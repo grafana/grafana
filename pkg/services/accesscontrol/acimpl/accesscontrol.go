@@ -236,7 +236,7 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 	}
 
 	// Check direct access to resource first
-	res, err := a.zclient.Check(ctx, in)
+	res, err := a.zclient.CheckObject(ctx, in)
 	if err != nil {
 		return false, err
 	}
@@ -262,7 +262,7 @@ func (a *AccessControl) Check(ctx context.Context, req accesscontrol.CheckReques
 		TupleKey: folderKey,
 	}
 
-	folderRes, err := a.zclient.Check(ctx, folderReq)
+	folderRes, err := a.zclient.CheckObject(ctx, folderReq)
 	if err != nil {
 		return false, err
 	}

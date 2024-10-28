@@ -8,7 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -16,14 +16,14 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	ctx, span := tracer.Start(ctx, "authzServer.List")
 	defer span.End()
 
-	if info, ok := typeInfo(r.GetGroup(), r.GetResource()); ok {
+	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
 		return s.listTyped(ctx, r, info)
 	}
 
 	return s.listGeneric(ctx, r)
 }
-func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info TypeInfo) (*authzextv1.ListResponse, error) {
-	relation := mapping[r.GetVerb()]
+func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo) (*authzextv1.ListResponse, error) {
+	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
@@ -32,7 +32,7 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
 	if err != nil {
@@ -47,8 +47,8 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              s.storeID,
 		AuthorizationModelId: s.modelID,
-		Type:                 info.typ,
-		Relation:             mapping[utils.VerbGet],
+		Type:                 info.Type,
+		Relation:             relation,
 		User:                 r.GetSubject(),
 	})
 	if err != nil {
@@ -56,12 +56,12 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 	}
 
 	return &authzextv1.ListResponse{
-		Items: typedObjects(info.typ, listRes.GetObjects()),
+		Items: typedObjects(info.Type, listRes.GetObjects()),
 	}, nil
 }
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	relation := mapping[r.GetVerb()]
+	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
@@ -70,7 +70,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
-			Object:   newNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
 		},
 	})
 	if err != nil {
@@ -90,7 +90,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(formatGroupResource(r.GetGroup(), r.GetResource())),
+				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
 			},
 		},
 	})
@@ -107,7 +107,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(formatGroupResource(r.GetGroup(), r.GetResource())),
+				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
 			},
 		},
 	})

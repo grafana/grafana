@@ -11,8 +11,16 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
+
+var _ authz.AccessClient = (*Client)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
@@ -32,7 +40,10 @@ func WithLogger(logger log.Logger) ClientOption {
 
 type Client struct {
 	logger   log.Logger
-	client   openfgav1.OpenFGAServiceClient
+	openfga  openfgav1.OpenFGAServiceClient
+	authz    authzv1.AuthzServiceClient
+	authzext authzextv1.AuthzExtentionServiceClient
+
 	tenantID string
 	storeID  string
 	modelID  string
@@ -40,7 +51,9 @@ type Client struct {
 
 func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		client: openfgav1.NewOpenFGAServiceClient(cc),
+		openfga:  openfgav1.NewOpenFGAServiceClient(cc),
+		authz:    authzv1.NewAuthzServiceClient(cc),
+		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
 	}
 
 	for _, o := range opts {
@@ -72,13 +85,70 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+// Check implements authz.AccessClient.
+func (c *Client) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
+	res, err := c.authz.Check(ctx, &authzv1.CheckRequest{
+		Subject:     id.GetUID(),
+		Verb:        req.Verb,
+		Group:       req.Group,
+		Resource:    req.Resource,
+		Namespace:   req.Namespace,
+		Name:        req.Name,
+		Subresource: req.Subresource,
+		Path:        req.Path,
+		Folder:      req.Folder,
+	})
+
+	if err != nil {
+		return authz.CheckResponse{}, err
+	}
+
+	return authz.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
+func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Compile")
+	defer span.End()
+
+	_, err := c.authzext.List(ctx, &authzextv1.ListRequest{
+		Subject:   id.GetUID(),
+		Group:     req.Group,
+		Verb:      utils.VerbList,
+		Resource:  req.Resource,
+		Namespace: req.Namespace,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: implement checker
+	return func(namespace, name, folder string) bool { return false }, nil
+}
+
+func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
+	defer span.End()
+
+	return c.authzext.List(ctx, &authzextv1.ListRequest{
+		Subject:   id.GetUID(),
+		Group:     req.Group,
+		Verb:      utils.VerbList,
+		Resource:  req.Resource,
+		Namespace: req.Namespace,
+	})
+}
+
+func (c *Client) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.CheckObject")
 	defer span.End()
 
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	return c.client.Check(ctx, in)
+	return c.openfga.Check(ctx, in)
 }
 
 func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
@@ -86,7 +156,7 @@ func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav
 	defer span.End()
 
 	in.StoreId = c.storeID
-	return c.client.Read(ctx, in)
+	return c.openfga.Read(ctx, in)
 }
 
 func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
@@ -96,13 +166,13 @@ func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsReque
 
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	return c.client.ListObjects(ctx, in)
+	return c.openfga.ListObjects(ctx, in)
 }
 
 func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	_, err := c.client.Write(ctx, in)
+	_, err := c.openfga.Write(ctx, in)
 	return err
 }
 
@@ -115,7 +185,7 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	// We should create an issue to support some way to get stores by name.
 	// For now we need to go thourh all stores until we find a match or we hit the end.
 	for {
-		res, err := c.client.ListStores(ctx, &openfgav1.ListStoresRequest{
+		res, err := c.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
 			PageSize:          &wrapperspb.Int32Value{Value: 20},
 			ContinuationToken: continuationToken,
 		})
@@ -142,7 +212,7 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 func (c *Client) loadModel(ctx context.Context, storeID string) (string, error) {
 	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
 	// So with a pageSize of 1 we will get the latest model.
-	res, err := c.client.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
+	res, err := c.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
 		StoreId:  storeID,
 		PageSize: &wrapperspb.Int32Value{Value: 1},
 	})

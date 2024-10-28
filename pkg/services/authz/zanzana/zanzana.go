@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
@@ -13,8 +14,10 @@ const (
 	TypeTeam      string = "team"
 	TypeRole      string = "role"
 	TypeFolder    string = "folder"
+	TypeFolder2   string = "folder2"
 	TypeDashboard string = "dashboard"
 	TypeOrg       string = "org"
+	TypeResource  string = "resource"
 )
 
 const (
@@ -23,7 +26,18 @@ const (
 	RelationParent     string = "parent"
 	RelationAssignee   string = "assignee"
 	RelationOrg        string = "org"
+
+	// FIXME action sets
+	RelationAdmin            string = "admin"
+	RelationRead             string = "read"
+	RelationWrite            string = "write"
+	RelationCreate           string = "create"
+	RelationDelete           string = "delete"
+	RelationPermissionsRead  string = "permissions_read"
+	RelationPermissionsWrite string = "permissions_write"
 )
+
+var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
 
 const (
 	KindOrg        string = "org"
@@ -87,6 +101,33 @@ func TranslateToTuple(user string, action, kind, identifier string, orgID int64)
 	}
 
 	return tuple, true
+}
+
+func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	if translation.typ == TypeResource {
+		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
+	}
+
+	if translation.typ == TypeFolder2 {
+		if m.group != "" && m.resource != "" {
+			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, name), true
+		}
+
+		return common.NewFolderTuple(subject, m.relation, name), true
+	}
+
+	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
 }
 
 func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
