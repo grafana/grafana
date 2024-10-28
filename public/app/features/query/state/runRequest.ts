@@ -142,7 +142,6 @@ export function runRequest(
     state.panelData.state = LoadingState.Done;
     return of(state.panelData);
   }
-  debugger;
 
   const dataObservable = callQueryMethodWithMigration(datasource, request, queryFunction).pipe(
     // Transform response packets into PanelData with merged results
@@ -152,6 +151,8 @@ export function runRequest(
       }
 
       // filter out responses for hidden queries
+      debugger;
+      // TODO: TONY: FILTER below only works if every package.data has the refId (which is an optional field)
       const hiddenQueries = request.targets.filter((q) => q.hide);
       for (const query of hiddenQueries) {
         packet.data = packet.data.filter((d) => d.refId !== query.refId);

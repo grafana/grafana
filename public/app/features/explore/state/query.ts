@@ -562,10 +562,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
-    const queries = exploreItemState.queries.map((query) => ({
-      ...query,
-      datasource: query.datasource || datasourceInstance?.getRef(),
-    }));
+    const queries = exploreItemState.queries
+      .map((query) => ({
+        ...query,
+        datasource: query.datasource || datasourceInstance?.getRef(),
+      }))
+      .filter((q) => !q.hide);
 
     if (datasourceInstance != null) {
       handleHistory(dispatch, getState().explore, datasourceInstance, queries);
@@ -629,6 +631,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+      debugger;
 
       newQuerySource = combineLatest([
         runRequest(datasourceInstance, transaction.request)
@@ -1351,28 +1354,24 @@ export const processQueryResponse = (
   const haveNodeGraphQuery = !!state.queries.find((q) => !q.hide && q.scenarioId === 'node_graph');
   const isNodeGraphResponse = nodeGraphFrames.length > 0;
   let mergedNodeGraphFrames = nodeGraphFrames;
-  let mergedGraphResult = state.graphResult;
-  let mergedTableResult = state.tableResult;
+  let mergedGraphResult = state.graphResult ? [...state.graphResult] : null;
+  let mergedTableResult = state.tableResult ? [...state.tableResult] : null;
   if (visibleQueriesCount === 1) {
     if (isNodeGraphResponse) {
       mergedNodeGraphFrames = nodeGraphFrames;
     }
-    mergedGraphResult = graphResult ?? [];
-    mergedTableResult = tableResult ?? [];
-  } else if (visibleQueriesCount > 1) {
-    if (isNodeGraphResponse) {
-      mergedGraphResult = state.graphResult ?? [];
-      mergedTableResult = state.tableResult ?? [];
-    } else {
-      mergedGraphResult = graphResult;
-      mergedTableResult = tableResult;
-      mergedNodeGraphFrames = state.queryResponse.nodeGraphFrames;
-    }
+    mergedGraphResult = graphResult;
+    mergedTableResult = tableResult;
+  } else if (visibleQueriesCount > 1 && !isNodeGraphResponse) {
+    mergedGraphResult = graphResult;
+    mergedTableResult = tableResult;
+    mergedNodeGraphFrames = [...state.queryResponse.nodeGraphFrames];
   }
   if (!haveNodeGraphQuery) {
     mergedNodeGraphFrames = [];
   }
 
+  debugger;
   return {
     ...state,
     queryResponse: { ...response, nodeGraphFrames: mergedNodeGraphFrames },
