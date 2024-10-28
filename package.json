@@ -177,7 +177,7 @@
     "eslint-plugin-jest": "28.8.3",
     "eslint-plugin-jest-dom": "^5.4.0",
     "eslint-plugin-jsdoc": "48.11.0",
-    "eslint-plugin-jsx-a11y": "6.10.1",
+    "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-lodash": "7.4.0",
     "eslint-plugin-no-barrel-files": "^1.1.0",
     "eslint-plugin-react": "7.37.2",
