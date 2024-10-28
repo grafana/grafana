@@ -121,6 +121,8 @@ If you already have Grafana, Loki, or Prometheus running on your system, you mig
 
 ## Generate sample logs
 
+To demonstrate how to create alert rules based on logs, you’ll use a script that generates realistic log entries to simulate typical monitoring data in Grafana. Running this script will output logs continuously, each containing a timestamp, HTTP method (either GET or POST), status code (200 for success or 500 for failures), and request duration in milliseconds.
+
 1. Download and save a Python file that generates logs.
 
    ```bash
