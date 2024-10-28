@@ -1,4 +1,3 @@
-// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
