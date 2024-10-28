@@ -88,6 +88,7 @@ func (i *Index) IndexBatches(ctx context.Context, maxSize int, tenants []string)
 }
 
 // AddToBatches adds resources to their respective shard's batch
+// returns a list of tenants that have changes
 func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string, error) {
 	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"AddToBatches")
 	defer span.End()

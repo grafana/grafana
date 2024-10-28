@@ -20,7 +20,6 @@ func TestIndexBatch(t *testing.T) {
 	trace, err := tracing.ProvideService(tracingCfg)
 	if err != nil {
 		t.Fatal(err)
-		return
 	}
 
 	tmpdir := os.TempDir() + "testindexbatch"
@@ -29,15 +28,17 @@ func TestIndexBatch(t *testing.T) {
 		err := os.RemoveAll(tmpdir)
 		if err != nil {
 			t.Fatal(err)
-			return
 		}
 	}()
 
 	index := &Index{
 		tracer: trace,
 		shards: make(map[string]Shard),
-		path:   tmpdir,
 		log:    log.New("unifiedstorage.search.index"),
+		opts: Opts{
+			IndexDir:  tmpdir,
+			ListLimit: 10000,
+		},
 	}
 
 	ctx := context.Background()
@@ -47,14 +48,19 @@ func TestIndexBatch(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i))}
 		start := time.Now()
-		err = index.IndexBatch(ctx, list)
 		if err != nil {
 			t.Fatal(err)
-			return
+		}
+		_, err = index.AddToBatches(ctx, list)
+		if err != nil {
+			t.Fatal(err)
 		}
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
 	}
+
+	// index all batches for each shard/tenant
+	err = index.IndexBatches(ctx, 1, namespaces)
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
@@ -62,9 +68,9 @@ func TestIndexBatch(t *testing.T) {
 	assert.Equal(t, 3, len(index.shards))
 
 	total, err := index.Count()
+	fmt.Println("Total docs:", total)
 	if err != nil {
 		t.Fatal(err)
-		return
 	}
 
 	assert.Equal(t, uint64(100000), total)
