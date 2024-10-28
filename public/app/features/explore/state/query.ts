@@ -193,6 +193,11 @@ export interface QueryEndedPayload {
 }
 export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
 
+interface ResetPanelItemResults {
+  exploreId: string;
+}
+const resetPanelItemResultsAction = createAction<ResetPanelItemResults>('explore/resetPanelItemResults');
+
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
  */
@@ -562,10 +567,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
-    const queries = exploreItemState.queries.map((query) => ({
-      ...query,
-      datasource: query.datasource || datasourceInstance?.getRef(),
-    }));
+    const queries = exploreItemState.queries
+      .map((query) => ({
+        ...query,
+        datasource: query.datasource || datasourceInstance?.getRef(),
+      }))
+      .filter((q) => !q.hide);
 
     if (datasourceInstance != null) {
       handleHistory(dispatch, getState().explore, datasourceInstance, queries);
@@ -599,6 +606,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         return;
       }
 
+      dispatch(resetPanelItemResultsAction({ exploreId }));
       // Some datasource's query builders allow per-query interval limits,
       // but we're using the datasource interval limit for now
       const minInterval = datasourceInstance?.interval;
@@ -620,7 +628,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       const timeZone = getTimeZone(getState().user);
       const transaction = buildQueryTransaction(
         exploreId,
-        queries.filter((q) => !q.hide),
+        queries,
         queryOptions,
         range,
         scanning,
@@ -1219,6 +1227,26 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
+  if (resetPanelItemResultsAction.match(action)) {
+    return {
+      ...state,
+      graphResult: null,
+      tableResult: null,
+      logsResult: null,
+      nodeGraphResult: null,
+      showFlameGraph: false,
+      showNodeGraph: false,
+      showLogs: false,
+      showTable: false,
+      showTrace: false,
+      showCustom: false,
+      showMetrics: false,
+      showRawPrometheus: false,
+      isLive: false,
+      isPaused: false,
+    };
+  }
+
   if (setPausedStateAction.match(action)) {
     const { isPaused } = action.payload;
     return {
@@ -1346,31 +1374,27 @@ export const processQueryResponse = (
     state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
-  const haveNodeGraphScenario = !!state.queries.find((q) => q?.scenarioId === 'node_graph' && !q.hide);
-  const visibleQueriesCount = state.queries.filter((q) => !q.hide).length;
-  const isNodeGraphResponse = nodeGraphFrames.length > 0;
-  const mergedNodeGraphFrames = haveNodeGraphScenario
-    ? [...state.queryResponse.nodeGraphFrames, ...nodeGraphFrames]
-    : nodeGraphFrames;
-
-  const mergedGraphResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? graphResult : graphResult) : graphResult;
-  const mergedTableResult = isNodeGraphResponse ? (visibleQueriesCount === 1 ? tableResult : tableResult) : tableResult;
+  // Avoid NodeGraph response overriding the data of other scenario type and vice versa.
+  const isNodeGraphReponse = nodeGraphFrames.length > 0;
+  const graph = isNodeGraphReponse ? state.graphResult : graphResult;
+  const table = isNodeGraphReponse ? state.tableResult : tableResult;
 
   return {
     ...state,
-    queryResponse: { ...response, nodeGraphFrames: mergedNodeGraphFrames },
-    graphResult: mergedGraphResult,
-    tableResult: mergedTableResult,
+    queryResponse: response,
+    graphResult: graph,
+    tableResult: table,
+    nodeGraphResult: isNodeGraphReponse ? nodeGraphFrames : state.nodeGraphResult,
     rawPrometheusResult,
     logsResult:
       state.isLive && logsResult
         ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
     showLogs: !!logsResult,
-    showMetrics: !!mergedGraphResult,
-    showTable: !!mergedTableResult?.length,
+    showMetrics: !!graph,
+    showTable: !!table?.length,
     showTrace: !!traceFrames.length,
-    showNodeGraph: !!mergedNodeGraphFrames.length,
+    showNodeGraph: isNodeGraphReponse ? !!nodeGraphFrames.length : state.showNodeGraph,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
     showCustom: !!customFrames?.length,

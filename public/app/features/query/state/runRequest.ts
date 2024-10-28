@@ -142,7 +142,6 @@ export function runRequest(
     state.panelData.state = LoadingState.Done;
     return of(state.panelData);
   }
-  debugger;
 
   const dataObservable = callQueryMethodWithMigration(datasource, request, queryFunction).pipe(
     // Transform response packets into PanelData with merged results
