@@ -628,7 +628,6 @@ export interface VizLegendOptions {
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;
-  showStatePercentage?: boolean;
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
