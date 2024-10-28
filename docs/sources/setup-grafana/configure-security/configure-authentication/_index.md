@@ -141,8 +141,8 @@ Example:
 enabled = true
 
 {{< admonition type="note" >}}
-Enabling anonymous access is a disallowed configuration setting on Hosted Grafana and not recommended due [security implications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/#implications-of-enabling-anonymous-access-to-dashboards). 
-Use [public dashboard](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/) feature instead.
+Enabling anonymous access is a disallowed configuration setting on Hosted Grafana and not recommended due [security implications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/#implications-of-enabling-anonymous-access-to-dashboards).
+For sharing dashboards with a wider audience, consider using the [public dashboard feature](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/) instead.
 {{< /admonition >}}
 
 # Organization name that should be used for unauthenticated users
