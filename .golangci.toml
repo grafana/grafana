@@ -1,5 +1,5 @@
 [run]
-timeout = "20m"
+timeout = "10m"
 concurrency = 10
 allow-parallel-runners = true
 
