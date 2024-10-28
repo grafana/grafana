@@ -27,9 +27,9 @@ export default class CloudMonitoringCheatSheet extends PureComponent<
           <span>Patterns:</span>
           <br />
           <ul
-            className={css`
-              list-style: none;
-            `}
+            className={css({
+              listStyle: 'none',
+            })}
           >
             <li>
               <code>{`${'{{metric.type}}'}`}</code> = metric type e.g. compute.googleapis.com/instance/cpu/usage_time

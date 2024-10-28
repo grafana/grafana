@@ -2,6 +2,7 @@ package authtest
 
 import (
 	"context"
+	"errors"
 	"net"
 	"time"
 
@@ -64,6 +65,9 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 		},
 		GetUserTokensProvider: func(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 			return nil, nil
+		},
+		GetExternalSessionProvider: func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+			return nil, errors.New("settings Provider table not found")
 		},
 	}
 }

@@ -31,6 +31,30 @@ type ServiceAccountsAPI struct {
 	isExternalSAEnabled  bool
 }
 
+func MiddlewareServiceAccountUIDResolver(saService serviceaccounts.Service, paramName string) web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		// Get service account id from request
+		saUID := web.Params(c.Req)[paramName]
+		// if saID is empty or is an integer, we assume it's a service account id and we don't need to resolve it
+		_, err := strconv.ParseInt(saUID, 10, 64)
+		if saUID == "" || err == nil {
+			return
+		}
+
+		serviceAccount, err := saService.RetrieveServiceAccount(c.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: c.SignedInUser.GetOrgID(),
+			UID:   saUID,
+		})
+		if err == nil {
+			gotParams := web.Params(c.Req)
+			gotParams[paramName] = strconv.FormatInt(serviceAccount.Id, 10)
+			web.SetURLParams(c.Req, gotParams)
+		} else {
+			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
+		}
+	}
+}
+
 func NewServiceAccountsAPI(
 	cfg *setting.Cfg,
 	service serviceaccounts.Service,
@@ -55,15 +79,16 @@ func NewServiceAccountsAPI(
 
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
+	saUIDResolver := MiddlewareServiceAccountUIDResolver(api.service, ":serviceAccountId")
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
 		serviceAccountsRoute.Get("/search", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
 		serviceAccountsRoute.Post("/", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
-		serviceAccountsRoute.Patch("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
-		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
-		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+		serviceAccountsRoute.Get("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Patch("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+		serviceAccountsRoute.Post("/:serviceAccountId/tokens", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
+		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", saUIDResolver, auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
 		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 	}, requestmeta.SetOwner(requestmeta.TeamAuth))
@@ -125,12 +150,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
-	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), scopeID)
+	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: ctx.SignedInUser.GetOrgID(),
+		ID:    saID,
+	})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
@@ -167,7 +195,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
@@ -181,7 +209,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
-	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), scopeID, &cmd)
+	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID, &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
@@ -223,11 +251,11 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole org.RoleTyp
 // 403: forbiddenError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), scopeID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}

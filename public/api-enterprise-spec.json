@@ -5773,6 +5773,8 @@
           "type": "string",
           "enum": [
             "DATASOURCE_NAME_CONFLICT",
+            "DATASOURCE_INVALID_URL",
+            "FOLDER_NAME_CONFLICT",
             "DASHBOARD_ALREADY_MANAGED",
             "LIBRARY_ELEMENT_NAME_CONFLICT",
             "UNSUPPORTED_DATA_TYPE",
@@ -6937,6 +6939,9 @@
         "orientation": {
           "type": "string"
         },
+        "pdfCombineOneFile": {
+          "type": "boolean"
+        },
         "pdfShowTemplateVariables": {
           "type": "boolean"
         },
@@ -7416,6 +7421,10 @@
           "type": "integer",
           "format": "int64",
           "example": 0
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         }
       }
     },
@@ -7481,6 +7490,10 @@
         "tokens": {
           "type": "integer",
           "format": "int64"
+        },
+        "uid": {
+          "type": "string",
+          "example": "fe1xejlha91xce"
         },
         "updatedAt": {
           "type": "string",
@@ -10387,14 +10400,17 @@
             "type": "integer",
             "format": "int64"
           },
-          "lbacRules": {
-            "$ref": "#/definitions/TeamLBACRules"
-          },
           "message": {
             "type": "string"
           },
           "name": {
             "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/TeamLBACRule"
+            }
           },
           "uid": {
             "type": "string"

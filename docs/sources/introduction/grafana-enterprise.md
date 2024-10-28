@@ -108,4 +108,4 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 
 ## Try Grafana Enterprise
 
-To purchase or obtain a trial license, contact the Grafana Labs [Sales Team](/contact?about=support&topic=Grafana%20Enterprise).
+To purchase or obtain a trial license, contact the Grafana Labs [Sales Team](/contact?about=grafana-enterprise-stack).

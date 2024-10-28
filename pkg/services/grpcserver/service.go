@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -69,12 +68,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		}
 	}
 
-	var opts []grpc.ServerOption
-
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
 	// See https://github.com/grpc-ecosystem/go-grpc-middleware/blob/main/interceptors/auth/auth.go#L30.
-	opts = append(opts, []grpc.ServerOption{
+	opts := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
@@ -86,7 +83,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
-	}...)
+	}
 
 	if s.cfg.GRPCServerTLSConfig != nil {
 		opts = append(opts, grpc.Creds(credentials.NewTLS(cfg.GRPCServerTLSConfig)))
@@ -120,14 +117,14 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 		s.logger.Info("GRPC server: starting")
 		err := s.server.Serve(listener)
 		if err != nil {
-			backend.Logger.Error("GRPC server: failed to serve", "err", err)
+			s.logger.Error("GRPC server: failed to serve", "err", err)
 			serveErr <- err
 		}
 	}()
 
 	select {
 	case err := <-serveErr:
-		backend.Logger.Error("GRPC server: failed to serve", "err", err)
+		s.logger.Error("GRPC server: failed to serve", "err", err)
 		return err
 	case <-ctx.Done():
 	}

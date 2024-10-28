@@ -152,6 +152,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       '& > p': {
         margin: theme.spacing(1, 0),
       },
+      code: {
+        'white-space': 'pre-wrap',
+      },
     },
     a: {
       color: theme.colors.text.link,
