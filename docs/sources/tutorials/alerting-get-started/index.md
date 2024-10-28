@@ -36,7 +36,7 @@ In this tutorial you will:
 
 {{< admonition type="tip" >}}
 
-Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/).
+Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /admonition >}}
 
@@ -44,7 +44,7 @@ Once you have completed Part 1, don’t forget to explore the advanced but essen
 
 {{< docs/ignore >}}
 
-> Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://grafana.com/tutorials/alerting-get-started-pt2/).
+> Once you have completed Part 1, don’t forget to explore the advanced but essential alerting topics in [Part 2 Alert instances and notification routing](http://www.grafana.com/tutorials/alerting-get-started-pt2/).
 
 {{< /docs/ignore >}}
 
@@ -266,13 +266,13 @@ By incrementing the threshold, the condition is no longer met, and after the eva
 
 <!-- INTERACTIVE page finish.md START -->
 
-## Learn more in [Grafana Alerting Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/)
+## Learn more in [Grafana Alerting Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/)
 
 <!-- INTERACTIVE ignore START -->
 
 {{< admonition type="tip" >}}
 
-In [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /admonition >}}
 
@@ -280,7 +280,7 @@ In [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/ale
 
 {{< docs/ignore >}}
 
-In [Get started with Grafana Alerting - Part 2](http://grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
+In [Get started with Grafana Alerting - Part 2](http://www.grafana.com/tutorials/alerting-get-started-pt2/) you can advance your skills by exploring alert instances and notification routing.
 
 {{< /docs/ignore >}}
 
