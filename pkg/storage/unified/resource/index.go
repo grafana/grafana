@@ -16,6 +16,7 @@ import (
 )
 
 const tracingPrexfixIndex = "unified_storage.index."
+const pageSize = 10000
 
 type Shard struct {
 	index bleve.Index
@@ -49,7 +50,7 @@ func NewIndex(s *server, opts Opts, path string, tracer tracing.Tracer) *Index {
 	return idx
 }
 
-func (i *Index) IndexBatch(ctx context.Context, list *ListResponse, kind string) error {
+func (i *Index) IndexBatch(ctx context.Context, list *ListResponse) error {
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"CreateIndexBatches")
 	for _, obj := range list.Items {
 		res, err := NewIndexedResource(obj.Value)
@@ -61,7 +62,7 @@ func (i *Index) IndexBatch(ctx context.Context, list *ListResponse, kind string)
 		if err != nil {
 			return err
 		}
-		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", kind, "tenant", res.Namespace)
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "tenant", res.Namespace)
 
 		// Transform the raw resource into a more generic indexable resource
 		indexableResource, err := NewIndexedResource(obj.Value)
@@ -98,7 +99,7 @@ func (i *Index) Init(ctx context.Context) error {
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
 		i.log.Info("indexing resource", "kind", rt.Key.Resource)
-		r := &ListRequest{Options: rt, Limit: 100}
+		r := &ListRequest{Options: rt, Limit: pageSize}
 
 		// Paginate through the list of resources and index each page
 		for {
@@ -111,7 +112,7 @@ func (i *Index) Init(ctx context.Context) error {
 			totalObjectsFetched += len(list.Items)
 
 			// Index current page
-			err = i.IndexBatch(ctx, list, rt.Key.Resource)
+			err = i.IndexBatch(ctx, list)
 			if err != nil {
 				return err
 			}
