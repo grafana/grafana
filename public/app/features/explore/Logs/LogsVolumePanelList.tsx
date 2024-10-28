@@ -17,6 +17,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -97,8 +98,29 @@ export const LogsVolumePanelList = ({
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query has timed out"
+        title="Unable to show log volume"
         // Using info to avoid users thinking that the actual query has failed.
+        message={
+          <>
+            <p>
+              <Trans i18nKey="explore.logs.logs-volume.much-data">
+                The query is trying to access too much data. Try one or more of the following:
+              </Trans>
+            </p>
+            <ul>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.add-filters">
+                  Add more labels to your query to narrow down your search.
+                </Trans>
+              </li>
+              <li>
+                <Trans i18nKey="explore.logs.logs-volume.decrease-timerange">
+                  Decrease the time range of your query.
+                </Trans>
+              </li>
+            </ul>
+          </>
+        }
         severity="info"
         suggestedAction="Retry"
         onSuggestedAction={onLoadLogsVolume}
@@ -109,7 +131,7 @@ export const LogsVolumePanelList = ({
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
-  if (numberOfLogVolumes === 0) {
+  if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
         <Alert severity="info" title="No logs volume available">
@@ -122,7 +144,6 @@ export const LogsVolumePanelList = ({
   return (
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
-        const logsVolumeData = { data: logVolumes[name] };
         return (
           <LogsVolumePanel
             toggleLegendRef={toggleLegendRef}
@@ -130,7 +151,7 @@ export const LogsVolumePanelList = ({
             timeRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}
             width={width}
-            logsVolumeData={logsVolumeData}
+            logsVolumeData={{ data: logVolumes[name], state: logsVolumeData?.state }}
             onUpdateTimeRange={onUpdateTimeRange}
             timeZone={timeZone}
             splitOpen={splitOpen}
@@ -155,25 +176,25 @@ export const LogsVolumePanelList = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    listContainer: css`
-      padding-top: 10px;
-    `,
-    extraInfoContainer: css`
-      display: flex;
-      justify-content: end;
-      position: absolute;
-      right: 5px;
-      top: 5px;
-    `,
-    oldInfoText: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-    alertContainer: css`
-      width: 50%;
-      min-width: ${theme.breakpoints.values.sm}px;
-      margin: 0 auto;
-    `,
+    listContainer: css({
+      paddingTop: '10px',
+    }),
+    extraInfoContainer: css({
+      display: 'flex',
+      justifyContent: 'end',
+      position: 'absolute',
+      right: '5px',
+      top: '5px',
+    }),
+    oldInfoText: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+    }),
+    alertContainer: css({
+      width: '50%',
+      minWidth: `${theme.breakpoints.values.sm}px`,
+      margin: '0 auto',
+    }),
   };
 };
 

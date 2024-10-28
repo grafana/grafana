@@ -58,6 +58,119 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 	}
 }
 
+// folderTreeCollector collects folder tree structure and writes it as relation tuples
+func folderTreeCollector2(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
+		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
+		defer span.End()
+
+		const query = `
+			SELECT uid, parent_uid, org_id FROM folder
+		`
+		type folder struct {
+			OrgID     int64  `xorm:"org_id"`
+			FolderUID string `xorm:"uid"`
+			ParentUID string `xorm:"parent_uid"`
+		}
+
+		var folders []folder
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&folders)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, f := range folders {
+			var tuple *openfgav1.TupleKey
+			if f.ParentUID == "" {
+				continue
+			}
+
+			tuple = &openfgav1.TupleKey{
+				Object:   zanzana.NewTupleEntry("folder2", f.FolderUID, ""),
+				Relation: zanzana.RelationParent,
+				User:     zanzana.NewTupleEntry("folder2", f.ParentUID, ""),
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+// managedPermissionsCollector collects managed permissions into provided tuple map.
+// It will only store actions that are supported by our schema. Managed permissions can
+// be directly mapped to user/team/role without having to write an intermediate role.
+func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
+		query := `
+			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN user_role ur ON r.id = ur.role_id
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
+			LEFT JOIN team_role tr ON r.id = tr.role_id
+			LEFT JOIN team t ON tr.team_id = t.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE r.name LIKE 'managed:%'
+		`
+		type Permission struct {
+			RoleName   string `xorm:"role_name"`
+			OrgID      int64  `xorm:"org_id"`
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			UserUID    string `xorm:"user_uid"`
+			TeamUID    string `xorm:"team_uid"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query).Find(&permissions)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, p := range permissions {
+			var subject string
+			if len(p.UserUID) > 0 {
+				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
+			} else if len(p.TeamUID) > 0 {
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, "member")
+			} else {
+				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
+				continue
+			}
+
+			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
+			if !ok {
+				continue
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
 func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCollector {
 	return func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error) {
 		// list will use continuation token to collect all tuples for object and relation

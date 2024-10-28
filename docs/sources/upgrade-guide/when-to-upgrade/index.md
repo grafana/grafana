@@ -7,7 +7,7 @@ keywords:
   - upgrade
 title: Strategies for upgrading your self-managed Grafana instance
 menuTitle: Upgrade strategies
-weight: 1000
+weight: 1
 ---
 
 # Strategies for upgrading your self-managed Grafana instance
