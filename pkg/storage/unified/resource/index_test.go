@@ -36,12 +36,14 @@ func TestIndexBatch(t *testing.T) {
 	ctx := context.Background()
 	startAll := time.Now()
 
+	// simulate 10 List calls
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i))}
 		start := time.Now()
 		err = index.IndexBatch(ctx, list)
 		if err != nil {
 			t.Fatal(err)
+			return
 		}
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
@@ -50,7 +52,15 @@ func TestIndexBatch(t *testing.T) {
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
 
-	assert.Equal(t, len(index.shards), 3)
+	assert.Equal(t, 3, len(index.shards))
+
+	total, err := index.Count()
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	assert.Equal(t, uint64(100000), total)
 }
 
 func loadTestItems(uid string) []*ResourceWrapper {
