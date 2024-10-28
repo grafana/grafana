@@ -88,7 +88,7 @@ func (i *Index) IndexBatches(ctx context.Context, maxSize int, tenants []string)
 }
 
 // AddToBatches adds resources to their respective shard's batch
-func (i *Index) AddToBatches(ctx context.Context, list *ListResponse, kind string) ([]string, error) {
+func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string, error) {
 	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"AddToBatches")
 	defer span.End()
 
@@ -104,7 +104,7 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse, kind strin
 		if err != nil {
 			return nil, err
 		}
-		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", kind, "tenant", res.Namespace)
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", res.Kind, "tenant", res.Namespace)
 
 		err = shard.batch.Index(res.Uid, res)
 		if err != nil {
@@ -147,7 +147,7 @@ func (i *Index) Init(ctx context.Context) error {
 
 			i.log.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items))
 			//add changes to batches for shards with changes in the List
-			tenants, err := i.AddToBatches(ctx, list, rt.Key.Resource)
+			tenants, err := i.AddToBatches(ctx, list)
 			if err != nil {
 				return err
 			}
