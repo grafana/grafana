@@ -329,6 +329,24 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
+		doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -547,6 +565,28 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 	}, &folder.Folder{})
 	require.NotEmpty(t, create2.Response)
 	require.Equal(t, 409, create2.Response.StatusCode)
+}
+
+func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	payload := `{
+		"title": "  my folder  ",
+		"uid": ""
+		}`
+
+	// When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables
+	create := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotNil(t, create.Result)
+	require.Equal(t, "my folder", create.Result.Title)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
