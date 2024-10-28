@@ -150,14 +150,14 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
 
 	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), &serviceaccounts.GetServiceAccountQuery{
 		OrgID: ctx.SignedInUser.GetOrgID(),
-		ID:    scopeID,
+		ID:    saID,
 	})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
@@ -195,7 +195,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 // 404: notFoundError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
 	}
@@ -209,7 +209,7 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
-	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), scopeID, &cmd)
+	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.SignedInUser.GetOrgID(), saID, &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
@@ -251,11 +251,11 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole org.RoleTyp
 // 403: forbiddenError
 // 500: internalServerError
 func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext) response.Response {
-	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
+	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
 	}
-	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), scopeID)
+	err = api.service.DeleteServiceAccount(ctx.Req.Context(), ctx.SignedInUser.GetOrgID(), saID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Service account deletion error", err)
 	}
