@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/no-untranslated-strings */
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';

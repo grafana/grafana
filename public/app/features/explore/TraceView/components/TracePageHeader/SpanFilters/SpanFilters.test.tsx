@@ -260,7 +260,7 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
 
-    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    const matchesSwitch = screen.getByRole('switch', { name: 'Show matches only switch' });
     expect(matchesSwitch).not.toBeChecked();
     await user.click(matchesSwitch);
     expect(matchesSwitch).toBeChecked();

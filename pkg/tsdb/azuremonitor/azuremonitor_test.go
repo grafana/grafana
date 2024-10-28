@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -496,6 +497,149 @@ func TestCheckHealth(t *testing.T) {
 				assert.NoError(t, err)
 			}
 			assert.Equal(t, tt.expectedResult, res)
+		})
+	}
+}
+
+func Test_QueryData(t *testing.T) {
+	tests := []struct {
+		name          string
+		queryType     string
+		expectedURL   string
+		Err           require.ErrorAssertionFunc
+		ExpectedError error
+	}{
+		{
+			name:          "Azure Monitor query type",
+			queryType:     azureMonitor,
+			expectedURL:   testRoutes[azureMonitor].URL,
+			Err:           require.NoError,
+			ExpectedError: nil,
+		},
+		{
+			name:          "Azure Log Analytics query type",
+			queryType:     azureLogAnalytics,
+			expectedURL:   testRoutes[azureLogAnalytics].URL,
+			Err:           require.NoError,
+			ExpectedError: nil,
+		},
+		{
+			name:          "Azure Resource Graph query type",
+			queryType:     azureResourceGraph,
+			expectedURL:   testRoutes[azureResourceGraph].URL,
+			Err:           require.NoError,
+			ExpectedError: nil,
+		},
+		{
+			name:          "Azure Traces query type",
+			queryType:     azureTraces,
+			expectedURL:   testRoutes[azureLogAnalytics].URL,
+			Err:           require.NoError,
+			ExpectedError: nil,
+		},
+		{
+			name:          "traceExemplar query type",
+			queryType:     traceExemplar,
+			expectedURL:   testRoutes[traceExemplar].URL,
+			Err:           require.NoError,
+			ExpectedError: nil,
+		},
+		{
+			name:          "Deprecated Application Insights query type",
+			queryType:     "Application Insights",
+			expectedURL:   "",
+			Err:           require.Error,
+			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", "Application Insights"),
+		},
+		{
+			name:          "Deprecated Insights Analytics query type",
+			queryType:     "Insights Analytics",
+			expectedURL:   "",
+			Err:           require.Error,
+			ExpectedError: fmt.Errorf("query type: '%s' is no longer supported. Please migrate this query (see https://grafana.com/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/ for details)", "Insights Analytics"),
+		},
+	}
+
+	service := &Service{
+		im: &fakeInstance{
+			routes: testRoutes,
+			services: map[string]types.DatasourceService{
+				azureMonitor: {
+					URL:        testRoutes[azureMonitor].URL,
+					HTTPClient: &http.Client{},
+				},
+				azureLogAnalytics: {
+					URL:        testRoutes[azureLogAnalytics].URL,
+					HTTPClient: &http.Client{},
+				},
+				azureResourceGraph: {
+					URL:        testRoutes[azureResourceGraph].URL,
+					HTTPClient: &http.Client{},
+				},
+				azureTraces: {
+					URL:        testRoutes[azureTraces].URL,
+					HTTPClient: &http.Client{},
+				},
+				traceExemplar: {
+					URL:        testRoutes[traceExemplar].URL,
+					HTTPClient: &http.Client{},
+				},
+			},
+		},
+		executors: map[string]azDatasourceExecutor{
+			azureMonitor: &fakeExecutor{
+				t:           t,
+				queryType:   azureMonitor,
+				expectedURL: testRoutes[azureMonitor].URL,
+			},
+			azureLogAnalytics: &fakeExecutor{
+				t:           t,
+				queryType:   azureMonitor,
+				expectedURL: testRoutes[azureLogAnalytics].URL,
+			},
+			azureResourceGraph: &fakeExecutor{
+				t:           t,
+				queryType:   azureMonitor,
+				expectedURL: testRoutes[azureResourceGraph].URL,
+			},
+			azureTraces: &fakeExecutor{
+				t:           t,
+				queryType:   azureMonitor,
+				expectedURL: testRoutes[azureTraces].URL,
+			},
+			traceExemplar: &fakeExecutor{
+				t:           t,
+				queryType:   azureMonitor,
+				expectedURL: testRoutes[traceExemplar].URL,
+			},
+		},
+	}
+	service.queryMux = service.newQueryMux()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, _ := service.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{
+					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+						Name: "datasource_name",
+						UID:  "datasource_UID",
+					},
+				},
+				Queries: []backend.DataQuery{
+					{QueryType: tt.queryType,
+						RefID: "test"},
+				},
+			})
+
+			if res == nil {
+				t.Errorf("Expecting a response")
+			}
+
+			if res != nil {
+				tt.Err(t, res.Responses["test"].Error)
+				if tt.ExpectedError != nil {
+					assert.EqualError(t, res.Responses["test"].Error, tt.ExpectedError.Error())
+				}
+			}
 		})
 	}
 }

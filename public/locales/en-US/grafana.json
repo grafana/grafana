@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "Firing for",
+      "next-evaluation": "Next evaluation",
+      "next-evaluation-in": "next evaluation in",
+      "rule-definition": "Rule definition"
+    },
     "alertform": {
       "labels": {
         "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
@@ -134,6 +140,7 @@
     "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
+      "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
         "no-permissions": "You do not have the required permission to delete this contact point",
@@ -141,6 +148,7 @@
         "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
         "rules": "Contact point is referenced by one or more alert rules"
       },
+      "delivered-to": "Delivered to",
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
@@ -473,11 +481,14 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
+    "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
@@ -856,6 +867,11 @@
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Add more labels to your query to narrow down your search.",
+        "decrease-timerange": "Decrease the time range of your query.",
+        "much-data": "The query is trying to access too much data. Try one or more of the following:"
+      },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
@@ -1018,6 +1034,7 @@
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
       "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-label": "Share",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -1061,11 +1078,73 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "auto-save-field": {
+      "saved": "Saved!",
+      "saving": "Saving <1></1>"
+    },
+    "color-picker-popover": {
+      "palette-tab": "Colors",
+      "spectrum-tab": "Custom"
+    },
+    "confirm-button": {
+      "cancel": "Cancel"
+    },
+    "data-link-editor": {
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+    },
+    "data-link-editor-modal": {
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "data-links-inline-editor": {
+      "add-link": "Add link",
+      "one-click-link": "One-click link"
+    },
+    "data-source-http-settings": {
+      "access-help": "Help <1></1>",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "allowed-cookies": "Allowed cookies",
+      "auth": "Auth",
+      "basic-auth": "Basic Auth Details",
+      "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
+      "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
+      "heading": "HTTP",
+      "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
+      "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-title": "<0>Server access mode (Default):</0>"
+    },
+    "data-source-settings": {
+      "alerting-settings-heading": "Alerting",
+      "cert-key-reset": "Reset",
+      "custom-headers-add": "Add header",
+      "custom-headers-title": "Custom HTTP Headers",
+      "secure-socks-heading": "Secure Socks Proxy",
+      "tls-heading": "TLS/SSL Auth Details"
+    },
+    "date-time-picker": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
     "drawer": {
       "close": "Close"
     },
+    "field-link-list": {
+      "external-links-heading": "External links"
+    },
+    "file-dropzone": {
+      "cancel-upload": "Cancel upload",
+      "file-too-large": "File is larger than {{size}}"
+    },
+    "filter-input": {
+      "clear": "Clear"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "secret-form-field": {
+      "reset": "Reset"
     },
     "segment-async": {
       "error": "Failed to load options",
@@ -1073,6 +1152,7 @@
       "no-options": "No options found"
     },
     "select": {
+      "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1080,7 +1160,26 @@
       "aria-label": "Loading"
     },
     "table": {
-      "copy": "Copy to Clipboard"
+      "copy": "Copy to Clipboard",
+      "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "filter-popup-apply": "Ok",
+      "filter-popup-cancel": "Cancel",
+      "filter-popup-clear": "Clear filter",
+      "filter-popup-heading": "Filter by values:",
+      "no-values-label": "No values",
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+    },
+    "tags-input": {
+      "add": "Add"
+    },
+    "user-icon": {
+      "active-text": "Active last 15m"
+    },
+    "viz-legend": {
+      "right-axis-indicator": "(right y-axis)"
+    },
+    "viz-tooltip": {
+      "footer-add-annotation": "Add annotation"
     }
   },
   "graph": {
@@ -1401,8 +1500,17 @@
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
       "title": "Connect to a cloud stack",
-      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
       "token-error-title": "Error saving token",
+      "token-errors": {
+        "instance-request-error": "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.",
+        "instance-unreachable": "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+        "migration-disabled": "Cloud migrations are disabled on this instance.",
+        "session-creation-failure": "There was an error creating the migration. Please try again.",
+        "token-invalid": "Token is not valid. Generate a new token on your cloud instance and try again.",
+        "token-not-saved": "There was an error saving the token. See the Grafana server logs for more details.",
+        "token-request-error": "An error occurred while validating the token. Please check the Grafana instance logs.",
+        "token-validation-failure": "Token is not valid. Please ensure the token matches the migration token on your cloud instance."
+      },
       "token-required-error": "Migration token is required"
     },
     "cta": {
@@ -1445,6 +1553,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rules": "alert rules",
       "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
@@ -1509,7 +1618,9 @@
       "dismiss-button": "OK",
       "error-messages": {
         "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
         "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "folder-name-conflict": "There is a folder with the same name in the target instance. Rename one of them and try again.",
         "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
         "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
         "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
@@ -1543,6 +1654,7 @@
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "alert_rule": "Alert Rule",
       "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
@@ -2064,6 +2176,8 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
+        "installedVersion": "Installed version: ",
+        "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
@@ -2360,6 +2474,16 @@
     },
     "dismissable-button": "Close"
   },
+  "role-picker": {
+    "title": {
+      "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Basic Roles"
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "A dashboard with the same name in the selected folder already exists, including recently deleted dashboards.",
@@ -2437,6 +2561,21 @@
   "select": {
     "select-menu": {
       "selected-count": "Selected "
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": "Create"
+    },
+    "name": {
+      "label": "Display name",
+      "required-error": "Display name is required"
+    },
+    "page-nav": {
+      "label": "Create service account"
+    },
+    "role": {
+      "label": "Role"
     }
   },
   "service-accounts": {
@@ -2729,10 +2868,16 @@
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
     },
     "time-range": {
+      "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "example": "Example: to select a time range from 10 minutes ago to now",
+      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
-      "specify": "Specify time range <1></1>"
+      "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
+      "more-info": "For more information see <2>docs <1></1></2>.",
+      "specify": "Specify time range <1></1>",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
     },
     "zone": {
       "select-aria-label": "Time zone picker",
@@ -2787,8 +2932,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "Identity Provider",
     "browser-column": "Browser & OS",
     "created-at-column": "Logged on",
+    "identity-provider-column": "Identity Provider",
     "ip-column": "IP address",
     "revoke": "Revoke user session",
     "seen-at-column": "Last seen"
