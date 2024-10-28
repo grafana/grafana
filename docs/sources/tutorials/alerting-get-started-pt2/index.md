@@ -2,8 +2,7 @@
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 categories:
   - alerting
-description: This is part 2 of the Get started with Grafana Alerting tutorials. Learn how to leverage alert instances, and set up a  notification policy that routes alert notifications based on labels to a specific contact point.
-id: alerting-get-started-pt2
+description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
 labels:
   products:
     - enterprise
@@ -15,7 +14,7 @@ title: Get started with Grafana Alerting - Part 2
 weight: 50
 killercoda:
   title: Get started with Grafana Alerting - Part 2
-  description: Part 2 of the Get Started with Grafana Alerting tutorials. In this guide, we explore alert instances and notification policies.
+  description: Learn to use alert instances and route notifications by labels to contacts, building on your alerting skills in Grafana for more advanced workflows — Part 2.
   backend:
     imageid: ubuntu
 ---
@@ -24,7 +23,7 @@ killercoda:
 
 # Get started with Grafana Alerting - Part 2
 
-This is part 2 of the [Get Started with Grafana Alerting tutorial](http://grafana.com/tutorials/alerting-get-started/).
+The Get started with Grafana Alerting tutorial Part 2 is a continuation of [Get started with Grafana Alerting tutorial Part 1](http://grafana.com/tutorials/alerting-get-started/).
 
 In this guide, we dig into more complex yet equally fundamental elements of Grafana Alerting: **alert instances** and **notification policies**.
 
@@ -51,26 +50,24 @@ Learning about alert instances and notification policies is useful if you have m
 
 There are different ways you can follow along with this tutorial.
 
-### Grafana Cloud
+- **Grafana Cloud**
 
-As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
+  - As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://www.grafana.com/auth/sign-up/create-user).
 
-Continue to [Alert instances](#alert-instances).
+  Continue to [Alert instances](#alert-instances).
 
-### Interactive learning environment
+- **Interactive learning environment**
 
-Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 2](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/).
+  - Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting - Part 2](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started-pt2/). It's a fully configured environment with all the dependencies already installed.
 
-It's a fully configured environment with all the dependencies already installed.
+- **Grafana OSS**
 
-### Grafana OSS
+  - If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
-If you opt to run a Grafana stack locally, ensure you have the following applications installed:
+  - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
+  - [Git](https://git-scm.com/)
 
-- [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
-- [Git](https://git-scm.com/)
-
-#### Set up the Grafana stack (OSS users)
+### Set up the Grafana stack (OSS users)
 
 <!-- INTERACTIVE ignore END -->
 
