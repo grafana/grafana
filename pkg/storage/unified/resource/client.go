@@ -2,7 +2,9 @@ package resource
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -35,7 +37,7 @@ type resourceClient struct {
 	DiagnosticsClient
 }
 
-func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
+func NewLegacyResourceClient(channel *grpc.ClientConn) ResourceClient {
 	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return &resourceClient{
 		ResourceStoreClient: NewResourceStoreClient(cc),
@@ -46,6 +48,7 @@ func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
+	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
 	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
@@ -80,6 +83,48 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
+func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
+	// scenario: remote on-prem
+	clientInt, err := authnlib.NewGrpcClientInterceptor(
+		&authnlib.GrpcClientConfig{},
+		authnlib.WithDisableAccessTokenOption(),
+		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
+}
+
+func NewCloudResourceClient(conn *grpc.ClientConn, cfg authnlib.GrpcClientConfig, allowInsecure bool) (ResourceClient, error) {
+	// scenario: remote cloud
+	opts := []authnlib.GrpcClientInterceptorOption{
+		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
+	}
+
+	if allowInsecure {
+		opts = allowInsecureTransportOpt(&cfg, opts)
+	}
+
+	clientInt, err := authnlib.NewGrpcClientInterceptor(&cfg, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
+}
+
 func idTokenExtractor(ctx context.Context) (string, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
@@ -105,6 +150,12 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	}
 
 	return "", fmt.Errorf("id-token not found")
+}
+
+func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
+	return append(opts, authnlib.WithTokenClientOption(tokenClient))
 }
 
 // createInternalToken creates a symmetrically signed token for using in in-proc mode only.

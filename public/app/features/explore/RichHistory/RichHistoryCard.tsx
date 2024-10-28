@@ -50,88 +50,88 @@ const getStyles = (theme: GrafanaTheme2) => {
   const cardColor = theme.colors.background.secondary;
 
   return {
-    queryCard: css`
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid ${theme.colors.border.weak};
-      margin: ${theme.spacing(1)} 0;
-      background-color: ${cardColor};
-      border-radius: ${theme.shape.radius.default};
-      .starred {
-        color: ${theme.v1.palette.orange};
-      }
-    `,
-    cardRow: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: ${theme.spacing(1)};
-      border-bottom: none;
-      :first-of-type {
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        padding: ${theme.spacing(0.5, 1)};
-      }
-      img {
-        height: ${theme.typography.fontSize}px;
-        max-width: ${theme.typography.fontSize}px;
-        margin-right: ${theme.spacing(1)};
-      }
-    `,
-    queryActionButtons: css`
-      max-width: ${rightColumnContentWidth};
-      display: flex;
-      justify-content: flex-end;
-      font-size: ${theme.typography.size.base};
-      button {
-        margin-left: ${theme.spacing(1)};
-      }
-    `,
-    queryContainer: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      width: calc(100% - ${rightColumnWidth});
-    `,
-    updateCommentContainer: css`
-      width: calc(100% + ${rightColumnWidth});
-      margin-top: ${theme.spacing(1)};
-    `,
-    comment: css`
-      overflow-wrap: break-word;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.fontWeightRegular};
-      margin-top: ${theme.spacing(0.5)};
-    `,
-    commentButtonRow: css`
-      > * {
-        margin-top: ${theme.spacing(1)};
-        margin-right: ${theme.spacing(1)};
-      }
-    `,
-    textArea: css`
-      width: 100%;
-    `,
-    runButton: css`
-      max-width: ${rightColumnContentWidth};
-      display: flex;
-      justify-content: flex-end;
-      button {
-        height: auto;
-        padding: ${theme.spacing(0.5, 2)};
-        line-height: 1.4;
-        span {
-          white-space: normal !important;
-        }
-      }
-    `,
-    loader: css`
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: ${theme.colors.background.secondary};
-    `,
+    queryCard: css({
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      border: `1px solid ${theme.colors.border.weak}`,
+      margin: theme.spacing(1, 0),
+      backgroundColor: cardColor,
+      borderRadius: theme.shape.radius.default,
+      '.starred': {
+        color: theme.v1.palette.orange,
+      },
+    }),
+    cardRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1),
+      borderBottom: 'none',
+      ':first-of-type': {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        padding: theme.spacing(0.5, 1),
+      },
+      img: {
+        height: `${theme.typography.fontSize}px`,
+        maxWidth: `${theme.typography.fontSize}px`,
+        marginRight: theme.spacing(1),
+      },
+    }),
+    queryActionButtons: css({
+      maxWidth: rightColumnContentWidth,
+      display: 'flex',
+      justifyContent: 'flex-end',
+      fontSize: theme.typography.size.base,
+      button: {
+        marginLeft: theme.spacing(1),
+      },
+    }),
+    queryContainer: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      width: `calc(100% - ${rightColumnWidth})`,
+    }),
+    updateCommentContainer: css({
+      width: `calc(100% + ${rightColumnWidth})`,
+      marginTop: theme.spacing(1),
+    }),
+    comment: css({
+      overflowWrap: 'break-word',
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      marginTop: theme.spacing(0.5),
+    }),
+    commentButtonRow: css({
+      '> *': {
+        marginTop: theme.spacing(1),
+        marginRight: theme.spacing(1),
+      },
+    }),
+    textArea: css({
+      width: '100%',
+    }),
+    runButton: css({
+      maxWidth: rightColumnContentWidth,
+      display: 'flex',
+      justifyContent: 'flex-end',
+      button: {
+        height: 'auto',
+        padding: theme.spacing(0.5, 2),
+        lineHeight: 1.4,
+        span: {
+          whiteSpace: 'normal !important',
+        },
+      },
+    }),
+    loader: css({
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 };
 
@@ -357,23 +357,23 @@ export function RichHistoryCard(props: Props) {
 }
 
 const getQueryStyles = (theme: GrafanaTheme2) => ({
-  queryRow: css`
-    border-top: 1px solid ${theme.colors.border.weak};
-    display: flex;
-    flex-direction: row;
-    padding: 4px 0px;
-    gap: 4px;
-    :first-child {
-      border-top: none;
-    }
-  `,
-  dsInfoContainer: css`
-    display: flex;
-    align-items: center;
-  `,
-  queryText: css`
-    word-break: break-all;
-  `,
+  queryRow: css({
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    display: 'flex',
+    flexDirection: 'row',
+    padding: theme.spacing(0.5, 0),
+    gap: theme.spacing(0.5),
+    ':first-child': {
+      borderTop: 'none',
+    },
+  }),
+  dsInfoContainer: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  queryText: css({
+    wordBreak: 'break-all',
+  }),
 });
 
 interface QueryProps {
@@ -403,13 +403,14 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
-  display: flex;
-  align-items: center;
-  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-  font-weight: ${theme.typography.fontWeightMedium};
-  white-space: nowrap;
-`;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
+  css({
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
+  });
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

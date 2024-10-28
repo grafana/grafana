@@ -340,7 +340,9 @@ function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const indexOfDot = attributeFieldParentText.indexOf('.');
   const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
 
-  if (['span', 'resource', 'parent'].find((item) => item === attributeFieldUpToDot)) {
+  if (
+    ['event', 'instrumentation', 'link', 'resource', 'span', 'parent'].find((item) => item === attributeFieldUpToDot)
+  ) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
       scope: attributeFieldUpToDot,

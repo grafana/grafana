@@ -531,6 +531,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 		case <-b.done:
 			return
 		case <-t.C:
+			ctx, span := b.tracer.Start(ctx, tracePrefix+"poller")
 			// List the latest RVs
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
@@ -562,12 +563,15 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 			}
 
 			t.Reset(b.pollingInterval)
+			span.End()
 		}
 	}
 }
 
 // listLatestRVs returns the latest resource version for each (Group, Resource) pair.
 func (b *backend) listLatestRVs(ctx context.Context) (groupResourceRV, error) {
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"listLatestRVs")
+	defer span.End()
 	var grvs []*groupResourceVersion
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -664,7 +668,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func (b *backend) resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, key *resource.ResourceKey) (newVersion int64, err error) {
-	ctx, span := b.tracer.Start(ctx, "resourceVersionAtomicInc", trace.WithAttributes(
+	ctx, span := b.tracer.Start(ctx, tracePrefix+"version_atomic_inc", trace.WithAttributes(
 		semconv.K8SNamespaceName(key.Namespace),
 		// TODO: the following attributes could use some standardization.
 		attribute.String("k8s.resource.group", key.Group),
