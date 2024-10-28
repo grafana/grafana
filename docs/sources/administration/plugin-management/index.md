@@ -238,6 +238,8 @@ When enabled, plugins run in a separate JavaScript context, which provides sever
 - Protects core Grafana features from being altered by plugins
 - Prevents plugins from modifying global browser objects and behaviors
 
+Plugins running inside the Frontend Sandbox should continue to work normally without any noticeable changes in their intended functionality.
+
 ### Enable Frontend Sandbox
 
 The Frontend Sandbox feature is currently behind the `pluginsFrontendSandbox` feature flag. To enable it, you'll need to:
