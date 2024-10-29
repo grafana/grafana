@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/experimental-ct-react';
 
+import { getPerformanceMetrics } from '../../../playwright/getPerformanceMetrics';
+
 import { Combobox } from './Combobox';
 
 test('should render Combobox', async ({ mount, page }) => {
@@ -15,19 +17,13 @@ test('should render Combobox', async ({ mount, page }) => {
     />
   );
 
-  const client = await page.context().newCDPSession(page);
-  const start = performance.now();
+  const metrics = await getPerformanceMetrics(page, async () => {
+    await component.click();
+    await component.press('ArrowDown');
+    await component.press('Enter');
+  });
 
-  client.send('Performance.enable');
-
-  await component.click();
-  await component.press('ArrowDown');
-  await component.press('Enter');
-  let performanceMetrics = await client.send('Performance.getMetrics');
-  const end = performance.now();
-
-  console.log(end - start);
-  console.log(performanceMetrics);
+  console.log(metrics);
 
   await expect(component.getByRole('combobox')).toHaveValue('Option 2');
 });
