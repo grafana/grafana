@@ -185,9 +185,7 @@ export function limitAdhocProviders(
         opts.queries = [];
       }
 
-      const values = (
-        await datasourceHelper.getTagKeys(opts)
-      ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      const values = (await datasourceHelper.getTagKeys(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
@@ -223,9 +221,7 @@ export function limitAdhocProviders(
         opts.queries = [];
       }
       
-      const values = (
-        await datasourceHelper.getTagValues(opts)
-      ).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
+      const values = (await datasourceHelper.getTagValues(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
     },
