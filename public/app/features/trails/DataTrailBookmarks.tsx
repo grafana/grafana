@@ -28,7 +28,7 @@ export function DataTrailsBookmarks({ model, onDelete }: Props) {
               <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
             </div>
             <IconButton
-              name="angle-down"
+              name={toggleBookmark ? "angle-up" : "angle-down"}
               size="xxxl"
               aria-label="bookmarkCarrot"
               variant="secondary"
