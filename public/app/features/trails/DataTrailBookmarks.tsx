@@ -28,7 +28,7 @@ export function DataTrailsBookmarks({ model, onDelete }: Props) {
               <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
             </div>
             <IconButton
-              name={toggleBookmark ? "angle-up" : "angle-down"}
+              name={toggleBookmark ? 'angle-up' : 'angle-down'}
               size="xxxl"
               aria-label="bookmarkCarrot"
               variant="secondary"
@@ -76,7 +76,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
     }),
     header: css({
-      color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',
+      color: theme.colors.text.primary,
       textAlign: 'center',
       /* H4 */
       fontFamily: 'Inter',
@@ -89,7 +89,7 @@ function getStyles(theme: GrafanaTheme2) {
     horizontalLine: css({
       width: '400px',
       height: '1px',
-      background: 'rgba(204, 204, 220, 0.12)',
+      background: theme.colors.border.weak,
       margin: '0 auto', // Center line horizontally
       marginTop: '32px',
     }),

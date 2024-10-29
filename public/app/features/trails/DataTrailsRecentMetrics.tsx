@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { DataTrailCard } from './DataTrailCard';
@@ -13,6 +13,7 @@ import { getTrailStore } from './TrailStore/TrailStore';
 export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrailsHome>) {
   const styles = useStyles2(getStyles);
   const recentMetrics = getTrailStore().recent;
+  const theme = useTheme2();
 
   const [showAll, setShowAll] = useState(false);
   const handleToggleShow = () => {
@@ -45,7 +46,7 @@ export function DataTrailsRecentMetrics({ model }: SceneComponentProps<DataTrail
           })}
       </div>
       {recentMetrics.length > 3 && (
-        <Button variant="secondary" size="sm" onClick={handleToggleShow}>
+        <Button variant="secondary" size="sm" onClick={handleToggleShow} fill={theme.isLight ? 'outline' : 'solid'}>
           {showAll ? 'Show less' : 'Show more'}
         </Button>
       )}
@@ -60,7 +61,7 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(3),
     }),
     header: css({
-      color: 'var(--text-primary, rgba(204, 204, 220, 0.7))',
+      color: theme.colors.text.primary,
       textAlign: 'center',
       /* H4 */
       fontFamily: 'Inter',

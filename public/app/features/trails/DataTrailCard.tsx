@@ -110,7 +110,7 @@ export function getStyles(theme: GrafanaTheme2) {
   return {
     metricLabel: css({
       display: 'inline',
-      color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
+      color: theme.colors.text.primary,
       fontFamily: 'Inter',
       fontSize: '14px',
       fontStyle: 'normal',
@@ -118,7 +118,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     metricValue: css({
       display: 'inline',
-      color: 'var(--text-primary, #CCCCDC)',
+      color: theme.colors.text.primary,
       fontFamily: 'Inter',
       fontSize: '14px',
       fontStyle: 'normal',
@@ -138,12 +138,12 @@ export function getStyles(theme: GrafanaTheme2) {
       height: '152px',
       alignItems: 'start',
       marginBottom: 0,
-      borderTop: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
-      borderRight: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
-      borderLeft: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
       borderBottom: 'none', // Remove the bottom border
       // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '4px 4px 0 0', // Top-left and top-right corners are 4px, bottom-left and bottom-right are 0; cannot use theme.shape.radius.default because need bottom corners to be 0
+      borderRadius: '2px 2px 0 0', // Top-left and top-right corners are 2px, bottom-left and bottom-right are 0; cannot use theme.shape.radius.default because need bottom corners to be 0
     }),
     secondary: css({
       color: theme.colors.text.secondary,
@@ -153,9 +153,9 @@ export function getStyles(theme: GrafanaTheme2) {
       gridArea: 'Description',
     }),
     date: css({
-      border: `1px solid var(--border-Weak, rgba(204, 204, 220, 0.12))`,
+      border: `1px solid ${theme.colors.border.weak}`,
       // eslint-disable-next-line @grafana/no-border-radius-literal
-      borderRadius: '0 0 4px 4px',
+      borderRadius: '0 0 2px 2px',
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       backgroundColor: theme.colors.background.primary,
     }),
@@ -172,7 +172,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     primaryFont: css({
       display: 'inline',
-      color: 'var(--text-primary, #CCCCDC)',
+      color: theme.colors.text.primary,
       fontFamily: 'Inter',
       fontSize: '12px',
       fontStyle: 'normal',
@@ -182,7 +182,7 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     secondaryFont: css({
       display: 'inline',
-      color: 'var(--text-secondary, rgba(204, 204, 220, 0.65))',
+      color: theme.colors.text.secondary,
       fontFamily: 'Inter',
       fontSize: '12px',
       fontStyle: 'normal',
