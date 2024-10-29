@@ -8,12 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, accessControl ac.AccessControl) *LabelSuggestionService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) *LabelSuggestionService {
 	s := &LabelSuggestionService{
 		store:         sqlStore,
 		Cfg:           cfg,
@@ -21,9 +22,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		log:           log.New("label-suggestion"),
 		now:           time.Now,
 		queryHistory:  queryhistory.ProvideService(cfg, sqlStore, routeRegister, accessControl),
+		features:      features,
 	}
 
-	s.registerAPIEndpoints()
+	if features.IsEnabled(context.Background(), featuremgmt.FlagLabelSuggestionService) {
+		s.registerAPIEndpoints()
+	}
 
 	return s
 }
@@ -39,6 +43,7 @@ type LabelSuggestionService struct {
 	log           log.Logger
 	now           func() time.Time
 	queryHistory  *queryhistory.QueryHistoryService
+	features      featuremgmt.FeatureToggles
 }
 
 func (s LabelSuggestionService) GetLabelSuggestion(ctx context.Context, user *user.SignedInUser, datasourceUID string) (LabelSuggestionResult, error) {

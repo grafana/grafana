@@ -1548,6 +1548,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "labelSuggestionService",
+			Description: "Enable label suggestion service endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaMachineLearning,
+		},
 	}
 )
 

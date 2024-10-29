@@ -834,4 +834,8 @@ const (
 	// FlagPrometheusUsesCombobox
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
+
+	// FlagLabelSuggestionService
+	// Enable label suggestion service
+	FlagLabelSuggestionService = "labelSuggestionService"
 )
