@@ -136,6 +136,70 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 	return response, nil
 }
 
+func (s QueryHistoryService) searchQueriesAll(ctx context.Context, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	var dtos []QueryHistoryDTO
+	var totalCount int
+
+	if query.To <= 0 {
+		query.To = s.now().Unix()
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+
+	if query.Limit <= 0 {
+		query.Limit = 100
+	}
+
+	if query.Sort == "" {
+		query.Sort = "time-desc"
+	}
+
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+		dtosBuilder := db.SQLBuilder{}
+		dtosBuilder.Write(`SELECT
+			query_history.uid,
+			query_history.datasource_uid,
+			query_history.created_by,
+			query_history.created_at AS created_at,
+			query_history.comment,
+			query_history.queries,
+		`)
+		writeStarredSQL(query, s.store, &dtosBuilder, false)
+		writeFiltersSQLAllUsers(query, s.store, &dtosBuilder)
+		writeSortSQL(query, s.store, &dtosBuilder)
+		writeLimitSQL(query, s.store, &dtosBuilder)
+		writeOffsetSQL(query, s.store, &dtosBuilder)
+
+		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
+		if err != nil {
+			return err
+		}
+
+		countBuilder := db.SQLBuilder{}
+		countBuilder.Write(`SELECT
+		`)
+		writeStarredSQL(query, s.store, &countBuilder, true)
+		writeFiltersSQLAllUsers(query, s.store, &countBuilder)
+		_, err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Get(&totalCount)
+		return err
+	})
+
+	if err != nil {
+		return QueryHistorySearchResult{}, err
+	}
+
+	response := QueryHistorySearchResult{
+		QueryHistory: dtos,
+		TotalCount:   totalCount,
+		Page:         query.Page,
+		PerPage:      query.Limit,
+	}
+
+	return response, nil
+}
+
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {
 	var queryID int64
 	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {

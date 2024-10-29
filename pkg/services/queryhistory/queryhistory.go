@@ -33,6 +33,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 type Service interface {
 	CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error)
 	SearchInQueryHistory(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error)
+	SearchInQueryHistoryAll(ctx context.Context, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error)
 	PatchQueryCommentInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
 	StarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
@@ -56,6 +57,10 @@ func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user
 
 func (s QueryHistoryService) SearchInQueryHistory(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
 	return s.searchQueries(ctx, user, query)
+}
+
+func (s QueryHistoryService) SearchInQueryHistoryAll(ctx context.Context, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	return s.searchQueriesAll(ctx, query)
 }
 
 func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {
