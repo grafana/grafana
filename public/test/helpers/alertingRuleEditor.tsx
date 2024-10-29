@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
 
 export const ui = {
@@ -36,10 +37,13 @@ export const ui = {
 
 export function renderRuleEditor(identifier?: string, recording = false) {
   return render(
-    <Routes>
-      <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
-      <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
-    </Routes>,
+    <>
+      <AppNotificationList />
+      <Routes>
+        <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
+        <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
+      </Routes>
+    </>,
     {
       historyOptions: {
         initialEntries: [

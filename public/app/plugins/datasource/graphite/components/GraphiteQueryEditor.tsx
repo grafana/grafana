@@ -63,14 +63,14 @@ function GraphiteQueryEditorContent() {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-    `,
-    visualEditor: css`
-      flex-grow: 1;
-    `,
-    toggleButton: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+    }),
+    visualEditor: css({
+      flexGrow: 1,
+    }),
+    toggleButton: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 }

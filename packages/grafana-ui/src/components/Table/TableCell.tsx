@@ -3,7 +3,7 @@ import { Cell } from 'react-table';
 import { TimeRange, DataFrame } from '@grafana/data';
 
 import { TableStyles } from './styles';
-import { GrafanaTableColumn, TableFilterActionCallback } from './types';
+import { GetActionsFunction, GrafanaTableColumn, TableFilterActionCallback } from './types';
 
 export interface Props {
   cell: Cell;
@@ -18,6 +18,7 @@ export interface Props {
   rowExpanded?: boolean;
   textWrapped?: boolean;
   height?: number;
+  getActions?: GetActionsFunction;
 }
 
 export const TableCell = ({
@@ -31,6 +32,7 @@ export const TableCell = ({
   rowExpanded,
   textWrapped,
   height,
+  getActions,
 }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
@@ -56,6 +58,8 @@ export const TableCell = ({
 
   let innerWidth = (typeof cell.column.width === 'number' ? cell.column.width : 24) - tableStyles.cellPadding * 2;
 
+  const actions = getActions ? getActions(frame, field) : [];
+
   return (
     <>
       {cell.render('Cell', {
@@ -71,6 +75,7 @@ export const TableCell = ({
         rowExpanded,
         textWrapped,
         height,
+        actions,
       })}
     </>
   );

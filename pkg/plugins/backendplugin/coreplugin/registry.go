@@ -254,7 +254,7 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	if backendFactory == nil {
 		return nil, ErrCorePluginNotFound
 	}
-	bp, err := backendFactory(p.ID, p.Logger(), nil)
+	bp, err := backendFactory(p.ID, p.Logger(), tracer, nil)
 	if err != nil {
 		return nil, err
 	}

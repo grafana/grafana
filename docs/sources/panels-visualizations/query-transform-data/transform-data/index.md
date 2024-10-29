@@ -1069,6 +1069,14 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
 
+Using a negative number, you can keep values from the end of the set. Here is the result after adding a Limit transformation with a value of '-3':
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
+
 This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
 
 ### Merge series/tables
@@ -1206,8 +1214,6 @@ Select this option to transform the time series data frame from the long format 
 | ------------------- | ------ | ------ |
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
-
-> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
 ### Reduce
 
@@ -1378,8 +1384,6 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
 This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format.
-
-> **Note:** This transformation is available in Grafana 7.1+.
 
 ### Sort by
 

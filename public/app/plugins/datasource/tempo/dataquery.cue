@@ -64,7 +64,7 @@ composableKinds: DataQuery: {
 				#SearchTableType: "traces" | "spans" | "raw" @cuetsy(kind="enum")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
-				#TraceqlSearchScope: "intrinsic" | "unscoped" | "resource" | "span" @cuetsy(kind="enum")
+				#TraceqlSearchScope: "intrinsic" | "unscoped" | "event" | "instrumentation" | "link" | "resource" | "span" @cuetsy(kind="enum")
 				#TraceqlFilter: {
 					// Uniquely identify the filter, will not be used in the query generation
 					id: string

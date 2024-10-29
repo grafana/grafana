@@ -32,10 +32,12 @@ export class ExtensionsLog {
   }
 
   warning(message: string, labels?: Labels): void {
+    console.warn(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.warning, message, labels);
   }
 
   error(message: string, labels?: Labels): void {
+    console.error(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.error, message, labels);
   }
 

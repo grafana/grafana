@@ -34,6 +34,7 @@ import (
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -650,17 +651,17 @@ func TestGetParentNames(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 	libraryElementFolderUID := "folderUID-A"
 	testcases := []struct {
-		fakeFolders             []*folder.Folder
-		folders                 []folder.CreateFolderCommand
-		dashboards              []dashboards.Dashboard
-		libraryElements         []libraryElement
-		expectedDashParentNames []string
-		expectedFoldParentNames []string
+		fakeFolders         []*folder.Folder
+		folders             []folder.CreateFolderCommand
+		dashboards          []dashboards.Dashboard
+		libraryElements     []libraryElement
+		expectedParentNames map[cloudmigration.MigrateDataType][]string
 	}{
 		{
 			fakeFolders: []*folder.Folder{
 				{UID: "folderUID-A", Title: "Folder A", OrgID: 1, ParentUID: ""},
 				{UID: "folderUID-B", Title: "Folder B", OrgID: 1, ParentUID: "folderUID-A"},
+				{UID: "folderUID-X", Title: "Folder X", OrgID: 1, ParentUID: ""},
 			},
 			folders: []folder.CreateFolderCommand{
 				{UID: "folderUID-C", Title: "Folder A", OrgID: 1, ParentUID: "folderUID-A"},
@@ -674,8 +675,11 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
 				{UID: "libraryElementUID-1"},
 			},
-			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
-			expectedFoldParentNames: []string{"Folder A"},
+			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
+				cloudmigration.DashboardDataType:      []string{"", "Folder A", "Folder B"},
+				cloudmigration.FolderDataType:         []string{"Folder A"},
+				cloudmigration.LibraryElementDataType: []string{"Folder A"},
+			},
 		},
 	}
 
@@ -685,13 +689,11 @@ func TestGetParentNames(t *testing.T) {
 		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements)
 		require.NoError(t, err)
 
-		resDashParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.DashboardDataType]))
-		require.Len(t, resDashParentNames, len(tc.expectedDashParentNames))
-		require.ElementsMatch(t, resDashParentNames, tc.expectedDashParentNames)
-
-		resFoldParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.FolderDataType]))
-		require.Len(t, resFoldParentNames, len(tc.expectedFoldParentNames))
-		require.ElementsMatch(t, resFoldParentNames, tc.expectedFoldParentNames)
+		for dataType, expectedParentNames := range tc.expectedParentNames {
+			actualParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[dataType]))
+			require.Len(t, actualParentNames, len(expectedParentNames))
+			require.ElementsMatch(t, expectedParentNames, actualParentNames)
+		}
 	}
 }
 
@@ -773,16 +775,22 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		},
 	}
 
-	featureToggles := featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagDashboardRestore)
+	featureToggles := featuremgmt.WithFeatures(
+		featuremgmt.FlagOnPremToCloudMigrations,
+		featuremgmt.FlagOnPremToCloudMigrationsAlerts,
+		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
+	)
 
 	kvStore := kvstore.ProvideService(sqlStore)
 
 	bus := bus.ProvideBus(tracer)
-	fakeAccessControl := actest.FakeAccessControl{}
+	fakeAccessControl := actest.FakeAccessControl{ExpectedEvaluate: true}
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl)
+	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
+	cfg.UnifiedAlerting.BaseInterval = time.Minute
+	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
@@ -793,12 +801,34 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	)
 	require.NoError(t, err)
 
+	var validConfig = `{
+		"alertmanager_config": {
+			"route": {
+				"receiver": "grafana-default-email"
+			},
+			"receivers": [{
+				"name": "grafana-default-email",
+				"grafana_managed_receiver_configs": [{
+					"uid": "",
+					"name": "email receiver",
+					"type": "email",
+					"settings": {
+						"addresses": "<example@email.com>"
+					}
+				}]
+			}]
+		}
+	}`
+	require.NoError(t, ng.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: validConfig,
+		OrgID:                     1,
+		LastApplied:               time.Now().Unix(),
+	}))
+
 	s, err := ProvideService(
 		cfg,
 		httpclient.NewProvider(),
-		featuremgmt.WithFeatures(
-			featuremgmt.FlagOnPremToCloudMigrations,
-			featuremgmt.FlagDashboardRestore),
+		featureToggles,
 		sqlStore,
 		dsService,
 		secretskv.NewFakeSQLSecretsKVStore(t, sqlStore),
