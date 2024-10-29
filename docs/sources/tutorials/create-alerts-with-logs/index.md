@@ -115,7 +115,7 @@ If you already have Grafana, Loki, or Prometheus running on your system, you mig
 
 ## Generate sample logs
 
-To demonstrate how to create alert rules based on logs, you’ll use a script that generates realistic log entries to simulate typical monitoring data in Grafana. Running this script will output logs continuously, each containing a timestamp, HTTP method (either GET or POST), status code (200 for success or 500 for failures), and request duration in milliseconds.
+To demonstrate how to create alert rules based on logs, you’ll use a script that generates realistic log entries to simulate typical monitoring data in Grafana. Running this script outputs logs continuously, each containing a timestamp, HTTP method (either GET or POST), status code (200 for success or 500 for failures), and request duration in milliseconds.
 
 1. Download and save a Python file that generates logs.
 
@@ -146,7 +146,7 @@ If you don't see the sample logs in Explore:
 
 Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
-In this step, we set up a new contact point. This contact point will use the [webhook integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+In this step, we set up a new contact point. This contact point uses the [webhook integration](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point uses the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We can use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
 <!-- INTERACTIVE ignore START -->
 
@@ -193,7 +193,7 @@ Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alert
 
 1. In Grafana, **navigate to Alerting** > **Alert rules**.
 1. Click on **New alert rule**.
-1. Enter alert rule name for your alert rule. Make it short and descriptive as this will appear in your alert notification. For instance, **web-requests-logs**
+1. Enter alert rule name for your alert rule. Make it short and descriptive as this appears in your alert notification. For instance, **web-requests-logs**
 
 ### Define query and alert condition
 
@@ -207,7 +207,7 @@ In this section, we use the default options for Grafana-managed alert rule creat
    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != "status=200" | pattern "<_> <message> duration<_>" [10m]))
    ```
 
-   This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+   This query counts the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the LogQL pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
    You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
 
@@ -244,9 +244,9 @@ An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundament
 
 To set up the evaluation:
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder will contain our alerts.
-1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
-1. Choose an **Evaluation interval** (how often the alert will be evaluated).
+1. In **Folder**, click **+ New folder** and enter a name. For example: _web-server-alerts_. This folder contains our alerts.
+1. In the **Evaluation group**, repeat the above step to create a new evaluation group. Name it _1m-evaluation_.
+1. Choose an **Evaluation interval** (how often the alert are evaluated).
    For example, every `1m` (1 minute).
 1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
@@ -263,7 +263,7 @@ Choose the contact point where you want to receive your alert notifications.
 
 ## Trigger the alert rule
 
-Since the Python script will continue to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
+Since the Python script continues to generate log data that matches the alert rule condition, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
 
 {{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
 
