@@ -49,6 +49,7 @@ export function NewFolderForm({ onCancel, onConfirm, preventDefault = false }: P
       name="addFolder"
       onSubmit={handleSubmit((form, event) => {
         if (preventDefault) {
+          // TODO: clean up!!!
           // event?.preventDefault();
           event?.stopPropagation();
         }
