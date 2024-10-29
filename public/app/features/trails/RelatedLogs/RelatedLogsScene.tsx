@@ -15,7 +15,7 @@ import {
   type SceneObjectState,
   type SceneVariable,
 } from '@grafana/scenes';
-import { Stack, Button } from '@grafana/ui';
+import { Stack, LinkButton } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import {
@@ -139,19 +139,16 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
                 ))}
               </Stack>
             )}
-            <Button
+            <LinkButton
+              href={`${config.appSubUrl}/a/grafana-lokiexplore-app`} // We prefix with the appSubUrl for environments that don't host grafana at the root.
+              target="_blank"
+              tooltip="Navigate to the Explore Logs app"
               variant="secondary"
               size="sm"
-              tooltip="Navigate to the Explore Logs app"
-              onClick={() => {
-                reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' });
-                // We prefix with the appSubUrl for environments that don't host grafana at the root.
-                const exploreLogsHomepage = `${config.appSubUrl}/a/grafana-lokiexplore-app`;
-                window.open(exploreLogsHomepage, '_blank');
-              }}
+              onClick={() => reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' })}
             >
               <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Explore Logs</Trans>
-            </Button>
+            </LinkButton>
           </Stack>
           <body.Component model={body} />
         </Stack>
