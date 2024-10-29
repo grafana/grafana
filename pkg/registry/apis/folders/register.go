@@ -245,7 +245,6 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		}
 		if i == folderValidationRules.maxDepth {
 			return folder.ErrMaximumDepthReached
-			return nil
 		}
 
 		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
