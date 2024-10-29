@@ -183,9 +183,6 @@ export class TrailStore {
   }
 
   setRecentTrail(recentTrail: DataTrail) {
-    if (recentTrail.state.metric === undefined) {
-      return;
-    }
     const { steps } = recentTrail.state.history.state;
     if (steps.length === 0 || (steps.length === 1 && steps[0].type === 'start')) {
       // We do not set an uninitialized trail, or a single node "start" trail as recent
