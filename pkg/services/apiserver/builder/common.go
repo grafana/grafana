@@ -47,7 +47,15 @@ type APIGroupBuilder interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
+type APIGroupMutation interface {
+	// Mutate allows the builder to make changes to the object before it is persisted.
+	// Context is used only for timeout/deadline/cancellation and tracing information.
+	Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
+}
+
 type APIGroupValidation interface {
+	// Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate
+	// Context is used only for timeout/deadline/cancellation and tracing information.
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
 }
 
