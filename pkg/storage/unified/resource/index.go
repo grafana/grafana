@@ -299,7 +299,7 @@ type Opts struct {
 	IndexDir  string // The directory where the indexes for each tenant are stored
 }
 
-// faster, less memory intensive alternative for larger indexes with less tenants (on-prem)?
+// faster, less memory intensive alternative for larger indexes with less tenants (on-prem)
 func createFileIndex(path string) (bleve.Index, string, error) {
 	indexPath := filepath.Join(path, uuid.New().String())
 	index, err := bleve.New(indexPath, createIndexMappings())
