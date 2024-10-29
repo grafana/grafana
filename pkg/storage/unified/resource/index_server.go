@@ -61,7 +61,6 @@ func (is *IndexServer) Load(ctx context.Context) error {
 		BatchSize: is.cfg.IndexMaxBatchSize,
 		ListLimit: is.cfg.IndexListLimit,
 		IndexDir:  is.cfg.IndexPath,
-		InMemory:  is.cfg.IndexInMemory,
 	}
 	is.index = NewIndex(is.s, opts, is.tracer)
 	err := is.index.Init(ctx)

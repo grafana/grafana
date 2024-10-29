@@ -297,7 +297,6 @@ type Opts struct {
 	BatchSize int    // This is the batch size for how many objects to add to the index at once
 	ListLimit int    // This is how big the List page size is. If the response size is too large, the number of items will be limited by the server.
 	IndexDir  string // The directory where the indexes for each tenant are stored
-	InMemory  bool   // Use an in-memory index
 }
 
 // faster, less memory intensive alternative for larger indexes with less tenants (on-prem)?
@@ -345,7 +344,7 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 }
 
 func (i *Index) createIndex() (bleve.Index, string, error) {
-	if i.opts.InMemory {
+	if i.opts.IndexDir == "" {
 		return createInMemoryIndex()
 	}
 	return createFileIndex(i.opts.IndexDir)
