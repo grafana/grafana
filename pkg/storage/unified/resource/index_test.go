@@ -36,10 +36,9 @@ func TestIndexBatch(t *testing.T) {
 		shards: make(map[string]Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
-			IndexDir:  tmpdir,
-			ListLimit: 10000,
+			ListLimit: 5000,
 			Workers:   10,
-			BatchSize: 10000,
+			BatchSize: 1000,
 		},
 	}
 
@@ -58,13 +57,14 @@ func TestIndexBatch(t *testing.T) {
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
+	ns := namespaces()
 	// index all batches for each shard/tenant
-	err = index.IndexBatches(ctx, 1, namespaces)
+	err = index.IndexBatches(ctx, 1, namespaces())
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
 
-	assert.Equal(t, 3, len(index.shards))
+	assert.Equal(t, len(ns), len(index.shards))
 
 	total, err := index.Count()
 	if err != nil {
@@ -94,23 +94,26 @@ func loadTestItems(uid string) []*ResourceWrapper {
 	for i := 0; i < 10000; i++ {
 		res := strings.Replace(resource, "<uid>", strconv.Itoa(i)+uid, 1)
 		// shuffle kinds
-		kind := namespaces[rand.Intn(len(kinds))]
+		kind := kinds[rand.Intn(len(kinds))]
 		res = strings.Replace(res, "<kind>", kind, 1)
 		// shuffle namespaces
-		ns := namespaces[rand.Intn(len(namespaces))]
+		ns := namespaces()[rand.Intn(len(namespaces()))]
 		res = strings.Replace(res, "<ns>", ns, 1)
 		items = append(items, &ResourceWrapper{Value: []byte(res)})
 	}
 	return items
 }
 
-var namespaces = []string{
-	"tenant1",
-	"tenant2",
-	"tenant3",
-}
-
 var kinds = []string{
 	"playlist",
 	"folder",
+}
+
+// simulate many tenants ( cloud )
+func namespaces() []string {
+	ns := []string{}
+	for i := 0; i < 1000; i++ {
+		ns = append(ns, "tenant"+strconv.Itoa(i))
+	}
+	return ns
 }
