@@ -41,9 +41,10 @@ func ProvideTeamPermissions(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "teams",
-		ResourceAttribute: "id",
-		OnlyManaged:       true,
+		Resource:           "teams",
+		ResourceAttribute:  "id",
+		OnlyManaged:        true,
+		ResourceTranslator: team.UIDToIDHandler(teamService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideTeamerPermissions.ResourceValidator")
 			defer span.End()

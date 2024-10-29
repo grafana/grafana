@@ -19,7 +19,7 @@ export const ServiceAccountPermissions = (props: ServiceAccountPermissionsProps)
       addPermissionTitle="Add permission"
       buttonLabel="Add permission"
       resource="serviceaccounts"
-      resourceId={props.serviceAccount.id}
+      resourceId={props.serviceAccount.uid}
       canSetPermissions={canSetPermissions}
     />
   );
