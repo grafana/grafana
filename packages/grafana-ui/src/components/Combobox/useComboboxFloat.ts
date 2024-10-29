@@ -9,14 +9,12 @@ import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
-const MAX_HEIGHT = 45 * 8.5; // approx 8.5 items
+// Used with Downshift to get the height of each item
+export const OPTION_HEIGHT = 45;
+const POPOVER_MAX_HEIGHT = OPTION_HEIGHT * 8.5;
 
-/**
- * Used with Downshift to get the height of each item
- */
-export function estimateOptionHeight() {
-  return 45;
-}
+// Clearance around the popover to prevent it from being too close to the edge of the viewport
+const POPOVER_PADDING = 16;
 
 export const useComboboxFloat = (
   items: Array<ComboboxOption<string | number>>,
@@ -38,8 +36,11 @@ export const useComboboxFloat = (
     }),
     size({
       apply({ availableWidth, availableHeight }) {
-        const width = Math.max(availableWidth - 16, 0);
-        const height = Math.min(Math.max(availableHeight - 16, estimateOptionHeight()), MAX_HEIGHT);
+        const preferredMaxWidth = availableWidth - POPOVER_PADDING;
+        const preferredMaxHeight = availableHeight - POPOVER_PADDING;
+
+        const width = Math.max(preferredMaxWidth, 0);
+        const height = Math.min(Math.max(preferredMaxHeight, OPTION_HEIGHT), POPOVER_MAX_HEIGHT);
 
         setPopoverMaxSize({ width, height });
       },
