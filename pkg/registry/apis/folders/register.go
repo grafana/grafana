@@ -36,6 +36,8 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 var errNoUser = errors.New("valid user is required")
 var errNoResource = errors.New("resource name is required")
 
+const invalidName = "general"
+
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	gv            schema.GroupVersion
@@ -183,10 +185,6 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	return nil
-}
-
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
 	verb := attr.GetVerb()
 	name := attr.GetName()
@@ -219,4 +217,39 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}
 	return &authorizerParams{evaluator: eval, user: user}, nil
+}
+
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	// name cannot be called "general"
+	id := a.GetName()
+	if id == invalidName {
+		return dashboards.ErrFolderInvalidUID
+	}
+
+	//max depth folder is 4
+	var maxFolderDepth = 4
+	obj := a.GetObject()
+
+	for i := 0; i <= maxFolderDepth+1; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		if i == maxFolderDepth+1 {
+			return folder.ErrMaximumDepthReached
+		}
+
+		// TODO: investigate the best way to get a folder by name, considering validate is called before the storage layer
+		// parent, err := getFolderByNameSomehow()
+		// obj = parent
+	}
+	return nil
+}
+
+func getParent(o runtime.Object) string {
+	meta, err := utils.MetaAccessor(o)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }
