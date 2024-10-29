@@ -210,9 +210,9 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
   };
 }
 
-export function syncLdapUser(userUid: string): ThunkResult<void> {
+export function syncLdapUser(userId: number, userUid: string): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/ldap/sync/${userUid}`);
+    await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
     dispatch(loadAdminUserPage(userUid));
   };
 }

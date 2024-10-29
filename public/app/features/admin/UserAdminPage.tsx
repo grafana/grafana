@@ -108,7 +108,7 @@ export const UserAdminPage = ({
 
   const onUserSync = () => {
     if (user) {
-      syncLdapUser(user.uid);
+      syncLdapUser(user.id, user.uid);
     }
   };
 
