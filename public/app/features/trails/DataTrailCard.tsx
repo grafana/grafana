@@ -68,7 +68,7 @@ export function DataTrailCard(props: Props) {
           </div>
           <div className={styles.metricValue}>{getMetricName(metric)}</div>
         </Card.Heading>
-        <Card.Meta separator={'|'} className={styles.meta}>
+        <Card.Meta className={styles.meta}>
           {filters.map((f) => (
             <span key={f.key}>
               <div className={styles.secondaryFont}>{f.key}: </div>
