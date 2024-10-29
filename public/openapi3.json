@@ -7222,6 +7222,7 @@
             "enum": [
               "DATASOURCE_NAME_CONFLICT",
               "DATASOURCE_INVALID_URL",
+              "DATASOURCE_ALREADY_MANAGED",
               "FOLDER_NAME_CONFLICT",
               "DASHBOARD_ALREADY_MANAGED",
               "LIBRARY_ELEMENT_NAME_CONFLICT",
@@ -10394,6 +10395,10 @@
             "example": 0,
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "example": "fe1xejlha91xce",
+            "type": "string"
           }
         },
         "type": "object"
@@ -10459,6 +10464,10 @@
           "tokens": {
             "format": "int64",
             "type": "integer"
+          },
+          "uid": {
+            "example": "fe1xejlha91xce",
+            "type": "string"
           },
           "updatedAt": {
             "example": "2022-03-21T14:35:33Z",
