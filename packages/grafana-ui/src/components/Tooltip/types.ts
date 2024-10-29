@@ -11,6 +11,7 @@ export interface PopoverContentProps {
   hidePopper?: () => void;
 }
 
+// hidePopper is only available to popover content when it is passed as a function
 export type PopoverContent = string | React.ReactElement | ((props: PopoverContentProps) => JSX.Element);
 
 export type TooltipPlacement = Placement | 'auto' | 'auto-start' | 'auto-end';
