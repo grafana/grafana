@@ -132,7 +132,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       <div>
         <Stack gap={1} direction={'column'} grow={1}>
           <Stack gap={1} direction={'row'} grow={1} justifyContent={'space-between'} alignItems={'start'}>
-            {Boolean(controls?.length) && (
+            {controls && (
               <Stack gap={1}>
                 {controls.map((control) => (
                   <control.Component key={control.state.key} model={control} />
@@ -142,7 +142,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
             <Button
               variant="secondary"
               size="sm"
-              tooltip="Navigate to the Explore logs app"
+              tooltip="Navigate to the Explore Logs app"
               onClick={() => {
                 reportExploreMetrics('related_logs_action_clicked', { action: 'open_explore_logs' });
                 // We prefix with the appSubUrl for environments that don't host grafana at the root.
@@ -150,7 +150,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
                 window.open(exploreLogsHomepage, '_blank');
               }}
             >
-              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open explore logs</Trans>
+              <Trans i18nKey="explore-metrics.related-logs.openExploreLogs">Open Explore Logs</Trans>
             </Button>
           </Stack>
           <body.Component model={body} />
