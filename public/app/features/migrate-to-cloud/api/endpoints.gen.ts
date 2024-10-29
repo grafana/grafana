@@ -166,6 +166,9 @@ export type CreateSnapshotResponseDto = {
 export type MigrateDataResponseItemDto = {
   errorCode?:
     | 'DATASOURCE_NAME_CONFLICT'
+    | 'DATASOURCE_INVALID_URL'
+    | 'DATASOURCE_ALREADY_MANAGED'
+    | 'FOLDER_NAME_CONFLICT'
     | 'DASHBOARD_ALREADY_MANAGED'
     | 'LIBRARY_ELEMENT_NAME_CONFLICT'
     | 'UNSUPPORTED_DATA_TYPE'

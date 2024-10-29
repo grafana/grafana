@@ -15,9 +15,10 @@ export interface Props {
   searchQuery: string;
   onChange: (options: VizTypeChangeDetails) => void;
   isWidget?: boolean;
+  trackSearch?: (q: string, count: number) => void;
 }
 
-export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false }: Props) {
+export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
   const pluginsList = useMemo(() => {
     if (config.featureToggles.vizAndWidgetSplit) {
@@ -26,10 +27,13 @@ export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = fals
     return getAllPanelPluginMeta();
   }, [isWidget]);
 
-  const filteredPluginTypes = useMemo(
-    () => filterPluginList(pluginsList, searchQuery, pluginId),
-    [pluginsList, searchQuery, pluginId]
-  );
+  const filteredPluginTypes = useMemo(() => {
+    const result = filterPluginList(pluginsList, searchQuery, pluginId);
+    if (trackSearch) {
+      trackSearch(searchQuery, result.length);
+    }
+    return result;
+  }, [pluginsList, searchQuery, pluginId, trackSearch]);
 
   if (filteredPluginTypes.length === 0) {
     return <EmptySearchResult>Could not find anything matching your query</EmptySearchResult>;

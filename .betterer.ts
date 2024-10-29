@@ -82,7 +82,6 @@ function countEslintErrors() {
     const { baseDirectory } = resolver;
 
     const baseRules: Partial<Linter.RulesRecord> = {
-      '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
       'no-restricted-imports': [
