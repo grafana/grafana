@@ -38,6 +38,7 @@ func TestIndexBatch(t *testing.T) {
 		opts: Opts{
 			IndexDir:  tmpdir,
 			ListLimit: 10000,
+			Workers:   10,
 		},
 	}
 
