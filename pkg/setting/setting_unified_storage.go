@@ -42,4 +42,5 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.IndexListLimit = section.Key("index_list_limit").MustInt(1000)
+	cfg.IndexInMemory = section.Key("index_in_memory").MustBool(true)
 }
