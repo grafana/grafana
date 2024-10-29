@@ -245,7 +245,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchDetectedLabelValues(
     labelName: string,
-    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throw?: boolean }
+    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throwError?: boolean }
   ): Promise<string[]> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
 
@@ -282,7 +282,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     labelValuesPromise = new Promise(async (resolve) => {
       try {
-        const data = await this.request(url, params, options?.throw);
+        const data = await this.request(url, params, options?.throwError);
         if (Array.isArray(data)) {
           const labelValues = data.slice().sort();
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
@@ -292,7 +292,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       } catch (error) {
         console.error(error);
         resolve([]);
-        if (options?.throw) {
+        if (options?.throwError) {
           throw error;
         }
       }
