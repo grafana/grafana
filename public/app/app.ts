@@ -67,6 +67,7 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { BrowserConsoleBackend } from './core/services/echo/backends/analytics/BrowseConsoleBackend';
 import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
@@ -381,6 +382,10 @@ function initEchoSrv() {
         endpointUrl: config.applicationInsightsEndpointUrl,
       })
     );
+  }
+
+  if (config.analyticsConsoleReporting) {
+    registerEchoBackend(new BrowserConsoleBackend());
   }
 }
 

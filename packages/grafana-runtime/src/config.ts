@@ -183,6 +183,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
   rudderstackIntegrationsUrl: undefined;
+  analyticsConsoleReporting = false;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
