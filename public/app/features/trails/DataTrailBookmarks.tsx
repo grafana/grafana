@@ -18,38 +18,38 @@ export function DataTrailsBookmarks({ model, onDelete }: Props) {
   const [toggleBookmark, setToggleBookmark] = useState(false);
   const styles = useStyles2(getStyles);
 
+  if (getTrailStore().bookmarks.length === 0) {
+    return null;
+  }
+
   return (
     <>
-      {getTrailStore().bookmarks.length > 0 && (
-        <>
-          <div className={styles.horizontalLine} />
-          <div className={css(styles.gap20, styles.bookmarkHeader, styles.bottomGap24)}>
-            <div className={styles.header} style={{ marginRight: '8px' }}>
-              <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
-            </div>
-            <IconButton
-              name={toggleBookmark ? 'angle-up' : 'angle-down'}
-              size="xxxl"
-              aria-label="bookmarkCarrot"
-              variant="secondary"
-              onClick={() => setToggleBookmark(!toggleBookmark)}
-            />
-          </div>
-          {toggleBookmark && (
-            <div className={styles.trailList}>
-              {getTrailStore().bookmarks.map((bookmark, index) => {
-                return (
-                  <DataTrailCard
-                    key={getBookmarkKey(bookmark)}
-                    bookmark={bookmark}
-                    onSelect={() => model.onSelectBookmark(index)}
-                    onDelete={() => onDelete(index)}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </>
+      <div className={styles.horizontalLine} />
+      <div className={css(styles.gap20, styles.bookmarkHeader, styles.bottomGap24)}>
+        <div className={styles.header} style={{ marginRight: '8px' }}>
+          <Trans i18nKey="trails.bookmarks.or-view-bookmarks">Or view bookmarks</Trans>
+        </div>
+        <IconButton
+          name={toggleBookmark ? 'angle-up' : 'angle-down'}
+          size="xxxl"
+          aria-label="bookmarkCarrot"
+          variant="secondary"
+          onClick={() => setToggleBookmark(!toggleBookmark)}
+        />
+      </div>
+      {toggleBookmark && (
+        <div className={styles.trailList}>
+          {getTrailStore().bookmarks.map((bookmark, index) => {
+            return (
+              <DataTrailCard
+                key={getBookmarkKey(bookmark)}
+                bookmark={bookmark}
+                onSelect={() => model.onSelectBookmark(index)}
+                onDelete={() => onDelete(index)}
+              />
+            );
+          })}
+        </div>
       )}
     </>
   );
