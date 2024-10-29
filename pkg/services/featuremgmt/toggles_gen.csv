@@ -207,3 +207,4 @@ unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,f
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
+dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true

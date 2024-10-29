@@ -1555,6 +1555,13 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "dashboardSchemaV2",
+			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
