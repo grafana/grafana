@@ -66,7 +66,7 @@ export const AppLinks = ({ query }: Props) => {
   }
 
   if (links.length === 1) {
-    const link = first(links);
+    const link = first(links)!;
     const icon = plugins?.[link.pluginId].info.logos.small;
     return (
       <Tooltip content={link.description}>
