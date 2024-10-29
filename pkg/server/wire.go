@@ -79,6 +79,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/labelsuggestion"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -387,6 +388,8 @@ var wireBasicSet = wire.NewSet(
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSet,
+	labelsuggestion.ProvideService,
+	wire.Bind(new(labelsuggestion.Service), new(*labelsuggestion.LabelSuggestionService)),
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
