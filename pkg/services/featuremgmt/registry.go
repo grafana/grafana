@@ -1363,8 +1363,8 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:              "passScopeToDashboardApi",
-			Description:       "Enables the passing of scopes to dashboards fetching in Grafana",
+			Name:              "reloadDashboardsOnParamsChange",
+			Description:       "Enables reload of dashboards on scopes, time range and variables changes",
 			FrontendOnly:      false,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,
@@ -1554,6 +1554,13 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "dashboardSchemaV2",
+			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
 		},
 	}
 )
