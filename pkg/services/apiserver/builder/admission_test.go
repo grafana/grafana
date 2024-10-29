@@ -7,8 +7,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/apis/example"
 )
 
 func TestBuilderAdmission_Validate(t *testing.T) {
@@ -81,7 +83,7 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := builder.NewAdmission(tt.validators)
+			b := builder.NewAdmission(nil, tt.validators)
 			err := b.Validate(context.Background(), tt.attributes, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -133,6 +135,72 @@ func TestNewAdmissionFromBuilders(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestBuilderAdmission_Admit(t *testing.T) {
+	gvk := schema.GroupVersionKind{
+		Group:   "test.grafana.app",
+		Version: "v1",
+		Kind:    "Foo",
+	}
+	gvr := gvk.GroupVersion().WithResource("foos")
+	exampleObj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}, Spec: example.PodSpec{}}
+	tests := []struct {
+		name       string
+		mutators   map[schema.GroupVersion]builder.APIGroupMutation
+		attributes admission.Attributes
+		wantErr    bool
+		wantSpec   example.PodSpec
+	}{
+		{
+			name: "mutator exists - error",
+			mutators: map[schema.GroupVersion]builder.APIGroupMutation{
+				gvk.GroupVersion(): &mockMutator{
+					mutateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+						return errors.New("test error")
+					},
+				},
+			},
+			attributes: admission.NewAttributesRecord(exampleObj.DeepCopy(), nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil),
+			wantErr:    true,
+			wantSpec:   exampleObj.Spec,
+		},
+		{
+			name: "mutator exists - add hostname",
+			mutators: map[schema.GroupVersion]builder.APIGroupMutation{
+				gvk.GroupVersion(): &mockMutator{
+					mutateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+						obj := a.GetObject().(*example.Pod)
+						obj.Spec.Hostname = "test"
+						return nil
+					},
+				},
+			},
+			attributes: admission.NewAttributesRecord(exampleObj.DeepCopy(), nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil),
+			wantErr:    false,
+			wantSpec:   example.PodSpec{Hostname: "test"},
+		},
+		{
+			name:       "mutator does not exist",
+			mutators:   map[schema.GroupVersion]builder.APIGroupMutation{},
+			attributes: admission.NewAttributesRecord(exampleObj.DeepCopy(), nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil),
+			wantErr:    false,
+			wantSpec:   exampleObj.Spec,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := builder.NewAdmission(tt.mutators, nil)
+			err := b.Admit(context.Background(), tt.attributes, nil)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tt.wantSpec, tt.attributes.GetObject().(*example.Pod).Spec)
+		})
+	}
+}
+
 type mockBuilder struct {
 	builder.APIGroupBuilder
 	groupVersion schema.GroupVersion
@@ -145,6 +213,14 @@ func (m *mockBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (m *mockBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	return m.validator.Validate(ctx, a, o)
+}
+
+type mockMutator struct {
+	mutateFunc func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error
+}
+
+func (m *mockMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	return m.mutateFunc(ctx, a, o)
 }
 
 type mockValidator struct {
