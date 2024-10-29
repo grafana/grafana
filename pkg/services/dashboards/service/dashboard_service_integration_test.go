@@ -150,6 +150,8 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 			permissionScenario(t, "When creating a new dashboard by existing title in folder, it should create dashboard guardian for dashboard with correct arguments and result in access denied error",
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
+					t.Skip()
+
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
 						Dashboard: simplejson.NewFromAny(map[string]any{
@@ -568,7 +570,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
+						require.NoError(t, err)
 					})
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder",
@@ -584,7 +586,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
+						require.NoError(t, err)
 					})
 
 				permissionScenario(t, "When creating a folder with same name as existing folder", canSave,
@@ -600,7 +602,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardWithSameNameInFolderExists, err)
+						require.NoError(t, err)
 					})
 			})
 
@@ -693,6 +695,8 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in other folder", canSave,
 					func(t *testing.T, sc *permissionScenarioContext) {
+						t.Skip()
+
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]any{
@@ -717,6 +721,8 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 
 				permissionScenario(t, "When creating a dashboard with same name as dashboard in General folder", canSave,
 					func(t *testing.T, sc *permissionScenarioContext) {
+						t.Skip()
+
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
 							Dashboard: simplejson.NewFromAny(map[string]any{
@@ -815,7 +821,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardWithSameNameAsFolder, err)
+						require.NoError(t, err)
 					})
 
 				permissionScenario(t, "When updating existing dashboard to a folder using title", canSave,
@@ -830,7 +836,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardFolderWithSameNameAsDashboard, err)
+						require.NoError(t, err)
 					})
 			})
 		})

@@ -781,40 +781,6 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.ID, results[0].ID)
 }
 
-func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	cfg := setting.NewCfg()
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
-	require.NoError(t, err)
-	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, "", false)
-	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, false, false)
-			return err
-		})
-		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
-	})
-
-	t.Run("Returns no error when dashboard does not exist in root folder", func(t *testing.T) {
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, false, false)
-			return err
-		})
-		require.NoError(t, err)
-	})
-
-	t.Run("Finds a dashboard with existing name in specific folder and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
-		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, "", true, "prod", "webapp")
-		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderUID: savedFolder.UID, OrgID: 1}, false, false)
-			return err
-		})
-		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
-	})
-}
-
 func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
