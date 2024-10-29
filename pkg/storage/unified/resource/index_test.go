@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -22,33 +21,24 @@ func TestIndexBatch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpdir := os.TempDir() + "testindexbatch"
-
-	defer func() {
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
-
 	index := &Index{
 		tracer: trace,
 		shards: make(map[string]Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
-			IndexDir:  tmpdir,
-			ListLimit: 10000,
+			ListLimit: 5000,
 			Workers:   10,
-			BatchSize: 10000,
+			BatchSize: 1000,
 		},
 	}
 
 	ctx := context.Background()
 	startAll := time.Now()
 
+	ns := namespaces()
 	// simulate 10 List calls
 	for i := 0; i < 10; i++ {
-		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i))}
+		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
 		_, err = index.AddToBatches(ctx, list)
 		if err != nil {
@@ -59,12 +49,15 @@ func TestIndexBatch(t *testing.T) {
 	}
 
 	// index all batches for each shard/tenant
-	err = index.IndexBatches(ctx, 1, namespaces)
+	err = index.IndexBatches(ctx, 1, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
 
-	assert.Equal(t, 3, len(index.shards))
+	assert.Equal(t, len(ns), len(index.shards))
 
 	total, err := index.Count()
 	if err != nil {
@@ -74,7 +67,7 @@ func TestIndexBatch(t *testing.T) {
 	assert.Equal(t, uint64(100000), total)
 }
 
-func loadTestItems(uid string) []*ResourceWrapper {
+func loadTestItems(uid string, tenants []string) []*ResourceWrapper {
 	resource := `{
 		"kind": "<kind>",
 		"title": "test",
@@ -94,23 +87,26 @@ func loadTestItems(uid string) []*ResourceWrapper {
 	for i := 0; i < 10000; i++ {
 		res := strings.Replace(resource, "<uid>", strconv.Itoa(i)+uid, 1)
 		// shuffle kinds
-		kind := namespaces[rand.Intn(len(kinds))]
+		kind := kinds[rand.Intn(len(kinds))]
 		res = strings.Replace(res, "<kind>", kind, 1)
 		// shuffle namespaces
-		ns := namespaces[rand.Intn(len(namespaces))]
+		ns := tenants[rand.Intn(len(tenants))]
 		res = strings.Replace(res, "<ns>", ns, 1)
 		items = append(items, &ResourceWrapper{Value: []byte(res)})
 	}
 	return items
 }
 
-var namespaces = []string{
-	"tenant1",
-	"tenant2",
-	"tenant3",
-}
-
 var kinds = []string{
 	"playlist",
 	"folder",
+}
+
+// simulate many tenants ( cloud )
+func namespaces() []string {
+	ns := []string{}
+	for i := 0; i < 1000; i++ {
+		ns = append(ns, "tenant"+strconv.Itoa(i))
+	}
+	return ns
 }
