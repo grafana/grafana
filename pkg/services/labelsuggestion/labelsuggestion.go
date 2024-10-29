@@ -33,7 +33,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 }
 
 type Service interface {
-	GetLabelSuggestion(ctx context.Context, user *user.SignedInUser, datasourceUID string) (LabelSuggestionResult, error)
+	GenerateUserLabelSuggestion(ctx context.Context, user *user.SignedInUser) (LabelSuggestionResult, error)
+	GenerateDatasourceLabelSuggestion(ctx context.Context, datasourceUIDs []string) (LabelSuggestionResult, error)
+	GenerateGeneralLabelSuggestion(ctx context.Context) (LabelSuggestionResult, error)
 }
 
 type LabelSuggestionService struct {
@@ -46,12 +48,75 @@ type LabelSuggestionService struct {
 	features      featuremgmt.FeatureToggles
 }
 
-func (s LabelSuggestionService) GetLabelSuggestion(ctx context.Context, user *user.SignedInUser, datasourceUID string) (LabelSuggestionResult, error) {
-	if user != nil {
-		return s.getUserLabelSuggestion(ctx, user)
-	} else if datasourceUID != "" {
-		return s.getDatasourceLabelSuggestion(ctx, datasourceUID)
-	} else {
-		return s.getGeneralLabelSuggestion(ctx)
+// GenerateUserLabelSuggestion generates label suggestions based on email
+func (s LabelSuggestionService) GenerateUserLabelSuggestion(ctx context.Context, user *user.SignedInUser) (LabelSuggestionResult, error) {
+	emailQueryHistory, err := s.queryHistory.SearchInQueryHistory(ctx, user, queryhistory.SearchInQueryHistoryQuery{})
+	if err != nil {
+		return LabelSuggestionResult{}, err
 	}
+	parsedLabels := s.parseLabels(emailQueryHistory.QueryHistory)
+
+	result := LabelSuggestionResult{
+		Email:       user.Email,
+		CreatedAt:   time.Now().Unix(),
+		Suggestions: parsedLabels,
+	}
+
+	return result, nil
+}
+
+func (s LabelSuggestionService) GenerateDatasourceLabelSuggestion(ctx context.Context, datasourceUIDs []string) (LabelSuggestionResult, error) {
+	datasourceQueryHistory, err := s.queryHistory.SearchInQueryHistoryAll(ctx, queryhistory.SearchInQueryHistoryQuery{DatasourceUIDs: datasourceUIDs})
+	if err != nil {
+		return LabelSuggestionResult{}, err
+	}
+	parsedLabels := s.parseLabels(datasourceQueryHistory.QueryHistory)
+
+	result := LabelSuggestionResult{
+		DatasourceUIDs: datasourceUIDs,
+		CreatedAt:      time.Now().Unix(),
+		Suggestions:    parsedLabels,
+	}
+	return result, nil
+}
+
+func (s LabelSuggestionService) GenerateGeneralLabelSuggestion(ctx context.Context) (LabelSuggestionResult, error) {
+	datasourceQueryHistory, err := s.queryHistory.SearchInQueryHistoryAll(ctx, queryhistory.SearchInQueryHistoryQuery{})
+	if err != nil {
+		return LabelSuggestionResult{}, err
+	}
+	parsedLabels := s.parseLabels(datasourceQueryHistory.QueryHistory)
+
+	result := LabelSuggestionResult{
+		CreatedAt:   time.Now().Unix(),
+		Suggestions: parsedLabels,
+	}
+	return result, nil
+}
+
+// parseLabels extracts and counts labels from query history
+func (s LabelSuggestionService) parseLabels(queryHistory []queryhistory.QueryHistoryDTO) ParsedLabels {
+	parsedLabels := ParsedLabels{
+		LabelNames:  make(map[string]int),
+		LabelValues: make(map[string]map[string]int),
+	}
+	for _, result := range queryHistory {
+		curLabels := Extract(result.Queries)
+		for lname, searches := range curLabels {
+			if _, exists := parsedLabels.LabelNames[lname]; !exists {
+				parsedLabels.LabelNames[lname] = 1
+				parsedLabels.LabelValues[lname] = make(map[string]int)
+			} else {
+				parsedLabels.LabelNames[lname]++
+			}
+			for search := range searches {
+				if _, exists := parsedLabels.LabelValues[lname][search.Value]; !exists {
+					parsedLabels.LabelValues[lname][search.Value] = 1
+				} else {
+					parsedLabels.LabelValues[lname][search.Value]++
+				}
+			}
+		}
+	}
+	return parsedLabels
 }

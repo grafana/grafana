@@ -62,10 +62,10 @@ var SupportedDataSources = map[string]bool{
 // }
 
 type LabelSuggestionResult struct {
-	Email         string       `json:"email,omitempty"`
-	DatasourceUID string       `json:"datasourceUid,omitempty"`
-	CreatedAt     int64        `json:"createdAt"`
-	Suggestions   ParsedLabels `json:"suggestions"`
+	Email          string       `json:"email,omitempty"`
+	DatasourceUIDs []string     `json:"datasourceUids,omitempty"`
+	CreatedAt      int64        `json:"createdAt"`
+	Suggestions    ParsedLabels `json:"suggestions"`
 }
 
 type LabelSearch struct {
