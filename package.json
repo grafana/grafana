@@ -79,7 +79,7 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "7.0.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "^1.8.3",
+    "@grafana/plugin-e2e": "^1.11.0",
     "@grafana/tsconfig": "^2.0.0",
     "@manypkg/get-packages": "^2.2.0",
     "@playwright/test": "1.48.2",
@@ -427,6 +427,7 @@
     "redux": "^5.0.0",
     "@storybook/blocks@npm:8.1.6": "patch:@storybook/blocks@npm%3A8.1.6#~/.yarn/patches/@storybook-blocks-npm-8.1.6-892f57a6d7.patch",
     "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
+    "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
     "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*"
   },
