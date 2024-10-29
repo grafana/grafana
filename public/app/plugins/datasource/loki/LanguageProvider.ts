@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -31,7 +31,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
   private labelsCache = new LRUCache<string, string[]>({ max: 10 });
+  private detectedFieldValuesCache = new LRUCache<string, string[]>({ max: 10 });
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
+  private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -42,11 +44,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>) => {
+  request = async (url: string, params?: Record<string, string | number>, throwError?: boolean) => {
     try {
       return await this.datasource.metadataRequest(url, params);
     } catch (error) {
       console.error(error);
+      if (throwError) {
+        throw error;
+      }
     }
 
     return undefined;
@@ -236,6 +241,65 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Round nanoseconds epoch to nearest 5 minute interval
   private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
+  }
+
+  async fetchDetectedLabelValues(
+    labelName: string,
+    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throwError?: boolean }
+  ): Promise<string[]> {
+    const label = encodeURIComponent(this.datasource.interpolateString(labelName));
+
+    const interpolatedExpr =
+      options?.expr && options.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(options.expr, options.scopedVars)
+        : undefined;
+
+    const url = `detected_field/${label}/values`;
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end, limit: options?.limit ?? 1000 };
+    let paramCacheKey = label;
+
+    if (interpolatedExpr) {
+      params.query = interpolatedExpr;
+      paramCacheKey += interpolatedExpr;
+    }
+
+    const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
+
+    // Values in cache, return
+    const labelValues = this.detectedFieldValuesCache.get(cacheKey);
+    if (labelValues) {
+      return labelValues;
+    }
+
+    // Promise in cache, return
+    let labelValuesPromise = this.detectedLabelValuesPromisesCache.get(cacheKey);
+    if (labelValuesPromise) {
+      return labelValuesPromise;
+    }
+
+    labelValuesPromise = new Promise(async (resolve) => {
+      try {
+        const data = await this.request(url, params, options?.throwError);
+        if (Array.isArray(data)) {
+          const labelValues = data.slice().sort();
+          this.detectedFieldValuesCache.set(cacheKey, labelValues);
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve(labelValues);
+        }
+      } catch (error) {
+        console.error(error);
+        resolve([]);
+        if (options?.throwError) {
+          throw error;
+        }
+      }
+    });
+    this.detectedLabelValuesPromisesCache.set(cacheKey, labelValuesPromise);
+
+    return labelValuesPromise;
   }
 
   /**

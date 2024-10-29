@@ -541,7 +541,12 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data || [];
+
+    // detected_field/${label}/values has different structure then other metadata responses
+    if (!res.data && res.values) {
+      return res.values ?? [];
+    }
+    return res.data ?? [];
   }
 
   /**
