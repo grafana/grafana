@@ -17,14 +17,14 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 
 require (
 	cloud.google.com/go/storage v1.43.0 // @grafana/grafana-backend-group
-	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-release-guild
+	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
-	github.com/docker/docker v27.3.1+incompatible // @grafana/grafana-release-guild
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
+	github.com/docker/docker v27.3.1+incompatible // @grafana/grafana-developer-enablement-squad
+	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
+	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-developer-enablement-squad
+	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/google/uuid v1.6.0 // indirect; @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.13.0 // indirect; @grafana/grafana-backend-group
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group

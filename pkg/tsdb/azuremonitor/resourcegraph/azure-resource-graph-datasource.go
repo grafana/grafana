@@ -172,7 +172,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return nil, err
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat), false)
 	if err != nil {
 		return nil, err
 	}

@@ -135,6 +135,7 @@ export const versionedPages = {
       Variables: {
         List: {
           url: {
+            '11.3.0': '/dashboard/new?orgId=1&editview=variables',
             [MIN_GRAFANA_VERSION]: '/dashboard/new?orgId=1&editview=templating',
           },
         },
