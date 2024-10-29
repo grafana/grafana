@@ -309,7 +309,7 @@ func createFileIndex(path string) (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
-// faster when there are many tenants (cloud)
+// faster indexing when there are many tenants with smaller batches (cloud)
 func createInMemoryIndex() (bleve.Index, string, error) {
 	index, err := bleve.NewMemOnly(createIndexMappings())
 	return index, "", err
