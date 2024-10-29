@@ -1,3 +1,4 @@
+import ansicolor from 'ansicolor';
 import { groupBy, size } from 'lodash';
 import { from, isObservable, Observable } from 'rxjs';
 
@@ -41,7 +42,7 @@ import {
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
-import { ansicolor, colors } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';

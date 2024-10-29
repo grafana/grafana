@@ -11,7 +11,6 @@ export * from './table';
 export * from './measureText';
 export * from './useForceUpdate';
 export { SearchFunctionType } from './searchFunctions';
-export { ansicolor } from 'ansicolor';
 
 export { DOMUtil };
 
