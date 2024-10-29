@@ -1,6 +1,7 @@
 package playlist
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -18,9 +19,11 @@ import (
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -326,6 +329,24 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
+		doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -485,6 +506,9 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(parentPayload),
 	}, &folder.Folder{})
 	require.NotNil(t, parentCreate.Result)
+	// creating a folder without providing a parent should default to the empty parent folder
+	require.Empty(t, parentCreate.Result.ParentUID)
+
 	parentUID := parentCreate.Result.UID
 	require.NotEmpty(t, parentUID)
 
@@ -506,6 +530,8 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	require.Equal(t, 1, len(childCreate.Result.Parents))
 
 	parent := childCreate.Result.Parents[0]
+	// creating a folder with a known parent should succeed
+	require.Equal(t, parentUID, childCreate.Result.ParentUID)
 	require.Equal(t, parentUID, parent.UID)
 	require.Equal(t, "Test\\/parent", parent.Title)
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
@@ -538,7 +564,29 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(payload),
 	}, &folder.Folder{})
 	require.NotEmpty(t, create2.Response)
-	require.Equal(t, 409, create2.Response.StatusCode)
+	require.Equal(t, 200, create2.Response.StatusCode) // it is OK
+}
+
+func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	payload := `{
+		"title": "  my folder  ",
+		"uid": ""
+		}`
+
+	// When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables
+	create := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotNil(t, create.Result)
+	require.Equal(t, "my folder", create.Result.Title)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
@@ -637,5 +685,179 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 				require.Equal(t, "Folder", resp.Result.Title)
 			}
 		})
+	}
+}
+
+// TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
+func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	folderWithoutParentInput := "{ \"uid\": \"uid\", \"title\": \"Folder\"}"
+	folderWithoutUID := "{ \"title\": \"Folder without UID\"}"
+	folderWithTitleEmpty := "{ \"title\": \"\"}"
+	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
+	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
+
+	type testCase struct {
+		description            string
+		expectedCode           int
+		expectedMessage        string
+		expectedFolderSvcError error
+		permissions            []resourcepermissions.SetResourcePermissionCommand
+		input                  string
+		createSecondRecord     bool
+	}
+
+	folderCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:create"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+
+	// NOTE: folder creation does not return ErrFolderAccessDenied neither ErrFolderNotFound
+	tcs := []testCase{
+		{
+			description:  "folder creation succeeds given the correct request for creating a folder",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusOK,
+			permissions:  folderCreatePermission,
+		},
+		{
+			description:     "folder creation fails without permissions to create a folder",
+			input:           folderWithoutParentInput,
+			expectedCode:    http.StatusForbidden,
+			expectedMessage: dashboards.ErrFolderAccessDenied.Error(),
+			permissions:     []resourcepermissions.SetResourcePermissionCommand{},
+		},
+		{
+			// #TODO This test case doesn't set up the conditions it describes. We should have created a folder with the same UID before
+			// creating a second one and failing to do so successfully.
+			description:  "folder creation fails given folder service error %s",
+			input:        folderWithoutUID,
+			expectedCode: http.StatusConflict,
+			// expectedMessage:        dashboards.ErrFolderWithSameUIDExists.Error(),
+			expectedFolderSvcError: dashboards.ErrFolderWithSameUIDExists,
+			createSecondRecord:     true,
+			permissions:            folderCreatePermission,
+		},
+		{
+			description:            "folder creation fails given folder service error %s",
+			input:                  folderWithTitleEmpty,
+			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrFolderTitleEmpty.Error(),
+			expectedFolderSvcError: dashboards.ErrFolderTitleEmpty,
+			permissions:            folderCreatePermission,
+		},
+		{
+			description:            "folder creation fails given folder service error %s",
+			input:                  folderWithInvalidUid,
+			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrDashboardInvalidUid.Error(),
+			expectedFolderSvcError: dashboards.ErrDashboardInvalidUid,
+			permissions:            folderCreatePermission,
+		},
+		{
+			description:            "folder creation fails given folder service error %s",
+			input:                  folderWithUIDTooLong,
+			expectedCode:           http.StatusBadRequest,
+			expectedMessage:        dashboards.ErrDashboardUidTooLong.Error(),
+			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
+			permissions:            folderCreatePermission,
+		},
+		{
+			description:            "folder creation fails given folder service error %s",
+			input:                  folderWithoutParentInput,
+			expectedCode:           http.StatusPreconditionFailed,
+			expectedMessage:        dashboards.ErrFolderVersionMismatch.Error(),
+			expectedFolderSvcError: dashboards.ErrFolderVersionMismatch,
+			createSecondRecord:     true,
+			permissions:            folderCreatePermission,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(testDescription(tc.description, tc.expectedFolderSvcError), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
+			})
+
+			userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+
+			if tc.createSecondRecord {
+				client := helper.GetResourceClient(apis.ResourceClientArgs{
+					User: helper.Org1.Admin,
+					GVR:  gvr,
+				})
+				create2 := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/api/folders",
+					Body:   []byte(tc.input),
+				}, &folder.Folder{})
+				require.NotEmpty(t, create2.Response)
+				require.Equal(t, http.StatusOK, create2.Response.StatusCode)
+			}
+
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+			login := userTest.Identity.GetLogin()
+			baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
+
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
+				"%s%s",
+				baseUrl,
+				"/api/folders",
+			), bytes.NewBuffer([]byte(tc.input)))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			type folderWithMessage struct {
+				dtos.Folder
+				Message string `json:"message"`
+			}
+
+			folder := folderWithMessage{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			if tc.expectedCode == http.StatusOK {
+				require.Equal(t, "uid", folder.UID)
+				require.Equal(t, "Folder", folder.Title)
+			}
+
+			if tc.expectedMessage != "" {
+				require.Equal(t, tc.expectedMessage, folder.Message)
+			}
+		})
+	}
+}
+
+func testDescription(description string, expectedErr error) string {
+	if expectedErr != nil {
+		return fmt.Sprintf(description, expectedErr.Error())
+	} else {
+		return description
 	}
 }

@@ -355,29 +355,29 @@ const getStyles = stylesFactory(() => {
   const { theme } = config;
 
   return {
-    innerWrapper: css`
-      display: flex;
-      flex-direction: column;
-      padding: ${theme.spacing.md};
-    `,
-    dataSourceRow: css`
-      display: flex;
-      margin-bottom: ${theme.spacing.md};
-    `,
-    dataSourceRowItem: css`
-      margin-right: ${theme.spacing.inlineFormMargin};
-    `,
-    dataSourceRowItemOptions: css`
-      flex-grow: 1;
-      margin-right: ${theme.spacing.inlineFormMargin};
-    `,
-    queriesWrapper: css`
-      padding-bottom: 16px;
-    `,
-    expressionWrapper: css``,
-    expressionButton: css`
-      margin-right: ${theme.spacing.sm};
-    `,
+    innerWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing.md,
+    }),
+    dataSourceRow: css({
+      display: 'flex',
+      marginBottom: theme.spacing.md,
+    }),
+    dataSourceRowItem: css({
+      marginRight: theme.spacing.inlineFormMargin,
+    }),
+    dataSourceRowItemOptions: css({
+      flexGrow: 1,
+      marginRight: theme.spacing.inlineFormMargin,
+    }),
+    queriesWrapper: css({
+      paddingBottom: '16px',
+    }),
+    expressionWrapper: css({}),
+    expressionButton: css({
+      marginRight: theme.spacing.sm,
+    }),
   };
 });
 

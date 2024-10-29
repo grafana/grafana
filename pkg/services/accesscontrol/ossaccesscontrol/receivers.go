@@ -42,6 +42,9 @@ func ProvideReceiverPermissionsService(
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
+		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
+			return alertingac.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil
+		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,
 			Teams:           true,
@@ -79,7 +82,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	resourceId := alertingac.ScopeReceiversProvider.GetResourceIDFromUID(uid)
 	permissions := defaultPermissions()
 	clearCache := false
-	if user != nil && user.IsIdentityType(claims.TypeUser) {
+	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			r.log.Error("Could not make user admin", "receiver_uid", uid, "resource_id", resourceId, "id", user.GetID(), "error", err)

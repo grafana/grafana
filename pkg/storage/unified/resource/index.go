@@ -10,7 +10,13 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 )
+
+const tracingPrexfixIndex = "unified_storage.index."
 
 type Shard struct {
 	index bleve.Index
@@ -23,12 +29,12 @@ type Index struct {
 	opts   Opts
 	s      *server
 	log    log.Logger
-	path   string
+	tracer tracing.Tracer
 }
 
-func NewIndex(s *server, opts Opts, path string) *Index {
-	if path == "" {
-		path = os.TempDir()
+func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
+	if opts.IndexDir == "" {
+		opts.IndexDir = os.TempDir()
 	}
 
 	idx := &Index{
@@ -36,65 +42,119 @@ func NewIndex(s *server, opts Opts, path string) *Index {
 		opts:   opts,
 		shards: make(map[string]Shard),
 		log:    log.New("unifiedstorage.search.index"),
-		path:   path,
+		tracer: tracer,
 	}
 
 	return idx
 }
 
-func (i *Index) IndexBatch(list *ListResponse, kind string) error {
-	for _, obj := range list.Items {
-		res, err := NewIndexedResource(obj.Value)
+// IndexBatches goes through all the shards and indexes their batches if they are large enough
+func (i *Index) IndexBatches(ctx context.Context, maxSize int, tenants []string) error {
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"IndexBatches")
+	defer span.End()
+
+	group := errgroup.Group{}
+	group.SetLimit(i.opts.Workers)
+	totalBatchesIndexed := 0
+
+	for _, tenant := range tenants {
+		shard, err := i.getShard(tenant)
 		if err != nil {
 			return err
 		}
-
-		shard, err := i.getShard(res.Namespace)
-		if err != nil {
-			return err
-		}
-		i.log.Debug("initial indexing resources batch", "count", len(list.Items), "kind", kind, "tenant", res.Namespace)
-
-		// Transform the raw resource into a more generic indexable resource
-		indexableResource, err := NewIndexedResource(obj.Value)
-		if err != nil {
-			return err
-		}
-
-		err = shard.batch.Index(res.Uid, indexableResource)
-		if err != nil {
-			return err
+		// Index the batch if it is large enough
+		if shard.batch.Size() >= maxSize {
+			totalBatchesIndexed++
+			group.Go(func() error {
+				i.log.Debug("indexing batch for shard", "tenant", tenant, "size", shard.batch.Size())
+				err = shard.index.Batch(shard.batch)
+				if err != nil {
+					return err
+				}
+				shard.batch.Reset()
+				return nil
+			})
 		}
 	}
 
-	for _, shard := range i.shards {
-		err := shard.index.Batch(shard.batch)
-		if err != nil {
-			return err
-		}
-		shard.batch.Reset()
+	err := group.Wait()
+	if err != nil {
+		return err
 	}
+
+	span.AddEvent("batches indexed", trace.WithAttributes(attribute.Int("batches_indexed", totalBatchesIndexed)))
 
 	return nil
 }
 
-func (i *Index) Init(ctx context.Context) error {
-	start := time.Now().Unix()
+// AddToBatches adds resources to their respective shard's batch
+// returns a list of tenants that have changes
+func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string, error) {
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"AddToBatches")
+	defer span.End()
 
+	tenantsWithChanges := make(map[string]bool)
+	for _, obj := range list.Items {
+		// Transform the raw resource into a more generic indexable resource
+		res, err := NewIndexedResource(obj.Value)
+		if err != nil {
+			return nil, err
+		}
+
+		shard, err := i.getShard(res.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		i.log.Debug("indexing resource in batch", "batch_count", len(list.Items), "kind", res.Kind, "tenant", res.Namespace)
+
+		err = shard.batch.Index(res.Uid, res)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := tenantsWithChanges[res.Namespace]; !ok {
+			tenantsWithChanges[res.Namespace] = true
+		}
+	}
+
+	tenants := make([]string, 0, len(tenantsWithChanges))
+	for tenant := range tenantsWithChanges {
+		tenants = append(tenants, tenant)
+	}
+
+	return tenants, nil
+}
+
+func (i *Index) Init(ctx context.Context) error {
+	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Init")
+	defer span.End()
+
+	start := time.Now().Unix()
 	resourceTypes := fetchResourceTypes()
+	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
-		i.log.Info("indexing resource", "kind", rt.Key.Resource)
-		r := &ListRequest{Options: rt, Limit: 100}
+		i.log.Info("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers)
+		r := &ListRequest{Options: rt, Limit: int64(i.opts.ListLimit)}
 
 		// Paginate through the list of resources and index each page
 		for {
+			i.log.Info("fetching resource list", "kind", rt.Key.Resource)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return err
 			}
 
-			// Index current page
-			err = i.IndexBatch(list, rt.Key.Resource)
+			totalObjectsFetched += len(list.Items)
+
+			i.log.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items))
+			//add changes to batches for shards with changes in the List
+			tenants, err := i.AddToBatches(ctx, list)
+			if err != nil {
+				return err
+			}
+
+			// Index the batches for tenants with changes if the batch is large enough
+			err = i.IndexBatches(ctx, i.opts.BatchSize, tenants)
 			if err != nil {
 				return err
 			}
@@ -107,7 +167,16 @@ func (i *Index) Init(ctx context.Context) error {
 		}
 	}
 
+	//index all remaining batches
+	i.log.Info("indexing remaining batches", "shards", len(i.shards))
+	err := i.IndexBatches(ctx, 1, i.allTenants())
+	if err != nil {
+		return err
+	}
+
+	span.AddEvent("indexing finished", trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjectsFetched))))
 	end := time.Now().Unix()
+	i.log.Info("Initial indexing finished", "seconds", float64(end-start))
 	if IndexServerMetrics != nil {
 		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
@@ -116,6 +185,9 @@ func (i *Index) Init(ctx context.Context) error {
 }
 
 func (i *Index) Index(ctx context.Context, data *Data) error {
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Index")
+	defer span.End()
+
 	// Transform the raw resource into a more generic indexable resource
 	res, err := NewIndexedResource(data.Value.Value)
 	if err != nil {
@@ -134,6 +206,9 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
+	if latencySeconds > 5 {
+		i.log.Warn("high index latency", "latency", latencySeconds)
+	}
 	if IndexServerMetrics != nil {
 		IndexServerMetrics.IndexLatency.WithLabelValues(data.Key.Resource).Observe(latencySeconds)
 	}
@@ -142,6 +217,9 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 }
 
 func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error {
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Delete")
+	defer span.End()
+
 	shard, err := i.getShard(key.Namespace)
 	if err != nil {
 		return err
@@ -154,6 +232,9 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 }
 
 func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]IndexedResource, error) {
+	_, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Search")
+	defer span.End()
+
 	if tenant == "" {
 		tenant = "default"
 	}
@@ -199,10 +280,23 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	return results, nil
 }
 
+func (i *Index) Count() (uint64, error) {
+	var total uint64
+	for _, shard := range i.shards {
+		count, err := shard.index.DocCount()
+		if err != nil {
+			i.log.Error("failed to get doc count", "error", err)
+		}
+		total += count
+	}
+	return total, nil
+}
+
 type Opts struct {
-	Workers    int // This controls how many goroutines are used to index objects
-	BatchSize  int // This is the batch size for how many objects to add to the index at once
-	Concurrent bool
+	Workers   int    // This controls how many goroutines are used to index objects
+	BatchSize int    // This is the batch size for how many objects to add to the index at once
+	ListLimit int    // This is how big the List page size is. If the response size is too large, the number of items will be limited by the server.
+	IndexDir  string // The directory where the indexes for each tenant are stored
 }
 
 func createFileIndex(path string) (bleve.Index, string, error) {
@@ -214,12 +308,20 @@ func createFileIndex(path string) (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
+func (i *Index) allTenants() []string {
+	tenants := make([]string, 0, len(i.shards))
+	for tenant := range i.shards {
+		tenants = append(tenants, tenant)
+	}
+	return tenants
+}
+
 func (i *Index) getShard(tenant string) (Shard, error) {
 	shard, ok := i.shards[tenant]
 	if ok {
 		return shard, nil
 	}
-	index, path, err := createFileIndex(i.path)
+	index, path, err := createFileIndex(i.opts.IndexDir)
 	if err != nil {
 		return Shard{}, err
 	}

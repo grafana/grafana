@@ -50,7 +50,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Lifecycle = store
 
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg)
+		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
 		server, err := resource.NewResourceServer(opts)
 		if err != nil {
 			return nil, err

@@ -29,13 +29,13 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
     <div>
       <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms" invalid={args.invalid}>
-          <Switch value={args.value} disabled={args.disabled} />
+          <Switch value={args.value} disabled={args.disabled} id="normal-switch" />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
           <InlineField label="My switch" invalid={args.invalid} disabled={args.disabled}>
-            <InlineSwitch value={args.value} />
+            <InlineSwitch value={args.value} id="my-switch" />
           </InlineField>
         </InlineFieldRow>
       </div>

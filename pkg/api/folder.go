@@ -807,7 +807,14 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	//nolint:errorlint
 	statusError, ok := err.(*k8sErrors.StatusError)
 	if ok {
-		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		message := statusError.Status().Message
+		// #TODO: Is there a better way to set the correct meesage? Instead of "access denied to folder", currently we are
+		// returning something like `folders.folder.grafana.app is forbidden: User "" cannot create resource "folders" in
+		// API group "folder.grafana.app" in the namespace "default": folder``
+		if statusError.Status().Code == http.StatusForbidden {
+			message = dashboards.ErrFolderAccessDenied.Error()
+		}
+		c.JsonApiErr(int(statusError.Status().Code), message, err)
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)

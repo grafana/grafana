@@ -280,6 +280,14 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, AsErrorResult(err)
 	}
 
+	if obj.GetUID() == "" {
+		s.log.Error("object is missing UID", "key", key)
+	}
+
+	if obj.GetResourceVersion() != "" {
+		s.log.Error("object must not include a resource version", "key", key)
+	}
+
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
@@ -534,6 +542,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
