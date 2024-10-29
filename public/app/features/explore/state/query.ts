@@ -75,7 +75,8 @@ import {
 } from './utils';
 
 /**
- * Derives from explore state if a given Explore pane is waiting for more data to be received */
+ * Derives from explore state if a given Explore pane is waiting for more data to be received
+ */
 export const selectIsWaitingForData = (exploreId: string) => {
   return (state: StoreState) => {
     const panelState = state.explore.panes[exploreId];
