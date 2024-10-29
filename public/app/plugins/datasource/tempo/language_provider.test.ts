@@ -173,6 +173,20 @@ describe('Language_provider', () => {
         lp.generateQueryFromFilters([{ id: 'foo', tag: 'footag', value: '1234', operator: '>', valueType: 'integer' }])
       ).toBe('{.footag>1234}');
     });
+    it.each([['=~'], ['!~']])('a field with a regexp operator (%s)', (operator) => {
+      expect(
+        lp.generateQueryFromFilters([
+          {
+            id: 'span-name',
+            tag: 'name',
+            operator,
+            scope: TraceqlSearchScope.Span,
+            value: ['api/v2/variants/by-upc/(?P<upc>[\\s\\S]*)/$'],
+            valueType: 'string',
+          },
+        ])
+      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\\\\\s\\\\\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
+    });
     it('two fields with everything filled in', () => {
       expect(
         lp.generateQueryFromFilters([
