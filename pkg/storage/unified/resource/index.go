@@ -308,6 +308,11 @@ func createFileIndex(path string) (bleve.Index, string, error) {
 	return index, indexPath, err
 }
 
+func createInMemoryIndex() (bleve.Index, string, error) {
+	index, err := bleve.NewMemOnly(createIndexMappings())
+	return index, "", err
+}
+
 func (i *Index) allTenants() []string {
 	tenants := make([]string, 0, len(i.shards))
 	for tenant := range i.shards {
@@ -321,7 +326,7 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 	if ok {
 		return shard, nil
 	}
-	index, path, err := createFileIndex(i.opts.IndexDir)
+	index, path, err := createInMemoryIndex()
 	if err != nil {
 		return Shard{}, err
 	}
