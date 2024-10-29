@@ -20,8 +20,8 @@ import { Trans } from 'app/core/internationalization';
 
 import {
   fetchAndExtractLokiRecordingRules,
-  getLogsQueryForMetric,
-  getLogsUidOfMetric,
+  getLokiQueryForRelatedMetric,
+  getDataSourcesWithRecordingRulesContainingMetric,
   type ExtractedRecordingRules,
 } from '../Integrations/logsIntegration';
 import { reportExploreMetrics } from '../interactions';
@@ -62,7 +62,7 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
   private onActivate() {
     fetchAndExtractLokiRecordingRules().then((lokiRecordingRules) => {
       const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
-      const lokiDatasources = getLogsUidOfMetric(selectedMetric, lokiRecordingRules);
+      const lokiDatasources = getDataSourcesWithRecordingRulesContainingMetric(selectedMetric, lokiRecordingRules);
       const logsPanelContainer = sceneGraph.findByKeyAndType(this, LOGS_PANEL_CONTAINER_KEY, SceneFlexItem);
 
       if (!lokiDatasources?.length) {
@@ -107,7 +107,11 @@ export class RelatedLogsScene extends SceneObjectBase<RelatedLogsSceneState> {
       if (name === VAR_LOGS_DATASOURCE) {
         const selectedMetric = sceneGraph.interpolate(this, VAR_METRIC_EXPR);
         const selectedDatasourceUid = sceneGraph.interpolate(this, VAR_LOGS_DATASOURCE_EXPR);
-        const lokiQuery = getLogsQueryForMetric(selectedMetric, selectedDatasourceUid, this.state.lokiRecordingRules);
+        const lokiQuery = getLokiQueryForRelatedMetric(
+          selectedMetric,
+          selectedDatasourceUid,
+          this.state.lokiRecordingRules
+        );
 
         if (lokiQuery) {
           const relatedLogsQuery = sceneGraph.findByKeyAndType(this, RELATED_LOGS_QUERY_KEY, SceneQueryRunner);
