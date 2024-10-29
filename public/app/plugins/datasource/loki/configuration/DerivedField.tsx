@@ -56,7 +56,7 @@ export const DerivedField = (props: Props) => {
   const { value, onChange, onDelete, suggestions, className, validateName } = props;
   const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
-  const [openInNewTab, setOpenInNewTab] = useState(value.targetBlank);
+  const [openInNewTab, setOpenInNewTab] = useState(!!value.targetBlank);
   const previousUid = usePrevious(value.datasourceUid);
   const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'regex');
 
