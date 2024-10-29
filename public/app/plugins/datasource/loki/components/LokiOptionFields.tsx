@@ -39,7 +39,8 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
   {
     value: LokiQueryDirection.Scan,
     label: 'Scan',
-    description: 'Split the query into smaller units and stop at the requested log line limit.',
+    description: 'Experimental. Split the query into smaller units and stop at the requested log line limit.',
+    icon: 'exclamation-triangle',
   },
 ];
 
