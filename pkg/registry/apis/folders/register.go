@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -28,6 +29,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
+var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
 
@@ -179,6 +181,10 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		}
 		return authorizer.DecisionDeny, "folder", err
 	})
+}
+
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	return nil
 }
 
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {

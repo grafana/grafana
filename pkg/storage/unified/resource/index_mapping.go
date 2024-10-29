@@ -38,7 +38,7 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 	ir.Title = hit.Fields["Title"].(string)
 
 	// add indexed spec fields to search results
-	specResult := map[string]interface{}{}
+	specResult := map[string]any{}
 	for k, v := range hit.Fields {
 		if strings.HasPrefix(k, "Spec.") {
 			specKey := strings.TrimPrefix(k, "Spec.")
@@ -53,8 +53,6 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 // NewIndexedResource creates a new IndexedResource from a raw resource.
 // rawResource is the raw json for the resource from unified storage.
 func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
-	ir := &IndexedResource{}
-
 	k8sObj := unstructured.Unstructured{}
 	err := k8sObj.UnmarshalJSON(rawResource)
 	if err != nil {
@@ -66,6 +64,7 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
+	ir := &IndexedResource{}
 	ir.Uid = string(meta.GetUID())
 	ir.Name = meta.GetName()
 	ir.Title = meta.FindTitle("")

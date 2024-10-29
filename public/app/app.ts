@@ -317,6 +317,15 @@ function initEchoSrv() {
   }
 
   if (config.grafanaJavascriptAgent.enabled) {
+    // Ignore Rudderstack URLs
+    const rudderstackUrls = [
+      config.rudderstackConfigUrl,
+      config.rudderstackDataPlaneUrl,
+      config.rudderstackIntegrationsUrl,
+    ]
+      .filter(Boolean)
+      .map((url) => new RegExp(`${url}.*.`));
+
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,
@@ -329,6 +338,7 @@ function initEchoSrv() {
           id: String(config.bootData.user?.id),
           email: config.bootData.user?.email,
         },
+        ignoreUrls: rudderstackUrls,
       })
     );
   }

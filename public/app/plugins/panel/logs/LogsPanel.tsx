@@ -38,6 +38,7 @@ import {
   isOnClickFilterString,
   isOnClickHideField,
   isOnClickShowField,
+  isReactNodeArray,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -67,6 +68,12 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
+   *
+   * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
+   * logRowMenuIconsBefore?: ReactNode[];
+   *
+   * Passed to the LogRowMenuCell component to be rendered after the default actions in the menu.
+   * logRowMenuIconsAfter?: ReactNode[];
    */
 }
 interface LogsPermalinkUrlState {
@@ -96,6 +103,8 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    logRowMenuIconsBefore,
+    logRowMenuIconsAfter,
     ...options
   },
   id,
@@ -389,6 +398,8 @@ export const LogsPanel = ({
             displayedFields={displayedFields}
             onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
             onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
+            logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
+            logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
