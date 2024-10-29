@@ -34,7 +34,7 @@ const isRegExpOperator = (operator: string) => operator === '=~' || operator ===
 const escapeValues = (values: string[]) => getEscapedSpanNames(values);
 
 export const valueHelper = (f: TraceqlFilter) => {
-  const value = isRegExpOperator(f.operator!) ? escapeValues(f.value as string[]) : f.value;
+  const value = Array.isArray(f.value) && isRegExpOperator(f.operator!) ? escapeValues(f.value) : f.value;
 
   if (Array.isArray(value) && value.length > 1) {
     return `"${value.join('|')}"`;
