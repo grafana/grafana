@@ -282,7 +282,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     labelValuesPromise = new Promise(async (resolve) => {
       try {
-        const data = await this.request(url, params);
+        const data = await this.request(url, params, options?.throw);
         if (Array.isArray(data)) {
           const labelValues = data.slice().sort();
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
@@ -292,7 +292,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       } catch (error) {
         console.error(error);
         resolve([]);
-        if (options?.throw === true) {
+        if (options?.throw) {
           throw error;
         }
       }
