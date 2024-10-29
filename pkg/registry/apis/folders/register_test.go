@@ -119,17 +119,24 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 }
 
 func TestFolderAPIBuilder_Validate(t *testing.T) {
+	type input struct {
+		obj  *unstructured.Unstructured
+		name string
+	}
 	tests := []struct {
 		name  string
-		input *unstructured.Unstructured
+		input input
 		err   error
 	}{
 		{
 			name: "should return error when nameis invalid",
-			input: &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"meta": map[string]interface{}{"name": invalidName},
+			input: input{
+				obj: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"meta": map[string]interface{}{"name": folderValidationRules.invalidNames[0]},
+					},
 				},
+				name: folderValidationRules.invalidNames[0],
 			},
 			err: dashboards.ErrFolderInvalidUID,
 		},
@@ -145,11 +152,11 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
-				tt.input,
+				tt.input.obj,
 				nil,
 				v0alpha1.SchemeGroupVersion.WithKind("folder"),
 				"stacks-123",
-				invalidName,
+				tt.input.name,
 				v0alpha1.SchemeGroupVersion.WithResource("folders"),
 				"",
 				"create",
