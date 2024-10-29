@@ -335,10 +335,12 @@ func (i *Index) createIndex() (bleve.Index, string, error) {
 	return createFileIndex(i.opts.IndexDir)
 }
 
+var mappings = createIndexMappings()
+
 // less memory intensive alternative for larger indexes with less tenants (on-prem)
 func createFileIndex(path string) (bleve.Index, string, error) {
 	indexPath := filepath.Join(path, uuid.New().String())
-	index, err := bleve.New(indexPath, createIndexMappings())
+	index, err := bleve.New(indexPath, mappings)
 	if err != nil {
 		golog.Fatalf("Failed to create index: %v", err)
 	}
@@ -347,7 +349,7 @@ func createFileIndex(path string) (bleve.Index, string, error) {
 
 // faster indexing when there are many tenants with smaller batches (cloud)
 func createInMemoryIndex() (bleve.Index, string, error) {
-	index, err := bleve.NewMemOnly(createIndexMappings())
+	index, err := bleve.NewMemOnly(mappings)
 	return index, "", err
 }
 
