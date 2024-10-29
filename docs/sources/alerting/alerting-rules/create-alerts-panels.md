@@ -14,7 +14,13 @@ labels:
     - enterprise
     - oss
 title: Create alert rules from panels
-weight: 400
+weight: 300
+refs:
+  time-series-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 ## Create alert rules from panels
@@ -30,7 +36,7 @@ The New alert rule form opens where you can configure and create your alert rule
 {{% admonition type="note" %}}
 Changes to the panel aren't reflected on the linked alert rules. If you change a query, you have to update it in both the panel and the alert rule.
 
-Alert rules are only supported in [time series](ref:time-series) visualizations.
+Alert rules are only supported in [time series](ref:time-series-visualizations) visualizations.
 {{% /admonition %}}
 
 {{< docs/play title="visualizations with linked alerts in Grafana" url="https://play.grafana.org/d/000000074/" >}}

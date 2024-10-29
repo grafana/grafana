@@ -43,7 +43,7 @@ Alert rules in different groups can be evaluated simultaneously.
 
 - **Grafana-managed** alert rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
 
-- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
+- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
 
 ## Pending period
 
