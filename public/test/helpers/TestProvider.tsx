@@ -1,6 +1,7 @@
 import { Store } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { Provider } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { MemoryRouter as Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

@@ -5,6 +5,7 @@ import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
 import { Fragment, PropsWithChildren } from 'react';
 import * as React from 'react';
 import { Provider } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { MemoryRouter } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

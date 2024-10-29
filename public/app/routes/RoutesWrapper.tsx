@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { History } from 'history';
+// eslint-disable-next-line no-restricted-imports
 import { ComponentType, memo, useLayoutEffect, useState } from 'react';
 import { BrowserRouterProps, Router } from 'react-router-dom';
 

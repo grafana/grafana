@@ -140,6 +140,7 @@
     "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -1552,6 +1553,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1616,6 +1618,7 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
         "datasource-invalid-url": "",
         "datasource-name-conflict": "",
         "folder-name-conflict": "",
@@ -1652,6 +1655,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
