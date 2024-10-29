@@ -12,9 +12,7 @@ export class BrowserConsoleBackend implements EchoBackend<PageviewEchoEvent, unk
   options = {};
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
-  constructor() {
-    console.log('[EchoSrv]', 'Registering BrowserConsoleBackend');
-  }
+  constructor() {}
 
   addEvent = (e: PageviewEchoEvent) => {
     if (isPageviewEvent(e)) {
@@ -22,7 +20,25 @@ export class BrowserConsoleBackend implements EchoBackend<PageviewEchoEvent, unk
     }
 
     if (isInteractionEvent(e)) {
-      console.log('[EchoSrv:event]', e.payload.interactionName, e.payload.properties);
+      const eventName = e.payload.interactionName;
+      console.log('[EchoSrv:event]', eventName, e.payload.properties);
+
+      // Warn for non-scalar property values. We're not yet making this a hard a
+      const invalidTypeProperties = Object.entries(e.payload.properties ?? {}).filter(([_, value]) => {
+        const valueType = typeof value;
+        const isValidType =
+          valueType === 'string' || valueType === 'number' || valueType === 'boolean' || valueType === 'undefined';
+        return !isValidType;
+      });
+
+      if (invalidTypeProperties.length > 0) {
+        console.warn(
+          'Event',
+          eventName,
+          'has invalid property types. Event properties should only be string, number or boolean. Invalid properties:',
+          Object.fromEntries(invalidTypeProperties)
+        );
+      }
     }
 
     if (isExperimentViewEvent(e)) {
