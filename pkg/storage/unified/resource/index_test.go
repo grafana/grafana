@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -21,15 +20,6 @@ func TestIndexBatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	tmpdir := os.TempDir() + "testindexbatch"
-
-	defer func() {
-		err = os.RemoveAll(tmpdir)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
 
 	index := &Index{
 		tracer: trace,
@@ -59,7 +49,10 @@ func TestIndexBatch(t *testing.T) {
 
 	ns := namespaces()
 	// index all batches for each shard/tenant
-	err = index.IndexBatches(ctx, 1, namespaces())
+	err = index.IndexBatches(ctx, 1, ns)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
