@@ -28,7 +28,7 @@ export class PrometheusMetricFindQuery {
     this.range = timeRange;
     const labelNamesRegex = PrometheusLabelNamesRegex;
     const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
-    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+    const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_.]*)\)\s*$/;
     const metricNamesRegex = PrometheusMetricNamesRegex;
     const queryResultRegex = PrometheusQueryResultRegex;
     const labelNamesQuery = this.query.match(labelNamesRegex);
