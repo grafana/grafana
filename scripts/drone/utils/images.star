@@ -36,4 +36,5 @@ images = {
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
     "rocky": "rockylinux:9",
+    "wine": "scottyhardy/docker-wine:stable-9.0",
 }

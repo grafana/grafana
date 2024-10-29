@@ -651,17 +651,17 @@ func TestGetParentNames(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 	libraryElementFolderUID := "folderUID-A"
 	testcases := []struct {
-		fakeFolders             []*folder.Folder
-		folders                 []folder.CreateFolderCommand
-		dashboards              []dashboards.Dashboard
-		libraryElements         []libraryElement
-		expectedDashParentNames []string
-		expectedFoldParentNames []string
+		fakeFolders         []*folder.Folder
+		folders             []folder.CreateFolderCommand
+		dashboards          []dashboards.Dashboard
+		libraryElements     []libraryElement
+		expectedParentNames map[cloudmigration.MigrateDataType][]string
 	}{
 		{
 			fakeFolders: []*folder.Folder{
 				{UID: "folderUID-A", Title: "Folder A", OrgID: 1, ParentUID: ""},
 				{UID: "folderUID-B", Title: "Folder B", OrgID: 1, ParentUID: "folderUID-A"},
+				{UID: "folderUID-X", Title: "Folder X", OrgID: 1, ParentUID: ""},
 			},
 			folders: []folder.CreateFolderCommand{
 				{UID: "folderUID-C", Title: "Folder A", OrgID: 1, ParentUID: "folderUID-A"},
@@ -675,8 +675,11 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-0", FolderUID: &libraryElementFolderUID},
 				{UID: "libraryElementUID-1"},
 			},
-			expectedDashParentNames: []string{"", "Folder A", "Folder B"},
-			expectedFoldParentNames: []string{"Folder A"},
+			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
+				cloudmigration.DashboardDataType:      []string{"", "Folder A", "Folder B"},
+				cloudmigration.FolderDataType:         []string{"Folder A"},
+				cloudmigration.LibraryElementDataType: []string{"Folder A"},
+			},
 		},
 	}
 
@@ -686,13 +689,11 @@ func TestGetParentNames(t *testing.T) {
 		dataUIDsToParentNamesByType, err := s.getParentNames(ctx, user, tc.dashboards, tc.folders, tc.libraryElements)
 		require.NoError(t, err)
 
-		resDashParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.DashboardDataType]))
-		require.Len(t, resDashParentNames, len(tc.expectedDashParentNames))
-		require.ElementsMatch(t, resDashParentNames, tc.expectedDashParentNames)
-
-		resFoldParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[cloudmigration.FolderDataType]))
-		require.Len(t, resFoldParentNames, len(tc.expectedFoldParentNames))
-		require.ElementsMatch(t, resFoldParentNames, tc.expectedFoldParentNames)
+		for dataType, expectedParentNames := range tc.expectedParentNames {
+			actualParentNames := slices.Collect(maps.Values(dataUIDsToParentNamesByType[dataType]))
+			require.Len(t, actualParentNames, len(expectedParentNames))
+			require.ElementsMatch(t, expectedParentNames, actualParentNames)
+		}
 	}
 }
 
@@ -787,6 +788,8 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	fakeAccessControlService := actest.FakeService{}
 	alertMetrics := metrics.NewNGAlert(prometheus.NewRegistry())
 
+	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
+	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
 	require.NoError(t, err)
 

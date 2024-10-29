@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { Playlist, PlaylistMode } from './types';
@@ -17,12 +17,14 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
   const [displayTimePicker, setDisplayTimePicker] = useState(true);
   const [displayVariables, setDisplayVariables] = useState(true);
   const [displayLinks, setDisplayLinks] = useState(true);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
-  const modes: Array<SelectableValue<PlaylistMode>> = [
-    { label: 'Normal', value: false },
-    { label: 'TV', value: 'tv' },
-    { label: 'Kiosk', value: true },
-  ];
+  const modes: Array<SelectableValue<PlaylistMode>> = [];
+  modes.push({ label: 'Normal', value: false });
+  if (!isSingleTopNav) {
+    modes.push({ label: 'TV', value: 'tv' });
+  }
+  modes.push({ label: 'Kiosk', value: true });
 
   const onStart = () => {
     const params: UrlQueryMap = {};
@@ -44,6 +46,11 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
     }
 
     locationService.push(urlUtil.renderUrl(`/playlists/play/${playlist.uid}`, params));
+    reportInteraction('grafana_kiosk_mode', {
+      action: 'start_playlist',
+      singleTopNav: Boolean(config.featureToggles.singleTopNav),
+      mode: mode,
+    });
   };
 
   return (

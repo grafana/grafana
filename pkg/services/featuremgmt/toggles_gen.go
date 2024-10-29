@@ -727,9 +727,9 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
-	// FlagPassScopeToDashboardApi
-	// Enables the passing of scopes to dashboards fetching in Grafana
-	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+	// FlagReloadDashboardsOnParamsChange
+	// Enables reload of dashboards on scopes, time range and variables changes
+	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
@@ -834,4 +834,12 @@ const (
 	// FlagPrometheusUsesCombobox
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagDashboardSchemaV2
+	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
+	FlagDashboardSchemaV2 = "dashboardSchemaV2"
 )
