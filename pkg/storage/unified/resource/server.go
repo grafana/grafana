@@ -13,7 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -729,6 +728,7 @@ func (s *server) initWatcher() error {
 	return err
 }
 
+//nolint:gocyclo
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	ctx := srv.Context()
 
@@ -738,7 +738,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
-		return errors.NewUnauthorized("no user found in context")
+		return apierrors.NewUnauthorized("no user found in context")
 	}
 
 	key := req.Options.Key
@@ -751,7 +751,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		return err
 	}
 	if checker == nil {
-		return errors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
+		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
 	}
 
 	// Start listening -- this will buffer any changes that happen while we backfill.
