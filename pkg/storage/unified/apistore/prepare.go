@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func logN(n, b float64) float64 {
+	return math.Log(n) / math.Log(b)
+}
+
+// Slightly modified function from https://github.com/dustin/go-humanize (MIT).
+func formatBytes(numBytes int) string {
+	base := 1024.0
+	sizes := []string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}
+	if numBytes < 10 {
+		return fmt.Sprintf("%d B", numBytes)
+	}
+	e := math.Floor(logN(float64(numBytes), base))
+	suffix := sizes[int(e)]
+	val := math.Floor(float64(numBytes)/math.Pow(base, e)*10+0.5) / 10
+	return fmt.Sprintf("%.1f %s", val, suffix)
+}
 
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, error) {
@@ -109,7 +127,8 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 		size := buf.Len()
 		if size > support.Threshold() {
 			if support.MaxSize() > 0 && size > support.MaxSize() {
-				return nil, fmt.Errorf("too big!")
+
+				return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
 			}
 		}
 
