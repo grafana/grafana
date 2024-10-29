@@ -2178,12 +2178,13 @@
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed version: ",
+        "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
-        "updatedAt": "Last updated: ",
+        "updatedAt": "Last updated:",
         "version": "Version"
       }
     },
