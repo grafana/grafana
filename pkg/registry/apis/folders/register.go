@@ -36,7 +36,13 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 var errNoUser = errors.New("valid user is required")
 var errNoResource = errors.New("resource name is required")
 
-const invalidName = "general"
+var folderValidationRules = struct {
+	maxDepth     int
+	invalidNames []string
+}{
+	maxDepth:     4,
+	invalidNames: []string{"general"},
+}
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -222,20 +228,20 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	// name cannot be called "general"
 	id := a.GetName()
-	if id == invalidName {
-		return dashboards.ErrFolderInvalidUID
+	for _, invalidName := range folderValidationRules.invalidNames {
+		if id == invalidName {
+			return dashboards.ErrFolderInvalidUID
+		}
 	}
 
-	//max depth folder is 4
-	var maxFolderDepth = 4
 	obj := a.GetObject()
 
-	for i := 0; i <= maxFolderDepth+1; i++ {
+	for i := 0; i <= folderValidationRules.maxDepth+1; i++ {
 		parent := getParent(obj)
 		if parent == "" {
 			break
 		}
-		if i == maxFolderDepth+1 {
+		if i == folderValidationRules.maxDepth+1 {
 			return folder.ErrMaximumDepthReached
 		}
 
