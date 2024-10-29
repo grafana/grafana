@@ -127,13 +127,12 @@ export const ResourcePickerPopover = (props: Props) => {
                           .get(`api/storage/read/${data.path}`)
                           .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
                           .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`))
-                          .then(() => {
-                            hidePopper?.();
-                          });
+                          .then(() => hidePopper?.());
                       })
                       .catch((err) => console.error(err));
                   } else {
                     onChange(newValue);
+                    hidePopper?.();
                   }
                 }}
               >
