@@ -2,13 +2,10 @@ package resource
 
 import (
 	"context"
-	golog "log"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"go.opentelemetry.io/otel/attribute"
@@ -299,14 +296,15 @@ type Opts struct {
 	IndexDir  string // The directory where the indexes for each tenant are stored
 }
 
-func createFileIndex(path string) (bleve.Index, string, error) {
-	indexPath := filepath.Join(path, uuid.New().String())
-	index, err := bleve.New(indexPath, createIndexMappings())
-	if err != nil {
-		golog.Fatalf("Failed to create index: %v", err)
-	}
-	return index, indexPath, err
-}
+// TODO: faster, less memory intensive alternative for larger indexes with less tenants (on-prem)?
+// func createFileIndex(path string) (bleve.Index, string, error) {
+// 	indexPath := filepath.Join(path, uuid.New().String())
+// 	index, err := bleve.New(indexPath, createIndexMappings())
+// 	if err != nil {
+// 		golog.Fatalf("Failed to create index: %v", err)
+// 	}
+// 	return index, indexPath, err
+// }
 
 func createInMemoryIndex() (bleve.Index, string, error) {
 	index, err := bleve.NewMemOnly(createIndexMappings())
