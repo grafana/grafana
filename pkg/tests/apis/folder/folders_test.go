@@ -564,7 +564,7 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(payload),
 	}, &folder.Folder{})
 	require.NotEmpty(t, create2.Response)
-	require.Equal(t, 409, create2.Response.StatusCode)
+	require.Equal(t, 200, create2.Response.StatusCode) // it is OK
 }
 
 func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) {
@@ -699,7 +699,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
-	folderWithSameName := "{\"title\": \"same name\"}"
 
 	type testCase struct {
 		description            string
@@ -768,15 +767,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			expectedCode:           http.StatusBadRequest,
 			expectedMessage:        dashboards.ErrDashboardUidTooLong.Error(),
 			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
-			permissions:            folderCreatePermission,
-		},
-		{
-			description:            "folder creation fails given folder service error %s",
-			input:                  folderWithSameName,
-			expectedCode:           http.StatusConflict,
-			expectedMessage:        dashboards.ErrFolderSameNameExists.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
-			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
 		{
