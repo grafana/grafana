@@ -143,7 +143,7 @@ Let's consider a scenario where you're monitoring website traffic using Grafana.
 
 If the query returns more than one time-series, each time-series represents a different metric or aspect being monitored. In this case, the alert rule is applied individually to each time-series.
 
-{{< figure alt="Screenshot displaying alert instances in the context of an alert rule, highlighting the specific alerts triggered by the rule and their respective statuses" src="/media/docs/alerting/get-started-digram-instance-grey.png" max-width="1200px" caption="Alert Instances in the Context of an Alert Rule" >}}
+{{< figure alt="Screenshot displaying alert instances in the context of an alert rule, highlighting the specific alerts triggered by the rule and their respective statuses" src="/media/docs/alerting/alert-instance-flow.png" max-width="1200px" caption="Alert Instances in the Context of an Alert Rule" >}}
 
 In this scenario, each time-series is evaluated independently against the alert rule. It results in the creation of an alert instance for each time-series. The time-series corresponding to the desktop page views meets the threshold and, therefore, results in an alert instance in **Firing** state for which an alert notification is sent. The mobile alert instance state remains **Normal**.
 <!-- INTERACTIVE page step2.md END -->
