@@ -264,6 +264,7 @@ const (
 
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
+	UID     string `json:"uid"`
 	Message string `json:"message"`
 }
 

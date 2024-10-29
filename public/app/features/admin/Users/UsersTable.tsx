@@ -54,7 +54,7 @@ export const UsersTable = ({
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => {
           return (
-            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.id}`} title="Edit user">
+            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.uid}`} title="Edit user">
               {original.login}
             </TextLink>
           );
