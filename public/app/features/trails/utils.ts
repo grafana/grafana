@@ -177,7 +177,7 @@ export function limitAdhocProviders(
         filters,
         scopes: getClosestScopesFacade(variable)?.value,
         queries: dataTrail.getQueries(),
-      }
+      };
 
       // if there are too many queries it takes to much time to process the requests.
       // In this case we favour responsiveness over reducing the number of options.
@@ -207,20 +207,20 @@ export function limitAdhocProviders(
       // call getTagValues and truncate the response
       // we're passing the queries so we get the label values that adhere to the queries
       // we're also passing the scopes so we get the label values that adhere to the scopes filters
-      
+
       const opts = {
         key: filter.key,
         filters,
         scopes: getClosestScopesFacade(variable)?.value,
         queries: dataTrail.getQueries(),
-      }
+      };
 
       // if there are too many queries it takes to much time to process the requests.
       // In this case we favour responsiveness over reducing the number of options.
       if (opts.queries.length > 20) {
         opts.queries = [];
       }
-      
+
       const values = (await datasourceHelper.getTagValues(opts)).slice(0, MAX_ADHOC_VARIABLE_OPTIONS);
       // use replace: true to override the default lookup in adhoc filter variable
       return { replace: true, values };
