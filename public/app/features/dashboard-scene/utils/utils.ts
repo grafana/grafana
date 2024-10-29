@@ -253,7 +253,7 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
  * Useful when rendering a scene object out of context of it's parent
  * @returns
  */
-export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivationHandler | undefined {
   let cancel: CancelActivationHandler | undefined;
   let parentCancel: CancelActivationHandler | undefined;
 
@@ -262,7 +262,7 @@ export function activateInActiveParents(so: SceneObject): CancelActivationHandle
   }
 
   if (so.parent) {
-    parentCancel = activateInActiveParents(so.parent);
+    parentCancel = activateSceneObjectAndParentTree(so.parent);
   }
 
   cancel = so.activate();
