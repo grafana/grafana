@@ -249,7 +249,7 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 /**
- * Activates any inactive parents of the scene object.
+ * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
  * @returns
  */
@@ -272,3 +272,10 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
     cancel();
   };
 }
+
+/**
+ * @deprecated use activateSceneObjectAndParentTree instead.
+ * Activates any inactive ancestors of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ */
+export const activateInActiveParents = activateSceneObjectAndParentTree;
