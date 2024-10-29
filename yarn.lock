@@ -4271,7 +4271,6 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
-    ansicolor: "npm:1.1.100"
     calculate-size: "npm:1.1.1"
     chance: "npm:1.1.12"
     classnames: "npm:2.5.1"
