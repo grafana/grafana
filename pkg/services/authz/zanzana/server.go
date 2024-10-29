@@ -11,8 +11,8 @@ import (
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 )
 
-func NewServer(store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
-	return zserver.New(store, logger)
+func NewServer(cfg *setting.Cfg, store storage.OpenFGADatastore, logger log.Logger) (*server.Server, error) {
+	return zserver.New(&cfg.Zanzana, store, logger)
 }
 
 func StartOpenFGAHttpSever(cfg *setting.Cfg, srv grpcserver.Provider, logger log.Logger) error {

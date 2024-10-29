@@ -6,8 +6,9 @@ import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/
 import { useSidecar } from 'app/core/context/SidecarContext';
 
 import { getPluginExtensions } from './getPluginExtensions';
+import { log } from './logs/log';
 import { PluginExtensionRegistries } from './registry/types';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode, logWarning } from './utils';
+import { isExtensionPointMetaInfoMissing, isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid } from './validators';
 
 export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
@@ -25,13 +26,17 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
       // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
       const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
       const pluginId = pluginContext?.meta.id ?? '';
+      const pointLog = log.child({
+        pluginId,
+        extensionPointId,
+      });
 
       if (!addedLinksRegistry && !addedComponentsRegistry) {
         return { extensions: [], isLoading: false };
       }
 
       if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-        logWarning(
+        pointLog.warning(
           `Extension point usePluginExtensions("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
         );
         return {
@@ -40,8 +45,8 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
         };
       }
 
-      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-        logWarning(
+      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
+        pointLog.warning(
           `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
         );
         return {

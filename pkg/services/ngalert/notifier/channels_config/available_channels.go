@@ -1141,6 +1141,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Google Chat incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
+					Secure:       true,
 				},
 				{
 					Label:        "Title",

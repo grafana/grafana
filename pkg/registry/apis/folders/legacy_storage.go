@@ -174,6 +174,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
 	parent := accessor.GetFolder()
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{

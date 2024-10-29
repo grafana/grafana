@@ -183,5 +183,5 @@ func (s *ServiceAccountsProxy) SearchOrgServiceAccounts(ctx context.Context, que
 }
 
 func isNameValid(name string) bool {
-	return !strings.HasPrefix(name, serviceaccounts.ExtSvcPrefix)
+	return !strings.HasPrefix(name, strings.TrimSuffix(serviceaccounts.ExtSvcPrefix, "-"))
 }

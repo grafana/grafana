@@ -393,7 +393,7 @@ func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl stri
 }
 
 func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo) error {
-	tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
+	tracesUrl, err := getTracesQueryUrl(azurePortalBaseUrl)
 	if err != nil {
 		return err
 	}
@@ -552,20 +552,12 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRa
 	return portalUrl, nil
 }
 
-func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error) {
+func getTracesQueryUrl(azurePortalUrl string) (string, error) {
 	portalUrl := azurePortalUrl
 	portalUrl += "/#view/AppInsightsExtension/DetailsV2Blade/ComponentId~/"
-	resource := struct {
-		ResourceId string `json:"ResourceId"`
-	}{
-		resources[0],
-	}
-	resourceMarshalled, err := json.Marshal(resource)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal application insights resource: %s", err)
-	}
 
-	portalUrl += url.PathEscape(string(resourceMarshalled))
+	resource := "%7B%22ResourceId%22:%22${__data.fields.resource:percentencode}%22%7D"
+	portalUrl += resource
 	portalUrl += "/DataModel~/"
 
 	// We're making use of data link variables to select the necessary fields in the frontend

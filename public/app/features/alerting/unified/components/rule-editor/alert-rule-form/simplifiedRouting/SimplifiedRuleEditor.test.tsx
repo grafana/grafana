@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
@@ -157,7 +157,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 function renderSimplifiedRuleEditor() {
   return render(
     <AlertmanagerProvider alertmanagerSourceName={GRAFANA_DATASOURCE_NAME} accessType="notification">
-      <Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />
+      <Routes>
+        <Route path={'/alerting/new/:type'} element={<RuleEditor />} />
+        <Route path={'/alerting/:id/edit'} element={<RuleEditor />} />
+      </Routes>
     </AlertmanagerProvider>,
     { historyOptions: { initialEntries: ['/alerting/new/alerting'] } }
   );

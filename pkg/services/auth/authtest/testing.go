@@ -11,26 +11,28 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type FakeUserAuthTokenService struct {
-	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error)
-	RotateTokenProvider          func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
-	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
-	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
-	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
-	RevokeAllUserTokensProvider  func(ctx context.Context, userID int64) error
-	ActiveTokenCountProvider     func(ctx context.Context, userID *int64) (int64, error)
-	GetUserTokenProvider         func(ctx context.Context, userID, userTokenID int64) (*auth.UserToken, error)
-	GetUserTokensProvider        func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
-	GetUserRevokedTokensProvider func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
-	BatchRevokedTokenProvider    func(ctx context.Context, userIDs []int64) error
+	CreateTokenProvider                 func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error)
+	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
+	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
+	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
+	FindExternalSessionsProvider        func(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)
+	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
+	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
+	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
+	RevokeAllUserTokensProvider         func(ctx context.Context, userID int64) error
+	ActiveTokenCountProvider            func(ctx context.Context, userID *int64) (int64, error)
+	GetUserTokenProvider                func(ctx context.Context, userID, userTokenID int64) (*auth.UserToken, error)
+	GetUserTokensProvider               func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
+	GetUserRevokedTokensProvider        func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
+	BatchRevokedTokenProvider           func(ctx context.Context, userIDs []int64) error
 }
 
 func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 	return &FakeUserAuthTokenService{
-		CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+		CreateTokenProvider: func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
 			return &auth.UserToken{
 				UserId:        0,
 				UnhashedToken: "",
@@ -72,12 +74,24 @@ func (s *FakeUserAuthTokenService) Init() error {
 	return nil
 }
 
-func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
-	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
+func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error) {
+	return s.CreateTokenProvider(context.Background(), cmd)
 }
 
 func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
 	return s.RotateTokenProvider(ctx, cmd)
+}
+
+func (s *FakeUserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
+	return s.GetTokenByExternalSessionIDProvider(ctx, externalSessionID)
+}
+
+func (s *FakeUserAuthTokenService) GetExternalSession(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+	return s.GetExternalSessionProvider(ctx, externalSessionID)
+}
+
+func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
+	return s.FindExternalSessionsProvider(context.Background(), query)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {

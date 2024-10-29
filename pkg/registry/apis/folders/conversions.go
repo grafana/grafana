@@ -2,6 +2,7 @@ package folders
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -50,13 +51,57 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructu
 	return obj
 }
 
-func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
+func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
+	// #TODO reduce duplication of the different conversion functions
 	spec := item.Object["spec"].(map[string]any)
-	return &folder.Folder{
-		UID:   item.GetName(),
-		Title: spec["title"].(string),
-		// #TODO add other fields
+	uid := item.GetName()
+	title := spec["title"].(string)
+
+	meta, err := utils.MetaAccessor(&item)
+	if err != nil {
+		return nil
 	}
+
+	id, err := getLegacyID(meta)
+	if err != nil {
+		return nil
+	}
+
+	created, err := getCreated(meta)
+	if err != nil {
+		return nil
+	}
+
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		createdTime = created.Local()
+	}
+
+	f := &folder.Folder{
+		UID:       uid,
+		Title:     title,
+		ID:        id,
+		ParentUID: meta.GetFolder(),
+		// #TODO add created by field if necessary
+		// CreatedBy: meta.GetCreatedBy(),
+		// UpdatedBy: meta.GetCreatedBy(),
+		URL:     getURL(meta, title),
+		Created: createdTime,
+		Updated: createdTime,
+		OrgID:   orgID,
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
+		Fullpath: meta.GetFullPath(),
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
+		FullpathUIDs: meta.GetFullPathUIDs(),
+	}
+	return f
 }
 
 func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder, error) {
@@ -79,6 +124,14 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		return nil, err
 	}
 
+	// avoid panic
+	var createdTime time.Time
+	if created != nil {
+		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
+		// which includes a part that represents a fraction of a second.
+		createdTime = created.Local()
+	}
+
 	dto := &dtos.Folder{
 		UID:       uid,
 		Title:     title,
@@ -87,20 +140,14 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
 		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
 		// Could convert meta.GetCreatedBy() return value to a struct--id and name
-		// CreatedBy: meta.GetCreatedBy(),
-		// UpdatedBy: meta.GetCreatedBy(),
-		URL: getURL(meta, title),
+		CreatedBy: meta.GetCreatedBy(),
+		UpdatedBy: meta.GetCreatedBy(),
+		URL:       getURL(meta, title),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: *created,
+		Created: createdTime,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: *created,
-		// #TODO figure out how to set these properly
-		CanSave:   true,
-		CanEdit:   true,
-		CanAdmin:  true,
-		CanDelete: true,
-		HasACL:    false,
+		Updated: createdTime,
 
 		// #TODO figure out about adding version, parents, orgID fields
 	}
@@ -135,14 +182,25 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			Timestamp: &v.Created,
 		})
 	}
-	if v.CreatedBy > 0 {
-		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
+	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
+	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
+	// as the only user identifier
+	if v.CreatedByUID != "" {
+		meta.SetCreatedBy(v.UpdatedByUID)
 	}
-	if v.UpdatedBy > 0 {
-		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
+	if v.UpdatedByUID != "" {
+		meta.SetUpdatedBy(v.UpdatedByUID)
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
+	}
+	if v.Fullpath != "" {
+		// nolint:staticcheck
+		meta.SetFullPath(v.Fullpath)
+	}
+	if v.FullpathUIDs != "" {
+		// nolint:staticcheck
+		meta.SetFullPathUIDs(v.FullpathUIDs)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
@@ -186,4 +244,23 @@ func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 		return nil, err
 	}
 	return created, nil
+}
+
+func GetParentTitles(fullPath string) ([]string, error) {
+	// Find all forward slashes which aren't escaped
+	r, err := regexp.Compile(`[^\\](/)`)
+	if err != nil {
+		return nil, err
+	}
+	indices := r.FindAllStringIndex(fullPath, -1)
+
+	var start int
+	titles := []string{}
+	for _, i := range indices {
+		titles = append(titles, fullPath[start:i[0]+1])
+		start = i[0] + 2
+	}
+
+	titles = append(titles, fullPath[start:])
+	return titles, nil
 }

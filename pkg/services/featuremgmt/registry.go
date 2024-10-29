@@ -188,15 +188,6 @@ var (
 			Owner:       hostedGrafanaTeam,
 		},
 		{
-			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
-			// can afford the breaking change, or we've detemined no one else is relying on it
-			Name:        "topnav",
-			Description: "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
-			Stage:       FeatureStageDeprecated,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -430,11 +421,10 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:         "pluginsFrontendSandbox",
-			Description:  "Enables the plugins frontend sandbox",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
+			Name:        "pluginsFrontendSandbox",
+			Description: "Enables the plugins frontend sandbox",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:         "frontendSandboxMonitorOnly",
@@ -743,6 +733,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:            "kubernetesDashboardsAPI",
+			Description:     "Use the kubernetes API in the backend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:        "kubernetesFolders",
@@ -1063,6 +1060,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "onPremToCloudMigrationsAlerts",
+			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
@@ -1250,10 +1253,11 @@ var (
 		},
 		{
 			Name:              "dashboardRestore",
-			Description:       "Enables deleted dashboard restore feature (backend only)",
+			Description:       "Enables deleted dashboard restore feature",
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
+			Expression:        "false", // enabled by default
 		},
 		{
 			Name:         "datasourceProxyDisableRBAC",
@@ -1363,13 +1367,6 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "dashboardRestoreUI",
-			Description: "Enables the frontend to be able to restore a recently deleted dashboard",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false", // enabled by default
-		},
-		{
 			Name:        "cloudWatchRoundUpEndTime",
 			Description: "Round up end time for metric queries to the next minute to avoid missing data",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1458,8 +1455,8 @@ var (
 			Owner:        growthAndOnboarding,
 		},
 		{
-			Name:              "appPlatformAccessTokens",
-			Description:       "Enables the use of access tokens for the App Platform",
+			Name:              "appPlatformGrpcClientAuth",
+			Description:       "Enables the gRPC client to authenticate with the App Platform by using ID & access tokens",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
@@ -1518,6 +1515,12 @@ var (
 			Description: "Enables SRI checks for plugin assets",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:        "unifiedStorageBigObjectsSupport",
+			Description: "Enables to save big objects in blob storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 	}
 )

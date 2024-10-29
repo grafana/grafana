@@ -3,7 +3,7 @@ import { Route } from 'react-router';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { makeGrafanaAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
+import { makeAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
 
@@ -97,14 +97,18 @@ describe('alerting API server disabled', () => {
     );
 
     const testBody = await testRequest?.json();
-    const saveBody = await saveRequest?.json();
+    const fullSaveBody = await saveRequest?.json();
+
+    // Only snapshot and check the receivers, as we don't want other tests to break this
+    // just because we added something new to the mock config
+    const saveBody = fullSaveBody.alertmanager_config.receivers;
 
     expect([testBody]).toMatchSnapshot();
     expect([saveBody]).toMatchSnapshot();
   });
 
   it('does not redirect when creating contact point and API errors', async () => {
-    makeGrafanaAlertmanagerConfigUpdateFail();
+    makeAlertmanagerConfigUpdateFail();
     const { user } = renderForm();
 
     await user.type(await ui.inputs.name.find(), 'receiver that should fail');

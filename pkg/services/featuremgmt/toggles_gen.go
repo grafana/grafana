@@ -99,10 +99,6 @@ const (
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
-	// FlagTopnav
-	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
-	FlagTopnav = "topnav"
-
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -399,6 +395,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesDashboardsAPI
+	// Use the kubernetes API in the backend for dashboards
+	FlagKubernetesDashboardsAPI = "kubernetesDashboardsAPI"
+
 	// FlagKubernetesFolders
 	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
 	FlagKubernetesFolders = "kubernetesFolders"
@@ -567,6 +567,10 @@ const (
 	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem dashboards, folders, and data source configurations to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
+	// FlagOnPremToCloudMigrationsAlerts
+	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
@@ -664,7 +668,7 @@ const (
 	FlagNotificationBanner = "notificationBanner"
 
 	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature (backend only)
+	// Enables deleted dashboard restore feature
 	FlagDashboardRestore = "dashboardRestore"
 
 	// FlagDatasourceProxyDisableRBAC
@@ -723,10 +727,6 @@ const (
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
 
-	// FlagDashboardRestoreUI
-	// Enables the frontend to be able to restore a recently deleted dashboard
-	FlagDashboardRestoreUI = "dashboardRestoreUI"
-
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
@@ -779,9 +779,9 @@ const (
 	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
 	FlagHomeSetupGuide = "homeSetupGuide"
 
-	// FlagAppPlatformAccessTokens
-	// Enables the use of access tokens for the App Platform
-	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+	// FlagAppPlatformGrpcClientAuth
+	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
+	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time
@@ -814,4 +814,8 @@ const (
 	// FlagPluginsSriChecks
 	// Enables SRI checks for plugin assets
 	FlagPluginsSriChecks = "pluginsSriChecks"
+
+	// FlagUnifiedStorageBigObjectsSupport
+	// Enables to save big objects in blob storage
+	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
 )

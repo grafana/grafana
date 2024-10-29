@@ -39,7 +39,7 @@ const defaultProps: Props = {
     orgId: 0,
   },
   teams: [
-    getMockTeam(0, {
+    getMockTeam(0, 'aaaaaa', {
       name: 'Team One',
       email: 'team.one@test.com',
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',

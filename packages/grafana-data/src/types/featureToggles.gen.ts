@@ -41,7 +41,6 @@ export interface FeatureToggles {
   vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  topnav?: boolean;
   grpcServer?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -116,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesDashboardsAPI?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -158,6 +158,7 @@ export interface FeatureToggles {
   newFolderPicker?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  onPremToCloudMigrationsAlerts?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   sqlExpressions?: boolean;
@@ -197,7 +198,6 @@ export interface FeatureToggles {
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
-  dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
@@ -211,7 +211,7 @@ export interface FeatureToggles {
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
   homeSetupGuide?: boolean;
-  appPlatformAccessTokens?: boolean;
+  appPlatformGrpcClientAuth?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   alertingQueryAndExpressionsStepMode?: boolean;
@@ -220,4 +220,5 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   pluginsSriChecks?: boolean;
+  unifiedStorageBigObjectsSupport?: boolean;
 }
