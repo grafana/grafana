@@ -1,5 +1,3 @@
-import 'core-js/stable/structured-clone';
-
 import { NotifierDTO } from 'app/types';
 
 import { Receiver } from '../../../../plugins/datasource/alertmanager/types';

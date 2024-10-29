@@ -12,7 +12,6 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
-import 'core-js/stable/structured-clone';
 import ContactPoints from './components/contact-points/ContactPoints';
 import EditContactPoint from './components/contact-points/EditContactPoint';
 import NewReceiverView from './components/receivers/NewReceiverView';
