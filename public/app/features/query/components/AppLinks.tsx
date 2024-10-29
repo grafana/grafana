@@ -9,7 +9,6 @@ import { usePluginLinks } from '@grafana/runtime';
 import { Dropdown, LinkButton, ToolbarButton } from '@grafana/ui';
 import { useStyles2, Tooltip } from '@grafana/ui/';
 
-import { useGrafana } from '../../../core/context/GrafanaContext';
 import { Trans } from '../../../core/internationalization';
 import { ToolbarExtensionPointMenu } from '../../explore/extensions/ToolbarExtensionPointMenu';
 import { getPluginMeta } from '../../plugins/admin/api';
@@ -92,7 +91,7 @@ export const AppLinks = ({ query }: Props) => {
     return (
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
         <ToolbarButton aria-label="Go to" variant="canvas" isOpen={isOpen}>
-          Go to
+          <Trans i18nKey="query-operation.header.go-to">Go to</Trans>
         </ToolbarButton>
       </Dropdown>
     );
