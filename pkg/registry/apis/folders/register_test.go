@@ -13,10 +13,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
@@ -129,7 +131,7 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 		err   error
 	}{
 		{
-			name: "should return error when nameis invalid",
+			name: "should return error when name is invalid",
 			input: input{
 				obj: &unstructured.Unstructured{
 					Object: map[string]interface{}{
@@ -140,15 +142,44 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 			},
 			err: dashboards.ErrFolderInvalidUID,
 		},
+		{
+			name: "should return error when creating a bested folder higher than max depth",
+			input: input{
+				obj: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"meta": map[string]interface{}{"name": "valid-name", "grafana.app/folder": 1},
+					},
+				},
+				name: folderValidationRules.invalidNames[0],
+			},
+			err: dashboards.ErrFolderInvalidUID,
+		},
+		{
+			name: "should return no error if every validation passes",
+			input: input{
+				obj: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"meta": map[string]interface{}{"name": "valid-name"},
+					},
+				},
+				name: "valid-name",
+			},
+		},
 	}
+
+	s := (rest.Storage)(nil)
+	m := &mock.Mock{}
+	us := storageMock{m, s}
 
 	b := &FolderAPIBuilder{
 		gv:            resourceInfo.GroupVersion(),
 		features:      nil,
 		namespacer:    func(_ int64) string { return "123" },
 		folderSvc:     foldertest.NewFakeService(),
+		storage:       us,
 		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures("nestedFolders"), zanzana.NewNoopClient()),
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
