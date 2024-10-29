@@ -2,7 +2,9 @@ package generic
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/fields"
@@ -63,6 +65,21 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 }
 
 func (g *genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	u, err := identity.GetRequester(ctx)
+	if err != nil {
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("failed to get requester: %v", err))}
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return field.ErrorList{field.InternalError(nil, fmt.Errorf("failed to get meta accessor: %v", err))}
+	}
+	if u.GetUID() != meta.GetName() {
+		return field.ErrorList{field.Forbidden(field.NewPath("metadata").Child("name"), "name must match user id")}
+	}
+
+	fmt.Println(u.GetUID())
+
 	return field.ErrorList{}
 }
 
