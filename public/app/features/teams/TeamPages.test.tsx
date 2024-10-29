@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { render } from 'test/test-utils';
 
 import TeamPages from './TeamPages';
@@ -56,8 +56,8 @@ jest.mock('./TeamGroupSync', () => {
   return () => <div>Team group sync</div>;
 });
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: jest.fn(),
 }));
 

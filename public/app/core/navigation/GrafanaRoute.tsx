@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useLayoutEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom-v5-compat';
+import { Navigate, useLocation } from 'react-router-dom';
 // @ts-ignore
 import Drop from 'tether-drop';
 
@@ -40,7 +40,7 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     cleanupDOM();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Updated', props);
+    navigationLogger('GrafanaRoute', false, 'Updated', props.route);
   });
 
   navigationLogger('GrafanaRoute', false, 'Rendered', props.route);

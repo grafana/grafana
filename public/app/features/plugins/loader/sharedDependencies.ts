@@ -105,7 +105,7 @@ export const sharedDependenciesMap = {
   //
   // Plugins that would like update to "react-router-dom@v6" will need to bundle "react-router-dom",
   // however they cannot bundle "react-router" - this would mean that we have two instances of "react-router"
-  // in the app, which would casue issues. As the "react-router-dom-v5-compat" package re-exports everything from "react-router-dom@v6"
+  // in the app, which would cause issues. As the "react-router-dom-v5-compat" package re-exports everything from "react-router-dom@v6"
   // which then re-exports everything from "react-router@v6", we are in the lucky state to be able to expose a compatible v6 version of the router to plugins by
   // just exposing "react-router-dom-v5-compat".
   //

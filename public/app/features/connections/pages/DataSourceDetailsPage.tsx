@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { Alert, Badge } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';

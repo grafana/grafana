@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';

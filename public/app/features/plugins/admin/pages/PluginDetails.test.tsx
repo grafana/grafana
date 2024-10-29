@@ -1,5 +1,5 @@
 import { getDefaultNormalizer, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
 import { render } from 'test/test-utils';
 
 import {

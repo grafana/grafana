@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { Routes, Route } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
 import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -22,8 +22,8 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: () => ({ accessToken: 'an-access-token' }),
 }));
 

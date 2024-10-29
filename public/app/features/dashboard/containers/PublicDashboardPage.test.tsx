@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';

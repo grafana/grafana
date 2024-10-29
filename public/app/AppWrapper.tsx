@@ -1,7 +1,7 @@
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType, Fragment } from 'react';
 import { Provider } from 'react-redux';
-import { Route, Routes } from 'react-router-dom-v5-compat';
+import { Route, Routes } from 'react-router-dom';
 
 import {
   config,

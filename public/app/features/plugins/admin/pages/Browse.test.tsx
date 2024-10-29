@@ -1,8 +1,6 @@
-import { render, RenderResult, waitFor, within } from '@testing-library/react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, RenderResult, waitFor, within } from 'test/test-utils';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
@@ -27,13 +25,8 @@ const renderBrowse = (
   pluginsStateOverride?: ReducerState
 ): RenderResult => {
   const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
-  locationService.push(path);
 
-  return render(
-    <TestProvider store={store}>
-      <BrowsePage />
-    </TestProvider>
-  );
+  return render(<BrowsePage />, { store, historyOptions: { initialEntries: [path] } });
 };
 
 describe('Browse list of plugins', () => {

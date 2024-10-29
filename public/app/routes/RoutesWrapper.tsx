@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { ComponentType } from 'react';
+import { History } from 'history';
 // eslint-disable-next-line no-restricted-imports
-import { Router } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import { ComponentType, memo, useLayoutEffect, useState } from 'react';
+import { BrowserRouterProps, Router } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import {
@@ -18,7 +18,6 @@ import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
-import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
 
 import { createLocationStorageHistory } from './utils';
@@ -30,32 +29,52 @@ type RouterWrapperProps = {
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
-    <Router history={locationService.getHistory()}>
+    <BrowserRouter history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
-        <CompatRouter>
-          <QueriesDrawerContextProvider>
-            <ModalsContextProvider>
-              <AppChrome>
-                <AngularRoot />
-                <AppNotificationList />
-                <Stack gap={0} grow={1} direction="column">
-                  {props.pageBanners.map((Banner, index) => (
-                    <Banner key={index.toString()} />
-                  ))}
-                  {props.routes}
-                </Stack>
-                {props.bodyRenderHooks.map((Hook, index) => (
-                  <Hook key={index.toString()} />
-                ))}
-              </AppChrome>
-              <ModalRoot />
-            </ModalsContextProvider>
-          </QueriesDrawerContextProvider>
-        </CompatRouter>
+        <ModalsContextProvider>
+          <AppChrome>
+            <AngularRoot />
+            <AppNotificationList />
+            <Stack gap={0} grow={1} direction="column">
+              {props.pageBanners.map((Banner, index) => (
+                <Banner key={index.toString()} />
+              ))}
+              {props.routes}
+            </Stack>
+            {props.bodyRenderHooks.map((Hook, index) => (
+              <Hook key={index.toString()} />
+            ))}
+          </AppChrome>
+          <ModalRoot />
+        </ModalsContextProvider>
       </LocationServiceProvider>
-    </Router>
+    </BrowserRouter>
   );
 }
+
+export interface CustomBrowserRouterProps extends Omit<BrowserRouterProps, 'window'> {
+  history: History;
+}
+
+export const BrowserRouter = memo(({ history, ...restProps }: CustomBrowserRouterProps) => {
+  const [state, setState] = useState({
+    action: history.action,
+    location: history.location,
+  });
+
+  useLayoutEffect(() => history.listen((location, action) => setState({ location, action })), [history]);
+
+  if (!state.location) {
+    return null;
+  }
+
+  return (
+    //@ts-expect-error TODO Update history version
+    <Router {...restProps} location={state.location} navigationType={state.action} navigator={history} />
+  );
+});
+
+BrowserRouter.displayName = 'BrowserRouter';
 
 /**
  * Renders both the main app tree and a secondary sidecar app tree to show 2 apps at the same time in a resizable split
@@ -104,25 +123,23 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
         <>
           <div {...splitterProps} />
           <div {...secondaryProps}>
-            <Router history={memoryLocationService.getHistory()}>
+            <BrowserRouter history={locationService.getHistory()}>
               <LocationServiceProvider service={memoryLocationService}>
-                <CompatRouter>
-                  <GlobalStyles />
-                  <div className={styles.secondAppWrapper}>
-                    <div className={styles.secondAppToolbar}>
-                      <IconButton
-                        size={'lg'}
-                        style={{ margin: '8px' }}
-                        name={'times'}
-                        aria-label={'close'}
-                        onClick={() => closeApp(activePluginId)}
-                      />
-                    </div>
-                    <AppRootPage pluginId={activePluginId} />
+                <GlobalStyles />
+                <div className={styles.secondAppWrapper}>
+                  <div className={styles.secondAppToolbar}>
+                    <IconButton
+                      size={'lg'}
+                      style={{ margin: '8px' }}
+                      name={'times'}
+                      aria-label={'close'}
+                      onClick={() => closeApp(activePluginId)}
+                    />
                   </div>
-                </CompatRouter>
+                  <AppRootPage pluginId={activePluginId} />
+                </div>
               </LocationServiceProvider>
-            </Router>
+            </BrowserRouter>
           </div>
         </>
       )}

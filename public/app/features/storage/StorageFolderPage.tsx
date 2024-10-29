@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { DataFrame, NavModel, NavModelItem } from '@grafana/data';

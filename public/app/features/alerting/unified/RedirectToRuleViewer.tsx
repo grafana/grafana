@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Navigate } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';

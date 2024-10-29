@@ -1,6 +1,6 @@
 // Libraries
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';

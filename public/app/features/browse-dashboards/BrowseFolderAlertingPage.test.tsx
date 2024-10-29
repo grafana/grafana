@@ -1,7 +1,7 @@
 import { render as rtlRender, screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/core';
@@ -23,8 +23,8 @@ jest.mock('@grafana/runtime', () => ({
     unifiedAlertingEnabled: true,
   },
 }));
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
   useParams: jest.fn(),
 }));
 const mockFolderName = 'myFolder';

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Navigate } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
 import { useGetMuteTiming } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
