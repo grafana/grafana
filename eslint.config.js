@@ -44,6 +44,7 @@ module.exports = [
   grafanaConfig,
   {
     name: 'react/jsx-runtime',
+    // @ts-ignore - not sure why but flat config is typed as a maybe?
     ...reactPlugin.configs.flat['jsx-runtime'],
   },
   {
@@ -76,6 +77,7 @@ module.exports = [
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
       '@emotion/jsx-import': 'error',
+      '@emotion/syntax-preference': [2, 'object'],
       'lodash/import-scope': [2, 'member'],
       'jest/no-focused-tests': 'error',
       'import/order': [
@@ -175,7 +177,6 @@ module.exports = [
     files: ['packages/grafana-ui/**/*.{ts,tsx}'],
     ignores: ['packages/grafana-ui/**/*.{test,story}.{ts,tsx}'],
     rules: {
-      '@emotion/syntax-preference': [2, 'object'],
       'no-restricted-imports': [
         'error',
         {
