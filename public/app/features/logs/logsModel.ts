@@ -683,7 +683,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           observer.next({
             state: LoadingState.Error,
             error,
-            data: [],
+            data: dataQueryResponse.data,
           });
           observer.error(error);
         } else {
