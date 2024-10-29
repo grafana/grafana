@@ -10,7 +10,7 @@
     "@fingerprintjs/fingerprintjs", // we don't want to bump to v4 due to licensing changes
     "@swc/core", // versions ~1.4.5 contain multiple bugs related to baseUrl resolution breaking builds.
     "slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
-    "slate-react",  // we don't want to continue using this on the long run, use Monaco editor instead of Slate
+    "slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
   ],
