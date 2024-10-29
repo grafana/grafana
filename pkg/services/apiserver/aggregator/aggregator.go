@@ -55,7 +55,10 @@ import (
 )
 
 // making sure we only register metrics once into legacy registry
-var registerIntoLegacyRegistryOnce sync.Once
+var (
+	registerAvailabilityMetricsIntoLegacyRegistryOnce sync.Once
+	registerRegisteredMetricsIntoLegacyRegistryOnce   sync.Once
+)
 
 func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
@@ -263,11 +266,17 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
-	metrics := newAvailabilityMetrics()
+	availableMetrics := newAvailabilityMetrics()
+	registeredMetrics := newRegisteredMetrics()
 
 	// create shared (remote and local) availability metrics
 	// TODO: decouple from legacyregistry
-	registerIntoLegacyRegistryOnce.Do(func() { err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	registerAvailabilityMetricsIntoLegacyRegistryOnce.Do(func() { err = availableMetrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	if err != nil {
+		return nil, err
+	}
+
+	registerRegisteredMetricsIntoLegacyRegistryOnce.Do(func() { err = registeredMetrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +288,8 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
-		metrics,
+		availableMetrics,
+		registeredMetrics,
 	)
 	if err != nil {
 		return nil, err

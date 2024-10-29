@@ -3,6 +3,9 @@
 // Provenance-includes-license: Apache-2.0
 // Provenance-includes-copyright: The Kubernetes Authors.
 
+// The following is a slightly modified version of upstream's metrics. We are more interested in measuring success.
+// Hence, the unavailable metrics have been adjusted to produce available metrics instead.
+
 package aggregator
 
 import (
@@ -22,9 +25,9 @@ import (
  * the metric stability policy.
  */
 var (
-	unavailableGaugeDesc = metrics.NewDesc(
-		"st_aggregator_unavailable_apiservice",
-		"Gauge of Grafana APIServices which are marked as unavailable broken down by APIService name.",
+	availableGaugeDesc = metrics.NewDesc(
+		"st_aggregator_available_apiservice",
+		"Gauge of Grafana APIServices which are marked as available broken down by APIService name.",
 		[]string{"name"},
 		nil,
 		metrics.ALPHA,
@@ -32,22 +35,22 @@ var (
 	)
 )
 
-type Metrics struct {
-	unavailableCounter *metrics.CounterVec
+type AvailabilityMetrics struct {
+	availableCounter *metrics.CounterVec
 
 	*availabilityCollector
 }
 
-func newAvailabilityMetrics() *Metrics {
-	return &Metrics{
-		unavailableCounter: metrics.NewCounterVec(
+// These metrics are registered in the main kube-aggregator package as well, prefixing with single-tenant (ST) to avoid
+// "duplicate metrics collector registration attempted" in https://github.com/prometheus/client_golang
+// a more descriptive prefix is already added for apiserver metrics during scraping in cloud and didn't want
+// to double a word by using a word such as "grafana" here
+func newAvailabilityMetrics() *AvailabilityMetrics {
+	return &AvailabilityMetrics{
+		availableCounter: metrics.NewCounterVec(
 			&metrics.CounterOpts{
-				// These metrics are registered in the main kube-aggregator package as well, prefixing with single-tenant (ST) to avoid
-				// "duplicate metrics collector registration attempted" in https://github.com/prometheus/client_golang
-				// a more descriptive prefix is already added for apiserver metrics during scraping in cloud and didn't want
-				// to double a word by using a word such as "grafana" here
-				Name:           "st_aggregator_unavailable_apiservice_total",
-				Help:           "Counter of Grafana APIServices which are marked as unavailable broken down by APIService name and reason.",
+				Name:           "st_aggregator_available_apiservice_total",
+				Help:           "Counter of Grafana APIServices which are marked as available broken down by APIService name and reason.",
 				StabilityLevel: metrics.ALPHA,
 			},
 			[]string{"name", "reason"},
@@ -57,11 +60,11 @@ func newAvailabilityMetrics() *Metrics {
 }
 
 // Register registers apiservice availability metrics.
-func (m *Metrics) Register(
+func (m *AvailabilityMetrics) Register(
 	registrationFunc func(metrics.Registerable) error,
 	customRegistrationFunc func(metrics.StableCollector) error,
 ) error {
-	err := registrationFunc(m.unavailableCounter)
+	err := registrationFunc(m.availableCounter)
 	if err != nil {
 		return err
 	}
@@ -74,9 +77,9 @@ func (m *Metrics) Register(
 	return nil
 }
 
-// UnavailableCounter returns a counter to track apiservices marked as unavailable.
-func (m *Metrics) UnavailableCounter(apiServiceName, reason string) metrics.CounterMetric {
-	return m.unavailableCounter.WithLabelValues(apiServiceName, reason)
+// AvailableCounter returns a counter to track apiservices marked as available.
+func (m *AvailabilityMetrics) AvailableCounter(apiServiceName, reason string) metrics.CounterMetric {
+	return m.availableCounter.WithLabelValues(apiServiceName, reason)
 }
 
 type availabilityCollector struct {
@@ -86,8 +89,8 @@ type availabilityCollector struct {
 	availabilities map[string]bool
 }
 
-// SetUnavailableGauge set the metrics so that it reflect the current state based on availability of the given service
-func (m *Metrics) SetUnavailableGauge(newAPIService *apiregistrationv1.APIService) {
+// SetAvailableGauge set the metrics so that it reflect the current state based on availability of the given service
+func (m *AvailabilityMetrics) SetAvailableGauge(newAPIService *apiregistrationv1.APIService) {
 	if apiregistrationv1apihelper.IsAPIServiceConditionTrue(newAPIService, apiregistrationv1.Available) {
 		m.SetAPIServiceAvailable(newAPIService.Name)
 		return
@@ -96,18 +99,18 @@ func (m *Metrics) SetUnavailableGauge(newAPIService *apiregistrationv1.APIServic
 	m.SetAPIServiceUnavailable(newAPIService.Name)
 }
 
-// SetUnavailableCounter increases the metrics only if the given service is unavailable and its APIServiceCondition has changed
-func (m *Metrics) SetUnavailableCounter(originalAPIService, newAPIService *apiregistrationv1.APIService) {
+// SetAvailableCounter increases the metrics only if the given service is available and its APIServiceCondition has changed
+func (m *AvailabilityMetrics) SetAvailableCounter(originalAPIService, newAPIService *apiregistrationv1.APIService) {
 	wasAvailable := apiregistrationv1apihelper.IsAPIServiceConditionTrue(originalAPIService, apiregistrationv1.Available)
 	isAvailable := apiregistrationv1apihelper.IsAPIServiceConditionTrue(newAPIService, apiregistrationv1.Available)
 	statusChanged := isAvailable != wasAvailable
 
-	if statusChanged && !isAvailable {
+	if statusChanged && isAvailable {
 		reason := "UnknownReason"
 		if newCondition := apiregistrationv1apihelper.GetAPIServiceConditionByType(newAPIService, apiregistrationv1.Available); newCondition != nil {
 			reason = newCondition.Reason
 		}
-		m.UnavailableCounter(newAPIService.Name, reason).Inc()
+		m.AvailableCounter(newAPIService.Name, reason).Inc()
 	}
 }
 
@@ -122,7 +125,7 @@ func newAvailabilityCollector() *availabilityCollector {
 
 // DescribeWithStability implements the metrics.StableCollector interface.
 func (c *availabilityCollector) DescribeWithStability(ch chan<- *metrics.Desc) {
-	ch <- unavailableGaugeDesc
+	ch <- availableGaugeDesc
 }
 
 // CollectWithStability implements the metrics.StableCollector interface.
@@ -131,12 +134,12 @@ func (c *availabilityCollector) CollectWithStability(ch chan<- metrics.Metric) {
 	defer c.mtx.RUnlock()
 
 	for apiServiceName, isAvailable := range c.availabilities {
-		gaugeValue := 1.0
+		gaugeValue := 0.0
 		if isAvailable {
-			gaugeValue = 0.0
+			gaugeValue = 1.0
 		}
 		ch <- metrics.NewLazyConstMetric(
-			unavailableGaugeDesc,
+			availableGaugeDesc,
 			metrics.GaugeValue,
 			gaugeValue,
 			apiServiceName,
@@ -149,7 +152,7 @@ func (c *availabilityCollector) SetAPIServiceAvailable(apiServiceKey string) {
 	c.setAPIServiceAvailability(apiServiceKey, true)
 }
 
-// SetAPIServiceUnavailable sets the given apiservice availability gauge to unavailable.
+// SetAPIServiceavailable sets the given apiservice availability gauge to available.
 func (c *availabilityCollector) SetAPIServiceUnavailable(apiServiceKey string) {
 	c.setAPIServiceAvailability(apiServiceKey, false)
 }

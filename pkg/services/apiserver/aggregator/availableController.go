@@ -67,8 +67,9 @@ type AvailableConditionController struct {
 	// map from service-namespace -> service-name -> apiservice names
 	cache map[string]map[string][]string
 	// this lock protects operations on the above cache
-	cacheLock sync.RWMutex
-	metrics   *Metrics
+	cacheLock           sync.RWMutex
+	availabilityMetrics *AvailabilityMetrics
+	registeredMetrics   *RegisteredMetrics
 }
 
 // NewAvailableConditionController returns a new AvailableConditionController.
@@ -79,7 +80,8 @@ func NewAvailableConditionController(
 	proxyTransportDial *transport.DialHolder,
 	proxyCurrentCertKeyContent certKeyFunc,
 	serviceResolver ServiceResolver,
-	metrics *Metrics,
+	availabilityMetrics *AvailabilityMetrics,
+	registeredMetrics *RegisteredMetrics,
 ) (*AvailableConditionController, error) {
 	c := &AvailableConditionController{
 		apiServiceClient:   apiServiceClient,
@@ -95,7 +97,8 @@ func NewAvailableConditionController(
 		),
 		proxyTransportDial:         proxyTransportDial,
 		proxyCurrentCertKeyContent: proxyCurrentCertKeyContent,
-		metrics:                    metrics,
+		availabilityMetrics:        availabilityMetrics,
+		registeredMetrics:          registeredMetrics,
 	}
 
 	// resync on this one because it is low cardinality and rechecking the actual discovery
@@ -126,7 +129,8 @@ func NewAvailableConditionController(
 func (c *AvailableConditionController) sync(key string) error {
 	originalAPIService, err := c.apiServiceLister.Get(key)
 	if apierrors.IsNotFound(err) {
-		c.metrics.ForgetAPIService(key)
+		c.availabilityMetrics.ForgetAPIService(key)
+		c.registeredMetrics.ForgetAPIService(key)
 		return nil
 	}
 	if err != nil {
@@ -289,7 +293,8 @@ func (c *AvailableConditionController) sync(key string) error {
 // apiservices. Doing that means we don't want to quickly issue no-op updates.
 func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService, newAPIService *apiregistrationv1.APIService) (*apiregistrationv1.APIService, error) {
 	// update this metric on every sync operation to reflect the actual state
-	c.metrics.SetUnavailableGauge(newAPIService)
+	c.availabilityMetrics.SetAvailableGauge(newAPIService)
+	c.registeredMetrics.SetRegisteredGauge(newAPIService)
 
 	if equality.Semantic.DeepEqual(originalAPIService.Status, newAPIService.Status) {
 		return newAPIService, nil
@@ -316,7 +321,7 @@ func (c *AvailableConditionController) updateAPIServiceStatus(originalAPIService
 		return nil, err
 	}
 
-	c.metrics.SetUnavailableCounter(originalAPIService, newAPIService)
+	c.availabilityMetrics.SetAvailableCounter(originalAPIService, newAPIService)
 	return newAPIService, nil
 }
 
@@ -375,6 +380,9 @@ func (c *AvailableConditionController) addAPIService(obj interface{}) {
 		c.rebuildAPIServiceCache()
 	}
 	c.queue.Add(castObj.Name)
+
+	// Don't bother with doing this in sync() func because its only needed for add events
+	c.registeredMetrics.SetRegisteredCounter(castObj)
 }
 
 func (c *AvailableConditionController) updateAPIService(oldObj, newObj interface{}) {
