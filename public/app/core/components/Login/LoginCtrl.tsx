@@ -137,7 +137,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
 
     getBackendSrv()
-      .post<AuthNRedirectDTO>('/login/passwordless/start', formModel, { showErrorAlert: false })
+      .post<AuthNRedirectDTO>('/api/login/passwordless/start', formModel, { showErrorAlert: false })
       .then((result) => {
         window.location.assign(result.URL);
         return;
@@ -158,7 +158,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
 
     getBackendSrv()
-      .post<LoginDTO>('/login/passwordless/authenticate', formModel, { showErrorAlert: false })
+      .post<LoginDTO>('/api/login/passwordless/authenticate', formModel, { showErrorAlert: false })
       .then((result) => {
         this.result = result;
         this.toGrafana();
