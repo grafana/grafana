@@ -14,7 +14,7 @@ type Service interface {
 	CreateServiceAccount(context.Context, *CreateUserCommand) (*User, error)
 	Delete(context.Context, *DeleteUserCommand) error
 	GetByID(context.Context, *GetUserByIDQuery) (*User, error)
-	// GetByUID returns a user by UID. This also includes service accounts (identity use only). If org is ommitted, global search is performed.
+	// GetByUID returns a user by UID. This also includes service accounts (identity use only)
 	GetByUID(context.Context, *GetUserByUIDQuery) (*User, error)
 	GetByLogin(context.Context, *GetUserByLoginQuery) (*User, error)
 	GetByEmail(context.Context, *GetUserByEmailQuery) (*User, error)
@@ -38,8 +38,7 @@ func UIDToIDHandler(userService Service) func(ctx context.Context, orgID int64, 
 			return resourceID, nil
 		}
 		user, err := userService.GetByUID(ctx, &GetUserByUIDQuery{
-			OrgID: orgID,
-			UID:   resourceID,
+			UID: resourceID,
 		})
 		return strconv.FormatInt(user.ID, 10), err
 	}

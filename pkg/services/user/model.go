@@ -213,8 +213,7 @@ type GetUserByIDQuery struct {
 }
 
 type GetUserByUIDQuery struct {
-	OrgID int64
-	UID   string
+	UID string
 }
 
 type StartVerifyEmailCommand struct {

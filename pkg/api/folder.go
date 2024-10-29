@@ -935,8 +935,7 @@ func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, 
 	defer span.End()
 
 	query := user.GetUserByUIDQuery{
-		UID:   userUID,
-		OrgID: orgID,
+		UID: userUID,
 	}
 	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {
