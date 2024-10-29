@@ -3,13 +3,7 @@ import { RuleTester } from 'eslint';
 import noAriaLabelE2ESelector from '../rules/no-aria-label-e2e-selectors.cjs';
 
 // TODO: `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
-if (!global.structuredClone) {
-  global.structuredClone = function structuredClone(objectToClone) {
-    const stringified = JSON.stringify(objectToClone);
-    const parsed = JSON.parse(stringified);
-    return parsed;
-  };
-}
+import 'core-js/stable/structured-clone';
 
 RuleTester.setDefaultConfig({
   languageOptions: {
