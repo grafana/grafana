@@ -13,12 +13,12 @@ import (
 
 func TestBuilderAdmission_Validate(t *testing.T) {
 	gvk := schema.GroupVersionKind{
-		Group:   "testGroup",
+		Group:   "example.grafana.app",
 		Version: "v1",
-		Kind:    "testKind",
+		Kind:    "Foo",
 	}
-	gvr := gvk.GroupVersion().WithResource("testkinds")
-	defaultAttributes := admission.NewAttributesRecord(nil, nil, gvk, "", "", gvr, "", admission.Create, nil, false, nil)
+	gvr := gvk.GroupVersion().WithResource("foos")
+	defaultAttributes := admission.NewAttributesRecord(nil, nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil)
 	tests := []struct {
 		name       string
 		validators map[schema.GroupVersion]builder.APIGroupValidation
@@ -28,7 +28,7 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 		{
 			name: "validator exists - forbidden",
 			validators: map[schema.GroupVersion]builder.APIGroupValidation{
-				{Group: "testGroup", Version: "v1"}: &mockValidator{
+				gvk.GroupVersion(): &mockValidator{
 					validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 						return admission.NewForbidden(a, errors.New("test error"))
 					},
@@ -40,7 +40,7 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 		{
 			name: "validator exists - allowed",
 			validators: map[schema.GroupVersion]builder.APIGroupValidation{
-				{Group: "testGroup", Version: "v1"}: &mockValidator{
+				gvk.GroupVersion(): &mockValidator{
 					validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 						return nil
 					},
@@ -50,16 +50,32 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name: "validator does not exist",
+			name:       "validator does not exist",
+			validators: map[schema.GroupVersion]builder.APIGroupValidation{},
+			attributes: defaultAttributes,
+			wantErr:    false,
+		},
+		{
+			name: "multiple validators",
 			validators: map[schema.GroupVersion]builder.APIGroupValidation{
-				{Group: "testGroup", Version: "v1"}: &mockValidator{
+				{Group: "example.grafana.app", Version: "v1beta"}: &mockValidator{
+					validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+						return nil
+					},
+				},
+				gvk.GroupVersion(): &mockValidator{
+					validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+						return admission.NewForbidden(a, errors.New("test error"))
+					},
+				},
+				{Group: "example.grafana.app", Version: "v2"}: &mockValidator{
 					validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 						return nil
 					},
 				},
 			},
 			attributes: defaultAttributes,
-			wantErr:    false,
+			wantErr:    true,
 		},
 	}
 
@@ -74,6 +90,61 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewAdmissionFromBuilders(t *testing.T) {
+	gvk := schema.GroupVersionKind{
+		Group:   "example.grafana.app",
+		Version: "v1",
+		Kind:    "Foo",
+	}
+	gvr := gvk.GroupVersion().WithResource("foos")
+	defaultAttributes := admission.NewAttributesRecord(nil, nil, gvk, "default", "foo", gvr, "", admission.Create, nil, false, nil)
+
+	builders := []builder.APIGroupBuilder{
+		&mockBuilder{
+			groupVersion: schema.GroupVersion{Group: "example.grafana.app", Version: "v1beta"},
+			validator: &mockValidator{
+				validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+					return nil
+				},
+			},
+		},
+		&mockBuilder{
+			groupVersion: gvk.GroupVersion(),
+			validator: &mockValidator{
+				validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+					return admission.NewForbidden(a, errors.New("test error"))
+				},
+			},
+		},
+		&mockBuilder{
+			groupVersion: schema.GroupVersion{Group: "example.grafana.app", Version: "v2"},
+			validator: &mockValidator{
+				validateFunc: func(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+					return nil
+				},
+			},
+		},
+	}
+
+	a := builder.NewAdmissionFromBuilders(builders)
+	err := a.Validate(context.Background(), defaultAttributes, nil)
+	require.Error(t, err)
+}
+
+type mockBuilder struct {
+	builder.APIGroupBuilder
+	groupVersion schema.GroupVersion
+	validator    builder.APIGroupValidation
+}
+
+func (m *mockBuilder) GetGroupVersion() schema.GroupVersion {
+	return m.groupVersion
+}
+
+func (m *mockBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	return m.validator.Validate(ctx, a, o)
 }
 
 type mockValidator struct {
