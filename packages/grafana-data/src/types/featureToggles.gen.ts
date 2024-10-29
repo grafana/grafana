@@ -222,4 +222,5 @@ export interface FeatureToggles {
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
+  passwordlessMagicLinkAuthentication?: boolean;
 }

@@ -822,4 +822,8 @@ const (
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
+
+	// FlagPasswordlessMagicLinkAuthentication
+	// Enable passwordless login via magic link authentication
+	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
 )

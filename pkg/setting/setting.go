@@ -247,7 +247,7 @@ type Cfg struct {
 	IDResponseHeaderNamespaces    map[string]struct{}
 	ManagedServiceAccountsEnabled bool
 
-	// Passwordless Auth
+	// Passwordless Magic Link Auth
 	PasswordlessEnabled        bool
 	PasswordlessCodeExpiration time.Duration
 

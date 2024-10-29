@@ -1528,6 +1528,15 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 		},
+		{
+			Name:              "passwordlessMagicLinkAuthentication",
+			Description:       "Enable passwordless login via magic link authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+		},
 	}
 )
 
