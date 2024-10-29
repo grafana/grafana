@@ -46,7 +46,7 @@ async function fetchRecordingRuleGroups(datasourceSettings: DataSourceInstanceSe
  * @param ds - The data source instance settings to associate with the extracted rules.
  * @returns An array of extracted recording rules, each associated with the provided data source.
  */
-export function extractRecordingRulesFromRuleGroups(
+function extractRecordingRulesFromRuleGroups(
   ruleGroups: RecordingRuleGroup[],
   ds: DataSourceInstanceSettings<DataSourceJsonData>
 ): ExtractedRecordingRule[] {
