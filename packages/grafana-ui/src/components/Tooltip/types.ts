@@ -7,6 +7,8 @@ export interface PopoverContentProps {
    * It will be removed in a future release.
    */
   updatePopperPosition?: () => void;
+
+  hidePopper?: () => void;
 }
 
 export type PopoverContent = string | React.ReactElement | ((props: PopoverContentProps) => JSX.Element);
