@@ -30,6 +30,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -618,13 +619,18 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 
 	return func(c *contextmodel.ReqContext) {
 		userID := web.Params(c.Req)[paramName]
-		id, err := handler(c.Req.Context(), c.OrgID, userID)
+		// search user globally. other
+		id, err := handler(c.Req.Context(), 0, userID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id
 			web.SetURLParams(c.Req, gotParams)
 		} else {
-			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
+			if errors.Is(err, user.ErrUserNotFound) {
+				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else {
+				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
+			}
 		}
 	}
 }

@@ -112,9 +112,12 @@ func (ss *sqlStore) GetByUID(ctx context.Context, orgId int64, uid string) (*use
 	var usr user.User
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table("user").
-			Where("org_id = ? AND uid = ?", orgId, uid).
-			Get(&usr)
+		query := sess.Table("user").Where("uid = ?", uid)
+		if orgId != 0 {
+			query = query.Where("org_id = ?", orgId)
+		}
+
+		has, err := query.Get(&usr)
 
 		if err != nil {
 			return err

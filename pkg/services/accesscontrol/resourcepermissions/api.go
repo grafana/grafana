@@ -1,6 +1,7 @@
 package resourcepermissions
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -448,18 +449,23 @@ func permissionSetResponse(cmd setPermissionCommand) response.Response {
 	return response.Success(message)
 }
 
+// middlewareUserUIDResolver resolves the user UID to ID and sets the ID in the URL params.
 func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {
 	handler := user.UIDToIDHandler(userService)
 
 	return func(c *contextmodel.ReqContext) {
 		userID := web.Params(c.Req)[paramName]
-		id, err := handler(c.Req.Context(), c.OrgID, userID)
+		id, err := handler(c.Req.Context(), 0, userID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id
 			web.SetURLParams(c.Req, gotParams)
 		} else {
-			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
+			if errors.Is(err, user.ErrUserNotFound) {
+				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else {
+				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
+			}
 		}
 	}
 }
