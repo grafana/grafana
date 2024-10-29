@@ -35,9 +35,10 @@ func TestIndexBatch(t *testing.T) {
 	ctx := context.Background()
 	startAll := time.Now()
 
+	ns := namespaces()
 	// simulate 10 List calls
 	for i := 0; i < 10; i++ {
-		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i))}
+		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
 		_, err = index.AddToBatches(ctx, list)
 		if err != nil {
@@ -47,7 +48,6 @@ func TestIndexBatch(t *testing.T) {
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
-	ns := namespaces()
 	// index all batches for each shard/tenant
 	err = index.IndexBatches(ctx, 1, ns)
 	if err != nil {
@@ -67,7 +67,7 @@ func TestIndexBatch(t *testing.T) {
 	assert.Equal(t, uint64(100000), total)
 }
 
-func loadTestItems(uid string) []*ResourceWrapper {
+func loadTestItems(uid string, tenants []string) []*ResourceWrapper {
 	resource := `{
 		"kind": "<kind>",
 		"title": "test",
@@ -90,7 +90,7 @@ func loadTestItems(uid string) []*ResourceWrapper {
 		kind := kinds[rand.Intn(len(kinds))]
 		res = strings.Replace(res, "<kind>", kind, 1)
 		// shuffle namespaces
-		ns := namespaces()[rand.Intn(len(namespaces()))]
+		ns := tenants[rand.Intn(len(tenants))]
 		res = strings.Replace(res, "<ns>", ns, 1)
 		items = append(items, &ResourceWrapper{Value: []byte(res)})
 	}
