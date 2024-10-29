@@ -3,7 +3,7 @@ import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -37,6 +37,7 @@ import { reportExploreMetrics } from '../interactions';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
+  RefreshMetricsEvent,
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
@@ -207,6 +208,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         this.buildLayout();
       })
     );
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      this._subs.add(
+        trail.subscribeToEvent(RefreshMetricsEvent, () => {
+          this._debounceRefreshMetricNames();
+        })
+      );
+    }
 
     this._debounceRefreshMetricNames();
   }

@@ -19,7 +19,7 @@ import { AppChromeUpdate } from '../../core/components/AppChrome/AppChromeUpdate
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
+import { HOME_ROUTE, RefreshMetricsEvent, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
@@ -134,7 +134,7 @@ export function getDataTrailsApp() {
               const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
 
               if (trail instanceof DataTrail) {
-                trail.checkDataSourceForOTelResources();
+                trail.publishEvent(new RefreshMetricsEvent());
               }
             },
           }),
