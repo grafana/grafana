@@ -141,7 +141,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const saveRecentTrail = () => {
       const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
       const hasFilters = filtersVariable instanceof AdHocFiltersVariable && filtersVariable.state.filters.length > 0;
-      return (this.state.metric || hasFilters) && getTrailStore().setRecentTrail(this);
+      if (this.state.metric || hasFilters) {
+        getTrailStore().setRecentTrail(this);
+      }
     };
     window.addEventListener('unload', saveRecentTrail);
 
