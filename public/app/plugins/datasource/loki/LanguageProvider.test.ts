@@ -299,12 +299,18 @@ describe('Language completion provider', () => {
       limit: 999,
     };
 
-    const options: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throw?: boolean } =
-      {
-        expr: '',
-        timeRange: mockTimeRange,
-        limit: 999,
-      };
+    const options: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    } = {
+      expr: '',
+      timeRange: mockTimeRange,
+      limit: 999,
+      throwError: true,
+    };
 
     const labelName = 'labelName';
 
@@ -320,7 +326,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchDetectedLabelValues(labelName, options);
 
-      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true);
       expect(labelValues).toEqual(expectedResponse);
     });
 
@@ -334,7 +340,7 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchDetectedLabelValues(labelName, options);
       expect(requestSpy).toHaveBeenCalledTimes(1);
-      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true);
       expect(nextLabelValues).toEqual(expectedResponse);
     });
 
@@ -343,7 +349,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchDetectedLabelValues('`\\"testkey', options);
 
-      expect(requestSpy).toHaveBeenCalledWith('detected_field/%60%5C%22testkey/values', expectedOptions);
+      expect(requestSpy).toHaveBeenCalledWith('detected_field/%60%5C%22testkey/values', expectedOptions, true);
     });
 
     it('should cache by label name', async () => {
