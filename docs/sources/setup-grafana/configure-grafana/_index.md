@@ -820,9 +820,8 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The `auto_assign_org_role` setting determines the default role assigned to new users
-in the main organization (if `auto_assign_org` setting is set to true).
-The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
+The `auto_assign_org_role` setting determines the default role assigned to new users in the main organization if `auto_assign_org` setting is set to `true`.
+You can set this to one of the following roles: (`Viewer` (default), `Admin`, `Editor`, and `None`). For example:
 
 `auto_assign_org_role = Viewer`
 
@@ -1511,7 +1510,7 @@ Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
 
 ### api_key
 
-If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
+If `custom_endpoint` required authentication, you can set the API key here. Only relevant for Grafana Javascript Agent provider.
 
 <hr>
 
