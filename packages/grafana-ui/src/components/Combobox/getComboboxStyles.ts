@@ -2,8 +2,6 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-const MAX_HEIGHT = 400;
-
 // We need a px font size to accurately measure the width of items.
 // This should be in sync with the body font size in the theme.
 export const MENU_ITEM_FONT_SIZE = 14;
@@ -20,7 +18,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
-      maxHeight: MAX_HEIGHT,
       overflowY: 'auto',
       position: 'relative',
     }),
