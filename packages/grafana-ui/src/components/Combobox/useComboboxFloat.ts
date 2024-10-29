@@ -9,10 +9,12 @@ import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
+const MAX_HEIGHT = 45 * 8.5; // approx 8.5 items
+
 /**
  * Used with Downshift to get the height of each item
  */
-export function estimateSize() {
+export function estimateOptionHeight() {
   return 45;
 }
 
@@ -23,7 +25,7 @@ export const useComboboxFloat = (
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
@@ -35,8 +37,11 @@ export const useComboboxFloat = (
       boundary: document.body,
     }),
     size({
-      apply({ availableWidth }) {
-        setPopoverMaxWidth(availableWidth);
+      apply({ availableWidth, availableHeight }) {
+        const width = Math.max(availableWidth - 16, 0);
+        const height = Math.min(Math.max(availableHeight - 16, estimateOptionHeight()), MAX_HEIGHT);
+
+        setPopoverMaxSize({ width, height });
       },
     }),
   ];
@@ -67,8 +72,10 @@ export const useComboboxFloat = (
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
-    maxWidth: popoverMaxWidth,
+    maxWidth: popoverMaxSize?.width,
     minWidth: inputRef.current?.offsetWidth,
+
+    maxHeight: popoverMaxSize?.height,
   };
 
   return { inputRef, floatingRef, floatStyles };
