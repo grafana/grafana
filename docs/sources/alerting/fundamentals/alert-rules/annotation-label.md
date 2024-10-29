@@ -26,11 +26,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
-  create-alerts-from-panel:
+  link-alert-rules-to-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-alerts-panels/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-alerts-panels/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-dashboards/
   templates:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
@@ -139,7 +139,7 @@ Annotations are displayed in Grafana and are included by default in notification
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `dashboardUId` and `panelId`: Link the alert to a dashboard and panel. These are automatically set when [creating an alert from panels](ref:create-alerts-from-panel).
+- `dashboardUId` and `panelId`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-dashboards).
 
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 
