@@ -54,7 +54,7 @@ func (i *Index) IndexBatches(ctx context.Context, maxSize int, tenants []string)
 	defer span.End()
 
 	group := errgroup.Group{}
-	group.SetLimit(500)
+	group.SetLimit(i.opts.Workers)
 	totalBatchesIndexed := 0
 
 	for _, tenant := range tenants {
@@ -206,6 +206,9 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
+	if latencySeconds > 5 {
+		i.log.Warn("high index latency", "latency", latencySeconds)
+	}
 	if IndexServerMetrics != nil {
 		IndexServerMetrics.IndexLatency.WithLabelValues(data.Key.Resource).Observe(latencySeconds)
 	}
