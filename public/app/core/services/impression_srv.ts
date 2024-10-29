@@ -30,6 +30,7 @@ export class ImpressionSrv {
   }
 
   private async convertToUIDs() {
+    return; // LOGZIO GRAFANA CHANGE :: DEV-46987 - disable convert recent visited dashboards to UID
     let impressions = this.getImpressions();
     const ids = filter(impressions, (el) => isNumber(el));
     if (!ids.length) {
