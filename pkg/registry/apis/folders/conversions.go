@@ -69,6 +69,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 	spec := item.Object["spec"].(map[string]any)
 	uid := item.GetName()
 	title := spec["title"].(string)
+	version := spec["version"].(int64)
 
 	meta, err := utils.MetaAccessor(&item)
 	if err != nil {
@@ -113,6 +114,7 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		// it can't be saved in the resource metadata because then everything must cascade
 		// nolint:staticcheck
 		FullpathUIDs: meta.GetFullPathUIDs(),
+		Version:      int(version),
 	}
 	return f
 }
@@ -179,6 +181,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		Spec: v0alpha1.Spec{
 			Title:       v.Title,
 			Description: v.Description,
+			Version:     v.Version,
 		},
 	}
 

@@ -884,7 +884,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		fDTO.AccessControl = acMetadata
 		fDTO.OrgID = f.OrgID
 		// #TODO version doesn't seem to be used--confirm or set it properly
-		fDTO.Version = 1
+		fDTO.Version = f.Version
 
 		return *fDTO, nil
 	}
