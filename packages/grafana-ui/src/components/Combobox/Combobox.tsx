@@ -150,7 +150,7 @@ export const Combobox = <T extends string | number>({
               setAsyncLoading(false);
             }
           });
-      }, 300),
+      }, 200),
     [loadOptions]
   );
 

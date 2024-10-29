@@ -191,9 +191,9 @@ describe('Combobox', () => {
       await user.click(input);
       await act(async () => {
         await user.keyboard('a');
-        jest.advanceTimersByTime(300); // Skip debounce
+        jest.advanceTimersByTime(200); // Skip debounce
         await user.keyboard('b');
-        jest.advanceTimersByTime(300); // Skip debounce
+        jest.advanceTimersByTime(200); // Skip debounce
         await user.keyboard('c');
         jest.advanceTimersByTime(500); // Resolve the second request, should be ignored
       });
@@ -250,7 +250,7 @@ describe('Combobox', () => {
       await act(async () => jest.advanceTimersByTime(10));
 
       await user.keyboard('c');
-      await act(async () => jest.advanceTimersByTime(300));
+      await act(async () => jest.advanceTimersByTime(200));
 
       expect(asyncSpy).toHaveBeenCalledTimes(1); // Called only for 'abc'
     });
