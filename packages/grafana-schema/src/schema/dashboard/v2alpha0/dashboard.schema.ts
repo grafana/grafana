@@ -41,7 +41,7 @@ interface DashboardSpec {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const handTestingSchema: DashboardV2 = {
+export const handyTestingSchema: DashboardV2 = {
   kind: 'Dashboard',
   spec: {
     id: 1,
