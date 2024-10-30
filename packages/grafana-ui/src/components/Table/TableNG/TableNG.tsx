@@ -11,6 +11,7 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
+import { getFooterValue } from '../TableRT/FooterRow'; // TODO pull this out of TableRT, not dependent on react-table
 import { FooterItem, TableNGProps } from '../types';
 import { getCellColors, getFooterItems } from '../utils';
 
@@ -160,8 +161,7 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            // TODO support for Array<KeyValue<string>>
-            return <div>{footerItems[fieldIndex]?.toString()}</div>;
+            return <>{getFooterValue(fieldIndex, footerItems)}</>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
