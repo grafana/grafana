@@ -5,6 +5,7 @@ go 1.23.1
 
 use (
 	. // skip:golangci-lint
+	./kindsv2
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
