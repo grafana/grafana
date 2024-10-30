@@ -1,10 +1,10 @@
 ---
 aliases:
-  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/templates/
+  - ../fundamentals/notifications/templates/ # /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
   - ../contact-points/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/message-templating/
   - ../alert-rules/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-rules/message-templating/
   - ../unified-alerting/message-templating/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/message-templating/
-canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/templates/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/templates/
 description: Use templating to customize, format, and reuse alert notification messages. Create more flexible and informative alert notification messages by incorporating dynamic content, such as metric values, labels, and other contextual information.
 keywords:
   - grafana
@@ -33,24 +33,19 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
   templating-labels-annotations:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
   notification-message-reference:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  notification-messages:
+  template-notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  create-notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
 ---
 
 # Templates
@@ -103,7 +98,7 @@ Annotations can contain plain text, but you should template annotations if you n
 Here’s an example of templating an annotation, which explains where and why the alert was triggered. In this case, the alert triggers when CPU usage exceeds a threshold, and the `summary` annotation provides the relevant details.
 
 ```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
+CPU usage for {{ $labels.instance }} has exceeded 80% ({{ $values.A.Value }}) for the last 5 minutes.
 ```
 
 The outcome of this template would be:
@@ -120,11 +115,14 @@ For more details on how to template annotations, refer to [Template annotations 
 
 [Labels](ref:labels) are used to differentiate one alert instance from all other alert instances, as the set of labels uniquely identifies an alert instance. Notification policies and silences use labels to handle alert instances.
 
-Template labels when you need to improve or change how alerts are uniquely identified. This is helpful if the labels you get from your query aren't detailed enough.
+You can also template labels based on query results. This is helpful if the labels you get from your query aren't detailed enough. For instance:
+
+- Add a new label to change how alerts are identified and grouped into different alert groups.
+- Add a new label used by notification policies or silences to manage how the alert is handled.
 
 Here’s an example of templating a `severity` label based on the query value:
 
-```
+```go
 {{ if (gt $values.A.Value 90.0) -}}
 critical
 {{ else if (gt $values.A.Value 80.0) -}}
@@ -136,26 +134,23 @@ low
 {{- end }}
 ```
 
-Avoid using query values in labels, as this may result in the creation of numerous alerts when only one is needed. Use annotation to inform about the query value instead.
-
 For more details on how to template labels, refer to [Template annotations and labels](ref:templating-labels-annotations).
 
 ## Template notifications
 
-[Notification templates](ref:notification-messages) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
+[Notification templates](ref:template-notifications) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
 
 Notification templates differ from templating annotations and labels in the following ways:
 
 - Notification templates are assigned to the **Contact point**, rather than the alert rule.
 - If not specified, the contact point uses a default template that includes relevant alert information.
-- You can create reusable notification templates and reference them in other templates.
 - The same template can be shared across multiple contact points, making it easier to maintain and ensuring consistency.
-- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
 - Notification templates should not be used to add additional information to individual alerts—use annotations for that purpose.
+- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
 
 Here is an example of a notification template that summarizes all firing and resolved alerts in a notification group:
 
-```
+```go
 {{ define "alerts.message" -}}
   {{ if .Alerts.Firing -}}
     {{ len .Alerts.Firing }} firing alert(s)
@@ -184,4 +179,4 @@ The notification message to the contact point would look like this:
 - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
 ```
 
-For instructions on creating and using notification templates, refer to [Create notification templates.](ref:create-notification-templates)
+For more details, refer to [Template notifications](ref:template-notifications).

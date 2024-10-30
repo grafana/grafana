@@ -3,9 +3,10 @@ import { useKBar, VisualState } from 'kbar';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getInputStyles, Icon, Text, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { focusCss } from '@grafana/ui/src/themes/mixins';
+import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
@@ -60,7 +61,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
   // action. You don't actually type into it.
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid={selectors.components.NavToolbar.commandPaletteTrigger}>
       <div className={styles.inputWrapper}>
         <div className={styles.prefix}>
           <Icon name="search" />
@@ -107,9 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
           boxShadow: 'unset',
         },
 
-        '&:focus-visible': css`
-          ${focusCss(theme)}
-        `,
+        '&:focus-visible': getFocusStyles(theme),
       },
     ]),
 

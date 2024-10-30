@@ -36,7 +36,16 @@ export const queryDirections: Array<SelectableValue<LokiQueryDirection>> = [
     label: 'Forward',
     description: 'Search in forward direction.',
   },
+  {
+    value: LokiQueryDirection.Scan,
+    label: 'Scan',
+    description: 'Split the query into smaller units and stop at the requested log line limit.',
+  },
 ];
+
+export function getQueryDirectionLabel(direction: LokiQueryDirection) {
+  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
+}
 
 if (config.featureToggles.lokiExperimentalStreaming) {
   queryTypeOptions.push({

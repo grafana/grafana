@@ -4,48 +4,59 @@ on:
     # only run on PRs where go.mod/go.sum/etc have been updated
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
   push:
     branches:
       - main
     paths:
       - go.*
+      - .github/workflows/trivy-scan.yml
 
 jobs:
   trivy-scan:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
+    - name: Install Trivy
+      uses: aquasecurity/setup-trivy@v0.2.2
+      with:
+        version: v0.56.2
+        cache: true
+    - name: Download Trivy DB
+      run: |
+        trivy fs --no-progress --download-db-only --db-repository public.ecr.aws/aquasecurity/trivy-db
     - name: Run Trivy vulnerability scanner (table output)
-      uses: aquasecurity/trivy-action@0.28.0
-      with:
-        # scan the filesystem, rather than building a Docker image prior - the
-        # downside is we won't catch dependencies that are only installed in the
-        # image, but the upside is we'll only catch vulnerabilities that are
-        # explicitly in the our dependencies
-        scan-type: 'fs'
-        scanners: 'vuln'
-        format: 'table'
-        exit-code: 1
-        ignore-unfixed: true
-        vuln-type: 'os,library'
-        severity: 'CRITICAL,HIGH'
-        trivyignores: .trivyignore
-        # for the PR check, ignore JS-related issues
-        skip-files: 'yarn.lock,package.json'
+      # Use the trivy binary rather than the aquasecurity/trivy-action action
+      # to avoid a few bugs
+      # scan the filesystem, rather than building a Docker image prior - the
+      # downside is we won't catch dependencies that are only installed in the
+      # image, but the upside is we'll only catch vulnerabilities that are
+      # explicitly in the our dependencies
+      run: |
+        trivy fs \
+          --scanners vuln \
+          --format table \
+          --exit-code 1 \
+          --ignore-unfixed \
+          --pkg-types os,library \
+          --severity CRITICAL,HIGH \
+          --ignorefile .trivyignore \
+          --skip-files yarn.lock,package.json \
+          --skip-db-update \
+          .
     - name: Run Trivy vulnerability scanner (SARIF)
-      uses: aquasecurity/trivy-action@0.28.0
-      with:
-        scan-type: 'fs'
-        scanners: 'vuln'
-        # Note: The SARIF format ignores severity and uploads all vulns for
-        # later triage. The table-format step above is used to fail the build
-        # if there are any critical or high vulnerabilities.
-        # See https://github.com/aquasecurity/trivy-action/issues/95
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        ignore-unfixed: true
-        vuln-type: 'os,library'
-        trivyignores: .trivyignore
+      # Use the trivy binary rather than the aquasecurity/trivy-action action
+      # to avoid a few bugs
+      run: |
+        trivy fs \
+          --scanners vuln \
+          --format sarif \
+          --output trivy-results.sarif \
+          --ignore-unfixed \
+          --pkg-types os,library \
+          --ignorefile .trivyignore \
+          --skip-db-update \
+          .
       if: always() && github.repository == 'grafana/grafana'
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
