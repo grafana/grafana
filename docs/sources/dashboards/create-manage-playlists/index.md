@@ -24,7 +24,7 @@ A _playlist_ is a list of dashboards that are displayed in a sequence. You might
 
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
-You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
+You can access the **Playlist** feature from Grafana's side menu, in the Dashboards submenu.
 
 {{< admonition type="note" >}}
 You must have at least Editor role permissions to create and manage playlists.
@@ -41,7 +41,7 @@ Use the information in this section to access playlists. Start and control the d
 
 ### Start a playlist
 
-You can start a playlist in six different view modes. View modes determine how the menus and navigation bar appear on the dashboards as well as how panels are sized.
+You can start a playlist in four different view modes. View modes determine how the menus and navigation bar appear on the dashboards as well as how panels are sized.
 
 1. Click **Dashboards** in the main menu.
 1. Click **Playlists**.
@@ -70,23 +70,13 @@ The playlist displays each dashboard for the time specified in the **Interval** 
 
 <!-- prettier-ignore-end -->
 
-### Control a playlist
+### Playlist controls
 
 You can control a playlist in **Normal** mode after it's started, using the buttons at the top of your screen. Press the `Esc` key to stop the playlist.
 
-<!-- prettier-ignore-start -->
-
-| Button                         | Result   |
-| ------------------------------ | ---------------------------------------------------------------- |
-| Next (double-right arrow)      | Advances to the next dashboard.  |
-| Back (left arrow)              | Returns to the previous dashboard.  |
-| Stop playlist                  | Ends the playlist, and exits to the current dashboard.  |
-| Time range                     | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
-| Refresh (circle arrow)         | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop-down arrow.  |
-
-<!-- should these last two items even be in this list given that these are just dashboard controls and not playlist controls?-->
-
-<!-- prettier-ignore-end -->
+- **Next (double-right arrow)** - Advances to the next dashboard.
+- **Back (doublt-left arrow)** - Returns to the previous dashboard.
+- **Stop playlist** - Ends the playlist, and exits to the current dashboard.
 
 ## Create a playlist
 
