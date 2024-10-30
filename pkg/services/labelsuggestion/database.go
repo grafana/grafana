@@ -8,8 +8,8 @@ import (
 
 // getEmailLabelSuggestion recommends labels based on email
 func (s LabelSuggestionService) getUserLabelSuggestion(ctx context.Context, user *user.SignedInUser) (LabelSuggestionResult, error) {
-	var hasCached bool = false
-	var cachedResult LabelSuggestionResult = LabelSuggestionResult{}
+	var hasCached = false
+	var cachedResult = LabelSuggestionResult{}
 	// SQL logic to pull cached stored suggestions if they are not stale
 	if !hasCached {
 		results, err := s.GenerateUserLabelSuggestion(ctx, user)
@@ -24,8 +24,8 @@ func (s LabelSuggestionService) getUserLabelSuggestion(ctx context.Context, user
 }
 
 func (s LabelSuggestionService) getDatasourceLabelSuggestion(ctx context.Context, datasourceUIDs []string) (LabelSuggestionResult, error) {
-	var hasCached bool = false
-	var cachedResult LabelSuggestionResult = LabelSuggestionResult{}
+	var hasCached = false
+	var cachedResult = LabelSuggestionResult{}
 	// SQL logic to pull cached stored suggestions if they are not stale
 	if !hasCached {
 		results, err := s.GenerateDatasourceLabelSuggestion(ctx, datasourceUIDs)
@@ -40,8 +40,8 @@ func (s LabelSuggestionService) getDatasourceLabelSuggestion(ctx context.Context
 }
 
 func (s LabelSuggestionService) getGeneralLabelSuggestion(ctx context.Context) (LabelSuggestionResult, error) {
-	var hasCached bool = false
-	var cachedResult LabelSuggestionResult = LabelSuggestionResult{}
+	var hasCached = false
+	var cachedResult = LabelSuggestionResult{}
 	// SQL logic to pull cached stored suggestions if they are not stale
 	if !hasCached {
 		results, err := s.GenerateGeneralLabelSuggestion(ctx)
