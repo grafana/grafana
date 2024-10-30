@@ -29,16 +29,16 @@ type folder2
     define permissions_read: [user, team#member, role#assignee] or admin or permissions_read from parent
     define permissions_write: [user, team#member, role#assignee] or admin or permissions_write from parent
 
-    define resource_view: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or resource_edit
-    define resource_edit: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or resource_admin
-    define resource_admin: [user with group_filter, team#member with group_filter, role#assignee with group_filter]
+    define resource_view: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit
+    define resource_edit: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin
+    define resource_admin: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter]
 
-    define resource_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or resource_view or resource_read from parent
-    define resource_create: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or resource_edit or resource_create from parent
-    define resource_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or resource_edit or resource_write from parent
-    define resource_delete: [user, team#member, role#assignee] or resource_edit or resource_delete from parent
-    define resource_permissions_read: [user, team#member, role#assignee] or resource_admin or resource_permissions_read from parent
-    define resource_permissions_write: [user, team#member, role#assignee] or resource_admin or resource_permissions_write from parent
+    define resource_read: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_view or resource_read from parent
+    define resource_create: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_create from parent
+    define resource_write: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_write from parent
+    define resource_delete: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_edit or resource_delete from parent
+    define resource_permissions_read: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_permissions_read from parent
+    define resource_permissions_write: [user with folder_group_filter, team#member with folder_group_filter, role#assignee with folder_group_filter] or resource_admin or resource_permissions_write from parent
 
 type resource
   relations
@@ -53,7 +53,12 @@ type resource
     define permissions_read: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
     define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
-condition group_filter(requested_group: string, group_resources: list<string>) {
+
+condition group_filter(requested_group: string, resource_group: string) {
+  resource_group == requested_group
+}
+
+condition folder_group_filter(requested_group: string, group_resources: list<string>) {
   requested_group in group_resources
 }
 

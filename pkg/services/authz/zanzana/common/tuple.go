@@ -42,9 +42,7 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resources": structpb.NewListValue(&structpb.ListValue{
-						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource))},
-					}),
+					"resource_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
 				},
 			},
 		},
@@ -57,7 +55,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, folder string) *
 		Relation: "resource_" + relation,
 		Object:   NewFolderIdent(folder),
 		Condition: &openfgav1.RelationshipCondition{
-			Name: "group_filter",
+			Name: "folder_group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resources": structpb.NewListValue(&structpb.ListValue{
