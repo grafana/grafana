@@ -124,6 +124,8 @@ Each derived field consists of the following:
 
 - **Internal link** - Toggle on to define an internal link. For internal links, you can select the target data source from a selector. This supports only tracing data sources.
 
+- **Open in new tab** - Toggle on to open the link in a new tab or window.
+
 - **Show example log message** - Click to paste an example log line to test the regular expression of your derived fields.
 
 Click **Save & test** to test your connection.
