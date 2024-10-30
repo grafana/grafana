@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
@@ -18,11 +17,7 @@ type storageMock struct {
 
 func (m storageMock) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	args := m.Called(ctx, name, options)
-	return &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"meta": map[string]interface{}{"name": "valid-name", "grafana.app/folder": 4},
-		},
-	}, args.Error(1)
+	return args.Get(0).(runtime.Object), args.Error(1)
 }
 
 func (m storageMock) ConvertToTable(ctx context.Context, obj runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {

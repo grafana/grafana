@@ -2,15 +2,18 @@ package folders
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/mock"
@@ -18,7 +21,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
@@ -126,9 +128,10 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 		name string
 	}
 	tests := []struct {
-		name  string
-		input input
-		err   error
+		name    string
+		input   input
+		setupFn func(*mock.Mock)
+		err     error
 	}{
 		{
 			name: "should return error when name is invalid",
@@ -136,18 +139,6 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				obj: &unstructured.Unstructured{
 					Object: map[string]interface{}{
 						"meta": map[string]interface{}{"name": folderValidationRules.invalidNames[0]},
-					},
-				},
-				name: folderValidationRules.invalidNames[0],
-			},
-			err: dashboards.ErrFolderInvalidUID,
-		},
-		{
-			name: "should return error when creating a nested folder higher than max depth",
-			input: input{
-				obj: &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"meta": map[string]interface{}{"name": "valid-name", "grafana.app/folder": 1},
 					},
 				},
 				name: folderValidationRules.invalidNames[0],
@@ -165,9 +156,29 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				name: "valid-name",
 			},
 		},
+		{
+			name: "should return error when creating a nested folder higher than max depth",
+			input: input{
+				obj: &unstructured.Unstructured{
+					Object: map[string]any{
+						"metadata": map[string]any{"name": "valid-name", "annotations": map[string]any{"grafana.app/folder": "valid-name"}},
+					},
+				},
+				name: "valid-name",
+			},
+			setupFn: func(m *mock.Mock) {
+				m.On("Get", mock.Anything, "valid-name", mock.Anything).Return(
+					&unstructured.Unstructured{
+						Object: map[string]any{
+							"metadata": map[string]any{"name": "valid-name", "annotations": map[string]any{"grafana.app/folder": "valid-name"}},
+						},
+					}, nil)
+			},
+			err: folder.ErrMaximumDepthReached,
+		},
 	}
 
-	s := (rest.Storage)(nil)
+	s := (grafanarest.Storage)(nil)
 	m := &mock.Mock{}
 	us := storageMock{m, s}
 
@@ -182,6 +193,10 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn(m)
+			}
+
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.input.obj,
 				nil,
@@ -195,6 +210,8 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				true,
 				&user.SignedInUser{},
 			), nil)
+
+			fmt.Println("ERR", err)
 
 			if tt.err != nil {
 				require.ErrorIs(t, err, tt.err)
