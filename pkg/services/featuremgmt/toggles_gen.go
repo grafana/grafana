@@ -842,4 +842,8 @@ const (
 	// FlagDashboardSchemaV2
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
 	FlagDashboardSchemaV2 = "dashboardSchemaV2"
+
+	// FlagDisableDashboardReportTimeRangeTransformation
+	// Disables the absolute time range transformation performed in the backend for reporting
+	FlagDisableDashboardReportTimeRangeTransformation = "disableDashboardReportTimeRangeTransformation"
 )

@@ -1121,6 +1121,19 @@
     },
     {
       "metadata": {
+        "name": "disableDashboardReportTimeRangeTransformation",
+        "resourceVersion": "1730298834441",
+        "creationTimestamp": "2024-10-30T14:33:54Z"
+      },
+      "spec": {
+        "description": "Disables the absolute time range transformation performed in the backend for reporting",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-05-24T08:34:47Z",

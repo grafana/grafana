@@ -1562,6 +1562,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "disableDashboardReportTimeRangeTransformation",
+			Description: "Disables the absolute time range transformation performed in the backend for reporting",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false", // disabled by default
+		},
 	}
 )
 
