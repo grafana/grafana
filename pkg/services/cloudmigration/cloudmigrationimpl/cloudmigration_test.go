@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretsfakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -676,9 +677,9 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-1"},
 			},
 			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
-				cloudmigration.DashboardDataType:      []string{"", "Folder A", "Folder B"},
-				cloudmigration.FolderDataType:         []string{"Folder A"},
-				cloudmigration.LibraryElementDataType: []string{"Folder A"},
+				cloudmigration.DashboardDataType:      {"", "Folder A", "Folder B"},
+				cloudmigration.FolderDataType:         {"Folder A"},
+				cloudmigration.LibraryElementDataType: {"Folder A"},
 			},
 		},
 	}
@@ -839,6 +840,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		dashboardService,
 		mockFolder,
 		&pluginstore.FakePluginStore{},
+		&pluginsettings.FakePluginSettings{},
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,
