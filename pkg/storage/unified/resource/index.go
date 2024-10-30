@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	golog "log"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -40,10 +39,6 @@ type Index struct {
 }
 
 func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
-	if opts.IndexDir == "" {
-		opts.IndexDir = os.TempDir()
-	}
-
 	idx := &Index{
 		s:      s,
 		opts:   opts,
