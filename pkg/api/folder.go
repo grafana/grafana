@@ -856,10 +856,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy))
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy))
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -930,13 +930,12 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	return folderDTO, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, orgID int64) string {
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
 	query := user.GetUserByUIDQuery{
-		UID:   userUID,
-		OrgID: orgID,
+		UID: userUID,
 	}
 	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {

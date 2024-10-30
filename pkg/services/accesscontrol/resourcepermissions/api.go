@@ -1,6 +1,7 @@
 package resourcepermissions
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -44,6 +46,7 @@ func (a *api) registerEndpoints() {
 		licenseMW = nopMiddleware
 	}
 
+	userUIDResolver := middlewareUserUIDResolver(a.service.userService, ":userID")
 	teamUIDResolver := team.MiddlewareTeamUIDResolver(a.service.teamService, ":teamID")
 	resourceResolver := func(resTranslator ResourceTranslator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
@@ -72,7 +75,7 @@ func (a *api) registerEndpoints() {
 		r.Get("/:resourceID", resourceResolver, auth(accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
 		r.Post("/:resourceID", resourceResolver, licenseMW, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", licenseMW, resourceResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
+			r.Post("/:resourceID/users/:userID", licenseMW, resourceResolver, userUIDResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
 			r.Post("/:resourceID/teams/:teamID", licenseMW, resourceResolver, teamUIDResolver, auth(accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
@@ -444,4 +447,25 @@ func permissionSetResponse(cmd setPermissionCommand) response.Response {
 		message = "Permission removed"
 	}
 	return response.Success(message)
+}
+
+// middlewareUserUIDResolver resolves the user UID to ID and sets the ID in the URL params.
+func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {
+	handler := user.UIDToIDHandler(userService)
+
+	return func(c *contextmodel.ReqContext) {
+		userID := web.Params(c.Req)[paramName]
+		id, err := handler(c.Req.Context(), userID)
+		if err == nil {
+			gotParams := web.Params(c.Req)
+			gotParams[paramName] = id
+			web.SetURLParams(c.Req, gotParams)
+		} else {
+			if errors.Is(err, user.ErrUserNotFound) {
+				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else {
+				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
+			}
+		}
+	}
 }

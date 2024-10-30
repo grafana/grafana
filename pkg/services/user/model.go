@@ -213,8 +213,7 @@ type GetUserByIDQuery struct {
 }
 
 type GetUserByUIDQuery struct {
-	OrgID int64
-	UID   string
+	UID string
 }
 
 type StartVerifyEmailCommand struct {
@@ -264,6 +263,7 @@ const (
 
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
+	UID     string `json:"uid"`
 	Message string `json:"message"`
 }
 

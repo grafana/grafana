@@ -71,6 +71,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
+		UID:     usr.UID,
 	}
 
 	return response.JSON(http.StatusOK, result)

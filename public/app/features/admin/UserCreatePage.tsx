@@ -33,9 +33,9 @@ const UserCreatePage = () => {
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      const { id } = await createUser(data);
+      const { uid } = await createUser(data);
 
-      navigate(`/admin/users/edit/${id}`);
+      navigate(`/admin/users/edit/${uid}`);
     },
     [navigate]
   );

@@ -34,6 +34,7 @@ export type Unit = { name: string; url: string };
 
 export interface UserDTO extends WithAccessControlMetadata {
   id: number;
+  uid: string;
   login: string;
   email: string;
   name: string;

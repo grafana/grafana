@@ -10,9 +10,9 @@ interface Props {
   user: UserDTO;
 
   onUserUpdate: (user: UserDTO) => void;
-  onUserDelete: (userId: number) => void;
-  onUserDisable: (userId: number) => void;
-  onUserEnable: (userId: number) => void;
+  onUserDelete: (userUid: string) => void;
+  onUserDisable: (userUid: string) => void;
+  onUserEnable: (userUid: string) => void;
   onPasswordChange(password: string): void;
 }
 
@@ -43,11 +43,11 @@ export function UserProfile({
     }
   };
 
-  const handleUserDelete = () => onUserDelete(user.id);
+  const handleUserDelete = () => onUserDelete(user.uid);
 
-  const handleUserDisable = () => onUserDisable(user.id);
+  const handleUserDisable = () => onUserDisable(user.uid);
 
-  const handleUserEnable = () => onUserEnable(user.id);
+  const handleUserEnable = () => onUserEnable(user.uid);
 
   const onUserNameChange = (newValue: string) => {
     onUserUpdate({

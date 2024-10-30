@@ -62,6 +62,7 @@ describe('userReducer', () => {
           userLoaded({
             user: {
               id: 2021,
+              uid: 'aaaaaa',
               email: 'test@test.com',
               isDisabled: true,
               login: 'test',
@@ -74,6 +75,7 @@ describe('userReducer', () => {
           ...initialUserState,
           user: {
             id: 2021,
+            uid: 'aaaaaa',
             email: 'test@test.com',
             isDisabled: true,
             login: 'test',
