@@ -31,8 +31,8 @@ func TestIndexDashboard(t *testing.T) {
 
 	err = index.IndexBatches(testContext, 1, []string{testTenant})
 	require.NoError(t, err)
-	assertCount(t, index, 1)
-	assertResults(t, index, 1)
+	assertCountEquals(t, index, 1)
+	assertSearchCountEquals(t, index, 1)
 }
 
 func TestIndexBatch(t *testing.T) {
@@ -58,7 +58,7 @@ func TestIndexBatch(t *testing.T) {
 	fmt.Println("Total Time elapsed:", elapsed)
 
 	assert.Equal(t, len(ns), len(index.shards))
-	assertCount(t, index, 100000)
+	assertCountEquals(t, index, 100000)
 }
 
 func loadTestItems(uid string, tenants []string) []*ResourceWrapper {
@@ -122,13 +122,13 @@ func newTestIndex(t *testing.T) *Index {
 	}
 }
 
-func assertCount(t *testing.T, index *Index, expected uint64) {
+func assertCountEquals(t *testing.T, index *Index, expected uint64) {
 	total, err := index.Count()
 	require.NoError(t, err)
 	assert.Equal(t, expected, total)
 }
 
-func assertResults(t *testing.T, index *Index, expected int) {
+func assertSearchCountEquals(t *testing.T, index *Index, expected int) {
 	results, err := index.Search(testContext, testTenant, "*", expected+1, 0)
 	require.NoError(t, err)
 	assert.Equal(t, expected, len(results))
