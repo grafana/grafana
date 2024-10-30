@@ -36,11 +36,14 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
 }
 
 function getUserUID() {
-  let userUID = config.bootData.user.uid;
-  if (userUID === '') {
-    userUID = `user:${config.bootData.user.id}`;
+  if (config.bootData.user.uid === '') {
+    return `user:${config.bootData.user.id}`;
   }
-  return userUID;
+  return `user:${config.bootData.user.uid}`;
+}
+
+function canUseUserStorage(): boolean {
+  return config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
 }
 
 async function getUserStorage(): Promise<{ spec: UserStorageSpec } | null> {
@@ -65,7 +68,7 @@ async function getUserStorage(): Promise<{ spec: UserStorageSpec } | null> {
  * @returns A promise that resolves to the item value or null if not found.
  */
 export async function getItem(key: string): Promise<string | null> {
-  if (config.featureToggles.userStorageAPI !== true) {
+  if (!canUseUserStorage()) {
     // Fallback to localStorage
     return localStorage.getItem(key);
   }
@@ -84,7 +87,7 @@ export async function getItem(key: string): Promise<string | null> {
  * @returns A promise that resolves when the item is set.
  */
 export async function setItem(key: string, value: string): Promise<void> {
-  if (config.featureToggles.userStorageAPI !== true) {
+  if (!canUseUserStorage()) {
     // Fallback to localStorage
     localStorage.setItem(key, value);
     return;

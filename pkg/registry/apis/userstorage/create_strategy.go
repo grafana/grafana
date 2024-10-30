@@ -11,20 +11,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apiserver/pkg/storage/names"
 )
 
 type userstorageCreateStrategy struct {
-	names.NameGenerator
-	runtime.ObjectTyper
-
-	genericStrategy rest.RESTCreateStrategy
+	rest.RESTCreateStrategy
 }
 
 func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion) *userstorageCreateStrategy {
-	return &userstorageCreateStrategy{
-		genericStrategy: grafanaregistry.NewStrategy(typer, gv),
-	}
+	genericStrategy := grafanaregistry.NewStrategy(typer, gv)
+	return &userstorageCreateStrategy{genericStrategy}
 }
 
 // Validate ensures that when creating a userstorage object, the name matches the user id.
@@ -43,21 +38,4 @@ func (g *userstorageCreateStrategy) Validate(ctx context.Context, obj runtime.Ob
 	}
 
 	return field.ErrorList{}
-}
-
-func (g *userstorageCreateStrategy) NamespaceScoped() bool {
-	return g.genericStrategy.NamespaceScoped()
-}
-
-func (g *userstorageCreateStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	g.genericStrategy.PrepareForCreate(ctx, obj)
-}
-
-// WarningsOnCreate returns warnings for the creation of the given object.
-func (g *userstorageCreateStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
-	return g.genericStrategy.WarningsOnCreate(ctx, obj)
-}
-
-func (g *userstorageCreateStrategy) Canonicalize(obj runtime.Object) {
-	g.genericStrategy.Canonicalize(obj)
 }
