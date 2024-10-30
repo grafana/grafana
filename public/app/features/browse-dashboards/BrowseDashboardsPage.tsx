@@ -81,8 +81,10 @@ const BrowseDashboardsPage = memo(() => {
 
   const hasSelection = useHasSelection();
 
-  const { data: rootFolder } = useGetFolderQuery('general');
-  let folder = folderDTO ? folderDTO : rootFolder;
+  // Fetch the root (aka general) folder if we're not in a specific folder
+  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
+  const folder = folderDTO ?? rootFolderDTO;
+
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
