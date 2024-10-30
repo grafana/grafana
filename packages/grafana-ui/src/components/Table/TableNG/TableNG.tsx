@@ -107,7 +107,23 @@ export function TableNG(props: TableNGProps) {
   };
 
   const handleSort = (columnKey: string, direction: SortDirection) => {
-    setSortColumns([{ columnKey, direction }]);
+    let currentSortColumn: SortColumn | undefined;
+
+    const updatedSortColumns = sortColumns.filter((column) => {
+      const isCurrentColumn = column.columnKey === columnKey;
+      if (isCurrentColumn) {
+        currentSortColumn = column;
+      }
+      return !isCurrentColumn;
+    });
+
+    // sorted column exists and is descending -> remove it to reset sorting
+    if (currentSortColumn && currentSortColumn.direction === 'DESC') {
+      setSortColumns(updatedSortColumns);
+    } else {
+      // new sort column or changed direction
+      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+    }
   };
 
   const mapFrameToDataGrid = (main: DataFrame) => {
