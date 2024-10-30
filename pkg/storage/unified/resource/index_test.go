@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 )
 
@@ -21,15 +22,15 @@ var testContext = context.Background()
 
 func TestIndexDashboard(t *testing.T) {
 	data, err := os.ReadFile("./testdata/dashboard-resource.json")
-	assertNil(t, err)
+	require.NoError(t, err)
 
 	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}}}
 	index := newTestIndex(t)
 	_, err = index.AddToBatches(testContext, list)
-	assertNil(t, err)
+	require.NoError(t, err)
 
 	err = index.IndexBatches(testContext, 1, []string{testTenant})
-	assertNil(t, err)
+	require.NoError(t, err)
 	assertCount(t, index, 1)
 	assertResults(t, index, 1)
 }
@@ -44,14 +45,14 @@ func TestIndexBatch(t *testing.T) {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
 		_, err := index.AddToBatches(testContext, list)
-		assertNil(t, err)
+		require.NoError(t, err)
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
 	// index all batches for each shard/tenant
 	err := index.IndexBatches(testContext, 1, ns)
-	assertNil(t, err)
+	require.NoError(t, err)
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
@@ -107,7 +108,7 @@ func namespaces() []string {
 func newTestIndex(t *testing.T) *Index {
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	trace, err := tracing.ProvideService(tracingCfg)
-	assertNil(t, err)
+	require.NoError(t, err)
 
 	return &Index{
 		tracer: trace,
@@ -121,20 +122,14 @@ func newTestIndex(t *testing.T) *Index {
 	}
 }
 
-func assertNil(t *testing.T, err error) {
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func assertCount(t *testing.T, index *Index, expected uint64) {
 	total, err := index.Count()
-	assertNil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, total)
 }
 
 func assertResults(t *testing.T, index *Index, expected int) {
 	results, err := index.Search(testContext, testTenant, "*", expected+1, 0)
-	assertNil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, len(results))
 }
