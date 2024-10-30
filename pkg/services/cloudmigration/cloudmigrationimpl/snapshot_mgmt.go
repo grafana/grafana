@@ -375,14 +375,14 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 	return cmds, nil
 }
 
-type Plugin struct {
+type PluginCmd struct {
 	Name       string                                `json:"name"`
 	ID         string                                `json:"uid"`
-	SettingCmd pluginsettings.UpdatePluginSettingCmd `json:"settings"`
+	SettingCmd pluginsettings.UpdatePluginSettingCmd `json:"settingCmd"`
 }
 
 // IsPublicSignatureType returns true if plugin signature type is public
-func IsPublicSignatureType(signatureType plugins.SignatureType) bool {
+func isPublicSignatureType(signatureType plugins.SignatureType) bool {
 	switch signatureType {
 	case plugins.SignatureTypeGrafana, plugins.SignatureTypeCommercial, plugins.SignatureTypeCommunity:
 		return true
@@ -391,18 +391,18 @@ func IsPublicSignatureType(signatureType plugins.SignatureType) bool {
 }
 
 // getPlugins returns the json payloads required by the plugin creation API
-func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUser) ([]Plugin, error) {
+func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUser) ([]PluginCmd, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getPlugins")
 	defer span.End()
 
-	results := make([]Plugin, 0)
+	results := make([]PluginCmd, 0)
 	plugins := s.pluginStore.Plugins(ctx)
 
 	for _, plugin := range plugins {
 		// Filter plugins to keep only non core, signed, with public signature type plugins
-		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && IsPublicSignatureType(plugin.SignatureType) {
+		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && isPublicSignatureType(plugin.SignatureType) {
 
-			pluginCmd := pluginsettings.UpdatePluginSettingCmd{
+			pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
 				Enabled:       plugin.JSONData.AutoEnabled,
 				Pinned:        plugin.Pinned,
 				PluginVersion: plugin.Info.Version,
@@ -417,21 +417,21 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 			if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 				return nil, fmt.Errorf("failed to get plugin settings: %w", err)
 			} else if ps != nil {
-				pluginCmd.Enabled = ps.Enabled
-				pluginCmd.Pinned = ps.Pinned
-				pluginCmd.JsonData = ps.JSONData
+				pluginSettingCmd.Enabled = ps.Enabled
+				pluginSettingCmd.Pinned = ps.Pinned
+				pluginSettingCmd.JsonData = ps.JSONData
 				// Decrypt secure json to send raw credentials
 				decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
 				if err != nil {
 					return nil, fmt.Errorf("failed to decrypt secure json data: %w", err)
 				}
-				pluginCmd.SecureJsonData = decryptedData
+				pluginSettingCmd.SecureJsonData = decryptedData
 			}
 
-			results = append(results, Plugin{
+			results = append(results, PluginCmd{
 				ID:         plugin.ID,
 				Name:       plugin.Name,
-				SettingCmd: pluginCmd,
+				SettingCmd: pluginSettingCmd,
 			})
 		}
 	}

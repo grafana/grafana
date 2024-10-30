@@ -728,6 +728,138 @@ func TestGetLibraryElementsCommands(t *testing.T) {
 	require.Equal(t, createLibraryElementCmd.UID, cmds[0].UID)
 }
 
+// NOTE: this should be on the plugin object
+func TestisPublicSignatureType(t *testing.T) {
+	testcases := []struct {
+		signature      plugins.SignatureType
+		expectedPublic bool
+	}{
+		{
+			signature:      plugins.SignatureTypeCommunity,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeCommercial,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypeGrafana,
+			expectedPublic: true,
+		},
+		{
+			signature:      plugins.SignatureTypePrivate,
+			expectedPublic: false,
+		},
+		{
+			signature:      plugins.SignatureTypePrivateGlob,
+			expectedPublic: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		resPublic := isPublicSignatureType(testcase.signature)
+		require.Equal(t, resPublic, testcase.expectedPublic)
+	}
+}
+
+func TestGetPlugins(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	user := &user.SignedInUser{OrgID: 1}
+
+	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-core",
+				Type: plugins.TypeDataSource,
+			},
+			Class:         plugins.ClassCore,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:          "plugin-external-valid-grafana",
+				Type:        plugins.TypeDataSource,
+				AutoEnabled: false,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-commercial",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommercial,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-community",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusValid,
+			SignatureType: plugins.SignatureTypeCommunity,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-invalid",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusInvalid,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-unsigned",
+				Type: plugins.TypePanel,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypeGrafana,
+		},
+		{
+			JSONData: plugins.JSONData{
+				ID:   "plugin-external-valid-private",
+				Type: plugins.TypeApp,
+			},
+			Class:         plugins.ClassExternal,
+			Signature:     plugins.SignatureStatusUnsigned,
+			SignatureType: plugins.SignatureTypePrivate,
+		},
+	}...)
+
+	s.pluginSettingsService = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+		"plugin-external-valid-grafana": {ID: 0, OrgID: user.OrgID, PluginID: "plugin-external-valid-grafana", PluginVersion: "1.0.0", Enabled: true},
+	}}
+
+	plugins, err := s.getPlugins(ctx, user)
+	require.NoError(t, err)
+	require.NotNil(t, plugins)
+	require.Len(t, plugins, 3)
+
+	expectedPluginIDs := []string{"plugin-external-valid-grafana", "plugin-external-valid-commercial", "plugin-external-valid-community"}
+	pluginsIDs := make([]string, 0)
+	for _, plugin := range plugins {
+		// Special case of using the settings from the settings store
+		if plugin.ID == "plugin-external-valid-grafana" {
+			require.True(t, plugin.SettingCmd.Enabled)
+		}
+
+		pluginsIDs = append(pluginsIDs, plugin.ID)
+	}
+	require.ElementsMatch(t, pluginsIDs, expectedPluginIDs)
+
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
