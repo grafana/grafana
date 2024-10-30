@@ -3297,7 +3297,8 @@
       "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-27T10:22:13Z"
+        "creationTimestamp": "2023-06-27T10:22:13Z",
+        "deletionTimestamp": "2024-10-30T14:21:33Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",
