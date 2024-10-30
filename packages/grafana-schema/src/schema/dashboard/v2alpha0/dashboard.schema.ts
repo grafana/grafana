@@ -21,7 +21,7 @@ interface DashboardSpec {
   title: string;
   description: string;
   cursorSync: DashboardCursorSync;
-  liveNow: boolean;
+  liveNow: boolean; // FIXME: it can be undefined, should this be optional?
   preload: boolean;
   editable: boolean;
   links: DashboardLink[];
@@ -39,6 +39,21 @@ interface DashboardSpec {
   // revision?: number; // for plugins only
   // gnetId?: string; // ??? Wat is this used for?
 }
+
+export const defaultDashboardSpecV2: Partial<DashboardSpec> = {
+  editable: true,
+  liveNow: false,
+  cursorSync: DashboardCursorSync.Off,
+  links: [],
+  tags: [],
+  elements: {},
+  layout: {
+    kind: 'GridLayout',
+    spec: {
+      items: [],
+    },
+  },
+};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const handyTestingSchema: DashboardV2 = {

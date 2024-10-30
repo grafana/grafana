@@ -104,7 +104,7 @@ export interface TimeSettingsSpec {
   autoRefresh: string; //v1: refresh
   autoRefreshIntervals: string[]; // v1: timepicker.refresh_intervals
   quickRanges: string[]; // v1: timepicker.time_options , not exposed in the UI
-  hideTimepicker: boolean; // v1: timepicker.hidden
+  hideTimepicker: boolean; // v1: timepicker.hidden FIXME: is possible this is undefined?
   weekStart: string;
   fiscalYearStartMonth: number;
   nowDelay?: string; // v1: timepicker.nowDelay

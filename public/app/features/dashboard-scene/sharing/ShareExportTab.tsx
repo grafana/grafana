@@ -276,7 +276,6 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           </Modal.ButtonRow>
         </>
       )}
-      ;
     </>
   );
 }
