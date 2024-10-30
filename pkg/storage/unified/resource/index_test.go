@@ -17,44 +17,40 @@ import (
 
 const testTenant = "default"
 
+var testContext = context.Background()
+
 func TestIndexDashboard(t *testing.T) {
 	data, err := os.ReadFile("./testdata/dashboard-resource.json")
 	assertNil(t, err)
 
-	items := []*ResourceWrapper{}
-	items = append(items, &ResourceWrapper{Value: data})
-
-	ctx := context.Background()
-	list := &ListResponse{Items: items}
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}}}
 	index := newTestIndex(t)
-	_, err = index.AddToBatches(ctx, list)
+	_, err = index.AddToBatches(testContext, list)
 	assertNil(t, err)
 
-	err = index.IndexBatches(ctx, 1, []string{testTenant})
+	err = index.IndexBatches(testContext, 1, []string{testTenant})
 	assertNil(t, err)
 	assertCount(t, index, 1)
-	assertResults(t, ctx, index, 1)
+	assertResults(t, index, 1)
 }
 
 func TestIndexBatch(t *testing.T) {
 	index := newTestIndex(t)
 
-	ctx := context.Background()
 	startAll := time.Now()
-
 	ns := namespaces()
 	// simulate 10 List calls
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
-		_, err := index.AddToBatches(ctx, list)
+		_, err := index.AddToBatches(testContext, list)
 		assertNil(t, err)
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
 	// index all batches for each shard/tenant
-	err := index.IndexBatches(ctx, 1, ns)
+	err := index.IndexBatches(testContext, 1, ns)
 	assertNil(t, err)
 
 	elapsed := time.Since(startAll)
@@ -137,8 +133,8 @@ func assertCount(t *testing.T, index *Index, expected uint64) {
 	assert.Equal(t, expected, total)
 }
 
-func assertResults(t *testing.T, ctx context.Context, index *Index, expected int) {
-	results, err := index.Search(ctx, testTenant, "*", expected+1, 0)
+func assertResults(t *testing.T, index *Index, expected int) {
+	results, err := index.Search(testContext, testTenant, "*", expected+1, 0)
 	assertNil(t, err)
 	assert.Equal(t, expected, len(results))
 }
