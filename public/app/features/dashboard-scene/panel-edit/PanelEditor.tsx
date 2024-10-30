@@ -24,7 +24,7 @@ import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGridItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
-  activateInActiveParents,
+  activateSceneObjectAndParentTree,
   getDashboardSceneFor,
   getLibraryPanelBehavior,
   getPanelIdForVizPanel,
@@ -68,7 +68,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
-    const deactivateParents = activateInActiveParents(panel);
+    const deactivateParents = activateSceneObjectAndParentTree(panel);
     const layoutElement = panel.parent;
 
     this.waitForPlugin();
