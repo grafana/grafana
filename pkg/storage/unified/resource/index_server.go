@@ -56,7 +56,13 @@ func (is *IndexServer) Load(ctx context.Context) error {
 	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Load")
 	defer span.End()
 
-	is.index = NewIndex(is.s, Opts{}, is.cfg.IndexPath, is.tracer)
+	opts := Opts{
+		Workers:   is.cfg.IndexWorkers,
+		BatchSize: is.cfg.IndexMaxBatchSize,
+		ListLimit: is.cfg.IndexListLimit,
+		IndexDir:  is.cfg.IndexPath,
+	}
+	is.index = NewIndex(is.s, opts, is.tracer)
 	err := is.index.Init(ctx)
 	if err != nil {
 		return err
