@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -210,8 +209,6 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 				true,
 				&user.SignedInUser{},
 			), nil)
-
-			fmt.Println("ERR", err)
 
 			if tt.err != nil {
 				require.ErrorIs(t, err, tt.err)
