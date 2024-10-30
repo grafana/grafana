@@ -165,6 +165,7 @@
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
 /pkg/web/ @grafana/grafana-backend-group
+/pkg/services/labelsuggestion/ @grafana/machine-learning
 
 /pkg/infra/kvstore/ @grafana/grafana-backend-group
 /pkg/infra/fs/ @grafana/grafana-backend-group
