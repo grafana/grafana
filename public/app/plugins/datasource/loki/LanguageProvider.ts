@@ -48,10 +48,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     url: string,
     params?: Record<string, string | number>,
     throwError?: boolean,
-    options?: Partial<BackendSrvRequest>
+    requestOptions?: Partial<BackendSrvRequest>
   ) => {
     try {
-      return await this.datasource.metadataRequest(url, params, options);
+      return await this.datasource.metadataRequest(url, params, requestOptions);
     } catch (error) {
       if (throwError) {
         throw error;
