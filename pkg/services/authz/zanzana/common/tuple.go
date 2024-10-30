@@ -9,8 +9,8 @@ import (
 
 const (
 	resourceType       = "resource"
+	resourceTypeFolder = "folder2"
 	namespaceType      = "namespace"
-	folderResourceType = "folder_resource"
 )
 
 func NewTypedIdent(typ string, name string) string {
@@ -21,8 +21,8 @@ func NewResourceIdent(group, resource, name string) string {
 	return fmt.Sprintf("%s:%s/%s", resourceType, FormatGroupResource(group, resource), name)
 }
 
-func NewFolderResourceIdent(group, resource, folder string) string {
-	return fmt.Sprintf("%s:%s/%s", folderResourceType, FormatGroupResource(group, resource), folder)
+func NewFolderIdent(name string) string {
+	return fmt.Sprintf("folder2:%s", name)
 }
 
 func NewNamespaceResourceIdent(group, resource string) string {
@@ -42,7 +42,9 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"resource_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource))},
+					}),
 				},
 			},
 		},
@@ -52,13 +54,15 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 func NewFolderResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
-		Relation: relation,
-		Object:   NewFolderResourceIdent(group, resource, folder),
+		Relation: "resource_" + relation,
+		Object:   NewFolderIdent(folder),
 		Condition: &openfgav1.RelationshipCondition{
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"resource_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource))},
+					}),
 				},
 			},
 		},
@@ -70,6 +74,14 @@ func NewNamespaceResourceTuple(subject, relation, group, resource string) *openf
 		User:     subject,
 		Relation: relation,
 		Object:   NewNamespaceResourceIdent(group, resource),
+	}
+}
+
+func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
+	return &openfgav1.TupleKey{
+		Object:   NewFolderIdent(folder),
+		Relation: "parent",
+		User:     NewFolderIdent(parent),
 	}
 }
 
