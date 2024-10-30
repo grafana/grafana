@@ -542,6 +542,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -147,6 +149,34 @@ func TestGetNotificationPolicies(t *testing.T) {
 	})
 }
 
+func TestGetAlertRules(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
+
+		alertRules, err := s.getAlertRules(ctx, nil)
+		require.NoError(t, err)
+		require.Nil(t, alertRules)
+	})
+
+	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the alert rules", func(t *testing.T) {
+		s := setUpServiceTest(t, false).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		alertRule := createAlertRule(t, ctx, s, user)
+
+		alertRules, err := s.getAlertRules(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, alertRules, 1)
+		require.Equal(t, alertRule.UID, alertRules[0].UID)
+	})
+}
+
 func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.MuteTimeInterval {
 	t.Helper()
 
@@ -260,4 +290,35 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 
 	_, _, err := service.ngAlert.Api.Policies.UpdatePolicyTree(ctx, user.GetOrgID(), tree, "", "")
 	require.NoError(t, err)
+}
+
+func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) models.AlertRule {
+	t.Helper()
+
+	rule := models.AlertRule{
+		OrgID:        user.GetOrgID(),
+		Title:        "Alert Rule SLO",
+		NamespaceUID: "folderUID",
+		Condition:    "A",
+		Data: []models.AlertQuery{
+			{
+				RefID: "A",
+				Model: []byte(`{"queryType": "a"}`),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(60),
+					To:   models.Duration(0),
+				},
+			},
+		},
+		RuleGroup:       "ruleGroup",
+		For:             time.Minute,
+		IntervalSeconds: 60,
+		NoDataState:     models.OK,
+		ExecErrState:    models.OkErrState,
+	}
+
+	createdRule, err := service.ngAlert.Api.AlertRules.CreateAlertRule(ctx, user, rule, "")
+	require.NoError(t, err)
+
+	return createdRule
 }

@@ -39,9 +39,16 @@ interface TableHeaderProps {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, footerOptions } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  // TODO: this is a hack to force the column width to update when the fieldConfig changes
+  const [revId, setRevId] = useState(0);
+  const columnWidth = useMemo(() => {
+    setRevId(revId + 1);
+    return fieldConfig?.defaults?.custom?.width || 'auto';
+  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -108,7 +115,23 @@ export function TableNG(props: TableNGProps) {
   };
 
   const handleSort = (columnKey: string, direction: SortDirection) => {
-    setSortColumns([{ columnKey, direction }]);
+    let currentSortColumn: SortColumn | undefined;
+
+    const updatedSortColumns = sortColumns.filter((column) => {
+      const isCurrentColumn = column.columnKey === columnKey;
+      if (isCurrentColumn) {
+        currentSortColumn = column;
+      }
+      return !isCurrentColumn;
+    });
+
+    // sorted column exists and is descending -> remove it to reset sorting
+    if (currentSortColumn && currentSortColumn.direction === 'DESC') {
+      setSortColumns(updatedSortColumns);
+    } else {
+      // new sort column or changed direction
+      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+    }
   };
 
   const mapFrameToDataGrid = (main: DataFrame) => {
@@ -122,13 +145,13 @@ export function TableNG(props: TableNGProps) {
 
     main.fields.map((field, fieldIndex) => {
       filterFields.push({ id: fieldIndex.toString(), field });
-      const key = field.name;
+      const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
       // Add a column for each field
       columns.push({
         key,
-        name: key,
+        name: field.name,
         field: shallowField,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
@@ -167,6 +190,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
+        width: columnWidth,
       });
 
       // Create row objects
@@ -252,7 +276,6 @@ export function TableNG(props: TableNGProps) {
         defaultColumnOptions={{
           sortable: true,
           resizable: true,
-          maxWidth: 200,
         }}
         rowHeight={rowHeightNumber}
         // TODO: This doesn't follow current table behavior
