@@ -842,8 +842,8 @@ const (
 	// FlagDashboardSchemaV2
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
 	FlagDashboardSchemaV2 = "dashboardSchemaV2"
-	
+
 	// FlagLabelSuggestionService
-	// Enable label suggestion service
+	// Enable label suggestion service endpoint
 	FlagLabelSuggestionService = "labelSuggestionService"
 )
