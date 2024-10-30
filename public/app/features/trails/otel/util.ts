@@ -227,62 +227,61 @@ export function limitOtelMatchTerms(
  * @returns
  */
 export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: string) {
-  // when to add or remove the group left
-  // ADD
-  // 1. the metric is selected from previews
-  // 2. the metric is loaded from refresh in metric scene
-  // 3. the metric is loaded from bookmark
+  // When to remove or add the group left
   // REMOVE
-  // 4. selecting a new metric and returning to metric select scene
-  const timeRange: RawTimeRange | undefined = trail.state.$timeRange?.state;
-  if (timeRange) {
-    const otelGroupLeft = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
-    const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+  // - selecting a new metric and returning to metric select scene
+  // ADD
+  // - the metric is selected from previews
+  // - the metric is loaded from refresh in metric scene
+  // - the metric is loaded from bookmark
+  const timeRange = trail.state.$timeRange?.state;
+  if (!timeRange) {
+    return;
+  }
+  const otelGroupLeft = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+  const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+  if (!(otelGroupLeft instanceof ConstantVariable) || !(otelJoinQueryVariable instanceof ConstantVariable)) {
+    return;
+  }
+  // Remove the group left
+  if (!metric) {
+    // if the metric is not present, that means we are in the metric select scene
+    // and that should have no group left because it may interfere with queries.
+    otelGroupLeft.setState({ value: '' });
+    const resourceObject = getOtelResourcesObject(trail);
+    const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
+    otelJoinQueryVariable.setState({ value: otelJoinQuery });
+    return;
+  }
+  // if the metric is target_info, it already has all resource attributes
+  if (metric === 'target_info') {
+    return;
+  }
 
-    if (!(otelGroupLeft instanceof ConstantVariable) || !(otelJoinQueryVariable instanceof ConstantVariable)) {
-      return;
-    }
-
-    if (metric) {
-      if (metric === 'target_info') {
-        return;
-      }
-      const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
-      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
-
-      let excludeFilterKeys: string[] = [];
-      if (filtersVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
-        // do not include the following
-        // 1. pre selected label filters
-        // 2. pre selected otel resource attribute filters
-        // 3. job and instance labels (will break the join)
-        const filterKeys = filtersVariable.state.filters.map((f) => f.key);
-        const otelKeys = otelResourcesVariable.state.filters.map((f) => f.key);
-
-        excludeFilterKeys = filterKeys.concat(otelKeys);
-        excludeFilterKeys = excludeFilterKeys.concat(['job', 'instance']);
-      }
-
-      const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-      const attributes = await getFilteredResourceAttributes(datasourceUid, timeRange, metric, excludeFilterKeys);
-
-      // here we start to add the attributes to the group left
-      if (attributes.length > 0) {
-        // update the group left variable that contains all the filtered resource attributes
-        otelGroupLeft.setState({ value: attributes.join(',') });
-        // get the new otel join query that includes the group left attributes
-        const resourceObject = getOtelResourcesObject(trail);
-        const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
-        // update the join query that is interpolated in all queries
-        otelJoinQueryVariable.setState({ value: otelJoinQuery });
-      }
-    } else {
-      // if the metric is not present, that means we are in the metric select scene
-      // and that should have no group left because it may interfere with queries.
-      otelGroupLeft.setState({ value: '' });
-      const resourceObject = getOtelResourcesObject(trail);
-      const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
-      otelJoinQueryVariable.setState({ value: otelJoinQuery });
-    }
+  // Add the group left
+  const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
+  const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+  let excludeFilterKeys: string[] = [];
+  if (filtersVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
+    // do not include the following
+    // 1. pre selected label filters
+    // 2. pre selected otel resource attribute filters
+    // 3. job and instance labels (will break the join)
+    const filterKeys = filtersVariable.state.filters.map((f) => f.key);
+    const otelKeys = otelResourcesVariable.state.filters.map((f) => f.key);
+    excludeFilterKeys = filterKeys.concat(otelKeys);
+    excludeFilterKeys = excludeFilterKeys.concat(['job', 'instance']);
+  }
+  const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+  const attributes = await getFilteredResourceAttributes(datasourceUid, timeRange, metric, excludeFilterKeys);
+  // here we start to add the attributes to the group left
+  if (attributes.length > 0) {
+    // update the group left variable that contains all the filtered resource attributes
+    otelGroupLeft.setState({ value: attributes.join(',') });
+    // get the new otel join query that includes the group left attributes
+    const resourceObject = getOtelResourcesObject(trail);
+    const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
+    // update the join query that is interpolated in all queries
+    otelJoinQueryVariable.setState({ value: otelJoinQuery });
   }
 }

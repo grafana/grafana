@@ -279,7 +279,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     }
 
     const attributeArray: SelectableValue[] = resourceAttributes.split(',').map((el) => ({ label: el, value: el }));
-    //shift ALL value to the front
+    // shift ALL value to the front
     const all: SelectableValue = [{ label: 'All', value: ALL_VARIABLE_VALUE }];
     const firstGroup = all.concat(attributeArray);
 
