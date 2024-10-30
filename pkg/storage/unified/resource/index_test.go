@@ -32,16 +32,8 @@ func TestIndexDashboard(t *testing.T) {
 
 	err = index.IndexBatches(ctx, 1, []string{testTenant})
 	assertNil(t, err)
-
-	total, err := index.Count()
-	assertNil(t, err)
-
-	assert.Equal(t, uint64(1), total)
-
-	results, err := index.Search(ctx, testTenant, "*", 10, 0)
-	assertNil(t, err)
-
-	assert.Equal(t, 1, len(results))
+	assertCount(t, index, 1)
+	assertResults(t, ctx, index, 1)
 }
 
 func TestIndexBatch(t *testing.T) {
@@ -69,11 +61,7 @@ func TestIndexBatch(t *testing.T) {
 	fmt.Println("Total Time elapsed:", elapsed)
 
 	assert.Equal(t, len(ns), len(index.shards))
-
-	total, err := index.Count()
-	assertNil(t, err)
-
-	assert.Equal(t, uint64(100000), total)
+	assertCount(t, index, 100000)
 }
 
 func loadTestItems(uid string, tenants []string) []*ResourceWrapper {
@@ -141,4 +129,16 @@ func assertNil(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func assertCount(t *testing.T, index *Index, expected uint64) {
+	total, err := index.Count()
+	assertNil(t, err)
+	assert.Equal(t, expected, total)
+}
+
+func assertResults(t *testing.T, ctx context.Context, index *Index, expected int) {
+	results, err := index.Search(ctx, testTenant, "*", expected+1, 0)
+	assertNil(t, err)
+	assert.Equal(t, expected, len(results))
 }
