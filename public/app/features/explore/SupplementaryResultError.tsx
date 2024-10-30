@@ -13,7 +13,7 @@ type Props = {
   onSuggestedAction?(): void;
   onRemove?(): void;
   dismissable?: boolean;
-  fullWidth?: boolean;
+  size?: 'md' | 'lg' | 'xl';
 };
 const SHORT_ERROR_MESSAGE_LIMIT = 100;
 export function SupplementaryResultError(props: Props) {
@@ -23,7 +23,7 @@ export function SupplementaryResultError(props: Props) {
   const {
     dismissable,
     error,
-    fullWidth,
+    size = 'md',
     title,
     suggestedAction,
     onSuggestedAction,
@@ -35,7 +35,7 @@ export function SupplementaryResultError(props: Props) {
   const message = props.message ?? error?.message ?? error?.data?.message ?? '';
   const showButton = typeof message === 'string' && message.length > SHORT_ERROR_MESSAGE_LIMIT;
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, size);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -48,10 +48,10 @@ export function SupplementaryResultError(props: Props) {
   }
 
   return (
-    <div className={fullWidth ? undefined : styles.supplementaryErrorContainer}>
+    <div className={styles.supplementaryErrorContainer}>
       <Alert title={title} severity={severity} onRemove={handleRemove}>
         {showButton ? (
-          <div className={styles.suggestedActionWrapper}>
+          <div className={styles.messageWrapper}>
             {!isOpen ? (
               <Button
                 variant="secondary"
@@ -67,7 +67,7 @@ export function SupplementaryResultError(props: Props) {
             )}
           </div>
         ) : (
-          <div className={styles.suggestedActionWrapper}>
+          <div className={`${styles.messageWrapper} ${styles.suggestedActionWrapper}`}>
             {message}
             {suggestedAction && onSuggestedAction && (
               <Button variant="primary" size="xs" onClick={onSuggestedAction}>
@@ -81,29 +81,38 @@ export function SupplementaryResultError(props: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, size: 'md' | 'lg' | 'xl') => {
+  let width;
+  switch (size) {
+    case 'md':
+      width = '50%';
+      break;
+    case 'lg':
+      width = '60%';
+      break;
+    case 'xl':
+      width = '100%';
+      break;
+  }
   return {
     supplementaryErrorContainer: css({
-      width: '50%',
+      width,
       minWidth: `${theme.breakpoints.values.sm}px`,
       margin: '0 auto',
-      [theme.breakpoints.down('lg')]: {
-        width: '70%',
-      },
-      [theme.breakpoints.down('md')]: {
-        width: '100%',
-      },
     }),
-    suggestedActionWrapper: css({
+    messageWrapper: css({
       minHeight: theme.spacing(3),
-      ['button']: {
-        position: 'absolute',
-        right: theme.spacing(2),
-        bottom: theme.spacing(2),
-      },
       ['ul']: {
         paddingLeft: theme.spacing(2),
       },
+      ['button']: {
+        position: 'absolute',
+        bottom: theme.spacing(2),
+        right: theme.spacing(2),
+      },
+    }),
+    suggestedActionWrapper: css({
+      paddingBottom: theme.spacing(5),
     }),
   };
 };
