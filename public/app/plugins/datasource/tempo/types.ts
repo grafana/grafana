@@ -116,6 +116,7 @@ export type TraceqlMetricsResponse = {
 export type MetricsSeries = {
   labels: MetricsSeriesLabel[];
   samples: MetricsSeriesSample[];
+  exemplars: MetricsSeriesExemplar[];
   promLabels: string;
 };
 
@@ -134,4 +135,10 @@ export type ProtoValue = {
 export type MetricsSeriesSample = {
   timestampMs: string;
   value: number;
+};
+
+export type MetricsSeriesExemplar = {
+  labels: MetricsSeriesLabel[];
+  value: number;
+  timestampMs: string;
 };
