@@ -4,6 +4,7 @@ import (
 	"context"
 	cryptoRand "crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -114,6 +115,15 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
+	for _, plugin := range plugins {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.PluginDataType,
+			RefID: plugin.ID,
+			Name:  plugin.Name,
+			Data:  plugin.SettingCmd,
+		})
+	}
+
 	for _, ds := range dataSources {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.DatasourceDataType,
@@ -201,15 +211,6 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: alertRule.UID,
 			Name:  alertRule.Title,
 			Data:  alertRule,
-		})
-	}
-
-	for _, plugin := range plugins {
-		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
-			Type:  cloudmigration.PluginDataType,
-			RefID: plugin.ID,
-			Name:  plugin.Name,
-			Data:  plugin.Settings,
 		})
 	}
 
@@ -375,13 +376,14 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 }
 
 type Plugin struct {
-	Name     string `json:"name"`
-	ID       string `json:"uid"`
-	Settings pluginsettings.UpdatePluginSettingCmd
+	Name       string                                `json:"name"`
+	ID         string                                `json:"uid"`
+	SettingCmd pluginsettings.UpdatePluginSettingCmd `json:"settings"`
 }
 
-func IsPublicSignatureType(s plugins.SignatureType) bool {
-	switch s {
+// IsPublicSignatureType returns true if plugin signature type is public
+func IsPublicSignatureType(signatureType plugins.SignatureType) bool {
+	switch signatureType {
 	case plugins.SignatureTypeGrafana, plugins.SignatureTypeCommercial, plugins.SignatureTypeCommunity:
 		return true
 	}
@@ -400,21 +402,6 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		// Filter plugins to keep only non core, signed, with public signature type plugins
 		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && IsPublicSignatureType(plugin.SignatureType) {
 
-			// pluginSetting, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
-			// 	PluginID: plugin.ID,
-			// 	OrgID:    signedInUser.OrgID,
-			// })
-			// if err != nil {
-			// 	fmt.Println("DEBUG | failed to get all plugin settings error", err)
-			// }
-
-			// Decrypt secure json to send raw credentials
-			// decryptedData, err := s.secretsService.DecryptJsonData(ctx, pluginSetting.SecureJSONData)
-			// if err != nil {
-			// 	s.log.Error("Failed to decrypt secure json data", "err", err)
-			// 	return nil, err
-			// }
-
 			pluginCmd := pluginsettings.UpdatePluginSettingCmd{
 				Enabled:       plugin.JSONData.AutoEnabled,
 				Pinned:        plugin.Pinned,
@@ -422,10 +409,29 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 				PluginId:      plugin.ID,
 			}
 
+			// Get plugin settings from db if they exist
+			ps, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+				PluginID: plugin.ID,
+				OrgID:    signedInUser.OrgID,
+			})
+			if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+				return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+			} else if ps != nil {
+				pluginCmd.Enabled = ps.Enabled
+				pluginCmd.Pinned = ps.Pinned
+				pluginCmd.JsonData = ps.JSONData
+				// Decrypt secure json to send raw credentials
+				decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
+				if err != nil {
+					return nil, fmt.Errorf("failed to decrypt secure json data: %w", err)
+				}
+				pluginCmd.SecureJsonData = decryptedData
+			}
+
 			results = append(results, Plugin{
-				ID:       plugin.ID,
-				Name:     plugin.Name,
-				Settings: pluginCmd,
+				ID:         plugin.ID,
+				Name:       plugin.Name,
+				SettingCmd: pluginCmd,
 			})
 		}
 	}
