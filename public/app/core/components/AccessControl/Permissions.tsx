@@ -91,13 +91,13 @@ export const Permissions = ({
 
   const onRemove = (item: ResourcePermission) => {
     let promise: Promise<void> | null = null;
-    if (item.userUid && item.userUid !== '') {
+    if (item.userUid) {
       promise = setUserPermission(resource, resourceId, item.userUid, EMPTY_PERMISSION);
-    } else if (item.teamUid && item.teamUid !== '') {
+    } else if (item.teamUid) {
       promise = setTeamPermission(resource, resourceId, item.teamUid, EMPTY_PERMISSION);
-    } else if (item.isServiceAccount && item.userUid && item.userUid !== '') {
+    } else if (item.isServiceAccount && item.userUid) {
       promise = setUserPermission(resource, resourceId, item.userUid, EMPTY_PERMISSION);
-    } else if (item.builtInRole && item.builtInRole !== '') {
+    } else if (item.builtInRole) {
       promise = setBuiltInRolePermission(resource, resourceId, item.builtInRole, EMPTY_PERMISSION);
     }
 
