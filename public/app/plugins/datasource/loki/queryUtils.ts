@@ -25,7 +25,6 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
@@ -319,9 +318,7 @@ export function requestSupportsSharding(allQueries: LokiQuery[]) {
     .filter((query) => !query.hide)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
-    .filter(
-      (query) => query.direction === LokiQueryDirection.Scan || query.refId?.startsWith(REF_ID_STARTER_LOG_VOLUME)
-    );
+    .filter((query) => query.direction === LokiQueryDirection.Scan || !isLogsQuery(query.expr));
 
   return queries.length > 0;
 }
