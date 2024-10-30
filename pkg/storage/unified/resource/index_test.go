@@ -19,41 +19,33 @@ const testTenant = "default"
 
 func TestIndexDashboard(t *testing.T) {
 	data, err := os.ReadFile("./testdata/dashboard-resource.json")
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
 
 	items := []*ResourceWrapper{}
 	items = append(items, &ResourceWrapper{Value: data})
 
 	ctx := context.Background()
 	list := &ListResponse{Items: items}
-	index := newTestIndex()
+	index := newTestIndex(t)
 	_, err = index.AddToBatches(ctx, list)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
 
 	err = index.IndexBatches(ctx, 1, []string{testTenant})
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
 
 	total, err := index.Count()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
+
 	assert.Equal(t, uint64(1), total)
 
 	results, err := index.Search(ctx, testTenant, "*", 10, 0)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
+
 	assert.Equal(t, 1, len(results))
 }
 
 func TestIndexBatch(t *testing.T) {
-	index := newTestIndex()
+	index := newTestIndex(t)
 
 	ctx := context.Background()
 	startAll := time.Now()
@@ -64,18 +56,14 @@ func TestIndexBatch(t *testing.T) {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
 		_, err := index.AddToBatches(ctx, list)
-		if err != nil {
-			t.Fatal(err)
-		}
+		assertNil(t, err)
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
 	// index all batches for each shard/tenant
 	err := index.IndexBatches(ctx, 1, ns)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
@@ -83,9 +71,7 @@ func TestIndexBatch(t *testing.T) {
 	assert.Equal(t, len(ns), len(index.shards))
 
 	total, err := index.Count()
-	if err != nil {
-		t.Fatal(err)
-	}
+	assertNil(t, err)
 
 	assert.Equal(t, uint64(100000), total)
 }
@@ -134,12 +120,10 @@ func namespaces() []string {
 	return ns
 }
 
-func newTestIndex() *Index {
+func newTestIndex(t *testing.T) *Index {
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	trace, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		panic(err)
-	}
+	assertNil(t, err)
 
 	return &Index{
 		tracer: trace,
@@ -150,5 +134,11 @@ func newTestIndex() *Index {
 			Workers:   10,
 			BatchSize: 1000,
 		},
+	}
+}
+
+func assertNil(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
 	}
 }
