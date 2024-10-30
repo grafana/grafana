@@ -30,7 +30,7 @@ import { PanelOptionsEditorConfig, PanelOptionsEditorItem } from '../types/panel
  */
 export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder<
   TOptions,
-  StandardEditorProps<any, any>,
+  StandardEditorProps,
   FieldConfigPropertyItem<TOptions>
 > {
   addNumberInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & NumberFieldConfigSettings, number>) {
@@ -168,7 +168,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
 export interface NestedValueAccess {
   getValue: (path: string) => any;
   onChange: (path: string, value: any) => void;
-  getContext?: (parent: StandardEditorContext<any, any>) => StandardEditorContext<any, any>;
+  getContext?: (parent: StandardEditorContext<any>) => StandardEditorContext<any>;
 }
 export interface NestedPanelOptions<TSub = any> {
   path: string;
