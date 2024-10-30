@@ -42,6 +42,12 @@ export function initializeCrashDetection() {
   initCrashDetection({
     id: nanoid(5),
 
+    dbName: 'grafana.crashes',
+
+    log: (log) => {
+      console.log(log);
+    },
+
     createClientWorker(): Worker {
       return new Worker(new URL('./client.worker', import.meta.url));
     },
