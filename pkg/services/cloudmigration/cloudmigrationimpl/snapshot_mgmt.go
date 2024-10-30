@@ -14,12 +14,14 @@ import (
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
+	plugins "github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
 	"golang.org/x/crypto/nacl/box"
@@ -45,7 +47,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	defer span.End()
 
 	// Plugins
-	plugins, err := s.getPlugins(ctx)
+	plugins, err := s.getPlugins(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get plugins", "err", err)
 		return nil, err
@@ -207,7 +209,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			Type:  cloudmigration.PluginDataType,
 			RefID: plugin.ID,
 			Name:  plugin.Name,
-			Data:  plugin,
+			Data:  plugin.Settings,
 		})
 	}
 
@@ -373,25 +375,57 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 }
 
 type Plugin struct {
-	Name string `json:"name"`
-	ID   string `json:"uid"`
-	Type string `json:"type"`
+	Name     string `json:"name"`
+	ID       string `json:"uid"`
+	Settings pluginsettings.UpdatePluginSettingCmd
+}
+
+func IsPublicSignatureType(s plugins.SignatureType) bool {
+	switch s {
+	case plugins.SignatureTypeGrafana, plugins.SignatureTypeCommercial, plugins.SignatureTypeCommunity:
+		return true
+	}
+	return false
 }
 
 // getPlugins returns the json payloads required by the plugin creation API
-func (s *Service) getPlugins(ctx context.Context) ([]Plugin, error) {
+func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUser) ([]Plugin, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getPlugins")
 	defer span.End()
 
 	results := make([]Plugin, 0)
 	plugins := s.pluginStore.Plugins(ctx)
+
 	for _, plugin := range plugins {
-		if !plugin.IsCorePlugin() {
-			// TODO: filter unisigned and private plugins
+		// Filter plugins to keep only non core, signed, with public signature type plugins
+		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && IsPublicSignatureType(plugin.SignatureType) {
+
+			// pluginSetting, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+			// 	PluginID: plugin.ID,
+			// 	OrgID:    signedInUser.OrgID,
+			// })
+			// if err != nil {
+			// 	fmt.Println("DEBUG | failed to get all plugin settings error", err)
+			// }
+
+			// Decrypt secure json to send raw credentials
+			// decryptedData, err := s.secretsService.DecryptJsonData(ctx, pluginSetting.SecureJSONData)
+			// if err != nil {
+			// 	s.log.Error("Failed to decrypt secure json data", "err", err)
+			// 	return nil, err
+			// }
+
+			pluginCmd := pluginsettings.UpdatePluginSettingCmd{
+				Enabled:       plugin.JSONData.AutoEnabled,
+				Pinned:        plugin.Pinned,
+				PluginVersion: plugin.Info.Version,
+				PluginId:      plugin.ID,
+			}
+
 			results = append(results, Plugin{
-				Name: plugin.Name,
-				ID:   plugin.ID,
-				Type: string(plugin.Type),
+				ID:       plugin.ID,
+				Name:     plugin.Name,
+				Settings: pluginCmd,
 			})
 		}
 	}
