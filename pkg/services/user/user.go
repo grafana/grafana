@@ -31,14 +31,14 @@ type Verifier interface {
 	Complete(ctx context.Context, cmd CompleteEmailVerifyCommand) error
 }
 
-func UIDToIDHandler(userService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-	return func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-		_, err := strconv.ParseInt(resourceID, 10, 64)
-		if resourceID == "" || err == nil {
-			return resourceID, nil
+func UIDToIDHandler(userService Service) func(ctx context.Context, userID string) (string, error) {
+	return func(ctx context.Context, userID string) (string, error) {
+		_, err := strconv.ParseInt(userID, 10, 64)
+		if userID == "" || err == nil {
+			return userID, nil
 		}
 		user, err := userService.GetByUID(ctx, &GetUserByUIDQuery{
-			UID: resourceID,
+			UID: userID,
 		})
 		return strconv.FormatInt(user.ID, 10), err
 	}

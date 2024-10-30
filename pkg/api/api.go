@@ -619,8 +619,7 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 
 	return func(c *contextmodel.ReqContext) {
 		userID := web.Params(c.Req)[paramName]
-		// search user globally. other
-		id, err := handler(c.Req.Context(), 0, userID)
+		id, err := handler(c.Req.Context(), userID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id
