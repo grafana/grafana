@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -14,7 +15,12 @@ import (
 )
 
 func TestStarDashboard(t *testing.T) {
-	api := ProvideApi(startest.NewStarServiceFake(), dashboards.NewFakeDashboardService(t))
+	ds := dashboards.NewFakeDashboardService(t)
+	ds.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{
+		ID: 1, // abc >> 1
+	}, nil)
+
+	api := ProvideApi(startest.NewStarServiceFake(), ds)
 
 	testCases := []struct {
 		name           string
@@ -25,7 +31,7 @@ func TestStarDashboard(t *testing.T) {
 		{
 			name: "Star dashboard with user",
 			params: map[string]string{
-				":id": "1",
+				":uid": "abc",
 			},
 			signedInUser: &user.SignedInUser{
 				UserID:      1,
@@ -37,7 +43,7 @@ func TestStarDashboard(t *testing.T) {
 		{
 			name: "Star dashboard with anonymous user",
 			params: map[string]string{
-				":id": "1",
+				":uid": "abc",
 			},
 			signedInUser: &user.SignedInUser{
 				UserID:      0,
@@ -49,7 +55,7 @@ func TestStarDashboard(t *testing.T) {
 		{
 			name: "Star dashboard with API Key",
 			params: map[string]string{
-				":id": "1",
+				":uid": "abc",
 			},
 			signedInUser: &user.SignedInUser{
 				UserID:      0,
@@ -62,7 +68,7 @@ func TestStarDashboard(t *testing.T) {
 		{
 			name: "Star dashboard with Service Account",
 			params: map[string]string{
-				":id": "1",
+				":uid": "abc",
 			},
 			signedInUser: &user.SignedInUser{
 				UserID:           1,
@@ -77,7 +83,7 @@ func TestStarDashboard(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			req := web.SetURLParams(&http.Request{}, tc.params)
 			c := &contextmodel.ReqContext{SignedInUser: tc.signedInUser, Context: &web.Context{Req: req}}
-			resp := api.StarDashboard(c)
+			resp := api.StarDashboardByUID(c)
 			assert.Equal(t, tc.expectedStatus, resp.Status())
 		})
 	}
