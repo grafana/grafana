@@ -786,10 +786,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 	dashUID := web.Params(c.Req)[":uid"]
 
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "missing dashboard uid", nil)
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
@@ -901,10 +898,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	var dash *dashboards.Dashboard
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "missing dashboard uid", nil)
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
@@ -1098,10 +1092,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "missing dashboard uid", nil)
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)

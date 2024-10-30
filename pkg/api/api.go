@@ -30,6 +30,8 @@
 package api
 
 import (
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -46,7 +48,6 @@ import (
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
@@ -483,18 +484,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Deprecated: used to convert internal IDs to UIDs
 			dashboardRoute.Get("/ids/:ids", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), hs.GetDashboardUIDs)
-
-			// Deprecated: use /uid/:uid API instead.
-			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute routing.RouteRegister) {
-				dashIdRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
-				dashIdRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
-				dashIdRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
-
-				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
-				})
-			})
 		})
 
 		// Dashboard snapshots

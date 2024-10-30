@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -52,10 +51,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "missing dashboard uid", nil)
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)
@@ -137,10 +133,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 
 	dashUID := web.Params(c.Req)[":uid"]
 	if dashUID == "" {
-		dashID, err = strconv.ParseInt(web.Params(c.Req)[":dashboardId"], 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "dashboardId is invalid", err)
-		}
+		return response.Error(http.StatusBadRequest, "missing dashboard uid", nil)
 	}
 
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), dashID, dashUID)

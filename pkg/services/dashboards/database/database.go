@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	"go.opentelemetry.io/otel"
+
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -746,6 +747,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
 
+		// nolint:staticcheck
 		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
 		mustCols := []string{}
 		if query.Title != nil { // nolint:staticcheck

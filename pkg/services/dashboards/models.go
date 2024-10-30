@@ -252,6 +252,7 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
+	// Deprecated: use the UID flavor where possible
 	ID  int64
 	UID string
 	// Deprecated: this is no-longer a unique constraint and should not be used
