@@ -14352,13 +14352,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie@npm:0.7.1":
-  version: 0.7.1
-  resolution: "cookie@npm:0.7.1"
-  checksum: 10/aec6a6aa0781761bf55d60447d6be08861d381136a0fe94aa084fddd4f0300faa2b064df490c6798adfa1ebaef9e0af9b08a189c823e0811b8b313b3d9a03380
-  languageName: node
-  linkType: hard
-
 "cookie@npm:^0.5.0":
   version: 0.5.0
   resolution: "cookie@npm:0.5.0"
@@ -14502,12 +14495,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crashme@npm:^0.0.2":
-  version: 0.0.2
-  resolution: "crashme@npm:0.0.2"
-  dependencies:
-    express: "npm:^4.21.0"
-  checksum: 10/7b2ab4b3032fcba0707c2d3d79f3ed0cf41ad78d7d749e9eca825cfa4675d580df912f9011dad4c83c224a56da1a548a36c7b919ffb90f50f50016cf995f8801
+"crashme@npm:0.0.4":
+  version: 0.0.4
+  resolution: "crashme@npm:0.0.4"
+  checksum: 10/075841d35e75e0f5d2dac4a6277e90380578cb900c39ad87c9801dda3d52c763e597192bd5d0c811c5eb3f80b9026b3ce56ab18062294379b91e5de2d35449d5
   languageName: node
   linkType: hard
 
@@ -17718,45 +17709,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:^4.21.0":
-  version: 4.21.1
-  resolution: "express@npm:4.21.1"
-  dependencies:
-    accepts: "npm:~1.3.8"
-    array-flatten: "npm:1.1.1"
-    body-parser: "npm:1.20.3"
-    content-disposition: "npm:0.5.4"
-    content-type: "npm:~1.0.4"
-    cookie: "npm:0.7.1"
-    cookie-signature: "npm:1.0.6"
-    debug: "npm:2.6.9"
-    depd: "npm:2.0.0"
-    encodeurl: "npm:~2.0.0"
-    escape-html: "npm:~1.0.3"
-    etag: "npm:~1.8.1"
-    finalhandler: "npm:1.3.1"
-    fresh: "npm:0.5.2"
-    http-errors: "npm:2.0.0"
-    merge-descriptors: "npm:1.0.3"
-    methods: "npm:~1.1.2"
-    on-finished: "npm:2.4.1"
-    parseurl: "npm:~1.3.3"
-    path-to-regexp: "npm:0.1.10"
-    proxy-addr: "npm:~2.0.7"
-    qs: "npm:6.13.0"
-    range-parser: "npm:~1.2.1"
-    safe-buffer: "npm:5.2.1"
-    send: "npm:0.19.0"
-    serve-static: "npm:1.16.2"
-    setprototypeof: "npm:1.2.0"
-    statuses: "npm:2.0.1"
-    type-is: "npm:~1.6.18"
-    utils-merge: "npm:1.0.1"
-    vary: "npm:~1.1.2"
-  checksum: 10/5d4a36dd03c1d1cce93172e9b185b5cd13a978d29ee03adc51cd278be7b4a514ae2b63e2fdaec0c00fdc95c6cfb396d9dd1da147917ffd337d6cd0778e08c9bc
-  languageName: node
-  linkType: hard
-
 "extend@npm:^3.0.0, extend@npm:~3.0.2":
   version: 3.0.2
   resolution: "extend@npm:3.0.2"
@@ -19213,7 +19165,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.38.1"
-    crashme: "npm:^0.0.2"
+    crashme: "npm:0.0.4"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.10.0"
