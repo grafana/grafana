@@ -66,12 +66,15 @@ interface HardDeleteDashboardArgs {
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
+    // Suppress error pop-up for root (aka 'general') folder
+    const isGeneralFolder = requestOptions.url === `/folders/general`;
+    requestOptions = isGeneralFolder ? { ...requestOptions, showErrorAlert: false } : requestOptions;
+
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
-          showErrorAlert: requestOptions.showErrorAlert,
         })
       );
       return { data: responseData, meta };
