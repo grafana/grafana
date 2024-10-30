@@ -216,7 +216,7 @@ Experimental features might be changed or removed without prior notice.
 | `timeRangeProvider`                           | Enables time pickers sync                                                                                                                                                                                                                                                         |
 | `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
 | `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
-| `labelSuggestionService`                      | Enable label suggestion API endpoint                                                                                                                                                                                                                                              |
+| `labelSuggestionService`                      | Enable label suggestion service endpoint endpoint                                                                                                                                                                                                                                 |
 
 ## Development feature toggles
 
