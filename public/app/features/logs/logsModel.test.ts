@@ -1715,7 +1715,7 @@ describe('logs sample', () => {
   });
 });
 
-describe.only('logs volume', () => {
+describe('logs volume', () => {
   class TestDataQuery implements DataQuery {
     refId = 'A';
     target = '';
