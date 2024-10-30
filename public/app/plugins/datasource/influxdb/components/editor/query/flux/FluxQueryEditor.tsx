@@ -200,10 +200,10 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
             options={samples}
             value="Sample query"
             onChange={this.onSampleChange}
-            className={css`
-              margin-top: -${theme.spacing(0.5)};
-              margin-left: ${theme.spacing(0.5)};
-            `}
+            className={css({
+              marginTop: theme.spacing(-0.5),
+              marginLeft: theme.spacing(0.5),
+            })}
           />
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow"></div>
@@ -218,17 +218,17 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorContainerStyles: css`
-    height: 200px;
-    max-width: 100%;
-    resize: vertical;
-    overflow: auto;
-    background-color: ${theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary};
-    padding-bottom: ${theme.spacing(1)};
-  `,
-  editorActions: css`
-    margin-top: 6px;
-  `,
+  editorContainerStyles: css({
+    height: '200px',
+    maxWidth: '100%',
+    resize: 'vertical',
+    overflow: 'auto',
+    backgroundColor: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+    paddingBottom: theme.spacing(1),
+  }),
+  editorActions: css({
+    marginTop: '6px',
+  }),
 });
 
 export const FluxQueryEditor = withTheme2(UnthemedFluxQueryEditor);

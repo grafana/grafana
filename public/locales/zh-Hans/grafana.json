@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "",
+      "next-evaluation": "",
+      "next-evaluation-in": "",
+      "rule-definition": ""
+    },
     "alertform": {
       "labels": {
         "alerting": "",
@@ -134,6 +140,7 @@
     "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -141,6 +148,7 @@
         "provisioned": "",
         "rules": ""
       },
+      "delivered-to": "",
       "delivery-duration": "",
       "empty-state": {
         "title": ""
@@ -464,11 +472,14 @@
     "cancel": "",
     "clear": "",
     "close": "",
+    "collapse": "",
+    "edit": "",
     "locale": {
       "default": "默认"
     },
     "save": "保存",
-    "search": ""
+    "search": "",
+    "view": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -847,6 +858,11 @@
   "explore": {
     "add-to-dashboard": "添加到仪表板",
     "logs": {
+      "logs-volume": {
+        "add-filters": "",
+        "decrease-timerange": "",
+        "much-data": ""
+      },
       "maximum-pinned-logs": "",
       "no-logs-found": "",
       "scan-for-older-logs": "",
@@ -1527,6 +1543,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1591,7 +1608,10 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
+        "datasource-invalid-url": "",
         "datasource-name-conflict": "",
+        "folder-name-conflict": "",
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
@@ -1625,6 +1645,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "仪表板",
       "datasource": "数据源",
@@ -2146,6 +2167,8 @@
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "installedVersion": "",
+        "latestVersion": "",
         "links": "",
         "reportAbuse": "",
         "signature": "",

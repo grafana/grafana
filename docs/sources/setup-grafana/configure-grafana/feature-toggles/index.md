@@ -77,6 +77,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                                                              | Yes                |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                          | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                             | Yes                |
+| `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                                          |                    |
 
 ## Public preview feature toggles
 
@@ -214,7 +215,8 @@ Experimental features might be changed or removed without prior notice.
 | `unifiedStorageBigObjectsSupport`             | Enables to save big objects in blob storage                                                                                                                                                                                                                                       |
 | `timeRangeProvider`                           | Enables time pickers sync                                                                                                                                                                                                                                                         |
 | `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
-| `labelSuggestionService`                      | Enable label suggestion API endpoint
+| `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
+| `labelSuggestionService`                      | Enable label suggestion API endpoint                                  |
 
 ## Development feature toggles
 

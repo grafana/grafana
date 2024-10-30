@@ -9,7 +9,11 @@ import {
   ScopedVar,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import {
+  activateInActiveParents,
+  findVizPanelByKey,
+  getVizPanelKeyForPanelId,
+} from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
 
@@ -69,7 +73,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = sourceDataProvider!.activate();
+      const cleanUp = activateInActiveParents(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         map((result) => {
@@ -81,7 +85,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             key: 'source-ds-provider',
           };
         }),
-        finalize(cleanUp)
+        finalize(() => cleanUp?.())
       );
     });
   }

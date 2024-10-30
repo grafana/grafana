@@ -248,61 +248,63 @@ export const getGridCellKind = (field: Field, row: number, hasGridSelection = fa
 
 export const getStyles = (theme: GrafanaTheme2, isResizeInProgress: boolean) => {
   return {
-    dataEditor: css`
-      .dvn-scroll-inner > div:nth-child(2) {
-        pointer-events: none !important;
-      }
-      scrollbar-color: ${theme.colors.background.secondary} ${theme.colors.background.primary};
-      ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-      }
-      ::-webkit-scrollbar-track {
-        background: ${theme.colors.background.primary};
-      }
-      ::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-corner {
-        display: none;
-      }
-    `,
-    addColumnDiv: css`
-      width: 120px;
-      display: flex;
-      flex-direction: column;
-      background-color: ${theme.colors.background.primary};
-      button {
-        pointer-events: ${isResizeInProgress ? 'none' : 'auto'};
-        border: none;
-        outline: none;
-        height: 37px;
-        font-size: 20px;
-        background-color: ${theme.colors.background.primary};
-        color: ${theme.colors.text.primary};
-        border-right: 1px solid ${theme.components.panel.borderColor};
-        border-bottom: 1px solid ${theme.components.panel.borderColor};
-        transition: background-color 200ms;
-        cursor: pointer;
-        :hover {
-          background-color: ${theme.colors.background.secondary};
-        }
-      }
-      input {
-        height: 37px;
-        border: 1px solid ${theme.colors.primary.main};
-        :focus {
-          outline: none;
-        }
-      }
-    `,
-    renameColumnInput: css`
-      height: 37px;
-      border: 1px solid ${theme.colors.primary.main};
-      :focus {
-        outline: none;
-      }
-    `,
+    dataEditor: css({
+      '.dvn-scroll-inner > div:nth-child(2)': {
+        // can't avoid type assertion here due to '!important'
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        pointerEvents: 'none !important' as 'none',
+      },
+      scrollbarColor: `${theme.colors.background.secondary} ${theme.colors.background.primary}`,
+      '::-webkit-scrollbar': {
+        width: '10px',
+        height: '10px',
+      },
+      '::-webkit-scrollbar-track': {
+        background: theme.colors.background.primary,
+      },
+      '::-webkit-scrollbar-thumb': {
+        borderRadius: '10px',
+      },
+      '::-webkit-scrollbar-corner': {
+        display: 'none',
+      },
+    }),
+    addColumnDiv: css({
+      width: '120px',
+      display: 'flex',
+      flexDirection: 'column',
+      backgroundColor: theme.colors.background.primary,
+      button: {
+        pointerEvents: isResizeInProgress ? 'none' : 'auto',
+        border: 'none',
+        outline: 'none',
+        height: '37px',
+        fontSize: '20px',
+        backgroundColor: theme.colors.background.primary,
+        color: theme.colors.text.primary,
+        borderRight: `1px solid ${theme.components.panel.borderColor}`,
+        borderBottom: `1px solid ${theme.components.panel.borderColor}`,
+        transition: 'background-color 200ms',
+        cursor: 'pointer',
+        ':hover': {
+          backgroundColor: theme.colors.background.secondary,
+        },
+      },
+      input: {
+        height: '37px',
+        border: `1px solid ${theme.colors.primary.main}`,
+        ':focus': {
+          outline: 'none',
+        },
+      },
+    }),
+    renameColumnInput: css({
+      height: '37px',
+      border: `1px solid ${theme.colors.primary.main}`,
+      ':focus': {
+        outline: 'none',
+      },
+    }),
   };
 };
 

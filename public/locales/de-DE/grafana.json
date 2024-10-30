@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "",
+      "next-evaluation": "",
+      "next-evaluation-in": "",
+      "rule-definition": ""
+    },
     "alertform": {
       "labels": {
         "alerting": "",
@@ -134,6 +140,7 @@
     "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -141,6 +148,7 @@
         "provisioned": "",
         "rules": ""
       },
+      "delivered-to": "",
       "delivery-duration": "",
       "empty-state": {
         "title": ""
@@ -473,11 +481,14 @@
     "cancel": "",
     "clear": "",
     "close": "",
+    "collapse": "",
+    "edit": "",
     "locale": {
       "default": "Standard"
     },
     "save": "Speichern",
-    "search": ""
+    "search": "",
+    "view": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -856,6 +867,11 @@
   "explore": {
     "add-to-dashboard": "Zum Dashboard hinzufügen",
     "logs": {
+      "logs-volume": {
+        "add-filters": "",
+        "decrease-timerange": "",
+        "much-data": ""
+      },
       "maximum-pinned-logs": "",
       "no-logs-found": "",
       "scan-for-older-logs": "",
@@ -1537,6 +1553,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1601,7 +1618,10 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
+        "datasource-invalid-url": "",
         "datasource-name-conflict": "",
+        "folder-name-conflict": "",
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
@@ -1635,6 +1655,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
@@ -2156,6 +2177,8 @@
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "installedVersion": "",
+        "latestVersion": "",
         "links": "",
         "reportAbuse": "",
         "signature": "",
