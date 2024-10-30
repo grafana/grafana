@@ -38,24 +38,35 @@ refs:
 
 {{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Grafana includes built-in support for InfluxDB.
-This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include
-its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
+Grafana includes built-in support for InfluxDB. You do not have to install a plugin to add the InfluxDB data source. 
 
-For instructions on how to add a data source to Grafana, refer to
+Grafana provides several different data source configuration options for the InfluxDB data source, including a choice of three query languages to use with InfluxDB as well as a [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
+
+<!-- This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include
+its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}). -->
+
+<!-- For instructions on how to add a data source to Grafana, refer to
 the [administration documentation](ref:data-source-management).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning
-system.
+system. -->
 
-Once you've added the InfluxDB data source, you can [configure it](#configure-the-data-source) so that your Grafana
-instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when
+After adding the InfluxDB data source, you can [configure it](#configure-the-data-source) to enable users in your Grafana instance to create queries in the [query editor]({{< relref "./query-editor" >}}) when
 they [build dashboards](ref:build-dashboards) and use [Explore](ref:explore).
 
-The following documents will help you get tarted working with the InfluxDB data source: 
+The following documents will help you get started with the InfluxDB data source in Grafana: 
 
+- [Get started with Grafana and InfluxDB](/docs/grafana/latest/getting-started/get-started-grafana-influxdb/)
 - [Configure the InfluxDB data source]()
+- InfluxDB query editor
+- InfluxDB templates and variables
 
+Once you have configured the data source you can:
+
+- Add [annotations]
+- Set up [alerting](https://grafana.com/docs/grafana/latest/alerting/)
+- Add [transformations](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
+)
 <!-- ## Configure the data source
 
 To configure basic settings for the data source, complete the following steps:

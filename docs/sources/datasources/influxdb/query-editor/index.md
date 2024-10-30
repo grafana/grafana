@@ -58,6 +58,7 @@ The InfluxDB data source has three different types of query editors, each corres
 
 Configuration options vary based on query editor. 
 
+
 ## InfluxQL query editor
 
 The InfluxQL query editor helps you select metrics and tags to create InfluxQL queries. There are two modes: visual editor mode and raw query mode. To switch between the two modes click the **pencil icon** in the upper right.
