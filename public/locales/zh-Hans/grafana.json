@@ -606,8 +606,7 @@
       "import": "从库导入",
       "paste-panel": "粘贴面板",
       "row": "行",
-      "visualization": "可视化",
-      "widget": "小部件"
+      "visualization": "可视化"
     },
     "alert-rules-drawer": {
       "redirect-link": "Grafana Alerting 中的列表",
@@ -620,9 +619,6 @@
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
-      "add-widget-body": "创建列表、Markdown 和其他小部件",
-      "add-widget-button": "添加小部件",
-      "add-widget-header": "添加一个小部件",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板"

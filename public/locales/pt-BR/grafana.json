@@ -615,8 +615,7 @@
       "import": "Importar da biblioteca",
       "paste-panel": "Colar painel",
       "row": "Linha",
-      "visualization": "Visualização",
-      "widget": "Widget"
+      "visualization": "Visualização"
     },
     "alert-rules-drawer": {
       "redirect-link": "Lista no alerta do Grafana",
@@ -629,9 +628,6 @@
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
-      "add-widget-body": "Criar listas, markdowns e outros widgets",
-      "add-widget-button": "Adicionar widget",
-      "add-widget-header": "Adicionar um widget",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle"

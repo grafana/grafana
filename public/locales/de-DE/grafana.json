@@ -615,8 +615,7 @@
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
-      "visualization": "Visualisierung",
-      "widget": "Widget"
+      "visualization": "Visualisierung"
     },
     "alert-rules-drawer": {
       "redirect-link": "Liste in Grafana Alerting",
@@ -629,9 +628,6 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "add-widget-body": "Listen, Markdowns und andere Widgets erstellen",
-      "add-widget-button": "Widget hinzufügen",
-      "add-widget-header": "Widget hinzufügen",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
