@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -14,23 +15,45 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-func TestIndexBatch(t *testing.T) {
-	tracingCfg := tracing.NewEmptyTracingConfig()
-	trace, err := tracing.ProvideService(tracingCfg)
+const testTenant = "default"
+
+func TestIndexDashboard(t *testing.T) {
+	data, err := os.ReadFile("./testdata/dashboard-resource.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	index := &Index{
-		tracer: trace,
-		shards: make(map[string]Shard),
-		log:    log.New("unifiedstorage.search.index"),
-		opts: Opts{
-			ListLimit: 5000,
-			Workers:   10,
-			BatchSize: 1000,
-		},
+	items := []*ResourceWrapper{}
+	items = append(items, &ResourceWrapper{Value: data})
+
+	ctx := context.Background()
+	list := &ListResponse{Items: items}
+	index := newTestIndex()
+	_, err = index.AddToBatches(ctx, list)
+	if err != nil {
+		t.Fatal(err)
 	}
+
+	err = index.IndexBatches(ctx, 1, []string{testTenant})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	total, err := index.Count()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, uint64(1), total)
+
+	results, err := index.Search(ctx, testTenant, "*", 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, 1, len(results))
+}
+
+func TestIndexBatch(t *testing.T) {
+	index := newTestIndex()
 
 	ctx := context.Background()
 	startAll := time.Now()
@@ -40,7 +63,7 @@ func TestIndexBatch(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
-		_, err = index.AddToBatches(ctx, list)
+		_, err := index.AddToBatches(ctx, list)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -49,7 +72,7 @@ func TestIndexBatch(t *testing.T) {
 	}
 
 	// index all batches for each shard/tenant
-	err = index.IndexBatches(ctx, 1, ns)
+	err := index.IndexBatches(ctx, 1, ns)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,4 +132,23 @@ func namespaces() []string {
 		ns = append(ns, "tenant"+strconv.Itoa(i))
 	}
 	return ns
+}
+
+func newTestIndex() *Index {
+	tracingCfg := tracing.NewEmptyTracingConfig()
+	trace, err := tracing.ProvideService(tracingCfg)
+	if err != nil {
+		panic(err)
+	}
+
+	return &Index{
+		tracer: trace,
+		shards: make(map[string]Shard),
+		log:    log.New("unifiedstorage.search.index"),
+		opts: Opts{
+			ListLimit: 5000,
+			Workers:   10,
+			BatchSize: 1000,
+		},
+	}
 }
