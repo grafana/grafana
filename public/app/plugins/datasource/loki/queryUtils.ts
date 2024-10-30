@@ -25,7 +25,7 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
 import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -351,15 +351,23 @@ export const interpolateShardingSelector = (queries: LokiQuery[], shards: number
     shardValue = shardValue === '-1' ? '' : shardValue;
     return queries.map((query) => ({
       ...query,
-      expr: addLabelToQuery(query.expr, '__stream_shard__', '=', shardValue, LabelType.Indexed),
+      expr: addStreamShardLabelsToQuery(query.expr, '=', shardValue),
     }));
   }
 
   return queries.map((query) => ({
     ...query,
-    expr: addLabelToQuery(query.expr, '__stream_shard__', '=~', shardValue, LabelType.Indexed),
+    expr: addStreamShardLabelsToQuery(query.expr, '=~', shardValue),
   }));
 };
+
+function addStreamShardLabelsToQuery(query: string, operator: string, shardValue: string) {
+  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LabelType.Indexed);
+  if (!isLogsQuery(query)) {
+    return addDropToQuery(shardedQuery, ['__stream_shard__']);
+  }
+  return shardedQuery;
+}
 
 export const getSelectorForShardValues = (query: string) => {
   const selector = getNodesFromQuery(query, [Selector]);
