@@ -357,7 +357,7 @@ function getTrailingWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
         sum += currentValue;
 
         if (i > window - 1) {
-          sum -= selectedField.values[i - window];
+          sum -= selectedField.values[i - window] != null ? selectedField.values[i - window] : 0;
           count--;
         }
       }
