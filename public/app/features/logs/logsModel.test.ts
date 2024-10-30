@@ -10,6 +10,7 @@ import {
   DataTopic,
   dateTimeParse,
   FieldType,
+  getDefaultTimeRange,
   LoadingState,
   LogLevel,
   LogRowModel,
@@ -1701,6 +1702,117 @@ describe('logs sample', () => {
     setup(setupErrorResponse);
 
     await expect(logsSampleProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Error,
+          error: 'Error message',
+          data: [],
+        },
+        'Error message',
+      ]);
+    });
+  });
+});
+
+describe.only('logs volume', () => {
+  class TestDataQuery implements DataQuery {
+    refId = 'A';
+    target = '';
+  }
+
+  let logsVolumeProvider: Observable<DataQueryResponse>,
+    datasource: MockObservableDataSourceApi,
+    request: DataQueryRequest<TestDataQuery>;
+
+  function createFrame() {
+    return toDataFrame({
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: {},
+          values: [3000000, 4000000],
+        },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          config: {},
+          values: [5, 4],
+          labels: {
+            level: 'debug',
+          },
+        },
+      ],
+    });
+  }
+
+  function setup(datasourceSetup: () => void) {
+    datasourceSetup();
+    request = {
+      targets: [{ target: 'logs sample query 1' }, { target: 'logs sample query 2' }],
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+    } as unknown as DataQueryRequest<TestDataQuery>;
+    logsVolumeProvider = queryLogsVolume(datasource, request, { targets: request.targets });
+  }
+  const dataFrame = createFrame();
+
+  function setupResult() {
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        data: [dataFrame],
+      },
+    ]);
+  }
+  function setupError() {
+    datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
+  }
+  function setupErrorWithData() {
+    datasource = new MockObservableDataSourceApi(
+      'loki',
+      [
+        {
+          data: [dataFrame],
+        },
+      ],
+      undefined,
+      'Error message'
+    );
+  }
+
+  it('returns logs volume data', async () => {
+    setup(setupResult);
+    await expect(logsVolumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual(
+        expect.objectContaining({
+          data: expect.arrayContaining([dataFrame]),
+        })
+      );
+    });
+  });
+
+  it('returns errors', async () => {
+    setup(setupError);
+
+    await expect(logsVolumeProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Error,
+          error: 'Error message',
+          data: [],
+        },
+        'Error message',
+      ]);
+    });
+  });
+
+  it('returns errors and data', async () => {
+    setup(setupErrorWithData);
+
+    await expect(logsVolumeProvider).toEmitValuesWith((received) => {
       expect(received).toMatchObject([
         { state: LoadingState.Loading, error: undefined, data: [] },
         {
