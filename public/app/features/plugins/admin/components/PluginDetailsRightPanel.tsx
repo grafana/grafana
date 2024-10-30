@@ -46,9 +46,23 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
           {plugin.updatedAt && (
             <Stack direction="column" gap={0.5}>
               <Text color="secondary">
-                <Trans i18nKey="plugins.details.labels.updatedAt">Last updated: </Trans>
+                <Trans i18nKey="plugins.details.labels.updatedAt">Last updated:</Trans>
               </Text>{' '}
-              <Text>{formatDate(new Date(plugin.updatedAt))}</Text>
+              <Text>{formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+            </Stack>
+          )}
+          {plugin?.details?.lastCommitDate && (
+            <Stack direction="column" gap={0.5}>
+              <Text color="secondary">
+                <Trans i18nKey="plugins.details.labels.lastCommitDate">Last commit date:</Trans>
+              </Text>{' '}
+              <Text>
+                {formatDate(new Date(plugin.details.lastCommitDate), {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
             </Stack>
           )}
         </Stack>
