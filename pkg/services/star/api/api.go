@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -81,43 +80,6 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, uids)
 }
 
-// swagger:route POST /user/stars/dashboard/{dashboard_id} signed_in_user starDashboard
-//
-// Star a dashboard.
-//
-// Stars the given Dashboard for the actual user.
-//
-// Deprecated: true
-//
-// Responses:
-// 200: okResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
-	}
-
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
-	}
-
-	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: id}
-	if cmd.DashboardID <= 0 {
-		return response.Error(http.StatusBadRequest, "Missing dashboard id", nil)
-	}
-
-	if err := api.starService.Add(c.Req.Context(), &cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
-	}
-
-	return response.Success("Dashboard starred!")
-}
-
 // swagger:route POST /user/stars/dashboard/uid/{dashboard_uid} signed_in_user starDashboardByUID
 //
 // Star a dashboard.
@@ -153,45 +115,6 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 	}
 
 	return response.Success("Dashboard starred!")
-}
-
-// swagger:route DELETE /user/stars/dashboard/{dashboard_id} signed_in_user unstarDashboard
-//
-// Unstar a dashboard.
-//
-// Deletes the starring of the given Dashboard for the actual user.
-//
-// Deprecated: true
-//
-// Please refer to the [new](#/signed_in_user/unstarDashboardByUID) API instead
-//
-// Responses:
-// 200: okResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 403: forbiddenError
-// 500: internalServerError
-func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
-	}
-
-	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
-	}
-
-	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardID: id}
-	if cmd.DashboardID <= 0 {
-		return response.Error(http.StatusBadRequest, "Missing dashboard id", nil)
-	}
-
-	if err := api.starService.Delete(c.Req.Context(), &cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
-	}
-
-	return response.Success("Dashboard unstarred")
 }
 
 // swagger:route DELETE /user/stars/dashboard/uid/{dashboard_uid} signed_in_user unstarDashboardByUID

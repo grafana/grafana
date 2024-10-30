@@ -30,6 +30,8 @@
 package api
 
 import (
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -46,7 +48,6 @@ import (
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
@@ -254,13 +255,6 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.starApi.StarDashboard))
-			// Deprecated: use /stars/dashboard/uid/:uid API instead.
-			// nolint:staticcheck
-			userRoute.Delete("/stars/dashboard/:id", routing.Wrap(hs.starApi.UnstarDashboard))
-
 			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
 			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
 
