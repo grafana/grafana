@@ -18,7 +18,6 @@ func (s *LabelSuggestionService) registerAPIEndpoints() {
 }
 
 func (s *LabelSuggestionService) generalLabelSuggestionHandler(c *contextmodel.ReqContext) response.Response {
-
 	result, err := s.getGeneralLabelSuggestion(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
@@ -28,7 +27,6 @@ func (s *LabelSuggestionService) generalLabelSuggestionHandler(c *contextmodel.R
 }
 
 func (s *LabelSuggestionService) datasourceLabelSuggestionHandler(c *contextmodel.ReqContext) response.Response {
-
 	datasourceUID := c.QueryStrings("datasourceUid")
 
 	result, err := s.getDatasourceLabelSuggestion(c.Req.Context(), datasourceUID)
@@ -40,7 +38,6 @@ func (s *LabelSuggestionService) datasourceLabelSuggestionHandler(c *contextmode
 }
 
 func (s *LabelSuggestionService) userLabelSuggestionHandler(c *contextmodel.ReqContext) response.Response {
-
 	result, err := s.getUserLabelSuggestion(c.Req.Context(), c.SignedInUser)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
