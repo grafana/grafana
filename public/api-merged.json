@@ -12439,6 +12439,9 @@
         },
         "message": {
           "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
