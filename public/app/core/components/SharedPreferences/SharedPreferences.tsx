@@ -15,8 +15,9 @@ import {
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
+  Combobox,
+  ComboboxOption,
 } from '@grafana/ui';
-import { Combobox, ComboboxOption } from '@grafana/ui/src/unstable';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
