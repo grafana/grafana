@@ -45,6 +45,16 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 			expected:  `{cluster="us-central-1"} |= "an unexpected error"`,
 			expectErr: false,
 		},
+		{
+			name:  "scopes with multiple filters",
+			query: `{} |= "an unexpected error"`,
+			scopeFilters: []models.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			},
+			expected:  `{namespace="default", cluster="us-central-1"} |= "an unexpected error"`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
