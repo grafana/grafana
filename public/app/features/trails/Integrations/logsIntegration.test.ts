@@ -5,6 +5,7 @@ import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import * as runtime from '@grafana/runtime';
 
 import {
+  extractRecordingRulesFromRuleGroups,
   fetchAndExtractLokiRecordingRules,
   getLokiQueryForRelatedMetric,
   getDataSourcesWithRecordingRulesContainingMetric,
@@ -37,6 +38,15 @@ const mockLokiDS2: DataSourceInstanceSettings<DataSourceJsonData> = {
   name: 'Loki Secondary',
 };
 
+const mockLokiDS3: DataSourceInstanceSettings<DataSourceJsonData> = {
+  ...mockLokiDS1,
+  id: 3,
+  uid: 'loki3',
+  name: 'Loki the Third with same rules',
+};
+
+const mockLokiDSs = [mockLokiDS1, mockLokiDS2, mockLokiDS3];
+
 const mockRuleGroups1: RecordingRuleGroup[] = [
   {
     name: 'group1',
@@ -68,6 +78,30 @@ const mockRuleGroups2: RecordingRuleGroup[] = [
   },
 ];
 
+const mockRuleGroupsWithSameRuleName: RecordingRuleGroup[] = [
+  {
+    name: 'group_with_same_rule_names',
+    rules: [
+      {
+        name: 'metric_xx_total',
+        query: 'sum(rate({app="app-XX"} |= "error" [5m]))',
+        type: 'recording',
+        labels: {
+          customLabel: 'label value 5m',
+        },
+      },
+      {
+        name: 'metric_xx_total',
+        query: 'sum(rate({app="app-YY"} |= "warn" [10m]))',
+        type: 'recording',
+        labels: {
+          customLabel: 'label value 10m',
+        },
+      },
+    ],
+  },
+];
+
 const mockExtractedRules: ExtractedRecordingRules = {
   loki1: [
     {
@@ -75,12 +109,14 @@ const mockExtractedRules: ExtractedRecordingRules = {
       query: 'sum(rate({app="app-A"} |= "error" [5m]))',
       type: 'recording',
       datasource: { name: 'Loki Main', uid: 'loki1' },
+      hasMultipleOccurrences: false,
     },
     {
       name: 'metric_b_total',
       query: 'sum(rate({app="app-B"} |= "warn" [5m]))',
       type: 'recording',
       datasource: { name: 'Loki Main', uid: 'loki1' },
+      hasMultipleOccurrences: false,
     },
   ],
   loki2: [
@@ -89,12 +125,22 @@ const mockExtractedRules: ExtractedRecordingRules = {
       query: 'sum(rate({app="app-C"} |= "error" [5m]))',
       type: 'recording',
       datasource: { name: 'Loki Secondary', uid: 'loki2' },
+      hasMultipleOccurrences: false,
+    },
+  ],
+  loki3: [
+    {
+      name: 'metric_xx_total',
+      query: 'sum(rate({app="app-XX"} |= "error" [5m]))',
+      type: 'recording',
+      datasource: { name: 'Loki the Third with same rules', uid: 'loki3' },
+      hasMultipleOccurrences: true,
     },
   ],
 };
 
 // Create spy functions
-const getListSpy = jest.fn().mockReturnValue([mockLokiDS1, mockLokiDS2]);
+const getListSpy = jest.fn().mockReturnValue(mockLokiDSs);
 const fetchSpy = jest.fn().mockImplementation((req) => {
   if (req.url.includes('loki1')) {
     return of({
@@ -109,8 +155,34 @@ const fetchSpy = jest.fn().mockImplementation((req) => {
       config: { url: req.url },
     } as runtime.FetchResponse);
   }
+  if (req.url.includes('loki2')) {
+    return of({
+      data: { data: { groups: mockRuleGroups2 } },
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic',
+      url: req.url,
+      config: { url: req.url },
+    } as runtime.FetchResponse);
+  }
+  if (req.url.includes('loki3')) {
+    return of({
+      data: { data: { groups: mockRuleGroupsWithSameRuleName } },
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic',
+      url: req.url,
+      config: { url: req.url },
+    } as runtime.FetchResponse);
+  }
   return of({
-    data: { data: { groups: mockRuleGroups2 } },
+    data: { data: { groups: [] } },
     ok: true,
     status: 200,
     statusText: 'OK',
@@ -155,7 +227,7 @@ describe('Logs Integration', () => {
 
       expect(result).toEqual(mockExtractedRules);
       expect(getListSpy).toHaveBeenCalledWith({ logs: true });
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      expect(fetchSpy).toHaveBeenCalledTimes(mockLokiDSs.length);
     });
 
     it('should handle errors from individual data sources gracefully', async () => {
@@ -226,5 +298,14 @@ describe('Logs Integration', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({ name: 'Loki Main', uid: 'loki1' });
     });
+  });
+});
+
+describe('extractRecordingRulesFromRuleGroups', () => {
+  it('should extract only the first rule from a rule group with same rule names', () => {
+    const result = extractRecordingRulesFromRuleGroups(mockRuleGroupsWithSameRuleName, mockLokiDS3);
+
+    expect(result.length).toEqual(1);
+    expect(result).toEqual(mockExtractedRules.loki3);
   });
 });

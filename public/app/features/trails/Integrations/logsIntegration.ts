@@ -13,10 +13,14 @@ export type RecordingRule = {
   name: string;
   query: string;
   type: 'recording' | 'alerting' | string;
+  labels?: Record<string, string>;
 };
 
 export type FoundLokiDataSource = Pick<DataSourceSettings, 'name' | 'uid'>;
-export type ExtractedRecordingRule = RecordingRule & { datasource: FoundLokiDataSource };
+export type ExtractedRecordingRule = RecordingRule & {
+  datasource: FoundLokiDataSource;
+  hasMultipleOccurrences?: boolean;
+};
 export type ExtractedRecordingRules = {
   [dataSourceUID: string]: ExtractedRecordingRule[];
 };
@@ -46,7 +50,7 @@ async function fetchRecordingRuleGroups(datasourceSettings: DataSourceInstanceSe
  * @param ds - The data source instance settings to associate with the extracted rules.
  * @returns An array of extracted recording rules, each associated with the provided data source.
  */
-function extractRecordingRulesFromRuleGroups(
+export function extractRecordingRulesFromRuleGroups(
   ruleGroups: RecordingRuleGroup[],
   ds: DataSourceInstanceSettings<DataSourceJsonData>
 ): ExtractedRecordingRule[] {
@@ -54,24 +58,37 @@ function extractRecordingRulesFromRuleGroups(
     return [];
   }
 
-  const extractedRules: ExtractedRecordingRule[] = [];
+  // We only want to return the first matching rule when there are multiple rules with same name
+  const extractedRules = new Map<string, ExtractedRecordingRule>();
+  // const extractedRules: [] = [];
   ruleGroups.forEach((rg) => {
     rg.rules
       .filter((r) => r.type === 'recording')
       .forEach(({ type, name, query }) => {
-        extractedRules.push({
-          type,
-          name,
-          query,
-          datasource: {
-            name: ds.name,
-            uid: ds.uid,
-          },
-        });
+        const isExist = extractedRules.has(name);
+        if (isExist) {
+          // We already have the rule.
+          const existingRule = extractedRules.get(name);
+          if (existingRule) {
+            existingRule.hasMultipleOccurrences = true;
+            extractedRules.set(name, existingRule);
+          }
+        } else {
+          extractedRules.set(name, {
+            type,
+            name,
+            query,
+            datasource: {
+              name: ds.name,
+              uid: ds.uid,
+            },
+            hasMultipleOccurrences: false,
+          });
+        }
       });
   });
 
-  return extractedRules;
+  return Array.from(extractedRules.values());
 }
 
 /**
