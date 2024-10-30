@@ -54,8 +54,6 @@ You can also create an alert rule from a panel. This allows you to reuse the pan
 1. Hover over the top-right corner of a time series panel and click the panel menu icon.
 1. From the dropdown menu, select **More...** > **New alert rule**.
 
-{{< figure src="/media/docs/alerting/create-alert-rule-from-time-series-panel.png" max-width="1200px" caption="Create an alert rule from a panel." >}}
-
 The New alert rule form opens where you can configure and create your alert rule based on the query used in the panel.
 
 {{% admonition type="note" %}}
@@ -72,8 +70,6 @@ This option is available only in [time series panels](ref:time-series-visualizat
 1. Click **Edit**.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
 
-{{< figure src="/media/docs/alerting/view-alert-rule-from-within-a-panel.png" max-width="1200px" caption="The Alert tab of the panel displays the status of the linked alert rule." >}}
-
 ## View alert state in dashboards
 
 When an alert rule is linked to a [time series panel](ref:time-series-visualizations), the time series panel displays the alert state and alert events.
@@ -85,7 +81,5 @@ A heart icon near the panel title indicates the current alert state, and colored
 #### Alert list panel
 
 Additionally, Grafana provides an [alert list panel](ref:alert-list-panel) to display a list of alerts. You can configure the alert list panel with various visualization options and filters to control how alerts are displayed.
-
-{{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="1200px" caption="Two alert list panels displaying distinct lists of alerts." >}}
 
 {{< docs/play title="this demo dashboard with alert list panels and linked alert rules" url="https://play.grafana.org/d/000000074/" >}}
