@@ -16,6 +16,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -24,7 +25,6 @@ import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { isTimeoutErrorResponse } from './utils/logsVolumeResponse';
-import { config } from '@grafana/runtime';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
