@@ -143,7 +143,7 @@ func TestFolderAPIBuilder_Validate(t *testing.T) {
 			err: dashboards.ErrFolderInvalidUID,
 		},
 		{
-			name: "should return error when creating a bested folder higher than max depth",
+			name: "should return error when creating a nested folder higher than max depth",
 			input: input{
 				obj: &unstructured.Unstructured{
 					Object: map[string]interface{}{
