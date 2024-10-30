@@ -7000,7 +7000,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "reportPdfTheme": {
+        "pdfTheme": {
           "type": "string"
         },
         "userId": {

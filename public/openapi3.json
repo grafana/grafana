@@ -9623,7 +9623,7 @@
             "format": "int64",
             "type": "integer"
           },
-          "reportPdfTheme": {
+          "pdfTheme": {
             "type": "string"
           },
           "userId": {
