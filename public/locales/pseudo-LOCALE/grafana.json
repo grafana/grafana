@@ -2884,7 +2884,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy þőőĸmäřĸş yęŧ. Ůşę ŧĥę Ēχpľőřę Męŧřįčş þőőĸmäřĸş ƒęäŧūřę ŧő şävę yőūř päŉęľş äş þőőĸmäřĸş."
+      "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"
+    },
+    "card": {
+      "data-source": "Đäŧä şőūřčę: ",
+      "date-created": "Đäŧę čřęäŧęđ: ",
+      "metric": "Męŧřįč:"
+    },
+    "home": {
+      "learn-more": "Ŀęäřŉ mőřę",
+      "lets-start": "Ŀęŧ'ş şŧäřŧ!",
+      "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
+      "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
     },
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
@@ -2898,6 +2909,9 @@
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
       "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Øř vįęŵ ä řęčęŉŧ ęχpľőřäŧįőŉ"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",

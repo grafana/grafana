@@ -137,8 +137,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
-    // Save the current trail as a recent if the browser closes or reloads
-    const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
+    // Save the current trail as a recent (if the browser closes or reloads) if user selects a metric OR applies filters to metric select view
+    const saveRecentTrail = () => {
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+      const hasFilters = filtersVariable instanceof AdHocFiltersVariable && filtersVariable.state.filters.length > 0;
+      if (this.state.metric || hasFilters) {
+        getTrailStore().setRecentTrail(this);
+      }
+    };
     window.addEventListener('unload', saveRecentTrail);
 
     return () => {
