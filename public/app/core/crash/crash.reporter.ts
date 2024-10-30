@@ -38,7 +38,7 @@ function prepareContext(context: Object): Record<string, string> {
   return preparedContext;
 }
 
-export function startReportingCrashes() {
+export function initializeCrashDetection() {
   initCrashDetection({
     id: nanoid(5),
 
