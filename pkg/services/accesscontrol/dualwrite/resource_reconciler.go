@@ -38,6 +38,8 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 	)
 
 	for object, tuples := range res {
+		// FIXME(kalleep): Merge some tuples due to list of groups...
+
 		// 2. Fetch all tuples for given object.
 		// Due to limitations in open fga api we need to collect tuples per object
 		zanzanaTuples, err := r.zanzana(ctx, r.client, object)
@@ -70,11 +72,10 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		return nil
 	}
 
-	// FIXME: batch them together
-	if len(writes) > 0 {
-		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
+	if len(deletes) > 0 {
+		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
 			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
+				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
 			})
 		})
 
@@ -83,10 +84,10 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		}
 	}
 
-	if len(deletes) > 0 {
-		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
+	if len(writes) > 0 {
+		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
 			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
+				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
 			})
 		})
 
