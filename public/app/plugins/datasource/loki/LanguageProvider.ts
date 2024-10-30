@@ -2,7 +2,7 @@ import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
@@ -44,13 +44,19 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>, throwError?: boolean) => {
+  request = async (
+    url: string,
+    params?: Record<string, string | number>,
+    throwError?: boolean,
+    options?: Partial<BackendSrvRequest>
+  ) => {
     try {
-      return await this.datasource.metadataRequest(url, params);
+      return await this.datasource.metadataRequest(url, params, options);
     } catch (error) {
-      console.error(error);
       if (throwError) {
         throw error;
+      } else {
+        console.error(error);
       }
     }
 
@@ -246,7 +252,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   async fetchDetectedLabelValues(
     labelName: string,
     options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throwError?: boolean }
-  ): Promise<string[]> {
+  ): Promise<string[] | Error> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
 
     const interpolatedExpr =
@@ -280,9 +286,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return labelValuesPromise;
     }
 
-    labelValuesPromise = new Promise(async (resolve) => {
+    labelValuesPromise = new Promise(async (resolve, reject) => {
       try {
-        const data = await this.request(url, params, options?.throwError);
+        const data = await this.request(url, params, options?.throwError, {
+          // Don't show error message in case loki version is less than 3.3.0
+          showErrorAlert: false,
+        });
         if (Array.isArray(data)) {
           const labelValues = data.slice().sort();
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
@@ -290,10 +299,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
           resolve(labelValues);
         }
       } catch (error) {
-        console.error(error);
-        resolve([]);
         if (options?.throwError) {
-          throw error;
+          reject(error);
+        } else {
+          console.error(error);
+          resolve([]);
         }
       }
     });
