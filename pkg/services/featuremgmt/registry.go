@@ -464,13 +464,6 @@ var (
 			AllowSelfServe: false,
 		},
 		{
-			Name:         "vizAndWidgetSplit",
-			Description:  "Split panels between visualizations and widgets",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
 			Stage:        FeatureStageGeneralAvailability,
