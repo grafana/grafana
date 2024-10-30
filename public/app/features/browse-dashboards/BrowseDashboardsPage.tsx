@@ -97,7 +97,6 @@ const BrowseDashboardsPage = memo(() => {
       if ('error' in result) {
         reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
           status: 'failed_with_error',
-          error: result.error,
         });
         throw result.error;
       } else {
