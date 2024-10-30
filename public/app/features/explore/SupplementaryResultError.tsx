@@ -13,29 +13,19 @@ type Props = {
   onSuggestedAction?(): void;
   onRemove?(): void;
   dismissable?: boolean;
-  size?: 'md' | 'lg' | 'xl';
 };
 const SHORT_ERROR_MESSAGE_LIMIT = 100;
 export function SupplementaryResultError(props: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
-  const {
-    dismissable,
-    error,
-    size = 'md',
-    title,
-    suggestedAction,
-    onSuggestedAction,
-    onRemove,
-    severity = 'warning',
-  } = props;
+  const { dismissable, error, title, suggestedAction, onSuggestedAction, onRemove, severity = 'warning' } = props;
   // generic get-error-message-logic, taken from
   // /public/app/features/explore/ErrorContainer.tsx
   const message = props.message ?? error?.message ?? error?.data?.message ?? '';
   const showButton = typeof message === 'string' && message.length > SHORT_ERROR_MESSAGE_LIMIT;
   const theme = useTheme2();
-  const styles = getStyles(theme, size);
+  const styles = getStyles(theme);
 
   const dismiss = useCallback(() => {
     setDismissed(true);
@@ -81,23 +71,12 @@ export function SupplementaryResultError(props: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, size: 'md' | 'lg' | 'xl') => {
-  let width;
-  switch (size) {
-    case 'md':
-      width = '50%';
-      break;
-    case 'lg':
-      width = '60%';
-      break;
-    case 'xl':
-      width = '100%';
-      break;
-  }
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     supplementaryErrorContainer: css({
-      width,
+      width: '60%',
       minWidth: `${theme.breakpoints.values.sm}px`,
+      maxWidth: `${theme.breakpoints.values.md}px`,
       margin: '0 auto',
     }),
     messageWrapper: css({

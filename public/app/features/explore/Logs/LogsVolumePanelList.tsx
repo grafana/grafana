@@ -102,7 +102,6 @@ export const LogsVolumePanelList = ({
     return (
       <SupplementaryResultError
         title="Unable to show log volume"
-        size="lg"
         // Using info to avoid users thinking that the actual query has failed.
         message={
           <>
@@ -152,7 +151,6 @@ export const LogsVolumePanelList = ({
           title="Showing partial data"
           message="The query is trying to access too much data and some sharded requests could not be completed. Try decreasing the time range or adding more labels to your query."
           severity="info"
-          size="lg"
           dismissable
         />
       )}
