@@ -65,8 +65,8 @@ The playlist displays each dashboard for the time specified in the **Interval** 
 | ---------------------------------- | ------------------------------------------------------------------------------------ |
 | Normal mode                        | <ul><li>The main menu and navbar remain visible.</li><li>Dashboard controls are hidden.</li><li>Playlist controls are displayed at the top of the screen.<li><ul> |
 | Normal mode (with auto fit panels) | <ul><li>The main menu and navbar remain visible.</li><li>Dashboard controls are hidden.</li><li>Playlist controls are displayed at the top of the screen.</li><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul> |
-| Kiosk mode                         | <ul><li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started.</li></ul> |
-| Kiosk mode (with auto fit panels)  | <ul><<li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started.</li><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul> |
+| Kiosk mode                         | <ul><li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started. Doing so causes the playlist controls to be displayed at the top of the screen briefly.</li></ul> |
+| Kiosk mode (with auto fit panels)  | <ul><<li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started. Doing so causes the playlist controls to be displayed at the top of the screen briefly.</li><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
