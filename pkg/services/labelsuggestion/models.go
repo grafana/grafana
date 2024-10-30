@@ -83,6 +83,12 @@ type ParsedLabels struct {
 	LabelValues map[string]map[string]int `json:"labelValues"`
 }
 
+type UserLabels struct {
+	Email       string
+	LabelNames  map[string]int
+	LabelValues map[string]map[LabelSearch]int
+}
+
 // type QueryRecommendSearchResult struct {
 // 	TotalCount     int                 `json:"totalCount"`
 // 	QueryRecommend []QueryRecommendDTO `json:"QueryRecommend"`

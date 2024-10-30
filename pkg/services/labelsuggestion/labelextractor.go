@@ -4,15 +4,23 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/queryhistory"
 )
 
-type UserLabels struct {
-	Email       string
-	LabelNames  map[string]int
-	LabelValues map[string]map[LabelSearch]int
+var labelsRegexp = regexp.MustCompile(`(?P<name>\w+)\s*(=|!=|=~|!~)\s*["'](?P<value>[\w-]+)["']`)
+
+type LabelExtractor struct {
+	parsedLabels ParsedLabels
 }
 
-var labelsRegexp = regexp.MustCompile(`(?P<name>\w+)\s*(=|!=|=~|!~)\s*["'](?P<value>[\w-]+)["']`)
+func NewLabelExtractor() *LabelExtractor {
+	return &LabelExtractor{
+		parsedLabels: ParsedLabels{
+			LabelNames:  make(map[string]int),
+			LabelValues: make(map[string]map[string]int),
+		},
+	}
+}
 
 func Extract(queries *simplejson.Json) map[string]map[LabelSearch]int {
 	jdoc, err := queries.Array()
@@ -72,36 +80,23 @@ func extractQueryLabels(query map[string]interface{}) [][2]interface{} {
 	return labels
 }
 
-// func main() {
-// 	// Example usage
-// 	queries, err := simplejson.NewJson([]byte(`[{"datasource": {"type": "prometheus"}, "expr": "your expression here"}]`))
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	extractor := LabelExtractor{}
-// 	extractedLabels := extractor.Extract(queries)
-
-// 	// Process user labels
-// 	userLabels := make(map[string]UserLabels)
-// 	for email, ls := range extractedLabels {
-// 		ul, exists := userLabels[email]
-// 		if !exists {
-// 			ul = UserLabels{
-// 				Email:       email,
-// 				LabelNames:  make(map[string]int),
-// 				LabelValues: make(map[string]map[LabelSearch]int),
-// 			}
-// 		}
-
-// 		for lname, searches := range ls {
-// 			ul.LabelNames[lname]++
-// 			for search := range searches {
-// 				if _, exists := ul.LabelValues[lname]; !exists {
-// 					ul.LabelValues[lname] = make(map[LabelSearch]int)
-// 				}
-// 				ul.LabelValues[lname][search]++
-// 			}
-// 		}
-// 		userLabels[email] = ul
-// 	}
-// }
+func (s LabelExtractor) extractLabels(queryHistory []queryhistory.QueryHistoryDTO) {
+	for _, result := range queryHistory {
+		curLabels := Extract(result.Queries)
+		for lname, searches := range curLabels {
+			if _, exists := s.parsedLabels.LabelNames[lname]; !exists {
+				s.parsedLabels.LabelNames[lname] = 1
+				s.parsedLabels.LabelValues[lname] = make(map[string]int)
+			} else {
+				s.parsedLabels.LabelNames[lname]++
+			}
+			for search := range searches {
+				if _, exists := s.parsedLabels.LabelValues[lname][search.Value]; !exists {
+					s.parsedLabels.LabelValues[lname][search.Value] = 1
+				} else {
+					s.parsedLabels.LabelValues[lname][search.Value]++
+				}
+			}
+		}
+	}
+}
