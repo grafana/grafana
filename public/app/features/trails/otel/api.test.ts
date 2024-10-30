@@ -1,9 +1,18 @@
 import { RawTimeRange } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 
-import { getOtelResources, totalOtelResources, isOtelStandardization, getDeploymentEnvironments } from './api';
+import {
+  getOtelResources,
+  totalOtelResources,
+  isOtelStandardization,
+  getDeploymentEnvironments,
+  getFilteredResourceAttributes,
+} from './api';
 
 jest.mock('@grafana/runtime', () => ({
+  config: {
+    publicDashboardAccessToken: '123',
+  },
   getBackendSrv: () => {
     return {
       get: (
@@ -12,9 +21,13 @@ jest.mock('@grafana/runtime', () => ({
         requestId?: string,
         options?: Partial<BackendSrvRequest>
       ) => {
+        // explore-metrics-otel-resources
         if (requestId === 'explore-metrics-otel-resources') {
           return Promise.resolve({ data: ['job', 'instance', 'deployment_environment'] });
-        } else if (requestId === 'explore-metrics-otel-check-total') {
+        } else if (
+          requestId === 'explore-metrics-otel-check-total-count(target_info{}) by (job, instance)' ||
+          requestId === 'explore-metrics-otel-check-total-count(metric) by (job, instance)'
+        ) {
           return Promise.resolve({
             data: {
               result: [
@@ -31,6 +44,18 @@ jest.mock('@grafana/runtime', () => ({
           });
         } else if (requestId === 'explore-metrics-otel-resources-deployment-env') {
           return Promise.resolve({ data: ['env1', 'env2'] });
+        } else if (
+          requestId ===
+          'explore-metrics-otel-resources-metric-job-instance-metric{job=~"job1|job2",instance=~"instance1|instance2"}'
+        ) {
+          // part of getFilteredResourceAttributes to get metric labels. We prioritize metric labels over resource attributes so we use these to filter
+          return Promise.resolve({ data: ['promotedResourceAttribute'] });
+        } else if (
+          requestId ===
+          'explore-metrics-otel-resources-metric-job-instance-target_info{job=~"job1|job2",instance=~"instance1|instance2"}'
+        ) {
+          // part of getFilteredResourceAttributes to get instance labels
+          return Promise.resolve({ data: ['promotedResourceAttribute', 'resourceAttribute'] });
         }
         return [];
       },
@@ -85,6 +110,16 @@ describe('OTEL API', () => {
       const environments = await getDeploymentEnvironments(dataSourceUid, timeRange);
 
       expect(environments).toEqual(['env1', 'env2']);
+    });
+  });
+
+  describe('getFilteredResourceAttributes', () => {
+    it('should fetch and filter OTEL resources with excluded filters', async () => {
+      const resources = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
+      // promotedResourceAttribute will be filtered out because even though it is a resource attribute, it is also a metric label and wee prioritize metric labels
+      expect(resources).not.toEqual(['promotedResourceAttribute', 'resourceAttribute']);
+      // the resource attributes returned are the ones only present on target_info
+      expect(resources).toEqual(['resourceAttribute']);
     });
   });
 });

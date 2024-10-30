@@ -1,6 +1,21 @@
 import { MetricFindValue } from '@grafana/data';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph } from '@grafana/scenes';
+import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
+import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
-import { sortResources, getOtelJoinQuery, blessedList, limitOtelMatchTerms } from './util';
+import { DataTrail } from '../DataTrail';
+import { VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
+
+import { sortResources, getOtelJoinQuery, blessedList, limitOtelMatchTerms, updateOtelJoinWithGroupLeft } from './util';
+
+jest.mock('./api', () => ({
+  totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
+  getDeploymentEnvironments: jest.fn(() => ['production', 'staging']),
+  isOtelStandardization: jest.fn(() => true),
+  getFilteredResourceAttributes: jest.fn().mockResolvedValue(['resourceAttribute']),
+}));
 
 describe('sortResources', () => {
   it('should sort and filter resources correctly', () => {
@@ -26,7 +41,7 @@ describe('getOtelJoinQuery', () => {
     const result = getOtelJoinQuery(otelResourcesObject);
 
     expect(result).toBe(
-      '* on (job, instance) group_left(deployment_environment,custom_label) topk by (job, instance) (1, target_info{job="test-job",instance="test-instance"})'
+      '* on (job, instance) group_left() topk by (job, instance) (1, target_info{job="test-job",instance="test-instance"})'
     );
   });
 
@@ -102,7 +117,7 @@ describe('getOtelJoinQuery', () => {
     const result = getOtelJoinQuery(otelResourcesObject);
 
     expect(result).toBe(
-      '* on (job, instance) group_left(deployment_environment,custom_label) topk by (job, instance) (1, target_info{job="test-job",instance="test-instance"})'
+      '* on (job, instance) group_left() topk by (job, instance) (1, target_info{job="test-job",instance="test-instance"})'
     );
   });
 
@@ -187,5 +202,77 @@ describe('limitOtelMatchTerms', () => {
     expect(result.missingOtelTargets).toEqual(false);
     expect(result.jobsRegex).toEqual('job=~"job1|job2|job3|job4|job5"');
     expect(result.instancesRegex).toEqual('instance=~"instance1|instance2|instance3|instance4|instance5"');
+  });
+});
+
+describe('updateOtelJoinWithGroupLeft', () => {
+  let trail: DataTrail;
+  const preTrailUrl =
+    '/trail?from=now-1h&to=now&var-ds=edwxqcebl0cg0c&var-deployment_environment=oteldemo01&var-otel_resources=k8s_cluster_name%7C%3D%7Cappo11ydev01&var-filters=&refresh=&metricPrefix=all&metricSearch=http&actionView=breakdown&var-groupby=$__all&metric=http_client_duration_milliseconds_bucket';
+
+  function getOtelDepEnvVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, trail);
+    if (variable instanceof CustomVariable) {
+      return variable;
+    }
+    throw new Error('getDepEnvVar failed');
+  }
+
+  function getOtelJoinQueryVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+    if (variable instanceof ConstantVariable) {
+      return variable;
+    }
+    throw new Error('getDepEnvVar failed');
+  }
+
+  function getOtelResourcesVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
+    if (variable instanceof AdHocFiltersVariable) {
+      return variable;
+    }
+    throw new Error('getOtelResourcesVar failed');
+  }
+
+  function getOtelGroupLeftVar(trail: DataTrail) {
+    const variable = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+    if (variable instanceof ConstantVariable) {
+      return variable;
+    }
+    throw new Error('getOtelResourcesVar failed');
+  }
+
+  beforeEach(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
+    setDataSourceSrv(
+      new MockDataSourceSrv({
+        prom: mockDataSource({
+          name: 'Prometheus',
+          type: DataSourceType.Prometheus,
+        }),
+      })
+    );
+    trail = new DataTrail({});
+    locationService.push(preTrailUrl);
+    activateFullSceneTree(trail);
+    getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
+    getOtelDepEnvVar(trail).changeValueTo('production');
+    getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
+  });
+
+  it('should update OTel join query with the group left resource attributes', async () => {
+    await updateOtelJoinWithGroupLeft(trail, 'metric');
+    const otelJoinQueryVar = getOtelJoinQueryVar(trail);
+    // this will include the group left resource attributes
+    expect(otelJoinQueryVar.getValue()).toBe(
+      '* on (job, instance) group_left(resourceAttribute) topk by (job, instance) (1, target_info{deployment_environment="production",service_name="adservice"})'
+    );
+  });
+
+  it('should not update OTel join query with the group left resource attributes when the metric is target_info', async () => {
+    await updateOtelJoinWithGroupLeft(trail, 'target_info');
+    const otelJoinQueryVar = getOtelJoinQueryVar(trail);
+
+    expect(otelJoinQueryVar.getValue()).toBe('');
   });
 });

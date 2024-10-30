@@ -2900,7 +2900,7 @@
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
-      "metric-attributes": "Metric attributes",
+      "metric-attributes": "Attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",

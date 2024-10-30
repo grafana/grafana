@@ -1,8 +1,17 @@
 import { MetricFindValue } from '@grafana/data';
-import { AdHocFiltersVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
-import { VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_RESOURCES } from '../shared';
+import { DataTrail } from '../DataTrail';
+import {
+  VAR_DATASOURCE_EXPR,
+  VAR_FILTERS,
+  VAR_OTEL_DEPLOYMENT_ENV,
+  VAR_OTEL_GROUP_LEFT,
+  VAR_OTEL_JOIN_QUERY,
+  VAR_OTEL_RESOURCES,
+} from '../shared';
 
+import { getFilteredResourceAttributes } from './api';
 import { OtelResourcesObject } from './types';
 
 export const blessedList = (): Record<string, number> => {
@@ -60,11 +69,19 @@ export function sortResources(resources: MetricFindValue[], excluded: string[]) 
  * @param otelResourcesObject
  * @returns a string that is used to add a join query to filter otel resources
  */
-export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject): string {
+export function getOtelJoinQuery(otelResourcesObject: OtelResourcesObject, scene?: SceneObject): string {
+  // the group left is for when a user wants to breakdown by a resource attribute
+  let groupLeft = '';
+
+  if (scene) {
+    const value = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, scene)?.getValue();
+    groupLeft = typeof value === 'string' ? value : '';
+  }
+
   let otelResourcesJoinQuery = '';
   if (otelResourcesObject.filters && otelResourcesObject.labels) {
     // add support for otel data sources that are not standardized, i.e., have non unique target_info series by job, instance
-    otelResourcesJoinQuery = `* on (job, instance) group_left(${otelResourcesObject.labels}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
+    otelResourcesJoinQuery = `* on (job, instance) group_left(${groupLeft}) topk by (job, instance) (1, target_info{${otelResourcesObject.filters}})`;
   }
 
   return otelResourcesJoinQuery;
@@ -192,4 +209,79 @@ export function limitOtelMatchTerms(
     jobsRegex,
     instancesRegex,
   };
+}
+
+/**
+ * This updates the OTel join query variable that is interpolated into all queries.
+ * When a user is in the breakdown or overview tab, they may want to breakdown a metric by a resource attribute.
+ * The only way to do this is by enriching the metric with the target_info resource.
+ * This is done by joining on a unique identifier for the resource, job and instance.
+ * The we can get the resource attributes for the metric, enrich the metric with the join query and
+ * show panels by aggregate functions over attributes.
+ * E.g. sum(metric * on (job, instance) group_left(cloud_region) topk by (job, instance) (1, target_info{})) by cloud_region
+ * where cloud_region is a resource attribute but not on the metric.
+ * BUT if the attribute is on the metric already, we shouldn't add it to the group left.
+ *
+ * @param trail
+ * @param metric
+ * @returns
+ */
+export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: string) {
+  // When to remove or add the group left
+  // REMOVE
+  // - selecting a new metric and returning to metric select scene
+  // ADD
+  // - the metric is selected from previews
+  // - the metric is loaded from refresh in metric scene
+  // - the metric is loaded from bookmark
+  const timeRange = trail.state.$timeRange?.state;
+  if (!timeRange) {
+    return;
+  }
+  const otelGroupLeft = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+  const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+  if (!(otelGroupLeft instanceof ConstantVariable) || !(otelJoinQueryVariable instanceof ConstantVariable)) {
+    return;
+  }
+  // Remove the group left
+  if (!metric) {
+    // if the metric is not present, that means we are in the metric select scene
+    // and that should have no group left because it may interfere with queries.
+    otelGroupLeft.setState({ value: '' });
+    const resourceObject = getOtelResourcesObject(trail);
+    const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
+    otelJoinQueryVariable.setState({ value: otelJoinQuery });
+    return;
+  }
+  // if the metric is target_info, it already has all resource attributes
+  if (metric === 'target_info') {
+    return;
+  }
+
+  // Add the group left
+  const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
+  const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
+  let excludeFilterKeys: string[] = [];
+  if (filtersVariable instanceof AdHocFiltersVariable && otelResourcesVariable instanceof AdHocFiltersVariable) {
+    // do not include the following
+    // 1. pre selected label filters
+    // 2. pre selected otel resource attribute filters
+    // 3. job and instance labels (will break the join)
+    const filterKeys = filtersVariable.state.filters.map((f) => f.key);
+    const otelKeys = otelResourcesVariable.state.filters.map((f) => f.key);
+    excludeFilterKeys = filterKeys.concat(otelKeys);
+    excludeFilterKeys = excludeFilterKeys.concat(['job', 'instance']);
+  }
+  const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+  const attributes = await getFilteredResourceAttributes(datasourceUid, timeRange, metric, excludeFilterKeys);
+  // here we start to add the attributes to the group left
+  if (attributes.length > 0) {
+    // update the group left variable that contains all the filtered resource attributes
+    otelGroupLeft.setState({ value: attributes.join(',') });
+    // get the new otel join query that includes the group left attributes
+    const resourceObject = getOtelResourcesObject(trail);
+    const otelJoinQuery = getOtelJoinQuery(resourceObject, trail);
+    // update the join query that is interpolated in all queries
+    otelJoinQueryVariable.setState({ value: otelJoinQuery });
+  }
 }
