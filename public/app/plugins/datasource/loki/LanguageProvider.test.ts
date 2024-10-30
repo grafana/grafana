@@ -326,7 +326,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchDetectedLabelValues(labelName, options);
 
-      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true, undefined);
       expect(labelValues).toEqual(expectedResponse);
     });
 
@@ -340,7 +340,7 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchDetectedLabelValues(labelName, options);
       expect(requestSpy).toHaveBeenCalledTimes(1);
-      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_field/${labelName}/values`, expectedOptions, true, undefined);
       expect(nextLabelValues).toEqual(expectedResponse);
     });
 
@@ -349,7 +349,12 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchDetectedLabelValues('`\\"testkey', options);
 
-      expect(requestSpy).toHaveBeenCalledWith('detected_field/%60%5C%22testkey/values', expectedOptions, true);
+      expect(requestSpy).toHaveBeenCalledWith(
+        'detected_field/%60%5C%22testkey/values',
+        expectedOptions,
+        true,
+        undefined
+      );
     });
 
     it('should cache by label name', async () => {
@@ -448,7 +453,7 @@ describe('Request URL', () => {
     const instance = new LanguageProvider(datasourceWithLabels);
     instance.fetchLabels();
     const expectedUrl = 'labels';
-    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams);
+    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeParams, undefined);
   });
 });
 
