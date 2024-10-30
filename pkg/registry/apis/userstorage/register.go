@@ -102,7 +102,7 @@ func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			switch attr.GetVerb() {
 			case "create":
 				// Create requests are validated later since we don't have access to the resource name
-				return authorizer.DecisionAllow, "", nil
+				return authorizer.DecisionNoOpinion, "", nil
 			case "get", "delete", "patch", "update":
 				// Only allow the user to access their own settings
 				uid := u.GetUID()
