@@ -4412,6 +4412,7 @@ __metadata:
     ol: "npm:7.4.0"
     prismjs: "npm:1.29.0"
     process: "npm:^0.11.10"
+    prometheus-remote-write: "npm:^0.4.1"
     rc-cascader: "npm:3.28.1"
     rc-drawer: "npm:7.2.0"
     rc-slider: "npm:11.1.7"
@@ -26978,6 +26979,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prometheus-remote-write@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "prometheus-remote-write@npm:0.4.1"
+  dependencies:
+    protobufjs: "npm:^7.2.4"
+    snappyjs: "npm:^0.6.1"
+  peerDependencies:
+    node-fetch: ^2.6.7
+  peerDependenciesMeta:
+    node-fetch:
+      optional: true
+  checksum: 10/7feb2db175a748d74f4601d3cac37b0fa41f8a12c1d98f24eb67aa262038abf1c5babcb8240a2bcdad1b00187724fad71391915acb59d4d967970239ad526b6f
+  languageName: node
+  linkType: hard
+
 "promise-all-reject-late@npm:^1.0.0":
   version: 1.0.1
   resolution: "promise-all-reject-late@npm:1.0.1"
@@ -27061,6 +27077,26 @@ __metadata:
   dependencies:
     xtend: "npm:^4.0.0"
   checksum: 10/e4f45b100fec5968126b08102f9567f1b5fc3442aecbb5b4cdeca401f1f447672e7638a08c81c05dd3979c62d084e0cc6acbe2d8b053c05280ac5abaaf666a68
+  languageName: node
+  linkType: hard
+
+"protobufjs@npm:^7.2.4":
+  version: 7.4.0
+  resolution: "protobufjs@npm:7.4.0"
+  dependencies:
+    "@protobufjs/aspromise": "npm:^1.1.2"
+    "@protobufjs/base64": "npm:^1.1.2"
+    "@protobufjs/codegen": "npm:^2.0.4"
+    "@protobufjs/eventemitter": "npm:^1.1.0"
+    "@protobufjs/fetch": "npm:^1.1.0"
+    "@protobufjs/float": "npm:^1.0.2"
+    "@protobufjs/inquire": "npm:^1.1.0"
+    "@protobufjs/path": "npm:^1.1.2"
+    "@protobufjs/pool": "npm:^1.1.0"
+    "@protobufjs/utf8": "npm:^1.1.0"
+    "@types/node": "npm:>=13.7.0"
+    long: "npm:^5.0.0"
+  checksum: 10/408423506610f70858d7593632f4a6aa4f05796c90fd632be9b9252457c795acc71aa6d3b54bb7f48a890141728fee4ca3906723ccea6c202ad71f21b3879b8b
   languageName: node
   linkType: hard
 
@@ -30388,6 +30424,13 @@ __metadata:
     dot-case: "npm:^3.0.4"
     tslib: "npm:^2.0.3"
   checksum: 10/0a7a79900bbb36f8aaa922cf111702a3647ac6165736d5dc96d3ef367efc50465cac70c53cd172c382b022dac72ec91710608e5393de71f76d7142e6fd80e8a3
+  languageName: node
+  linkType: hard
+
+"snappyjs@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "snappyjs@npm:0.6.1"
+  checksum: 10/23067ccc8ae798e5fc01f119c8ebcff2fef3f49ce36bf02d094a2950e8accdae595c8821961cb87d3ce4b32cf73719b03c91e98299e538184abdbfe6d45687e7
   languageName: node
   linkType: hard
 
