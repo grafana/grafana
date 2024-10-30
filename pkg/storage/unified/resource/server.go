@@ -191,10 +191,11 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 			UserID:         1,
 			IsGrafanaAdmin: true,
 		}))
+
 	return &server{
 		tracer:      opts.Tracer,
 		log:         logger,
-		backend:     opts.Backend,
+		backend:     NewVersionedStorage(opts.Backend),
 		index:       opts.Index,
 		blob:        blobstore,
 		diagnostics: opts.Diagnostics,
@@ -562,6 +563,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		APIVersion: "common.grafana.app/v0alpha1", // ?? or can we stick this in common?
 	}
 	marker.Annotations["RestoreResourceVersion"] = fmt.Sprintf("%d", event.PreviousRV)
+
 	event.Value, err = json.Marshal(marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
@@ -663,7 +665,6 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 			if err := iter.Error(); err != nil {
 				return err
 			}
-
 			item := &ResourceWrapper{
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),

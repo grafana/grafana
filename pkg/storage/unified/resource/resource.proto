@@ -508,6 +508,22 @@ message GetBlobResponse {
   bytes value = 4;
 }
 
+//----------------------------
+// StoredValue
+//----------------------------
+
+message StoredValue {
+  // Raw payload
+  bytes raw = 1;
+
+  // Additional metadata store alongside the payload 
+  string namespace = 2;
+  string group = 3;
+  string resource = 4;
+  string name = 5;
+  string folder = 6;
+}
+
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes
 // This does not understand the resource schemas, only deals with json bytes
