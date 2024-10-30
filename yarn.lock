@@ -12188,10 +12188,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansicolor@npm:1.1.100":
-  version: 1.1.100
-  resolution: "ansicolor@npm:1.1.100"
-  checksum: 10/9420e96f44b578153dfd11e2d829d633ca2699452419aff48314219d66b7b69a9b6d994d2f2350b1d29a9826e33500b87fe85606629a8889cd52ce806908f4a9
+"ansicolor@npm:2.0.3":
+  version: 2.0.3
+  resolution: "ansicolor@npm:2.0.3"
+  checksum: 10/0ecac28dbb3ed5ed77cba0392586391c35872806098f5ad4c47825e92a710b673d1504aca5b8a0903f5a8bd3a61ab6759d55e62f8d78bc21fbced14eb78eb99c
   languageName: node
   linkType: hard
 
@@ -19154,7 +19154,7 @@ __metadata:
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.20"
     babel-loader: "npm:9.2.1"
     baron: "npm:3.0.3"
