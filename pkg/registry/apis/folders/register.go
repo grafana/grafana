@@ -132,7 +132,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
-	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.DualWriter)
+	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
 }
 
