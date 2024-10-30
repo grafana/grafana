@@ -2,7 +2,7 @@ import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
@@ -44,13 +44,19 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>, throwError?: boolean) => {
+  request = async (
+    url: string,
+    params?: Record<string, string | number>,
+    throwError?: boolean,
+    requestOptions?: Partial<BackendSrvRequest>
+  ) => {
     try {
-      return await this.datasource.metadataRequest(url, params);
+      return await this.datasource.metadataRequest(url, params, requestOptions);
     } catch (error) {
-      console.error(error);
       if (throwError) {
         throw error;
+      } else {
+        console.error(error);
       }
     }
 
@@ -245,20 +251,27 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchDetectedLabelValues(
     labelName: string,
-    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throwError?: boolean }
-  ): Promise<string[]> {
+    queryOptions?: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[] | Error> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
 
     const interpolatedExpr =
-      options?.expr && options.expr !== EMPTY_SELECTOR
-        ? this.datasource.interpolateString(options.expr, options.scopedVars)
+      queryOptions?.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
         : undefined;
 
     const url = `detected_field/${label}/values`;
-    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
     const rangeParams = this.datasource.getTimeRangeParams(range);
     const { start, end } = rangeParams;
-    const params: KeyValue<string | number> = { start, end, limit: options?.limit ?? 1000 };
+    const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
     let paramCacheKey = label;
 
     if (interpolatedExpr) {
@@ -280,9 +293,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return labelValuesPromise;
     }
 
-    labelValuesPromise = new Promise(async (resolve) => {
+    labelValuesPromise = new Promise(async (resolve, reject) => {
       try {
-        const data = await this.request(url, params, options?.throwError);
+        const data = await this.request(url, params, queryOptions?.throwError, requestOptions);
         if (Array.isArray(data)) {
           const labelValues = data.slice().sort();
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
@@ -290,10 +303,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
           resolve(labelValues);
         }
       } catch (error) {
-        console.error(error);
-        resolve([]);
-        if (options?.throwError) {
-          throw error;
+        if (queryOptions?.throwError) {
+          reject(error);
+        } else {
+          console.error(error);
+          resolve([]);
         }
       }
     });
