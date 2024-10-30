@@ -251,20 +251,27 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
   async fetchDetectedLabelValues(
     labelName: string,
-    options?: { expr?: string; timeRange?: TimeRange; limit?: number; scopedVars?: ScopedVars; throwError?: boolean }
+    queryOptions?: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
   ): Promise<string[] | Error> {
     const label = encodeURIComponent(this.datasource.interpolateString(labelName));
 
     const interpolatedExpr =
-      options?.expr && options.expr !== EMPTY_SELECTOR
-        ? this.datasource.interpolateString(options.expr, options.scopedVars)
+      queryOptions?.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
         : undefined;
 
     const url = `detected_field/${label}/values`;
-    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
     const rangeParams = this.datasource.getTimeRangeParams(range);
     const { start, end } = rangeParams;
-    const params: KeyValue<string | number> = { start, end, limit: options?.limit ?? 1000 };
+    const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
     let paramCacheKey = label;
 
     if (interpolatedExpr) {
@@ -288,10 +295,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     labelValuesPromise = new Promise(async (resolve, reject) => {
       try {
-        const data = await this.request(url, params, options?.throwError, {
-          // Don't show error message in case loki version is less than 3.3.0
-          showErrorAlert: false,
-        });
+        const data = await this.request(url, params, queryOptions?.throwError, requestOptions);
         if (Array.isArray(data)) {
           const labelValues = data.slice().sort();
           this.detectedFieldValuesCache.set(cacheKey, labelValues);
@@ -299,7 +303,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
           resolve(labelValues);
         }
       } catch (error) {
-        if (options?.throwError) {
+        if (queryOptions?.throwError) {
           reject(error);
         } else {
           console.error(error);
