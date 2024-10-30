@@ -295,6 +295,9 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 
 		tags := make(map[string]string)
 		for name, value := range series.Tags {
+			if name == "name" {
+				value = target
+			}
 			switch value := value.(type) {
 			case string:
 				tags[name] = value
