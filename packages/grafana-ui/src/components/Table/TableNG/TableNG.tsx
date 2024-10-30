@@ -38,9 +38,16 @@ interface TableHeaderProps {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  // TODO: this is a hack to force the column width to update when the fieldConfig changes
+  const [revId, setRevId] = useState(0);
+  const columnWidth = useMemo(() => {
+    setRevId(revId + 1);
+    return fieldConfig?.defaults?.custom?.width || 'auto';
+  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -131,13 +138,13 @@ export function TableNG(props: TableNGProps) {
     const rows: Array<{ [key: string]: string }> = [];
 
     main.fields.map((field) => {
-      const key = field.name;
+      const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
       // Add a column for each field
       columns.push({
         key,
-        name: key,
+        name: field.name,
         field: shallowField,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
@@ -171,6 +178,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
+        width: columnWidth,
       });
 
       // Create row objects
@@ -244,7 +252,6 @@ export function TableNG(props: TableNGProps) {
         defaultColumnOptions={{
           sortable: true,
           resizable: true,
-          maxWidth: 200,
         }}
         rowHeight={rowHeightNumber}
         // TODO: This doesn't follow current table behavior
