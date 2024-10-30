@@ -1,4 +1,4 @@
-import { MetricFindValue, RawTimeRange } from '@grafana/data';
+import { MetricFindValue } from '@grafana/data';
 import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph, SceneObject } from '@grafana/scenes';
 
 import { DataTrail } from '../DataTrail';
