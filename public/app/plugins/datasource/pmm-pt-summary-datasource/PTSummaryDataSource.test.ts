@@ -2,6 +2,7 @@ import { FieldType, toDataFrame } from '@grafana/data';
 import { ActionResult } from 'app/percona/shared/services/actions/Actions.types';
 
 import { PTSummaryService } from './PTSummary.service';
+import { PTSummaryResponse, PTSummaryResult } from './PTSummary.types';
 import { PTSummaryDataSource } from './PTSummaryDataSource';
 
 jest.mock('@grafana/runtime', () => ({
@@ -10,11 +11,11 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 jest.mock('app/percona/shared/services/actions/Actions.utils', () => ({
-  getActionResult: async (): Promise<ActionResult<string>> =>
+  getActionResult: async (actionId: string): Promise<ActionResult<string>> =>
     new Promise((resolve) => {
       resolve({
         loading: false,
-        value: 'Test data',
+        value: actionId,
         error: '',
       });
     }),
@@ -25,13 +26,14 @@ describe('PTSummaryDatasource::', () => {
     const expected = {
       data: [
         toDataFrame({
-          fields: [{ name: 'summary', values: ['Test data'], type: FieldType.string }],
+          fields: [{ name: 'summary', values: ['node'], type: FieldType.string }],
         }),
       ],
     };
     const instance = new PTSummaryDataSource({});
 
-    PTSummaryService.getPTSummary = jest.fn().mockResolvedValueOnce({ value: 'Test data' });
+    const response: PTSummaryResult = { action_id: 'node', pmm_agent_id: 'node' };
+    PTSummaryService.getPTSummary = jest.fn().mockResolvedValueOnce(response);
 
     const result = await instance.query({
       targets: [{ refId: 'A', queryType: { type: 'node', variableName: undefined } }],
@@ -44,13 +46,14 @@ describe('PTSummaryDatasource::', () => {
     const expected = {
       data: [
         toDataFrame({
-          fields: [{ name: 'summary', values: ['Test data'], type: FieldType.string }],
+          fields: [{ name: 'summary', values: ['mysql'], type: FieldType.string }],
         }),
       ],
     };
     const instance = new PTSummaryDataSource({});
 
-    PTSummaryService.getMysqlPTSummary = jest.fn().mockResolvedValueOnce({ value: 'Test data' });
+    const response: PTSummaryResponse = { pt_mysql_summary: { action_id: 'mysql', pmm_agent_id: 'mysql' } };
+    PTSummaryService.getMysqlPTSummary = jest.fn().mockResolvedValueOnce(response);
 
     const result = await instance.query({
       targets: [{ refId: 'A', queryType: { type: 'mysql', variableName: undefined } }],
@@ -63,13 +66,14 @@ describe('PTSummaryDatasource::', () => {
     const expected = {
       data: [
         toDataFrame({
-          fields: [{ name: 'summary', values: ['Test data'], type: FieldType.string }],
+          fields: [{ name: 'summary', values: ['mongo'], type: FieldType.string }],
         }),
       ],
     };
     const instance = new PTSummaryDataSource({});
 
-    PTSummaryService.getMongodbPTSummary = jest.fn().mockResolvedValueOnce({ value: 'Test data' });
+    const response: PTSummaryResponse = { pt_mongodb_summary: { action_id: 'mongo', pmm_agent_id: 'mongo' } };
+    PTSummaryService.getMongodbPTSummary = jest.fn().mockResolvedValueOnce(response);
 
     const result = await instance.query({
       targets: [{ refId: 'A', queryType: { type: 'mongodb', variableName: undefined } }],
@@ -82,13 +86,16 @@ describe('PTSummaryDatasource::', () => {
     const expected = {
       data: [
         toDataFrame({
-          fields: [{ name: 'summary', values: ['Test data'], type: FieldType.string }],
+          fields: [{ name: 'summary', values: ['postgresql'], type: FieldType.string }],
         }),
       ],
     };
     const instance = new PTSummaryDataSource({});
 
-    PTSummaryService.getPostgresqlPTSummary = jest.fn().mockResolvedValueOnce({ value: 'Test data' });
+    const response: PTSummaryResponse = {
+      pt_postgres_summary: { action_id: 'postgresql', pmm_agent_id: 'postgresql' },
+    };
+    PTSummaryService.getPostgresqlPTSummary = jest.fn().mockResolvedValueOnce(response);
 
     const result = await instance.query({
       targets: [{ refId: 'A', queryType: { type: 'postgresql', variableName: undefined } }],

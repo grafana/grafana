@@ -2,7 +2,7 @@ import { DataQueryResponse, DataSourceApi, toDataFrame, FieldType } from '@grafa
 import { getActionResult } from 'app/percona/shared/services/actions/Actions.utils';
 
 import { PTSummaryService } from './PTSummary.service';
-import { DatasourceType, PTSummaryResponse } from './PTSummary.types';
+import { DatasourceType, PTSummaryResponse, PTSummaryResult } from './PTSummary.types';
 
 export class PTSummaryDataSource extends DataSourceApi {
   constructor(instanceSettings: any) {
@@ -27,11 +27,30 @@ export class PTSummaryDataSource extends DataSourceApi {
       }
     };
 
+    const getResult = (response: PTSummaryResponse, type: DatasourceType) => {
+      switch (type) {
+        case DatasourceType.mysql:
+          return response.pt_mysql_summary;
+        case DatasourceType.mongodb:
+          return response.pt_mongodb_summary;
+        case DatasourceType.postgresql:
+          return response.pt_postgres_summary;
+        default:
+          return response as unknown as PTSummaryResult;
+      }
+    };
+
     return getRequest(type)
       .then(async (response) => {
-        const result = await getActionResult<string>((response as PTSummaryResponse).action_id);
+        const summaryResult = getResult(response, type);
 
-        return this.newDataFrame(result.value ? result.value : result.error);
+        if (summaryResult) {
+          const result = await getActionResult<string>(summaryResult.action_id);
+
+          return this.newDataFrame(result.value ? result.value : result.error);
+        }
+
+        return this.newDataFrame('error');
       })
       .catch((error) => this.newDataFrame(error.response.data.message));
   }
