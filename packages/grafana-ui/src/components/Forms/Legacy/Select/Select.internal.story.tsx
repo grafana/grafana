@@ -60,6 +60,11 @@ const options = [
   { label: 'Another label', value: 'Another value 4' },
   { label: 'Another label', value: 'Another value 5' },
   { label: 'Another label', value: 'Another value ' },
+  { label: 'Another label', value: 'Another value 7' },
+  { label: 'Another label', value: 'Another value 6' },
+  { label: 'Another label', value: 'Another value 8' },
+  { label: 'Another label', value: 'Another value 9' },
+  { label: 'Another label', value: 'Another value 10' },
 ];
 
 export const Basic: StoryFn<typeof Select> = (args) => {
