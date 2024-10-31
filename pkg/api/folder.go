@@ -60,7 +60,7 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 				folderPermissionRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
 			})
 		})
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
+		if false {
 			// Use k8s client to implement legacy API
 			handler := newFolderK8sHandler(hs)
 			folderRoute.Post("/", handler.createFolder)
