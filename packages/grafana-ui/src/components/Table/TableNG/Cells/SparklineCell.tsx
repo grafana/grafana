@@ -106,6 +106,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
     );
   }
 
+  // @TODO update width, height
   return (
     <div className={styles.cellContainer}>
       {valueElement}
