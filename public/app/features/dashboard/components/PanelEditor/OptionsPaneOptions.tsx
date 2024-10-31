@@ -130,7 +130,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           </div>
         )}
       </div>
-      <ScrollContainer minHeight="100%">
+      <ScrollContainer>
         <div className={styles.mainBox}>{mainBoxElements}</div>
       </ScrollContainer>
     </div>
