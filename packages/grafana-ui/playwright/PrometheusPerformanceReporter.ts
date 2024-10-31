@@ -21,8 +21,6 @@ class PrometheusReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    console.log(config);
-
     test.annotations.forEach((annotation) => {
       if (!annotation.type.startsWith('perf_test_')) {
         return;
@@ -47,7 +45,6 @@ class PrometheusReporter implements Reporter {
       )
         .then((res) => console.log(res))
         .catch(console.error);
-      console.log(`Pushed ${annotation.type} for ${test.title}`);
     });
 
     console.log(test.retries);

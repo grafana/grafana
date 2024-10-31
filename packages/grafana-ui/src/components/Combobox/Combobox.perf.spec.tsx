@@ -19,7 +19,7 @@ const CUSTOM_PROMETHEUS_METRICS: Record<string, string> = {
   JSEventListeners: 'perf_test_js_event_listeners_count',
 };
 
-test.only('Combobox 100k', async ({ mount, page }) => {
+test('Combobox 100k', async ({ mount, page }) => {
   const component = await mount(<Combobox value="" options={TEST_VALUES} onChange={() => {}} />);
 
   const metrics = await getPerformanceMetrics(page, async () => {
@@ -64,7 +64,16 @@ test('VirtualizedSelect 100k', async ({ mount, page }) => {
     await component.press('ArrowDown');
     await component.press('Enter');
   });
-  console.log(metrics);
+  test
+    .info()
+    .annotations.push({ type: 'perf_test_duration_seconds', description: (metrics.duration / 1000).toString() });
+  metrics.metrics.forEach((item) => {
+    if (!(item.name in CUSTOM_PROMETHEUS_METRICS)) {
+      return;
+    }
+
+    test.info().annotations.push({ type: CUSTOM_PROMETHEUS_METRICS[item.name], description: item.value.toString() });
+  });
 
   await expect(component).toContainText('Option 1');
 });
