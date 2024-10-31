@@ -151,13 +151,7 @@ func (i *Index) Init(ctx context.Context) error {
 
 			logger.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items))
 			//add changes to batches for shards with changes in the List
-			tenants, err := i.AddToBatches(ctx, list)
-			if err != nil {
-				return err
-			}
-
-			// Index the batches for tenants with changes if the batch is large enough
-			err = i.IndexBatches(ctx, i.opts.BatchSize, tenants)
+			err = i.writeBatch(ctx, list)
 			if err != nil {
 				return err
 			}
@@ -184,6 +178,20 @@ func (i *Index) Init(ctx context.Context) error {
 		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
 
+	return nil
+}
+
+func (i *Index) writeBatch(ctx context.Context, list *ListResponse) error {
+	tenants, err := i.AddToBatches(ctx, list)
+	if err != nil {
+		return err
+	}
+
+	// Index the batches for tenants with changes if the batch is large enough
+	err = i.IndexBatches(ctx, i.opts.BatchSize, tenants)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -235,15 +243,15 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	return nil
 }
 
-func (i *Index) Search(ctx context.Context, tenant string, query string, limit int, offset int) ([]IndexedResource, error) {
+func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResults, error) {
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Search")
 	defer span.End()
 	logger := i.log.FromContext(ctx)
 
-	if tenant == "" {
-		tenant = "default"
+	if request.Tenant == "" {
+		request.Tenant = "default"
 	}
-	shard, err := i.getShard(tenant)
+	shard, err := i.getShard(request.Tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -251,23 +259,30 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("got index for tenant", "tenant", tenant, "docCount", docCount)
+	logger.Info("got index for tenant", "tenant", request.Tenant, "docCount", docCount)
 
 	fields, _ := shard.index.Fields()
 	logger.Debug("indexed fields", "fields", fields)
 
 	// use 10 as a default limit for now
-	if limit <= 0 {
-		limit = 10
+	if request.Limit <= 0 {
+		request.Limit = 10
 	}
 
-	req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(query))
-	req.From = offset
-	req.Size = limit
+	query := bleve.NewQueryStringQuery(request.Query)
+	req := bleve.NewSearchRequest(query)
+
+	for _, group := range request.GroupBy {
+		facet := bleve.NewFacetRequest("Spec."+group.Name, int(group.Limit))
+		req.AddFacet(group.Name+"_facet", facet)
+	}
+
+	req.From = int(request.Offset)
+	req.Size = int(request.Size)
 
 	req.Fields = []string{"*"} // return all indexed fields in search results
 
-	logger.Info("searching index", "query", query, "tenant", tenant)
+	logger.Info("searching index", "query", request.Query, "tenant", request.Tenant)
 	res, err := shard.index.Search(req)
 	if err != nil {
 		return nil, err
@@ -282,7 +297,15 @@ func (i *Index) Search(ctx context.Context, tenant string, query string, limit i
 		results[resKey] = ir
 	}
 
-	return results, nil
+	groups := []*Group{}
+	for _, group := range request.GroupBy {
+		groupByFacet := res.Facets[group.Name+"_facet"]
+		for _, term := range groupByFacet.Terms.Terms() {
+			groups = append(groups, &Group{Name: term.Term, Count: int64(term.Count)})
+		}
+	}
+
+	return &IndexResults{Values: results, Groups: groups}, nil
 }
 
 func (i *Index) Count() (uint64, error) {

@@ -21,22 +21,35 @@ const testTenant = "default"
 var testContext = context.Background()
 
 func TestIndexDashboard(t *testing.T) {
-	data, err := os.ReadFile("./testdata/dashboard-resource.json")
-	require.NoError(t, err)
-
+	data := readTestData(t, "dashboard-resource.json")
 	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}}}
-	index := newTestIndex(t)
-	_, err = index.AddToBatches(testContext, list)
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	err = index.IndexBatches(testContext, 1, []string{testTenant})
-	require.NoError(t, err)
 	assertCountEquals(t, index, 1)
-	assertSearchCountEquals(t, index, 1)
+	assertSearchCountEquals(t, index, "*", 1)
+}
+
+func TestIndexDashboardWithTags(t *testing.T) {
+	data := readTestData(t, "dashboard-tagged-resource.json")
+	data2 := readTestData(t, "dashboard-tagged-resource2.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}, {Value: data2}}}
+	index := newTestIndex(t, 2)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 2)
+	assertSearchCountEquals(t, index, "tag1", 2)
+	assertSearchCountEquals(t, index, "tag4", 1)
+	assertSearchGroupCountEquals(t, index, "*", "tags", 4)
+	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
 }
 
 func TestIndexBatch(t *testing.T) {
-	index := newTestIndex(t)
+	index := newTestIndex(t, 1000)
 
 	startAll := time.Now()
 	ns := namespaces()
@@ -105,7 +118,7 @@ func namespaces() []string {
 	return ns
 }
 
-func newTestIndex(t *testing.T) *Index {
+func newTestIndex(t *testing.T, batchSize int) *Index {
 	tracingCfg := tracing.NewEmptyTracingConfig()
 	trace, err := tracing.ProvideService(tracingCfg)
 	require.NoError(t, err)
@@ -117,7 +130,7 @@ func newTestIndex(t *testing.T) *Index {
 		opts: Opts{
 			ListLimit: 5000,
 			Workers:   10,
-			BatchSize: 1000,
+			BatchSize: batchSize,
 		},
 	}
 }
@@ -128,8 +141,25 @@ func assertCountEquals(t *testing.T, index *Index, expected uint64) {
 	assert.Equal(t, expected, total)
 }
 
-func assertSearchCountEquals(t *testing.T, index *Index, expected int) {
-	results, err := index.Search(testContext, testTenant, "*", expected+1, 0)
+func assertSearchCountEquals(t *testing.T, index *Index, search string, expected int64) {
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1}
+	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
-	assert.Equal(t, expected, len(results))
+	assert.Equal(t, expected, int64(len(results.Values)))
+}
+
+func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, group string, expected int64) {
+	groupBy := []*GroupBy{{Name: group, Limit: 100}}
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1, GroupBy: groupBy}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+	assert.Equal(t, expected, int64(len(results.Groups)))
+}
+
+func readTestData(t *testing.T, name string) []byte {
+	// We can ignore the gosec G304 because this is only for tests
+	// nolint:gosec
+	data, err := os.ReadFile("./testdata/" + name)
+	require.NoError(t, err)
+	return data
 }
