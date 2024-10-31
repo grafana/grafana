@@ -149,6 +149,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      event.Object.GetFolder(),
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
@@ -158,6 +159,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      event.Object.GetFolder(),
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -206,6 +208,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      event.Object.GetFolder(),
 			GUID:        guid,
 		})
 		if err != nil {
@@ -216,6 +219,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      event.Object.GetFolder(),
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -276,6 +280,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
+			Folder:      event.Object.GetFolder(),
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -305,16 +310,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
 
 	readReq := &sqlResourceReadRequest{
-		SQLTemplate:  sqltemplate.New(b.dialect),
-		Request:      req,
-		readResponse: new(readResponse),
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Request:     req,
+		Response:    NewReadResponse(),
 	}
 
 	sr := sqlResourceRead
@@ -323,21 +328,21 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 		sr = sqlResourceHistoryRead
 	}
 
-	var res *readResponse
+	var res *resource.BackendReadResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
 		return err
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.ReadResponse{
+		return &resource.BackendReadResponse{
 			Error: resource.NewNotFoundError(req.Key),
 		}
 	} else if err != nil {
-		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}
+		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
 	}
 
-	return &res.ReadResponse
+	return res
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
@@ -371,6 +376,7 @@ type listIter struct {
 	value     []byte
 	namespace string
 	name      string
+	folder    string
 }
 
 // ContinueToken implements resource.ListIterator.
@@ -378,19 +384,20 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
-// Error implements resource.ListIterator.
 func (l *listIter) Error() error {
 	return l.err
 }
 
-// Name implements resource.ListIterator.
 func (l *listIter) Name() string {
 	return l.name
 }
 
-// Namespace implements resource.ListIterator.
 func (l *listIter) Namespace() string {
 	return l.namespace
+}
+
+func (l *listIter) Folder() string {
+	return l.folder
 }
 
 // ResourceVersion implements resource.ListIterator.
@@ -407,7 +414,7 @@ func (l *listIter) Value() []byte {
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
 		l.offset++
-		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.value)
+		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.folder, &l.value)
 		return true
 	}
 	return false
