@@ -59,7 +59,7 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 
 	err = s.setAuthInfoInCache(ctx, query, authInfo)
 	if err != nil {
-		s.logger.Error("failed to set auth info in cache", "error", err)
+		s.logger.Warn("failed to set auth info in cache", "error", err)
 	} else {
 		s.logger.Debug("auth info set in cache", "cacheKey", generateCacheKey(query))
 	}
