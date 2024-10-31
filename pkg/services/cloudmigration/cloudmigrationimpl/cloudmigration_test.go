@@ -842,6 +842,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		kvstore.ProvideService(sqlStore),
 		&libraryelementsfake.LibraryElementService{},
 		ng,
+		nil,
 	)
 	require.NoError(t, err)
 

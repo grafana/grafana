@@ -66,6 +66,7 @@ type Service struct {
 	kvStore                *kvstore.NamespacedKVStore
 	libraryElementsService libraryelements.Service
 	ngAlert                *ngalert.AlertNG
+	snapshotAssembler      SnapshotAssembler
 
 	api     *api.CloudMigrationAPI
 	tracer  tracing.Tracer
@@ -102,6 +103,7 @@ func ProvideService(
 	kvStore kvstore.KVStore,
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
+	snapshotAssembler SnapshotAssembler,
 ) (cloudmigration.Service, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		return &NoopServiceImpl{}, nil
@@ -122,6 +124,7 @@ func ProvideService(
 		kvStore:                kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
+		snapshotAssembler:      snapshotAssembler,
 	}
 	s.api = api.RegisterApi(routeRegister, s, tracer)
 

@@ -194,6 +194,18 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		})
 	}
 
+	// Extra! Extra!
+	extraBuilders := s.snapshotAssembler.Builders()
+	for _, builder := range extraBuilders {
+		items, err := builder.Build(ctx, signedInUser)
+		if err != nil {
+			s.log.Error("Failed to get resource", "err", err)
+			return nil, err
+		}
+
+		migrationDataSlice = append(migrationDataSlice, items...)
+	}
+
 	// Obtain the names of parent elements for Dashboard and Folders data types
 	parentNamesByType, err := s.getParentNames(ctx, signedInUser, dashs, folders, libraryElements)
 	if err != nil {
