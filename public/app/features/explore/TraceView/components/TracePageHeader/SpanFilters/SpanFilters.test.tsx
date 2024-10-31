@@ -185,19 +185,19 @@ describe('SpanFilters', () => {
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
       const container = screen.getByText('TagKey0').parentElement?.parentElement?.parentElement;
-      expect(container?.childNodes[0].textContent).toBe('ProcessKey0');
-      expect(container?.childNodes[1].textContent).toBe('ProcessKey1');
-      expect(container?.childNodes[2].textContent).toBe('TagKey0');
-      expect(container?.childNodes[3].textContent).toBe('TagKey1');
-      expect(container?.childNodes[4].textContent).toBe('id');
-      expect(container?.childNodes[5].textContent).toBe('kind');
-      expect(container?.childNodes[6].textContent).toBe('library.name');
-      expect(container?.childNodes[7].textContent).toBe('library.version');
-      expect(container?.childNodes[8].textContent).toBe('status');
-      expect(container?.childNodes[9].textContent).toBe('status.message');
-      expect(container?.childNodes[10].textContent).toBe('trace.state');
-      expect(container?.childNodes[11].textContent).toBe('LogKey0');
-      expect(container?.childNodes[12].textContent).toBe('LogKey1');
+      expect(container?.childNodes[1].textContent).toBe('ProcessKey0');
+      expect(container?.childNodes[2].textContent).toBe('ProcessKey1');
+      expect(container?.childNodes[3].textContent).toBe('TagKey0');
+      expect(container?.childNodes[4].textContent).toBe('TagKey1');
+      expect(container?.childNodes[5].textContent).toBe('id');
+      expect(container?.childNodes[6].textContent).toBe('kind');
+      expect(container?.childNodes[7].textContent).toBe('library.name');
+      expect(container?.childNodes[8].textContent).toBe('library.version');
+      expect(container?.childNodes[9].textContent).toBe('status');
+      expect(container?.childNodes[10].textContent).toBe('status.message');
+      expect(container?.childNodes[11].textContent).toBe('trace.state');
+      expect(container?.childNodes[12].textContent).toBe('LogKey0');
+      expect(container?.childNodes[13].textContent).toBe('LogKey1');
     });
   });
 

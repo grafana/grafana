@@ -10,8 +10,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Trans } from '../../utils/i18n';
 import { clearButtonStyles } from '../Button';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Icon } from '../Icon/Icon';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { getSelectStyles } from './getSelectStyles';
 import { ToggleAllState } from './types';
@@ -54,7 +54,7 @@ export const SelectMenu = ({
       style={{ maxHeight }}
       aria-label="Select options menu"
     >
-      <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+      <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators>
         {toggleAllOptions && (
           <ToggleAllOption
             state={toggleAllOptions.state}
@@ -64,7 +64,7 @@ export const SelectMenu = ({
           ></ToggleAllOption>
         )}
         {children}
-      </CustomScrollbar>
+      </ScrollContainer>
     </div>
   );
 };

@@ -10,10 +10,10 @@ import { RelativeTimeRange, GrafanaTheme2, TimeOption } from '@grafana/data';
 import { useStyles2 } from '../../../themes';
 import { Trans, t } from '../../../utils/i18n';
 import { Button } from '../../Button';
-import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
+import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
@@ -157,14 +157,16 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
             <div ref={ref} {...overlayProps} {...dialogProps}>
               <div className={styles.content} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
                 <div className={styles.body}>
-                  <CustomScrollbar className={styles.leftSide} hideHorizontalTrack>
-                    <TimeRangeList
-                      title={t('time-picker.time-range.example-title', 'Example time ranges')}
-                      options={validOptions}
-                      onChange={onChangeTimeOption}
-                      value={timeOption}
-                    />
-                  </CustomScrollbar>
+                  <div className={styles.leftSide}>
+                    <ScrollContainer showScrollIndicators>
+                      <TimeRangeList
+                        title={t('time-picker.time-range.example-title', 'Example time ranges')}
+                        options={validOptions}
+                        onChange={onChangeTimeOption}
+                        value={timeOption}
+                      />
+                    </ScrollContainer>
+                  </div>
                   <div className={styles.rightSide}>
                     <div className={styles.title}>
                       <TimePickerTitle>
