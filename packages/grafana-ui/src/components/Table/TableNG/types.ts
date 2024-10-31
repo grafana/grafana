@@ -1,14 +1,15 @@
-import { Field, GrafanaTheme2, TimeRange } from "@grafana/data";
+import { Field, GrafanaTheme2, TimeRange } from '@grafana/data';
 
 export interface CellNGProps {
-    value: any;
-    field: Field;
-    theme: GrafanaTheme2;
-
+  value: any;
+  field: Field;
+  theme: GrafanaTheme2;
+  rowIdx?: number;
 }
+
 export interface BarGaugeCellProps extends CellNGProps {
-    height: number;
-    timeRange: TimeRange;
+  height: number;
+  timeRange: TimeRange;
 }
 
-export interface SparklineCellProps extends BarGaugeCellProps { }
+export interface SparklineCellProps extends BarGaugeCellProps {}

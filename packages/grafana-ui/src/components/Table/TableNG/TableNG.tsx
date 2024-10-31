@@ -28,7 +28,7 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   rowHeight: number;
-  field: Omit<Field, 'values'>;
+  field: Field;
 }
 
 interface TableHeaderProps {
@@ -122,15 +122,15 @@ export function TableNG(props: TableNGProps) {
       columns.push({
         key,
         name: key,
-        field: shallowField,
+        field,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
           const value = row[key];
-          const displayValue = shallowField.display!(value);
+          const displayValue = field.display!(value);
 
           // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          let colors = getCellColors(theme, shallowField.config.custom, displayValue);
+          let colors = getCellColors(theme, field.config.custom, displayValue);
           // }
 
           // css()
@@ -145,10 +145,11 @@ export function TableNG(props: TableNGProps) {
             <TableCellNG
               key={key}
               value={value}
-              field={shallowField}
+              field={field}
               theme={theme}
               timeRange={timeRange}
               height={rowHeight}
+              {...props}
             />
           );
         },
