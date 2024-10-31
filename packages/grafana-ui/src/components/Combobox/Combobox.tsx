@@ -10,7 +10,7 @@ import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
-import { estimateSize, useComboboxFloat } from './useComboboxFloat';
+import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -129,7 +129,7 @@ export const Combobox = <T extends string | number>({
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
-    estimateSize,
+    estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
 
@@ -195,7 +195,7 @@ export const Combobox = <T extends string | number>({
       setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
     },
 
-    onIsOpenChange: ({ isOpen }) => {
+    onIsOpenChange: ({ isOpen, inputValue }) => {
       // Default to displaying all values when opening
       if (isOpen && !isAsync) {
         setItems(options);
@@ -204,7 +204,7 @@ export const Combobox = <T extends string | number>({
 
       if (isOpen && isAsync) {
         setAsyncLoading(true);
-        loadOptions('').then((options) => {
+        loadOptions(inputValue ?? '').then((options) => {
           setItems(options);
           setAsyncLoading(false);
         });

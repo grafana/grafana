@@ -330,6 +330,52 @@ export const Async: StoryObj<PropsAndCustomArgs> = {
   render: AsyncStory,
 };
 
+const noop = () => {};
+const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  if (typeof args.options === 'function') {
+    throw new Error('This story does not support async options');
+  }
+
+  function renderColumnOfComboboxes(pos: string) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flex: 1,
+        }}
+      >
+        <Combobox placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
+        <Combobox placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
+        <Combobox placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+
+        // approx the height of the dev alert, and three margins. exact doesn't matter
+        minHeight: 'calc(100vh - (105px + 16px + 16px + 16px))',
+        justifyContent: 'space-between',
+        gap: 32,
+      }}
+    >
+      {renderColumnOfComboboxes('Left')}
+      {renderColumnOfComboboxes('Middle')}
+      {renderColumnOfComboboxes('Right')}
+    </div>
+  );
+};
+
+export const PositioningTest: StoryObj<PropsAndCustomArgs> = {
+  render: PositioningTestStory,
+};
+
 export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
   args: {
     numberOfOptions: 100,

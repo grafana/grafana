@@ -17,7 +17,6 @@ import {
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
-
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
@@ -36,6 +35,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
+    lastCommitDate: remote?.lastCommitDate,
     changelog: remote?.changelog || localChangelog,
   };
 }
