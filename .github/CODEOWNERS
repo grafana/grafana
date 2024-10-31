@@ -625,6 +625,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/rendering/ @grafana/sharing-squad
+/pkg/services/report/ @grafana/sharing-squad
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
