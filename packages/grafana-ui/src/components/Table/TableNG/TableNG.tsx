@@ -49,9 +49,6 @@ export function TableNG(props: TableNGProps) {
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // const columnAlign = fieldConfig?.defaults?.custom?.align;
-  // console.log('columnAlign', columnAlign);
-
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
     value: string;
