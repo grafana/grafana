@@ -110,7 +110,7 @@ func folderTreeCollector2(store db.DB) legacyTupleCollector {
 // managedPermissionsCollector collects managed permissions into provided tuple map.
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
-func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
+func managedPermissionsCollector2(store db.DB, kind string) legacyTupleCollector {
 	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
@@ -122,6 +122,7 @@ func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
 			LEFT JOIN team t ON tr.team_id = t.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE r.name LIKE 'managed:%'
+			AND p.kind = ?
 		`
 		type Permission struct {
 			RoleName   string `xorm:"role_name"`
@@ -135,7 +136,7 @@ func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
 
 		var permissions []Permission
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&permissions)
+			return sess.SQL(query, kind).Find(&permissions)
 		})
 
 		if err != nil {
@@ -164,11 +165,32 @@ func managedPermissionsCollector2(store db.DB) legacyTupleCollector {
 				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 			}
 
+			// For resource actions on folders we need to merge the tuples into one with combined
+			// group_resources.
+			if zanzana.IsFolderResourceTuple(tuple) {
+				key := tupleStringWithoutCondition(tuple)
+				if t, ok := tuples[tuple.Object][key]; ok {
+					zanzana.MergeFolderResourceTuples(t, tuple)
+				} else {
+					tuples[tuple.Object][key] = tuple
+				}
+
+				continue
+			}
+
 			tuples[tuple.Object][tuple.String()] = tuple
 		}
 
 		return tuples, nil
 	}
+}
+
+func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
+	c := tuple.Condition
+	tuple.Condition = nil
+	s := tuple.String()
+	tuple.Condition = c
+	return s
 }
 
 func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCollector {
@@ -213,7 +235,11 @@ func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCol
 				return nil, err
 			}
 			for _, t := range tuples {
-				out[t.Key.String()] = t.Key
+				if zanzana.IsFolderResourceTuple(t.Key) {
+					out[tupleStringWithoutCondition(t.Key)] = t.Key
+				} else {
+					out[t.Key.String()] = t.Key
+				}
 			}
 		}
 

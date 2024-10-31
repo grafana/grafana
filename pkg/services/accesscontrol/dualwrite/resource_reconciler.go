@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 // legacyTupleCollector collects tuples groupd by object and tupleKey
@@ -47,13 +48,25 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 
 		// 3. Check if tuples from grafana db exists in zanzana and if not add them to writes
 		for key, t := range tuples {
-			_, ok := zanzanaTuples[key]
+			stored, ok := zanzanaTuples[key]
 			if !ok {
+				writes = append(writes, t)
+				continue
+			}
+
+			// 4. For folder resource tuples we also need to compare the stored group_resources
+			if zanzana.IsFolderResourceTuple(t) && t.String() != stored.String() {
+				deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
+					User:     t.User,
+					Relation: t.Relation,
+					Object:   t.Object,
+				})
+
 				writes = append(writes, t)
 			}
 		}
 
-		// 4. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
+		// 5. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
 		for key, tuple := range zanzanaTuples {
 			_, ok := tuples[key]
 			if !ok {
@@ -70,11 +83,10 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		return nil
 	}
 
-	// FIXME: batch them together
-	if len(writes) > 0 {
-		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
+	if len(deletes) > 0 {
+		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
 			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
+				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
 			})
 		})
 
@@ -83,10 +95,10 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 		}
 	}
 
-	if len(deletes) > 0 {
-		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
+	if len(writes) > 0 {
+		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
 			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
+				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
 			})
 		})
 
