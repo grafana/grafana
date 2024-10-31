@@ -130,11 +130,9 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
           </div>
         )}
       </div>
-      <div className={styles.scrollWrapper}>
-        <ScrollContainer minHeight="100%">
-          <div className={styles.mainBox}>{mainBoxElements}</div>
-        </ScrollContainer>
-      </div>
+      <ScrollContainer minHeight="100%">
+        <div className={styles.mainBox}>{mainBoxElements}</div>
+      </ScrollContainer>
     </div>
   );
 };
@@ -207,10 +205,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   searchHits: css({
     padding: theme.spacing(1, 1, 0, 1),
-  }),
-  scrollWrapper: css({
-    flexGrow: 1,
-    minHeight: 0,
   }),
   searchNotice: css({
     fontSize: theme.typography.size.sm,
