@@ -1,10 +1,10 @@
-import { formattedValueToString } from "@grafana/data";
+import { formattedValueToString } from '@grafana/data';
 
-import { CellNGProps } from "../types"
+import { CellNGProps } from '../types';
 
+export default function AutoCell({ value, field, justifyContent }: CellNGProps) {
+  const displayValue = field.display!(value);
+  const formattedValue = formattedValueToString(displayValue);
 
-export default function AutoCell({ value, field }: CellNGProps) {
-    const displayValue = field.display!(value);
-    const formattedValue = formattedValueToString(displayValue);
-    return (<>{formattedValue}</>)
+  return <div style={{ display: 'flex', justifyContent }}>{formattedValue}</div>;
 }

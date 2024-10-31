@@ -12,7 +12,7 @@ import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, TableNGProps } from '../types';
-import { getCellColors } from '../utils';
+import { getCellColors, getTextAlign } from '../utils';
 
 import { TableCellNG } from './Cells/TableCellNG';
 
@@ -48,6 +48,9 @@ export function TableNG(props: TableNGProps) {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // const columnAlign = fieldConfig?.defaults?.custom?.align;
+  // console.log('columnAlign', columnAlign);
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -172,6 +175,7 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={rowHeight}
+              justifyContent={getTextAlign(field)}
             />
           );
         },
