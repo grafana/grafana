@@ -4,8 +4,8 @@ import { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2
 
 import {
   DashboardV2,
-  defaultDashboardSpecV2,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.schema';
+  defaultDashboardSpec,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -13,8 +13,8 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
+    [P in keyof T]?: DeepPartial<T[P]>;
+  }
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2> {
@@ -88,7 +88,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 function getCursorSync(state: DashboardSceneState) {
   const cursorSync =
     state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
-    defaultDashboardSpecV2.cursorSync;
+    defaultDashboardSpec().cursorSync;
   return cursorSync;
 }
 
@@ -98,7 +98,7 @@ function getLiveNow(state: DashboardSceneState) {
     undefined;
   // hack for validator
   if (liveNow === undefined) {
-    return defaultDashboardSpecV2.liveNow;
+    return defaultDashboardSpec().liveNow;
   }
   return liveNow;
 }
