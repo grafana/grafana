@@ -5,44 +5,21 @@
     "to": "now",
     "queries": [
       {
-        "refId": "C",
-        "queryType": "",
-        "datasourceUid": "__expr__",
-        "type": "reduce",
-        "reducer": "last",
-        "datasourceId": 100,
-        "datasource": {
-          "type": "__expr__",
-          "uid": "__expr__"
-        },
-        "expression": "$B"
-      },
-      {
         "refId": "A",
-        "queryType": "",
-        "datasourceUid": "XYX",
         "datasource": {
+          "type": "",
           "uid": "${datasource}"
-        }
-      },
-      {
-        "refId": "B",
-        "queryType": "",
-        "datasourceUid": "__expr__",
-        "type": "math",
-        "datasource": {
-          "type": "__expr__",
-          "uid": "__expr__"
         },
-        "expression": "$A + 10"
+        "datasourceUid": "XYX",
+        "expr": "2"
       }
     ]
   },
   "expect": {
     "requests": [
       {
-        "uid": "XYX",
         "pluginId": "plugin-bbb",
+        "uid": "XYX",
         "request": {
           "from": "now-6",
           "to": "now",
@@ -50,31 +27,13 @@
             {
               "refId": "A",
               "datasource": {
-                "uid": "${datasource}",
-                "type": ""
+                "type": "",
+                "uid": "${datasource}"
               },
-              "datasourceUid": "XYX"
+              "datasourceUid": "XYX",
+              "expr": "2"
             }
           ]
-        }
-      }
-    ],
-    "expressions": [
-      {
-        "id": 2,
-        "refId": "B",
-        "type": "math",
-        "properties": {
-          "expression": "$A + 10"
-        }
-      },
-      {
-        "id": 1,
-        "refId": "C",
-        "type": "reduce",
-        "properties": {
-          "expression": "$B",
-          "reducer": "last"
         }
       }
     ]
