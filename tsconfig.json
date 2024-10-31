@@ -9,6 +9,7 @@
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": true,
     "incremental": true,
+    "isolatedModules": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
       "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]

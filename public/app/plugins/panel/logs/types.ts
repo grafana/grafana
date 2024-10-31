@@ -2,7 +2,7 @@ import React, { ReactNode } from 'react';
 
 import { DataFrame } from '@grafana/data';
 
-export { Options } from './panelcfg.gen';
+export type { Options } from './panelcfg.gen';
 
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
