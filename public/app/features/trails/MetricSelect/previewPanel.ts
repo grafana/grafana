@@ -5,6 +5,7 @@ import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngi
 import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 
+import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 
@@ -15,7 +16,10 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
     .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setDescription(description)
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
+    .setHeaderActions([
+      new SelectMetricAction({ metric, title: 'Select' }),
+      new AddToExplorationButton({ labelName: metric }),
+    ])
     .build();
 
   const queries = autoQuery.preview.queries.map((query) =>
