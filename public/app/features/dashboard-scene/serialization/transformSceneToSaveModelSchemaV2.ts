@@ -1,17 +1,20 @@
-import { behaviors } from '@grafana/scenes';
+import { behaviors, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
 import {
   DashboardV2,
   defaultDashboardSpecV2,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.schema';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-  }
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2> {
@@ -68,7 +71,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       layout: {
         kind: 'GridLayout',
         spec: {
-          items: [], //FIXME
+          items: getGridLayoutItems(oldDash),
         },
       },
       // EOF layout
@@ -98,6 +101,77 @@ function getLiveNow(state: DashboardSceneState) {
     return defaultDashboardSpecV2.liveNow;
   }
   return liveNow;
+}
+
+function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
+  const body = state.body;
+  const elements: GridLayoutItemKind[] = [];
+  if (body instanceof DefaultGridLayoutManager) {
+    for (const child of body.state.grid.state.children) {
+      if (child instanceof DashboardGridItem) {
+        // TODO: handle panel repeater scenario
+        // if (child.state.variableName) {
+        //   panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
+        // } else {
+        elements.push(gridItemToGridLayoutItem(child, isSnapshot));
+        // }
+      }
+
+      // TODO: OLD transformer code
+      // if (child instanceof SceneGridRow) {
+      //   // Skip repeat clones or when generating a snapshot
+      //   if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
+      //     continue;
+      //   }
+      //   gridRowToSaveModel(child, panels, isSnapshot);
+      // }
+    }
+  }
+  return elements;
+}
+
+export function gridItemToGridLayoutItem(gridItem: DashboardGridItem, isSnapshot = false): GridLayoutItemKind {
+  let elementGridItem: GridLayoutItemKind | undefined;
+  let x = 0,
+    y = 0,
+    width = 0,
+    height = 0;
+
+  let gridItem_ = gridItem;
+
+  if (!(gridItem_.state.body instanceof VizPanel)) {
+    throw new Error('DashboardGridItem body expected to be VizPanel');
+  }
+
+  // Get the grid position and size
+  height = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
+  x = gridItem_.state.x ?? 0;
+  y = gridItem_.state.y ?? 0;
+  width = gridItem_.state.width ?? 0;
+
+  // FIXME: which name should we use for the element reference, key or something else ?
+  const elementName = gridItem_.state.body.state.key ?? 'DefaultName';
+  elementGridItem = {
+    kind: 'GridLayoutItem',
+    spec: {
+      x,
+      y,
+      width: width,
+      height: height,
+      element: {
+        kind: 'ElementReference',
+        spec: {
+          name: elementName,
+        },
+      },
+    },
+  };
+
+  if (!elementGridItem) {
+    throw new Error('Unsupported grid item type');
+  }
+
+  return elementGridItem;
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2
