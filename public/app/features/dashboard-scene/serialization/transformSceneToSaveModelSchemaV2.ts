@@ -113,7 +113,7 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
         // if (child.state.variableName) {
         //   panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
         // } else {
-        elements.push(gridItemToGridLayoutItem(child, isSnapshot));
+        elements.push(gridItemToGridLayoutItemKind(child, isSnapshot));
         // }
       }
 
@@ -130,7 +130,7 @@ function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): G
   return elements;
 }
 
-export function gridItemToGridLayoutItem(gridItem: DashboardGridItem, isSnapshot = false): GridLayoutItemKind {
+export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnapshot = false): GridLayoutItemKind {
   let elementGridItem: GridLayoutItemKind | undefined;
   let x = 0,
     y = 0,
