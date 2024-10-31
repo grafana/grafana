@@ -74,9 +74,7 @@ export const Permissions = ({
 
   const onAdd = (state: SetPermission) => {
     let promise: Promise<void> | null = null;
-    if (state.target === PermissionTarget.User) {
-      promise = setUserPermission(resource, resourceId, state.userUid!, state.permission);
-    } else if (state.target === PermissionTarget.ServiceAccount) {
+    if (state.target === PermissionTarget.User || state.target === PermissionTarget.ServiceAccount) {
       promise = setUserPermission(resource, resourceId, state.userUid!, state.permission);
     } else if (state.target === PermissionTarget.Team) {
       promise = setTeamPermission(resource, resourceId, state.teamUid!, state.permission);
@@ -95,8 +93,6 @@ export const Permissions = ({
       promise = setUserPermission(resource, resourceId, item.userUid, EMPTY_PERMISSION);
     } else if (item.teamUid) {
       promise = setTeamPermission(resource, resourceId, item.teamUid, EMPTY_PERMISSION);
-    } else if (item.isServiceAccount && item.userUid) {
-      promise = setUserPermission(resource, resourceId, item.userUid, EMPTY_PERMISSION);
     } else if (item.builtInRole) {
       promise = setBuiltInRolePermission(resource, resourceId, item.builtInRole, EMPTY_PERMISSION);
     }
@@ -111,9 +107,7 @@ export const Permissions = ({
     if (item.permission === permission) {
       return;
     }
-    if (item.userUid) {
-      onAdd({ permission, userUid: item.userUid, target: PermissionTarget.User });
-    } else if (item.isServiceAccount) {
+    if (item.userUid || item.isServiceAccount) {
       onAdd({ permission, userUid: item.userUid, target: PermissionTarget.User });
     } else if (item.teamUid) {
       onAdd({ permission, teamUid: item.teamUid, target: PermissionTarget.Team });
