@@ -181,7 +181,7 @@ zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
-cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
+cloudwatchMetricInsightsCrossAccount,GA,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
