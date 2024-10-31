@@ -78,6 +78,8 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
+	// TODO: Feature flag probably?
+	r.Post("/login/:name/pretend", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.PretendOAuthLogin)
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
