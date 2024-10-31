@@ -177,7 +177,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Nullable: true,
 	}))
 
-	mg.AddMigration("increase resource_uid column length to 255", NewRawSQLMigration("").
+	mg.AddMigration("increase resource_uid column length", NewRawSQLMigration("").
 		Mysql("ALTER TABLE cloud_migration_resource MODIFY resource_uid NVARCHAR(255);").
 		Postgres("ALTER TABLE cloud_migration_resource ALTER COLUMN resource_uid TYPE NVARCHAR(255);"))
 
