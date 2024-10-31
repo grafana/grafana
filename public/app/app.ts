@@ -267,7 +267,10 @@ export class GrafanaApp {
       setChromeHeaderHeightHook(useChromeHeaderHeight);
 
       initializeScopes();
-      initializeCrashDetection();
+      console.log('Crash detection', config.featureToggles.crashDetection);
+      if (config.featureToggles.crashDetection) {
+        initializeCrashDetection();
+      }
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
