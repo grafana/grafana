@@ -48,6 +48,7 @@ export function TableNG(props: TableNGProps) {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || 150;
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -179,6 +180,7 @@ export function TableNG(props: TableNGProps) {
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
         width: columnWidth,
+        minWidth: columnMinWidth,
       });
 
       // Create row objects
