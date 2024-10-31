@@ -244,12 +244,15 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	//nolint:errcheck
-	go d.updateOnLegacyStorage(ctx, objFromStorage, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	go d.updateOnLegacyStorageMode3(ctx, objFromStorage, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
 	return objFromStorage, async, err
 }
 
-func (d *DualWriterMode3) updateOnLegacyStorage(ctx context.Context, storageObj runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
+func (d *DualWriterMode3) updateOnLegacyStorageMode3(ctx context.Context, storageObj runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
+	// The incoming RV is from unified storage, so legacy can ignore it
+	ctx = context.WithValue(ctx, dualWriteContextKey{}, true)
+
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method, "name", name)
 
