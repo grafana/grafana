@@ -14509,10 +14509,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crashme@npm:0.0.11":
-  version: 0.0.11
-  resolution: "crashme@npm:0.0.11"
-  checksum: 10/a336eeeb4f43ac1ae428a41b1b4260f4c0a2022db4188da99262f205f2fc301e2bcfb7d312c6a38ab9fa3e8e782bc556f760f3fcaf9c5535d2e4ce6335dc3a6f
+"crashme@npm:0.0.12":
+  version: 0.0.12
+  resolution: "crashme@npm:0.0.12"
+  checksum: 10/489ff1a3e55160cc230b3f8246dd4a09749cd3a3e7a9bec2981bc610bc4681b5393a80bd38f54d56f76639b5cb28628d301753b1eab79ee44cc0730a33060b77
   languageName: node
   linkType: hard
 
@@ -19178,7 +19178,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.38.1"
-    crashme: "npm:0.0.11"
+    crashme: "npm:0.0.12"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.10.0"
