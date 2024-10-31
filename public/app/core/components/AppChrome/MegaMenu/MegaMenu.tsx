@@ -6,16 +6,18 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { usePatchUserPreferencesMutation } from 'app/features/preferences/api/index';
 import { useDispatch, useSelector } from 'app/types';
 
+import { MEGA_MENU_TOGGLE_ID } from '../TopBar/SingleTopBar';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
-import { MegaMenuHeader } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { usePinnedItems } from './hooks';
 import { enrichWithInteractionTracking, findByUrl, getActiveItem } from './utils';
@@ -76,9 +78,11 @@ export const MegaMenu = memo(
       }
 
       // refocus on undock/menu open button when changing state
-      setTimeout(() => {
-        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
-      });
+      if (!config.featureToggles.singleTopNav) {
+        setTimeout(() => {
+          document.getElementById(state.megaMenuDocked ? MEGA_MENU_TOGGLE_ID : DOCK_MENU_BUTTON_ID)?.focus();
+        });
+      }
     };
 
     const isPinned = useCallback(
@@ -131,7 +135,7 @@ export const MegaMenu = memo(
           </div>
         )}
         <nav className={styles.content}>
-          <CustomScrollbar showScrollIndicators hideHorizontalTrack>
+          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
                 <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">
@@ -159,7 +163,7 @@ export const MegaMenu = memo(
                 </Stack>
               ))}
             </ul>
-          </CustomScrollbar>
+          </ScrollContainer>
         </nav>
       </div>
     );

@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
+import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -10,7 +11,7 @@ import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
-import { estimateSize, useComboboxFloat } from './useComboboxFloat';
+import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -129,11 +130,29 @@ export const Combobox = <T extends string | number>({
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
-    estimateSize,
+    estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
+
+  const debounceAsync = useMemo(
+    () =>
+      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setAsyncLoading(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              // TODO: handle error
+              setAsyncLoading(false);
+            }
+          });
+      }, 200),
+    [loadOptions]
+  );
 
   const {
     getInputProps,
@@ -156,6 +175,7 @@ export const Combobox = <T extends string | number>({
       onChange(selectedItem);
     },
     defaultHighlightedIndex: selectedItemIndex ?? 0,
+
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
       const customValueOption =
@@ -174,17 +194,7 @@ export const Combobox = <T extends string | number>({
           setItems([customValueOption]);
         }
         setAsyncLoading(true);
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(customValueOption ? [customValueOption, ...opts] : opts);
-            setAsyncLoading(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
-              setAsyncLoading(false);
-            }
-          });
+        debounceAsync(inputValue, customValueOption);
 
         return;
       }
@@ -194,7 +204,7 @@ export const Combobox = <T extends string | number>({
       setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
     },
 
-    onIsOpenChange: ({ isOpen }) => {
+    onIsOpenChange: ({ isOpen, inputValue }) => {
       // Default to displaying all values when opening
       if (isOpen && !isAsync) {
         setItems(options);
@@ -203,10 +213,18 @@ export const Combobox = <T extends string | number>({
 
       if (isOpen && isAsync) {
         setAsyncLoading(true);
-        loadOptions('').then((options) => {
-          setItems(options);
-          setAsyncLoading(false);
-        });
+        loadOptions(inputValue ?? '')
+          .then((options) => {
+            setItems(options);
+            setAsyncLoading(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              // TODO: handle error
+              setAsyncLoading(false);
+              throw err;
+            }
+          });
         return;
       }
     },
@@ -223,7 +241,18 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
+  const handleSuffixClick = useCallback(() => {
+    isOpen ? closeMenu() : openMenu();
+  }, [isOpen, openMenu, closeMenu]);
+
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+
+  const suffixIcon = asyncLoading
+    ? 'spinner'
+    : // If it's loading, show loading icon. Otherwise, icon indicating menu state
+      isOpen
+      ? 'search'
+      : 'angle-down';
 
   return (
     <div>
@@ -248,19 +277,14 @@ export const Combobox = <T extends string | number>({
                 }}
               />
             )}
-            <Icon
-              name={isOpen ? 'search' : 'angle-down'}
-              onClick={() => {
-                if (isOpen) {
-                  closeMenu();
-                } else {
-                  openMenu();
-                }
-              }}
-            />
+
+            {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
+                translated to the input, so it blocks the input from being focused. So we need an additional event
+                handler here to open/close the menu. It should not have button role because we intentionally don't
+                want it in the a11y tree. */}
+            <Icon name={suffixIcon} onClick={handleSuffixClick} />
           </>
         }
-        loading={asyncLoading}
         {...restProps}
         {...getInputProps({
           ref: inputRef,

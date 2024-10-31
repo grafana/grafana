@@ -11,6 +11,7 @@ import (
 )
 
 type IndexedResource struct {
+	Uid       string
 	Group     string
 	Namespace string
 	Kind      string
@@ -25,6 +26,7 @@ type IndexedResource struct {
 }
 
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
+	ir.Uid = hit.Fields["Uid"].(string)
 	ir.Kind = hit.Fields["Kind"].(string)
 	ir.Name = hit.Fields["Name"].(string)
 	ir.Namespace = hit.Fields["Namespace"].(string)
@@ -36,7 +38,7 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 	ir.Title = hit.Fields["Title"].(string)
 
 	// add indexed spec fields to search results
-	specResult := map[string]interface{}{}
+	specResult := map[string]any{}
 	for k, v := range hit.Fields {
 		if strings.HasPrefix(k, "Spec.") {
 			specKey := strings.TrimPrefix(k, "Spec.")
@@ -51,8 +53,6 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 // NewIndexedResource creates a new IndexedResource from a raw resource.
 // rawResource is the raw json for the resource from unified storage.
 func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
-	ir := &IndexedResource{}
-
 	k8sObj := unstructured.Unstructured{}
 	err := k8sObj.UnmarshalJSON(rawResource)
 	if err != nil {
@@ -64,6 +64,8 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
+	ir := &IndexedResource{}
+	ir.Uid = string(meta.GetUID())
 	ir.Name = meta.GetName()
 	ir.Title = meta.FindTitle("")
 	ir.Namespace = meta.GetNamespace()
@@ -97,7 +99,7 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 	indexMapping.TypeField = "Kind"
 
 	// for all kinds, create their index mappings
-	for k, _ := range getSpecObjectMappings() {
+	for k := range getSpecObjectMappings() {
 		objMapping := createIndexMappingForKind(k)
 		indexMapping.AddDocumentMapping(k, objMapping)
 	}
@@ -108,6 +110,7 @@ func createIndexMappings() *mapping.IndexMappingImpl {
 func createIndexMappingForKind(resourceKind string) *mapping.DocumentMapping {
 	// create mappings for top level fields
 	baseFields := map[string]*mapping.FieldMapping{
+		"Uid":       bleve.NewTextFieldMapping(),
 		"Group":     bleve.NewTextFieldMapping(),
 		"Namespace": bleve.NewTextFieldMapping(),
 		"Kind":      bleve.NewTextFieldMapping(),
@@ -157,6 +160,16 @@ func getSpecObjectMappings() map[string][]SpecFieldMapping {
 			},
 		},
 		"Folder": {
+			{
+				Field: "title",
+				Type:  "string",
+			},
+			{
+				Field: "description",
+				Type:  "string",
+			},
+		},
+		"Dashboard": {
 			{
 				Field: "title",
 				Type:  "string",
