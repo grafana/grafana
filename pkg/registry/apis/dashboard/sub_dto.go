@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
+	resource      string
 	getter        rest.Getter
 	legacy        legacy.DashboardAccess
 	unified       resource.ResourceClient
@@ -40,6 +42,7 @@ func newDTOConnector(dash rest.Storage, builder *DashboardsAPIBuilder) (rest.Sto
 		accessControl: builder.accessControl,
 		unified:       builder.unified,
 		log:           builder.log,
+		resource:      dashboard.DashboardResourceInfo.GroupResource().Resource,
 	}
 	v.getter, ok = dash.(rest.Getter)
 	if !ok {
@@ -142,6 +145,8 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		rv, _ := obj.GetResourceVersionInt64()
 		rsp, err := r.unified.GetBlob(ctx, &resource.GetBlobRequest{
 			Resource: &resource.ResourceKey{
+				Group:     dashboard.GROUP,
+				Resource:  r.resource,
 				Namespace: obj.GetNamespace(),
 				Name:      obj.GetName(),
 			},
@@ -151,7 +156,17 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("TODO, load full blob from storage %+v // bytes(%d)\n", blobInfo, len(rsp.Value))
+		if rsp.Error != nil {
+			return nil, fmt.Errorf("error loading value from object store %+v", rsp.Error)
+		}
+
+		// Replace the spec with the value saved in the blob store
+		if len(rsp.Value) > 0 {
+			err = json.Unmarshal(rsp.Value, &dash.Spec)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))

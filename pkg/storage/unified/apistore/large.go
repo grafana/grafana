@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -54,8 +55,18 @@ func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resource
 		return err
 	}
 
+	var val []byte
+
+	// :( could not figure out custom JSON marshaling
+	// with pointer receiver... quick fix
+	u, ok := spec.(common.Unstructured)
+	if ok {
+		val, err = json.Marshal(u.Object)
+	} else {
+		val, err = json.Marshal(spec)
+	}
+
 	// Write only the spec
-	val, err := json.Marshal(spec)
 	if err != nil {
 		return err
 	}

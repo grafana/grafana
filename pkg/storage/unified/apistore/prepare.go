@@ -127,7 +127,6 @@ func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMet
 		size := buf.Len()
 		if size > support.Threshold() {
 			if support.MaxSize() > 0 && size > support.MaxSize() {
-
 				return nil, fmt.Errorf("request object is too big (%s > %s)", formatBytes(size), formatBytes(support.MaxSize()))
 			}
 		}
