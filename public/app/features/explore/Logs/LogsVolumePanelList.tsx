@@ -16,6 +16,7 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -87,6 +88,8 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
+  const canShowPartialData =
+    config.featureToggles.lokiShardSplitting && logsVolumeData && logsVolumeData.data.length > 0;
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
   const from = dateTime(Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from));
@@ -95,7 +98,7 @@ export const LogsVolumePanelList = ({
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
-  } else if (timeoutError) {
+  } else if (timeoutError && !canShowPartialData) {
     return (
       <SupplementaryResultError
         title="Unable to show log volume"
@@ -127,7 +130,7 @@ export const LogsVolumePanelList = ({
         onRemove={onClose}
       />
     );
-  } else if (logsVolumeData?.error !== undefined) {
+  } else if (logsVolumeData?.error !== undefined && !canShowPartialData) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
@@ -143,6 +146,14 @@ export const LogsVolumePanelList = ({
 
   return (
     <div className={styles.listContainer}>
+      {timeoutError && canShowPartialData && (
+        <SupplementaryResultError
+          title="Showing partial data"
+          message="The query is trying to access too much data and some sharded requests could not be completed. Try decreasing the time range or adding more labels to your query."
+          severity="info"
+          dismissable
+        />
+      )}
       {Object.keys(logVolumes).map((name, index) => {
         return (
           <LogsVolumePanel
