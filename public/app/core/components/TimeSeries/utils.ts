@@ -250,8 +250,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           range:
             customConfig.stacking?.mode === StackingMode.Percent
               ? (u: uPlot, dataMin: number, dataMax: number) => {
-                  dataMin = field.config.min != null ? field.config.min : dataMin < 0 ? -1 : 0;
-                  dataMax = field.config.max != null ? field.config.max : dataMax > 0 ? 1 : 0;
+                  dataMin = (field.config.min ?? dataMin) < 0 ? -1 : 0;
+                  dataMax = (field.config.max ?? dataMax) > 0 ? 1 : 0;
                   return [dataMin, dataMax];
                 }
               : field.type === FieldType.enum
