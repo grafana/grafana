@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -69,13 +68,13 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 }
 
 func (hs *HTTPServer) PretendOAuthLogin(reqCtx *contextmodel.ReqContext) {
-	var dto social.BasicUserInfo
+	var dto user.CreateUserCommand
 	if err := web.Bind(reqCtx.Req, &dto); err != nil {
 		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not the dto needed", err)
 		return
 	}
 
-	_, err := hs.userService.GetByUID(reqCtx.Req.Context(), &user.GetUserByUIDQuery{UID: dto.Id})
+	_, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not the dto needed", err)
 		return
@@ -84,15 +83,7 @@ func (hs *HTTPServer) PretendOAuthLogin(reqCtx *contextmodel.ReqContext) {
 		return
 	}
 
-	_, err = hs.userService.Create(reqCtx.Req.Context(), &user.CreateUserCommand{
-		UID:           dto.Id,
-		Email:         dto.Email,
-		Login:         dto.Login,
-		Name:          dto.Name,
-		EmailVerified: true,
-		IsAdmin:       dto.IsGrafanaAdmin != nil && *dto.IsGrafanaAdmin,
-		SkipOrgSetup:  true,
-	})
+	_, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
 	if err != nil {
 		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "user could not be created", err)
 		return
