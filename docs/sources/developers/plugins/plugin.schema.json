@@ -236,7 +236,7 @@
     },
     "buildMode": {
       "type": "string",
-      "description": "The build mode of the plugin. Can be `development` or `production`."
+      "description": "The build mode of the plugin. This field is set automatically at build time, so it should not be provided manually."
     },
     "builtIn": {
       "type": "boolean",
