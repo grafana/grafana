@@ -102,9 +102,9 @@ export function TableNG(props: TableNGProps) {
           <div>{column.name}</div>
           {direction &&
             (direction === 'ASC' ? (
-              <Icon size="lg" name="arrow-down" className={styles.sortIcon} />
-            ) : (
               <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
+            ) : (
+              <Icon name="arrow-down" size="lg" className={styles.sortIcon} />
             ))}
         </button>
 
