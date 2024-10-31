@@ -47,7 +47,13 @@ export const SelectMenu = ({
   const optionsElement = components?.Option ?? SelectMenuOptions;
 
   return (
-    <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
+    <div
+      {...innerProps}
+      data-testid={selectors.components.Select.menu}
+      className={styles.menu}
+      style={{ maxHeight }}
+      aria-label="Select options menu"
+    >
       <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         {toggleAllOptions && (
           <ToggleAllOption
