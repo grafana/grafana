@@ -93,17 +93,16 @@ function processContent(options: Options, interpolate: InterpolateFunction, disa
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  codeEditorContainer: css`
-    .monaco-editor .margin,
-    .monaco-editor-background {
-      background-color: ${theme.colors.background.primary};
-    }
-  `,
+  codeEditorContainer: css({
+    '.monaco-editor .margin, .monaco-editor-background': {
+      backgroundColor: theme.colors.background.primary,
+    },
+  }),
   markdown: cx(
     'markdown-html',
-    css`
-      height: 100%;
-    `
+    css({
+      height: '100%',
+    })
   ),
   containStrict: css({
     contain: 'strict',

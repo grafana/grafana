@@ -1,17 +1,24 @@
 import { css } from '@emotion/css';
 import { ComponentType } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
+import {
+  HistoryWrapper,
+  locationService,
+  LocationServiceProvider,
+  useChromeHeaderHeight,
+  useSidecar_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
-import { useSidecar } from '../core/context/SidecarContext';
+import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
 
 import { createLocationStorageHistory } from './utils';
@@ -26,22 +33,24 @@ export function RouterWrapper(props: RouterWrapperProps) {
     <Router history={locationService.getHistory()}>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
-          <ModalsContextProvider>
-            <AppChrome>
-              <AngularRoot />
-              <AppNotificationList />
-              <Stack gap={0} grow={1} direction="column">
-                {props.pageBanners.map((Banner, index) => (
-                  <Banner key={index.toString()} />
+          <QueriesDrawerContextProvider>
+            <ModalsContextProvider>
+              <AppChrome>
+                <AngularRoot />
+                <AppNotificationList />
+                <Stack gap={0} grow={1} direction="column">
+                  {props.pageBanners.map((Banner, index) => (
+                    <Banner key={index.toString()} />
+                  ))}
+                  {props.routes}
+                </Stack>
+                {props.bodyRenderHooks.map((Hook, index) => (
+                  <Hook key={index.toString()} />
                 ))}
-                {props.routes}
-              </Stack>
-              {props.bodyRenderHooks.map((Hook, index) => (
-                <Hook key={index.toString()} />
-              ))}
-            </AppChrome>
-            <ModalRoot />
-          </ModalsContextProvider>
+              </AppChrome>
+              <ModalRoot />
+            </ModalsContextProvider>
+          </QueriesDrawerContextProvider>
         </CompatRouter>
       </LocationServiceProvider>
     </Router>
@@ -55,7 +64,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar();
+  const { activePluginId, closeApp } = useSidecar_EXPERIMENTAL();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
