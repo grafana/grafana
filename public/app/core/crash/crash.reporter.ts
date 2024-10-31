@@ -45,7 +45,7 @@ export function initializeCrashDetection() {
     dbName: 'grafana.crashes',
 
     log: (log) => {
-      console.log(log);
+      // console.log(log);
     },
 
     createClientWorker(): Worker {
