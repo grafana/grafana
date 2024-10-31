@@ -42,7 +42,7 @@ export class UserPicker extends Component<Props, State> {
       .then((result: OrgUser[]) => {
         return result.map((user) => ({
           id: user.userId,
-          uid: user.userId,
+          uid: user.uid,
           value: user,
           label: user.login,
           imgUrl: user.avatarUrl,
