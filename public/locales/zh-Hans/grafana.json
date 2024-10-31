@@ -2871,7 +2871,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2885,6 +2896,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",
