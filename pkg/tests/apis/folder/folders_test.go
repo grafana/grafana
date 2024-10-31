@@ -551,7 +551,7 @@ func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
 	// creating a folder with a known parent should succeed
 	require.Equal(t, parentUID, childCreate.Result.ParentUID)
 	require.Equal(t, parentUID, parent.UID)
-	require.Equal(t, "Test\\/parent", parent.Title)
+	require.Equal(t, "Test/parent", parent.Title)
 	require.Equal(t, parentCreate.Result.URL, parent.URL)
 }
 
