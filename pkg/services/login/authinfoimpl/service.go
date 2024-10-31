@@ -47,7 +47,7 @@ func (s *Service) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery
 
 	authInfo, err := s.getAuthInfoFromCache(ctx, query)
 	if err != nil && !errors.Is(err, remotecache.ErrCacheItemNotFound) {
-		s.logger.Error("failed to retrieve auth info from cache", "error", err)
+		s.logger.Warn("failed to retrieve auth info from cache", "error", err)
 	} else if authInfo != nil {
 		return authInfo, nil
 	}
