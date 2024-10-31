@@ -74,19 +74,19 @@ func (hs *HTTPServer) PretendOAuthLogin(reqCtx *contextmodel.ReqContext) {
 		return
 	}
 
-	_, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
+	u, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not the dto needed", err)
 		return
 	} else if err == nil {
-		reqCtx.Resp.WriteHeader(http.StatusNoContent)
+		reqCtx.JSON(http.StatusOK, *u)
 		return
 	}
 
-	_, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
+	u, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
 	if err != nil {
 		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "user could not be created", err)
 		return
 	}
-	reqCtx.Resp.WriteHeader(http.StatusNoContent)
+	reqCtx.JSON(http.StatusOK, *u)
 }
