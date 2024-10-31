@@ -110,7 +110,7 @@ const lokiQueryResult = {
   },
 };
 
-describe.skip('Loki Query Editor', () => {
+describe('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
