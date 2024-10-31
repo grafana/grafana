@@ -157,6 +157,8 @@ func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, gro
 }
 
 func readTestData(t *testing.T, name string) []byte {
+	// We can ignore the gosec G304 because this is only for tests
+	// nolint:gosec
 	data, err := os.ReadFile("./testdata/" + name)
 	require.NoError(t, err)
 	return data
