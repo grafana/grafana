@@ -4480,6 +4480,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -4504,6 +4507,9 @@
             "type": "integer"
           },
           "userLogin": {
+            "type": "string"
+          },
+          "userUid": {
             "type": "string"
           }
         },
