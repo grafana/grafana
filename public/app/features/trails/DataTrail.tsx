@@ -46,7 +46,7 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
-import { sortResources, getOtelJoinQuery, getOtelResourcesObject } from './otel/util';
+import { sortResources, getOtelJoinQuery, getOtelResourcesObject, updateOtelJoinWithGroupLeft } from './otel/util';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -55,6 +55,7 @@ import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
   VAR_OTEL_DEPLOYMENT_ENV,
+  VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
@@ -247,8 +248,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     locationService.replace(fullUrl);
   }
 
-  private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
-    this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
+  private async _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
+    const metric = evt.payload ?? '';
+
+    if (this.state.useOtelExperience) {
+      await updateOtelJoinWithGroupLeft(this, metric);
+    }
+
+    this.setState(this.getSceneUpdatesForNewMetricValue(metric));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -674,6 +681,11 @@ function getVariableSet(
         supportsMultiValueOperators: true,
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
+      new ConstantVariable({
+        name: VAR_OTEL_GROUP_LEFT,
+        value: undefined,
+        hide: VariableHide.hideVariable,
+      }),
     ],
   });
 }
