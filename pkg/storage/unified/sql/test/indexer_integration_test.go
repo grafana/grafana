@@ -30,6 +30,10 @@ func addResource(t *testing.T, ctx context.Context, backend sql.Backend, resourc
 }
 
 func TestIntegrationIndexerSearch(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	cfg := setting.NewCfg()
 	cfg.IndexWorkers = 1
