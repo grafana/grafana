@@ -175,12 +175,12 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate            string
-	AngularSupportEnabled            bool
-	DisableFrontendSandboxForPlugins []string
-	DisableGravatar                  bool
-	DataProxyWhiteList               map[string]bool
-	ActionsAllowPostURL              string
+	CSPReportOnlyTemplate           string
+	AngularSupportEnabled           bool
+	EnableFrontendSandboxForPlugins []string
+	DisableGravatar                 bool
+	DataProxyWhiteList              map[string]bool
+	ActionsAllowPostURL             string
 
 	TempDataLifetime time.Duration
 
@@ -382,6 +382,7 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -531,7 +532,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
+	UnifiedStorage    map[string]UnifiedStorageConfig
+	IndexPath         string
+	IndexWorkers      int
+	IndexMaxBatchSize int
+	IndexListLimit    int
 }
 
 type UnifiedStorageConfig struct {
@@ -1157,6 +1162,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1338,7 +1344,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
-	// read unifed storage config
+	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
 	return nil
@@ -1555,10 +1561,10 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
+	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
+	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
-		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
+		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {

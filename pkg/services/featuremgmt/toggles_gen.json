@@ -607,6 +607,39 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorDisableLogLimit",
+        "resourceVersion": "1727698096407",
+        "creationTimestamp": "2024-09-30T11:51:51Z",
+        "deletionTimestamp": "2024-10-22T09:44:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-30 12:08:16.407109 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "azureMonitorLogLimit",
+        "resourceVersion": "1727696791818",
+        "creationTimestamp": "2024-09-30T11:45:45Z",
+        "deletionTimestamp": "2024-09-30T11:51:51Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-30 11:46:31.818302 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Control the log limit restriction for Azure Monitor",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorPrometheusExemplars",
         "resourceVersion": "1723028568258",
         "creationTimestamp": "2024-06-06T16:53:17Z",
@@ -822,6 +855,22 @@
     },
     {
       "metadata": {
+        "name": "dashboardNewLayouts",
+        "resourceVersion": "1729671312626",
+        "creationTimestamp": "2024-10-16T08:44:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 08:15:12.626632 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables experimental new dashboard layouts",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardRestore",
         "resourceVersion": "1728397491294",
         "creationTimestamp": "2024-05-16T17:36:26Z",
@@ -857,10 +906,10 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1727354524763",
+        "resourceVersion": "1729671397794",
         "creationTimestamp": "2023-11-13T08:51:21Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-23 08:16:37.794144 +0000 UTC"
         }
       },
       "spec": {
@@ -903,6 +952,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaV2",
+        "resourceVersion": "1730192092473",
+        "creationTimestamp": "2024-10-29T08:54:52Z"
+      },
+      "spec": {
+        "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -1646,6 +1708,19 @@
     },
     {
       "metadata": {
+        "name": "kubernetesDashboardsAPI",
+        "resourceVersion": "1729017284006",
+        "creationTimestamp": "2024-10-15T18:34:44Z"
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the backend for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFeatureToggles",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-18T05:32:44Z"
@@ -1955,6 +2030,22 @@
         "description": "Send dashboard and panel names to Loki when querying",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiShardSplitting",
+        "resourceVersion": "1729678036788",
+        "creationTimestamp": "2024-10-23T10:06:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-10-23 10:07:16.788828 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use stream shards to split queries into smaller subqueries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
       }
     },
     {
@@ -2273,7 +2364,8 @@
       "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
-        "creationTimestamp": "2024-06-20T15:49:19Z"
+        "creationTimestamp": "2024-06-20T15:49:19Z",
+        "deletionTimestamp": "2024-10-14T10:53:41Z"
       },
       "spec": {
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",
@@ -2560,6 +2652,21 @@
     },
     {
       "metadata": {
+        "name": "prometheusUsesCombobox",
+        "resourceVersion": "1726140033271",
+        "creationTimestamp": "2024-09-12T11:19:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-12 11:20:33.271822988 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use new combobox component for Prometheus query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
@@ -2731,6 +2838,20 @@
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2955,6 +3076,18 @@
     },
     {
       "metadata": {
+        "name": "timeRangeProvider",
+        "resourceVersion": "1728565214224",
+        "creationTimestamp": "2024-10-10T13:00:14Z"
+      },
+      "spec": {
+        "description": "Enables time pickers sync",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "tlsMemcached",
         "resourceVersion": "1722608472573",
         "creationTimestamp": "2024-05-09T19:12:08Z",
@@ -2974,6 +3107,7 @@
         "name": "topnav",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-06-20T14:25:43Z",
+        "deletionTimestamp": "2024-10-15T15:00:51Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3068,6 +3202,31 @@
     },
     {
       "metadata": {
+        "name": "unifiedStorageBigObjectSupport",
+        "resourceVersion": "1728561321640",
+        "creationTimestamp": "2024-10-10T11:55:21Z",
+        "deletionTimestamp": "2024-10-15T12:09:18Z"
+      },
+      "spec": {
+        "description": "Enables to save big objects in blob storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
+        "name": "unifiedStorageBigObjectsSupport",
+        "resourceVersion": "1728994158474",
+        "creationTimestamp": "2024-10-15T12:09:18Z"
+      },
+      "spec": {
+        "description": "Enables to save big objects in blob storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "unifiedStorageSearch",
         "resourceVersion": "1726771421439",
         "creationTimestamp": "2024-09-19T18:43:41Z"
@@ -3138,7 +3297,8 @@
       "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-27T10:22:13Z"
+        "creationTimestamp": "2023-06-27T10:22:13Z",
+        "deletionTimestamp": "2024-10-30T14:21:33Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",

@@ -16,7 +16,7 @@ import (
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
 func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (models.AlertRule, error) {
-	return models.AlertRule{
+	rule := models.AlertRule{
 		ID:                   a.ID,
 		UID:                  a.UID,
 		OrgID:                a.OrgID,
@@ -34,7 +34,13 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		IsPaused:             a.IsPaused,
 		NotificationSettings: NotificationSettingsFromAlertRuleNotificationSettings(a.NotificationSettings),
 		Record:               ModelRecordFromApiRecord(a.Record),
-	}, nil
+	}
+
+	if rule.Type() == models.RuleTypeRecording {
+		models.ClearRecordingRuleIgnoredFields(&rule)
+	}
+
+	return rule, nil
 }
 
 // ProvisionedAlertRuleFromAlertRule converts models.AlertRule to definitions.ProvisionedAlertRule and sets provided provenance status

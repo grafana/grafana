@@ -34,6 +34,7 @@ export type Unit = { name: string; url: string };
 
 export interface UserDTO extends WithAccessControlMetadata {
   id: number;
+  uid: string;
   login: string;
   email: string;
   name: string;
@@ -95,6 +96,7 @@ export interface UserSession {
   seenAt: string;
   browser: string;
   browserVersion: string;
+  authModule?: string;
   os: string;
   osVersion: string;
   device: string;

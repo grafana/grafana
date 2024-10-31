@@ -41,7 +41,6 @@ export interface FeatureToggles {
   vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  topnav?: boolean;
   grpcServer?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
@@ -53,6 +52,7 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiShardSplitting?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
@@ -80,7 +80,6 @@ export interface FeatureToggles {
   pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
-  vizAndWidgetSplit?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -116,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesDashboardsAPI?: boolean;
   kubernetesFolders?: boolean;
   grafanaAPIServerTestingWithExperimentalAPIs?: boolean;
   datasourceQueryTypes?: boolean;
@@ -140,6 +140,7 @@ export interface FeatureToggles {
   dashboardSceneForViewers?: boolean;
   dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
+  dashboardNewLayouts?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
   ssoSettingsApi?: boolean;
@@ -196,7 +197,7 @@ export interface FeatureToggles {
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
-  passScopeToDashboardApi?: boolean;
+  reloadDashboardsOnParamsChange?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -220,4 +221,9 @@ export interface FeatureToggles {
   rolePickerDrawer?: boolean;
   unifiedStorageSearch?: boolean;
   pluginsSriChecks?: boolean;
+  unifiedStorageBigObjectsSupport?: boolean;
+  timeRangeProvider?: boolean;
+  prometheusUsesCombobox?: boolean;
+  azureMonitorDisableLogLimit?: boolean;
+  dashboardSchemaV2?: boolean;
 }

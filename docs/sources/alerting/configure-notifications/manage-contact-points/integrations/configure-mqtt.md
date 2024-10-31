@@ -149,8 +149,8 @@ Each alert instance in the `alerts` array has the following fields.
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
-| dashboardURL | string | **Deprecated. It will be removed in a future release.**                            |
-| panelURL     | string | **Deprecated. It will be removed in a future release.**                            |
+| dashboardURL | string | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation        |
+| panelURL     | string | A link to the panel if the alert has a Panel ID annotation                         |
 | imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 {{< admonition type="note" >}}

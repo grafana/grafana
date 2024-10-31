@@ -34,6 +34,9 @@ var currentMigrationTypes = []cloudmigration.MigrateDataType{
 	cloudmigration.DashboardDataType,
 	cloudmigration.MuteTimingType,
 	cloudmigration.NotificationTemplateType,
+	cloudmigration.ContactPointType,
+	cloudmigration.NotificationPolicyType,
+	cloudmigration.AlertRuleType,
 }
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
@@ -74,10 +77,31 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Alerts: Contact Points
+	contactPoints, err := s.getContactPoints(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert contact points", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Notification Policies
+	notificationPolicies, err := s.getNotificationPolicies(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert notification policies", "err", err)
+		return nil, err
+	}
+
+	// Alerts: Alert Rules
+	alertRules, err := s.getAlertRules(ctx, signedInUser)
+	if err != nil {
+		s.log.Error("Failed to get alert rules", "err", err)
+		return nil, err
+	}
+
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders)+len(libraryElements)+
-			len(muteTimings)+len(notificationTemplates),
+			len(muteTimings)+len(notificationTemplates)+len(contactPoints)+len(alertRules),
 	)
 
 	for _, ds := range dataSources {
@@ -127,7 +151,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, muteTiming := range muteTimings {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.MuteTimingType,
-			RefID: muteTiming.Name,
+			RefID: muteTiming.UID,
 			Name:  muteTiming.Name,
 			Data:  muteTiming,
 		})
@@ -136,9 +160,37 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	for _, notificationTemplate := range notificationTemplates {
 		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
 			Type:  cloudmigration.NotificationTemplateType,
-			RefID: notificationTemplate.Name,
+			RefID: notificationTemplate.UID,
 			Name:  notificationTemplate.Name,
 			Data:  notificationTemplate,
+		})
+	}
+
+	for _, contactPoint := range contactPoints {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.ContactPointType,
+			RefID: contactPoint.UID,
+			Name:  contactPoint.Name,
+			Data:  contactPoint,
+		})
+	}
+
+	if len(notificationPolicies.Name) > 0 {
+		// Notification Policy can only be managed by updating its entire tree, so we send the whole thing as one item.
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationPolicyType,
+			RefID: notificationPolicies.Name, // no UID available
+			Name:  notificationPolicies.Name,
+			Data:  notificationPolicies.Routes,
+		})
+	}
+
+	for _, alertRule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: alertRule.UID,
+			Name:  alertRule.Title,
+			Data:  alertRule,
 		})
 	}
 

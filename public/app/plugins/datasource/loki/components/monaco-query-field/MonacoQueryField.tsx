@@ -82,21 +82,21 @@ function ensureLogQL(monaco: Monaco) {
 
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
-    container: css`
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.components.input.borderColor};
-      width: 100%;
-      .monaco-editor .suggest-widget {
-        min-width: 50%;
-      }
-    `,
-    placeholder: css`
-      ::after {
-        content: '${placeholder}';
-        font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
-      }
-    `,
+    container: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      width: '100%',
+      '.monaco-editor .suggest-widget': {
+        minWidth: '50%',
+      },
+    }),
+    placeholder: css({
+      '::after': {
+        content: `'${placeholder}'`,
+        fontFamily: theme.typography.fontFamilyMonospace,
+        opacity: 0.3,
+      },
+    }),
   };
 };
 
@@ -119,6 +119,7 @@ const MonacoQueryField = ({
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
+  const completionDataProviderRef = useRef<CompletionDataProvider | null>(null);
 
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
@@ -131,6 +132,12 @@ const MonacoQueryField = ({
       autocompleteCleanupCallback.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (completionDataProviderRef.current && timeRange) {
+      completionDataProviderRef.current.setTimeRange(timeRange);
+    }
+  }, [timeRange]);
 
   const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
     const placeholderDecorators = [
@@ -213,6 +220,7 @@ const MonacoQueryField = ({
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef, timeRange);
+          completionDataProviderRef.current = dataProvider;
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,

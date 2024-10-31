@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/klog/v2"
 	v1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	v1helper "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1/helper"
@@ -45,14 +46,16 @@ import (
 	"k8s.io/kube-aggregator/pkg/controllers/autoregister"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
-
 	servicev0alpha1applyconfiguration "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
 	serviceclientset "github.com/grafana/grafana/pkg/generated/clientset/versioned"
 	informersv0alpha1 "github.com/grafana/grafana/pkg/generated/informers/externalversions"
+	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
+
+// making sure we only register metrics once into legacy registry
+var registerIntoLegacyRegistryOnce sync.Once
 
 func readCABundlePEM(path string, devMode bool) ([]byte, error) {
 	if devMode {
@@ -260,6 +263,15 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		}
 	}
 
+	metrics := newAvailabilityMetrics()
+
+	// create shared (remote and local) availability metrics
+	// TODO: decouple from legacyregistry
+	registerIntoLegacyRegistryOnce.Do(func() { err = metrics.Register(legacyregistry.Register, legacyregistry.CustomRegister) })
+	if err != nil {
+		return nil, err
+	}
+
 	availableController, err := NewAvailableConditionController(
 		aggregatorServer.APIRegistrationInformers.Apiregistration().V1().APIServices(),
 		externalNamesInformer,
@@ -267,6 +279,7 @@ func CreateAggregatorServer(config *Config, delegateAPIServer genericapiserver.D
 		nil,
 		proxyCurrentCertKeyContentFunc,
 		completedConfig.ExtraConfig.ServiceResolver,
+		metrics,
 	)
 	if err != nil {
 		return nil, err

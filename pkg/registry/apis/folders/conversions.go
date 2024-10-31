@@ -17,6 +17,7 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstructured.Unstructured, error) {
@@ -29,6 +30,9 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 		},
 	}
 	// #TODO: let's see if we need to set the json field to "-"
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
 	obj.SetName(cmd.UID)
 
 	if err := setParentUID(&obj, cmd.ParentUID); err != nil {
@@ -38,17 +42,26 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstruct
 	return obj, nil
 }
 
-func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
-	// #TODO add other fields
+func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstructured.Unstructured, error) {
+	// #TODO add other fields ; do we support updating the UID/orgID?
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
-				"title": cmd.NewTitle,
+				"title":       cmd.NewTitle,
+				"description": cmd.NewDescription,
 			},
 		},
 	}
 	obj.SetName(cmd.UID)
-	return obj
+
+	if cmd.NewParentUID == nil {
+		return obj, nil
+	}
+	if err := setParentUID(&obj, *cmd.NewParentUID); err != nil {
+		return unstructured.Unstructured{}, err
+	}
+
+	return obj, nil
 }
 
 func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
@@ -86,11 +99,19 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		// #TODO add created by field if necessary
 		// CreatedBy: meta.GetCreatedBy(),
 		// UpdatedBy: meta.GetCreatedBy(),
-		URL:          getURL(meta, title),
-		Created:      createdTime,
-		Updated:      createdTime,
-		OrgID:        orgID,
-		Fullpath:     meta.GetFullPath(),
+		URL:     getURL(meta, title),
+		Created: createdTime,
+		Updated: createdTime,
+		OrgID:   orgID,
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
+		Fullpath: meta.GetFullPath(),
+
+		// This will need to be restructured so the full path is looked up when saving
+		// it can't be saved in the resource metadata because then everything must cascade
+		// nolint:staticcheck
 		FullpathUIDs: meta.GetFullPathUIDs(),
 	}
 	return f
@@ -177,19 +198,21 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
-	if v.CreatedBy > 0 {
-		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
+	if v.CreatedByUID != "" {
+		meta.SetCreatedBy(v.UpdatedByUID)
 	}
-	if v.UpdatedBy > 0 {
-		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
+	if v.UpdatedByUID != "" {
+		meta.SetUpdatedBy(v.UpdatedByUID)
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
 	if v.Fullpath != "" {
+		// nolint:staticcheck
 		meta.SetFullPath(v.Fullpath)
 	}
 	if v.FullpathUIDs != "" {
+		// nolint:staticcheck
 		meta.SetFullPathUIDs(v.FullpathUIDs)
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)

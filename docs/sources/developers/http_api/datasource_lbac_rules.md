@@ -47,6 +47,31 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
+**Example response:**
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Content-Length: 131
+
+{
+  "rules": [
+    {
+      "teamId": "1",
+      "rules": [
+        "{ service_name=\"bigquery-sync-mysql\" }"
+      ]
+    },
+    {
+      "teamId": "2",
+      "rules": [
+        "{ service_name=\"api\" }"
+      ]
+    }
+  ]
+}
+```
+
 ## Update LBAC rules for a data source
 
 `PUT /api/datasources/:uid/lbac/teams`
@@ -72,11 +97,18 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
-  "teamId": 1,
   "rules": [
     {
-        "header": "X-Prom-Label-Policy",
-        "value": "18042:{ foo=\"bar\" }"
+      "teamId": "1",
+      "rules": [
+        "{ service_name=\"bigquery-sync-mysql\" }"
+      ]
+    },
+    {
+      "teamId": "2",
+      "rules": [
+        "{ service_name=\"api\" }"
+      ]
     }
   ]
 }
@@ -90,20 +122,23 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 35
 
 {
-  "message": "Data source LBAC rules updated",
   "id": 1,
-  "uid": "my_datasource",
-  "name": "My Data Source",
-  "lbacRules": [
+  "message": "Data source LBAC rules updated",
+  "name": "loki",
+  "rules": [
     {
-      "teamId": 1,
+      "teamId": "1",
       "rules": [
-        {
-          "header": "X-Prom-Label-Policy",
-          "value": "18042:{ foo=\"bar\" }"
-        }
+        "{ service_name=\"bigquery-sync-mysql\" }"
+      ]
+    },
+    {
+      "teamId": "2",
+      "rules": [
+        "{ service_name=\"api\" }"
       ]
     }
-  ]
+  ],
+  "uid": "ee1nm1t7spog0e",
 }
 ```
