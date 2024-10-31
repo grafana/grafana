@@ -23,6 +23,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getMockFrames } from 'app/plugins/datasource/loki/__mocks__/frames';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
 import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
@@ -38,7 +39,6 @@ import {
   queryLogsSample,
   queryLogsVolume,
 } from './logsModel';
-import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 
 const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
 const TO = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
