@@ -33,7 +33,9 @@ type DualWriterMode2 struct {
 const mode2Str = "2"
 
 // NewDualWriterMode2 returns a new DualWriter in mode 2.
-// Mode 2 represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+// Mode 2 represents writing to LegacyStorage first, then to Storage
+// When reading, values from storage will be returned if they exist
+// otherwise the value from legacy will be used
 func newDualWriterMode2(legacy LegacyStorage, storage Storage, dwm *dualWriterMetrics, resource string) *DualWriterMode2 {
 	return &DualWriterMode2{
 		Legacy:            legacy,
@@ -324,20 +326,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	return objFromLegacy, created, err
-}
-
-func updateRVOnLegacyObj(storageObj runtime.Object, legacyObj runtime.Object) error {
-	storageAccessor, err := utils.MetaAccessor(storageObj)
-	if err != nil {
-		return err
-	}
-	legacyAccessor, err := utils.MetaAccessor(legacyObj)
-	if err != nil {
-		return err
-	}
-
-	legacyAccessor.SetResourceVersion(storageAccessor.GetResourceVersion())
-	return nil
 }
 
 func (d *DualWriterMode2) Destroy() {
