@@ -25,6 +25,11 @@ type IndexedResource struct {
 	Spec      any
 }
 
+type IndexResults struct {
+	Values []IndexedResource
+	Groups []*Group
+}
+
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
 	ir.Uid = hit.Fields["Uid"].(string)
 	ir.Kind = hit.Fields["Kind"].(string)
@@ -178,6 +183,10 @@ func getSpecObjectMappings() map[string][]SpecFieldMapping {
 				Field: "description",
 				Type:  "string",
 			},
+			{
+				Field: "tags",
+				Type:  "string[]",
+			},
 		},
 	}
 
@@ -198,7 +207,7 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 
 		// Create a field mapping based on field type
 		switch fieldType {
-		case "string":
+		case "string", "string[]":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewTextFieldMapping())
 		case "int", "int64", "float64":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewNumericFieldMapping())

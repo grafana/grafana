@@ -334,10 +334,25 @@ message SearchRequest {
   // pagination support
   int64 limit = 5;
   int64 offset = 6;
+  // batch size (optional)
+  int64 size = 7;
+  // grouping (optional)
+  repeated GroupBy groupBy = 8;
+}
+
+message GroupBy {
+  string name = 1;
+  int64 limit = 2;
+}
+
+message Group {
+  string name = 1;
+  int64 count = 2;
 }
 
 message SearchResponse {
   repeated ResourceWrapper items = 1;
+  repeated Group groups = 2;
 }
 
 message HistoryRequest {
