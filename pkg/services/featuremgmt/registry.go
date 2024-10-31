@@ -1379,6 +1379,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "disableInstanceStore",
+			Description:     "Disable the use of instance store",
+			Stage:           FeatureStageExperimental,
+			Owner:           groundcover,
+			RequiresRestart: true,
+		},
 	}
 )
 

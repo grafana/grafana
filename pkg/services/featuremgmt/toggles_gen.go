@@ -734,4 +734,8 @@ const (
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
+
+	// FlagDisableInstanceStore
+	// Disable instance store
+	FlagDisableInstanceStore = "disableInstanceStore"
 )
