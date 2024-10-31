@@ -87,7 +87,7 @@ export function UserProfile({
         <div>
           <table className="filter-table form-inline">
             <tbody>
-              <UserProfileRow label="Numerical Identifier" value={user.id.toString()} locked={true} />
+              <UserProfileRow label="Numerical identifier" value={user.id.toString()} locked={true} />
               <UserProfileRow
                 label="Name"
                 value={user.name}
