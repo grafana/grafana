@@ -86,7 +86,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 		StoreId:              s.storeID,
 		AuthorizationModelId: s.modelID,
 		Type:                 "folder2",
-		Relation:             "resource_" + relation,
+		Relation:             common.FolderResourceRelation(relation),
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{

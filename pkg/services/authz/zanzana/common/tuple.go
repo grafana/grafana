@@ -13,6 +13,10 @@ const (
 	namespaceType      = "namespace"
 )
 
+func FolderResourceRelation(relation string) string {
+	return fmt.Sprintf("%s_%s", resourceType, relation)
+}
+
 func NewTypedIdent(typ string, name string) string {
 	return fmt.Sprintf("%s:%s", typ, name)
 }
@@ -52,7 +56,7 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 func NewFolderResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
 	return &openfgav1.TupleKey{
 		User:     subject,
-		Relation: "resource_" + relation,
+		Relation: FolderResourceRelation(relation),
 		Object:   NewFolderIdent(folder),
 		Condition: &openfgav1.RelationshipCondition{
 			Name: "folder_group_filter",

@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 // legacyTupleCollector collects tuples groupd by object and tupleKey
@@ -38,8 +39,6 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 	)
 
 	for object, tuples := range res {
-		// FIXME(kalleep): Merge some tuples due to list of groups...
-
 		// 2. Fetch all tuples for given object.
 		// Due to limitations in open fga api we need to collect tuples per object
 		zanzanaTuples, err := r.zanzana(ctx, r.client, object)
@@ -49,13 +48,25 @@ func (r resourceReconciler) reconcile(ctx context.Context) error {
 
 		// 3. Check if tuples from grafana db exists in zanzana and if not add them to writes
 		for key, t := range tuples {
-			_, ok := zanzanaTuples[key]
+			stored, ok := zanzanaTuples[key]
 			if !ok {
+				writes = append(writes, t)
+				continue
+			}
+
+			// 4. For folder resource tuples we also need to compare the stored group_resources
+			if zanzana.IsFolderResourceTuple(t) && t.String() != stored.String() {
+				deletes = append(deletes, &openfgav1.TupleKeyWithoutCondition{
+					User:     t.User,
+					Relation: t.Relation,
+					Object:   t.Object,
+				})
+
 				writes = append(writes, t)
 			}
 		}
 
-		// 4. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
+		// 5. Check if tuple from zanzana don't exists in grafana db, if not add them to deletes.
 		for key, tuple := range zanzanaTuples {
 			_, ok := tuples[key]
 			if !ok {
