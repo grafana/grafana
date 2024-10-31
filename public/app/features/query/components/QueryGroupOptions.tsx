@@ -129,7 +129,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
   const onMinIntervalBlur = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      let minInterval = emptyToUndefined(event.target.value);
+      const minInterval = emptyToUndefined(event.target.value);
       if (minInterval !== options.minInterval) {
         onChange({
           ...options,
