@@ -15,6 +15,7 @@ export interface OrgUser extends WithAccessControlMetadata {
   // RBAC roles
   roles?: Role[];
   userId: number;
+  uid: string;
   isDisabled: boolean;
   authLabels?: string[];
   isExternallySynced?: boolean;

@@ -212,10 +212,10 @@ func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Request
 			FolderID:       dashboard.FolderID, // nolint:staticcheck
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserID:         p.UserId,
+			UserID:         p.UserID,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamID:         p.TeamId,
+			TeamID:         p.TeamID,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,

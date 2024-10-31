@@ -143,6 +143,7 @@ type UpdateOrgUserCommand struct {
 type OrgUserDTO struct {
 	OrgID              int64           `json:"orgId" xorm:"org_id"`
 	UserID             int64           `json:"userId" xorm:"user_id"`
+	UID                string          `json:"uid" xorm:"uid"`
 	Email              string          `json:"email"`
 	Name               string          `json:"name"`
 	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`

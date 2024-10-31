@@ -134,10 +134,12 @@ type resourcePermissionDTO struct {
 	IsInherited      bool     `json:"isInherited"`
 	IsServiceAccount bool     `json:"isServiceAccount"`
 	UserID           int64    `json:"userId,omitempty"`
+	UserUID          string   `json:"userUid,omitempty"`
 	UserLogin        string   `json:"userLogin,omitempty"`
 	UserAvatarUrl    string   `json:"userAvatarUrl,omitempty"`
 	Team             string   `json:"team,omitempty"`
 	TeamID           int64    `json:"teamId,omitempty"`
+	TeamUID          string   `json:"teamUid,omitempty"`
 	TeamAvatarUrl    string   `json:"teamAvatarUrl,omitempty"`
 	BuiltInRole      string   `json:"builtInRole,omitempty"`
 	Actions          []string `json:"actions"`
@@ -191,18 +193,20 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	for _, p := range permissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
-			if p.TeamId != 0 {
+			if p.TeamID != 0 {
 				teamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, p.TeamEmail, p.Team)
 			}
 
 			dto = append(dto, resourcePermissionDTO{
 				ID:               p.ID,
 				RoleName:         p.RoleName,
-				UserID:           p.UserId,
+				UserID:           p.UserID,
+				UserUID:          p.UserUID,
 				UserLogin:        p.UserLogin,
 				UserAvatarUrl:    dtos.GetGravatarUrl(a.cfg, p.UserEmail),
 				Team:             p.Team,
-				TeamID:           p.TeamId,
+				TeamID:           p.TeamID,
+				TeamUID:          p.TeamUID,
 				TeamAvatarUrl:    teamAvatarUrl,
 				BuiltInRole:      p.BuiltInRole,
 				Actions:          p.Actions,

@@ -4480,6 +4480,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -4504,6 +4507,9 @@
             "type": "integer"
           },
           "userLogin": {
+            "type": "string"
+          },
+          "userUid": {
             "type": "string"
           }
         },
@@ -7774,6 +7780,9 @@
             "type": "integer"
           },
           "role": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           },
           "userId": {
@@ -12131,6 +12140,9 @@
           "login": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -13130,6 +13142,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUid": {
+            "type": "string"
+          },
           "userAvatarUrl": {
             "type": "string"
           },
@@ -13138,6 +13153,9 @@
             "type": "integer"
           },
           "userLogin": {
+            "type": "string"
+          },
+          "userUid": {
             "type": "string"
           }
         },

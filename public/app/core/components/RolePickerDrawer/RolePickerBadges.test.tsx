@@ -10,6 +10,7 @@ const props = {
   user: {
     login: 'admin',
     email: 'email@example.com',
+    uid: 'uid',
     avatarUrl: 'avatarURL',
     lastSeenAt: 'lastSeenAt',
     lastSeenAtAge: 'lastSeenAtAge',
