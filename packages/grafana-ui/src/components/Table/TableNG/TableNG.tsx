@@ -1,10 +1,10 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import React, { useMemo, useState, useLayoutEffect } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldMatcher, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -37,8 +37,10 @@ interface TableHeaderProps {
   direction: SortDirection | undefined;
 }
 
+let resizeTimer;
+
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, onColumnResize } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -48,6 +50,9 @@ export function TableNG(props: TableNGProps) {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [isDragging, setIsDragging] = useState(false);
+
+  let currentResize = { columnKey: '', width: 0 };
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -55,8 +60,24 @@ export function TableNG(props: TableNGProps) {
     top: number;
     left: number;
   } | null>(null);
+
+  // const refTable = React.useRef<DataGrid<TableRow>>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  const handleDragging = () => {
+    console.log('handleDragging', isDragging);
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    console.log('useEffect', isDragging);
+    if (isDragging) {
+      addEventListener('onmouseup', handleDragging);
+    } else {
+      removeEventListener('onmouseup', handleDragging);
+    }
+  }, [isDragging]);
 
   useLayoutEffect(() => {
     if (!isContextMenuOpen) {
@@ -73,6 +94,15 @@ export function TableNG(props: TableNGProps) {
       removeEventListener('click', onClick);
     };
   }, [isContextMenuOpen]);
+
+  // useEffect(() => {
+  //   const tableEl = refTable.current
+  //   if (tableEl) {
+  //     tableEl.addEventListener('mouseup', (event) => {
+  //       console.log('mouseup', event);
+  //     });
+  //   }
+  // }, []);
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
@@ -141,6 +171,19 @@ export function TableNG(props: TableNGProps) {
       const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
+      // overrides
+      let columnWidthOverride = columnWidth;
+      fieldConfig?.overrides?.forEach((override) => {
+        const matcher = getFieldMatcher(override.matcher);
+        if (matcher(field, props.data, [props.data])) {
+          for (const property of override.properties) {
+            if (property.id === 'custom.width') {
+              columnWidthOverride = property.value;
+            }
+          }
+        }
+      });
+
       // Add a column for each field
       columns.push({
         key,
@@ -178,7 +221,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
-        width: columnWidth,
+        width: columnWidthOverride,
       });
 
       // Create row objects
@@ -242,10 +285,35 @@ export function TableNG(props: TableNGProps) {
     );
   };
 
+  // useEffect(() => {
+  //   console.log('=====useEffect======');
+  //   function handleResizeEnd() {
+  //     console.log('handleResizeEnd', currentResize);
+  //     if (currentResize.columnKey) {
+  //       onColumnResize!(currentResize.columnKey, currentResize.width); // Trigger on release
+  //       currentResize = { columnKey: '', width: 0 }; // Reset
+  //     }
+  //   }
+
+  //   document.addEventListener('mousedown', event => console.log('mousedown', event));
+  //   // document.addEventListener('mousemove', event => console.log('mousemove', event));
+  //   document.addEventListener('mouseup', event => console.log('mouseup', event));
+  //   document.addEventListener('dragend', handleResizeEnd);
+
+  //   // Clean up the event listener on unmount
+  //   return () => {
+  //     document.removeEventListener('dragend', handleResizeEnd);
+  //     document.removeEventListener('mousedown', event => console.log('mousedown', event));
+  //     // document.removeEventListener('mousemove', event => console.log('mousemove', event));
+  //     document.removeEventListener('mouseup', event => console.log('mouseup', event));
+  //   };
+  // }, []);
+
   // Return the data grid
   return (
     <>
       <DataGrid
+        // ref={refTable}
         rows={sortedRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
@@ -271,6 +339,25 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
+        onColumnResize={(columnKey, width) => {
+          setIsDragging(true);
+          console.log('onColumnResize', columnKey, width);
+          // currentResize = { columnKey: columns[columnKey].name, width };
+          // onColumnResize!(columns[columnKey].name, width);
+
+          // const column = columns.find((c) => c.key === columnKey);
+          // if (column) {
+          //   column.width = width;
+          // }
+          // setRevId(revId + 1);
+
+          // if (resizeTimer) clearTimeout(resizeTimer);
+
+          // // Delay the onColumnResize call by 200ms (or whatever time feels right)
+          // resizeTimer = setTimeout(() => {
+          //     onColumnResize!(columns[columnKey].name, width);
+          // }, 200);
+        }}
       />
 
       {isContextMenuOpen && (
