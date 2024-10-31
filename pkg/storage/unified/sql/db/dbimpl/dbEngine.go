@@ -72,7 +72,7 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 		// Unified Storage used `pass`
 		"password": cmp.Or(getter.String("pass"), getter.String("password")),
 		"dbname":   getter.String("name"),
-		"sslmode":  cmp.Or(getter.String("sslmode"), "disable"),
+		"sslmode":  cmp.Or(getter.String("ssl_mode"), "disable"),
 	}
 
 	// TODO: probably interesting:
