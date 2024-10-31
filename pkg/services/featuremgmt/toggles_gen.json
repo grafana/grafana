@@ -809,17 +809,18 @@
     {
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
-        "resourceVersion": "1722005531805",
+        "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-26 14:52:11.80525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cross account observability for Cloudwatch Metric Insights query builder",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
