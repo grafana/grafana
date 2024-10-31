@@ -128,9 +128,7 @@ This example iterates over the list of firing and resolved alerts (`.Alerts`) in
 {{ end }}
 ```
 
-## Types
-
-### KV
+## KV
 
 `KV` is a set of key value pairs, where each key and value is a string.
 
@@ -164,7 +162,26 @@ Here's an example of using these methods:
 {{ end }}
 ```
 
-### Time
+## Time
+
+Some template functions and properties return a `Time` object, which refers to the [type `Time`](https://pkg.go.dev/time#Time) in Go's time package.
+
+When accessing a `Time` object, you can use various [`Time` functions](https://pkg.go.dev/time#Time) in your templates as follows.
+
+```go
+{{ define "custom_template" }}
+  {{ range .Alerts }}
+    {{ .StartsAt  }}
+    {{ .StartsAt.Add 6000000000000  }}
+    {{ .StartsAt.Add -6000000000000  }}
+    {{ .StartsAt.AddDate 1 0 0  }}
+    {{ .StartsAt.Year   }}/{{ .StartsAt.Month   }}/{{ .StartsAt.Day   }}
+    {{ .StartsAt.Hour   }}:{{ .StartsAt.Minute   }}:{{ .StartsAt.Second   }}
+    {{ .StartsAt.YearDay   }}-{{ .StartsAt.Weekday   }}
+    {{ .StartsAt.Unix }} {{ .StartsAt.UnixMilli }}
+  {{ end}}
+{{ end }}
+```
 
 ## Functions
 
