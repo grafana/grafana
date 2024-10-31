@@ -72,8 +72,14 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 				client,
 			),
 			newResourceReconciler(
-				"managed permissison",
-				managedPermissionsCollector2(store),
+				"managed folder permissions",
+				managedPermissionsCollector2(store, zanzana.KindFolders),
+				zanzanaCollector(client, zanzana.Folder2Relations),
+				client,
+			),
+			newResourceReconciler(
+				"managed dashboard permissions",
+				managedPermissionsCollector2(store, zanzana.KindDashboards),
 				zanzanaCollector(client, zanzana.ResourceRelations),
 				client,
 			),
