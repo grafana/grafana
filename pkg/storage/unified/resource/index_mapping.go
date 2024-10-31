@@ -169,6 +169,16 @@ func getSpecObjectMappings() map[string][]SpecFieldMapping {
 				Type:  "string",
 			},
 		},
+		"Dashboard": {
+			{
+				Field: "title",
+				Type:  "string",
+			},
+			{
+				Field: "description",
+				Type:  "string",
+			},
+		},
 	}
 
 	return mappings
