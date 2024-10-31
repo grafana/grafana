@@ -35,9 +35,9 @@ To activate your license, complete the following tasks.
 
    For more information about deploying an application on Amazon ECS, refer to [Creating an Amazon ECS service](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-service.html).
 
-1. As you create the Amazon ECS service, use the Grafana Enterprise version 8.3.0 or later container image.
+1. As you create the Amazon ECS service, use the intended Grafana Enterprise container image version.
 
-   For example, enter `grafana/grafana-enterprise:8.3.3`.
+   For example, enter `grafana/grafana-enterprise:11.3.0`.
 
    > Only Grafana Enterprise versions 8.3.0 and later support licenses granted through AWS Marketplace.
 

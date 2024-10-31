@@ -20,7 +20,7 @@ weight: 200
 
 # Activate a Grafana Enterprise license from AWS Marketplace on EKS
 
-If you have purchased a Grafana Enterprise subscription through AWS Marketplace, you must activate it in order to use Grafana Enterprise data source plugins and features in Grafana.
+If you have purchased a Grafana Enterprise subscription through AWS Marketplace, you must activate it to use Grafana Enterprise data source plugins and features in Grafana.
 
 ## Before you begin:
 
@@ -37,9 +37,9 @@ To activate your license, complete the following tasks:
 
    For more information about installing Grafana on Kubernetes using the Helm Chart, refer to the [Grafana Helm Chart](https://github.com/grafana/helm-charts/tree/main/charts/grafana#readme).
 
-1. Use `kubectl set image deployment/my-release grafana=grafana/grafana-enterprise:<version>` to update the container image to Grafana Enterprise version 8.3.0 or later.
+1. Use `kubectl set image deployment/my-release grafana=grafana/grafana-enterprise:<version>` to update the container image.
 
-   For example, enter `grafana/grafana-enterprise:8.3.3`.
+   For example, enter `grafana/grafana-enterprise:11.3.0`.
 
 > Only Grafana Enterprise versions 8.3.0 and later support licenses granted through AWS Marketplace.
 
