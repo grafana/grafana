@@ -615,8 +615,7 @@
       "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
       "paste-panel": "Päşŧę päŉęľ",
       "row": "Ŗőŵ",
-      "visualization": "Vįşūäľįžäŧįőŉ",
-      "widget": "Ŵįđģęŧ"
+      "visualization": "Vįşūäľįžäŧįőŉ"
     },
     "alert-rules-drawer": {
       "redirect-link": "Ŀįşŧ įŉ Ğřäƒäŉä Åľęřŧįŉģ",
@@ -629,9 +628,6 @@
       "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
       "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
       "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
-      "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
-      "add-widget-button": "Åđđ ŵįđģęŧ",
-      "add-widget-header": "Åđđ ä ŵįđģęŧ",
       "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđş ƒřőm ƒįľęş őř <1>ģřäƒäŉä.čőm</1>.",
       "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
       "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
@@ -2888,12 +2884,23 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy þőőĸmäřĸş yęŧ. Ůşę ŧĥę Ēχpľőřę Męŧřįčş þőőĸmäřĸş ƒęäŧūřę ŧő şävę yőūř päŉęľş äş þőőĸmäřĸş."
+      "or-view-bookmarks": "Øř vįęŵ þőőĸmäřĸş"
+    },
+    "card": {
+      "data-source": "Đäŧä şőūřčę: ",
+      "date-created": "Đäŧę čřęäŧęđ: ",
+      "metric": "Męŧřįč:"
+    },
+    "home": {
+      "learn-more": "Ŀęäřŉ mőřę",
+      "lets-start": "Ŀęŧ'ş şŧäřŧ!",
+      "start-your-metrics-exploration": "Ŝŧäřŧ yőūř męŧřįčş ęχpľőřäŧįőŉ!",
+      "subtitle": "Ēχpľőřę yőūř Přőmęŧĥęūş-čőmpäŧįþľę męŧřįčş ŵįŧĥőūŧ ŵřįŧįŉģ ä qūęřy."
     },
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
       "labels": "Ŀäþęľş",
-      "metric-attributes": "Męŧřįč äŧŧřįþūŧęş",
+      "metric-attributes": "Åŧŧřįþūŧęş",
       "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
       "type-label": "Ŧypę",
       "unit-label": "Ůŉįŧ",
@@ -2902,6 +2909,9 @@
     "metric-select": {
       "filter-by": "Fįľŧęř þy",
       "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Øř vįęŵ ä řęčęŉŧ ęχpľőřäŧįőŉ"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
