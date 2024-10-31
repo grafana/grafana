@@ -13,6 +13,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// addResource is a helper to create a resource in unified storage
 func addResource(t *testing.T, ctx context.Context, backend sql.Backend, resourceName string, data string) {
 	ir, err := resource.NewIndexedResource([]byte(data))
 	require.NoError(t, err)
@@ -72,11 +73,11 @@ func TestIntegrationIndexerSearch(t *testing.T) {
   		}
 	}`
 
-	// add playlist1 and playlist2 to storage
+	// add playlist1 and playlist2 to unified storage
 	addResource(t, ctx, backend, "playlists", playlist1)
 	addResource(t, ctx, backend, "playlists", playlist2)
 
-	// initialze the search index
+	// initialze and build the search index
 	indexer, ok := server.(resource.ResourceIndexer)
 	if !ok {
 		t.Fatal("server does not implement ResourceIndexer")
@@ -84,6 +85,7 @@ func TestIntegrationIndexerSearch(t *testing.T) {
 	_, err := indexer.Index(ctx)
 	require.NoError(t, err)
 
+	// run search tests against the index
 	t.Run("can search for all resources", func(t *testing.T) {
 		res, err := server.Search(ctx, &resource.SearchRequest{
 			Tenant: "tenant1",
