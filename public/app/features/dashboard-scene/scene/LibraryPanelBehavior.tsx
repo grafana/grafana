@@ -68,7 +68,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
 
     vizPanel.setState(vizPanelState);
-    vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
+    vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig, false);
 
     this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
 
