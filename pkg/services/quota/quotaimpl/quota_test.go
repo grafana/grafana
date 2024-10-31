@@ -101,7 +101,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 	setupEnv(t, sqlStore, cfg, b, quotaService)

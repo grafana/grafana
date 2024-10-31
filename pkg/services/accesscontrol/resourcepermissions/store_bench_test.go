@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -149,7 +150,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		qs, supportbundlestest.NewFakeBundleService())
+		qs, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures())
 	require.NoError(b, err)
 	userIds := make([]int64, 0)
 	teamIds := make([]int64, 0)

@@ -56,12 +56,13 @@ import (
 const newEmail = "newemail@localhost"
 
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
+	features := featuremgmt.WithFeatures()
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
+		AccessControl: acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()),
 	}
 
 	mockResult := user.SearchUserQueryResult{
@@ -85,7 +86,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), features,
 		)
 		require.NoError(t, err)
 		hs.userService = userSvc
@@ -158,7 +159,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), features,
 		)
 		require.NoError(t, err)
 		_, err = userSvc.Create(context.Background(), &createUserCmd)
@@ -395,7 +396,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 
@@ -624,7 +625,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),
-			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+			quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 		)
 		require.NoError(t, err)
 

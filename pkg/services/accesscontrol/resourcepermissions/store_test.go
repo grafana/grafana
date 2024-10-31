@@ -530,7 +530,7 @@ func seedResourcePermissions(
 
 	usrSvc, err := userimpl.ProvideService(
 		sql, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -47,7 +48,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 
@@ -117,7 +118,7 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 

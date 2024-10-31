@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -163,7 +164,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(c.t, err)
 

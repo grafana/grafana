@@ -269,7 +269,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			sqlStore, orgService, cfg, nil, nil, tracer,
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), features,
 		)
 		require.NoError(t, err)
 

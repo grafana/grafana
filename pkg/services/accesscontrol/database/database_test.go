@@ -488,7 +488,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 
 	userService, err := userimpl.ProvideService(
 		sql, orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(),
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService, sql

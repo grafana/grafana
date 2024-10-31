@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -254,7 +255,7 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)

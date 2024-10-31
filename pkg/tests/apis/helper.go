@@ -478,7 +478,8 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	userSvc, err := userimpl.ProvideService(
 		store, orgService, c.env.Cfg, teamSvc,
 		cache, tracing.InitializeTracerForTest(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), c.env.FeatureToggles,
+	)
 	require.NoError(c.t, err)
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
@@ -550,7 +551,8 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 	userSvc, err := userimpl.ProvideService(
 		c.env.SQLStore, orgService, c.env.Cfg, teamSvc,
 		cache, tracing.InitializeTracerForTest(), c.env.Server.HTTPServer.QuotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), c.env.FeatureToggles,
+	)
 	require.NoError(c.t, err)
 
 	teampermissionSvc, err := ossaccesscontrol.ProvideTeamPermissions(

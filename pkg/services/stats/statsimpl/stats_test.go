@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -89,7 +90,7 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(),
+		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())

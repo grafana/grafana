@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -71,7 +72,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(),
+			quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 		)
 		require.NoError(t, err)
 

@@ -46,7 +46,7 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) {
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 

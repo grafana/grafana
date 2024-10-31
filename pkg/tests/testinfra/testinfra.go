@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -516,7 +517,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(),
+		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(), quotaService, supportbundlestest.NewFakeBundleService(), featuremgmt.WithFeatures(),
 	)
 	require.NoError(t, err)
 
