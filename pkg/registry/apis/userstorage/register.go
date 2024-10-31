@@ -15,23 +15,20 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ builder.APIGroupBuilder = (*UserStorageAPIBuilder)(nil)
 
-type UserStorageAPIBuilder struct {
-	accessControl ac.AccessControl
-}
+type UserStorageAPIBuilder struct{}
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, accessControl ac.AccessControl) *UserStorageAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *UserStorageAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagUserStorageAPI) {
 		return nil
 	}
 
-	builder := &UserStorageAPIBuilder{accessControl: accessControl}
+	builder := &UserStorageAPIBuilder{}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

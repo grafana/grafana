@@ -25,7 +25,6 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
       getBackendSrv().fetch<T>({
         ...requestOptions,
         url: baseURL + requestOptions.url,
-        showErrorAlert: requestOptions.showErrorAlert,
         data: requestOptions.body,
       })
     );
