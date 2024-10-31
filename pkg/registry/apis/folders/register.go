@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,20 +37,13 @@ var resourceInfo = v0alpha1.FolderResourceInfo
 var errNoUser = errors.New("valid user is required")
 var errNoResource = errors.New("resource name is required")
 
-var folderValidationRules = struct {
-	maxDepth     int
-	invalidNames []string
-}{
-	maxDepth:     4,
-	invalidNames: []string{"general"},
-}
-
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
 	gv            schema.GroupVersion
 	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
+	storage       grafanarest.Storage
 	accessControl accesscontrol.AccessControl
 }
 
@@ -138,6 +132,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
 }
 
@@ -225,8 +220,15 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 	return &authorizerParams{evaluator: eval, user: user}, nil
 }
 
+var folderValidationRules = struct {
+	maxDepth     int
+	invalidNames []string
+}{
+	maxDepth:     5,
+	invalidNames: []string{"general"},
+}
+
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	// name cannot be called "general"
 	id := a.GetName()
 	for _, invalidName := range folderValidationRules.invalidNames {
 		if id == invalidName {
@@ -236,18 +238,20 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	obj := a.GetObject()
 
-	for i := 0; i <= folderValidationRules.maxDepth+1; i++ {
+	for i := 1; i <= folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)
 		if parent == "" {
 			break
 		}
-		if i == folderValidationRules.maxDepth+1 {
+		if i == folderValidationRules.maxDepth {
 			return folder.ErrMaximumDepthReached
 		}
 
-		// TODO: investigate the best way to get a folder by name, considering validate is called before the storage layer
-		// parent, err := getFolderByNameSomehow()
-		// obj = parent
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		obj = parentObj
 	}
 	return nil
 }
