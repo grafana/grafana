@@ -110,7 +110,6 @@ const lokiQueryResult = {
   },
 };
 
-// Skipping due to race conditions with same old arch test e2e/various-suite/loki-table-explore-to-dash.spec.ts
 describe.skip('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
@@ -121,9 +120,7 @@ describe.skip('Loki Query Editor', () => {
   });
 
   beforeEach(() => {
-    cy.window().then((win) => {
-      win.localStorage.setItem('grafana.featureToggles', 'logsExploreTableVisualisation=1');
-    });
+    cy.setLocalStorage('grafana.featureToggles', 'logsExploreTableVisualisation=1');
   });
   it('Should be able to add explore table to dashboard', () => {
     addDataSource();
