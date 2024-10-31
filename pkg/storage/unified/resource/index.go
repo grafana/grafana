@@ -278,7 +278,7 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	}
 
 	req.From = int(request.Offset)
-	req.Size = int(request.Size)
+	req.Size = int(request.Limit)
 
 	req.Fields = []string{"*"} // return all indexed fields in search results
 

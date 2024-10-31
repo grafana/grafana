@@ -1,16 +1,19 @@
 package test
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/context"
 )
 
-func addResource(t *testing.T, ctx context.Context, backend sql.Backend, data string) {
+func addResource(t *testing.T, ctx context.Context, backend sql.Backend, resourceName string, data string) {
 	ir, err := resource.NewIndexedResource([]byte(data))
 	require.NoError(t, err)
 	_, err = backend.WriteEvent(ctx, resource.WriteEvent{
@@ -19,7 +22,7 @@ func addResource(t *testing.T, ctx context.Context, backend sql.Backend, data st
 		Key: &resource.ResourceKey{
 			Namespace: ir.Namespace,
 			Group:     ir.Group,
-			Resource:  ir.Kind,
+			Resource:  resourceName,
 			Name:      ir.Name,
 		},
 	})
@@ -27,8 +30,7 @@ func addResource(t *testing.T, ctx context.Context, backend sql.Backend, data st
 }
 
 func TestIntegrationIndexerSearch(t *testing.T) {
-	//ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	ctx := context.Background()
+	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	cfg := setting.NewCfg()
 	cfg.IndexWorkers = 1
 	cfg.IndexMaxBatchSize = 100
@@ -67,26 +69,15 @@ func TestIntegrationIndexerSearch(t *testing.T) {
 	}`
 
 	// add playlist1 and playlist2 to storage
-	//addResource(t, ctx, backend, playlist1)
-	addResource(t, ctx, backend, playlist2)
-	_, err := backend.WriteEvent(ctx, resource.WriteEvent{
-		Type:  resource.WatchEvent_ADDED,
-		Value: []byte(playlist1),
-		Key: &resource.ResourceKey{
-			Namespace: "tenant1",
-			Group:     "playlist.grafana.app",
-			Resource:  "Playlist",
-			Name:      "playlist dogs",
-		},
-	})
-	require.NoError(t, err)
+	addResource(t, ctx, backend, "playlists", playlist1)
+	addResource(t, ctx, backend, "playlists", playlist2)
 
 	// initialze the search index
 	indexer, ok := server.(resource.ResourceIndexer)
 	if !ok {
 		t.Fatal("server does not implement ResourceIndexer")
 	}
-	_, err = indexer.Index(ctx)
+	_, err := indexer.Index(ctx)
 	require.NoError(t, err)
 
 	t.Run("can search for all resources", func(t *testing.T) {
@@ -98,5 +89,32 @@ func TestIntegrationIndexerSearch(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, res.Items, 2)
+	})
+
+	t.Run("can search for resources by title", func(t *testing.T) {
+		res, err := server.Search(ctx, &resource.SearchRequest{
+			Tenant: "tenant1",
+			Query:  "Spec.title:dogs",
+			Limit:  10,
+			Offset: 0,
+		})
+		require.NoError(t, err)
+		require.Len(t, res.Items, 1)
+	})
+
+	t.Run("can filter resources by created time", func(t *testing.T) {
+		res, err := server.Search(ctx, &resource.SearchRequest{
+			Tenant: "tenant1",
+			Query:  "CreatedAt:>=\"2024-01-02\"",
+			Limit:  10,
+			Offset: 0,
+		})
+		require.NoError(t, err)
+
+		require.Len(t, res.Items, 1)
+		ir := resource.IndexedResource{}
+		err = json.Unmarshal(res.Items[0].Value, &ir)
+		require.NoError(t, err)
+		require.Equal(t, "playlist cats", ir.Name)
 	})
 }
