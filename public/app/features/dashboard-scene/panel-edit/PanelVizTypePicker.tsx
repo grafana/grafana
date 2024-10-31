@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { Button, CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
+import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypePicker } from 'app/features/panel/components/VizTypePicker/VizTypePicker';
@@ -48,18 +48,12 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
     setSearchQuery(value);
   };
 
-  const isWidgetEnabled = false;
-  const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
-  const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
+  const tabKey = LS_VISUALIZATION_SELECT_TAB_KEY;
+  const defaultTab = VisualizationSelectPaneTab.Visualizations;
   const panelModel = useMemo(() => new PanelModelCompatibilityWrapper(panel), [panel]);
 
   const supportedListModes = useMemo(
-    () =>
-      new Set([
-        VisualizationSelectPaneTab.Widgets,
-        VisualizationSelectPaneTab.Visualizations,
-        VisualizationSelectPaneTab.Suggestions,
-      ]),
+    () => new Set([VisualizationSelectPaneTab.Visualizations, VisualizationSelectPaneTab.Suggestions]),
     []
   );
   const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);

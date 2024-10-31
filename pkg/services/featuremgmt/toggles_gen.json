@@ -809,17 +809,18 @@
     {
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
-        "resourceVersion": "1722005531805",
+        "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-26 14:52:11.80525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cross account observability for Cloudwatch Metric Insights query builder",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -952,6 +953,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaV2",
+        "resourceVersion": "1730192092473",
+        "creationTimestamp": "2024-10-29T08:54:52Z"
+      },
+      "spec": {
+        "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -2349,20 +2363,6 @@
     },
     {
       "metadata": {
-        "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1728903221522",
-        "creationTimestamp": "2024-10-14T10:53:41Z"
-      },
-      "spec": {
-        "description": "Enables reload of dashboards on scopes, time range and variables changes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
         "creationTimestamp": "2024-06-20T15:49:19Z",
@@ -2843,6 +2843,20 @@
     },
     {
       "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -3284,7 +3298,8 @@
       "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-27T10:22:13Z"
+        "creationTimestamp": "2023-06-27T10:22:13Z",
+        "deletionTimestamp": "2024-10-30T14:21:33Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",

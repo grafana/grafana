@@ -35,8 +35,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		}
 	}
 	cfg.UnifiedStorage = storageConfig
-}
 
-func (cfg *Cfg) setIndexPath() {
-	cfg.IndexPath = cfg.Raw.Section("unified_storage").Key("index_path").String()
+	// Set indexer config for unified storaae
+	section := cfg.Raw.Section("unified_storage")
+	cfg.IndexPath = section.Key("index_path").String()
+	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
+	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
+	cfg.IndexListLimit = section.Key("index_list_limit").MustInt(1000)
 }
