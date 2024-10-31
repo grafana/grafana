@@ -116,7 +116,7 @@ interface GridLayoutItemSpec {
   y: number;
   width: number;
   height: number;
-  element: Reference; // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+  element: ElementReferenceKind; // reference of the element to resolve from dashboard.elements
 }
 export type GridLayoutItemKind = Kind<'GridLayoutItem', GridLayoutItemSpec>;
 
@@ -138,3 +138,9 @@ interface PanelSpec {
 }
 
 export type PanelKind = Kind<'Panel', PanelSpec>;
+
+interface ElementReferenceSpec {
+  name: string;
+}
+
+export type ElementReferenceKind = Kind<'ElementReference', ElementReferenceSpec>;
