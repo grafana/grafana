@@ -9334,9 +9334,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@test-plugins/grafana-test-datasource@workspace:e2e/test-plugins/grafana-test-datasource":
+"@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource":
   version: 0.0.0-use.local
-  resolution: "@test-plugins/grafana-test-datasource@workspace:e2e/test-plugins/grafana-test-datasource"
+  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
