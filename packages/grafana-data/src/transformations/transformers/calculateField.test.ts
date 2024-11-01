@@ -753,11 +753,7 @@ describe('calculateField transformer w/ timeseries', () => {
       //console.log(data.fields);
 
       expect(data.fields.length).toEqual(2);
-      expect(data.fields[1].values[0]).toEqual(1);
-      expect(data.fields[1].values[1]).toEqual(0.5);
-      expect(data.fields[1].values[2]).toEqual(1.5);
-      expect(data.fields[1].values[3]).toEqual(3.5);
-      expect(data.fields[1].values[4]).toEqual(4.5);
+      expect(data.fields[1].values).toEqual([1, 0.5, 1.5, 3.5, 4.5]);
     });
   });
 
