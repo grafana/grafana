@@ -15,7 +15,7 @@ describe('VersionInstallButton', () => {
       isCompatible: false,
       grafanaDependency: null,
     };
-    renderWithStore(<VersionInstallButton pluginId={''} version={version} disabled={false} onClick={() => {}} />);
+    renderWithStore(<VersionInstallButton pluginId={''} version={version} disabled={false} onConfirmInstallation={() => {}} />);
     expect(screen.getByText('Install')).toBeInTheDocument();
   });
 
@@ -33,7 +33,7 @@ describe('VersionInstallButton', () => {
         pluginId={''}
         version={version}
         disabled={false}
-        onClick={() => {}}
+        onConfirmInstallation={() => {}}
       />
     );
     expect(screen.getByText('Upgrade')).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe('VersionInstallButton', () => {
         pluginId={''}
         version={version}
         disabled={false}
-        onClick={() => {}}
+        onConfirmInstallation={() => {}}
       />
     );
     expect(screen.getByText('Downgrade')).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('VersionInstallButton', () => {
         pluginId={''}
         version={version}
         disabled={false}
-        onClick={() => {}}
+        onConfirmInstallation={() => {}}
       />
     );
     expect(screen.getByText('Downgrade')).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('VersionInstallButton', () => {
         pluginId={''}
         version={version}
         disabled={false}
-        onClick={() => {}}
+        onConfirmInstallation={() => {}}
       />
     );
     const el = screen.getByRole('button');
