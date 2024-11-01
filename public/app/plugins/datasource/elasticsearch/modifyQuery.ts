@@ -104,13 +104,14 @@ export function addAddHocFilter(query: string, filter: AdHocVariableFilter): str
    */
   const key = escapeFilter(filter.key);
   const value = escapeFilterValue(filter.value);
+  const regexValue = escapeFilterValue(filter.value, false);
   let addHocFilter = '';
   switch (filter.operator) {
     case '=~':
-      addHocFilter = `${key}:/${value}/`;
+      addHocFilter = `${key}:/${regexValue}/`;
       break;
     case '!~':
-      addHocFilter = `-${key}:/${value}/`;
+      addHocFilter = `-${key}:/${regexValue}/`;
       break;
     case '>':
       addHocFilter = `${key}:>${value}`;
@@ -186,8 +187,10 @@ export function escapeFilter(value: string) {
  * Values can possibly reserved special characters such as quotes.
  * Use this function to escape filter values.
  */
-export function escapeFilterValue(value: string) {
-  value = value.replace(/\\/g, '\\\\');
+export function escapeFilterValue(value: string, escapeBackslash = true) {
+  if (escapeBackslash) {
+    value = value.replace(/\\/g, '\\\\');
+  }
   return lucene.phrase.escape(value);
 }
 
