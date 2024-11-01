@@ -334,8 +334,6 @@ message SearchRequest {
   // pagination support
   int64 limit = 5;
   int64 offset = 6;
-  // batch size (optional)
-  int64 size = 7;
   // grouping (optional)
   repeated GroupBy groupBy = 8;
 }
@@ -455,7 +453,7 @@ message PutBlobRequest {
     // Use the inline raw []byte
     GRPC = 0;
 
-    // Get a signed URL and PUT the value 
+    // Get a signed URL and PUT the value
     HTTP = 1;
   }
 
@@ -516,7 +514,7 @@ message GetBlobResponse {
   // When this is set, neither info nor value will be set
   string url = 2;
 
-  // Content type 
+  // Content type
   string content_type = 3;
 
   // The raw object value
@@ -564,7 +562,7 @@ service BlobStore {
   // For large payloads, signed URLs are required to avoid protobuf message size limits
   rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
 
-  // NOTE: there is no direct access to delete blobs 
+  // NOTE: there is no direct access to delete blobs
   // >> cleanup will be managed via garbage collection or direct access to the underlying storage
 }
 

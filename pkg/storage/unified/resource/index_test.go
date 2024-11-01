@@ -142,7 +142,7 @@ func assertCountEquals(t *testing.T, index *Index, expected uint64) {
 }
 
 func assertSearchCountEquals(t *testing.T, index *Index, search string, expected int64) {
-	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1}
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0}
 	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
 	assert.Equal(t, expected, int64(len(results.Values)))
@@ -150,7 +150,7 @@ func assertSearchCountEquals(t *testing.T, index *Index, search string, expected
 
 func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, group string, expected int64) {
 	groupBy := []*GroupBy{{Name: group, Limit: 100}}
-	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1, GroupBy: groupBy}
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, GroupBy: groupBy}
 	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
 	assert.Equal(t, expected, int64(len(results.Groups)))
