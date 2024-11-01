@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/playlist
 go 1.23.1
 
 require (
-	github.com/grafana/grafana-app-sdk v0.19.0
+	github.com/grafana/grafana-app-sdk v0.23.1
 	k8s.io/apimachinery v0.31.1
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 )
@@ -24,7 +24,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
