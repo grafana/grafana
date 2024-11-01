@@ -137,7 +137,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 	}
 
 	statesCount := 0
-	states := make(map[int64]map[string]*ruleStates, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -167,9 +166,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 				)
 			}
 		}
-
-		orgStates := make(map[string]*ruleStates, len(ruleByUID))
-		states[orgId] = orgStates
 
 		// Get Instances
 		cmd := ngModels.ListAlertInstancesQuery{
