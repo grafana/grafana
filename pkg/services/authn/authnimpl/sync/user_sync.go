@@ -344,6 +344,11 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 
+		// TODO: Remove for debugging
+		s.log.FromContext(ctx).Info("checking with identity auth info",
+			"got_auth_info", authInfo != nil,
+			"err", errGetAuthInfo)
+
 		if errGetAuthInfo != nil && !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
 			return nil, nil, errGetAuthInfo
 		}
@@ -365,10 +370,18 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 				}
 			}
 		}
+	} else {
+		// TODO: Remove for debugging
+		s.log.FromContext(ctx).Info("not checking with auth info in the first place")
 	}
 
 	// Check user table to grab existing user
 	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
+	// TODO: Remove for debugging
+	s.log.FromContext(ctx).Info("looked up user with params",
+		"params", identity.ClientParams.LookUpParams,
+		"found", usr != nil,
+		"err", err)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -397,6 +410,10 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	// If not found, try to find the user by email address
 	if params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
+		// TODO: Remove for debugging
+		s.log.FromContext(ctx).Info("looking up by email",
+			"found", usr != nil,
+			"err", err)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
@@ -405,12 +422,19 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 	// If not found, try to find the user by login
 	if usr == nil && params.Login != nil && *params.Login != "" {
 		usr, err = s.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: *params.Login})
+		// TODO: Remove for debugging
+		s.log.FromContext(ctx).Info("looking up by login",
+			"found", usr != nil,
+			"err", err)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
 	}
 
 	if usr == nil || usr.ID == 0 { // id check as safeguard against returning empty user
+		// TODO: Remove for debugging
+		s.log.FromContext(ctx).Info("got usr == nil || usr.ID == 0",
+			"usr_nil", usr == nil) // if false, usr.ID == 0
 		return nil, user.ErrUserNotFound
 	}
 
