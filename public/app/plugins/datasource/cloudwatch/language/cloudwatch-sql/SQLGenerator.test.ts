@@ -225,7 +225,7 @@ describe('SQLGenerator', () => {
       // In this scenario, the parenthesis are redundant. However, they're not doing any harm and it would be really complicated to remove them
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE "Instance.Type" = 'I-123' AND (InstanceId != 'I-456' AND Type != 'some-type')`
+        `WHERE "Instance.Type" = 'I-123' AND (InstanceId != 'I-456' AND "Type" != 'some-type')`
       );
     });
 
@@ -242,7 +242,7 @@ describe('SQLGenerator', () => {
       );
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE InstanceId = 'I-123' AND (InstanceId != 'I-456' OR Type != 'some-type')`
+        `WHERE InstanceId = 'I-123' AND (InstanceId != 'I-456' OR "Type" != 'some-type')`
       );
     });
 
@@ -263,7 +263,7 @@ describe('SQLGenerator', () => {
 
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE (InstanceId = 'I-123' AND Type != 'some-type') AND (InstanceId != 'I-456' OR Type != 'some-type')`
+        `WHERE (InstanceId = 'I-123' AND "Type" != 'some-type') AND (InstanceId != 'I-456' OR "Type" != 'some-type')`
       );
     });
 
@@ -283,7 +283,7 @@ describe('SQLGenerator', () => {
       );
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE (InstanceId = 'I-123' OR Type != 'some-type') OR (InstanceId != 'I-456' OR Type != 'some-type')`
+        `WHERE (InstanceId = 'I-123' OR "Type" != 'some-type') OR (InstanceId != 'I-456' OR "Type" != 'some-type')`
       );
     });
 
@@ -298,7 +298,7 @@ describe('SQLGenerator', () => {
       );
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE InstanceId = 'I-123' OR Type != 'some-type' OR InstanceId != 'I-456'`
+        `WHERE InstanceId = 'I-123' OR "Type" != 'some-type' OR InstanceId != 'I-456'`
       );
     });
 
@@ -313,7 +313,7 @@ describe('SQLGenerator', () => {
       );
       assertQueryEndsWith(
         { sql: { where: filter } },
-        `WHERE InstanceId = 'I-123' AND Type != 'some-type' AND InstanceId != 'I-456'`
+        `WHERE InstanceId = 'I-123' AND "Type" != 'some-type' AND InstanceId != 'I-456'`
       );
     });
   });
@@ -331,7 +331,7 @@ describe('SQLGenerator', () => {
         [createGroupBy('InstanceId'), createGroupBy('Type'), createGroupBy('Group')],
         QueryEditorExpressionType.And
       );
-      assertQueryEndsWith({ sql: { groupBy } }, `GROUP BY InstanceId, Type, Group`);
+      assertQueryEndsWith({ sql: { groupBy } }, `GROUP BY InstanceId, "Type", "Group"`);
     });
   });
 
@@ -387,7 +387,7 @@ describe('SQLGenerator', () => {
         limit: 100,
       };
       expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery(query)).toEqual(
-        `SELECT COUNT(DroppedBytes) FROM SCHEMA("AWS/MQ", InstanceId, "Instance-Group") WHERE (InstanceId = 'I-123' OR Type != 'some-type') AND (InstanceId != 'I-456' OR Type != 'some-type') GROUP BY InstanceId, InstanceType ORDER BY COUNT() DESC LIMIT 100`
+        `SELECT COUNT(DroppedBytes) FROM SCHEMA("AWS/MQ", InstanceId, "Instance-Group") WHERE (InstanceId = 'I-123' OR "Type" != 'some-type') AND (InstanceId != 'I-456' OR "Type" != 'some-type') GROUP BY InstanceId, InstanceType ORDER BY COUNT() DESC LIMIT 100`
       );
     });
   });
@@ -423,7 +423,7 @@ describe('SQLGenerator', () => {
         limit: 100,
       };
       expect(new SQLGenerator(templateService).expressionToSqlQuery(query)).toEqual(
-        `SELECT $aggregation($metric) FROM SCHEMA(\"$namespace\", $labels) WHERE (InstanceId = 'I-123' OR Type != 'some-type') AND (InstanceId != 'I-456' OR Type != 'some-type') GROUP BY $labels ORDER BY $aggregation() DESC LIMIT 100`
+        `SELECT $aggregation($metric) FROM SCHEMA(\"$namespace\", $labels) WHERE (InstanceId = 'I-123' OR "Type" != 'some-type') AND (InstanceId != 'I-456' OR "Type" != 'some-type') GROUP BY $labels ORDER BY $aggregation() DESC LIMIT 100`
       );
     });
   });
