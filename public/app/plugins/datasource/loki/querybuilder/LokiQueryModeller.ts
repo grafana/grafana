@@ -23,6 +23,14 @@ export class LokiQueryModeller extends QueryModellerBase {
     ]);
   }
 
+  enrichLabelFilterOptions(labels: string[]) {
+    const labelFilterOpDef = this.operationsRegistry.get(LokiOperationId.LabelFilter);
+    if (!labelFilterOpDef) {
+      return;
+    }
+    labelFilterOpDef.params[0].options = labels;
+  }
+
   renderOperations(queryString: string, operations: QueryBuilderOperation[]): string {
     for (const operation of operations) {
       const def = this.operationsRegistry.getIfExists(operation.id);

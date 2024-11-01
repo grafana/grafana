@@ -118,6 +118,22 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       const series = await datasource.getDataSamples(lokiQuery, range);
       const sampleData = { series, state: LoadingState.Done, timeRange: range };
       setSampleData(sampleData);
+
+      const extractedLabelsResult = await datasource.languageProvider.getParserAndLabelKeys(
+        lokiQueryModeller.renderLabels(query.labels),
+        {
+          timeRange: range,
+        }
+      );
+      lokiQueryModeller.enrichLabelFilterOptions(
+        Array.from(
+          new Set([
+            ...extractedLabelsResult.extractedLabelKeys,
+            ...extractedLabelsResult.structuredMetadataKeys,
+            ...extractedLabelsResult.unwrapLabelKeys,
+          ])
+        )
+      );
     };
 
     const updateBasedOnChangedTimeRange =
