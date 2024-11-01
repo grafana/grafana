@@ -89,7 +89,7 @@ type RestConfigProvider interface {
 
 type DirectRestConfigProvider interface {
 	// GetDirectRestConfig returns a k8s client configuration that will use the same
-	// tged logged in user as the current request context.  This is useful when
+	// logged in user as the current request context.  This is useful when
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 
