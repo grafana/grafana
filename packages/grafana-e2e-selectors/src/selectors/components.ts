@@ -182,7 +182,6 @@ export const versionedComponents = {
         },
       },
       queryEditor: {
-        // kickstart: '', see QueryBuilder queryPatterns below
         explain: {
           '10.4.0': 'data-testid prometheus explain switch wrapper',
         },
@@ -209,9 +208,6 @@ export const versionedComponents = {
         },
         builder: {
           // see QueryBuilder below for commented selectors
-          // labelSelect: 'data-testid Select label',
-          // valueSelect: 'data-testid Select value',
-          // matchOperatorSelect: 'data-testid Select match operator',
           metricSelect: {
             '10.4.0': 'data-testid metric select',
           },
