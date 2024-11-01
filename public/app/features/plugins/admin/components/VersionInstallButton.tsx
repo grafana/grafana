@@ -3,11 +3,15 @@ import { useEffect, useState } from 'react';
 import { gt } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useInstall } from '../state/hooks';
 import { Version } from '../types';
+
+const PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
+const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME  = 'plugins_downgrade_clicked';
 
 interface Props {
   pluginId: string;
@@ -15,7 +19,7 @@ interface Props {
   latestCompatibleVersion?: string;
   installedVersion?: string;
   disabled: boolean;
-  onClick: () => void;
+  onConfirmInstallation: () => void;
 }
 
 export const VersionInstallButton = ({
@@ -24,7 +28,7 @@ export const VersionInstallButton = ({
   latestCompatibleVersion,
   installedVersion,
   disabled,
-  onClick,
+  onConfirmInstallation,
 }: Props) => {
   const install = useInstall();
   const [isInstalling, setIsInstalling] = useState(false);
@@ -45,9 +49,28 @@ export const VersionInstallButton = ({
   }
 
   const performInstallation = () => {
+
+    const trackProps = {
+        path: location.pathname,
+        plugin_id: pluginId,
+        version: version.version,
+        is_latest: latestCompatibleVersion === version.version,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+    };
+
+    if (!installedVersion) {
+      reportInteraction(PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME, trackProps);
+    } else {
+      reportInteraction(PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME, {
+        ...trackProps,
+        previous_version: installedVersion,
+      });
+    }
+
     install(pluginId, version.version, true);
     setIsInstalling(true);
-    onClick();
+    onConfirmInstallation();
   };
 
   const onInstallClick = () => {

@@ -72,7 +72,7 @@ export const VersionList = ({ pluginId, versions = [], installedVersion }: Props
                   version={version}
                   latestCompatibleVersion={latestCompatibleVersion?.version}
                   installedVersion={installedVersion}
-                  onClick={onInstallClick}
+                  onConfirmInstallation={onInstallClick}
                   disabled={isInstalledVersion || isInstalling || versionIsIncompatible}
                 />
               </td>
