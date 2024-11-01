@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import '@testing-library/jest-dom';
+
 import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
@@ -123,5 +125,31 @@ describe('MetricCombobox', () => {
     await userEvent.click(item);
 
     expect(mockOnChange).toHaveBeenCalledWith({ metric: 'random_metric', labels: [], operations: [] });
+  });
+
+  it("doesn't show the metrics explorer button by default", () => {
+    render(<MetricCombobox {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: /open metrics explorer/i })).not.toBeInTheDocument();
+  });
+
+  describe('when metrics explorer toggle is enabled', () => {
+    beforeAll(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        prometheusMetricEncyclopedia: true,
+      });
+    });
+
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('opens the metrics explorer when the button is clicked', async () => {
+      render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
+
+      const button = screen.getByRole('button', { name: /open metrics explorer/i });
+      await userEvent.click(button);
+
+      expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
+    });
   });
 });

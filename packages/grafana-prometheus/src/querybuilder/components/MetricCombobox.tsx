@@ -1,13 +1,17 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup } from '@grafana/experimental';
-import { InlineField, InlineFieldRow, Combobox, ComboboxOption } from '@grafana/ui';
+import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Button, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 
 import { PrometheusDatasource } from '../../datasource';
 import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
+
+import { MetricsModal } from './metrics-modal';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -28,6 +32,8 @@ export function MetricCombobox({
   labelsFilters,
   variableEditor,
 }: Readonly<MetricComboboxProps>) {
+  const [metricsModalOpen, setMetricsModalOpen] = useState(false);
+
   /**
    * Gets label_values response from prometheus API for current autocomplete query string and any existing labels filters
    */
@@ -65,21 +71,59 @@ export function MetricCombobox({
     [getMetricLabels, onGetMetrics]
   );
 
+  const loadMetricsExplorerMetrics = useCallback(async () => {
+    const allMetrics = await onGetMetrics();
+    const metrics: string[] = [];
+    for (const metric of allMetrics) {
+      if (metric.value) {
+        metrics.push(metric.value);
+      }
+    }
+
+    return metrics;
+  }, [onGetMetrics]);
+
+  const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
+
   const asyncSelect = () => {
     return (
-      <Combobox
-        placeholder="Select metric"
-        width="auto"
-        minWidth={25}
-        options={loadOptions}
-        value={query.metric}
-        onChange={onComboboxChange}
-      />
+      <InputGroup>
+        <Combobox
+          placeholder="Select metric"
+          width="auto"
+          minWidth={25}
+          options={loadOptions}
+          value={query.metric}
+          onChange={onComboboxChange}
+        />
+
+        {metricsExplorerEnabled ? (
+          <Button
+            tooltip="Open metrics explorer"
+            aria-label="Open metrics explorer"
+            variant="secondary"
+            icon="book-open"
+            onClick={() => setMetricsModalOpen(true)}
+          />
+        ) : (
+          <></>
+        )}
+      </InputGroup>
     );
   };
 
   return (
     <>
+      {metricsExplorerEnabled && !datasource.lookupsDisabled && metricsModalOpen && (
+        <MetricsModal
+          datasource={datasource}
+          isOpen={metricsModalOpen}
+          onClose={() => setMetricsModalOpen(false)}
+          query={query}
+          onChange={onChange}
+          initialMetrics={loadMetricsExplorerMetrics}
+        />
+      )}
       {variableEditor ? (
         <InlineFieldRow>
           <InlineField
