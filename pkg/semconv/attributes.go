@@ -4,6 +4,25 @@ package semconv
 
 import "go.opentelemetry.io/otel/attribute"
 
+// Describes Grafana service attributes.
+const (
+	// GrafanaServiceNameKey is the attribute Key conforming to the
+	// "grafana.service.name" semantic conventions. It represents the service
+	// name.
+	//
+	// Type: string
+	// RequirementLevel: Optional
+	// Stability: stable
+	// Examples: 'grafana-apiserver'
+	grafanaServiceNameKey = attribute.Key("grafana.service.name")
+)
+
+// GrafanaServiceName returns an attribute KeyValue conforming to the
+// "grafana.service.name" semantic conventions. It represents the service name.
+func GrafanaServiceName(val string) attribute.KeyValue {
+	return grafanaServiceNameKey.String(val)
+}
+
 // Describes Grafana datasource attributes.
 const (
 	// GrafanaDatasourceTypeKey is the attribute Key conforming to the
