@@ -63,6 +63,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/labelsuggestion"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -201,6 +202,7 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
+	LabelSuggestionService       labelsuggestion.Service
 
 	userService          user.Service
 	tempUserService      tempUser.Service
@@ -262,6 +264,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
 	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
+	labelSuggestionService labelsuggestion.Service,
 	playlistService playlist.Service, apiKeyService apikey.Service, kvStore kvstore.KVStore,
 	secretsMigrator secrets.Migrator, secretsPluginManager plugins.SecretsPluginManager, secretsService secrets.Service,
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
@@ -369,6 +372,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		managedPluginsService:        managedPlugins,
+		LabelSuggestionService:       labelSuggestionService,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,

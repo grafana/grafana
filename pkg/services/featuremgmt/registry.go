@@ -1556,6 +1556,12 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "labelSuggestionService",
+			Description: "Enable label suggestion service endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaMachineLearning,
+		},
 	}
 )
 

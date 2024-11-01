@@ -55,6 +55,28 @@ func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, s
 	builder.Write(sql.String(), params...)
 }
 
+func writeFiltersSQLAllUsers(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *db.SQLBuilder) {
+	params := []any{query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
+	var sql bytes.Buffer
+	sql.WriteString(" WHERE query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
+
+	if len(query.DatasourceUIDs) > 0 {
+		q := "?" + strings.Repeat(",?", len(query.DatasourceUIDs)-1)
+		for _, uid := range query.DatasourceUIDs {
+			params = append(params, uid)
+		}
+		for _, uid := range query.DatasourceUIDs {
+			params = append(params, uid)
+		}
+		sql.WriteString(" AND (")
+		sql.WriteString("(query_history.datasource_uid IN (" + q + "))")
+		sql.WriteString(" OR ")
+		sql.WriteString("(query_history.uid IN (SELECT i.query_history_item_uid from query_history_details i WHERE i.datasource_uid IN (" + q + ")))")
+		sql.WriteString(")")
+	}
+	builder.Write(sql.String(), params...)
+}
+
 func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if query.Sort == "time-asc" {
 		builder.Write(" ORDER BY created_at ASC ")

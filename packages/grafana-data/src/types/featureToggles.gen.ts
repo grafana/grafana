@@ -226,4 +226,5 @@ export interface FeatureToggles {
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   dashboardSchemaV2?: boolean;
+  labelSuggestionService?: boolean;
 }
