@@ -224,3 +224,5 @@ public/app/plugins/**/dist/
 
 # Mock service worker used for fake API responses in frontend development
 public/mockServiceWorker.js
+
+/e2e/test-plugins/*/dist
