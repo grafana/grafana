@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlist "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
+	playlist "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
