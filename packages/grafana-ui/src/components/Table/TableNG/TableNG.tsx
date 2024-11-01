@@ -11,8 +11,9 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellDisplayMode, TableNGProps } from '../types';
-import { getCellColors, getTextAlign } from '../utils';
+import { getFooterValue } from '../TableRT/FooterRow'; // TODO pull this out of TableRT, not dependent on react-table
+import { FooterItem, TableNGProps } from '../types';
+import { getCellColors, getTextAlign, getFooterItems } from '../utils';
 
 import { TableCellNG } from './Cells/TableCellNG';
 
@@ -38,7 +39,7 @@ interface TableHeaderProps {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -137,7 +138,13 @@ export function TableNG(props: TableNGProps) {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
 
-    main.fields.map((field) => {
+    // Footer calculations
+    let footerItems: FooterItem[] = [];
+    const filterFields: Array<{ id: string; field?: Field } | undefined> = [];
+    const allValues: any[][] = [];
+
+    main.fields.map((field, fieldIndex) => {
+      filterFields.push({ id: fieldIndex.toString(), field });
       const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
@@ -176,6 +183,11 @@ export function TableNG(props: TableNGProps) {
             />
           );
         },
+        ...(footerOptions?.show && {
+          renderSummaryCell() {
+            return <>{getFooterValue(fieldIndex, footerItems)}</>;
+          },
+        }),
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
@@ -183,16 +195,28 @@ export function TableNG(props: TableNGProps) {
       });
 
       // Create row objects
-      field.values.map((value, index) => {
+      if (footerOptions?.show && footerOptions.reducer.length > 0) {
+        // Only populate 2d array if needed for footer calculations
+        allValues.push(field.values);
+      }
+      field.values.map((value, valueIndex) => {
         const currentValue = { [key]: value };
 
-        if (rows.length > index) {
-          rows[index] = { ...rows[index], ...currentValue };
+        if (rows.length > valueIndex) {
+          rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
         } else {
-          rows[index] = currentValue;
+          rows[valueIndex] = currentValue;
         }
       });
     });
+
+    if (footerOptions?.show && footerOptions.reducer.length > 0) {
+      if (footerOptions.countRows) {
+        footerItems = ['Count', rows.length.toString()];
+      } else {
+        footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
+      }
+    }
 
     return {
       columns,
@@ -272,6 +296,9 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
+        // footer
+        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
       />
 
       {isContextMenuOpen && (
