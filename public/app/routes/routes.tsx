@@ -1,4 +1,5 @@
-import { Navigate, useParams } from 'react-router-dom-v5-compat';
+import { useEffect } from 'react';
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -535,6 +536,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
     {
+      path: '/goto/*',
+      component: HandleGoToRedirect,
+    },
+    {
       path: '/*',
       component: PageNotFound,
     },
@@ -570,4 +575,15 @@ function DataSourceDashboardRoute() {
 function DataSourceEditRoute() {
   const { uid = '' } = useParams();
   return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
+}
+
+// Explicitly send "goto" URLs to server, bypassing client-side routing
+function HandleGoToRedirect() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.location.href = pathname;
+  }, [pathname]);
+
+  return null;
 }
