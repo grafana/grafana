@@ -10,6 +10,7 @@ import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 
+import { SkeletonMenu } from './SkeletonMenu';
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
@@ -177,7 +178,18 @@ export const Combobox = <T extends string | number>({
     defaultHighlightedIndex: selectedItemIndex ?? 0,
 
     scrollIntoView: () => {},
-    onInputValueChange: ({ inputValue }) => {
+    onInputValueChange: ({ inputValue, isOpen }) => {
+      // This function is triggered when an item is selected and the menu is closed.
+      // In that case, we don't actually need to do anything here.
+      if (!isOpen) {
+        // Clear out any async loaded options
+        if (isAsync) {
+          setItems([]);
+        }
+
+        return;
+      }
+
       const customValueOption =
         createCustomValue &&
         inputValue &&
@@ -254,6 +266,8 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
+  const showLoadingMessage = asyncLoading && items.length === 0;
+
   return (
     <div>
       <InputComponent
@@ -307,40 +321,43 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              return (
-                <li
-                  key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                  data-index={virtualRow.index}
-                  className={cx(
-                    styles.option,
-                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                    highlightedIndex === virtualRow.index && styles.optionFocused
-                  )}
-                  style={{
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  {...getItemProps({
-                    item: items[virtualRow.index],
-                    index: virtualRow.index,
-                  })}
-                >
-                  <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>
-                      {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                    </span>
-                    {items[virtualRow.index].description && (
-                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+        {isOpen &&
+          (showLoadingMessage ? (
+            <SkeletonMenu />
+          ) : (
+            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                return (
+                  <li
+                    key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                    data-index={virtualRow.index}
+                    className={cx(
+                      styles.option,
+                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                      highlightedIndex === virtualRow.index && styles.optionFocused
                     )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    style={{
+                      height: virtualRow.size,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    {...getItemProps({
+                      item: items[virtualRow.index],
+                      index: virtualRow.index,
+                    })}
+                  >
+                    <div className={styles.optionBody}>
+                      <span className={styles.optionLabel}>
+                        {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                      </span>
+                      {items[virtualRow.index].description && (
+                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ))}
       </div>
     </div>
   );

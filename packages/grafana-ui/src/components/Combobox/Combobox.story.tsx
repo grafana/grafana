@@ -2,6 +2,7 @@ import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
 import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
+import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { SelectableValue } from '@grafana/data';
 
@@ -12,6 +13,8 @@ import { Field } from '../Forms/Field';
 import { Select, AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
+
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const chance = new Chance();
 
@@ -273,8 +276,14 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
     );
   }, []);
 
+  const theme = useTheme2();
+
   return (
-    <>
+    <SkeletonTheme
+      baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
+      highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}
+      borderRadius={theme.shape.radius.default}
+    >
       <Field
         label="Options with labels"
         description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
@@ -322,7 +331,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           }}
         />
       </Field>
-    </>
+    </SkeletonTheme>
   );
 };
 

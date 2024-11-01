@@ -1,3 +1,5 @@
+import Skeleton from 'react-loading-skeleton';
+
 import { NavModelItem } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
@@ -20,7 +22,7 @@ export const TestStuffPage = () => {
       <Stack>
         <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
         <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
-          Success
+          <Skeleton width={120} />
         </Button>
         <Button
           onClick={() => notifyApp.warning('Warning toast', 'some more text goes here', 'bogus-trace-99999')}

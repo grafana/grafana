@@ -25,6 +25,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'grafana-select-menu-ul-container',
       listStyle: 'none',
     }),
+    skeletonOption: css({
+      padding: MENU_ITEM_PADDING_X,
+    }),
     option: css({
       label: 'grafana-select-option',
       padding: MENU_ITEM_PADDING_X,
