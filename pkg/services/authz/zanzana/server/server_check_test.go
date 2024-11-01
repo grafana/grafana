@@ -93,4 +93,18 @@ func testCheck(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
 	})
+
+	t.Run("user:8 should be able to read all resoruce:dashboard.grafana.app/dashboar in folder 6 through folder 5", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newRead("user:8", dashboardGroup, dashboardResource, "6", "10"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:8", dashboardGroup, dashboardResource, "5", "11"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:8", folderGroup, folderResource, "4", "12"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
 }

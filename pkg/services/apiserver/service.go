@@ -81,7 +81,7 @@ type Service interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig() *clientrest.Config
+	GetRestConfig(context.Context) *clientrest.Config
 }
 
 type DirectRestConfigProvider interface {
@@ -202,7 +202,10 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *service) GetRestConfig() *clientrest.Config {
+func (s *service) GetRestConfig(ctx context.Context) *clientrest.Config {
+	if err := s.BasicService.AwaitRunning(ctx); err != nil {
+		return nil
+	}
 	return s.restConfig
 }
 
@@ -212,10 +215,14 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.start(ctx); err != nil {
+	if err := s.BasicService.StartAsync(ctx); err != nil {
 		return err
 	}
-	return s.running(ctx)
+
+	if err := s.BasicService.AwaitRunning(ctx); err != nil {
+		return err
+	}
+	return s.AwaitTerminated(ctx)
 }
 
 func (s *service) RegisterAPI(b builder.APIGroupBuilder) {

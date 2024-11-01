@@ -157,7 +157,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
         margin: theme.spacing(1, 0),
       },
       code: {
-        'white-space': 'pre-wrap',
+        whiteSpace: 'pre-wrap',
       },
     },
     a: {
