@@ -2418,6 +2418,19 @@
     },
     {
       "metadata": {
+        "name": "playlistsWatcher",
+        "resourceVersion": "1730462910506",
+        "creationTimestamp": "2024-11-01T12:08:30Z"
+      },
+      "spec": {
+        "description": "Enables experimental watcher for playlists",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginProxyPreserveTrailingSlash",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-05T11:36:14Z",
