@@ -193,12 +193,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 				annotations = make(map[string]string)
 			}
 
-			rulesStates, ok := orgStates[entry.RuleUID]
-			if !ok {
-				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
-				orgStates[entry.RuleUID] = rulesStates
-			}
-
 			lbs := map[string]string(entry.Labels)
 			cacheID := entry.Labels.Fingerprint()
 			var resultFp data.Fingerprint
@@ -209,7 +203,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 				}
 				resultFp = data.Fingerprint(fp)
 			}
-			rulesStates.states[cacheID] = &State{
+			state := State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheID:              cacheID,
@@ -225,11 +219,11 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
 			}
+			st.cache.getOrAdd(state, st.log)
 			statesCount++
 		}
 	}
 
-	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
