@@ -103,5 +103,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   containStrict: css({
     contain: 'strict',
+    height: '100%',
   }),
 });
