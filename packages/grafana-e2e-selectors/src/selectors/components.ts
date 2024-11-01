@@ -487,7 +487,6 @@ export const versionedComponents = {
         '11.0.0': (title: string) => `data-testid Panel editor option pane field input ${title}`,
       },
     },
-    // not sure about the naming *DataPane*
     DataPane: {
       content: {
         '11.1.0': 'data-testid Panel editor data pane content',
