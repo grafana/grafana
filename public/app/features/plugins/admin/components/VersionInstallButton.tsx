@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { gt } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ConfirmModal, Spinner, useStyles2 } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useInstall } from '../state/hooks';
@@ -39,6 +39,10 @@ export const VersionInstallButton = ({
       setIsModalOpen(false);
     }
   }, [installedVersion, version.version]);
+
+  if (version.version === installedVersion) {
+    return <Badge className={styles.badge} text="Installed" color="green" />;
+  }
 
   const performInstallation = () => {
     install(pluginId, version.version, true);
@@ -77,14 +81,15 @@ export const VersionInstallButton = ({
   return (
     <>
       <Button
-        fill="text"
+        fill="solid"
         disabled={disabled || isInstalled}
         fullWidth
         size="sm"
         variant={latestCompatibleVersion === version.version ? 'primary' : 'secondary'}
         onClick={onInstallClick}
+        className={styles.button}
       >
-        {label} {isInstalling && <Spinner className={styles.spinner} inline size="sm" />}
+        {label} {getIcon(label)} {isInstalling && <Spinner className={styles.spinner} inline size="sm" />}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
@@ -100,11 +105,28 @@ export const VersionInstallButton = ({
   );
 };
 
+function getIcon(label: string) {
+  if (label === 'Downgrade') {
+    return <Icon name="arrow-down" />;
+  }
+  if (label === 'Upgrade') {
+    return <Icon name="arrow-up" />;
+  }
+  return '';
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   spinner: css({
     marginLeft: theme.spacing(1),
   }),
   successIcon: css({
     color: theme.colors.success.main,
+  }),
+  button: css({
+    width: theme.spacing(13),
+  }),
+  badge: css({
+    width: theme.spacing(13),
+    justifyContent: 'center',
   }),
 });
