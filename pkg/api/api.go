@@ -296,7 +296,8 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Put("/:id", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUser))
 			usersRoute.Post("/:id/using/:orgId", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUserActiveOrg))
 			// TODO: Feature flag or config probably?
-			usersRoute.Post("/pretend-oauth-login", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.PretendOAuthLogin)
+			usersRoute.Post("/pretend-oauth-login/create", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.CreateOAuthUser)
+			usersRoute.Post("/pretend-oauth-login/info", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.UpsertAuthInfo)
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 
 		// org information available to all users.
