@@ -70,23 +70,23 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 func (hs *HTTPServer) PretendOAuthLogin(reqCtx *contextmodel.ReqContext) {
 	var dto user.CreateUserCommand
 	if err := web.Bind(reqCtx.Req, &dto); err != nil {
-		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not the dto needed", err)
+		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not valid CreateUserCommand DTO", err)
 		return
 	}
 
-	u, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
+	_, err := hs.userService.GetByEmail(reqCtx.Req.Context(), &user.GetUserByEmailQuery{Email: dto.Email})
 	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		reqCtx.WriteErrOrFallback(http.StatusBadRequest, "request was not the dto needed", err)
+		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "request failed on fetching user", err)
 		return
 	} else if err == nil {
-		reqCtx.JSON(http.StatusOK, *u)
+		reqCtx.Resp.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	u, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
+	_, err = hs.userService.Create(reqCtx.Req.Context(), &dto)
 	if err != nil {
 		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "user could not be created", err)
 		return
 	}
-	reqCtx.JSON(http.StatusOK, *u)
+	reqCtx.Resp.WriteHeader(http.StatusCreated)
 }

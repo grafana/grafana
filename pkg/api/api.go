@@ -78,8 +78,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
-	// TODO: Feature flag probably?
-	r.Post("/login/:name/pretend", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.PretendOAuthLogin)
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
@@ -297,6 +295,8 @@ func (hs *HTTPServer) registerRoutes() {
 			usersRoute.Get("/lookup", authorize(ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll)), routing.Wrap(hs.GetUserByLoginOrEmail))
 			usersRoute.Put("/:id", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUser))
 			usersRoute.Post("/:id/using/:orgId", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersWrite, userIDScope)), routing.Wrap(hs.UpdateUserActiveOrg))
+			// TODO: Feature flag or config probably?
+			usersRoute.Post("/pretend-oauth-login", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite)), hs.PretendOAuthLogin)
 		}, requestmeta.SetOwner(requestmeta.TeamAuth))
 
 		// org information available to all users.
