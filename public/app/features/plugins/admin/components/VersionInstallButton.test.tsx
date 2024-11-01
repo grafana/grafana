@@ -15,7 +15,9 @@ describe('VersionInstallButton', () => {
       isCompatible: false,
       grafanaDependency: null,
     };
-    renderWithStore(<VersionInstallButton pluginId={''} version={version} disabled={false} onConfirmInstallation={() => {}} />);
+    renderWithStore(
+      <VersionInstallButton pluginId={''} version={version} disabled={false} onConfirmInstallation={() => {}} />
+    );
     expect(screen.getByText('Install')).toBeInTheDocument();
   });
 

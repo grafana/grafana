@@ -11,7 +11,7 @@ import { useInstall } from '../state/hooks';
 import { Version } from '../types';
 
 const PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
-const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME  = 'plugins_downgrade_clicked';
+const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
 
 interface Props {
   pluginId: string;
@@ -49,14 +49,13 @@ export const VersionInstallButton = ({
   }
 
   const performInstallation = () => {
-
     const trackProps = {
-        path: location.pathname,
-        plugin_id: pluginId,
-        version: version.version,
-        is_latest: latestCompatibleVersion === version.version,
-        creator_team: 'grafana_plugins_catalog',
-        schema_version: '1.0.0',
+      path: location.pathname,
+      plugin_id: pluginId,
+      version: version.version,
+      is_latest: latestCompatibleVersion === version.version,
+      creator_team: 'grafana_plugins_catalog',
+      schema_version: '1.0.0',
     };
 
     if (!installedVersion) {
