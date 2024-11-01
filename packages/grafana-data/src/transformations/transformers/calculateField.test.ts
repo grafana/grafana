@@ -754,10 +754,10 @@ describe('calculateField transformer w/ timeseries', () => {
 
       expect(data.fields.length).toEqual(2);
       expect(data.fields[1].values[0]).toEqual(1);
-      expect(data.fields[1].values[1]).toEqual(1);
-      expect(data.fields[1].values[2]).toEqual(3);
-      expect(data.fields[1].values[3]).toEqual(7);
-      expect(data.fields[1].values[4]).toEqual(9);
+      expect(data.fields[1].values[1]).toEqual(0.5);
+      expect(data.fields[1].values[2]).toEqual(1.5);
+      expect(data.fields[1].values[3]).toEqual(3.5);
+      expect(data.fields[1].values[4]).toEqual(4.5);
     });
   });
 
@@ -915,9 +915,9 @@ describe('calculateField transformer w/ timeseries', () => {
 
       expect(data.fields.length).toEqual(2);
       expect(data.fields[1].values[0]).toEqual(1);
-      expect(data.fields[1].values[1]).toEqual(1);
-      expect(data.fields[1].values[2]).toEqual(1.5);
-      expect(data.fields[1].values[3]).toEqual(4.5);
+      expect(data.fields[1].values[1]).toEqual(0.5);
+      expect(data.fields[1].values[2]).toEqual(1);
+      expect(data.fields[1].values[3]).toEqual(3);
     });
   });
 

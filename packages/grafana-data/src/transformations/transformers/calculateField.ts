@@ -351,7 +351,7 @@ function getTrailingWindowValues(frame: DataFrame, reducer: ReducerID, selectedF
   let count = 0;
   for (let i = 0; i < frame.length; i++) {
     if (reducer === ReducerID.mean) {
-      const currentValue = selectedField.values[i];
+      const currentValue = selectedField.values[i] ?? 0;
       if (currentValue !== null && currentValue !== undefined) {
         count++;
         sum += currentValue;
