@@ -5,13 +5,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	secretstore "github.com/grafana/grafana/pkg/storage/secret"
@@ -58,7 +56,7 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(secret.SchemeGroupVersion)
 }
 
-func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
+func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	resource := secret.SecureValuesResourceInfo
 	storage := map[string]rest.Storage{}
 	storage[resource.StoragePath()] = &secretStorage{
@@ -73,7 +71,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		store: b.store,
 	}
 
-	err := b.manager.InitStorage(scheme, storage, optsGetter)
+	err := b.manager.InitStorage(opts.Scheme, storage, opts.OptsGetter)
 	if err != nil {
 		return nil
 	}
