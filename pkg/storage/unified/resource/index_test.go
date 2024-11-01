@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -11,60 +12,66 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 )
 
+const testTenant = "default"
+
+var testContext = context.Background()
+
+func TestIndexDashboard(t *testing.T) {
+	data := readTestData(t, "dashboard-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 1)
+	assertSearchCountEquals(t, index, "*", 1)
+}
+
+func TestIndexDashboardWithTags(t *testing.T) {
+	data := readTestData(t, "dashboard-tagged-resource.json")
+	data2 := readTestData(t, "dashboard-tagged-resource2.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}, {Value: data2}}}
+	index := newTestIndex(t, 2)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 2)
+	assertSearchCountEquals(t, index, "tag1", 2)
+	assertSearchCountEquals(t, index, "tag4", 1)
+	assertSearchGroupCountEquals(t, index, "*", "tags", 4)
+	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
+}
+
 func TestIndexBatch(t *testing.T) {
-	tracingCfg := tracing.NewEmptyTracingConfig()
-	trace, err := tracing.ProvideService(tracingCfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	index := newTestIndex(t, 1000)
 
-	index := &Index{
-		tracer: trace,
-		shards: make(map[string]Shard),
-		log:    log.New("unifiedstorage.search.index"),
-		opts: Opts{
-			ListLimit: 5000,
-			Workers:   10,
-			BatchSize: 1000,
-		},
-	}
-
-	ctx := context.Background()
 	startAll := time.Now()
-
 	ns := namespaces()
 	// simulate 10 List calls
 	for i := 0; i < 10; i++ {
 		list := &ListResponse{Items: loadTestItems(strconv.Itoa(i), ns)}
 		start := time.Now()
-		_, err = index.AddToBatches(ctx, list)
-		if err != nil {
-			t.Fatal(err)
-		}
+		_, err := index.AddToBatches(testContext, list)
+		require.NoError(t, err)
 		elapsed := time.Since(start)
 		fmt.Println("Time elapsed:", elapsed)
 	}
 
 	// index all batches for each shard/tenant
-	err = index.IndexBatches(ctx, 1, ns)
-	if err != nil {
-		t.Fatal(err)
-	}
+	err := index.IndexBatches(testContext, 1, ns)
+	require.NoError(t, err)
 
 	elapsed := time.Since(startAll)
 	fmt.Println("Total Time elapsed:", elapsed)
 
 	assert.Equal(t, len(ns), len(index.shards))
-
-	total, err := index.Count()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, uint64(100000), total)
+	assertCountEquals(t, index, 100000)
 }
 
 func loadTestItems(uid string, tenants []string) []*ResourceWrapper {
@@ -109,4 +116,50 @@ func namespaces() []string {
 		ns = append(ns, "tenant"+strconv.Itoa(i))
 	}
 	return ns
+}
+
+func newTestIndex(t *testing.T, batchSize int) *Index {
+	tracingCfg := tracing.NewEmptyTracingConfig()
+	trace, err := tracing.ProvideService(tracingCfg)
+	require.NoError(t, err)
+
+	return &Index{
+		tracer: trace,
+		shards: make(map[string]Shard),
+		log:    log.New("unifiedstorage.search.index"),
+		opts: Opts{
+			ListLimit: 5000,
+			Workers:   10,
+			BatchSize: batchSize,
+		},
+	}
+}
+
+func assertCountEquals(t *testing.T, index *Index, expected uint64) {
+	total, err := index.Count()
+	require.NoError(t, err)
+	assert.Equal(t, expected, total)
+}
+
+func assertSearchCountEquals(t *testing.T, index *Index, search string, expected int64) {
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+	assert.Equal(t, expected, int64(len(results.Values)))
+}
+
+func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, group string, expected int64) {
+	groupBy := []*GroupBy{{Name: group, Limit: 100}}
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Size: expected + 1, GroupBy: groupBy}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+	assert.Equal(t, expected, int64(len(results.Groups)))
+}
+
+func readTestData(t *testing.T, name string) []byte {
+	// We can ignore the gosec G304 because this is only for tests
+	// nolint:gosec
+	data, err := os.ReadFile("./testdata/" + name)
+	require.NoError(t, err)
+	return data
 }
