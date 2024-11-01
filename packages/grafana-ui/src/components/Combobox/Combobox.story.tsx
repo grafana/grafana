@@ -317,7 +317,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         />
       </Field>
 
-      <Field label="Async with error" description="An even number of characters throws an error">
+      <Field label="Async with error" description="An odd number of characters throws an error">
         <Combobox
           id="test-combobox-error"
           placeholder="Select an option"
