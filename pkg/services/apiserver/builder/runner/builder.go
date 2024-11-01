@@ -16,7 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
-var _ builder.APIGroupBuilder = (*AppBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder    = (*AppBuilder)(nil)
+	_ builder.APIGroupMutation   = (*AppBuilder)(nil)
+	_ builder.APIGroupValidation = (*AppBuilder)(nil)
+)
 
 type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.LegacyStorage
 
@@ -102,6 +106,6 @@ func (b *AppBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 // GetAuthorizer implements APIGroupBuilder.GetAuthorizer
-func (b AppBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *AppBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.config.Authorizer
 }
