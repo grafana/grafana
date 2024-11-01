@@ -69,6 +69,13 @@ describe('SQLGenerator', () => {
         `SELECT COUNT("4xxErrorRate") FROM SCHEMA("AWS/EC2")`
       );
     });
+
+    it('should wrap in double quotes if metric name is a reserved keyword ', () => {
+      const select = createFunctionWithParameter('SUM', ['Count']);
+      expect(new SQLGenerator(mockTemplateSrv).expressionToSqlQuery({ ...baseQuery, select })).toEqual(
+        `SELECT SUM("Count") FROM SCHEMA("AWS/EC2")`
+      );
+    });
   });
 
   describe('from', () => {
