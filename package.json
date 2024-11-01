@@ -45,7 +45,7 @@
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
-    "playwright:perf": "yarn workspace @grafana/ui test-ct",
+    "playwright:perf": "yarn workspace @grafana/ui test-ct --repeat-each=5",
     "themes-generate": "esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ext .tsx,.ts --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
