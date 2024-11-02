@@ -11,12 +11,14 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellDisplayMode, TableNGProps } from '../types';
-import { getCellColors } from '../utils';
+import { getFooterValue } from '../TableRT/FooterRow'; // TODO pull this out of TableRT, not dependent on react-table
+import { FooterItem, TableNGProps } from '../types';
+import { getCellColors, getFooterItems } from '../utils';
 
 import { TableCellNG } from './Cells/TableCellNG';
 
 const DEFAULT_CELL_PADDING = 6;
+const COLUMN_MIN_WIDTH = 150;
 
 interface TableRow {
   id: number;
@@ -38,9 +40,17 @@ interface TableHeaderProps {
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  // TODO: this is a hack to force the column width to update when the fieldConfig changes
+  const [revId, setRevId] = useState(0);
+  const columnWidth = useMemo(() => {
+    setRevId(revId + 1);
+    return fieldConfig?.defaults?.custom?.width || 'auto';
+  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -95,9 +105,9 @@ export function TableNG(props: TableNGProps) {
           <div>{column.name}</div>
           {direction &&
             (direction === 'ASC' ? (
-              <Icon size="lg" name="arrow-down" className={styles.sortIcon} />
-            ) : (
               <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
+            ) : (
+              <Icon name="arrow-down" size="lg" className={styles.sortIcon} />
             ))}
         </button>
 
@@ -107,21 +117,43 @@ export function TableNG(props: TableNGProps) {
   };
 
   const handleSort = (columnKey: string, direction: SortDirection) => {
-    setSortColumns([{ columnKey, direction }]);
+    let currentSortColumn: SortColumn | undefined;
+
+    const updatedSortColumns = sortColumns.filter((column) => {
+      const isCurrentColumn = column.columnKey === columnKey;
+      if (isCurrentColumn) {
+        currentSortColumn = column;
+      }
+      return !isCurrentColumn;
+    });
+
+    // sorted column exists and is descending -> remove it to reset sorting
+    if (currentSortColumn && currentSortColumn.direction === 'DESC') {
+      setSortColumns(updatedSortColumns);
+    } else {
+      // new sort column or changed direction
+      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+    }
   };
 
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
     const rows: Array<{ [key: string]: string }> = [];
 
-    main.fields.map((field) => {
-      const key = field.name;
+    // Footer calculations
+    let footerItems: FooterItem[] = [];
+    const filterFields: Array<{ id: string; field?: Field } | undefined> = [];
+    const allValues: any[][] = [];
+
+    main.fields.map((field, fieldIndex) => {
+      filterFields.push({ id: fieldIndex.toString(), field });
+      const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
       // Add a column for each field
       columns.push({
         key,
-        name: key,
+        name: field.name,
         field: shallowField,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
@@ -153,22 +185,41 @@ export function TableNG(props: TableNGProps) {
             />
           );
         },
+        ...(footerOptions?.show && {
+          renderSummaryCell() {
+            return <>{getFooterValue(fieldIndex, footerItems)}</>;
+          },
+        }),
         renderHeaderCell: ({ column, sortDirection }) => (
           <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
         ),
+        width: columnWidth,
+        minWidth: columnMinWidth,
       });
 
       // Create row objects
-      field.values.map((value, index) => {
+      if (footerOptions?.show && footerOptions.reducer.length > 0) {
+        // Only populate 2d array if needed for footer calculations
+        allValues.push(field.values);
+      }
+      field.values.map((value, valueIndex) => {
         const currentValue = { [key]: value };
 
-        if (rows.length > index) {
-          rows[index] = { ...rows[index], ...currentValue };
+        if (rows.length > valueIndex) {
+          rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
         } else {
-          rows[index] = currentValue;
+          rows[valueIndex] = currentValue;
         }
       });
     });
+
+    if (footerOptions?.show && footerOptions.reducer.length > 0) {
+      if (footerOptions.countRows) {
+        footerItems = ['Count', rows.length.toString()];
+      } else {
+        footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
+      }
+    }
 
     return {
       columns,
@@ -229,7 +280,6 @@ export function TableNG(props: TableNGProps) {
         defaultColumnOptions={{
           sortable: true,
           resizable: true,
-          maxWidth: 200,
         }}
         rowHeight={rowHeightNumber}
         // TODO: This doesn't follow current table behavior
@@ -249,6 +299,9 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
+        // footer
+        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
       />
 
       {isContextMenuOpen && (
