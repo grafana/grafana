@@ -371,16 +371,103 @@ func TestIntegrationFullSync(t *testing.T) {
 	})
 }
 
+func TestSaveAlertInstancesForRule(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	orgID := int64(1)
+	ruleGroup := "test-group"
+
+	ruleKey := models.AlertRuleKeyWithGroup{
+		AlertRuleKey: models.AlertRuleKey{
+			OrgID: orgID,
+			UID:   "test-uid",
+		},
+		RuleGroup: ruleGroup,
+	}
+
+	t.Run("should save new alert instances for a rule", func(t *testing.T) {
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+		instances := []models.AlertInstance{
+			generateTestAlertInstance(orgID, ruleKey.UID),
+			generateTestAlertInstance(orgID, ruleKey.UID),
+		}
+
+		err := dbstore.SaveAlertInstancesForRule(ctx, ruleKey, instances)
+		require.NoError(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: ruleKey.OrgID,
+			RuleUID:   ruleKey.UID,
+		}
+		savedInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Len(t, savedInstances, len(instances))
+	})
+
+	t.Run("should replace existing instances for the rule", func(t *testing.T) {
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+		initialInstances := []models.AlertInstance{
+			generateTestAlertInstance(orgID, ruleKey.UID),
+		}
+		err := dbstore.SaveAlertInstancesForRule(ctx, ruleKey, initialInstances)
+		require.NoError(t, err)
+
+		newInstances := []models.AlertInstance{
+			generateTestAlertInstance(orgID, ruleKey.UID),
+			generateTestAlertInstance(orgID, ruleKey.UID),
+		}
+		err = dbstore.SaveAlertInstancesForRule(ctx, ruleKey, newInstances)
+		require.NoError(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: ruleKey.OrgID,
+			RuleUID:   ruleKey.UID,
+		}
+		savedInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Len(t, savedInstances, len(newInstances))
+
+		savedLabelHashes := make([]string, len(savedInstances))
+		for _, instance := range savedInstances {
+			savedLabelHashes = append(savedLabelHashes, instance.LabelsHash)
+		}
+		newLabelHashes := make([]string, len(savedInstances))
+		for _, instance := range newInstances {
+			newLabelHashes = append(newLabelHashes, instance.LabelsHash)
+		}
+
+		require.ElementsMatch(t, newLabelHashes, savedLabelHashes)
+	})
+
+	t.Run("should handle saving with empty instances list", func(t *testing.T) {
+		_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
+		err := dbstore.SaveAlertInstancesForRule(ctx, ruleKey, []models.AlertInstance{})
+		require.NoError(t, err)
+
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+			RuleUID:   ruleKey.UID,
+		}
+		savedInstances, err := dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+		require.Empty(t, savedInstances)
+	})
+}
+
 func generateTestAlertInstance(orgID int64, ruleID string) models.AlertInstance {
 	return models.AlertInstance{
 		AlertInstanceKey: models.AlertInstanceKey{
 			RuleOrgID:  orgID,
 			RuleUID:    ruleID,
-			LabelsHash: "abc",
+			LabelsHash: util.GenerateShortUID(),
 		},
 		CurrentState: models.InstanceStateFiring,
 		Labels: map[string]string{
-			"hello": "world",
+			"hello":      "world",
+			"some-label": util.GenerateShortUID(),
 		},
 		ResultFingerprint: "abc",
 		CurrentStateEnd:   time.Now(),
