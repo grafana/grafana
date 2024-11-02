@@ -60,7 +60,6 @@ func addAppSettingsMigration(mg *Migrator) {
 			"created" DATETIME NOT NULL,
 			"updated" DATETIME NOT NULL,
 			"plugin_version" TEXT NULL);
-
 			INSERT INTO "plugin_setting_new" SELECT
 				"id",
 				COALESCE("org_id", 1),
@@ -73,10 +72,8 @@ func addAppSettingsMigration(mg *Migrator) {
 				"updated",
 				"plugin_version"
 			FROM "plugin_setting";
-
 			DROP TABLE "plugin_setting";
 			ALTER TABLE "plugin_setting_new" RENAME TO "plugin_setting";
-
 			CREATE UNIQUE INDEX "UQE_plugin_setting_org_id_plugin_id" ON "plugin_setting" ("org_id","plugin_id");
 		`),
 	)

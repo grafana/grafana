@@ -615,8 +615,7 @@
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization",
-      "widget": "Widget"
+      "visualization": "Visualization"
     },
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
@@ -629,9 +628,6 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-widget-body": "Create lists, markdowns and other widgets",
-      "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget",
       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
@@ -2888,12 +2884,23 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+      "or-view-bookmarks": "Or view bookmarks"
+    },
+    "card": {
+      "data-source": "Data source: ",
+      "date-created": "Date created: ",
+      "metric": "Metric:"
+    },
+    "home": {
+      "learn-more": "Learn more",
+      "lets-start": "Let's start!",
+      "start-your-metrics-exploration": "Start your metrics exploration!",
+      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
-      "metric-attributes": "Metric attributes",
+      "metric-attributes": "Attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
@@ -2902,6 +2909,9 @@
     "metric-select": {
       "filter-by": "Filter by",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Or view a recent exploration"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",

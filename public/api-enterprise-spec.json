@@ -2717,6 +2717,9 @@
         },
         "message": {
           "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -4077,6 +4080,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4101,6 +4107,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -6031,6 +6040,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -8600,6 +8612,9 @@
         "login": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -8972,6 +8987,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -8980,6 +8998,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }

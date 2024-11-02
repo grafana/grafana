@@ -80,7 +80,6 @@ export interface FeatureToggles {
   pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
-  vizAndWidgetSplit?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -227,4 +226,5 @@ export interface FeatureToggles {
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   dashboardSchemaV2?: boolean;
+  playlistsWatcher?: boolean;
 }
