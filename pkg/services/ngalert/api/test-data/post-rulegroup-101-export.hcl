@@ -43,7 +43,7 @@ resource "grafana_rule_group" "rule_group_0000" {
     }
 
     no_data_state  = "NoData"
-    exec_err_state = "Alerting"
+    exec_err_state = "OK"
     for            = "2m"
     is_paused      = false
   }
@@ -75,7 +75,7 @@ resource "grafana_rule_group" "rule_group_0000" {
     }
 
     no_data_state  = "NoData"
-    exec_err_state = "Alerting"
+    exec_err_state = "OK"
     is_paused      = false
 
     notification_settings {

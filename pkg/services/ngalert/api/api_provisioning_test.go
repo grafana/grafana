@@ -587,6 +587,7 @@ func TestProvisioningApi(t *testing.T) {
 				insertRule(t, sut, rule1)
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
+				// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 				expectedResponse := `resource "grafana_rule_group" "rule_group_0000" {
   org_id           = 1
   name             = "my-cool-group"
@@ -610,7 +611,7 @@ func TestProvisioningApi(t *testing.T) {
     }
 
     no_data_state  = "Alerting"
-    exec_err_state = "Error"
+    exec_err_state = "OK"
     for            = "0s"
     annotations = {
       test = "annotation"

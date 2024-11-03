@@ -63,7 +63,7 @@
             }
           ],
           "noDataState": "NoData",
-          "execErrState": "Alerting",
+          "execErrState": "OK",
           "for": "2m",
           "isPaused": false
         },
@@ -107,7 +107,7 @@
             }
           ],
           "noDataState": "NoData",
-          "execErrState": "Alerting",
+          "execErrState": "OK",
           "for": "0s",
           "isPaused": false,
           "notification_settings":{

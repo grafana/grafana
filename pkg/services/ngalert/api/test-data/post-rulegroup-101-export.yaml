@@ -47,7 +47,7 @@ groups:
                 refId: condition
                 type: math
           noDataState: NoData
-          execErrState: Alerting
+          execErrState: OK
           for: 2m
           isPaused: false
         - title: reduced testdata query - 2
@@ -80,7 +80,7 @@ groups:
                 refId: B
                 type: reduce
           noDataState: NoData
-          execErrState: Alerting
+          execErrState: OK
           for: 0s
           isPaused: false
           notification_settings:

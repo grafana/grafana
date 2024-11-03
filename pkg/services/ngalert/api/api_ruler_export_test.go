@@ -38,6 +38,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	srv := createService(ruleStore)
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value - changed in test files: post-rulegroup-101.json, post-rulegroup-101-export.yaml, post-rulegroup-101-export.json, post-rulegroup-101-export.hcl
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
 	require.NoError(t, err)

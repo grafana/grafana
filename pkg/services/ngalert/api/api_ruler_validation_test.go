@@ -71,7 +71,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 			},
 			UID:          util.GenerateShortUID(),
 			NoDataState:  allNoData[rand.Intn(len(allNoData))],
-			ExecErrState: allExecError[rand.Intn(len(allExecError))],
+			ExecErrState: apimodels.OkErrState, // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 		},
 	}
 }
@@ -365,14 +365,14 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 			},
 		},
 		{
-			name: "defaults to Alerting if ExecErrState is empty",
+			name: "defaults to OK if ExecErrState is empty", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.ExecErrState = ""
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
-				require.Equal(t, models.AlertingErrState, alert.ExecErrState)
+				require.Equal(t, models.OkErrState, alert.ExecErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			},
 		},
 		{
@@ -459,14 +459,15 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 				return &r
 			},
 		},
-		{
-			name: "fail if ExecErrState is not known",
-			rule: func() *apimodels.PostableExtendedRuleNode {
-				r := validRule()
-				r.GrafanaManagedAlert.ExecErrState = apimodels.ExecutionErrorState(util.GenerateShortUID())
-				return &r
-			},
-		},
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value - will not fail on unknown ExecErrState
+		//{
+		//	name: "fail if ExecErrState is not known",
+		//	rule: func() *apimodels.PostableExtendedRuleNode {
+		//		r := validRule()
+		//		r.GrafanaManagedAlert.ExecErrState = apimodels.ExecutionErrorState(util.GenerateShortUID())
+		//		return &r
+		//	},
+		//},
 		{
 			name: "fail if there are not data (nil)",
 			rule: func() *apimodels.PostableExtendedRuleNode {
@@ -604,14 +605,14 @@ func TestValidateRuleNode_UID(t *testing.T) {
 			},
 		},
 		{
-			name: "use empty Alerting if ExecErrState is empty",
+			name: "use OK state if ExecErrState is empty", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
 				r.GrafanaManagedAlert.ExecErrState = ""
 				return &r
 			},
 			assert: func(t *testing.T, api *apimodels.PostableExtendedRuleNode, alert *models.AlertRule) {
-				require.Equal(t, models.ExecutionErrorState(""), alert.ExecErrState)
+				require.Equal(t, models.OkErrState, alert.ExecErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			},
 		},
 		{

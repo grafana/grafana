@@ -63,7 +63,7 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting"
+        "exec_err_state": "OK"
       }
     },
     {
@@ -109,7 +109,7 @@
           }
         ],
         "no_data_state": "NoData",
-        "exec_err_state": "Alerting",
+        "exec_err_state": "OK",
         "notification_settings":{
           "receiver":"Test-Receiver",
           "group_by":["alertname","grafana_folder","test"],
