@@ -54,8 +54,8 @@ func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
 
 			hs.folderPermissionsService = &actest.FakePermissionsService{
 				ExpectedPermissions: []accesscontrol.ResourcePermission{
-					{UserId: 1, UserLogin: "regular", IsManaged: true},
-					{UserId: 2, UserLogin: "hidden", IsManaged: true},
+					{UserID: 1, UserLogin: "regular", IsManaged: true},
+					{UserID: 2, UserLogin: "hidden", IsManaged: true},
 				},
 			}
 		})
