@@ -15,6 +15,7 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
+import { lokiQueryModeller } from '../querybuilder/LokiQueryModeller';
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
@@ -85,6 +86,26 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   useEffect(() => {
     setDataIsStale(false);
+    debugger;
+    // Adding the parsed and structured metadata labels to label filters
+    // const populateLabelKeys = async () => {
+    //   const extractedLabelsResult = await datasource.languageProvider.getParserAndLabelKeys(
+    //     lokiQueryModeller.renderLabels(query.labels),
+    //     {
+    //       timeRange: range,
+    //     }
+    //   );
+    //   lokiQueryModeller.enrichLabelFilterOptions(
+    //     Array.from(
+    //       new Set([
+    //         ...extractedLabelsResult.extractedLabelKeys,
+    //         ...extractedLabelsResult.structuredMetadataKeys,
+    //         ...extractedLabelsResult.unwrapLabelKeys,
+    //       ])
+    //     )
+    //   );
+    //   console.log('HIHI', extractedLabelsResult);
+    // };
   }, [data]);
 
   const onChangeInternal = (query: LokiQuery) => {

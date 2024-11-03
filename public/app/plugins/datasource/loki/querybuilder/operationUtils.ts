@@ -351,10 +351,12 @@ export function getOnLabelAddedHandler(changeToOperationId: string) {
     // Check if we actually have the label param. As it's optional the aggregation can have one less, which is the
     // case of just simple aggregation without label. When user adds the label it now has the same number of params
     // as its definition, and now we can change it to its `_by` variant.
+    debugger;
     if (op.params.length === def.params.length) {
       return {
         ...op,
         id: changeToOperationId,
+        huhu: 'HUHUHU',
       };
     }
     return op;
@@ -387,10 +389,12 @@ export function getLastLabelRemovedHandler(changeToOperationId: string) {
   return function onParamChanged(index: number, op: QueryBuilderOperation, def: QueryBuilderOperationDefinition) {
     // If definition has more params then is defined there are no optional rest params anymore.
     // We then transform this operation into a different one
+    debugger;
     if (op.params.length < def.params.length) {
       return {
         ...op,
         id: changeToOperationId,
+        hihi: 'HIHIHI',
       };
     }
 

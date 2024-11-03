@@ -1,7 +1,7 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
+import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, DataFrame } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
@@ -355,15 +355,54 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return empty;
     }
 
-    const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
+    return this.getParserAndLabelKeysFromDataFrame(series[0]);
+  }
+
+  /**
+   * Get parser and label keys for a selector
+   *
+   * This asynchronous function is used to fetch parsers and label keys for a selected log stream based on sampled lines.
+   * It returns a promise that resolves to an object with the following properties:
+   *
+   * - `extractedLabelKeys`: An array of available label keys associated with the log stream.
+   * - `hasJSON`: A boolean indicating whether JSON parsing is available for the stream.
+   * - `hasLogfmt`: A boolean indicating whether Logfmt parsing is available for the stream.
+   * - `hasPack`: A boolean indicating whether Pack parsing is available for the stream.
+   * - `unwrapLabelKeys`: An array of label keys that can be used for unwrapping log data.
+   *
+   * @param streamSelector - The selector for the log stream you want to analyze.
+   * @param options - (Optional) An object containing additional options.
+   * @param options.maxLines - (Optional) The number of log lines requested when determining parsers and label keys.
+   * @param options.timeRange - (Optional) The time range for which you want to retrieve label keys. If not provided, the default time range is used.
+   * Smaller maxLines is recommended for improved query performance. The default count is 10.
+   * @returns A promise containing an object with parser and label key information.
+   * @throws An error if the fetch operation fails.
+   */
+  getParserAndLabelKeysFromDataFrame(frame: DataFrame): ParserAndLabelKeysResult {
+    const empty = {
+      extractedLabelKeys: [],
+      structuredMetadataKeys: [],
+      unwrapLabelKeys: [],
+      hasJSON: false,
+      hasLogfmt: false,
+      hasPack: false,
+    };
+    if (!config.featureToggles.lokiQueryHints) {
+      return empty;
+    }
+    if (!frame.length) {
+      return empty;
+    }
+
+    const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(frame);
 
     return {
       extractedLabelKeys: [
-        ...extractLabelKeysFromDataFrame(series[0], LabelType.Indexed),
-        ...extractLabelKeysFromDataFrame(series[0], LabelType.Parsed),
+        ...extractLabelKeysFromDataFrame(frame, LabelType.Indexed),
+        ...extractLabelKeysFromDataFrame(frame, LabelType.Parsed),
       ],
-      structuredMetadataKeys: extractLabelKeysFromDataFrame(series[0], LabelType.StructuredMetadata),
-      unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
+      structuredMetadataKeys: extractLabelKeysFromDataFrame(frame, LabelType.StructuredMetadata),
+      unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(frame),
       hasJSON,
       hasPack,
       hasLogfmt,

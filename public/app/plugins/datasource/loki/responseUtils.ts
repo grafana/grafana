@@ -72,6 +72,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     const allLabelKeys = Object.keys(labels).filter((key) => labelsType[key] === type);
     labelsSet = new Set([...labelsSet, ...allLabelKeys]);
   }
+  console.log('RESULT:', labelsSet);
 
   return Array.from(labelsSet);
 }

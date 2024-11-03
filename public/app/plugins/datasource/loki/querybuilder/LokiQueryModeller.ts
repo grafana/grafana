@@ -261,4 +261,8 @@ export class LokiQueryModeller extends QueryModellerBase {
   }
 }
 
+export const buildLokiModeller = () => {
+  return new LokiQueryModeller();
+};
+
 export const lokiQueryModeller = new LokiQueryModeller();
