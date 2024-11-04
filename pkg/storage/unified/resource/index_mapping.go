@@ -60,7 +60,6 @@ func fieldValue(field string, hit *search.DocumentMatch) string {
 		return val.(string)
 	}
 	return ""
-
 }
 
 // NewIndexedResource creates a new IndexedResource from a raw resource.
