@@ -770,7 +770,6 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 }
 
 func getPluginsLogos(availablePlugins AvailablePlugins) map[string]plugins.Logos {
-
 	pluginLogo := make(map[string]plugins.Logos)
 	pluginTypes := []plugins.Type{plugins.TypeDataSource, plugins.TypePanel, plugins.TypeApp}
 
