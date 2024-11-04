@@ -52,7 +52,7 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
 				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
 			},
-			expected:  `{namespace="default", cluster="us-central-1"} |= "an unexpected error"`,
+			expected:  `{cluster="us-central-1", namespace="default"} |= "an unexpected error"`,
 			expectErr: false,
 		},
 	}
