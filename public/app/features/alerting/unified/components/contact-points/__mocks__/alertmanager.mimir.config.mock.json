@@ -1,18 +1,41 @@
 {
-  "template_files": {},
+  "template_files": {
+    "misconfigured-template": "{{ define 'misconfigured template' }} Template that is defined in template_files but not templates {{ end }}"
+  },
   "alertmanager_config": {
     "global": {},
     "mute_time_intervals": [],
     "receivers": [
       {
         "email_configs": [
-          { "require_tls": false, "send_resolved": true, "to": "foo@bar.com" },
-          { "require_tls": false, "send_resolved": true, "to": "foo@bar.com" }
+          {
+            "require_tls": false,
+            "send_resolved": true,
+            "to": "foo@bar.com"
+          },
+          {
+            "require_tls": false,
+            "send_resolved": true,
+            "to": "foo@bar.com"
+          }
         ],
         "name": "mixed",
-        "webhook_configs": [{ "send_resolved": true, "url": "https://foo.bar/" }]
+        "webhook_configs": [
+          {
+            "send_resolved": true,
+            "url": "https://foo.bar/"
+          }
+        ]
       },
-      { "name": "some webhook", "webhook_configs": [{ "send_resolved": true, "url": "https://foo.bar/" }] }
+      {
+        "name": "some webhook",
+        "webhook_configs": [
+          {
+            "send_resolved": true,
+            "url": "https://foo.bar/"
+          }
+        ]
+      }
     ],
     "route": {
       "continue": false,
