@@ -27,6 +27,6 @@ export function prepareContext(context: Object): LogContext {
       }
     }
   }
-  prepare(context, 'context');
+  prepare(context, 'crash');
   return preparedContext;
 }
