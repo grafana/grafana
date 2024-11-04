@@ -43,6 +43,8 @@ composableKinds: PanelCfg: {
 					onClickFilterOutString?: _
 					onClickShowField?:       _
 					onClickHideField?:       _
+					logRowMenuIconsBefore?:  _
+					logRowMenuIconsAfter?:   _
 					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
 			}

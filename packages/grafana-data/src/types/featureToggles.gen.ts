@@ -80,7 +80,6 @@ export interface FeatureToggles {
   pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
-  vizAndWidgetSplit?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -198,7 +197,7 @@ export interface FeatureToggles {
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
   zanzana?: boolean;
-  passScopeToDashboardApi?: boolean;
+  reloadDashboardsOnParamsChange?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -226,4 +225,6 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  dashboardSchemaV2?: boolean;
+  playlistsWatcher?: boolean;
 }

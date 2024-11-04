@@ -16,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
+const (
+	resourceType     = "resource"
+	namespaceType    = "namespace"
+	folderTypePrefix = "folder2:"
+)
+
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
@@ -91,12 +97,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	s.modelID = modelID
 
 	return s, nil
-}
-
-func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	tracer.Start(ctx, "authzServer.Check")
-
-	return &authzv1.CheckResponse{}, nil
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {

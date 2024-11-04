@@ -97,7 +97,7 @@ Data source query labels labels are also used to generate multiple alert instanc
 
 Reserved labels are automatically added by Grafana:
 
-- `alert_name`: the name of the alert rule.
+- `alertname`: the name of the alert rule.
 - `grafana_folder`: the title of the folder containing the alert.
 
 Labels prefixed with `grafana_` are reserved by Grafana for special use. You can disable reserved labels via the [`unified_alerting.reserved_labels`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels) option.
