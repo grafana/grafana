@@ -1556,6 +1556,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:            "playlistsWatcher",
+			Description:     "Enables experimental watcher for playlists",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 
