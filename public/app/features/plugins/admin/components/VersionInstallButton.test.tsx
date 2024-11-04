@@ -83,7 +83,7 @@ describe('VersionInstallButton', () => {
     expect(screen.getByText('Downgrade plugin version')).toBeInTheDocument();
   });
 
-  it('should shown installed text and a disable button when version is installed', () => {
+  it('should shown installed text instead of button when version is installed', () => {
     const version: Version = {
       version: '1.0.0',
       createdAt: '',
@@ -100,10 +100,8 @@ describe('VersionInstallButton', () => {
         onConfirmInstallation={() => {}}
       />
     );
-    const el = screen.getByRole('button');
-    expect(el).toHaveTextContent(/Installed/i);
+    const el = screen.getByText('Installed');
     expect(el).toBeVisible();
-    expect(el).toBeDisabled();
   });
 });
 
