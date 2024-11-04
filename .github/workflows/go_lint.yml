@@ -29,5 +29,5 @@ jobs:
           version: v1.61.0
           args: |
             --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose
-            $(go list -m -f '{{.Dir}}/...' | grep pkg/) ./pkg/...
+            $(go list -m -f '{{.Path}}/...' | grep pkg/) ./pkg/...
           install-mode: binary
