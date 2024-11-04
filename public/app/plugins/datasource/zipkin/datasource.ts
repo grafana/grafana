@@ -70,11 +70,6 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     return res.data;
   }
 
-  async testDatasource(): Promise<{ status: string; message: string }> {
-    await this.getResource(`services`);
-    return { status: 'success', message: 'Data source is working' };
-  }
-
   getQueryDisplayText(query: ZipkinQuery): string {
     return query.query;
   }
