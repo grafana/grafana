@@ -729,7 +729,7 @@ func TestGetLibraryElementsCommands(t *testing.T) {
 }
 
 // NOTE: this should be on the plugin object
-func TestisPublicSignatureType(t *testing.T) {
+func TestIsPublicSignatureType(t *testing.T) {
 	testcases := []struct {
 		signature      plugins.SignatureType
 		expectedPublic bool
@@ -757,7 +757,7 @@ func TestisPublicSignatureType(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		resPublic := isPublicSignatureType(testcase.signature)
+		resPublic := IsPublicSignatureType(testcase.signature)
 		require.Equal(t, resPublic, testcase.expectedPublic)
 	}
 }
@@ -857,7 +857,6 @@ func TestGetPlugins(t *testing.T) {
 		pluginsIDs = append(pluginsIDs, plugin.ID)
 	}
 	require.ElementsMatch(t, pluginsIDs, expectedPluginIDs)
-
 }
 
 func ctxWithSignedInUser() context.Context {

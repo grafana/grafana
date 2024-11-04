@@ -382,10 +382,12 @@ type PluginCmd struct {
 }
 
 // IsPublicSignatureType returns true if plugin signature type is public
-func isPublicSignatureType(signatureType plugins.SignatureType) bool {
+func IsPublicSignatureType(signatureType plugins.SignatureType) bool {
 	switch signatureType {
 	case plugins.SignatureTypeGrafana, plugins.SignatureTypeCommercial, plugins.SignatureTypeCommunity:
 		return true
+	case plugins.SignatureTypePrivate, plugins.SignatureTypePrivateGlob:
+		return false
 	}
 	return false
 }
@@ -400,8 +402,7 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 
 	for _, plugin := range plugins {
 		// Filter plugins to keep only non core, signed, with public signature type plugins
-		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && isPublicSignatureType(plugin.SignatureType) {
-
+		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && IsPublicSignatureType(plugin.SignatureType) {
 			pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
 				Enabled:       plugin.JSONData.AutoEnabled,
 				Pinned:        plugin.Pinned,
