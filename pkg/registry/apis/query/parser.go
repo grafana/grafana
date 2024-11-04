@@ -214,10 +214,15 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, dataQuery data.
 
 	if ds.UID[0] == '$' {
 		uid, ok := dataQuery.Get("datasourceUid")
-		p.logger.Debug("dataQuery: %v", dataQuery)
+		p.logger.Debug("dataQuery uid: %v", uid)
 		if ok {
 			return p.legacy.GetDataSourceFromDeprecatedFields(ctx, uid.(string), 0) // uid can be name in this scenario
 		} else {
+			j, err := json.Marshal(dataQuery)
+			if err != nil {
+				p.logger.Debug("error marshaling: %v", err)
+			}
+			p.logger.Debug("dataQuery: %v", j)
 			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("unable to get datasource from datasourceUid"))
 		}
 	}
