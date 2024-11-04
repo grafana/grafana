@@ -1,15 +1,18 @@
+import { LogContext } from '@grafana/faro-core/dist/types/api/logs/types';
+
 /**
  * Ensures the context is a flat object with strings (required by Faro)
  */
-export function prepareContext(context: Object): Record<string, string> {
-  const preparedContext = {};
-  function prepare(value, propertyName) {
+export function prepareContext(context: Object): LogContext {
+  const preparedContext: LogContext = {};
+  function prepare(value: object | string | number, propertyName: string) {
     if (typeof value === 'object' && value !== null) {
       if (Array.isArray(value)) {
         throw new Error('Array values are not supported.');
       } else {
         for (const key in value) {
           if (value.hasOwnProperty(key)) {
+            // @ts-ignore
             prepare(value[key], propertyName ? `${propertyName}_${key}` : key);
           }
         }
