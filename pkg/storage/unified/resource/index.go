@@ -2,8 +2,10 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	golog "log"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -31,7 +33,7 @@ type Opts struct {
 }
 
 type Index struct {
-	shards map[string]Shard
+	shards sync.Map // need concurrency-safe map for building the index
 	opts   Opts
 	s      *server
 	log    log.Logger
@@ -42,7 +44,7 @@ func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
 	idx := &Index{
 		s:      s,
 		opts:   opts,
-		shards: make(map[string]Shard),
+		shards: sync.Map{},
 		log:    log.New("unifiedstorage.search.index"),
 		tracer: tracer,
 	}
@@ -128,32 +130,77 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string,
 }
 
 func (i *Index) Init(ctx context.Context) error {
+	logger := i.log.FromContext(ctx)
+	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"InitForTenant")
+	defer span.End()
+
+	start := time.Now().Unix()
+	group := errgroup.Group{}
+	group.SetLimit(20)
+
+	totalObjects := 0
+	// TODO get all tenants
+	// hacking this for now
+	for k := 1; k <= 1000; k++ {
+		group.Go(func() error {
+			objs, err := i.InitForTenant(ctx, fmt.Sprintf("stacks-%d", k))
+			if err != nil {
+				return err
+			}
+			totalObjects += objs
+			return nil
+		})
+	}
+
+	err := group.Wait()
+	if err != nil {
+		return err
+	}
+
+	//index all remaining batches for all tenants
+	logger.Info("indexing remaining batches", "shards", i.Count())
+	err = i.IndexBatches(ctx, 1, i.allTenants())
+	if err != nil {
+		return err
+	}
+
+	span.AddEvent("indexing finished", trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjects))))
+	end := time.Now().Unix()
+	logger.Info("Initial indexing finished", "seconds", float64(end-start))
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
+
+	return nil
+}
+
+func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error) {
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Init")
 	defer span.End()
 	logger := i.log.FromContext(ctx)
 
-	start := time.Now().Unix()
 	resourceTypes := fetchResourceTypes()
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
-		logger.Info("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers)
+		logger.Info("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
 		r := &ListRequest{Options: rt, Limit: int64(i.opts.ListLimit)}
+		r.Options.Key.Namespace = namespace // scope the list to a tenant or this will take forever when US has 1M+ resources
 
 		// Paginate through the list of resources and index each page
 		for {
-			logger.Info("fetching resource list", "kind", rt.Key.Resource)
+			logger.Info("fetching resource list", "kind", rt.Key.Resource, "namespace", namespace)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
-				return err
+				return totalObjectsFetched, err
 			}
 
 			totalObjectsFetched += len(list.Items)
 
-			logger.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items))
+			logger.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
 			//add changes to batches for shards with changes in the List
 			err = i.writeBatch(ctx, list)
 			if err != nil {
-				return err
+				return totalObjectsFetched, err
 			}
 
 			if list.NextPageToken == "" {
@@ -164,21 +211,13 @@ func (i *Index) Init(ctx context.Context) error {
 		}
 	}
 
-	//index all remaining batches
-	logger.Info("indexing remaining batches", "shards", len(i.shards))
-	err := i.IndexBatches(ctx, 1, i.allTenants())
-	if err != nil {
-		return err
-	}
+	span.AddEvent(
+		"indexing finished for tenant",
+		trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjectsFetched))),
+		trace.WithAttributes(attribute.String("tenant", namespace)),
+	)
 
-	span.AddEvent("indexing finished", trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjectsFetched))))
-	end := time.Now().Unix()
-	logger.Info("Initial indexing finished", "seconds", float64(end-start))
-	if IndexServerMetrics != nil {
-		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
-	}
-
-	return nil
+	return totalObjectsFetched, nil
 }
 
 func (i *Index) writeBatch(ctx context.Context, list *ListResponse) error {
@@ -207,6 +246,17 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	}
 	tenant := res.Namespace
 	logger.Debug("indexing resource for tenant", "res", string(data.Value.Value), "tenant", tenant)
+
+	// if tenant doesn't exist, they may have been created during initial indexing
+	_, ok := i.shards.Load(tenant)
+	if !ok {
+		i.log.Info("tenant not found, initializing", "tenant", tenant)
+		_, err = i.InitForTenant(ctx, tenant)
+		if err != nil {
+			return err
+		}
+	}
+
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
@@ -308,30 +358,30 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	return &IndexResults{Values: results, Groups: groups}, nil
 }
 
-func (i *Index) Count() (uint64, error) {
-	var total uint64
-	for _, shard := range i.shards {
-		count, err := shard.index.DocCount()
-		if err != nil {
-			i.log.Error("failed to get doc count", "error", err)
-		}
-		total += count
-	}
-	return total, nil
+// Count returns the number of shards in the index
+func (i *Index) Count() int {
+	var count int
+	i.shards.Range(func(k, v interface{}) bool {
+		count++
+		return true
+	})
+	return count
 }
 
+// allTenants returns a list of all tenants in the index
 func (i *Index) allTenants() []string {
-	tenants := make([]string, 0, len(i.shards))
-	for tenant := range i.shards {
-		tenants = append(tenants, tenant)
-	}
+	tenants := make([]string, i.Count())
+	i.shards.Range(func(k, v interface{}) bool {
+		tenants = append(tenants, k.(string))
+		return true
+	})
 	return tenants
 }
 
 func (i *Index) getShard(tenant string) (Shard, error) {
-	shard, ok := i.shards[tenant]
+	shard, ok := i.shards.Load(tenant)
 	if ok {
-		return shard, nil
+		return shard.(Shard), nil
 	}
 
 	index, path, err := i.createIndex()
@@ -344,9 +394,9 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 		path:  path,
 		batch: index.NewBatch(),
 	}
-	// TODO: do we need to lock this?
-	i.shards[tenant] = shard
-	return shard, nil
+	i.shards.Store(tenant, shard)
+
+	return shard.(Shard), nil
 }
 
 func (i *Index) createIndex() (bleve.Index, string, error) {
@@ -377,16 +427,23 @@ func createInMemoryIndex() (bleve.Index, string, error) {
 // TODO - fetch from api
 func fetchResourceTypes() []*ListOptions {
 	items := []*ListOptions{}
-	items = append(items, &ListOptions{
-		Key: &ResourceKey{
-			Group:    "playlist.grafana.app",
-			Resource: "playlists",
-		},
-	}, &ListOptions{
-		Key: &ResourceKey{
-			Group:    "folder.grafana.app",
-			Resource: "folders",
-		},
-	})
+	items = append(items,
+		//&ListOptions{
+		//	Key: &ResourceKey{
+		//		Group:    "playlist.grafana.app",
+		//		Resource: "playlists",
+		//	},
+		//}, &ListOptions{
+		//	Key: &ResourceKey{
+		//		Group:    "folder.grafana.app",
+		//		Resource: "folders",
+		//	},
+		//},
+		&ListOptions{
+			Key: &ResourceKey{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
+		})
 	return items
 }
