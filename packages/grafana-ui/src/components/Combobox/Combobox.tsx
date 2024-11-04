@@ -347,6 +347,7 @@ export const Combobox = <T extends string | number>({
         )}
         {asyncError && (
           <Stack justifyContent="center" alignItems="center" height={8}>
+            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
             <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
           </Stack>
         )}

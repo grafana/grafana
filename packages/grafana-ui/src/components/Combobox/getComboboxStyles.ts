@@ -98,5 +98,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     }),
+    warningIcon: css({
+      label: 'grafana-select-warning-icon',
+      color: theme.colors.text.secondary,
+    }),
   };
 };
