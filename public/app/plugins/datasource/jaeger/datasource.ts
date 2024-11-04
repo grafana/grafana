@@ -79,7 +79,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     let { start, end } = this.getTimeRange(options.range);
 
     if (target.queryType !== 'search' && target.query) {
-      let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`;
+      let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query.trim(), options.scopedVars))}`;
       if (this.traceIdTimeParams) {
         url += `?start=${start}&end=${end}`;
       }
