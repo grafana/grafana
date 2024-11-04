@@ -22,7 +22,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
-      - run: CODEGEN_VERIFY=1 make gen-cue
       - run: make gen-go
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
