@@ -108,7 +108,7 @@ func (hs *HTTPServer) UpsertAuthInfo(reqCtx *contextmodel.ReqContext) {
 		AuthId:     dto.AuthId,
 		AuthModule: dto.AuthModule,
 	})
-	if err != nil {
+	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 		reqCtx.WriteErrOrFallback(http.StatusInternalServerError, "auth info failed fetching", err)
 		return
 	}
