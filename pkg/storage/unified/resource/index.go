@@ -24,6 +24,13 @@ type Shard struct {
 	batch *bleve.Batch
 }
 
+type Opts struct {
+	Workers   int    // This controls how many goroutines are used to index objects
+	BatchSize int    // This is the batch size for how many objects to add to the index at once
+	ListLimit int    // This is how big the List page size is. If the response size is too large, the number of items will be limited by the server.
+	IndexDir  string // The directory where the indexes for each tenant are stored
+}
+
 type Index struct {
 	shards map[string]Shard
 	opts   Opts
@@ -292,22 +299,6 @@ func (i *Index) Count() (uint64, error) {
 	return total, nil
 }
 
-type Opts struct {
-	Workers   int    // This controls how many goroutines are used to index objects
-	BatchSize int    // This is the batch size for how many objects to add to the index at once
-	ListLimit int    // This is how big the List page size is. If the response size is too large, the number of items will be limited by the server.
-	IndexDir  string // The directory where the indexes for each tenant are stored
-}
-
-func createFileIndex(path string) (bleve.Index, string, error) {
-	indexPath := filepath.Join(path, uuid.New().String())
-	index, err := bleve.New(indexPath, createIndexMappings())
-	if err != nil {
-		golog.Fatalf("Failed to create index: %v", err)
-	}
-	return index, indexPath, err
-}
-
 func (i *Index) allTenants() []string {
 	tenants := make([]string, 0, len(i.shards))
 	for tenant := range i.shards {
@@ -321,7 +312,8 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 	if ok {
 		return shard, nil
 	}
-	index, path, err := createFileIndex(i.opts.IndexDir)
+
+	index, path, err := i.createIndex()
 	if err != nil {
 		return Shard{}, err
 	}
@@ -334,6 +326,31 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 	// TODO: do we need to lock this?
 	i.shards[tenant] = shard
 	return shard, nil
+}
+
+func (i *Index) createIndex() (bleve.Index, string, error) {
+	if i.opts.IndexDir == "" {
+		return createInMemoryIndex()
+	}
+	return createFileIndex(i.opts.IndexDir)
+}
+
+var mappings = createIndexMappings()
+
+// less memory intensive alternative for larger indexes with less tenants (on-prem)
+func createFileIndex(path string) (bleve.Index, string, error) {
+	indexPath := filepath.Join(path, uuid.New().String())
+	index, err := bleve.New(indexPath, mappings)
+	if err != nil {
+		golog.Fatalf("Failed to create index: %v", err)
+	}
+	return index, indexPath, err
+}
+
+// faster indexing when there are many tenants with smaller batches (cloud)
+func createInMemoryIndex() (bleve.Index, string, error) {
+	index, err := bleve.NewMemOnly(mappings)
+	return index, "", err
 }
 
 // TODO - fetch from api

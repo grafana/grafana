@@ -214,12 +214,11 @@ func (s *Service) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*u
 
 func (s *Service) GetByUID(ctx context.Context, query *user.GetUserByUIDQuery) (*user.User, error) {
 	ctx, span := s.tracer.Start(ctx, "user.GetByUID", trace.WithAttributes(
-		attribute.Int64("orgID", query.OrgID),
 		attribute.String("userUID", query.UID),
 	))
 	defer span.End()
 
-	return s.store.GetByUID(ctx, query.OrgID, query.UID)
+	return s.store.GetByUID(ctx, query.UID)
 }
 
 func (s *Service) GetByLogin(ctx context.Context, query *user.GetUserByLoginQuery) (*user.User, error) {
