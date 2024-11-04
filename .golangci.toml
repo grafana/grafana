@@ -215,6 +215,10 @@ enable = [
 [issues]
 exclude-use-default = false
 max-same-issues = 0
+exclude-dirs = [
+	"devenv",
+	"scripts",
+]
 
 # Enable when appropriate
 # Poorly chosen identifier
