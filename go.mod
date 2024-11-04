@@ -475,12 +475,12 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1
 	connectrpc.com/connect v1.17.0
-	github.com/bufbuild/connect-go v1.10.0
 )
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
+	github.com/bufbuild/connect-go v1.10.0 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
