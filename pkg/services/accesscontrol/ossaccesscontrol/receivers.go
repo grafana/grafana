@@ -171,8 +171,8 @@ func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions 
 		cmds = append(cmds, accesscontrol.SetResourcePermissionCommand{
 			Permission:  permission,
 			BuiltinRole: p.BuiltInRole,
-			TeamID:      p.TeamId,
-			UserID:      p.UserId,
+			TeamID:      p.TeamID,
+			UserID:      p.UserID,
 		})
 	}
 	return cmds

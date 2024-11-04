@@ -40,6 +40,10 @@ func UIDToIDHandler(userService Service) func(ctx context.Context, userID string
 		user, err := userService.GetByUID(ctx, &GetUserByUIDQuery{
 			UID: userID,
 		})
+		if err != nil {
+			return "", err
+		}
+
 		return strconv.FormatInt(user.ID, 10), err
 	}
 }
