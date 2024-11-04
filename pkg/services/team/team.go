@@ -32,6 +32,10 @@ func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, 
 			return resourceID, nil
 		}
 		team, err := teamService.GetTeamByID(ctx, &GetTeamByIDQuery{UID: resourceID, OrgID: orgID})
+		if err != nil {
+			return "", err
+		}
+
 		return strconv.FormatInt(team.ID, 10), err
 	}
 }
