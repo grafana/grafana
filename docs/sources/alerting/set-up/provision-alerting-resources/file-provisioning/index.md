@@ -270,8 +270,8 @@ settings:
   url: https://discord/webhook
   # <string>
   avatar_url: https://my_avatar
-  # <string>
-  use_discord_username: Grafana
+  # <bool>
+  use_discord_username: false
   # <string>
   message: |
     {{ template "default.message" . }}
