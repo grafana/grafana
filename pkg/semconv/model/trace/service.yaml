@@ -1,0 +1,7 @@
+groups:
+  - id: trace.grafana.service
+    type: span
+    brief: 'Semantic Convention for Grafana services'
+    stability: stable
+    attributes:
+      - ref: grafana.service.name
