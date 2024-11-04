@@ -82,7 +82,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      expect(await ui.actionButtons.more.find()).toBeInTheDocument();
+      await user.click(await ui.actionButtons.more.find());
       expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
 
