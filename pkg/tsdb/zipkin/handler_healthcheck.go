@@ -31,6 +31,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusError,
-		Message: fmt.Sprintf("invalid response from zipkin URL with status code %s", res.StatusCode),
+		Message: fmt.Sprintf("invalid response from zipkin URL with status code %d", res.StatusCode),
 	}, nil
 }

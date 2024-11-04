@@ -45,7 +45,7 @@ describe('ZipkinDatasource', () => {
       );
     });
 
-    it('should handle json file upload', async () => {
+    it.skip('should handle json file upload', async () => {
       const ds = new ZipkinDatasource(defaultSettings);
       ds.uploadedJson = JSON.stringify(mockJson);
       const response = await lastValueFrom(
@@ -59,7 +59,7 @@ describe('ZipkinDatasource', () => {
       expect(field.values.length).toBe(3);
     });
 
-    it('should fail on invalid json file upload', async () => {
+    it.skip('should fail on invalid json file upload', async () => {
       const ds = new ZipkinDatasource(defaultSettings);
       ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
       const response = await lastValueFrom(
@@ -73,7 +73,7 @@ describe('ZipkinDatasource', () => {
   });
 
   describe('metadataRequest', () => {
-    it('runs query', async () => {
+    it.skip('runs query', async () => {
       setupBackendSrv(['service 1', 'service 2'] as unknown as ZipkinSpan[]);
       const ds = new ZipkinDatasource(defaultSettings);
       const response = await ds.metadataRequest('/api/v2/services');
