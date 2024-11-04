@@ -171,7 +171,10 @@ export class AppChromeService {
     if (megaMenuDocked) {
       store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
-    reportInteraction('grafana_mega_menu_open', { state: newOpenState });
+    reportInteraction('grafana_mega_menu_open', {
+      state: newOpenState,
+      singleTopNav: Boolean(config.featureToggles.singleTopNav),
+    });
     this.update({
       megaMenuOpen: newOpenState,
     });
