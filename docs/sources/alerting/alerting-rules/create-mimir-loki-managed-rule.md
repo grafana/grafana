@@ -139,6 +139,6 @@ Annotations add metadata to provide more information on the alert in your alert 
 1. Optional: Add a custom annotation
 1. Optional: Add a **dashboard and panel link**.
 
-   [Link the alert rule to a panel in a dashboard](ref:link-alert-rules-to-dashboards).
+   [Link the alert rule to a panel](ref:link-alert-rules-to-dashboards) to enhance alert investigation.
 
 1. Click **Save rule**.

@@ -15,8 +15,8 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Link alert rules to dashboards and panels
-menuTitle: Link alert rules to dashboards
+title: Create and link alert rules with panels and dashboards
+menuTitle: Create and link alert rules with panels
 weight: 300
 refs:
   time-series-visualizations:
@@ -24,62 +24,61 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
-  alert-list-panel:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
   annotations:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
+  view-alert-state-on-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-alert-state-on-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-alert-state-on-panels/
 ---
 
-# Link alert rules to dashboards and panels
+# Create and link alert rules with panels and dashboards
 
-Grafana allows you to link alert rules with panels and dashboards. This helps connect alerts with an existing dashboard and informs alert responders on where to investigate.
+Grafana allows you to link an alert rule to a dashboard panel. This can help you:
 
-An alert rule is linked to a dashboard and panel via the [`dashboardUId` and `panelId` annotations](ref:annotations), respectively. When configuring the alert rule, you can set the dashboard and panel annotations as shown in this [video](https://youtu.be/ClLp-iSoaSY?si=qKWnvSVaQuvYcuw9&t=170).
+- Inform alert responders about where to investigate and which data to examine.
+- Visualize the alert state directly from dashboards.
+
+An alert rule is linked to a dashboard and panel via the [`dashboardUId` and `panelId` annotations](ref:annotations).
+
+## Link alert rule to dashboard and panel
+
+When configuring the alert rule, you can set the dashboard and panel annotations as shown in this [video](https://youtu.be/ClLp-iSoaSY?si=qKWnvSVaQuvYcuw9&t=170).
 
 1. Configure the alert rule.
-1. Click **Link dashboard and panel** on the **Configure notification message** section.
+1. In the **Configure notification message** section, click **Link dashboard and panel**.
 1. Select an existing dashboard and panel from the list.
+1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
+
+You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
+
+{{< figure src="/media/docs/alerting/panel-displays-alert-state.png" max-width="1200px" caption="A panel displaying the alert status and state changes." >}}
 
 ## Create alert rules from panels
 
-You can also create an alert rule from a panel. This allows you to reuse the panel query for the alert rule query and automatically sets the panel and dashboard annotations.
+To streamline alert creation, you can create an alert rule directly from a panel.
 
 1. Navigate to a dashboard in the **Dashboards** section.
-1. Hover over the top-right corner of a time series panel and click the panel menu icon.
+1. Hover over the top-right corner of a panel and click the panel menu icon.
 1. From the dropdown menu, select **More...** > **New alert rule**.
+1. This opens the **Edit rule** form and pre-fills some values:
+   - Sets the `dashboardUId` and `panelId` annotations to the corresponding dashboard and panel.
+   - Sets the alert rule query using the panel query.
+     {{% admonition type="note" %}}
+     Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
+     {{% /admonition %}}
+1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 
-The New alert rule form opens where you can configure and create your alert rule based on the query used in the panel.
+You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
 
-{{% admonition type="note" %}}
+## Access linked alert rules from panels
 
-Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
-
-{{% /admonition %}}
-
-## View alert rules from panels
-
-This option is available only in [time series panels](ref:time-series-visualizations). To view alert rules associated to a time series panel, complete the following steps.
+This option is available only in [time series panels](ref:time-series-visualizations). To access alert rules associated to a time series panel, complete the following steps.
 
 1. Hover over the top-right corner of the panel and click the panel menu icon.
 1. Click **Edit**.
 1. Click the **Alert** tab to view existing alert rules or create a new one.
-
-## View alert state in dashboards
-
-When an alert rule is linked to a [time series panel](ref:time-series-visualizations), the time series panel displays the alert state and alert events.
-
-A heart icon near the panel title indicates the current alert state, and colored annotations show changes in alert state.
-
-{{< figure src="/media/docs/alerting/panel-displays-alert-state.png" max-width="1200px" caption="A panel with a firing alert and annotations that display the pending and alerting state changes." >}}
-
-#### Alert list panel
-
-Additionally, Grafana provides an [alert list panel](ref:alert-list-panel) to display a list of alerts. You can configure the alert list panel with various visualization options and filters to control how alerts are displayed.
-
-{{< docs/play title="this demo dashboard with alert list panels and linked alert rules" url="https://play.grafana.org/d/000000074/" >}}
