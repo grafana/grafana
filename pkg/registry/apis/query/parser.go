@@ -214,7 +214,7 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, dataQuery data.
 		if ok {
 			return p.legacy.GetDataSourceFromDeprecatedFields(ctx, uid.(string), 0) // uid can be name in this scenario
 		} else {
-			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("missing datasource reference or id"))
+			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("unable to get datasource from datasourceUid"))
 		}
 	}
 
