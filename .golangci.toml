@@ -218,6 +218,7 @@ max-same-issues = 0
 exclude-dirs = [
 	"devenv",
 	"scripts",
+	"pkg/util/xorm",
 ]
 
 # Enable when appropriate
