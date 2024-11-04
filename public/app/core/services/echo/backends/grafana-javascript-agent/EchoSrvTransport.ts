@@ -3,6 +3,14 @@ import { getEchoSrv, EchoEventType, config } from '@grafana/runtime';
 export class EchoSrvTransport extends BaseTransport {
   readonly name: string = 'EchoSrvTransport';
   readonly version: string = config.buildInfo.version;
+  private ignoreUrls: RegExp[] = [];
+
+  constructor(private options?: { ignoreUrls: RegExp[] }) {
+    super();
+
+    this.ignoreUrls = options?.ignoreUrls ?? [];
+  }
+
   send(items: TransportItem[]) {
     getEchoSrv().addEvent({
       type: EchoEventType.GrafanaJavascriptAgent,
@@ -15,6 +23,6 @@ export class EchoSrvTransport extends BaseTransport {
   }
 
   getIgnoreUrls() {
-    return [];
+    return this.ignoreUrls;
   }
 }
