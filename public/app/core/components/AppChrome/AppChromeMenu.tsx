@@ -44,7 +44,7 @@ export function AppChromeMenu({}: Props) {
         // don't close when interacting with a select menu inside the mega menu
         // e.g. for the org switcher
         const isSelectMenu = document
-          .querySelector(`[data-testid=${selectors.components.Select.menu}]`)
+          .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
           ?.contains(element);
         return !isMenuToggle && !isSelectMenu;
       },
