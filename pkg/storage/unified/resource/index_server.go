@@ -28,17 +28,18 @@ func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchR
 	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Search")
 	defer span.End()
 
-	results, err := is.index.Search(ctx, req.Tenant, req.Query, int(req.Limit), int(req.Offset))
+	results, err := is.index.Search(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	res := &SearchResponse{}
-	for _, r := range results {
+	for _, r := range results.Values {
 		resJsonBytes, err := json.Marshal(r)
 		if err != nil {
 			return nil, err
 		}
 		res.Items = append(res.Items, &ResourceWrapper{Value: resJsonBytes})
+		res.Groups = results.Groups
 	}
 	return res, nil
 }

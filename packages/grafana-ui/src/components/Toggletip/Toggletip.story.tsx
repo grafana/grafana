@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
 import { Button } from '../Button';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import mdx from '../Toggletip/Toggletip.mdx';
 
 import { Toggletip } from './Toggletip';
@@ -96,7 +96,7 @@ export const LongContent: StoryFn<typeof Toggletip> = ({
     <Toggletip
       title={<h2>Toggletip with scrollable content and no interactive controls</h2>}
       content={
-        <CustomScrollbar autoHeightMax="500px">
+        <ScrollContainer maxHeight="500px">
           {/* one of the few documented cases we can turn this rule off */}
           {/* https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-noninteractive-tabindex.md#case-shouldnt-i-add-a-tabindex-so-that-users-can-navigate-to-this-item */}
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
@@ -110,7 +110,7 @@ export const LongContent: StoryFn<typeof Toggletip> = ({
               <p key={i}>This is some content repeated over and over again to ensure it is scrollable.</p>
             ))}
           </div>
-        </CustomScrollbar>
+        </ScrollContainer>
       }
       footer={footer}
       theme={theme}
