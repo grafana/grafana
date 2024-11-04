@@ -23,14 +23,14 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			Message: err.Error(),
 		}, nil
 	}
-	if res.StatusCode == http.StatusOK {
+	if res.StatusCode != http.StatusOK {
 		return &backend.CheckHealthResult{
-			Status:  backend.HealthStatusOk,
-			Message: "Data source is working",
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("invalid response from zipkin with status code %d", res.StatusCode),
 		}, nil
 	}
 	return &backend.CheckHealthResult{
-		Status:  backend.HealthStatusError,
-		Message: fmt.Sprintf("invalid response from zipkin URL with status code %d", res.StatusCode),
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
 	}, nil
 }
