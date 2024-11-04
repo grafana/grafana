@@ -33,6 +33,7 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Prometheus},
 		{ID: Pyroscope},
 		{ID: Tempo},
+		{ID: Zipkin},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
 	}

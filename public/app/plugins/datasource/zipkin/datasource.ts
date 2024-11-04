@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   FieldType,
@@ -13,9 +12,15 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
-import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
@@ -24,7 +29,7 @@ export interface ZipkinJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
 }
 
-export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData> {
+export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   spanBar?: SpanBarOptions;
@@ -50,11 +55,11 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
         return of({ error: { message: 'JSON is not valid Zipkin format' }, data: [] });
       }
     }
-
     if (target.query) {
-      const query = this.applyVariables(target, options.scopedVars);
-      return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
-        map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
+      return super.query({ ...options, targets: [this.applyVariables(target, options.scopedVars)] }).pipe(
+        map((res) => {
+          return responseToDataQueryResponse({ data: JSON.parse(res.data[0].meta.custom) });
+        }, this.nodeGraph?.enabled)
       );
     }
     return of(emptyDataQueryResponse);
@@ -66,7 +71,7 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
   }
 
   async testDatasource(): Promise<{ status: string; message: string }> {
-    await this.metadataRequest(`${apiPrefix}/services`);
+    await this.getResource(`services`);
     return { status: 'success', message: 'Data source is working' };
   }
 

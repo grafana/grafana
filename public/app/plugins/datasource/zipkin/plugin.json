@@ -3,7 +3,8 @@
   "name": "Zipkin",
   "id": "zipkin",
   "category": "tracing",
-
+  "backend": true,
+  "executable": "gpx_zipkin",
   "metrics": true,
   "alerting": false,
   "annotations": false,

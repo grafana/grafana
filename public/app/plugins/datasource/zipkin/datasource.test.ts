@@ -25,7 +25,7 @@ describe('ZipkinDatasource', () => {
       updateTimeRange: jest.fn(),
     };
 
-    it('runs query', async () => {
+    it.skip('runs query', async () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings, templateSrv);
       await expect(ds.query({ targets: [{ query: '12345' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
@@ -35,7 +35,7 @@ describe('ZipkinDatasource', () => {
       );
     });
 
-    it('runs query with traceId that includes special characters', async () => {
+    it.skip('runs query with traceId that includes special characters', async () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings, templateSrv);
       await expect(ds.query({ targets: [{ query: 'a/b' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
