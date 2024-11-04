@@ -360,7 +360,9 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 		s.cacheService.Set(cacheKey, *result, time.Second*5)
 	}
 
-	s.applyElevatedServerAdminOrg(ctx, result, query.OrgID)
+	if query.OrgID > 0 {
+		s.applyElevatedServerAdminOrg(ctx, result, query.OrgID)
+	}
 	return result, nil
 }
 
