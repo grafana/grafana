@@ -62,21 +62,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	}
 
-	tables := []migrator.Table{resource_table, resource_history_table}
-
-	// tables = append(tables, migrator.Table{
-	// 	Name: "resource_label_set",
-	// 	Columns: []*migrator.Column{
-	// 		{Name: "label_set", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
-	// 		{Name: "label", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-	// 		{Name: "value", Type: migrator.DB_Text, Nullable: false},
-	// 	},
-	// 	Indices: []*migrator.Index{
-	// 		{Cols: []string{"label_set", "label"}, Type: migrator.UniqueIndex},
-	// 	},
-	// })
-
-	tables = append(tables, migrator.Table{
+	resource_version_table := migrator.Table{
 		Name: "resource_version",
 		Columns: []*migrator.Column{
 			{Name: "group", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
@@ -86,7 +72,9 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Indices: []*migrator.Index{
 			{Cols: []string{"group", "resource"}, Type: migrator.UniqueIndex},
 		},
-	})
+	}
+
+	tables := []migrator.Table{resource_table, resource_history_table, resource_version_table}
 
 	// Initialize all tables
 	for t := range tables {
@@ -119,6 +107,14 @@ func initResourceTables(mg *migrator.Migrator) string {
 
 	mg.AddMigration("Add column folder in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
 		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: true,
+	}))
+
+	mg.AddMigration("Add column shard in resource", migrator.NewAddColumnMigration(resource_version_table, &migrator.Column{
+		Name: "shard", Type: migrator.DB_Int, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add index to resource_version", migrator.NewAddIndexMigration(resource_version_table, &migrator.Index{
+		Cols: []string{"group", "resource", "shard"}, Type: migrator.IndexType,
 	}))
 
 	return marker
