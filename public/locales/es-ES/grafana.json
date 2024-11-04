@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": ""
-      },
       "info-help": {
         "text": ""
       },
@@ -53,9 +50,39 @@
     "evaluation-behaviour-group": {
       "text": ""
     },
-    "pause": ""
+    "pause": {
+      "alerting": "",
+      "label": "",
+      "recording": ""
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        }
+      }
+    },
+    "alert-rules": {
+      "firing-for": "",
+      "next-evaluation": "",
+      "next-evaluation-in": "",
+      "rule-definition": ""
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "",
+        "recording": ""
+      }
+    },
     "annotations": {
       "description": "",
       "title": ""
@@ -113,6 +140,7 @@
     "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -120,6 +148,7 @@
         "provisioned": "",
         "rules": ""
       },
+      "delivered-to": "",
       "delivery-duration": "",
       "empty-state": {
         "title": ""
@@ -140,6 +169,20 @@
     },
     "contactPointFilter": {
       "label": ""
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "",
+            "recording": ""
+          }
+        },
+        "text": {
+          "alerting": "",
+          "recording": ""
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -438,11 +481,14 @@
     "cancel": "",
     "clear": "",
     "close": "",
+    "collapse": "",
+    "edit": "",
     "locale": {
       "default": "Por defecto"
     },
     "save": "Guardar",
-    "search": ""
+    "search": "",
+    "view": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -569,8 +615,7 @@
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización",
-      "widget": "«Widget»"
+      "visualization": "Visualización"
     },
     "alert-rules-drawer": {
       "redirect-link": "Lista en Alertas de Grafana",
@@ -583,9 +628,6 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "add-widget-body": "Crear listas, reducciones y otros «widgets»",
-      "add-widget-button": "Añadir widget",
-      "add-widget-header": "Añadir un «widget»",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control"
@@ -821,6 +863,11 @@
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
     "logs": {
+      "logs-volume": {
+        "add-filters": "",
+        "decrease-timerange": "",
+        "much-data": ""
+      },
       "maximum-pinned-logs": "",
       "no-logs-found": "",
       "scan-for-older-logs": "",
@@ -983,6 +1030,7 @@
       "copy-links-normal-category": "Enlaces URL normales",
       "copy-shortened-link": "Copiar URL acortada",
       "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-label": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
       "refresh-picker-run": "Ejecutar consulta",
@@ -1026,11 +1074,73 @@
     "send-custom-feedback": ""
   },
   "grafana-ui": {
+    "auto-save-field": {
+      "saved": "",
+      "saving": ""
+    },
+    "color-picker-popover": {
+      "palette-tab": "",
+      "spectrum-tab": ""
+    },
+    "confirm-button": {
+      "cancel": ""
+    },
+    "data-link-editor": {
+      "info": ""
+    },
+    "data-link-editor-modal": {
+      "cancel": "",
+      "save": ""
+    },
+    "data-links-inline-editor": {
+      "add-link": "",
+      "one-click-link": ""
+    },
+    "data-source-http-settings": {
+      "access-help": "",
+      "access-help-details": "",
+      "allowed-cookies": "",
+      "auth": "",
+      "basic-auth": "",
+      "browser-mode-description": "",
+      "browser-mode-title": "",
+      "default-url-tooltip": "",
+      "direct-url-tooltip": "",
+      "heading": "",
+      "proxy-url-tooltip": "",
+      "server-mode-description": "",
+      "server-mode-title": ""
+    },
+    "data-source-settings": {
+      "alerting-settings-heading": "",
+      "cert-key-reset": "",
+      "custom-headers-add": "",
+      "custom-headers-title": "",
+      "secure-socks-heading": "",
+      "tls-heading": ""
+    },
+    "date-time-picker": {
+      "apply": "",
+      "cancel": ""
+    },
     "drawer": {
       "close": "Cerrar"
     },
+    "field-link-list": {
+      "external-links-heading": ""
+    },
+    "file-dropzone": {
+      "cancel-upload": "",
+      "file-too-large": ""
+    },
+    "filter-input": {
+      "clear": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
+    },
+    "secret-form-field": {
+      "reset": ""
     },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
@@ -1038,6 +1148,7 @@
       "no-options": "No se ha encontrado ninguna opción"
     },
     "select": {
+      "default-create-label": "",
       "no-options-label": "No se ha encontrado ninguna opción",
       "placeholder": "Elegir"
     },
@@ -1045,7 +1156,26 @@
       "aria-label": ""
     },
     "table": {
-      "copy": ""
+      "copy": "",
+      "csv-counts": "",
+      "filter-popup-apply": "",
+      "filter-popup-cancel": "",
+      "filter-popup-clear": "",
+      "filter-popup-heading": "",
+      "no-values-label": "",
+      "pagination-summary": ""
+    },
+    "tags-input": {
+      "add": ""
+    },
+    "user-icon": {
+      "active-text": ""
+    },
+    "viz-legend": {
+      "right-axis-indicator": ""
+    },
+    "viz-tooltip": {
+      "footer-add-annotation": ""
     }
   },
   "graph": {
@@ -1366,8 +1496,17 @@
       "connect": "Conectar con esta pila",
       "connecting": "Conectando con esta pila...",
       "title": "Conectar a una pila en la nube",
-      "token-error-description": "",
       "token-error-title": "",
+      "token-errors": {
+        "instance-request-error": "",
+        "instance-unreachable": "",
+        "migration-disabled": "",
+        "session-creation-failure": "",
+        "token-invalid": "",
+        "token-not-saved": "",
+        "token-request-error": "",
+        "token-validation-failure": ""
+      },
       "token-required-error": "El token de migración es obligatorio"
     },
     "cta": {
@@ -1410,12 +1549,14 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
       "folders": "",
       "library_elements": "",
       "mute_timings": "",
+      "notification_policies": "",
       "notification_templates": ""
     },
     "migration-token": {
@@ -1471,6 +1612,20 @@
     },
     "resource-details": {
       "dismiss-button": "",
+      "error-messages": {
+        "dashboard-already-managed": "",
+        "datasource-already-managed": "",
+        "datasource-invalid-url": "",
+        "datasource-name-conflict": "",
+        "folder-name-conflict": "",
+        "generic-error": "",
+        "internal-service-error": "",
+        "library-element-name-conflict": "",
+        "only-core-data-sources": "",
+        "resource-conflict": "",
+        "unexpected-error": "",
+        "unsupported-data-type": ""
+      },
       "error-title": "",
       "generic-title": "",
       "missing-message": "",
@@ -1496,12 +1651,14 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Panel de control",
       "datasource": "Fuente de datos",
       "folder": "",
       "library_element": "",
       "mute_timing": "",
+      "notification_policy": "",
       "notification_template": "",
       "unknown": "Desconocido"
     },
@@ -2016,6 +2173,9 @@
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "installedVersion": "",
+        "lastCommitDate": "",
+        "latestVersion": "",
         "links": "",
         "reportAbuse": "",
         "signature": "",
@@ -2312,6 +2472,16 @@
     },
     "dismissable-button": "Cerrar"
   },
+  "role-picker": {
+    "title": {
+      "description": ""
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": ""
+    }
+  },
   "save-dashboards": {
     "name-exists": {
       "message-info": "",
@@ -2389,6 +2559,21 @@
   "select": {
     "select-menu": {
       "selected-count": ""
+    }
+  },
+  "service-account-create-page": {
+    "create": {
+      "button": ""
+    },
+    "name": {
+      "label": "",
+      "required-error": ""
+    },
+    "page-nav": {
+      "label": ""
+    },
+    "role": {
+      "label": ""
     }
   },
   "service-accounts": {
@@ -2681,10 +2866,16 @@
       "zoom-out-tooltip": "Reducir el intervalo de tiempo <1></1> CTRL+Z"
     },
     "time-range": {
+      "apply": "",
       "aria-role": "Selección de intervalo de tiempo",
       "default-title": "Intervalos de tiempo",
+      "example": "",
+      "example-details": "",
       "example-title": "Ejemplos de intervalos de tiempo",
-      "specify": "Especificar el intervalo de tiempo <1></1>"
+      "from-to": "",
+      "more-info": "",
+      "specify": "Especificar el intervalo de tiempo <1></1>",
+      "supported-formats": ""
     },
     "zone": {
       "select-aria-label": "Selector de huso horario",
@@ -2693,7 +2884,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2707,6 +2909,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",
@@ -2739,8 +2944,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "",
     "browser-column": "Navegador y sistema operativo",
     "created-at-column": "Conectado",
+    "identity-provider-column": "",
     "ip-column": "Dirección IP",
     "revoke": "Revocar sesión de usuario",
     "seen-at-column": "Última conexión"

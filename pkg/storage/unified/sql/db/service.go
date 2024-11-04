@@ -8,6 +8,9 @@ import (
 
 //go:generate mockery --with-expecter --name DB
 //go:generate mockery --with-expecter --name Tx
+//go:generate mockery --with-expecter --name Row
+//go:generate mockery --with-expecter --name Rows
+//go:generate mockery --with-expecter --exported --name result
 
 const (
 	DriverPostgres = "postgres"
@@ -59,9 +62,34 @@ type Tx interface {
 // ContextExecer is a set of database operation methods that take
 // context.Context.
 type ContextExecer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...any) (Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) Row
+}
+
+// Row is the set of methods from *sql.Row that we use.
+type Row interface {
+	Err() error
+	Scan(dest ...any) error
+}
+
+// Rows is the set of methods from *sql.Rows that we use.
+type Rows interface {
+	Close() error
+	Err() error
+	Next() bool
+	NextResultSet() bool
+	Scan(dest ...any) error
+}
+
+// Result is the standard sql.Result interface, for convenience.
+type Result = sql.Result
+
+// result is needed for mockery, since it doesn't support type aliases.
+//
+//nolint:unused
+type result interface {
+	Result
 }
 
 // WithTxFunc is an adapter to be able to provide the DB.WithTx method as an

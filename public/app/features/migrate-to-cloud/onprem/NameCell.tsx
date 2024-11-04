@@ -225,6 +225,10 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
       return <Icon size="xl" name="bell" />;
     case 'CONTACT_POINT':
       return <Icon size="xl" name="bell" />;
+    case 'NOTIFICATION_POLICY':
+      return <Icon size="xl" name="bell" />;
+    case 'ALERT_RULE':
+      return <Icon size="xl" name="bell" />;
     default:
       return undefined;
   }

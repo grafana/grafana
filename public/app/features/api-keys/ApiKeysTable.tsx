@@ -85,10 +85,11 @@ function formatDate(expiration: string | undefined, timeZone: TimeZone): string 
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (isExpired: boolean) => css`
-    color: ${isExpired ? theme.colors.text.secondary : theme.colors.text.primary};
-  `,
-  tooltipContainer: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  tableRow: (isExpired: boolean) =>
+    css({
+      color: isExpired ? theme.colors.text.secondary : theme.colors.text.primary,
+    }),
+  tooltipContainer: css({
+    marginLeft: theme.spacing(1),
+  }),
 });

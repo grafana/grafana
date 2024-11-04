@@ -1,4 +1,5 @@
-import { Navigate, useParams } from 'react-router-dom-v5-compat';
+import { useEffect } from 'react';
+import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -366,7 +367,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         : () => <Navigate replace to="/admin" />,
     },
     {
-      path: '/admin/storage/:path*',
+      path: '/admin/storage/:path/*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "StoragePage" */ 'app/features/storage/StoragePage')
@@ -516,9 +517,8 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     config.featureToggles.exploreMetrics && {
-      path: '/explore/metrics',
+      path: '/explore/metrics/*',
       chromeless: false,
-      exact: false,
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
@@ -535,6 +535,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...extraRoutes,
     ...getPublicDashboardRoutes(),
     ...getDataConnectionsRoutes(),
+    {
+      path: '/goto/*',
+      component: HandleGoToRedirect,
+    },
     {
       path: '/*',
       component: PageNotFound,
@@ -571,4 +575,15 @@ function DataSourceDashboardRoute() {
 function DataSourceEditRoute() {
   const { uid = '' } = useParams();
   return <Navigate replace to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', uid)} />;
+}
+
+// Explicitly send "goto" URLs to server, bypassing client-side routing
+function HandleGoToRedirect() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.location.href = pathname;
+  }, [pathname]);
+
+  return null;
 }

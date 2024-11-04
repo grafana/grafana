@@ -1,9 +1,6 @@
 package apiregistry
 
 import (
-	"context"
-
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
@@ -16,10 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
-)
-
-var (
-	_ registry.BackgroundService = (*Service)(nil)
 )
 
 type Service struct{}
@@ -41,9 +34,4 @@ func ProvideRegistryServiceSink(
 	_ *search.SearchAPIBuilder,
 ) *Service {
 	return &Service{}
-}
-
-func (s *Service) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }

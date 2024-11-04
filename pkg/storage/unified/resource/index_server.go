@@ -4,31 +4,42 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
-	"strings"
+	"log/slog"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
 type IndexServer struct {
 	ResourceServer
-	s     *server
-	index *Index
-	ws    *indexWatchServer
+	s      *server
+	index  *Index
+	ws     *indexWatchServer
+	log    *slog.Logger
+	cfg    *setting.Cfg
+	tracer tracing.Tracer
 }
 
+const tracingPrefixIndexServer = "unified_storage.index_server."
+
 func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	results, err := is.index.Search(ctx, req.Tenant, req.Query, int(req.Limit), int(req.Offset))
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Search")
+	defer span.End()
+
+	results, err := is.index.Search(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	res := &SearchResponse{}
-	for _, r := range results {
+	for _, r := range results.Values {
 		resJsonBytes, err := json.Marshal(r)
 		if err != nil {
 			return nil, err
 		}
 		res.Items = append(res.Items, &ResourceWrapper{Value: resJsonBytes})
+		res.Groups = results.Groups
 	}
 	return res, nil
 }
@@ -43,7 +54,16 @@ func (is *IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginR
 
 // Load the index
 func (is *IndexServer) Load(ctx context.Context) error {
-	is.index = NewIndex(is.s, Opts{})
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Load")
+	defer span.End()
+
+	opts := Opts{
+		Workers:   is.cfg.IndexWorkers,
+		BatchSize: is.cfg.IndexMaxBatchSize,
+		ListLimit: is.cfg.IndexListLimit,
+		IndexDir:  is.cfg.IndexPath,
+	}
+	is.index = NewIndex(is.s, opts, is.tracer)
 	err := is.index.Init(ctx)
 	if err != nil {
 		return err
@@ -60,10 +80,13 @@ func (is *IndexServer) Watch(ctx context.Context) error {
 		}
 
 		go func() {
-			// TODO: handle error
-			err := is.s.Watch(wr, is.ws)
-			if err != nil {
-				log.Printf("Error watching resource %v", err)
+			for {
+				// blocking call
+				err := is.s.Watch(wr, is.ws)
+				if err != nil {
+					is.log.Error("Error watching resource", "error", err)
+				}
+				is.log.Debug("Resource watch ended. Restarting watch")
 			}
 		}()
 	}
@@ -82,8 +105,21 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	return nil
 }
 
-func NewResourceIndexServer() ResourceIndexServer {
-	return &IndexServer{}
+func NewResourceIndexServer(cfg *setting.Cfg, tracer tracing.Tracer) ResourceIndexServer {
+	logger := slog.Default().With("logger", "index-server")
+
+	indexServer := &IndexServer{
+		log:    logger,
+		cfg:    cfg,
+		tracer: tracer,
+	}
+
+	err := prometheus.Register(NewIndexMetrics(cfg.IndexPath, indexServer))
+	if err != nil {
+		logger.Warn("Failed to register index metrics", "error", err)
+	}
+
+	return indexServer
 }
 
 type ResourceIndexer interface {
@@ -185,32 +221,24 @@ type Data struct {
 	Uid   string
 }
 
-func getGroup(r *Resource) string {
-	v := strings.Split(r.ApiVersion, "/")
-	if len(v) > 0 {
-		return v[0]
-	}
-	return ""
-}
-
 func getData(wr *WatchEvent_Resource) (*Data, error) {
-	r, err := getResource(wr.Value)
+	r, err := NewIndexedResource(wr.Value)
 	if err != nil {
 		return nil, err
 	}
 
 	key := &ResourceKey{
-		Group:     getGroup(r),
+		Group:     r.Group,
 		Resource:  r.Kind,
-		Namespace: r.Metadata.Namespace,
-		Name:      r.Metadata.Name,
+		Namespace: r.Namespace,
+		Name:      r.Name,
 	}
 
 	value := &ResourceWrapper{
 		ResourceVersion: wr.Version,
 		Value:           wr.Value,
 	}
-	return &Data{Key: key, Value: value, Uid: r.Metadata.Uid}, nil
+	return &Data{Key: key, Value: value, Uid: r.Uid}, nil
 }
 
 func resource(we *WatchEvent) (*WatchEvent_Resource, error) {
