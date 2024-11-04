@@ -219,6 +219,7 @@ exclude-dirs = [
 	"devenv",
 	"scripts",
 	"pkg/util/xorm",
+	"pkg/build/wire",
 ]
 
 # Enable when appropriate
