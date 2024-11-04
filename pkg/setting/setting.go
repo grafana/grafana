@@ -382,6 +382,7 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -531,8 +532,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
-	IndexPath      string
+	UnifiedStorage    map[string]UnifiedStorageConfig
+	IndexPath         string
+	IndexWorkers      int
+	IndexMaxBatchSize int
+	IndexListLimit    int
 }
 
 type UnifiedStorageConfig struct {
@@ -1158,6 +1162,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1341,7 +1346,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
-	cfg.setIndexPath()
 
 	return nil
 }

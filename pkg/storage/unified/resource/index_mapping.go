@@ -25,6 +25,11 @@ type IndexedResource struct {
 	Spec      any
 }
 
+type IndexResults struct {
+	Values []IndexedResource
+	Groups []*Group
+}
+
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
 	ir.Uid = hit.Fields["Uid"].(string)
 	ir.Kind = hit.Fields["Kind"].(string)
@@ -38,7 +43,7 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 	ir.Title = hit.Fields["Title"].(string)
 
 	// add indexed spec fields to search results
-	specResult := map[string]interface{}{}
+	specResult := map[string]any{}
 	for k, v := range hit.Fields {
 		if strings.HasPrefix(k, "Spec.") {
 			specKey := strings.TrimPrefix(k, "Spec.")
@@ -53,8 +58,6 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 // NewIndexedResource creates a new IndexedResource from a raw resource.
 // rawResource is the raw json for the resource from unified storage.
 func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
-	ir := &IndexedResource{}
-
 	k8sObj := unstructured.Unstructured{}
 	err := k8sObj.UnmarshalJSON(rawResource)
 	if err != nil {
@@ -66,6 +69,7 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
+	ir := &IndexedResource{}
 	ir.Uid = string(meta.GetUID())
 	ir.Name = meta.GetName()
 	ir.Title = meta.FindTitle("")
@@ -170,6 +174,20 @@ func getSpecObjectMappings() map[string][]SpecFieldMapping {
 				Type:  "string",
 			},
 		},
+		"Dashboard": {
+			{
+				Field: "title",
+				Type:  "string",
+			},
+			{
+				Field: "description",
+				Type:  "string",
+			},
+			{
+				Field: "tags",
+				Type:  "string[]",
+			},
+		},
 	}
 
 	return mappings
@@ -189,7 +207,7 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 
 		// Create a field mapping based on field type
 		switch fieldType {
-		case "string":
+		case "string", "string[]":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewTextFieldMapping())
 		case "int", "int64", "float64":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewNumericFieldMapping())

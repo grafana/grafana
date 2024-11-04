@@ -50,6 +50,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
       <h3>Information</h3>
       <table className="filter-table">
         <tbody>
+          <ServiceAccountProfileRow label="Numerical identifier" value={serviceAccount.id.toString()} disabled={true} />
           <ServiceAccountProfileRow
             label="Name"
             value={serviceAccount.name}

@@ -255,10 +255,6 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
-	// FlagVizAndWidgetSplit
-	// Split panels between visualizations and widgets
-	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -838,4 +834,12 @@ const (
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagDashboardSchemaV2
+	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
+	FlagDashboardSchemaV2 = "dashboardSchemaV2"
+
+	// FlagPlaylistsWatcher
+	// Enables experimental watcher for playlists
+	FlagPlaylistsWatcher = "playlistsWatcher"
 )
