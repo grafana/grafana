@@ -67,12 +67,13 @@ To streamline alert creation, you can create an alert rule directly from a panel
 1. This opens the **Edit rule** form and pre-fills some values:
    - Sets the `dashboardUId` and `panelId` annotations to the corresponding dashboard and panel.
    - Sets the alert rule query using the panel query.
-     {{% admonition type="note" %}}
-     Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
-     {{% /admonition %}}
 1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 
 You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
+
+{{% admonition type="note" %}}
+Changes to panel and alert rule queries aren't synchronized. If you change a query, you have to update it in both the panel and the alert rule.
+{{% /admonition %}}
 
 ## Access linked alert rules from panels
 
