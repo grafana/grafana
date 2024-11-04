@@ -274,5 +274,25 @@ describe('Combobox', () => {
 
       expect(customItem).toBeInTheDocument();
     });
+
+    it('should display message when there is an error loading async options', async () => {
+      const asyncOptions = jest.fn(() => {
+        throw new Error('Could not retrieve options');
+      });
+
+      render(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      await user.type(input, 'test');
+
+      await act(async () => {
+        jest.advanceTimersToNextTimer();
+      });
+
+      const emptyMessage = screen.queryByText('An error occurred while loading options.');
+
+      expect(emptyMessage).toBeInTheDocument();
+    });
   });
 });

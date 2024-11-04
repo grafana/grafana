@@ -448,6 +448,9 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": "An error occurred while loading options."
+    },
     "clear": {
       "title": "Clear value"
     },
