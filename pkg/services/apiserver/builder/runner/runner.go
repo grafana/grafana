@@ -117,7 +117,7 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 
 func (g *appBuilderGroup) setApp(app app.App) {
 	g.app = app
-	for i, _ := range g.builders {
+	for i := range g.builders {
 		g.builders[i].setApp(app)
 	}
 }

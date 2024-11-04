@@ -2987,6 +2987,19 @@
     },
     {
       "metadata": {
+        "name": "sqlQuerybuilderFunctionParameters",
+        "resourceVersion": "1718487716739",
+        "creationTimestamp": "2024-06-15T21:41:56Z"
+      },
+      "spec": {
+        "description": "Enables SQL query builder function parameters",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "sseGroupByDatasource",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-07T20:02:07Z"

@@ -676,9 +676,9 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-1"},
 			},
 			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
-				cloudmigration.DashboardDataType:      []string{"", "Folder A", "Folder B"},
-				cloudmigration.FolderDataType:         []string{"Folder A"},
-				cloudmigration.LibraryElementDataType: []string{"Folder A"},
+				cloudmigration.DashboardDataType:      {"", "Folder A", "Folder B"},
+				cloudmigration.FolderDataType:         {"Folder A"},
+				cloudmigration.LibraryElementDataType: {"Folder A"},
 			},
 		},
 	}

@@ -21,6 +21,12 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+const uid = '0000';
+// mock uuidv4 to give back the same value every time
+jest.mock('uuid', () => ({
+  v4: () => uid,
+}));
+
 describe('MySQLDatasource', () => {
   const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const setupTestContext = (response: unknown, templateSrv?: unknown) => {
@@ -134,7 +140,7 @@ describe('MySQLDatasource', () => {
     it('should return a list of fields when fetchFields is called', async () => {
       const fetchFieldsResponse = {
         results: {
-          fields: {
+          [`fields-${uid}`]: {
             refId: 'fields',
             frames: [
               dataFrameToJSON(
