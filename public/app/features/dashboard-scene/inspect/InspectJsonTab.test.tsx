@@ -16,7 +16,7 @@ import { SceneCanvasText, SceneDataTransformer, SceneQueryRunner, VizPanel } fro
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';

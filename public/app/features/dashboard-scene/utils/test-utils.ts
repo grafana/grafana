@@ -15,7 +15,7 @@ import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboar
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { DashboardDTO } from 'app/types';
 
-import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
+import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';

@@ -17,7 +17,7 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardGridItem, RepeatDirection } from './DashboardGridItem';
+import { DashboardGridItem, RepeatDirection } from './layout-default/DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { panelMenuBehavior, repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';

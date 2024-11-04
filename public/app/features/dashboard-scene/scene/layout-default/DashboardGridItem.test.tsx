@@ -4,11 +4,11 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
+import { activateFullSceneTree, buildPanelRepeaterScene } from '../../utils/test-utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { DashboardGridItem, DashboardGridItemState } from './DashboardGridItem';
-import { DashboardScene } from './DashboardScene';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

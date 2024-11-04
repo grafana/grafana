@@ -18,7 +18,7 @@ import {
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
