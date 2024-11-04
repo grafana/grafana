@@ -29,12 +29,12 @@ test.describe('test data source with frontend only health check', () => {
     page,
     selectors,
   }) => {
-    const configPage = await createDataSourceConfigPage({ type: 'zipkin' });
-    const healthCheckPath = `${selectors.apis.DataSource.proxy(configPage.datasource.uid)}/api/v2/services`;
+    const configPage = await createDataSourceConfigPage({ type: 'jaeger' });
+    const healthCheckPath = `${selectors.apis.DataSource.proxy(configPage.datasource.uid)}/api/services`;
     await page.route(healthCheckPath, async (route) => {
       await route.fulfill({ status: 200, body: 'OK' });
     });
-    await page.getByPlaceholder('http://localhost:9411').fill('http://localhost:9411');
+    await page.getByPlaceholder('http://localhost:16686').fill('http://localhost:16686');
     await expect(configPage.saveAndTest({ path: healthCheckPath })).toBeOK();
     await expect(
       configPage,
