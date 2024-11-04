@@ -12,6 +12,7 @@ import (
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources/service"
 )
@@ -48,6 +49,7 @@ type queryParser struct {
 	legacy service.LegacyDataSourceLookup
 	reader *expr.ExpressionQueryReader
 	tracer tracing.Tracer
+	logger log.Logger
 }
 
 func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDataSourceLookup, tracer tracing.Tracer) *queryParser {
@@ -55,6 +57,7 @@ func newQueryParser(reader *expr.ExpressionQueryReader, legacy service.LegacyDat
 		reader: reader,
 		legacy: legacy,
 		tracer: tracer,
+		logger: log.New("parser-logger"),
 	}
 }
 
@@ -211,6 +214,7 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, dataQuery data.
 
 	if ds.UID[0] == '$' {
 		uid, ok := dataQuery.Get("datasourceUid")
+		p.logger.Debug("dataQuery: %v", dataQuery)
 		if ok {
 			return p.legacy.GetDataSourceFromDeprecatedFields(ctx, uid.(string), 0) // uid can be name in this scenario
 		} else {
