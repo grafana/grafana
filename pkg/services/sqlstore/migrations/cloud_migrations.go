@@ -176,4 +176,10 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Type:     DB_Text,
 		Nullable: true,
 	}))
+
+	// -- increase the length of resource_uid column
+	// -- not needed in sqlite as type is TEXT with length defined by SQLITE_MAX_LENGTH preprocessor macro
+	mg.AddMigration("increase resource_uid column length", NewRawSQLMigration("").
+		Mysql("ALTER TABLE cloud_migration_resource MODIFY resource_uid NVARCHAR(255);").
+		Postgres("ALTER TABLE cloud_migration_resource ALTER COLUMN resource_uid TYPE VARCHAR(255);"))
 }

@@ -35,9 +35,18 @@ const (
 	RelationDelete           string = "delete"
 	RelationPermissionsRead  string = "permissions_read"
 	RelationPermissionsWrite string = "permissions_write"
+
+	FolderResourceRelationAdmin            string = "resource_admin"
+	FolderResourceRelationRead             string = "resource_read"
+	FolderResourceRelationWrite            string = "resource_write"
+	FolderResourceRelationCreate           string = "resource_create"
+	FolderResourceRelationDelete           string = "resource_delete"
+	FolderResourceRelationPermissionsRead  string = "resource_permissions_read"
+	FolderResourceRelationPermissionsWrite string = "resource_permissions_write"
 )
 
 var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
+var Folder2Relations = append(ResourceRelations, FolderResourceRelationRead, FolderResourceRelationWrite, FolderResourceRelationCreate, FolderResourceRelationDelete, FolderResourceRelationPermissionsRead, FolderResourceRelationPermissionsWrite)
 
 const (
 	KindOrg        string = "org"
@@ -128,6 +137,16 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	return common.NewTypedTuple(translation.typ, subject, m.relation, name), true
+}
+
+func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
+	return strings.HasPrefix(t.Object, TypeFolder2) && strings.HasPrefix(t.Relation, "resource_")
+}
+
+func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
+	va := a.Condition.Context.Fields["group_resources"]
+	vb := b.Condition.Context.Fields["group_resources"]
+	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
 func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
