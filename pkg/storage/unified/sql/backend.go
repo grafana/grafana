@@ -143,7 +143,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-
 		folder := ""
 		if event.Object != nil {
 			folder = event.Object.GetFolder()
@@ -669,6 +668,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 				Type:       resource.WatchEvent_Type(rec.Action),
 				PreviousRV: *prevRV,
 			},
+			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}

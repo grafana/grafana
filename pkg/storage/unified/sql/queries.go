@@ -107,6 +107,7 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 			Resource:  r.Response.Key.Resource,
 			Name:      r.Response.Key.Name,
 		},
+		Folder:          r.Response.Folder,
 		ResourceVersion: r.Response.ResourceVersion,
 		PreviousRV:      prevRV,
 		Value:           r.Response.Value,
