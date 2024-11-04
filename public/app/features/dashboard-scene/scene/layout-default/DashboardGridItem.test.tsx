@@ -21,8 +21,8 @@ setPluginImportUtils({
 });
 
 const mockGetQueryRunnerFor = jest.fn();
-jest.mock('../utils/utils', () => ({
-  ...jest.requireActual('../utils/utils'),
+jest.mock('../../utils/utils', () => ({
+  ...jest.requireActual('../../utils/utils'),
   getQueryRunnerFor: jest.fn().mockImplementation(() => mockGetQueryRunnerFor()),
 }));
 
