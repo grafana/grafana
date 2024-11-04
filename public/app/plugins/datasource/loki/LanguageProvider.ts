@@ -32,6 +32,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
   private labelsCache = new LRUCache<string, string[]>({ max: 10 });
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
+  private parsedLabelsCache = new LRUCache<string, ParserAndLabelKeysResult>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -342,20 +343,38 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return empty;
     }
 
-    const series = await this.datasource.getDataSamples(
-      {
-        expr: streamSelector,
-        refId: 'data-samples',
-        maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
-      },
-      options?.timeRange ?? this.getDefaultTimeRange()
-    );
+    const interpolatedMatch = this.datasource.interpolateString(streamSelector);
+    const url = 'series';
+    const range = options?.timeRange ?? this.getDefaultTimeRange();
+    const { start, end } = this.datasource.getTimeRangeParams(range);
 
-    if (!series.length) {
-      return empty;
+    const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
+
+    // const cacheKey = streamSelector;
+    let parsedLabelsResult = this.parsedLabelsCache.get(cacheKey);
+    // debugger;
+
+    if (!parsedLabelsResult) {
+      const series = await this.datasource.getDataSamples(
+        {
+          expr: streamSelector,
+          refId: 'data-samples',
+          maxLines: options?.maxLines || DEFAULT_MAX_LINES_SAMPLE,
+        },
+        options?.timeRange ?? this.getDefaultTimeRange()
+      );
+
+      console.log('A:', streamSelector, parsedLabelsResult, series);
+      if (!series.length) {
+        return empty;
+      }
+
+      parsedLabelsResult = this.getParserAndLabelKeysFromDataFrame(series[0]);
+      this.parsedLabelsCache.set(cacheKey, parsedLabelsResult);
     }
 
-    return this.getParserAndLabelKeysFromDataFrame(series[0]);
+    console.log('B:', streamSelector, parsedLabelsResult);
+    return parsedLabelsResult;
   }
 
   /**

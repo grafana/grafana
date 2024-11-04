@@ -24,6 +24,7 @@ export class LokiQueryModeller extends QueryModellerBase {
   }
 
   enrichLabelFilterOptions(labels: string[]) {
+    debugger;
     const labelFilterOpDef = this.operationsRegistry.get(LokiOperationId.LabelFilter);
     if (!labelFilterOpDef) {
       return;
@@ -262,6 +263,7 @@ export class LokiQueryModeller extends QueryModellerBase {
 }
 
 export const buildLokiModeller = () => {
+  console.log('BUILD A NEW LOKI MODELLER');
   return new LokiQueryModeller();
 };
 

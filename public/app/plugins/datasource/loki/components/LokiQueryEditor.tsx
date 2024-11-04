@@ -86,26 +86,6 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   useEffect(() => {
     setDataIsStale(false);
-    debugger;
-    // Adding the parsed and structured metadata labels to label filters
-    // const populateLabelKeys = async () => {
-    //   const extractedLabelsResult = await datasource.languageProvider.getParserAndLabelKeys(
-    //     lokiQueryModeller.renderLabels(query.labels),
-    //     {
-    //       timeRange: range,
-    //     }
-    //   );
-    //   lokiQueryModeller.enrichLabelFilterOptions(
-    //     Array.from(
-    //       new Set([
-    //         ...extractedLabelsResult.extractedLabelKeys,
-    //         ...extractedLabelsResult.structuredMetadataKeys,
-    //         ...extractedLabelsResult.unwrapLabelKeys,
-    //       ])
-    //     )
-    //   );
-    //   console.log('HIHI', extractedLabelsResult);
-    // };
   }, [data]);
 
   const onChangeInternal = (query: LokiQuery) => {

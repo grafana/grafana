@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
@@ -44,7 +44,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
   const prevQuery = usePrevious(query);
   const prevTimeRange = usePrevious(timeRange);
-  const queryModeller = buildLokiModeller();
+  // const modellerRef = useRef(buildLokiModeller());
 
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
@@ -65,7 +65,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       return await datasource.languageProvider.fetchLabels({ timeRange });
     }
 
-    const streamSelector = queryModeller.renderLabels(labelsToConsider);
+    const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
     const possibleLabelNames = await datasource.languageProvider.fetchLabels({
       streamSelector,
       timeRange,
@@ -90,7 +90,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
     if (labelsToConsider.length === 0 || !hasEqualityOperation) {
       values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
     } else {
-      const streamSelector = queryModeller.renderLabels(labelsToConsider);
+      const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
       values = await datasource.languageProvider.fetchLabelValues(forLabel.label, {
         streamSelector,
         timeRange,
@@ -114,22 +114,10 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
 
   useEffect(() => {
     const onGetSampleData = async () => {
-      const lokiQuery = { expr: queryModeller.renderQuery(query), refId: 'data-samples' };
+      const lokiQuery = { expr: lokiQueryModeller.renderQuery(query), refId: 'data-samples' };
       const range = timeRange ?? getDefaultTimeRange();
       const series = await datasource.getDataSamples(lokiQuery, range);
       const sampleData = { series, state: LoadingState.Done, timeRange: range };
-      if (series[0].length) {
-        const extractedLabelsResult = datasource.languageProvider.getParserAndLabelKeysFromDataFrame(series[0]);
-        queryModeller.enrichLabelFilterOptions(
-          Array.from(
-            new Set([
-              ...extractedLabelsResult.extractedLabelKeys,
-              ...extractedLabelsResult.structuredMetadataKeys,
-              ...extractedLabelsResult.unwrapLabelKeys,
-            ])
-          )
-        );
-      }
       setSampleData(sampleData);
     };
 
@@ -142,8 +130,26 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
     if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
       onGetSampleData().catch(console.error);
     }
-  }, [datasource, query, timeRange, prevQuery, prevTimeRange, queryModeller]);
+  }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
+  useEffect(() => {
+    const populateLabelsFilterOptions = async () => {
+      const extractedLabelsResult = await datasource.languageProvider.getParserAndLabelKeys(
+        lokiQueryModeller.renderQuery(query).split('|')[0]
+      );
+      lokiQueryModeller.enrichLabelFilterOptions(
+        Array.from(
+          new Set([
+            ...extractedLabelsResult.extractedLabelKeys,
+            ...extractedLabelsResult.structuredMetadataKeys,
+            ...extractedLabelsResult.unwrapLabelKeys,
+          ])
+        )
+      );
+      // console.log('HIHIHI:', extractedLabelsResult);
+    };
+    populateLabelsFilterOptions().catch(console.error);
+  }, [datasource, query]);
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
     <div data-testid={testIds.editor}>
@@ -163,14 +169,14 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
-          title={<RawQuery query={`${queryModeller.renderLabels(query.labels)}`} language={lang} />}
+          title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} language={lang} />}
         >
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
       <OperationsEditorRow>
         <OperationList
-          queryModeller={queryModeller}
+          queryModeller={lokiQueryModeller}
           query={query}
           onChange={onChange}
           onRunQuery={onRunQuery}
@@ -185,7 +191,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
           query={query}
           onChange={onChange}
           data={sampleData}
-          queryModeller={queryModeller}
+          queryModeller={lokiQueryModeller}
           buildVisualQueryFromString={buildVisualQueryFromString}
           buildDataQueryFromQueryString={(queryString) => ({ expr: queryString, refId: 'hints' })}
           buildQueryStringFromDataQuery={(query) => query.expr}
@@ -194,7 +200,7 @@ export const LokiQueryBuilder = memo<Props>(({ datasource, query, onChange, onRu
       {showExplain && (
         <OperationListExplained<LokiVisualQuery>
           stepNumber={2}
-          queryModeller={queryModeller}
+          queryModeller={lokiQueryModeller}
           query={query}
           language={lang}
           onMouseEnter={(op) => {
