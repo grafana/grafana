@@ -25,7 +25,6 @@ type WriteEvent struct {
 type WrittenEvent struct {
 	WriteEvent
 	// Metadata
-	key    *ResourceKey
 	Folder string
 
 	// The resource version
