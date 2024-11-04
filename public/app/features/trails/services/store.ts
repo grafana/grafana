@@ -1,5 +1,4 @@
-import { TRAIL_BREAKDOWN_SORT_KEY } from '../shared';
-import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { TRAIL_BREAKDOWN_VIEW_KEY, TRAIL_BREAKDOWN_SORT_KEY } from '../shared';
 
 export function getVewByPreference() {
   return localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
