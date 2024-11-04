@@ -45,7 +45,7 @@ export const VersionInstallButton = ({
   }, [installedVersion, version.version]);
 
   if (version.version === installedVersion) {
-    return <Badge className={styles.badge} text="Installed" color="green" />;
+    return <Badge className={styles.badge} text="Installed" icon="check" color="green" />;
   }
 
   const performInstallation = () => {
@@ -89,29 +89,25 @@ export const VersionInstallButton = ({
   };
 
   let label = 'Downgrade';
-  let isInstalled = false;
 
   if (!installedVersion) {
     label = 'Install';
   } else if (gt(version.version, installedVersion)) {
     label = 'Upgrade';
-  } else if (version.version === installedVersion) {
-    label = 'Installed';
-    isInstalled = true;
   }
 
   return (
     <>
       <Button
         fill="solid"
-        disabled={disabled || isInstalled}
+        disabled={disabled || isInstalling}
         fullWidth
         size="sm"
         variant={latestCompatibleVersion === version.version ? 'primary' : 'secondary'}
         onClick={onInstallClick}
         className={styles.button}
       >
-        {label} {getIcon(label)} {isInstalling && <Spinner className={styles.spinner} inline size="sm" />}
+        {label} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(label)}
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
