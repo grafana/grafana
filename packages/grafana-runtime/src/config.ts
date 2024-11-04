@@ -62,6 +62,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
   panels: { [key: string]: PanelPluginMeta } = {};
   apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
+  pluginLogos: {
+    [key: string]: {
+      large: string;
+      small: string;
+    };
+  } = {};
   minRefreshInterval = '';
   appUrl = '';
   appSubUrl = '';

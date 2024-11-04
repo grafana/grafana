@@ -205,6 +205,7 @@ function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
   const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
+  const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.refId : undefined);
 
   switch (resource.type) {
     case 'DASHBOARD':
@@ -230,7 +231,10 @@ function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
     case 'ALERT_RULE':
       return <Icon size="xl" name="bell" />;
     case 'PLUGIN':
-      return <Icon size="xl" name="plug" />; // TODO: how to obtain the logo?
+      if (pluginLogo) {
+        return <img className={styles.icon} src={pluginLogo} alt="" />;
+      }
+      return <Icon size="xl" name="plug" />;
     default:
       return undefined;
   }
@@ -258,4 +262,16 @@ function useDatasource(datasourceUID: string | undefined): DataSourceInstanceSet
   }, [datasourceUID]);
 
   return datasource;
+}
+
+function usePluginLogo(pluginID: string | undefined): string | undefined {
+  const logos = useMemo(() => {
+    if (!pluginID) {
+      return undefined;
+    }
+
+    return config.pluginLogos[pluginID];
+  }, [pluginID]);
+
+  return logos?.small;
 }
