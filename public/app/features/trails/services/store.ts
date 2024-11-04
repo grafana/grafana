@@ -2,11 +2,11 @@ import { TRAIL_BREAKDOWN_SORT_KEY } from '../shared';
 import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
 export function getVewByPreference() {
-    return localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
+  return localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
 }
 
 export function setVewByPreference(value?: string) {
-    return localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, value ?? 'grid');
+  return localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, value ?? 'grid');
 }
 
 export function getSortByPreference(target: string, defaultSortBy: string) {
