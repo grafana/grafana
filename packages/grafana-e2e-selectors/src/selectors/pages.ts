@@ -40,9 +40,17 @@ export const versionedPages = {
     },
   },
   PasswordlessLogin: {
-    url: '/login/passwordless/authenticate',
-    email: 'data-testid Email input field',
-    submit: 'data-testid PasswordlessLogin button',
+    url: {
+      [MIN_GRAFANA_VERSION]: '/login/passwordless/authenticate',
+    },
+    email: {
+      '10.2.3': 'data-testid Email input field',
+      [MIN_GRAFANA_VERSION]: 'Email input field',
+    },
+    submit: {
+      '10.2.3': 'data-testid PasswordlessLogin button',
+      [MIN_GRAFANA_VERSION]: 'PasswordlessLogin button',
+    },
   },
   Home: {
     url: {
