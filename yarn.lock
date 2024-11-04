@@ -14542,6 +14542,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"crashme@npm:0.0.14":
+  version: 0.0.14
+  resolution: "crashme@npm:0.0.14"
+  checksum: 10/a8785aaad85febe87ce9ded964f03861f03dcc52fa48d376cea5bc4bde04a189039af8c79c084022d79cd09dc1867430fc7905d7409a2f84dee6b0183f110359
+  languageName: node
+  linkType: hard
+
 "create-emotion@npm:^10.0.14, create-emotion@npm:^10.0.27":
   version: 10.0.27
   resolution: "create-emotion@npm:10.0.27"
@@ -19204,6 +19211,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.38.1"
+    crashme: "npm:0.0.14"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.10.0"
