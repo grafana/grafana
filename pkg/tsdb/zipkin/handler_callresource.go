@@ -118,6 +118,7 @@ func handleRequest(hc *http.Client, rw http.ResponseWriter, r *http.Request) {
 		writeResponse(nil, err, rw, http.StatusInternalServerError)
 		return
 	}
+	defer res.Body.Close()
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
 		writeResponse(nil, err, rw, http.StatusInternalServerError)

@@ -23,6 +23,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			Message: err.Error(),
 		}, nil
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,

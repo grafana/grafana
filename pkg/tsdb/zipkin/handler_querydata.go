@@ -64,6 +64,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				response.Responses[q.RefID] = backend.DataResponse{Error: err}
 				continue
 			}
+			defer res.Body.Close()
 			bodyBytes, err := io.ReadAll(res.Body)
 			if err != nil {
 				response.Responses[q.RefID] = backend.DataResponse{Error: err}
