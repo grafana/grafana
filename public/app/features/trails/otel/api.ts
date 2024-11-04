@@ -3,6 +3,7 @@ import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
 import { getBackendSrv } from '@grafana/runtime';
 
 import { OtelResponse, LabelResponse, OtelTargetType } from './types';
+import { sortResources } from './util';
 
 const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
 /**
@@ -10,6 +11,7 @@ const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; /
  * When filters are added, we can also get a list of otel targets used to reduce the metric list
  * */
 const otelTargetInfoQuery = (filters?: string) => `count(target_info{${filters ?? ''}}) by (job, instance)`;
+const metricOtelJobInstanceQuery = (metric: string) => `count(${metric}) by (job, instance)`;
 
 export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', operator: '=' };
 
@@ -18,6 +20,8 @@ export const TARGET_INFO_FILTER = { key: '__name__', value: 'target_info', opera
  * Parse the results to get label filters.
  * @param dataSourceUid
  * @param timeRange
+ * @param excludedFilters
+ * @param matchFilters
  * @returns OtelResourcesType[], labels for the query result requesting matching job and instance on target_info metric
  */
 export async function getOtelResources(
@@ -47,7 +51,8 @@ export async function getOtelResources(
 }
 
 /**
- * Get the total amount of job/instance pairs on target info metric
+ * Get the total amount of job/instance pairs on a metric.
+ * Can be used for target_info.
  *
  * @param dataSourceUid
  * @param timeRange
@@ -57,22 +62,25 @@ export async function getOtelResources(
 export async function totalOtelResources(
   dataSourceUid: string,
   timeRange: RawTimeRange,
-  filters?: string
+  filters?: string,
+  metric?: string
 ): Promise<OtelTargetType> {
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
+
+  const query = metric ? metricOtelJobInstanceQuery(metric) : otelTargetInfoQuery(filters);
 
   const url = `/api/datasources/uid/${dataSourceUid}/resources/api/v1/query`;
   const paramsTotalTargets: Record<string, string | number> = {
     start,
     end,
-    query: otelTargetInfoQuery(filters),
+    query,
   };
 
   const responseTotal = await getBackendSrv().get<OtelResponse>(
     url,
     paramsTotalTargets,
-    'explore-metrics-otel-check-total'
+    `explore-metrics-otel-check-total-${query}`
   );
 
   let jobs: string[] = [];
@@ -163,4 +171,93 @@ export async function getDeploymentEnvironments(dataSourceUid: string, timeRange
   const resources = response.data;
 
   return resources;
+}
+
+/**
+ * For OTel, get the resource attributes for a metric.
+ * Handle filtering on both OTel resources as well as metric labels.
+ *
+ * @param datasourceUid
+ * @param timeRange
+ * @param metric
+ * @param excludedFilters
+ * @returns
+ */
+export async function getFilteredResourceAttributes(
+  datasourceUid: string,
+  timeRange: RawTimeRange,
+  metric: string,
+  excludedFilters?: string[]
+) {
+  // These filters should not be included in the resource attributes for users to choose from
+  const allExcludedFilters = (excludedFilters ?? []).concat(OTEL_RESOURCE_EXCLUDED_FILTERS);
+
+  // The jobs and instances for the metric
+  const metricResources = await totalOtelResources(datasourceUid, timeRange, undefined, metric);
+
+  // OTel metrics require unique identifies for the resource. Job+instance is the unique identifier.
+  // If there are none, we cannot join on a target_info resource
+  if (metricResources.jobs.length === 0 || metricResources.instances.length === 0) {
+    return [];
+  }
+
+  // The URL for the labels endpoint
+  const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
+
+  // The match param for the metric to get all possible labels for this metric
+  const metricMatchParam = `${metric}{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+
+  const start = getPrometheusTime(timeRange.from, false);
+  const end = getPrometheusTime(timeRange.to, true);
+
+  const metricParams: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': metricMatchParam,
+  };
+
+  // We prioritize metric attributes over resource attributes.
+  // If a label is present in both metric and target_info, we exclude it from the resource attributes.
+  // This prevents errors in the join query.
+  const metricResponse = await getBackendSrv().get<LabelResponse>(
+    url,
+    metricParams,
+    `explore-metrics-otel-resources-metric-job-instance-${metricMatchParam}`
+  );
+  // the metric labels here
+  const metricLabels = metricResponse.data ?? [];
+
+  // only get the resource attributes filtered by job and instance values present on the metric
+  const targetInfoMatchParam = `target_info{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+
+  const targetInfoParams: Record<string, string | number> = {
+    start,
+    end,
+    'match[]': targetInfoMatchParam,
+  };
+
+  // these are the resource attributes that come from target_info,
+  // filtered by the metric job and instance
+  const targetInfoResponse = await getBackendSrv().get<LabelResponse>(
+    url,
+    targetInfoParams,
+    `explore-metrics-otel-resources-metric-job-instance-${targetInfoMatchParam}`
+  );
+
+  const targetInfoAttributes = targetInfoResponse.data ?? [];
+
+  // first filters out metric labels from the resource attributes
+  const firstFilter = targetInfoAttributes.filter((resource) => !metricLabels.includes(resource));
+
+  // exclude __name__ or deployment_environment or previously chosen filters
+  const secondFilter = firstFilter
+    .filter((resource) => !allExcludedFilters.includes(resource))
+    .map((el) => ({ text: el }));
+
+  // sort the resources, surfacing the blessedlist on top
+  let sortedResourceAttributes = sortResources(secondFilter, ['job']);
+  // return a string array
+  const resourceAttributes = sortedResourceAttributes.map((el) => el.text);
+
+  return resourceAttributes;
 }

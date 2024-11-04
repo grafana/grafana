@@ -35,6 +35,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimeRangeProvider } from './DateTimePickers/TimeRangeContext';
 export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
@@ -229,11 +230,14 @@ export { InlineFieldRow } from './Forms/InlineFieldRow';
 export { FieldArray } from './Forms/FieldArray';
 
 // Select
+// Note - Select is nearly deprecated in favor of Combobox
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
 export { SelectMenuOptions } from './Select/SelectMenu';
 export { getSelectStyles } from './Select/getSelectStyles';
 export * from './Select/types';
+
+export { Combobox, type ComboboxOption } from './Combobox/Combobox';
 
 export { HorizontalGroup, VerticalGroup, Container } from './Layout/Layout';
 export { Badge, type BadgeColor, type BadgeProps } from './Badge/Badge';

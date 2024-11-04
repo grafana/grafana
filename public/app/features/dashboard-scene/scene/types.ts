@@ -1,5 +1,6 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 /**
  * A scene object that usually wraps an underlying layout
@@ -12,17 +13,11 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   editModeChanged(isEditing: boolean): void;
   /**
-   * We should be able to figure out how to add the explore panel in a way that leaves the
-   * initialSaveModel clean from it so we can leverage the default discard changes logic.
-   * Then we can get rid of this.
-   */
-  cleanUpStateFromExplore?(): void;
-  /**
    * Not sure we will need this in the long run, we should be able to handle this inside internally
    */
   getNextPanelId(): number;
   /**
-   * Remove an elemenet / panel
+   * Remove an element / panel
    * @param element
    */
   removePanel(panel: VizPanel): void;
@@ -52,6 +47,14 @@ export interface DashboardLayoutManager extends SceneObject {
    * For dynamic panels that need to be viewed in isolation (SoloRoute)
    */
   activateRepeaters?(): void;
+  /**
+   * Get's the layout descriptor (which has the name and id)
+   */
+  getDescriptor(): LayoutRegistryItem;
+  /**
+   * Renders options and layout actions
+   */
+  renderEditor?(): React.ReactNode;
 }
 
 /**
@@ -83,6 +86,33 @@ export interface LayoutParent extends SceneObject {
 
 export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
   return 'switchLayout' in obj;
+}
+
+/**
+ * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)
+ * Also useful to when rendering / viewing an element outside it's layout scope
+ */
+export interface DashboardLayoutElement extends SceneObject {
+  /**
+   * Marks this object as a layout element
+   */
+  isDashboardLayoutElement: true;
+  /**
+   * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
+   */
+  getOptions?(): OptionsPaneItemDescriptor[];
+  /**
+   * Used by panel edit to commit changes
+   */
+  setBody(body: SceneObject): void;
+  /**
+   * Only implemented by elements that wrap VizPanels
+   */
+  getVizPanel?(): VizPanel;
+}
+
+export function isDashboardLayoutElement(obj: SceneObject): obj is DashboardLayoutElement {
+  return 'isDashboardLayoutElement' in obj;
 }
 
 export interface DashboardRepeatsProcessedEventPayload {

@@ -25,9 +25,9 @@ import {
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
+import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LokiQuery, LokiQueryType } from './types';
+import { LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -313,6 +313,16 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
   return queries.length > 0;
 }
 
+export function requestSupportsSharding(allQueries: LokiQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-shard'))
+    .filter((query) => query.expr)
+    .filter((query) => query.direction === LokiQueryDirection.Scan || !isLogsQuery(query.expr));
+
+  return queries.length > 0;
+}
+
 export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
   if (!query) {
     return false;
@@ -327,4 +337,42 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   }
 
   return query;
+};
+
+export const interpolateShardingSelector = (queries: LokiQuery[], shards: number[]) => {
+  if (shards.length === 0) {
+    return queries;
+  }
+
+  let shardValue = shards.join('|');
+
+  // -1 means empty shard value
+  if (shardValue === '-1' || shards.length === 1) {
+    shardValue = shardValue === '-1' ? '' : shardValue;
+    return queries.map((query) => ({
+      ...query,
+      expr: addStreamShardLabelsToQuery(query.expr, '=', shardValue),
+    }));
+  }
+
+  return queries.map((query) => ({
+    ...query,
+    expr: addStreamShardLabelsToQuery(query.expr, '=~', shardValue),
+  }));
+};
+
+function addStreamShardLabelsToQuery(query: string, operator: string, shardValue: string) {
+  const shardedQuery = addLabelToQuery(query, '__stream_shard__', operator, shardValue, LabelType.Indexed);
+  if (!isLogsQuery(query)) {
+    return addDropToQuery(shardedQuery, ['__stream_shard__']);
+  }
+  return shardedQuery;
+}
+
+export const getSelectorForShardValues = (query: string) => {
+  const selector = getNodesFromQuery(query, [Selector]);
+  if (selector.length > 0) {
+    return query.substring(selector[0].from, selector[0].to);
+  }
+  return '';
 };

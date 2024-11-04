@@ -74,7 +74,7 @@ func (m *dualWriterMetrics) init(reg prometheus.Registerer) {
 	errStorage := reg.Register(m.storage)
 	errOutcome := reg.Register(m.outcome)
 	errSyncer := reg.Register(m.syncer)
-	errSyncerOutcome := reg.Register(m.syncer)
+	errSyncerOutcome := reg.Register(m.syncerOutcome)
 	if errLegacy != nil || errStorage != nil || errOutcome != nil || errSyncer != nil || errSyncerOutcome != nil {
 		log.Info("cloud migration metrics already registered")
 	}

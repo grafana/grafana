@@ -121,25 +121,26 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableRow: (hasExpired: boolean | undefined) => css`
-    color: ${hasExpired ? theme.colors.text.secondary : theme.colors.text.primary};
-  `,
-  tooltipContainer: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  toolTipIcon: css`
-    color: ${theme.colors.error.text};
-  `,
-  secondsUntilExpiration: css`
-    color: ${theme.colors.warning.text};
-  `,
-  hasExpired: css`
-    color: ${theme.colors.error.text};
-  `,
-  neverExpire: css`
-    color: ${theme.colors.text.secondary};
-  `,
-  section: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
+  tableRow: (hasExpired: boolean | undefined) =>
+    css({
+      color: hasExpired ? theme.colors.text.secondary : theme.colors.text.primary,
+    }),
+  tooltipContainer: css({
+    marginLeft: theme.spacing(1),
+  }),
+  toolTipIcon: css({
+    color: theme.colors.error.text,
+  }),
+  secondsUntilExpiration: css({
+    color: theme.colors.warning.text,
+  }),
+  hasExpired: css({
+    color: theme.colors.error.text,
+  }),
+  neverExpire: css({
+    color: theme.colors.text.secondary,
+  }),
+  section: css({
+    marginBottom: theme.spacing(4),
+  }),
 });

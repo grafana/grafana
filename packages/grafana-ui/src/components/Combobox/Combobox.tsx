@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
+import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -8,23 +9,32 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
+import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
-import { estimateSize, useComboboxFloat } from './useComboboxFloat';
+import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
+import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
-  label: string;
+  label?: string;
   value: T;
   description?: string;
 };
 
+// TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
+// then the onChange handler emits ComboboxOption with the label as non-undefined.
 interface ComboboxBaseProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
   isClearable?: boolean;
   createCustomValue?: boolean;
-  options: Array<ComboboxOption<T>>;
+  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
   onChange: (option: ComboboxOption<T> | null) => void;
-  value: T | null;
+  /**
+   * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
+   * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
+   */
+  value: T | ComboboxOption<T> | null;
   /**
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
@@ -45,7 +55,7 @@ type AutoSizeConditionals =
 
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
-function itemToString(item: ComboboxOption<string | number> | null) {
+function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
   return item?.label ?? item?.value.toString() ?? '';
 }
 
@@ -61,6 +71,8 @@ function itemFilter<T extends string | number>(inputValue: string) {
   };
 }
 
+const asyncNoop = () => Promise.resolve([]);
+
 /**
  * A performant Select replacement.
  *
@@ -69,7 +81,7 @@ function itemFilter<T extends string | number>(inputValue: string) {
 export const Combobox = <T extends string | number>({
   options,
   onChange,
-  value,
+  value: valueProp,
   isClearable = false,
   createCustomValue = false,
   id,
@@ -77,9 +89,22 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
-  const [items, setItems] = useState(options);
+  // Value can be an actual scalar Value (string or number), or an Option (value + label), so
+  // get a consistent Value from it
+  const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+
+  const isAsync = typeof options === 'function';
+  const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
+  const [asyncLoading, setAsyncLoading] = useState(false);
+  const [asyncError, setAsyncError] = useState(false);
+
+  const [items, setItems] = useState(isAsync ? [] : options);
 
   const selectedItemIndex = useMemo(() => {
+    if (isAsync) {
+      return null;
+    }
+
     if (value === null) {
       return null;
     }
@@ -90,22 +115,15 @@ export const Combobox = <T extends string | number>({
     }
 
     return index;
-  }, [options, value]);
+  }, [options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
-    if (selectedItemIndex !== null) {
+    if (selectedItemIndex !== null && !isAsync) {
       return options[selectedItemIndex];
     }
 
-    // Custom value
-    if (value !== null) {
-      return {
-        label: value.toString(),
-        value,
-      };
-    }
-    return null;
-  }, [selectedItemIndex, options, value]);
+    return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
+  }, [selectedItemIndex, isAsync, valueProp, options]);
 
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
@@ -115,11 +133,30 @@ export const Combobox = <T extends string | number>({
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
-    estimateSize,
+    estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
+
+  const debounceAsync = useMemo(
+    () =>
+      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+            }
+          });
+      }, 200),
+    [loadOptions]
+  );
 
   const {
     getInputProps,
@@ -142,27 +179,56 @@ export const Combobox = <T extends string | number>({
       onChange(selectedItem);
     },
     defaultHighlightedIndex: selectedItemIndex ?? 0,
+
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
-      const filteredItems = options.filter(itemFilter(inputValue));
-      if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
-        const customValueOption: ComboboxOption<T> = {
-          label: inputValue,
-          // @ts-ignore Type casting needed to make this work when T is a number
-          value: inputValue as unknown as T,
-          description: t('combobox.custom-value.create', 'Create custom value'),
-        };
+      const customValueOption =
+        createCustomValue &&
+        inputValue &&
+        items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
+          ? {
+              // Type casting needed to make this work when T is a number
+              value: inputValue as unknown as T,
+              description: t('combobox.custom-value.create', 'Create custom value'),
+            }
+          : null;
 
-        setItems([...filteredItems, customValueOption]);
+      if (isAsync) {
+        if (customValueOption) {
+          setItems([customValueOption]);
+        }
+        setAsyncLoading(true);
+        debounceAsync(inputValue, customValueOption);
+
         return;
-      } else {
-        setItems(filteredItems);
       }
+
+      const filteredItems = options.filter(itemFilter(inputValue));
+
+      setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
     },
-    onIsOpenChange: ({ isOpen }) => {
+
+    onIsOpenChange: ({ isOpen, inputValue }) => {
       // Default to displaying all values when opening
-      if (isOpen) {
+      if (isOpen && !isAsync) {
         setItems(options);
+        return;
+      }
+
+      if (isOpen && isAsync) {
+        setAsyncLoading(true);
+        loadOptions(inputValue ?? '')
+          .then((options) => {
+            setItems(options);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+            }
+          });
         return;
       }
     },
@@ -172,13 +238,25 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
+
   const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
+  const handleSuffixClick = useCallback(() => {
+    isOpen ? closeMenu() : openMenu();
+  }, [isOpen, openMenu, closeMenu]);
+
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+
+  const suffixIcon = asyncLoading
+    ? 'spinner'
+    : // If it's loading, show loading icon. Otherwise, icon indicating menu state
+      isOpen
+      ? 'search'
+      : 'angle-down';
 
   return (
     <div>
@@ -203,16 +281,12 @@ export const Combobox = <T extends string | number>({
                 }}
               />
             )}
-            <Icon
-              name={isOpen ? 'search' : 'angle-down'}
-              onClick={() => {
-                if (isOpen) {
-                  closeMenu();
-                } else {
-                  openMenu();
-                }
-              }}
-            />
+
+            {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
+                translated to the input, so it blocks the input from being focused. So we need an additional event
+                handler here to open/close the menu. It should not have button role because we intentionally don't
+                want it in the a11y tree. */}
+            <Icon name={suffixIcon} onClick={handleSuffixClick} />
           </>
         }
         {...restProps}
@@ -237,12 +311,12 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && (
+        {isOpen && !asyncError && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
-                  key={items[virtualRow.index].value + items[virtualRow.index].label}
+                  key={`${items[virtualRow.index].value}-${virtualRow.index}`}
                   data-index={virtualRow.index}
                   className={cx(
                     styles.option,
@@ -259,7 +333,9 @@ export const Combobox = <T extends string | number>({
                   })}
                 >
                   <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
+                    <span className={styles.optionLabel}>
+                      {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                    </span>
                     {items[virtualRow.index].description && (
                       <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
                     )}
@@ -268,6 +344,12 @@ export const Combobox = <T extends string | number>({
               );
             })}
           </ul>
+        )}
+        {asyncError && (
+          <Stack justifyContent="center" alignItems="center" height={8}>
+            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+            <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
+          </Stack>
         )}
       </div>
     </div>

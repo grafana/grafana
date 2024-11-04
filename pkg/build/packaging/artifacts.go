@@ -113,6 +113,16 @@ var ARMArtifacts = []BuildArtifact{
 		Arch:   "armv7",
 		Ext:    "tar.gz",
 	},
+	{
+		Distro: "linux",
+		Arch:   "arm64",
+		Ext:    "tar.gz",
+	},
+	{
+		Distro: "linux",
+		Arch:   "amd64",
+		Ext:    "tar.gz",
+	},
 }
 
 func join(a []BuildArtifact, b ...[]BuildArtifact) []BuildArtifact {
