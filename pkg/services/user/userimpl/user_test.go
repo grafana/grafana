@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -27,6 +28,7 @@ func TestUserService(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
+		features:     featuremgmt.WithFeatures(),
 	}
 	userService.cfg = setting.NewCfg()
 
@@ -103,6 +105,7 @@ func TestUserService(t *testing.T) {
 			cacheService: localcache.ProvideService(),
 			teamService:  teamtest.NewFakeService(),
 			tracer:       tracing.InitializeTracerForTest(),
+			features:     featuremgmt.WithFeatures(),
 		}
 		usr := &user.SignedInUser{
 			OrgID:       1,
@@ -219,6 +222,7 @@ func TestUpdateLastSeenAt(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
+		features:     featuremgmt.WithFeatures(),
 	}
 	userService.cfg = setting.NewCfg()
 	userService.cfg.UserLastSeenUpdateInterval = 5 * time.Minute
@@ -248,6 +252,7 @@ func TestMetrics(t *testing.T) {
 		cacheService: localcache.ProvideService(),
 		teamService:  &teamtest.FakeService{},
 		tracer:       tracing.InitializeTracerForTest(),
+		features:     featuremgmt.WithFeatures(),
 	}
 
 	t.Run("update user with role None", func(t *testing.T) {
