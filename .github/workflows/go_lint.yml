@@ -28,5 +28,5 @@ jobs:
         with:
           version: v1.61.0
           args: |
-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(go list -m -f '{{.Path}}/...' | grep pkg/) ./pkg/...
+            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(go list -m -f '{{.Path}}/...' | sed -n '/pkg/ s|^github.com/grafana/grafana|.|p') ./pkg/...
           install-mode: binary
