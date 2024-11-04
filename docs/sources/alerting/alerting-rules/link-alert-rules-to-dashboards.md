@@ -15,8 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create and link alert rules with panels and dashboards
-menuTitle: Create and link alert rules with panels
+title: Create and link alert rules with panels
 weight: 300
 refs:
   time-series-visualizations:
@@ -36,22 +35,22 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-alert-state-on-panels/
 ---
 
-# Create and link alert rules with panels and dashboards
+# Create and link alert rules with panels
 
 Grafana allows you to link an alert rule to a dashboard panel. This can help you:
 
 - Inform alert responders about where to investigate and which data to examine.
 - Visualize the alert state directly from dashboards.
 
-An alert rule is linked to a dashboard and panel via the [`dashboardUId` and `panelId` annotations](ref:annotations).
+An alert rule is linked to a panel by setting the [`dashboardUId` and `panelId` annotations](ref:annotations). Both annotations must be set together.
 
-## Link alert rule to dashboard and panel
+## Link alert rules to panels
 
 When configuring the alert rule, you can set the dashboard and panel annotations as shown in this [video](https://youtu.be/ClLp-iSoaSY?si=qKWnvSVaQuvYcuw9&t=170).
 
 1. Configure the alert rule.
 1. In the **Configure notification message** section, click **Link dashboard and panel**.
-1. Select an existing dashboard and panel from the list.
+1. Select an existing dashboard, then choose a panel from the selected dashboad.
 1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 
 You can then [view the alert state on the panel](ref:view-alert-state-on-panels).

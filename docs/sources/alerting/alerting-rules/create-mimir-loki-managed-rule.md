@@ -137,8 +137,8 @@ Annotations add metadata to provide more information on the alert in your alert 
    Webpage where you keep your runbook for the alert
 
 1. Optional: Add a custom annotation
-1. Optional: Add a **dashboard and panel link**.
+1. Optional: **Link dashboard and panel**.
 
-   [Link the alert rule to a panel](ref:link-alert-rules-to-dashboards) to enhance alert investigation.
+   [Link the alert rule to a panel](ref:link-alert-rules-to-dashboards) to facilitate alert investigation.
 
 1. Click **Save rule**.
