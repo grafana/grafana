@@ -234,10 +234,12 @@ type ResourcePermission struct {
 	RoleName         string
 	Actions          []string
 	Scope            string
-	UserId           int64
+	UserID           int64
+	UserUID          string
 	UserLogin        string
 	UserEmail        string
-	TeamId           int64
+	TeamID           int64
+	TeamUID          string
 	TeamEmail        string
 	Team             string
 	BuiltInRole      string

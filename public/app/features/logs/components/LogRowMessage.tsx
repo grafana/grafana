@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, ReactNode, useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
@@ -32,6 +32,8 @@ interface Props {
   mouseIsOver: boolean;
   onBlur: () => void;
   expanded?: boolean;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface LogMessageProps {
@@ -96,6 +98,8 @@ export const LogRowMessage = memo((props: Props) => {
     onBlur,
     getRowContextQuery,
     expanded,
+    logRowMenuIconsBefore,
+    logRowMenuIconsAfter,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(
@@ -132,6 +136,8 @@ export const LogRowMessage = memo((props: Props) => {
             styles={styles}
             mouseIsOver={mouseIsOver}
             onBlur={onBlur}
+            addonBefore={logRowMenuIconsBefore}
+            addonAfter={logRowMenuIconsAfter}
           />
         )}
       </td>
