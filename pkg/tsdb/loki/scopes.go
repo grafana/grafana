@@ -13,6 +13,7 @@ func ApplyScopes(rawExpr string, scopeFilters []models.ScopeFilter) (string, err
 	}
 	scopeMatchers, err := models.FiltersToMatchers(scopeFilters, nil)
 
+	// Need WithoutValidation to allow empty `{}` expressions
 	syntaxTree, err := syntax.ParseExprWithoutValidation(rawExpr)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse raw expression: %w", err)
