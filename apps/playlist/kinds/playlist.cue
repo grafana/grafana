@@ -5,6 +5,8 @@ externalName: {
 	group: "playlist"
 	apiResource: {
 		groupOverride: "playlist.grafana.app"
+		mutation: operations:  ["create","update"]
+		validation: operations:  ["create","update"]
 	}
 	codegen: {
 		frontend: false
