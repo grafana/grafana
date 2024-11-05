@@ -15,7 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create and link alert rules with panels
+title: Create and link alert rules to panels
 weight: 300
 refs:
   time-series-visualizations:
