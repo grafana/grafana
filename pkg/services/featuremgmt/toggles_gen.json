@@ -1203,6 +1203,22 @@
     },
     {
       "metadata": {
+        "name": "enableExtensionsAdminPage",
+        "resourceVersion": "1730819353237",
+        "creationTimestamp": "2024-11-05T09:18:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-05 15:09:13.237578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the extension admin page regardless of development mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-03T18:23:55Z"

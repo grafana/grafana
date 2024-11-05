@@ -217,6 +217,7 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
 | `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
 | `playlistsWatcher`                            | Enables experimental watcher for playlists                                                                                                                                                                                                                                        |
+| `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 

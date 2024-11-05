@@ -228,4 +228,5 @@ export interface FeatureToggles {
   azureMonitorDisableLogLimit?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
+  enableExtensionsAdminPage?: boolean;
 }

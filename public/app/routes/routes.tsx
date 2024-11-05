@@ -203,11 +203,15 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/extensions',
       navId: 'extensions',
-      component: isDevEnv
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
-          )
-        : () => <Navigate replace to="/admin" />,
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.PluginsInstall, AccessControlAction.PluginsWrite]),
+      component:
+        isDevEnv || config.featureToggles.enableExtensionsAdminPage
+          ? SafeDynamicImport(
+              () =>
+                import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+            )
+          : () => <Navigate replace to="/admin" />,
     },
     {
       path: '/admin/access',
