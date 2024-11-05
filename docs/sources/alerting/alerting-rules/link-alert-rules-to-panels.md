@@ -50,7 +50,7 @@ When configuring the alert rule, you can set the dashboard and panel annotations
 
 1. Configure the alert rule.
 1. In the **Configure notification message** section, click **Link dashboard and panel**.
-1. Select an existing dashboard, then choose a panel from the selected dashboad.
+1. Select an existing dashboard, then choose a panel from the selected dashboard.
 1. Complete the alert rule configuration and click **Save rule** to initiate the alert rule.
 
 You can then [view the alert state on the panel](ref:view-alert-state-on-panels).
