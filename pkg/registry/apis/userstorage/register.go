@@ -2,7 +2,6 @@ package userstorage
 
 import (
 	"context"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,9 +101,6 @@ func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionNoOpinion, "", nil
 			case "get", "delete", "patch", "update":
 				// Only allow the user to access their own settings
-				uid := u.GetUID()
-				attrName := attr.GetName()
-				fmt.Println("uid", uid, "attrName", attrName)
 				if u.GetUID() != attr.GetName() {
 					return authorizer.DecisionDeny, "forbidden", nil
 				}
