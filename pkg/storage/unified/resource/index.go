@@ -160,7 +160,7 @@ func (i *Index) Init(ctx context.Context) error {
 	}
 
 	//index all remaining batches for all tenants
-	logger.Info("indexing remaining batches", "shards", i.Count())
+	logger.Info("indexing remaining batches", "shards", len(i.shards))
 	err = i.IndexBatches(ctx, 1, i.allTenants())
 	if err != nil {
 		return err
@@ -365,9 +365,17 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	return &IndexResults{Values: results, Groups: groups}, nil
 }
 
-// Count returns the number of shards in the index
-func (i *Index) Count() int {
-	return len(i.shards)
+// Count returns the total doc count
+func (i *Index) Count() (int, error) {
+	total := 0
+	for _, shard := range i.shards {
+		count, err := shard.index.DocCount()
+		if err != nil {
+			return 0, err
+		}
+		total += int(count)
+	}
+	return total, nil
 }
 
 // allTenants returns a list of all tenants in the index

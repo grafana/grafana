@@ -125,7 +125,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 
 	return &Index{
 		tracer: trace,
-		shards: make(map[string]Shard),
+		shards: make(map[string]*Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
 			ListLimit: 5000,
@@ -135,7 +135,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 	}
 }
 
-func assertCountEquals(t *testing.T, index *Index, expected uint64) {
+func assertCountEquals(t *testing.T, index *Index, expected int) {
 	total, err := index.Count()
 	require.NoError(t, err)
 	assert.Equal(t, expected, total)
