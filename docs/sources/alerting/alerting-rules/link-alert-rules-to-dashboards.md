@@ -35,7 +35,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/view-alert-state-on-panels/
 ---
 
-# Create and link alert rules with panels
+# Create and link alert rules to panels
 
 Grafana allows you to link an alert rule to a dashboard panel. This can help you:
 
