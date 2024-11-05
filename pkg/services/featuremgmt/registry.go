@@ -1586,8 +1586,8 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "disableDashboardReportTimeRangeTransformation",
-			Description: "Disables the absolute time range transformation performed in the backend for reporting",
+			Name:        "useReportRawTimeRange",
+			Description: "Uses the original report time range instead of making an absolute transformation",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 			Expression:  "false", // disabled by default

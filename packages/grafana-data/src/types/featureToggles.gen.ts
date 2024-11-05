@@ -230,5 +230,5 @@ export interface FeatureToggles {
   playlistsWatcher?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
-  disableDashboardReportTimeRangeTransformation?: boolean;
+  useReportRawTimeRange?: boolean;
 }

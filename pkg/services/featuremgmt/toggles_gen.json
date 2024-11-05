@@ -1124,7 +1124,8 @@
       "metadata": {
         "name": "disableDashboardReportTimeRangeTransformation",
         "resourceVersion": "1730298834441",
-        "creationTimestamp": "2024-10-30T14:33:54Z"
+        "creationTimestamp": "2024-10-30T14:33:54Z",
+        "deletionTimestamp": "2024-11-05T21:05:53Z"
       },
       "spec": {
         "description": "Disables the absolute time range transformation performed in the backend for reporting",
@@ -3322,6 +3323,19 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useReportRawTimeRange",
+        "resourceVersion": "1730840741637",
+        "creationTimestamp": "2024-11-05T21:05:41Z"
+      },
+      "spec": {
+        "description": "Uses the original report time range instead of making an absolute transformation",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
       }
     },
     {

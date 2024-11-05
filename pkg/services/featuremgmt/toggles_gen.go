@@ -855,7 +855,7 @@ const (
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 
-	// FlagDisableDashboardReportTimeRangeTransformation
-	// Disables the absolute time range transformation performed in the backend for reporting
-	FlagDisableDashboardReportTimeRangeTransformation = "disableDashboardReportTimeRangeTransformation"
+	// FlagUseReportRawTimeRange
+	// Uses the original report time range instead of making an absolute transformation
+	FlagUseReportRawTimeRange = "useReportRawTimeRange"
 )

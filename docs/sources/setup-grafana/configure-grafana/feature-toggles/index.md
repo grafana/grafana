@@ -218,7 +218,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
 | `playlistsWatcher`                            | Enables experimental watcher for playlists                                                                                                                                                                                                                                        |
 | `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |
-| `disableDashboardReportTimeRangeTransformation` | Disables the absolute time range transformation performed in the backend for reporting                                                                                                                                                                                            |
+| `useReportRawTimeRange`                       | Uses the original report time range instead of making an absolute transformation                                                                                                                                                                                                  |
 
 ## Development feature toggles
 
