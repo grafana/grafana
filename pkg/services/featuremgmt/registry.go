@@ -1571,6 +1571,21 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "exploreMetricsRelatedLogs",
+			Description:  "Display Related Logs in Explore Metrics",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:            "enableExtensionsAdminPage",
+			Description:     "Enables the extension admin page regardless of development mode",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:              "passwordlessMagicLinkAuthentication",
 			Description:       "Enable passwordless login via magic link authentication",
 			Stage:             FeatureStageExperimental,

@@ -469,7 +469,7 @@ require (
 
 require (
 	github.com/getkin/kin-openapi v0.128.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/playlist v0.0.0-20241104191849-517a1bef0887 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-app-platform-squad
 )
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team

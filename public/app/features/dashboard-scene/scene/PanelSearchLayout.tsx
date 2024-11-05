@@ -9,8 +9,8 @@ import { Trans } from 'app/core/internationalization';
 
 import { activateSceneObjectAndParentTree } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export interface Props {
