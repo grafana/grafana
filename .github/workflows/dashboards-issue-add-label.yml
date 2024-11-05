@@ -17,7 +17,6 @@ concurrency:
   group: issue-label-when-in-project-${{ github.event.number }}
 jobs:
   main:
-    needs: config
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
