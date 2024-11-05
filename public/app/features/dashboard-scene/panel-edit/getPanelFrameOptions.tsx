@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
@@ -11,6 +11,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -206,5 +207,19 @@ function DescriptionTextArea({ panel }: { panel: VizPanel }) {
 }
 
 function setPanelTitle(panel: VizPanel, title: string) {
-  panel.setState({ title: title, hoverHeader: title === '' });
+  panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+}
+
+export function getUpdatedHoverHeader(title: string, timeRange: SceneTimeRangeLike | undefined): boolean {
+  if (title !== '') {
+    return false;
+  }
+
+  if (timeRange instanceof PanelTimeRange && !timeRange.state.hideTimeOverride) {
+    if (timeRange.state.timeFrom || timeRange.state.timeShift) {
+      return false;
+    }
+  }
+
+  return true;
 }
