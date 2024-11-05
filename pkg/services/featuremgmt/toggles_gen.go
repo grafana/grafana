@@ -846,4 +846,8 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagEnableExtensionsAdminPage
+	// Enables the extension admin page regardless of development mode
+	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 )

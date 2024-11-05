@@ -43,6 +43,7 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
+export const TRAIL_BREAKDOWN_SORT_KEY = 'grafana.trails.breakdown.sort';
 
 export const MDP_METRIC_PREVIEW = 250;
 export const MDP_METRIC_OVERVIEW = 500;

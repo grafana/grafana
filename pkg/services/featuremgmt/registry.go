@@ -1570,6 +1570,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "enableExtensionsAdminPage",
+			Description:     "Enables the extension admin page regardless of development mode",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 
