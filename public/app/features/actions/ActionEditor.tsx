@@ -29,6 +29,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     onChange(index, { ...value, title });
   };
 
+  const onConfirmationChange = (confirmation: string) => {
+    onChange(index, { ...value, confirmation });
+  };
+
   const onUrlChange = (url: string) => {
     onChange(index, {
       ...value,
@@ -107,6 +111,17 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
           placeholder="Action title"
         />
       </Field>
+
+      <InlineFieldRow>
+        <InlineField label="Confirmation" labelWidth={LABEL_WIDTH} grow={true}>
+          <SuggestionsInput
+            value={value.confirmation}
+            onChange={onConfirmationChange}
+            suggestions={suggestions}
+            placeholder="Confirmation text"
+          />
+        </InlineField>
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>

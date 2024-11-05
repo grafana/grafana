@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef } from 'react';
+import { createRef, useCallback, useState } from 'react';
 
 import {
   Field,
@@ -14,7 +14,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data/src';
 import { ActionModel } from '@grafana/data/src/types/action';
-import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { ConfirmModal, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -38,6 +38,17 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scene.tooltipCallback(undefined);
     }
   };
+
+  const [actionConfirmMessage, setActionConfirmMessage] = useState('');
+  const [actionExec, setActionExec] = useState(() => () => {});
+
+  const confirm = useCallback(
+    (message: string, execAction: () => void) => {
+      setActionConfirmMessage(message);
+      setActionExec(() => execAction);
+    },
+    [setActionConfirmMessage, setActionExec]
+  );
 
   const ref = createRef<HTMLElement>();
   const { overlayProps } = useOverlay({ onClose: onClose, isDismissable: true }, ref);
@@ -123,7 +134,8 @@ export const CanvasTooltip = ({ scene }: Props) => {
       scopedVars,
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
-      config
+      config,
+      confirm
     );
 
     actionsModel.forEach((action) => {
@@ -153,6 +165,23 @@ export const CanvasTooltip = ({ scene }: Props) => {
             </section>
           </VizTooltipContainer>
         </Portal>
+      )}
+      {actionConfirmMessage && (
+        <ConfirmModal
+          isOpen={true}
+          title="Confirm action?"
+          body={actionConfirmMessage}
+          confirmText="Confirm"
+          onConfirm={() => {
+            actionExec();
+            setActionConfirmMessage('');
+            setActionExec(() => {});
+          }}
+          onDismiss={() => {
+            setActionConfirmMessage('');
+            setActionExec(() => {});
+          }}
+        />
       )}
     </>
   );

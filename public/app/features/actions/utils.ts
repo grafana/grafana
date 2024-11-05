@@ -26,7 +26,8 @@ export const getActions = (
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
   actions: Action[],
-  config: ValueLinkConfig
+  config: ValueLinkConfig,
+  confirm?: (message: string, execute: () => void) => void
 ): Array<ActionModel<Field>> => {
   if (!actions || actions.length === 0) {
     return [];
@@ -54,8 +55,14 @@ export const getActions = (
 
     actionModel = {
       title: replaceVariables(action.title || '', actionScopedVars),
-      onClick: (evt: MouseEvent, origin: Field) => {
-        buildActionOnClick(action, boundReplaceVariables);
+      onClick: async (evt: MouseEvent, origin: Field) => {
+        const { request, confirmation } = prepRequest(action, boundReplaceVariables);
+
+        if (confirmation && confirm) {
+          confirm(confirmation, () => { execAction(request); });
+        } else {
+          execAction(request);
+        }
       },
     };
 
@@ -65,37 +72,8 @@ export const getActions = (
   return actionModels.filter((action): action is ActionModel => !!action);
 };
 
-/** @internal */
-const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
+const execAction = (request: BackendSrvRequest) => {
   try {
-    const url = new URL(getUrl(replaceVariables(action.fetch.url)));
-
-    const requestHeaders: Record<string, string> = {};
-
-    let request: BackendSrvRequest = {
-      url: url.toString(),
-      method: action.fetch.method,
-      data: getData(action, replaceVariables),
-      headers: requestHeaders,
-    };
-
-    if (action.fetch.headers) {
-      action.fetch.headers.forEach(([name, value]) => {
-        requestHeaders[replaceVariables(name)] = replaceVariables(value);
-      });
-    }
-
-    if (action.fetch.queryParams) {
-      action.fetch.queryParams?.forEach(([name, value]) => {
-        url.searchParams.append(replaceVariables(name), replaceVariables(value));
-      });
-
-      request.url = url.toString();
-    }
-
-    requestHeaders['X-Grafana-Action'] = '1';
-    request.headers = requestHeaders;
-
     getBackendSrv()
       .fetch(request)
       .subscribe({
@@ -112,6 +90,42 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
     console.error(error);
     return;
   }
+};
+
+/** @internal */
+const prepRequest = (action: Action, replaceVariables: InterpolateFunction) => {
+  const url = new URL(getUrl(replaceVariables(action.fetch.url)));
+
+  const requestHeaders: Record<string, string> = {};
+
+  let request: BackendSrvRequest = {
+    url: url.toString(),
+    method: action.fetch.method,
+    data: getData(action, replaceVariables),
+    headers: requestHeaders,
+  };
+
+  if (action.fetch.headers) {
+    action.fetch.headers.forEach(([name, value]) => {
+      requestHeaders[replaceVariables(name)] = replaceVariables(value);
+    });
+  }
+
+  if (action.fetch.queryParams) {
+    action.fetch.queryParams?.forEach(([name, value]) => {
+      url.searchParams.append(replaceVariables(name), replaceVariables(value));
+    });
+
+    request.url = url.toString();
+  }
+
+  requestHeaders['X-Grafana-Action'] = '1';
+  request.headers = requestHeaders;
+
+  return {
+    request,
+    confirmation: action.confirmation ? replaceVariables(action.confirmation) : undefined,
+  };
 };
 
 /** @internal */
