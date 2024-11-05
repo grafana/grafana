@@ -12,7 +12,9 @@ func ApplyScopes(rawExpr string, scopeFilters []models.ScopeFilter) (string, err
 		return rawExpr, nil
 	}
 	scopeMatchers, err := models.FiltersToMatchers(scopeFilters, nil)
-
+	if err != nil {
+		return "", fmt.Errorf("failed to convert filters to matchers: %w", err)
+	}
 	// Need WithoutValidation to allow empty `{}` expressions
 	syntaxTree, err := syntax.ParseExprWithoutValidation(rawExpr)
 	if err != nil {
