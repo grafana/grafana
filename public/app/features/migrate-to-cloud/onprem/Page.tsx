@@ -5,6 +5,7 @@ import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
+import { getLocalPlugins } from '../../plugins/admin/api';
 import {
   GetSnapshotResponseDto,
   SnapshotDto,
@@ -111,6 +112,8 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
     isFetching: listResult.isFetching || snapshotResult.isFetching,
   };
 }
+
+const localPlugins = await getLocalPlugins();
 
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
@@ -240,6 +243,7 @@ export const Page = () => {
           <Stack gap={4} direction="column">
             <ResourcesTable
               resources={snapshot.data.results}
+              localPlugins={localPlugins}
               onChangePage={setPage}
               numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
               page={page}

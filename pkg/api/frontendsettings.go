@@ -107,8 +107,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		return nil, err
 	}
 
-	pluginsLogos := getPluginsLogos(availablePlugins)
-
 	apps := make(map[string]*plugins.AppDTO, 0)
 	for _, ap := range availablePlugins[plugins.TypeApp] {
 		apps[ap.Plugin.ID] = hs.newAppDTO(
@@ -189,7 +187,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
-		PluginLogos:                         pluginsLogos,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
@@ -767,17 +764,4 @@ func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
 		}
 	}
 	return providers
-}
-
-func getPluginsLogos(availablePlugins AvailablePlugins) map[string]plugins.Logos {
-	pluginLogo := make(map[string]plugins.Logos)
-	pluginTypes := []plugins.Type{plugins.TypeDataSource, plugins.TypePanel, plugins.TypeApp}
-
-	for _, pluginType := range pluginTypes {
-		for _, plugin := range availablePlugins[pluginType] {
-			pluginLogo[plugin.Plugin.ID] = plugin.Plugin.Info.Logos
-		}
-	}
-
-	return pluginLogo
 }
