@@ -105,7 +105,7 @@ export const calculateOutlierValue = (series: DataFrame[], data: DataFrame): num
 
   const index = series.indexOf(data);
   if (outliers.seriesResults[index].isOutlier) {
-    return outliers.seriesResults[index].outlierIntervals.length;
+    return -outliers.seriesResults[index].outlierIntervals.length;
   }
 
   return 0;
