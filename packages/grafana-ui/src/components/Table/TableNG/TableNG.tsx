@@ -1,5 +1,6 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
@@ -33,10 +34,11 @@ interface TableColumn extends Column<TableRow> {
   field: Omit<Field, 'values'>;
 }
 
-interface TableHeaderProps {
+interface HeaderCellProps {
   column: Column<any>;
   onSort: (columnKey: string, direction: SortDirection) => void;
   direction: SortDirection | undefined;
+  justifyContent?: Property.JustifyContent;
 }
 
 export function TableNG(props: TableNGProps) {
@@ -94,13 +96,13 @@ export function TableNG(props: TableNGProps) {
   }
   const rowHeightNumber = rowHeight();
 
-  const TableHeader: React.FC<TableHeaderProps> = ({ column, onSort, direction }) => {
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
     };
 
     return (
-      <div>
+      <div style={{ display: 'flex', justifyContent }}>
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
@@ -191,7 +193,12 @@ export function TableNG(props: TableNGProps) {
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
-          <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
+          <HeaderCell
+            column={column}
+            onSort={handleSort}
+            direction={sortDirection}
+            justifyContent={getTextAlign(field)}
+          />
         ),
         width: columnWidth,
         minWidth: columnMinWidth,
