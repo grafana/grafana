@@ -14,6 +14,10 @@ const (
 	OfflineAccessScope = "offline_access"
 	RoleGrafanaAdmin   = "GrafanaAdmin" // For AzureAD for example this value cannot contain spaces
 
+	// Values for ClientAuthentication under OAuthInfo (based on oidc spec)
+	ClientSecretPost = "client_secret_post"
+	ClientSecretJWT  = "client_secret_jwt"
+
 	AzureADProviderName      = "azuread"
 	GenericOAuthProviderName = "generic_oauth"
 	GitHubProviderName       = "github"
@@ -47,7 +51,6 @@ type SocialConnector interface {
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
-	GetClientSecretJWT(ctx context.Context) (string, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
 	SupportBundleContent(*bytes.Buffer) error
@@ -62,9 +65,10 @@ type OAuthInfo struct {
 	AuthStyle               string            `mapstructure:"auth_style" toml:"auth_style"`
 	AuthUrl                 string            `mapstructure:"auth_url" toml:"auth_url"`
 	AutoLogin               bool              `mapstructure:"auto_login" toml:"auto_login"`
+	ClientAuthentication    string            `mapstructure:"client_authentication" toml:"client_authentication"`
 	ClientId                string            `mapstructure:"client_id" toml:"client_id"`
+	ManagedIdentityClientID string            `mapstructure:"managed_identity_client_id" toml:"managed_identity_client_id"`
 	ClientSecret            string            `mapstructure:"client_secret" toml:"-"`
-	ClientSecretJWT         string            `mapstructure:"client_secret_jwt" toml:"client_secret_jwt"`
 	EmailAttributeName      string            `mapstructure:"email_attribute_name" toml:"email_attribute_name"`
 	EmailAttributePath      string            `mapstructure:"email_attribute_path" toml:"email_attribute_path"`
 	EmptyScopes             bool              `mapstructure:"empty_scopes" toml:"empty_scopes"`

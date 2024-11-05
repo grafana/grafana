@@ -232,10 +232,6 @@ func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGitlab) GetClientSecretJWT(ctx context.Context) (string, error) {
-	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.GitlabProviderName)
-}
-
 func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, _ *oauth2.Token) (*userData, error) {
 	apiResp := &apiData{}
 	response, err := s.httpGet(ctx, client, s.info.ApiUrl+"/user")

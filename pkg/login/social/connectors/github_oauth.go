@@ -369,10 +369,6 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGithub) GetClientSecretJWT(ctx context.Context) (string, error) {
-	return "", fmt.Errorf("GetClientSecretJWT is not supported for %s", social.GitHubProviderName)
-}
-
 func (t *GithubTeam) GetShorthand() (string, error) {
 	if t.Organization.Login == "" || t.Slug == "" {
 		return "", errors.New("Error getting team shorthand")
