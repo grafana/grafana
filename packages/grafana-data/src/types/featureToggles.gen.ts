@@ -163,6 +163,7 @@ export interface FeatureToggles {
   onPremToCloudMigrationsAlerts?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  logQLScope?: boolean;
   sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;

@@ -472,6 +472,8 @@ require (
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
 
+require github.com/grafana/loki/v3 v3.2.1
+
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
@@ -484,7 +486,6 @@ require (
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
-	github.com/grafana/loki/v3 v3.2.1 // indirect
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect
 	github.com/hashicorp/consul/api v1.29.4 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
