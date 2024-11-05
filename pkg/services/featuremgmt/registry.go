@@ -1575,7 +1575,7 @@ var (
 			Description:     "Enables the extension admin page regardless of development mode",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: false,
+			RequiresRestart: true,
 		},
 	}
 )
