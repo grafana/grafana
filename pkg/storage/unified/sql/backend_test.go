@@ -8,7 +8,9 @@ import (
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/test"
@@ -281,9 +283,14 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 func TestBackend_create(t *testing.T) {
 	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
 	event := resource.WriteEvent{
-		Type: resource.WatchEvent_ADDED,
-		Key:  resKey,
+		Type:   resource.WatchEvent_ADDED,
+		Key:    resKey,
+		Object: meta,
 	}
 
 	t.Run("happy path", func(t *testing.T) {
@@ -386,9 +393,15 @@ func TestBackend_create(t *testing.T) {
 
 func TestBackend_update(t *testing.T) {
 	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
+	meta.SetFolder("folderuid")
 	event := resource.WriteEvent{
-		Type: resource.WatchEvent_MODIFIED,
-		Key:  resKey,
+		Type:   resource.WatchEvent_MODIFIED,
+		Key:    resKey,
+		Object: meta,
 	}
 
 	t.Run("happy path", func(t *testing.T) {
@@ -491,9 +504,14 @@ func TestBackend_update(t *testing.T) {
 
 func TestBackend_delete(t *testing.T) {
 	t.Parallel()
+	meta, err := utils.MetaAccessor(&unstructured.Unstructured{
+		Object: map[string]any{},
+	})
+	require.NoError(t, err)
 	event := resource.WriteEvent{
-		Type: resource.WatchEvent_DELETED,
-		Key:  resKey,
+		Type:   resource.WatchEvent_DELETED,
+		Key:    resKey,
+		Object: meta,
 	}
 
 	t.Run("happy path", func(t *testing.T) {

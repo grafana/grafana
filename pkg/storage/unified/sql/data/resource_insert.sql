@@ -6,6 +6,7 @@ INSERT INTO {{ .Ident "resource" }}
         {{ .Ident "resource" }},
         {{ .Ident "namespace" }},
         {{ .Ident "name" }},
+        {{ .Ident "folder" }},
 
         {{ .Ident "previous_resource_version" }},
         {{ .Ident "value" }},
@@ -17,6 +18,7 @@ INSERT INTO {{ .Ident "resource" }}
         {{ .Arg .WriteEvent.Key.Resource }},
         {{ .Arg .WriteEvent.Key.Namespace }},
         {{ .Arg .WriteEvent.Key.Name }},
+        {{ .Arg .Folder }},
 
         {{ .Arg .WriteEvent.PreviousRV }},
         {{ .Arg .WriteEvent.Value }},
