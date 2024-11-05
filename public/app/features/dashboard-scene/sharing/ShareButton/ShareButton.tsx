@@ -26,6 +26,10 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   }, [dashboard]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
+    if (isOpen) {
+      DashboardInteractions.toolbarShareDropdownClick();
+    }
+
     setIsOpen(isOpen);
   }, []);
 
