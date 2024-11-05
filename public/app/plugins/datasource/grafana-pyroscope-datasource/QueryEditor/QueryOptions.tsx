@@ -47,6 +47,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   if (query.groupBy?.length) {
     collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
   }
+  if (query.limit) {
+    collapsedInfo.push(`Limi: ${query.limit}`);
+  }
   if (query.spanSelector?.length) {
     collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
   }
