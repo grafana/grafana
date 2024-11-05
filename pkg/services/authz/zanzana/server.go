@@ -26,7 +26,7 @@ func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*
 
 	return zserver.NewAuthz(
 		openfga,
-		zserver.WithTenantID(fmt.Sprintf("stack-%s", stackID)),
+		zserver.WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
 	)
 }
 

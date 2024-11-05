@@ -76,7 +76,9 @@ exports[`alerting API server disabled should be able to test and save a receiver
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "message": "{{ template "slack-template" . }}",
             "singleEmail": false,
+            "subject": "some custom value",
           },
           "type": "email",
           "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",

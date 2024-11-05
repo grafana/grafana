@@ -807,7 +807,14 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	//nolint:errorlint
 	statusError, ok := err.(*k8sErrors.StatusError)
 	if ok {
-		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		message := statusError.Status().Message
+		// #TODO: Is there a better way to set the correct meesage? Instead of "access denied to folder", currently we are
+		// returning something like `folders.folder.grafana.app is forbidden: User "" cannot create resource "folders" in
+		// API group "folder.grafana.app" in the namespace "default": folder``
+		if statusError.Status().Code == http.StatusForbidden {
+			message = dashboards.ErrFolderAccessDenied.Error()
+		}
+		c.JsonApiErr(int(statusError.Status().Code), message, err)
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)
@@ -849,10 +856,10 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
 		if len(fDTO.CreatedBy) > 0 {
-			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy), orgID)
+			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy))
 		}
 		if len(fDTO.UpdatedBy) > 0 {
-			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy), orgID)
+			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy))
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -923,13 +930,12 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	return folderDTO, nil
 }
 
-func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string, orgID int64) string {
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string) string {
 	ctx, span := tracer.Start(ctx, "api.getUserLogin")
 	defer span.End()
 
 	query := user.GetUserByUIDQuery{
-		UID:   userUID,
-		OrgID: orgID,
+		UID: userUID,
 	}
 	user, err := fk8s.userService.GetByUID(ctx, &query)
 	if err != nil {

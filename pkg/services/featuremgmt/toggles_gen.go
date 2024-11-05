@@ -255,10 +255,6 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
-	// FlagVizAndWidgetSplit
-	// Split panels between visualizations and widgets
-	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
-
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
 	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
@@ -699,6 +695,10 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
+	// FlagSqlQuerybuilderFunctionParameters
+	// Enables SQL query builder function parameters
+	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
+
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -727,9 +727,9 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
-	// FlagPassScopeToDashboardApi
-	// Enables the passing of scopes to dashboards fetching in Grafana
-	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+	// FlagReloadDashboardsOnParamsChange
+	// Enables reload of dashboards on scopes, time range and variables changes
+	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
@@ -834,4 +834,16 @@ const (
 	// FlagPrometheusUsesCombobox
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagDashboardSchemaV2
+	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
+	FlagDashboardSchemaV2 = "dashboardSchemaV2"
+
+	// FlagPlaylistsWatcher
+	// Enables experimental watcher for playlists
+	FlagPlaylistsWatcher = "playlistsWatcher"
 )

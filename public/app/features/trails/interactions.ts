@@ -18,6 +18,7 @@ type Interactions = {
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
     );
+    otel_resource_attribute?: boolean;
   };
   // User changed a label filter.
   label_filter_changed: {
@@ -109,6 +110,10 @@ type Interactions = {
       // Closes the dropdown
       | 'close'
     )
+  };
+  sorting_changed: {
+      // type of sorting
+      sortBy: string
   };
   wasm_not_supported: {},
 };

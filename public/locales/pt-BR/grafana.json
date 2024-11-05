@@ -71,6 +71,12 @@
         }
       }
     },
+    "alert-rules": {
+      "firing-for": "",
+      "next-evaluation": "",
+      "next-evaluation-in": "",
+      "rule-definition": ""
+    },
     "alertform": {
       "labels": {
         "alerting": "",
@@ -134,6 +140,7 @@
     "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -141,6 +148,7 @@
         "provisioned": "",
         "rules": ""
       },
+      "delivered-to": "",
       "delivery-duration": "",
       "empty-state": {
         "title": ""
@@ -440,6 +448,9 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": ""
+    },
     "clear": {
       "title": ""
     },
@@ -473,11 +484,14 @@
     "cancel": "",
     "clear": "",
     "close": "",
+    "collapse": "",
+    "edit": "",
     "locale": {
       "default": "Padrão"
     },
     "save": "Salvar",
-    "search": ""
+    "search": "",
+    "view": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -604,8 +618,7 @@
       "import": "Importar da biblioteca",
       "paste-panel": "Colar painel",
       "row": "Linha",
-      "visualization": "Visualização",
-      "widget": "Widget"
+      "visualization": "Visualização"
     },
     "alert-rules-drawer": {
       "redirect-link": "Lista no alerta do Grafana",
@@ -618,9 +631,6 @@
       "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
       "add-visualization-button": "Adicionar visualização",
       "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
-      "add-widget-body": "Criar listas, markdowns e outros widgets",
-      "add-widget-button": "Adicionar widget",
-      "add-widget-header": "Adicionar um widget",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar um painel de controle",
       "import-dashboard-button": "Importar painel de controle"
@@ -856,6 +866,11 @@
   "explore": {
     "add-to-dashboard": "Adicionar ao painel de controle",
     "logs": {
+      "logs-volume": {
+        "add-filters": "",
+        "decrease-timerange": "",
+        "much-data": ""
+      },
       "maximum-pinned-logs": "",
       "no-logs-found": "",
       "scan-for-older-logs": "",
@@ -1034,7 +1049,8 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
-      "noMatchingValue": ""
+      "noMatchingValue": "",
+      "sortBy": ""
     },
     "viewBy": ""
   },
@@ -1537,6 +1553,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1601,7 +1618,10 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
+        "datasource-invalid-url": "",
         "datasource-name-conflict": "",
+        "folder-name-conflict": "",
         "generic-error": "",
         "internal-service-error": "",
         "library-element-name-conflict": "",
@@ -1635,6 +1655,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Painel de controle",
       "datasource": "Fonte de dados",
@@ -2156,6 +2177,9 @@
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "installedVersion": "",
+        "lastCommitDate": "",
+        "latestVersion": "",
         "links": "",
         "reportAbuse": "",
         "signature": "",
@@ -2864,7 +2888,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2878,6 +2913,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",

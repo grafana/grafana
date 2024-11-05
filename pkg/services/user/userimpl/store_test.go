@@ -99,6 +99,12 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, "abcd", siu.UserUID)
+
+		query := user.GetUserByUIDQuery{UID: "abcd"}
+		result, err := userStore.GetByUID(context.Background(), query.UID)
+		require.Nil(t, err)
+		require.Equal(t, result.UID, "abcd")
+		require.Equal(t, result.Email, "next-test@email.com")
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {

@@ -72,9 +72,9 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
 });
 
 const displayedFieldsStyles = {
-  noWrap: css`
-    white-space: nowrap;
-  `,
+  noWrap: css({
+    whiteSpace: 'nowrap',
+  }),
 };
 
 LogRowMessageDisplayedFields.displayName = 'LogRowMessageDisplayedFields';
