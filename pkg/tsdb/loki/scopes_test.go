@@ -55,6 +55,25 @@ func TestInjectScopesIntoLokiQuery(t *testing.T) {
 			expected:  `{cluster="us-central-1", namespace="default"} |= "an unexpected error"`,
 			expectErr: false,
 		},
+		{
+			name:  "metric query with scopes filters",
+			query: `count_over_time({} |= "error" [1m])`,
+			scopeFilters: []models.ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			},
+			expected:  `count_over_time({namespace="default"} |= "error"[1m])`,
+			expectErr: false,
+		},
+		{
+			name:  "multi range metric query operation",
+			query: `count_over_time({} |= "error" [1m])/count_over_time({} [1m])`,
+			scopeFilters: []models.ScopeFilter{
+				{Key: "cluster", Value: "us-central-1", Operator: models.FilterOperatorEquals},
+				{Key: "namespace", Value: "default", Operator: models.FilterOperatorEquals},
+			},
+			expected:  `(count_over_time({cluster="us-central-1", namespace="default"} |= "error"[1m]) / count_over_time({cluster="us-central-1", namespace="default"}[1m]))`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
