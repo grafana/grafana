@@ -37,7 +37,12 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   ignoreUrls: RegExp[];
 }
 
-const TRACKING_URLS = [/.*.google-analytics.com*.*/, /.*.googletagmanager.com*.*/, /frontend-metrics/, /\/collect(?:\/[\w]*)?$/];
+const TRACKING_URLS = [
+  /.*.google-analytics.com*.*/,
+  /.*.googletagmanager.com*.*/,
+  /frontend-metrics/,
+  /\/collect(?:\/[\w]*)?$/,
+];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
