@@ -8,11 +8,15 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { VariableUsagesButton } from '../../variables/VariableUsagesButton';
+import { UsagesToNetwork } from '../../variables/utils';
+
 import { getDefinition } from './utils';
 
 export interface VariableEditorListRowProps {
   index: number;
   variable: SceneVariable;
+  usagesNetwork: UsagesToNetwork[];
   onEdit: (identifier: string) => void;
   onDuplicate: (identifier: string) => void;
   onDelete: (identifier: string) => void;
@@ -21,6 +25,7 @@ export interface VariableEditorListRowProps {
 export function VariableEditorListRow({
   index,
   variable,
+  usagesNetwork,
   onEdit: propsOnEdit,
   onDuplicate: propsOnDuplicate,
   onDelete: propsOnDelete,
@@ -79,6 +84,11 @@ export function VariableEditorListRow({
 
           <td role="gridcell" className={styles.column}>
             <div className={styles.icons}>
+              <VariableUsagesButton
+                id={variableState.name}
+                isAdhoc={variableState.type === 'adhoc'}
+                usages={usagesNetwork}
+              />
               <IconButton
                 onClick={(event) => {
                   event.preventDefault();

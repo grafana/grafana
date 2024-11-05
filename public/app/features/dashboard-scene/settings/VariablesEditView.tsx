@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -5,6 +7,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
+import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -197,6 +200,13 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
 
     return [false, null];
   };
+
+  public getUsagesNetwork = () => {
+    const usages = createUsagesNetwork(this.getVariables(), this.getDashboard());
+    const usagesNetwork = transformUsagesToNetwork(usages);
+
+    return usagesNetwork;
+  };
 }
 
 function VariableEditorSettingsListView({ model }: SceneComponentProps<VariablesEditView>) {
@@ -206,6 +216,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
+  const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
@@ -230,6 +241,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       <NavToolbarActions dashboard={dashboard} />
       <VariableEditorList
         variables={variables}
+        usagesNetwork={usagesNetwork}
         onDelete={onDelete}
         onDuplicate={onDuplicated}
         onChangeOrder={onOrderChanged}
