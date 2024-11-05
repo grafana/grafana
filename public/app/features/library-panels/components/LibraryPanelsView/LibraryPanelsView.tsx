@@ -21,7 +21,6 @@ interface LibraryPanelViewProps {
   panelFilter?: string[];
   folderFilter?: string[];
   perPage?: number;
-  isWidget?: boolean;
 }
 
 export const LibraryPanelsView = ({
@@ -33,7 +32,6 @@ export const LibraryPanelsView = ({
   showSecondaryActions,
   currentPanelId: currentPanel,
   perPage: propsPerPage = 40,
-  isWidget,
 }: LibraryPanelViewProps) => {
   const styles = useStyles2(getPanelViewStyles);
   const [{ libraryPanels, page, perPage, numberOfPages, loadingState, currentPanelId }, dispatch] = useReducer(
@@ -56,7 +54,6 @@ export const LibraryPanelsView = ({
           page,
           perPage,
           currentPanelId,
-          isWidget,
         })
       ),
     300,

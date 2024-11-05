@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { EmptySearchResult, useStyles2 } from '@grafana/ui';
 
-import { filterPluginList, getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from '../../state/util';
+import { filterPluginList, getAllPanelPluginMeta } from '../../state/util';
 
 import { VizTypePickerPlugin } from './VizTypePickerPlugin';
 import { VizTypeChangeDetails } from './types';
@@ -14,18 +13,12 @@ export interface Props {
   pluginId: string;
   searchQuery: string;
   onChange: (options: VizTypeChangeDetails) => void;
-  isWidget?: boolean;
   trackSearch?: (q: string, count: number) => void;
 }
 
-export function VizTypePicker({ pluginId, searchQuery, onChange, isWidget = false, trackSearch }: Props) {
+export function VizTypePicker({ pluginId, searchQuery, onChange, trackSearch }: Props) {
   const styles = useStyles2(getStyles);
-  const pluginsList = useMemo(() => {
-    if (config.featureToggles.vizAndWidgetSplit) {
-      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
-    }
-    return getAllPanelPluginMeta();
-  }, [isWidget]);
+  const pluginsList = useMemo(getAllPanelPluginMeta, []);
 
   const filteredPluginTypes = useMemo(() => {
     const result = filterPluginList(pluginsList, searchQuery, pluginId);

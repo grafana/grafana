@@ -29,6 +29,10 @@ export const VAR_OTEL_DEPLOYMENT_ENV = 'deployment_environment';
 export const VAR_OTEL_DEPLOYMENT_ENV_EXPR = '${deployment_environment}';
 export const VAR_OTEL_JOIN_QUERY = 'otel_join_query';
 export const VAR_OTEL_JOIN_QUERY_EXPR = '${otel_join_query}';
+export const VAR_OTEL_GROUP_BY = 'otel_groupby';
+export const VAR_OTEL_GROUP_BY_EXPR = '${otel_groupby}';
+export const VAR_OTEL_GROUP_LEFT = 'otel_group_left';
+export const VAR_OTEL_GROUP_LEFT_EXPR = '${otel_group_left}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
@@ -39,6 +43,7 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
+export const TRAIL_BREAKDOWN_SORT_KEY = 'grafana.trails.breakdown.sort';
 
 export const MDP_METRIC_PREVIEW = 250;
 export const MDP_METRIC_OVERVIEW = 500;
