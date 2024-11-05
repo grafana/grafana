@@ -165,7 +165,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	// will use stack id for cloud and org id for on-prem
 	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
 
-	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
+	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From), Kind: qry.Kind}
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
 		s.logger.Error("Failed to search resources", "error", err)

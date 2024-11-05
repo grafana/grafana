@@ -330,7 +330,7 @@ message SearchRequest {
   string queryType = 2;
   string tenant = 3;
   // resource kind (playlists, dashboards, etc)
-  string kind = 4;
+  repeated string kind = 4;
   // pagination support
   int64 limit = 5;
   int64 offset = 6;
