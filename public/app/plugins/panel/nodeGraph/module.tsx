@@ -44,5 +44,16 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
         });
       },
     });
+    builder.addSelect({
+      name: 'Zoom mode',
+      path: 'zoomMode',
+      defaultValue: 'cooperative',
+      settings: {
+        options: [
+          { value: 'cooperative', label: 'Cooperative', description: 'Lets user scroll the page normally' },
+          { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
+        ],
+      },
+    });
   })
   .setSuggestionsSupplier(new NodeGraphSuggestionsSupplier());
