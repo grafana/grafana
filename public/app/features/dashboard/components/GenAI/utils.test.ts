@@ -8,6 +8,7 @@ import { getDashboardChanges, getPanelStrings, isLLMPluginEnabled, sanitizeReply
 
 // Mock the llms.openai module
 jest.mock('@grafana/experimental', () => ({
+  ...jest.requireActual('@grafana/experimental'),
   llms: {
     openai: {
       streamChatCompletions: jest.fn(),

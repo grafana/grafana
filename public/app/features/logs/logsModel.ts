@@ -44,6 +44,7 @@ import { config } from '@grafana/runtime';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
 
 import { LogsFrame, parseLogsFrame } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
@@ -222,6 +223,7 @@ export function dataFrameToLogsModel(
   const logsModel = logSeriesToLogsModel(logSeries, queries, Boolean(deduplicateResults));
 
   if (logsModel) {
+    logsModel.queries = queries;
     // Create histogram metrics from logs using the interval as bucket size for the line count
     if (intervalMs && logsModel.rows.length > 0) {
       const sortedRows = logsModel.rows.sort(sortInAscendingOrder);
@@ -240,7 +242,6 @@ export function dataFrameToLogsModel(
     } else {
       logsModel.series = [];
     }
-    logsModel.queries = queries;
     return logsModel;
   }
 
@@ -556,11 +557,19 @@ function adjustMetaInfo(logsModel: LogsModel, visibleRangeMs?: number, requested
     let metaLimitValue;
 
     if (limit === logsModel.rows.length && visibleRangeMs && requestedRangeMs) {
-      const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
+      metaLimitValue = `${limit} reached`;
 
-      metaLimitValue = `${limit} reached, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
-        visibleRangeMs
-      )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+      // Scan is a special Loki query direction which potentially returns fewer logs than expected.
+      const canShowCoverage = !logsModel.queries?.some(
+        (query) => 'direction' in query && query.direction === LokiQueryDirection.Scan
+      );
+
+      if (canShowCoverage) {
+        const coverage = ((visibleRangeMs / requestedRangeMs) * 100).toFixed(2);
+        metaLimitValue += `, received logs cover ${coverage}% (${rangeUtil.msRangeToTimeString(
+          visibleRangeMs
+        )}) of your selected time range (${rangeUtil.msRangeToTimeString(requestedRangeMs)})`;
+      }
     } else {
       const description = config.featureToggles.logsInfiniteScrolling ? 'displayed' : 'returned';
       metaLimitValue = `${limit} (${logsModel.rows.length} ${description})`;
@@ -683,7 +692,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           observer.next({
             state: LoadingState.Error,
             error,
-            data: [],
+            data: dataQueryResponse.data,
           });
           observer.error(error);
         } else {

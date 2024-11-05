@@ -190,6 +190,7 @@ export interface FeatureToggles {
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
+  sqlQuerybuilderFunctionParameters?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
@@ -226,5 +227,8 @@ export interface FeatureToggles {
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   dashboardSchemaV2?: boolean;
+  playlistsWatcher?: boolean;
+  exploreMetricsRelatedLogs?: boolean;
+  enableExtensionsAdminPage?: boolean;
   disableDashboardReportTimeRangeTransformation?: boolean;
 }

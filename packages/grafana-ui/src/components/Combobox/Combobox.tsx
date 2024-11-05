@@ -9,6 +9,8 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
+import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
@@ -94,6 +96,7 @@ export const Combobox = <T extends string | number>({
   const isAsync = typeof options === 'function';
   const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
   const [asyncLoading, setAsyncLoading] = useState(false);
+  const [asyncError, setAsyncError] = useState(false);
 
   const [items, setItems] = useState(isAsync ? [] : options);
 
@@ -143,10 +146,11 @@ export const Combobox = <T extends string | number>({
           .then((opts) => {
             setItems(customValueOption ? [customValueOption, ...opts] : opts);
             setAsyncLoading(false);
+            setAsyncError(false);
           })
           .catch((err) => {
             if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
+              setAsyncError(true);
               setAsyncLoading(false);
             }
           });
@@ -217,12 +221,12 @@ export const Combobox = <T extends string | number>({
           .then((options) => {
             setItems(options);
             setAsyncLoading(false);
+            setAsyncError(false);
           })
           .catch((err) => {
             if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
+              setAsyncError(true);
               setAsyncLoading(false);
-              throw err;
             }
           });
         return;
@@ -307,7 +311,7 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && (
+        {isOpen && !asyncError && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
@@ -340,6 +344,12 @@ export const Combobox = <T extends string | number>({
               );
             })}
           </ul>
+        )}
+        {asyncError && (
+          <Stack justifyContent="center" alignItems="center" height={8}>
+            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+            <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
+          </Stack>
         )}
       </div>
     </div>

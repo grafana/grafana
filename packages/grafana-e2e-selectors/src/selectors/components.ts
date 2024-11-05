@@ -182,7 +182,6 @@ export const versionedComponents = {
         },
       },
       queryEditor: {
-        // kickstart: '', see QueryBuilder queryPatterns below
         explain: {
           '10.4.0': 'data-testid prometheus explain switch wrapper',
         },
@@ -209,9 +208,6 @@ export const versionedComponents = {
         },
         builder: {
           // see QueryBuilder below for commented selectors
-          // labelSelect: 'data-testid Select label',
-          // valueSelect: 'data-testid Select value',
-          // matchOperatorSelect: 'data-testid Select match operator',
           metricSelect: {
             '10.4.0': 'data-testid metric select',
           },
@@ -491,7 +487,6 @@ export const versionedComponents = {
         '11.0.0': (title: string) => `data-testid Panel editor option pane field input ${title}`,
       },
     },
-    // not sure about the naming *DataPane*
     DataPane: {
       content: {
         '11.1.0': 'data-testid Panel editor data pane content',
@@ -1196,12 +1191,17 @@ export const versionedComponents = {
     selectColumn: {
       '11.0.0': 'data-testid select-column',
     },
+    selectColumnInput: { '11.0.0': 'data-testid select-column-input' },
+    selectFunctionParameter: { '11.0.0': (name: string) => `data-testid select-function-parameter-${name}` },
     selectAggregation: {
       '11.0.0': 'data-testid select-aggregation',
     },
+    selectAggregationInput: { '11.0.0': 'data-testid select-aggregation-input' },
     selectAlias: {
       '11.0.0': 'data-testid select-alias',
     },
+    selectAliasInput: { '11.0.0': 'data-testid select-alias-input' },
+    selectInputParameter: { '11.0.0': 'data-testid select-input-parameter' },
     filterConjunction: {
       '11.0.0': 'data-testid filter-conjunction',
     },
