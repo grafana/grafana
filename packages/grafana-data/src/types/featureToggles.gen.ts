@@ -229,4 +229,5 @@ export interface FeatureToggles {
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   exploreMetricsRelatedLogs?: boolean;
+  enableExtensionsAdminPage?: boolean;
 }
