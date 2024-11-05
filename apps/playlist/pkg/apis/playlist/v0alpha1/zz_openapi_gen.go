@@ -12,17 +12,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.Playlist":                    schema_playlist_apis_playlist_v0alpha1_Playlist(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistItem":                schema_playlist_apis_playlist_v0alpha1_PlaylistItem(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistList":                schema_playlist_apis_playlist_v0alpha1_PlaylistList(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistOperatorState":       schema_playlist_apis_playlist_v0alpha1_PlaylistOperatorState(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistSpec":                schema_playlist_apis_playlist_v0alpha1_PlaylistSpec(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistStatus":              schema_playlist_apis_playlist_v0alpha1_PlaylistStatus(ref),
-		"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlayliststatusOperatorState": schema_playlist_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.Playlist":                    schema_pkg_apis_playlist_v0alpha1_Playlist(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistItem":                schema_pkg_apis_playlist_v0alpha1_PlaylistItem(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistList":                schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistOperatorState":       schema_pkg_apis_playlist_v0alpha1_PlaylistOperatorState(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec":                schema_pkg_apis_playlist_v0alpha1_PlaylistSpec(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistStatus":              schema_pkg_apis_playlist_v0alpha1_PlaylistStatus(ref),
+		"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlayliststatusOperatorState": schema_pkg_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref),
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -51,13 +51,13 @@ func schema_playlist_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallbac
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistSpec"),
+							Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistStatus"),
 						},
 					},
 				},
@@ -65,11 +65,11 @@ func schema_playlist_apis_playlist_v0alpha1_Playlist(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistSpec", "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistSpec", "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlaylistItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlaylistItem(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -99,7 +99,7 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistItem(ref common.ReferenceCal
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -132,7 +132,7 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.Playlist"),
+										Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.Playlist"),
 									},
 								},
 							},
@@ -143,11 +143,11 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.Playlist", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.Playlist", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlaylistOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlaylistOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -199,7 +199,7 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistOperatorState(ref common.Ref
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -220,7 +220,7 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistItem"),
+										Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistItem"),
 									},
 								},
 							},
@@ -238,11 +238,11 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlaylistItem"},
+			"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlaylistItem"},
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -273,7 +273,7 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlayliststatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlayliststatusOperatorState"),
 									},
 								},
 							},
@@ -283,11 +283,11 @@ func schema_playlist_apis_playlist_v0alpha1_PlaylistStatus(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1.PlayliststatusOperatorState"},
+			"github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1.PlayliststatusOperatorState"},
 	}
 }
 
-func schema_playlist_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_playlist_v0alpha1_PlayliststatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
