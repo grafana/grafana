@@ -1,4 +1,3 @@
-// TODO: fix - copied from bluge.ts
 import {
     DataFrame,
     DataFrameJSON,
@@ -86,6 +85,7 @@ import {
       return [];
     }
   
+    // TODO: Implement this correctly
     getSortOptions(): Promise<SelectableValue[]> {
       const opts: SelectableValue[] = [
         { value: folderViewSort, label: 'Alphabetically (A-Z)' },
