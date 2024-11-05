@@ -2,6 +2,7 @@ UPDATE {{ .Ident "resource" }}
     SET
         {{ .Ident "guid" }}   = {{ .Arg .GUID }},
         {{ .Ident "value" }}  = {{ .Arg .WriteEvent.Value }},
+        {{ .Ident "folder" }}  = {{ .Arg .Folder }},
         {{ .Ident "action" }} = {{ .Arg .WriteEvent.Type }}  
     WHERE 1 = 1
         AND {{ .Ident "group" }}     = {{ .Arg .WriteEvent.Key.Group }}
