@@ -43,6 +43,10 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
+{{% admonition type="note" %}}
+The license only automatically updates once per day. To immediately update the terms for a license, use the Grafana UI to renew your license token.
+{{% /admonition %}}
+
 ### license_validation_type
 
 {{% admonition type="note" %}}
