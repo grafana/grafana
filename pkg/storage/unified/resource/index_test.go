@@ -54,7 +54,7 @@ func TestSearchFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 2)
-	assertSearchCountEquals(t, index, "Kind:Folder", nil, 1)
+	assertSearchCountEquals(t, index, "*", []string{"folder"}, 1)
 }
 
 func TestSearchDashboardsAndFoldersOnly(t *testing.T) {

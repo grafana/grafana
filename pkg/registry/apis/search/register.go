@@ -105,11 +105,9 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						offset, _ = strconv.Atoi(queryParams.Get("offset"))
 					}
 
-					kind := queryParams.Get("kind")
-					kinds := strings.Split(kind, ",")
 					searchRequest := &resource.SearchRequest{
 						Tenant:    tenant,
-						Kind:      kinds,
+						Kind:      strings.Split(queryParams.Get("kind"), ","),
 						QueryType: queryParams.Get("queryType"),
 						Query:     queryParams.Get("query"),
 						Limit:     int64(limit),
