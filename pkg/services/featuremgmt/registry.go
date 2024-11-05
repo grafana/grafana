@@ -1564,11 +1564,10 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "serverAdminElevatedOrgPrivileges",
-			Description:  "Enables treating server admins as org admins for all orgs",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
+			Name:        "serverAdminElevatedOrgPrivileges",
+			Description: "Enables treating server admins as org admins for all orgs",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )
