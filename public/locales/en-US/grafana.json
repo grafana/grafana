@@ -1049,7 +1049,8 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
-      "noMatchingValue": "No values found matching; {{filter}}"
+      "noMatchingValue": "No values found matching; {{filter}}",
+      "sortBy": "Sort by"
     },
     "viewBy": "View by"
   },
