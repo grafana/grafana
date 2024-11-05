@@ -469,7 +469,7 @@ require (
 
 require (
 	github.com/getkin/kin-openapi v0.128.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-app-platform-squad
 )
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
@@ -483,7 +483,11 @@ require (
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect
 	github.com/maypok86/otter v1.2.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
+	k8s.io/apiextensions-apiserver v0.31.1 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
