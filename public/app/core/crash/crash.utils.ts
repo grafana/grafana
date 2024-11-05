@@ -1,5 +1,31 @@
 import { LogContext } from '@grafana/faro-core/dist/types/api/logs/types';
 
+export interface ChromePerformanceMemory {
+  totalJSHeapSize: number;
+  usedJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
+export interface ChromePerformance {
+  memory: ChromePerformanceMemory;
+}
+
+function isChromePerformanceMemory(memory: unknown): memory is ChromePerformanceMemory {
+  if (!memory || typeof memory !== 'object') {
+    return false;
+  }
+
+  return 'totalJSHeapSize' in memory && 'usedJSHeapSize' in memory && 'jsHeapSizeLimit' in memory;
+}
+
+export function isChromePerformance(performance: unknown): performance is ChromePerformance {
+  if (!performance || typeof performance !== 'object') {
+    return false;
+  }
+
+  return 'memory' in performance && isChromePerformanceMemory(performance.memory);
+}
+
 /**
  * Ensures the context is a flat object with strings (required by Faro)
  */

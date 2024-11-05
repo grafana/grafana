@@ -1,17 +1,36 @@
-// @ts-nocheck
 import { initCrashDetection } from 'crashme';
+import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
 
 import { contextSrv } from '../services/context_srv';
 
-import { prepareContext } from './crash.utils';
+import { isChromePerformance, prepareContext } from './crash.utils';
 
 const logger = createMonitoringLogger('core.crash-detection');
 
+interface GrafanaCrashReport extends BaseStateReport {
+  app: {
+    version: string;
+    url: string;
+  };
+  user: {
+    email: string;
+    login: string;
+    name: string;
+  };
+  memory?: {
+    heapUtilization: number;
+    limitUtilization: number;
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}
+
 export function initializeCrashDetection() {
-  initCrashDetection({
+  initCrashDetection<GrafanaCrashReport>({
     id: nanoid(5),
 
     dbName: 'grafana.crashes',
@@ -42,13 +61,13 @@ export function initializeCrashDetection() {
         name: contextSrv.user.name,
       };
 
-      if (performance?.memory?.usedJSHeapSize) {
+      if (isChromePerformance(performance)) {
         info.memory = {
-          heapUtilization: performance?.memory?.usedJSHeapSize / performance?.memory?.totalJSHeapSize,
-          limitUtilization: performance?.memory?.totalJSHeapSize / performance?.memory?.jsHeapSizeLimit,
-          usedJSHeapSize: performance?.memory?.usedJSHeapSize,
-          totalJSHeapSize: performance?.memory?.totalJSHeapSize,
-          jsHeapSizeLimit: performance?.memory?.jsHeapSizeLimit,
+          heapUtilization: performance.memory.usedJSHeapSize / performance.memory.totalJSHeapSize,
+          limitUtilization: performance.memory.totalJSHeapSize / performance.memory.jsHeapSizeLimit,
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
         };
       }
     },
