@@ -61,7 +61,7 @@ func TestBuilderAdmission_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := AppBuilder{app: tt.app}
+			b := appBuilder{app: tt.app}
 			err := b.Validate(context.Background(), defaultAttributes, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -142,7 +142,7 @@ func TestBuilderAdmission_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := AppBuilder{app: tt.app}
+			b := appBuilder{app: tt.app}
 			err := b.Mutate(context.Background(), tt.attributes, nil)
 			if tt.wantErr {
 				require.Error(t, err)

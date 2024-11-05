@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -10,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 )
 
-func (b *AppBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (b *appBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	if b.app == nil {
 		return errors.New("app is nil")
 	}
@@ -40,7 +41,7 @@ func (b *AppBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	return nil
 }
 
-func (b *AppBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (b *appBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	req, err := b.translateAdmissionAttributes(a)
 	if err != nil {
 		return err
@@ -55,7 +56,7 @@ func (b *AppBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 	return nil
 }
 
-func (b *AppBuilder) translateAdmissionAttributes(a admission.Attributes) (*app.AdmissionRequest, error) {
+func (b *appBuilder) translateAdmissionAttributes(a admission.Attributes) (*app.AdmissionRequest, error) {
 	extra := make(map[string]any)
 	for k, v := range a.GetUserInfo().GetExtra() {
 		extra[k] = any(v)
@@ -71,6 +72,8 @@ func (b *AppBuilder) translateAdmissionAttributes(a admission.Attributes) (*app.
 		action = resource.AdmissionActionDelete
 	case admission.Connect:
 		action = resource.AdmissionActionConnect
+	default:
+		return nil, fmt.Errorf("unknown admission operation: %v", a.GetOperation())
 	}
 
 	var (
