@@ -87,6 +87,7 @@ func (s *IndexMetrics) Describe(ch chan<- *prometheus.Desc) {
 	s.IndexLatency.Describe(ch)
 }
 
+// getTotalDocCount returns the total number of documents in the index
 func getTotalDocCount(index *Index) float64 {
 	var totalCount float64
 	totalCount = 0
@@ -94,12 +95,10 @@ func getTotalDocCount(index *Index) float64 {
 		return totalCount
 	}
 
-	index.shards.Range(func(_, v interface{}) bool {
-		shard := v.(*Shard)
-		docCount, _ := shard.index.DocCount()
-		totalCount += float64(docCount)
-		return true
-	})
+	for _, shard := range index.shards {
+		count, _ := shard.index.DocCount()
+		totalCount += float64(count)
+	}
 
 	return totalCount
 }

@@ -33,20 +33,22 @@ type Opts struct {
 }
 
 type Index struct {
-	shards sync.Map // need concurrency-safe map for building the index
-	opts   Opts
-	s      *server
-	log    log.Logger
-	tracer tracing.Tracer
+	shardMutex sync.RWMutex
+	shards     map[string]*Shard
+	opts       Opts
+	s          *server
+	log        log.Logger
+	tracer     tracing.Tracer
 }
 
 func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
 	idx := &Index{
-		s:      s,
-		opts:   opts,
-		shards: sync.Map{},
-		log:    log.New("unifiedstorage.search.index"),
-		tracer: tracer,
+		shardMutex: sync.RWMutex{},
+		s:          s,
+		opts:       opts,
+		shards:     make(map[string]*Shard),
+		log:        log.New("unifiedstorage.search.index"),
+		tracer:     tracer,
 	}
 
 	return idx
@@ -131,18 +133,19 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string,
 
 func (i *Index) Init(ctx context.Context) error {
 	logger := i.log.FromContext(ctx)
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"InitForTenant")
+	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Init")
 	defer span.End()
 
 	start := time.Now().Unix()
 	group := errgroup.Group{}
-	group.SetLimit(20)
+	group.SetLimit(i.opts.Workers)
 
 	totalObjects := 0
 	// TODO get all tenants
 	// hacking this for now
 	for k := 1; k <= 1000; k++ {
 		group.Go(func() error {
+			logger.Info("initializing index for tenant", "tenant", fmt.Sprintf("stacks-%d", k))
 			objs, err := i.InitForTenant(ctx, fmt.Sprintf("stacks-%d", k))
 			if err != nil {
 				return err
@@ -171,24 +174,28 @@ func (i *Index) Init(ctx context.Context) error {
 		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
 
+	totalDocCount := getTotalDocCount(i)
+	fmt.Println("************Total doc count: ", totalDocCount)
+	fmt.Println("************Total objs fetched: ", totalObjects)
+
 	return nil
 }
 
 func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error) {
-	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Init")
+	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"InitForTenant")
 	defer span.End()
 	logger := i.log.FromContext(ctx)
 
 	resourceTypes := fetchResourceTypes()
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
-		logger.Info("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
+		logger.Debug("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
 		r := &ListRequest{Options: rt, Limit: int64(i.opts.ListLimit)}
 		r.Options.Key.Namespace = namespace // scope the list to a tenant or this will take forever when US has 1M+ resources
 
 		// Paginate through the list of resources and index each page
 		for {
-			logger.Info("fetching resource list", "kind", rt.Key.Resource, "namespace", namespace)
+			logger.Debug("fetching resource list", "kind", rt.Key.Resource, "namespace", namespace)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return totalObjectsFetched, err
@@ -196,7 +203,7 @@ func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error
 
 			totalObjectsFetched += len(list.Items)
 
-			logger.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
+			logger.Debug("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
 			//add changes to batches for shards with changes in the List
 			err = i.writeBatch(ctx, list)
 			if err != nil {
@@ -248,7 +255,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	logger.Debug("indexing resource for tenant", "res", string(data.Value.Value), "tenant", tenant)
 
 	// if tenant doesn't exist, they may have been created during initial indexing
-	_, ok := i.shards.Load(tenant)
+	_, ok := i.shards[tenant]
 	if !ok {
 		i.log.Info("tenant not found, initializing", "tenant", tenant)
 		_, err = i.InitForTenant(ctx, tenant)
@@ -360,43 +367,40 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 
 // Count returns the number of shards in the index
 func (i *Index) Count() int {
-	var count int
-	i.shards.Range(func(k, v interface{}) bool {
-		count++
-		return true
-	})
-	return count
+	return len(i.shards)
 }
 
 // allTenants returns a list of all tenants in the index
 func (i *Index) allTenants() []string {
-	tenants := make([]string, i.Count())
-	i.shards.Range(func(k, v interface{}) bool {
-		tenants = append(tenants, k.(string))
-		return true
-	})
+	tenants := make([]string, 0)
+	for tenant, _ := range i.shards {
+		tenants = append(tenants, tenant)
+	}
 	return tenants
 }
 
-func (i *Index) getShard(tenant string) (Shard, error) {
-	shard, ok := i.shards.Load(tenant)
+func (i *Index) getShard(tenant string) (*Shard, error) {
+	i.shardMutex.Lock()
+	defer i.shardMutex.Unlock()
+
+	shard, ok := i.shards[tenant]
 	if ok {
-		return shard.(Shard), nil
+		return shard, nil
 	}
 
 	index, path, err := i.createIndex()
 	if err != nil {
-		return Shard{}, err
+		return &Shard{}, err
 	}
 
-	shard = Shard{
+	shard = &Shard{
 		index: index,
 		path:  path,
 		batch: index.NewBatch(),
 	}
-	i.shards.Store(tenant, shard)
+	i.shards[tenant] = shard
 
-	return shard.(Shard), nil
+	return shard, nil
 }
 
 func (i *Index) createIndex() (bleve.Index, string, error) {
@@ -428,17 +432,18 @@ func createInMemoryIndex() (bleve.Index, string, error) {
 func fetchResourceTypes() []*ListOptions {
 	items := []*ListOptions{}
 	items = append(items,
-		//&ListOptions{
-		//	Key: &ResourceKey{
-		//		Group:    "playlist.grafana.app",
-		//		Resource: "playlists",
-		//	},
-		//}, &ListOptions{
-		//	Key: &ResourceKey{
-		//		Group:    "folder.grafana.app",
-		//		Resource: "folders",
-		//	},
-		//},
+		&ListOptions{
+			Key: &ResourceKey{
+				Group:    "playlist.grafana.app",
+				Resource: "playlists",
+			},
+		},
+		&ListOptions{
+			Key: &ResourceKey{
+				Group:    "folder.grafana.app",
+				Resource: "folders",
+			},
+		},
 		&ListOptions{
 			Key: &ResourceKey{
 				Group:    "dashboard.grafana.app",
