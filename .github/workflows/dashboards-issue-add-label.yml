@@ -36,9 +36,9 @@ jobs:
         with:
           app_id: ${{ env.GH_APP_ID }}
           private_key: ${{ env.GH_APP_PEM }}
-      - name: log in
-        run: gh api user -q .login
       - name: Check if issue is in target project
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           gh api graphql -f query='
             query($org: String!, $repo: String!) {
@@ -67,6 +67,8 @@ jobs:
           done
       - name: Add label to issue
         if: env.IN_TARGET_PROJ
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
           gh api graphql -f query='
             mutation ($labelableId: ID!, $labelIds: [ID!]!) {
