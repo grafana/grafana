@@ -28,8 +28,8 @@ import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -39,6 +39,7 @@ import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
+import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
@@ -251,8 +252,15 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
-        reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
+        reloadOnParamsChange:
+          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
         uid: oldModel.uid,
+      }),
+      new DashboardReloadBehavior({
+        reloadOnParamsChange:
+          config.featureToggles.reloadDashboardsOnParamsChange && oldModel.meta.reloadOnParamsChange,
+        uid: oldModel.uid,
+        version: oldModel.version,
       }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),

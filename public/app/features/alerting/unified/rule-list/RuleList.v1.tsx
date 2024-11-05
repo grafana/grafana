@@ -48,6 +48,8 @@ const RuleListV1 = () => {
   const [queryParams] = useQueryParams();
   const { filterState, hasActiveFilters } = useRulesFilter();
 
+  const hasActiveLabelsFilter = filterState.labels.length > 0;
+
   const queryParamView = queryParams.view;
   const viewType = queryParamView === 'state' || queryParamView === 'groups' ? queryParamView : 'groups';
   const view = VIEWS[viewType] ? viewType : 'groups';
@@ -79,7 +81,7 @@ const RuleListV1 = () => {
     return noRules && state.dispatched;
   });
 
-  const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+  const limitAlerts = hasActiveLabelsFilter ? undefined : LIMIT_ALERTS;
   // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
   const [_, fetchRules] = useAsyncFn(async () => {
     if (!loading) {

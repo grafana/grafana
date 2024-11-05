@@ -81,7 +81,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -94,7 +94,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_2_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -107,7 +107,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_4_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -119,7 +119,11 @@ describe('runShardSplitQuery()', () => {
         range: expect.any(Object),
         requestId: 'TEST_shard_0_5_1',
         targets: [
-          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
         ],
       });
     });
@@ -145,7 +149,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])',
+            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -364,7 +368,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -378,7 +382,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_4',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -392,7 +396,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -406,7 +410,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_5_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -420,7 +424,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_8_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -434,7 +438,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_10_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -447,7 +451,11 @@ describe('runShardSplitQuery()', () => {
         range: expect.any(Object),
         requestId: 'TEST_shard_0_11_1',
         targets: [
-          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
         ],
       });
     });

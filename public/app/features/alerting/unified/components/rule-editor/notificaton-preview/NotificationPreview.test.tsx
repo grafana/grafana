@@ -3,7 +3,6 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
 
-import 'core-js/stable/structured-clone';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';

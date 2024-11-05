@@ -1703,6 +1703,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bsull/augurs@npm:0.4.2":
+  version: 0.4.2
+  resolution: "@bsull/augurs@npm:0.4.2"
+  checksum: 10/b4806fed1daf76380577b4ca86c2bf94c00ce1033df0b8365229a55ff16bd2f864d3f9ca3f92faf284e62013b68e953be65ee78968931ba342be0e1c054c2e63
+  languageName: node
+  linkType: hard
+
 "@bundled-es-modules/cookie@npm:^2.0.0":
   version: 2.0.0
   resolution: "@bundled-es-modules/cookie@npm:2.0.0"
@@ -3118,7 +3125,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
@@ -3229,7 +3236,7 @@ __metadata:
     micro-memoize: "npm:^4.1.2"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
@@ -3270,7 +3277,7 @@ __metadata:
     logfmt: "npm:^1.3.2"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-window: "npm:1.8.10"
     rxjs: "npm:7.8.1"
     stream-browserify: "npm:3.0.0"
@@ -3411,7 +3418,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
     react-use: "npm:17.5.1"
@@ -3468,7 +3475,7 @@ __metadata:
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:5.5.1"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
@@ -3508,7 +3515,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
@@ -3857,7 +3864,7 @@ __metadata:
     "@types/systemjs": "npm:6.15.1"
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-use: "npm:17.5.1"
     rxjs: "npm:7.8.1"
     ts-jest: "npm:29.2.5"
@@ -3890,16 +3897,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:^1.8.3":
-  version: 1.9.0
-  resolution: "@grafana/plugin-e2e@npm:1.9.0"
+"@grafana/plugin-e2e@npm:^1.11.0":
+  version: 1.11.0
+  resolution: "@grafana/plugin-e2e@npm:1.11.0"
   dependencies:
+    "@grafana/e2e-selectors": "npm:^11.4.0-204289"
     semver: "npm:^7.5.4"
     uuid: "npm:^10.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/afc74b27473412a96b6bcdb77144c8bd25d3a299f55daff91a91aca951caca5cb0d009ec71e74c7efc906140d870076f4d763f7775fe2f5d2971657958daff96
+  checksum: 10/87726ecfd9c9895e075f8c9d3bd20b49ba458e43bbf8f41e46e635b2157597f36fd6ccb3f35dcea9df04c2dd65d63e9893318cbcf1903340e6668b3b122a9c83
   languageName: node
   linkType: hard
 
@@ -3961,7 +3969,7 @@ __metadata:
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jest: "npm:28.8.3"
     eslint-plugin-jsdoc: "npm:48.11.0"
-    eslint-plugin-jsx-a11y: "npm:6.10.1"
+    eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:7.4.0"
     eslint-plugin-react: "npm:7.37.2"
     eslint-plugin-react-hooks: "npm:4.6.0"
@@ -3985,7 +3993,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-highlight-words: "npm:0.20.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
     react-use: "npm:17.5.1"
@@ -4091,12 +4099,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.20.4":
-  version: 5.20.4
-  resolution: "@grafana/scenes-react@npm:5.20.4"
+"@grafana/scenes-react@npm:5.22.1":
+  version: 5.22.1
+  resolution: "@grafana/scenes-react@npm:5.22.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:^11.0.0"
-    "@grafana/scenes": "npm:5.20.4"
+    "@grafana/scenes": "npm:5.22.1"
     react-use: "npm:17.4.0"
   peerDependencies:
     "@grafana/data": ^11.0.0
@@ -4105,13 +4113,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/b12afa34ee48f6cbfd8a96e093193020de20b93629c456c0b31bf81121b2bd7196bdb97c07d9df9cb66dda7c84483abd0a257d6bfd689ffd9290c7e19cfb9703
+  checksum: 10/7ef272c760bb8d92a9d91a5497996a4bef44915eb83f2807d3a8b19075b401ee90d31ea665f3bf60333d2d909e488cd88e54dc93ae2dd88e925045dc5c79f650
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.20.4":
-  version: 5.20.4
-  resolution: "@grafana/scenes@npm:5.20.4"
+"@grafana/scenes@npm:5.22.1":
+  version: 5.22.1
+  resolution: "@grafana/scenes@npm:5.22.1"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -4128,7 +4136,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/99dfe8112b3d4d1d74c8dc626de53cf3245749cfd291d99f9e0d6bc2c5ee4870442b70be5010266b945cac32de282be5b87e66892bf0bebcb6b19f082a7f9dab
+  checksum: 10/ebb5f887ee94ad9fa1f9d4bd7f9503502875e940380362c0f476e042eb421881585c122a1252b0567508b0e1415d78b928ba22a04adb5b93882f601b86105f76
   languageName: node
   linkType: hard
 
@@ -4180,7 +4188,7 @@ __metadata:
     lodash: "npm:4.17.21"
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-use: "npm:17.5.1"
     react-virtualized-auto-sizer: "npm:1.0.24"
     rxjs: "npm:7.8.1"
@@ -4271,7 +4279,6 @@ __metadata:
     "@types/slate-react": "npm:0.22.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
-    ansicolor: "npm:1.1.100"
     calculate-size: "npm:1.1.1"
     chance: "npm:1.1.12"
     classnames: "npm:2.5.1"
@@ -4315,7 +4322,7 @@ __metadata:
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.5.0"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
     react-test-renderer: "npm:18.2.0"
@@ -6324,14 +6331,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.48.1":
-  version: 1.48.1
-  resolution: "@playwright/test@npm:1.48.1"
+"@playwright/test@npm:1.48.2":
+  version: 1.48.2
+  resolution: "@playwright/test@npm:1.48.2"
   dependencies:
-    playwright: "npm:1.48.1"
+    playwright: "npm:1.48.2"
   bin:
     playwright: cli.js
-  checksum: 10/26fe791868a965790bb39e434a799d743261fb073fa0bec49435e0f2d1aceca99dc2f408fc64b0e2d4c07984021059b27096d4477b989e990b551cf60e2652e6
+  checksum: 10/8557f9d60b93b9a60b66599d46f991b56df26b691f9285e8755298dabd9f42d1421c330a7d7578b76445fdd56040fe790d3f1081daa80e5e89a380170e0fd217
   languageName: node
   linkType: hard
 
@@ -7158,114 +7165,128 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm-eabi@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-android-arm-eabi@npm:4.24.0"
+"@rollup/rollup-android-arm-eabi@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-android-arm-eabi@npm:4.24.2"
   conditions: os=android & cpu=arm
   languageName: node
   linkType: hard
 
-"@rollup/rollup-android-arm64@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-android-arm64@npm:4.24.0"
+"@rollup/rollup-android-arm64@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-android-arm64@npm:4.24.2"
   conditions: os=android & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-arm64@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-darwin-arm64@npm:4.24.0"
+"@rollup/rollup-darwin-arm64@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-darwin-arm64@npm:4.24.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-darwin-x64@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-darwin-x64@npm:4.24.0"
+"@rollup/rollup-darwin-x64@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-darwin-x64@npm:4.24.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm-gnueabihf@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.24.0"
+"@rollup/rollup-freebsd-arm64@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-freebsd-arm64@npm:4.24.2"
+  conditions: os=freebsd & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@rollup/rollup-freebsd-x64@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-freebsd-x64@npm:4.24.2"
+  conditions: os=freebsd & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@rollup/rollup-linux-arm-gnueabihf@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-arm-gnueabihf@npm:4.24.2"
   conditions: os=linux & cpu=arm & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm-musleabihf@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-arm-musleabihf@npm:4.24.0"
+"@rollup/rollup-linux-arm-musleabihf@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-arm-musleabihf@npm:4.24.2"
   conditions: os=linux & cpu=arm & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-gnu@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.24.0"
+"@rollup/rollup-linux-arm64-gnu@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-arm64-gnu@npm:4.24.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-arm64-musl@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.24.0"
+"@rollup/rollup-linux-arm64-musl@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-arm64-musl@npm:4.24.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-powerpc64le-gnu@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-powerpc64le-gnu@npm:4.24.0"
+"@rollup/rollup-linux-powerpc64le-gnu@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-powerpc64le-gnu@npm:4.24.2"
   conditions: os=linux & cpu=ppc64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-riscv64-gnu@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-riscv64-gnu@npm:4.24.0"
+"@rollup/rollup-linux-riscv64-gnu@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-riscv64-gnu@npm:4.24.2"
   conditions: os=linux & cpu=riscv64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-s390x-gnu@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-s390x-gnu@npm:4.24.0"
+"@rollup/rollup-linux-s390x-gnu@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-s390x-gnu@npm:4.24.2"
   conditions: os=linux & cpu=s390x & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-gnu@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.24.0"
+"@rollup/rollup-linux-x64-gnu@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-x64-gnu@npm:4.24.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rollup/rollup-linux-x64-musl@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-linux-x64-musl@npm:4.24.0"
+"@rollup/rollup-linux-x64-musl@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-linux-x64-musl@npm:4.24.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-arm64-msvc@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.24.0"
+"@rollup/rollup-win32-arm64-msvc@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-win32-arm64-msvc@npm:4.24.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-ia32-msvc@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.24.0"
+"@rollup/rollup-win32-ia32-msvc@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-win32-ia32-msvc@npm:4.24.2"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@rollup/rollup-win32-x64-msvc@npm:4.24.0":
-  version: 4.24.0
-  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.24.0"
+"@rollup/rollup-win32-x64-msvc@npm:4.24.2":
+  version: 4.24.2
+  resolution: "@rollup/rollup-win32-x64-msvc@npm:4.24.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
@@ -9290,6 +9311,39 @@ __metadata:
 "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app":
   version: 0.0.0-use.local
   resolution: "@test-plugins/extensions-test-app@workspace:e2e/test-plugins/grafana-extensionstest-app"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/eslint-config": "npm:7.0.0"
+    "@grafana/plugin-configs": "npm:11.4.0-pre"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
+    "@grafana/ui": "workspace:*"
+    "@types/lodash": "npm:4.17.7"
+    "@types/node": "npm:20.14.14"
+    "@types/prismjs": "npm:1.26.4"
+    "@types/react": "npm:18.3.3"
+    "@types/react-dom": "npm:18.2.25"
+    "@types/semver": "npm:7.5.8"
+    "@types/uuid": "npm:9.0.8"
+    glob: "npm:10.4.1"
+    react: "npm:18.2.0"
+    react-dom: "npm:18.2.0"
+    react-router-dom: "npm:^6.22.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.3"
+    typescript: "npm:5.5.4"
+    webpack: "npm:5.95.0"
+    webpack-merge: "npm:5.10.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
+"@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource":
+  version: 0.0.0-use.local
+  resolution: "@test-plugins/grafana-e2etest-datasource@workspace:e2e/test-plugins/grafana-test-datasource"
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
@@ -12174,10 +12228,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansicolor@npm:1.1.100":
-  version: 1.1.100
-  resolution: "ansicolor@npm:1.1.100"
-  checksum: 10/9420e96f44b578153dfd11e2d829d633ca2699452419aff48314219d66b7b69a9b6d994d2f2350b1d29a9826e33500b87fe85606629a8889cd52ce806908f4a9
+"ansicolor@npm:2.0.3":
+  version: 2.0.3
+  resolution: "ansicolor@npm:2.0.3"
+  checksum: 10/0ecac28dbb3ed5ed77cba0392586391c35872806098f5ad4c47825e92a710b673d1504aca5b8a0903f5a8bd3a61ab6759d55e62f8d78bc21fbced14eb78eb99c
   languageName: node
   linkType: hard
 
@@ -17148,9 +17202,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsx-a11y@npm:6.10.1":
-  version: 6.10.1
-  resolution: "eslint-plugin-jsx-a11y@npm:6.10.1"
+"eslint-plugin-jsx-a11y@npm:6.10.2":
+  version: 6.10.2
+  resolution: "eslint-plugin-jsx-a11y@npm:6.10.2"
   dependencies:
     aria-query: "npm:^5.3.2"
     array-includes: "npm:^3.1.8"
@@ -17160,7 +17214,6 @@ __metadata:
     axobject-query: "npm:^4.1.0"
     damerau-levenshtein: "npm:^1.0.8"
     emoji-regex: "npm:^9.2.2"
-    es-iterator-helpers: "npm:^1.1.0"
     hasown: "npm:^2.0.2"
     jsx-ast-utils: "npm:^3.3.5"
     language-tags: "npm:^1.0.9"
@@ -17170,7 +17223,7 @@ __metadata:
     string.prototype.includes: "npm:^2.0.1"
   peerDependencies:
     eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9
-  checksum: 10/a39537fd553900b6f8adbfe0774e87e04eaf5217852d7938d765fc924f84ac6eb509c456685d73ba3c710e3b6d7fc8281fc8bae0334e21b555be6a58d065955c
+  checksum: 10/388550798548d911e2286d530a29153ca00434a06fcfc0e31e0dda46a5e7960005e532fb29ce1ccbf1e394a3af3e5cf70c47ca43778861eacc5e3ed799adb79c
   languageName: node
   linkType: hard
 
@@ -19003,6 +19056,7 @@ __metadata:
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@betterer/eslint": "npm:5.4.0"
+    "@bsull/augurs": "npm:0.4.2"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.13.4"
     "@emotion/eslint-plugin": "npm:11.12.0"
@@ -19026,12 +19080,12 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:^1.8.3"
+    "@grafana/plugin-e2e": "npm:^1.11.0"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.20.4"
-    "@grafana/scenes-react": "npm:5.20.4"
+    "@grafana/scenes": "npm:5.22.1"
+    "@grafana/scenes-react": "npm:5.22.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -19051,7 +19105,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.9.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.27.0"
-    "@playwright/test": "npm:1.48.1"
+    "@playwright/test": "npm:1.48.2"
     "@pmmmwh/react-refresh-webpack-plugin": "npm:0.5.15"
     "@popperjs/core": "npm:2.11.8"
     "@react-aria/dialog": "npm:3.5.19"
@@ -19141,7 +19195,7 @@ __metadata:
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.3"
     autoprefixer: "npm:10.4.20"
     babel-loader: "npm:9.2.1"
     baron: "npm:3.0.3"
@@ -19179,7 +19233,7 @@ __metadata:
     eslint-plugin-jest: "npm:28.8.3"
     eslint-plugin-jest-dom: "npm:^5.4.0"
     eslint-plugin-jsdoc: "npm:48.11.0"
-    eslint-plugin-jsx-a11y: "npm:6.10.1"
+    eslint-plugin-jsx-a11y: "npm:6.10.2"
     eslint-plugin-lodash: "npm:7.4.0"
     eslint-plugin-no-barrel-files: "npm:^1.1.0"
     eslint-plugin-react: "npm:7.37.2"
@@ -19275,7 +19329,7 @@ __metadata:
     react-router: "npm:5.3.3"
     react-router-dom: "npm:5.3.3"
     react-router-dom-v5-compat: "npm:^6.26.1"
-    react-select: "npm:5.8.1"
+    react-select: "npm:5.8.2"
     react-select-event: "npm:5.5.1"
     react-split-pane: "npm:0.1.92"
     react-table: "npm:7.8.0"
@@ -19294,7 +19348,7 @@ __metadata:
     regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.1.1"
     rimraf: "npm:6.0.1"
-    rudder-sdk-js: "npm:2.48.22"
+    rudder-sdk-js: "npm:2.48.23"
     rxjs: "npm:7.8.1"
     sass: "npm:1.79.5"
     sass-loader: "npm:16.0.2"
@@ -24388,11 +24442,11 @@ __metadata:
   linkType: hard
 
 "nanoid@npm:^5.0.4":
-  version: 5.0.7
-  resolution: "nanoid@npm:5.0.7"
+  version: 5.0.8
+  resolution: "nanoid@npm:5.0.8"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10/25ab0b0cf9082ae6747f0f55cec930e6c1cc5975103aa3a5fda44be5720eff57d9b25a8a9850274bfdde8def964b49bf03def71c6aa7ad1cba32787819b79f60
+  checksum: 10/df131a515465053ff25c8cf0450ef191e1db83b45fe125af43f50d39feddf1f161d3b2abb34cb993df35a76b427f8d6d982e16e47d67b2fbe843664af025b5e2
   languageName: node
   linkType: hard
 
@@ -25985,27 +26039,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.48.1":
-  version: 1.48.1
-  resolution: "playwright-core@npm:1.48.1"
+"playwright-core@npm:1.48.2":
+  version: 1.48.2
+  resolution: "playwright-core@npm:1.48.2"
   bin:
     playwright-core: cli.js
-  checksum: 10/81b51d288be78b75898470eb192ef0bc65594eebfb5f7602d83ba2505e1d2163c9923a0d7bae46779d5f3a16e1daf392acfbccde01d9f302cdf90bf2b21b8988
+  checksum: 10/dd029f797b1afb2240713a032fecc50e1ffc5464a39c075570cf10e929c145da3a8d0951a3f2b279e33b2f09cbeb8ff4330822cb1078452c0c75cc4ce34ca171
   languageName: node
   linkType: hard
 
-"playwright@npm:1.48.1":
-  version: 1.48.1
-  resolution: "playwright@npm:1.48.1"
+"playwright@npm:1.48.2":
+  version: 1.48.2
+  resolution: "playwright@npm:1.48.2"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.48.1"
+    playwright-core: "npm:1.48.2"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10/39e231af3d9e576ba835813c5319b8773d8536ba54c7e34c7004cf06fadb412b6bbfc91badf4bb5cda3f138e5a8994c314de4c76d06d9424430e415f86fb3dd1
+  checksum: 10/331af352504336f419cdf1369f0ef399c6f0e905fdb79a5e97c41f33e74766efd21430ab6ae2de0b237ae765ebfbe701e119a990d8dc01bcdac3bc43c1fa1fbf
   languageName: node
   linkType: hard
 
@@ -27953,9 +28007,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.8.1":
-  version: 5.8.1
-  resolution: "react-select@npm:5.8.1"
+"react-select@npm:5.8.2":
+  version: 5.8.2
+  resolution: "react-select@npm:5.8.2"
   dependencies:
     "@babel/runtime": "npm:^7.12.0"
     "@emotion/cache": "npm:^11.4.0"
@@ -27969,7 +28023,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/53168b156435c5bef7c271ae7ebe67bff912e568dd1638f37859ea0d76cbd273d422714b6cb9669aa811d3fb44bda0f666b5e397a90a76ac2888a9b0ab47495a
+  checksum: 10/143f3974829d6abc79a80ab79e1daaa054ad5120064c8f840d2d224cc60a853896a68ef3451f90b9997751ba17e7d558bd8875bed7be19ea3166a491d10783c7
   languageName: node
   linkType: hard
 
@@ -29093,25 +29147,27 @@ __metadata:
   linkType: hard
 
 "rollup@npm:^4.22.4":
-  version: 4.24.0
-  resolution: "rollup@npm:4.24.0"
+  version: 4.24.2
+  resolution: "rollup@npm:4.24.2"
   dependencies:
-    "@rollup/rollup-android-arm-eabi": "npm:4.24.0"
-    "@rollup/rollup-android-arm64": "npm:4.24.0"
-    "@rollup/rollup-darwin-arm64": "npm:4.24.0"
-    "@rollup/rollup-darwin-x64": "npm:4.24.0"
-    "@rollup/rollup-linux-arm-gnueabihf": "npm:4.24.0"
-    "@rollup/rollup-linux-arm-musleabihf": "npm:4.24.0"
-    "@rollup/rollup-linux-arm64-gnu": "npm:4.24.0"
-    "@rollup/rollup-linux-arm64-musl": "npm:4.24.0"
-    "@rollup/rollup-linux-powerpc64le-gnu": "npm:4.24.0"
-    "@rollup/rollup-linux-riscv64-gnu": "npm:4.24.0"
-    "@rollup/rollup-linux-s390x-gnu": "npm:4.24.0"
-    "@rollup/rollup-linux-x64-gnu": "npm:4.24.0"
-    "@rollup/rollup-linux-x64-musl": "npm:4.24.0"
-    "@rollup/rollup-win32-arm64-msvc": "npm:4.24.0"
-    "@rollup/rollup-win32-ia32-msvc": "npm:4.24.0"
-    "@rollup/rollup-win32-x64-msvc": "npm:4.24.0"
+    "@rollup/rollup-android-arm-eabi": "npm:4.24.2"
+    "@rollup/rollup-android-arm64": "npm:4.24.2"
+    "@rollup/rollup-darwin-arm64": "npm:4.24.2"
+    "@rollup/rollup-darwin-x64": "npm:4.24.2"
+    "@rollup/rollup-freebsd-arm64": "npm:4.24.2"
+    "@rollup/rollup-freebsd-x64": "npm:4.24.2"
+    "@rollup/rollup-linux-arm-gnueabihf": "npm:4.24.2"
+    "@rollup/rollup-linux-arm-musleabihf": "npm:4.24.2"
+    "@rollup/rollup-linux-arm64-gnu": "npm:4.24.2"
+    "@rollup/rollup-linux-arm64-musl": "npm:4.24.2"
+    "@rollup/rollup-linux-powerpc64le-gnu": "npm:4.24.2"
+    "@rollup/rollup-linux-riscv64-gnu": "npm:4.24.2"
+    "@rollup/rollup-linux-s390x-gnu": "npm:4.24.2"
+    "@rollup/rollup-linux-x64-gnu": "npm:4.24.2"
+    "@rollup/rollup-linux-x64-musl": "npm:4.24.2"
+    "@rollup/rollup-win32-arm64-msvc": "npm:4.24.2"
+    "@rollup/rollup-win32-ia32-msvc": "npm:4.24.2"
+    "@rollup/rollup-win32-x64-msvc": "npm:4.24.2"
     "@types/estree": "npm:1.0.6"
     fsevents: "npm:~2.3.2"
   dependenciesMeta:
@@ -29122,6 +29178,10 @@ __metadata:
     "@rollup/rollup-darwin-arm64":
       optional: true
     "@rollup/rollup-darwin-x64":
+      optional: true
+    "@rollup/rollup-freebsd-arm64":
+      optional: true
+    "@rollup/rollup-freebsd-x64":
       optional: true
     "@rollup/rollup-linux-arm-gnueabihf":
       optional: true
@@ -29151,7 +29211,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: 10/291dce8f180628a73d6749119a3e50aa917c416075302bc6f6ac655affc7f0ce9d7f025bef7318d424d0c5623dcb83e360f9ea0125273b6a2285c232172800cc
+  checksum: 10/78888d50c37e0564234392b2f1503e1bf6a6fe89a2f43236b55e3a9f66ab35d177e378d34b37e3b178c05440c4bbc7ff2d49e4fcf9ee6fc91cf1c91b901ff417
   languageName: node
   linkType: hard
 
@@ -29178,10 +29238,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rudder-sdk-js@npm:2.48.22":
-  version: 2.48.22
-  resolution: "rudder-sdk-js@npm:2.48.22"
-  checksum: 10/dcfbfca86c3c96b23789d388ab36e7a01009c237fceb82e7a98cdbc7e492ce9eaa757f3fa8fdb3096308878a26dc182f1bf8f7af5f32c04bff4d1ad6b07b41f6
+"rudder-sdk-js@npm:2.48.23":
+  version: 2.48.23
+  resolution: "rudder-sdk-js@npm:2.48.23"
+  checksum: 10/520d92172f6aa870a75d7caa0a8e763c7aa20b73b82decc9e565aa17028f834891816091080e5db12442c18a25bfd6a744d88bca4fbc685c3dd7f2a6068f5205
   languageName: node
   linkType: hard
 
