@@ -247,6 +247,9 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.includes('westeurope')) {
+          return Promise.reject('failed to retrieve due to timeout');
+        }
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
@@ -272,6 +275,26 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
           expect(results[1].text).toEqual('microsoft.insights/components');
           expect(results[1].value).toEqual('microsoft.insights/components');
+        });
+    });
+
+    it('should return list of Metric Namespaces even if there is a failure', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          true,
+          'westeurope'
+        )
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(0);
+          expect(consoleError).toHaveBeenCalled();
+          expect(consoleError.mock.calls[0][0]).toContain(
+            'Failed to get metric namespaces: failed to retrieve due to timeout'
+          );
         });
     });
   });
