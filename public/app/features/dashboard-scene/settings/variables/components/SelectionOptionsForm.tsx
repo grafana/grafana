@@ -8,17 +8,21 @@ import { VariableTextField } from 'app/features/dashboard-scene/settings/variabl
 interface SelectionOptionsFormProps {
   multi: boolean;
   includeAll: boolean;
+  disallowCustomValues?: boolean;
   allValue?: string | null;
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onDisallowCustomValuesChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function SelectionOptionsForm({
   multi,
+  disallowCustomValues,
   includeAll,
   allValue,
   onMultiChange,
+  onDisallowCustomValuesChange,
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
@@ -31,6 +35,15 @@ export function SelectionOptionsForm({
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
+      {disallowCustomValues !== undefined && onDisallowCustomValuesChange && (
+        <VariableCheckboxField
+          value={disallowCustomValues}
+          name="Disallow custom values"
+          description="Locks the list of values to the ones defined in the query"
+          onChange={onDisallowCustomValuesChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
+        />
+      )}
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"
