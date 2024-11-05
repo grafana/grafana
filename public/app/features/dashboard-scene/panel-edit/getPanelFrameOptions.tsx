@@ -215,9 +215,11 @@ export function getUpdatedHoverHeader(title: string, timeRange: SceneTimeRangeLi
     return false;
   }
 
-  if (timeRange instanceof PanelTimeRange) {
-    return Boolean(timeRange.state.timeFrom || timeRange.state.timeShift) && !timeRange.state.hideTimeOverride;
+  if (timeRange instanceof PanelTimeRange && !timeRange.state.hideTimeOverride) {
+    if (timeRange.state.timeFrom || timeRange.state.timeShift) {
+      return false;
+    }
   }
 
-  return false;
+  return true;
 }
