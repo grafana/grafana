@@ -437,7 +437,7 @@ describe('PanelDataQueriesTab', () => {
           queriesTab.onQueryOptionsChange({
             dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
             queries: [],
-            timeRange: { from: '1h', hide: true },
+            timeRange: { from: '1h' },
           });
 
           expect(panel.state.hoverHeader).toBe(false);
