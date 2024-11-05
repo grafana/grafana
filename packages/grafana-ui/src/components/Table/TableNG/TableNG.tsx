@@ -152,6 +152,8 @@ export function TableNG(props: TableNGProps) {
       const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
+      const justifyColumnContent = getTextAlign(field);
+
       // Add a column for each field
       columns.push({
         key,
@@ -183,7 +185,7 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={rowHeight}
-              justifyContent={getTextAlign(field)}
+              justifyContent={justifyColumnContent}
             />
           );
         },
@@ -197,7 +199,7 @@ export function TableNG(props: TableNGProps) {
             column={column}
             onSort={handleSort}
             direction={sortDirection}
-            justifyContent={getTextAlign(field)}
+            justifyContent={justifyColumnContent}
           />
         ),
         width: columnWidth,
