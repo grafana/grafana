@@ -5,7 +5,6 @@ import { config } from '@grafana/runtime';
 import { AlertVariant, Box, Stack, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { getLocalPlugins } from '../../plugins/admin/api';
 import {
   GetSnapshotResponseDto,
   SnapshotDto,
@@ -16,6 +15,7 @@ import {
   useGetShapshotListQuery,
   useGetSnapshotQuery,
   useUploadSnapshotMutation,
+  useGetLocalPluginListQuery,
 } from '../api';
 import { AlertWithTraceID } from '../shared/AlertWithTraceID';
 
@@ -113,8 +113,6 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   };
 }
 
-const localPlugins = await getLocalPlugins();
-
 export const Page = () => {
   const [disconnectModalOpen, setDisconnectModalOpen] = useState(false);
   const session = useGetLatestSession();
@@ -124,6 +122,8 @@ export const Page = () => {
   const [performUploadSnapshot, uploadSnapshotResult] = useUploadSnapshotMutation();
   const [performCancelSnapshot, cancelSnapshotResult] = useCancelSnapshotMutation();
   const [performDisconnect, disconnectResult] = useDeleteSessionMutation();
+
+  const { currentData: localPlugins = [] } = useGetLocalPluginListQuery();
 
   useNotifySuccessful(snapshot.data);
 
