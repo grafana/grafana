@@ -1052,6 +1052,13 @@
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
+    "related-logs": {
+      "docsLink": "Loki Recording Rule",
+      "openExploreLogs": "Open Explore Logs",
+      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
+      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "warnExperimentalFeature": "Related logs is an experimental feature."
+    },
     "viewBy": "View by"
   },
   "export": {

@@ -1304,6 +1304,20 @@
     },
     {
       "metadata": {
+        "name": "exploreMetricsRelatedLogs",
+        "resourceVersion": "1730125602673",
+        "creationTimestamp": "2024-10-28T14:26:42Z"
+      },
+      "spec": {
+        "description": "Display Related Logs in Explore Metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-17T00:59:11Z"

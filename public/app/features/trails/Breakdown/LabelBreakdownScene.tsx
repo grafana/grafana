@@ -4,6 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
@@ -33,6 +34,7 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
+import { RelatedLogsScene } from '../RelatedLogs/RelatedLogsScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
@@ -58,6 +60,7 @@ import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
+const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
 
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
@@ -334,6 +337,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       }
     }, [model, useOtelExperience]);
 
+    const relatedLogsScene = new RelatedLogsScene({});
+
     return (
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
@@ -359,6 +364,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
             )}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
+          {relatedLogsFeatureEnabled && <relatedLogsScene.Component model={relatedLogsScene} />}
         </StatusWrapper>
       </div>
     );
