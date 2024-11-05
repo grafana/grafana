@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
 
@@ -147,7 +147,6 @@ export function TableNG(props: TableNGProps) {
 
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
-    const rows: Array<{ [key: string]: string }> = [];
 
     // Footer calculations
     let footerItems: FooterItem[] = [];
@@ -156,7 +155,7 @@ export function TableNG(props: TableNGProps) {
 
     main.fields.map((field, fieldIndex) => {
       filterFields.push({ id: fieldIndex.toString(), field });
-      const key = `${field.name}-${revId}`;
+      const key = field.name;
       const { values: _, ...shallowField } = field;
 
       const justifyColumnContent = getTextAlign(field);
@@ -218,15 +217,6 @@ export function TableNG(props: TableNGProps) {
         // Only populate 2d array if needed for footer calculations
         allValues.push(field.values);
       }
-      field.values.map((value, valueIndex) => {
-        const currentValue = { [key]: value };
-
-        if (rows.length > valueIndex) {
-          rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
-        } else {
-          rows[valueIndex] = currentValue;
-        }
-      });
     });
 
     if (footerOptions?.show && footerOptions.reducer.length > 0) {
@@ -237,12 +227,51 @@ export function TableNG(props: TableNGProps) {
       }
     }
 
-    return {
-      columns,
-      rows,
-    };
+    return columns;
   };
-  const { columns, rows } = mapFrameToDataGrid(props.data);
+
+  // const frameToRecords = (main: DataFrame) => {
+  //   const rows: Array<{ [key: string]: string }> = [];
+
+  //   main.fields.map((field, fieldIndex) => {
+  //     const key = field.name;
+
+  //     field.values.map((value, valueIndex) => {
+  //       const currentValue = { [key]: value };
+
+  //       if (rows.length > valueIndex) {
+  //         rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
+  //       } else {
+  //         rows[valueIndex] = currentValue;
+  //       }
+  //     });
+  //   });
+
+  //   return rows;
+  // };
+
+  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+    const fnBody = `
+      const rows = Array(frame.length);
+      const values = frame.fields.map(f => f.values);
+
+      for (let i = 0; i < frame.length; i++) {
+        rows[i] = {${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+      }
+
+      return rows;
+    `;
+
+    const convert = new Function('frame', fnBody);
+
+    const records = convert(frame);
+
+    return records;
+  }, []);
+
+  const columns = mapFrameToDataGrid(props.data);
+
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
     return columns.reduce(
