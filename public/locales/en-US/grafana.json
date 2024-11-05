@@ -1613,7 +1613,9 @@
     "public-preview": {
       "button-text": "Give feedback",
       "message": "No SLAs are available yet. <2>Visit our docs</2> to learn more about this feature!",
-      "title": "Migrate to Grafana Cloud is in public preview"
+      "message-plugins": "Only Community and Commercial signed plugins are eligible for migration. Their latest version will be installed in the cloud instance, please upgrade your plugins before starting the migration process.",
+      "title": "Migrate to Grafana Cloud is in public preview",
+      "title-plugins": "Migration of plugins"
     },
     "resource-details": {
       "dismiss-button": "OK",
