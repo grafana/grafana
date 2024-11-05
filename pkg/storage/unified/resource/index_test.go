@@ -69,7 +69,7 @@ func TestLookupNames(t *testing.T) {
 	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	assertCountEquals(t, index, uint64(records))
+	assertCountEquals(t, index, records)
 	query := ""
 	chunk := ids[:100] // query for n folders by id
 	for _, id := range chunk {
