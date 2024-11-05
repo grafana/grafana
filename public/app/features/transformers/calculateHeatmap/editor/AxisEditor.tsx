@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { SelectableValue, StandardEditorProps, VariableOrigin, isValidDuration } from '@grafana/data';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { HorizontalGroup, Input, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
@@ -32,8 +32,17 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
+  const allowInterval = item.settings?.allowInterval ?? false;
+
   const onValueChange = (bucketValue: string) => {
-    setInvalid(!numberOrVariableValidator(bucketValue));
+    if (!allowInterval) {
+      setInvalid(!numberOrVariableValidator(bucketValue));
+    } else {
+      const isValidBucketDuration = isValidDuration(bucketValue);
+      const isValidNumberOrVariable = numberOrVariableValidator(bucketValue);
+      setInvalid(!isValidBucketDuration && !isValidNumberOrVariable);
+    }
+
     onChange({
       ...value,
       value: bucketValue,
