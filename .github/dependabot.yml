@@ -10,3 +10,4 @@ updates:
       interval: "daily"
       time: "02:00"
       timezone: UTC
+    open-pull-requests-limit: 10
