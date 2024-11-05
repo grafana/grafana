@@ -439,6 +439,9 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": ""
+    },
     "clear": {
       "title": ""
     },
@@ -1037,7 +1040,8 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
-      "noMatchingValue": ""
+      "noMatchingValue": "",
+      "sortBy": ""
     },
     "viewBy": ""
   },
