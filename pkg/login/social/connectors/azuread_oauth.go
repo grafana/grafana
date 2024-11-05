@@ -170,9 +170,41 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	return userInfo, nil
 }
 
-func (s *SocialAzureAD) GetClientSecretJWT(ctx context.Context) (string, error) {
+func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
+
+	oauthCfg := s.GetOAuthInfo()
+
+	if oauthCfg.ClientAuthentication == social.ClientSecretJWT {
+		if oauthCfg.ManagedIdentityClientID != "" {
+			clientAssertion, err := s.ManagedIdentityCallback(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			authOptions = append(authOptions,
+				oauth2.SetAuthURLParam("client_assertion", clientAssertion),
+				oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+			)
+
+			// Remove client_secret from Config to avoid sending it in the request
+			s.Config.ClientSecret = ""
+		} else {
+			// manually construct the token and sign with the client secret
+			return nil, fmt.Errorf("client_secret_jwt is not supported without managed_identity_client_id")
+		}
+	} else if oauthCfg.ClientAuthentication != social.ClientSecretPost {
+		return nil, fmt.Errorf("invalid client authentication method: %s", oauthCfg.ClientAuthentication)
+	}
+
+	// Default exchange method
+	return s.Config.Exchange(ctx, code, authOptions...)
+}
+
+func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context) (string, error) {
 	// exchange auth code to a valid token
-	managedIdentityClientID := s.GetOAuthInfo().ClientSecretJWT
+	managedIdentityClientID := s.GetOAuthInfo().ManagedIdentityClientID
 	azScopes := []string{"api://AzureADTokenExchange/.default"}
 
 	mic, err := azidentity.NewManagedIdentityCredential(
