@@ -43,11 +43,7 @@ function filterInput(data: DataFrame[], matcher?: FrameMatcher) {
 }
 
 const postProcessTransform =
-  (
-    before: DataFrame[],
-    info: TransformerRegistryItem<any>,
-    matcher?: FrameMatcher
-  ): MonoTypeOperatorFunction<DataFrame[]> =>
+  (before: DataFrame[], info: TransformerRegistryItem, matcher?: FrameMatcher): MonoTypeOperatorFunction<DataFrame[]> =>
   (source) =>
     source.pipe(
       map((after) => {

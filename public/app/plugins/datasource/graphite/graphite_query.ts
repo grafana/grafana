@@ -38,7 +38,7 @@ export default class GraphiteQuery {
   seriesByTagUsed = false;
   checkOtherSegmentsIndex = 0;
   removeTagValue: string;
-  templateSrv: any;
+  templateSrv: TemplateSrv | undefined;
   scopedVars?: ScopedVars;
 
   constructor(datasource: GraphiteDatasource, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
@@ -172,7 +172,7 @@ export default class GraphiteQuery {
     func.params.push(value);
   }
 
-  removeFunction(func: any) {
+  removeFunction(func: FuncInstance) {
     this.functions = without(this.functions, func);
   }
 
@@ -184,7 +184,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets: any) {
     const wrapFunction = (target: string, func: FuncInstance) => {
       return func.render(target, (value: string) => {
-        return this.templateSrv.replace(value, this.scopedVars);
+        return this.templateSrv ? this.templateSrv.replace(value, this.scopedVars) : value;
       });
     };
 
@@ -290,7 +290,7 @@ export default class GraphiteQuery {
     }
   }
 
-  addTag(tag: { key: any; operator: GraphiteTagOperator; value: string }) {
+  addTag(tag: { key: string; operator: GraphiteTagOperator; value: string }) {
     const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc()!.params.push(newTagParam);
     this.tags.push(tag);
@@ -307,7 +307,10 @@ export default class GraphiteQuery {
     if (tag.key === this.removeTagValue) {
       this.removeTag(tagIndex);
       if (this.tags.length === 0) {
-        this.removeFunction(this.getSeriesByTagFunc());
+        const funcToRemove = this.getSeriesByTagFunc();
+        if (funcToRemove) {
+          this.removeFunction(funcToRemove);
+        }
         this.checkOtherSegmentsIndex = 0;
         this.seriesByTagUsed = false;
       }
@@ -332,7 +335,7 @@ export default class GraphiteQuery {
   }
 }
 
-function renderTagString(tag: { key: any; operator?: any; value?: any }) {
+function renderTagString(tag: { key: string; operator?: GraphiteTagOperator; value?: string }) {
   return tag.key + tag.operator + tag.value;
 }
 

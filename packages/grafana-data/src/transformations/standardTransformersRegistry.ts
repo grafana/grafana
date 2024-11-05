@@ -16,7 +16,7 @@ export interface TransformerUIProps<T> {
   onChange: (options: T) => void;
 }
 
-export interface TransformerRegistryItem<TOptions> extends RegistryItem {
+export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
   /**
    * Object describing transformer configuration
    */
@@ -50,4 +50,4 @@ export enum TransformerCategory {
  * Registry of transformation options that can be driven by
  * stored configuration files.
  */
-export const standardTransformersRegistry = new Registry<TransformerRegistryItem<any>>();
+export const standardTransformersRegistry = new Registry<TransformerRegistryItem>();

@@ -1,4 +1,4 @@
-import { includes, isDate } from 'lodash';
+import { isDate } from 'lodash';
 
 import { TimeZone } from '../types/time';
 
@@ -12,7 +12,11 @@ import {
   ISO_8601,
 } from './moment_wrapper';
 
-const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
+const units: string[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'] satisfies DurationUnit[];
+
+const isDurationUnit = (value: string): value is DurationUnit => {
+  return units.includes(value);
+};
 
 /**
  * Determine if a string contains a relative date time.
@@ -169,11 +173,9 @@ export function parseDateMath(
       isFiscal = true;
     }
 
-    const unit = unitString as DurationUnit;
+    const unit = unitString;
 
-    if (!includes(units, unit)) {
-      return undefined;
-    } else {
+    if (isDurationUnit(unit)) {
       if (type === 0) {
         if (isFiscal) {
           roundToFiscal(fiscalYearStartMonth, result, unit, roundUp);
@@ -189,6 +191,8 @@ export function parseDateMath(
       } else if (type === 2) {
         result.subtract(num, unit);
       }
+    } else {
+      return undefined;
     }
   }
   return result;

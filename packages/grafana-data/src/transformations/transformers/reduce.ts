@@ -88,7 +88,7 @@ function reduceSeriesToRows(
       config: {},
     });
 
-    const labels: KeyValue<any[]> = {};
+    const labels: KeyValue<unknown[]> = {};
     if (labelsToFields) {
       for (const key of distinctLabels) {
         labels[key] = new Array(size);
@@ -101,7 +101,7 @@ function reduceSeriesToRows(
       }
     }
 
-    const calcs: KeyValue<any[]> = {};
+    const calcs: KeyValue<unknown[]> = {};
     for (const info of calculators) {
       calcs[info.id] = new Array(size);
       fields.push({

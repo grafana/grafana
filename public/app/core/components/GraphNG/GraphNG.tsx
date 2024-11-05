@@ -28,7 +28,7 @@ import { preparePlotFrame as defaultPreparePlotFrame } from './utils';
 /**
  * @internal -- not a public API
  */
-export type PropDiffFn<T extends any = any> = (prev: T, next: T) => boolean;
+export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next: T) => boolean;
 
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
@@ -61,7 +61,11 @@ export interface GraphNGProps extends Themeable2 {
   options?: Record<string, any>;
 }
 
-function sameProps(prevProps: any, nextProps: any, propsToDiff: Array<string | PropDiffFn> = []) {
+function sameProps<T extends Record<string, unknown>>(
+  prevProps: T,
+  nextProps: T,
+  propsToDiff: Array<string | PropDiffFn> = []
+) {
   for (const propName of propsToDiff) {
     if (typeof propName === 'function') {
       if (!propName(prevProps, nextProps)) {
