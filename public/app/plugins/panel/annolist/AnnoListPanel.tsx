@@ -13,8 +13,9 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
-import { Button, CustomScrollbar, stylesFactory, TagList } from '@grafana/ui';
+import { Button, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -259,7 +260,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 
     const hasFilter = queryUser || queryTags.length > 0;
     return (
-      <CustomScrollbar autoHeightMin="100%">
+      <ScrollContainer minHeight="100%">
         {hasFilter && (
           <div className={this.style.filter}>
             <b>Filter:</b>
@@ -290,7 +291,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         {annotations.length < 1 && <div className={this.style.noneFound}>No Annotations Found</div>}
 
         <AbstractList items={annotations} renderItem={this.renderItem} getItemKey={(item) => `${item.id}`} />
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 }

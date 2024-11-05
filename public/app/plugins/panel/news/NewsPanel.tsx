@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
+import { Alert, Icon } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
@@ -53,10 +54,10 @@ export function NewsPanel(props: NewsPanelProps) {
   }
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+    <ScrollContainer minHeight="100%">
       {state.value.map((_, index) => {
         return <News key={index} index={index} width={width} showImage={showImage} data={state.value} />;
       })}
-    </CustomScrollbar>
+    </ScrollContainer>
   );
 }
