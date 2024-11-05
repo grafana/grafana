@@ -58,7 +58,7 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     if (target.query) {
       return super.query({ ...options, targets: [this.applyVariables(target, options.scopedVars)] }).pipe(
         map((res) => {
-          return responseToDataQueryResponse({ data: JSON.parse(res.data[0].meta.custom) });
+          return responseToDataQueryResponse({ data: res.data[0].meta.custom });
         }, this.nodeGraph?.enabled)
       );
     }

@@ -1,7 +1,13 @@
 import { lastValueFrom, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
-import { DataQueryRequest, DataSourceInstanceSettings, DataSourcePluginMeta, FieldType } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  DataSourcePluginMeta,
+  FieldType,
+} from '@grafana/data';
 import { BackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ZipkinDatasource } from './datasource';
@@ -29,7 +35,7 @@ describe('ZipkinDatasource', () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings, templateSrv);
       await expect(ds.query({ targets: [{ query: '12345' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
-        (val) => {
+        (val: DataQueryResponse[]) => {
           expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
         }
       );
@@ -39,7 +45,7 @@ describe('ZipkinDatasource', () => {
       setupBackendSrv(zipkinResponse);
       const ds = new ZipkinDatasource(defaultSettings, templateSrv);
       await expect(ds.query({ targets: [{ query: 'a/b' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
-        (val) => {
+        (val: DataQueryResponse[]) => {
           expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
         }
       );

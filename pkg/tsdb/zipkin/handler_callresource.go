@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -40,95 +37,36 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 	}
 }
 
-// https://zipkin.io/zipkin-api/#/default/get_services
 func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v2/services", ds.URL), nil)
-		if err != nil {
-			writeResponse(nil, err, rw, http.StatusInternalServerError)
-			return
-		}
-		handleRequest(ds.HTTPClient, rw, req)
+		services, err := ds.ZipkinClient.Services()
+		writeResponse(services, err, rw, http.StatusOK)
 	}
 }
 
-// https://zipkin.io/zipkin-api/#/default/get_spans
 func getSpansHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		serviceName := strings.TrimSpace(r.URL.Query().Get("serviceName"))
-		if serviceName == "" {
-			writeResponse(nil, errors.New("invalid/empty serviceName"), rw, http.StatusNotFound)
-			return
-		}
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v2/spans?serviceName=%s", ds.URL, url.QueryEscape(serviceName)), nil)
-		if err != nil {
-			writeResponse(nil, err, rw, http.StatusInternalServerError)
-			return
-		}
-		handleRequest(ds.HTTPClient, rw, req)
+		spans, err := ds.ZipkinClient.Spans(serviceName)
+		writeResponse(spans, err, rw, http.StatusOK)
 	}
 }
 
-// https://zipkin.io/zipkin-api/#/default/get_traces
 func getTracesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		serviceName := strings.TrimSpace(r.URL.Query().Get("serviceName"))
-		if serviceName == "" {
-			writeResponse(nil, errors.New("invalid/empty serviceName"), rw, http.StatusNotFound)
-			return
-		}
 		spanName := strings.TrimSpace(r.URL.Query().Get("spanName"))
-		if spanName == "" {
-			writeResponse(nil, errors.New("invalid/empty spanName"), rw, http.StatusNotFound)
-			return
-		}
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v2/traces?serviceName=%s&spanName=%s", ds.URL, url.QueryEscape(serviceName), url.QueryEscape(spanName)), nil)
-		if err != nil {
-			writeResponse(nil, err, rw, http.StatusInternalServerError)
-			return
-		}
-		handleRequest(ds.HTTPClient, rw, req)
+		traces, err := ds.ZipkinClient.Traces(serviceName, spanName)
+		writeResponse(traces, err, rw, http.StatusOK)
 	}
 }
 
-// https://zipkin.io/zipkin-api/#/default/get_trace__traceId_
 func getTraceHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		traceId := r.PathValue("traceId")
-		if traceId == "" {
-			writeResponse(nil, errors.New("invalid/empty traceId"), rw, http.StatusNotFound)
-			return
-		}
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v2/trace/%s", ds.URL, url.QueryEscape(traceId)), nil)
-		if err != nil {
-			writeResponse(nil, err, rw, http.StatusInternalServerError)
-			return
-		}
-		handleRequest(ds.HTTPClient, rw, req)
+		traceId := strings.TrimSpace(r.PathValue("traceId"))
+		trace, err := ds.ZipkinClient.Trace(traceId)
+		writeResponse(trace, err, rw, http.StatusOK)
 	}
-}
-
-func handleRequest(hc *http.Client, rw http.ResponseWriter, r *http.Request) {
-	res, err := hc.Do(r)
-	if err != nil {
-		if res != nil {
-			writeResponse(nil, err, rw, res.StatusCode)
-			return
-		}
-		writeResponse(nil, err, rw, http.StatusInternalServerError)
-		return
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Error("Error closing the body", "error", err.Error())
-		}
-	}()
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		writeResponse(nil, err, rw, http.StatusInternalServerError)
-		return
-	}
-	writeResponse(string(bodyBytes), nil, rw, res.StatusCode)
 }
 
 func writeResponse(res interface{}, err error, rw http.ResponseWriter, statusCode int) {

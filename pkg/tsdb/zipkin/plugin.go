@@ -3,7 +3,6 @@ package zipkin
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/tsdb/zipkin/zipkin"
 )
 
 var logger = log.New("tsdb.zipkin")
@@ -26,8 +26,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 }
 
 type datasourceInfo struct {
-	HTTPClient *http.Client
-	URL        string
+	ZipkinClient zipkin.ZipkinClient
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -40,11 +39,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, err
 		}
-		model := &datasourceInfo{
-			HTTPClient: hc,
-			URL:        settings.URL,
-		}
-		return model, nil
+		zc, err := zipkin.New(settings.URL, hc, logger)
+		return &datasourceInfo{ZipkinClient: zc}, err
 	}
 }
 

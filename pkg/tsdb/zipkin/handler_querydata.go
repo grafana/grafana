@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -38,7 +36,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	response := backend.NewQueryDataResponse()
 	logger := logger.FromContext(ctx)
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger.Debug(dsInfo.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -53,23 +50,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 				Error: fmt.Errorf("unsupported query type %s. only available in frontend mode", query.QueryType),
 			}
 		default:
-			// https://zipkin.io/zipkin-api/#/default/get_trace__traceId_
-			req, err := http.NewRequest(http.MethodGet, dsInfo.URL+"/api/v2/trace/"+url.PathEscape(query.Query), nil)
-			if err != nil {
-				response.Responses[q.RefID] = backend.DataResponse{Error: err}
-				continue
-			}
-			res, err := dsInfo.HTTPClient.Do(req)
-			if err != nil {
-				response.Responses[q.RefID] = backend.DataResponse{Error: err}
-				continue
-			}
-			defer func() {
-				if err := res.Body.Close(); err != nil {
-					logger.Error("Error closing the body", "error", err.Error())
-				}
-			}()
-			bodyBytes, err := io.ReadAll(res.Body)
+			traces, err := dsInfo.ZipkinClient.Trace(url.PathEscape(query.Query))
 			if err != nil {
 				response.Responses[q.RefID] = backend.DataResponse{Error: err}
 				continue
@@ -79,7 +60,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			response.Responses[q.RefID] = backend.DataResponse{
 				Frames: []*data.Frame{
 					data.NewFrame("query").SetMeta(&data.FrameMeta{
-						Custom: string(bodyBytes),
+						Custom: traces,
 					}),
 				},
 			}
