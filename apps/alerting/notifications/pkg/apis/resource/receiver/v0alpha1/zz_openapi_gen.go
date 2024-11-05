@@ -12,13 +12,13 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Integration":         schema_apis_resource_receiver_v0alpha1_Integration(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.OperatorState":       schema_apis_resource_receiver_v0alpha1_OperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Receiver":            schema_apis_resource_receiver_v0alpha1_Receiver(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.ReceiverList":        schema_apis_resource_receiver_v0alpha1_ReceiverList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Spec":                schema_apis_resource_receiver_v0alpha1_Spec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Status":              schema_apis_resource_receiver_v0alpha1_Status(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.StatusOperatorState": schema_apis_resource_receiver_v0alpha1_StatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Integration":         schema_apis_resource_receiver_v0alpha1_Integration(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.OperatorState":       schema_apis_resource_receiver_v0alpha1_OperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Receiver":            schema_apis_resource_receiver_v0alpha1_Receiver(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.ReceiverList":        schema_apis_resource_receiver_v0alpha1_ReceiverList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Spec":                schema_apis_resource_receiver_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Status":              schema_apis_resource_receiver_v0alpha1_Status(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.StatusOperatorState": schema_apis_resource_receiver_v0alpha1_StatusOperatorState(ref),
 	}
 }
 
@@ -165,13 +165,13 @@ func schema_apis_resource_receiver_v0alpha1_Receiver(ref common.ReferenceCallbac
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Spec"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Spec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Status"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Status"),
 						},
 					},
 				},
@@ -179,7 +179,7 @@ func schema_apis_resource_receiver_v0alpha1_Receiver(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -216,7 +216,7 @@ func schema_apis_resource_receiver_v0alpha1_ReceiverList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Receiver"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Receiver"),
 									},
 								},
 							},
@@ -227,7 +227,7 @@ func schema_apis_resource_receiver_v0alpha1_ReceiverList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Receiver", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -245,7 +245,7 @@ func schema_apis_resource_receiver_v0alpha1_Spec(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Integration"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Integration"),
 									},
 								},
 							},
@@ -263,7 +263,7 @@ func schema_apis_resource_receiver_v0alpha1_Spec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.Integration"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.Integration"},
 	}
 }
 
@@ -298,7 +298,7 @@ func schema_apis_resource_receiver_v0alpha1_Status(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.StatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.StatusOperatorState"),
 									},
 								},
 							},
@@ -308,7 +308,7 @@ func schema_apis_resource_receiver_v0alpha1_Status(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/receiver/v0alpha1.StatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1.StatusOperatorState"},
 	}
 }
 

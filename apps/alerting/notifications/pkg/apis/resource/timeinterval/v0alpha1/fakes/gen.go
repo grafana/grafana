@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
 	"github.com/grafana/grafana/pkg/util"
 )
 

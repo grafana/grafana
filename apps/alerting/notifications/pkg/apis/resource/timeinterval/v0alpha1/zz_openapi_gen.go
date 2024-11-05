@@ -12,16 +12,108 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.OperatorState":       schema_apis_resource_templategroup_v0alpha1_OperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Spec":                schema_apis_resource_templategroup_v0alpha1_Spec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Status":              schema_apis_resource_templategroup_v0alpha1_Status(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.StatusOperatorState": schema_apis_resource_templategroup_v0alpha1_StatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.TemplateGroup":       schema_apis_resource_templategroup_v0alpha1_TemplateGroup(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.TemplateGroupList":   schema_apis_resource_templategroup_v0alpha1_TemplateGroupList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Interval":            schema_apis_resource_timeinterval_v0alpha1_Interval(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.OperatorState":       schema_apis_resource_timeinterval_v0alpha1_OperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Spec":                schema_apis_resource_timeinterval_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Status":              schema_apis_resource_timeinterval_v0alpha1_Status(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.StatusOperatorState": schema_apis_resource_timeinterval_v0alpha1_StatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeInterval":        schema_apis_resource_timeinterval_v0alpha1_TimeInterval(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeIntervalList":    schema_apis_resource_timeinterval_v0alpha1_TimeIntervalList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeRange":           schema_apis_resource_timeinterval_v0alpha1_TimeRange(ref),
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_OperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_Interval(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Interval defines model for Interval.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"days_of_month": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"location": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"months": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"times": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeRange"),
+									},
+								},
+							},
+						},
+					},
+					"weekdays": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"years": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeRange"},
+	}
+}
+
+func schema_apis_resource_timeinterval_v0alpha1_OperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -73,35 +165,43 @@ func schema_apis_resource_templategroup_v0alpha1_OperatorState(ref common.Refere
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_Spec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_Spec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "Spec defines model for Spec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"content": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
-					"title": {
+					"time_intervals": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Interval"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"content", "title"},
+				Required: []string{"name", "time_intervals"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Interval"},
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_Status(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_Status(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -132,7 +232,7 @@ func schema_apis_resource_templategroup_v0alpha1_Status(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.StatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.StatusOperatorState"),
 									},
 								},
 							},
@@ -142,11 +242,11 @@ func schema_apis_resource_templategroup_v0alpha1_Status(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.StatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.StatusOperatorState"},
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_StatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_StatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -198,7 +298,7 @@ func schema_apis_resource_templategroup_v0alpha1_StatusOperatorState(ref common.
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_TemplateGroup(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_TimeInterval(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -227,13 +327,13 @@ func schema_apis_resource_templategroup_v0alpha1_TemplateGroup(ref common.Refere
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Spec"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Spec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Status"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Status"),
 						},
 					},
 				},
@@ -241,11 +341,11 @@ func schema_apis_resource_templategroup_v0alpha1_TemplateGroup(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_apis_resource_templategroup_v0alpha1_TemplateGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_apis_resource_timeinterval_v0alpha1_TimeIntervalList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -278,7 +378,7 @@ func schema_apis_resource_templategroup_v0alpha1_TemplateGroupList(ref common.Re
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.TemplateGroup"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeInterval"),
 									},
 								},
 							},
@@ -289,6 +389,34 @@ func schema_apis_resource_templategroup_v0alpha1_TemplateGroupList(ref common.Re
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1.TemplateGroup", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1.TimeInterval", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_apis_resource_timeinterval_v0alpha1_TimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TimeRange defines model for TimeRange.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"end_time": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"start_time": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"end_time", "start_time"},
+			},
+		},
 	}
 }

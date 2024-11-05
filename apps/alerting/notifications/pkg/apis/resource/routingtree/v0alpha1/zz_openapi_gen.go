@@ -12,15 +12,15 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Matcher":             schema_apis_resource_routingtree_v0alpha1_Matcher(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.OperatorState":       schema_apis_resource_routingtree_v0alpha1_OperatorState(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Route":               schema_apis_resource_routingtree_v0alpha1_Route(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RouteDefaults":       schema_apis_resource_routingtree_v0alpha1_RouteDefaults(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RoutingTree":         schema_apis_resource_routingtree_v0alpha1_RoutingTree(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RoutingTreeList":     schema_apis_resource_routingtree_v0alpha1_RoutingTreeList(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Spec":                schema_apis_resource_routingtree_v0alpha1_Spec(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Status":              schema_apis_resource_routingtree_v0alpha1_Status(ref),
-		"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.StatusOperatorState": schema_apis_resource_routingtree_v0alpha1_StatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Matcher":             schema_apis_resource_routingtree_v0alpha1_Matcher(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.OperatorState":       schema_apis_resource_routingtree_v0alpha1_OperatorState(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Route":               schema_apis_resource_routingtree_v0alpha1_Route(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RouteDefaults":       schema_apis_resource_routingtree_v0alpha1_RouteDefaults(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RoutingTree":         schema_apis_resource_routingtree_v0alpha1_RoutingTree(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RoutingTreeList":     schema_apis_resource_routingtree_v0alpha1_RoutingTreeList(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Spec":                schema_apis_resource_routingtree_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Status":              schema_apis_resource_routingtree_v0alpha1_Status(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.StatusOperatorState": schema_apis_resource_routingtree_v0alpha1_StatusOperatorState(ref),
 	}
 }
 
@@ -158,7 +158,7 @@ func schema_apis_resource_routingtree_v0alpha1_Route(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Matcher"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Matcher"),
 									},
 								},
 							},
@@ -197,7 +197,7 @@ func schema_apis_resource_routingtree_v0alpha1_Route(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Route"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Route"),
 									},
 								},
 							},
@@ -208,7 +208,7 @@ func schema_apis_resource_routingtree_v0alpha1_Route(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Matcher", "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Route"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Matcher", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Route"},
 	}
 }
 
@@ -294,13 +294,13 @@ func schema_apis_resource_routingtree_v0alpha1_RoutingTree(ref common.ReferenceC
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Spec"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Spec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Status"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Status"),
 						},
 					},
 				},
@@ -308,7 +308,7 @@ func schema_apis_resource_routingtree_v0alpha1_RoutingTree(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Spec", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Status", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -345,7 +345,7 @@ func schema_apis_resource_routingtree_v0alpha1_RoutingTreeList(ref common.Refere
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RoutingTree"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RoutingTree"),
 									},
 								},
 							},
@@ -356,7 +356,7 @@ func schema_apis_resource_routingtree_v0alpha1_RoutingTreeList(ref common.Refere
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RoutingTree", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RoutingTree", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -370,7 +370,7 @@ func schema_apis_resource_routingtree_v0alpha1_Spec(ref common.ReferenceCallback
 					"defaults": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RouteDefaults"),
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RouteDefaults"),
 						},
 					},
 					"routes": {
@@ -380,7 +380,7 @@ func schema_apis_resource_routingtree_v0alpha1_Spec(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Route"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Route"),
 									},
 								},
 							},
@@ -391,7 +391,7 @@ func schema_apis_resource_routingtree_v0alpha1_Spec(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.Route", "github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.RouteDefaults"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.Route", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.RouteDefaults"},
 	}
 }
 
@@ -426,7 +426,7 @@ func schema_apis_resource_routingtree_v0alpha1_Status(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.StatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.StatusOperatorState"),
 									},
 								},
 							},
@@ -436,7 +436,7 @@ func schema_apis_resource_routingtree_v0alpha1_Status(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/routingtree/v0alpha1.StatusOperatorState"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1.StatusOperatorState"},
 	}
 }
 

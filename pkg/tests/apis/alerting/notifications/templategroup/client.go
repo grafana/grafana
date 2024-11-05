@@ -7,7 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/apis/resource/templategroup/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
