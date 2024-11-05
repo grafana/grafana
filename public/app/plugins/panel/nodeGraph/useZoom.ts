@@ -36,7 +36,7 @@ interface Options {
  * used to zoom in/out with mouse wheel.
  */
 export function useZoom(options: Options = defaultOptions) {
-  const { min, max, zoomMode } = options;
+  const { min, max, zoomMode } = { ...defaultOptions, ...options };
   const stepUp = options.stepUp ?? defaultOptions.stepUp;
   const stepDown = options.stepDown ?? defaultOptions.stepDown;
 
