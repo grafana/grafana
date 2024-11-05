@@ -67,7 +67,6 @@
     "@types/jquery": "3.5.32",
     "@types/lodash": "4.17.12",
     "@types/react-table": "7.7.20",
-    "ansicolor": "1.1.100",
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
     "d3": "7.9.0",

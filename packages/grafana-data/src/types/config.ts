@@ -208,7 +208,6 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
-  customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
@@ -226,6 +225,7 @@ export interface GrafanaConfig {
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
   rudderstackIntegrationsUrl: string | undefined;
+  analyticsConsoleReporting: boolean;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;

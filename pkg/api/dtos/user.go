@@ -43,6 +43,7 @@ type ResetUserPasswordForm struct {
 
 type UserLookupDTO struct {
 	UserID    int64  `json:"userId"`
+	UID       string `json:"uid"`
 	Login     string `json:"login"`
 	AvatarURL string `json:"avatarUrl"`
 }

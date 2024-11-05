@@ -85,8 +85,8 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              s.storeID,
 		AuthorizationModelId: s.modelID,
-		Type:                 "folder_resource",
-		Relation:             relation,
+		Type:                 "folder2",
+		Relation:             common.FolderResourceRelation(relation),
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
@@ -138,9 +138,8 @@ func directObjects(group, resource string, objects []string) []string {
 }
 
 func folderObject(group, resource string, objects []string) []string {
-	prefix := fmt.Sprintf("%s:%s/%s/", folderResourceType, group, resource)
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
 	}
 	return objects
 }

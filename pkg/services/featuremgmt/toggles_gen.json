@@ -809,17 +809,18 @@
     {
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
-        "resourceVersion": "1722005531805",
+        "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-26 14:52:11.80525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cross account observability for Cloudwatch Metric Insights query builder",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -952,6 +953,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaV2",
+        "resourceVersion": "1730192092473",
+        "creationTimestamp": "2024-10-29T08:54:52Z"
+      },
+      "spec": {
+        "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -1189,6 +1203,22 @@
     },
     {
       "metadata": {
+        "name": "enableExtensionsAdminPage",
+        "resourceVersion": "1730819353237",
+        "creationTimestamp": "2024-11-05T09:18:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-05 15:09:13.237578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the extension admin page regardless of development mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-03T18:23:55Z"
@@ -1270,6 +1300,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreMetricsRelatedLogs",
+        "resourceVersion": "1730125602673",
+        "creationTimestamp": "2024-10-28T14:26:42Z"
+      },
+      "spec": {
+        "description": "Display Related Logs in Explore Metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -2349,20 +2393,6 @@
     },
     {
       "metadata": {
-        "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1728903221522",
-        "creationTimestamp": "2024-10-14T10:53:41Z"
-      },
-      "spec": {
-        "description": "Enables reload of dashboards on scopes, time range and variables changes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
         "creationTimestamp": "2024-06-20T15:49:19Z",
@@ -2414,6 +2444,19 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "playlistsWatcher",
+        "resourceVersion": "1730462910506",
+        "creationTimestamp": "2024-11-01T12:08:30Z"
+      },
+      "spec": {
+        "description": "Enables experimental watcher for playlists",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -2843,6 +2886,20 @@
     },
     {
       "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -2956,6 +3013,19 @@
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlQuerybuilderFunctionParameters",
+        "resourceVersion": "1718487716739",
+        "creationTimestamp": "2024-06-15T21:41:56Z"
+      },
+      "spec": {
+        "description": "Enables SQL query builder function parameters",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true
       }
     },
     {
@@ -3296,7 +3366,8 @@
       "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-27T10:22:13Z"
+        "creationTimestamp": "2023-06-27T10:22:13Z",
+        "deletionTimestamp": "2024-10-30T14:21:33Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",

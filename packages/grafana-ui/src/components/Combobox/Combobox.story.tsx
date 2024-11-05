@@ -273,6 +273,14 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
     );
   }, []);
 
+  const loadOptionsWithErrors = useCallback((inputValue: string) => {
+    if (inputValue.length % 2 === 0) {
+      return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+    } else {
+      throw new Error('Could not retrieve options');
+    }
+  }, []);
+
   return (
     <>
       <Field
@@ -309,6 +317,18 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         />
       </Field>
 
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+        />
+      </Field>
       <Field label="Compared to AsyncSelect">
         <AsyncSelect
           id="test-async-select"
@@ -328,6 +348,52 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
 export const Async: StoryObj<PropsAndCustomArgs> = {
   render: AsyncStory,
+};
+
+const noop = () => {};
+const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  if (typeof args.options === 'function') {
+    throw new Error('This story does not support async options');
+  }
+
+  function renderColumnOfComboboxes(pos: string) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flex: 1,
+        }}
+      >
+        <Combobox placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
+        <Combobox placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
+        <Combobox placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+
+        // approx the height of the dev alert, and three margins. exact doesn't matter
+        minHeight: 'calc(100vh - (105px + 16px + 16px + 16px))',
+        justifyContent: 'space-between',
+        gap: 32,
+      }}
+    >
+      {renderColumnOfComboboxes('Left')}
+      {renderColumnOfComboboxes('Middle')}
+      {renderColumnOfComboboxes('Right')}
+    </div>
+  );
+};
+
+export const PositioningTest: StoryObj<PropsAndCustomArgs> = {
+  render: PositioningTestStory,
 };
 
 export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
