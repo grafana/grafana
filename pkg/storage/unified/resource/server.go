@@ -198,14 +198,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:      cancel,
 	}
 
-	// If an indexer is configured, we need to initialize it. This will also initialize the backend first.
-	if opts.Index != nil {
-		_, err := s.Index(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return s, nil
 }
 

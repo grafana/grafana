@@ -63,5 +63,18 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		}
 	}
 
-	return resource.NewResourceServer(opts)
+	rs, err := resource.NewResourceServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize the indexer if one is configured
+	if opts.Index != nil {
+		_, err = rs.(resource.ResourceIndexer).Index(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rs, nil
 }
