@@ -26,6 +26,16 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
+  sns:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
+  gchat:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-google-chat/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-google-chat/
   email:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-email/
@@ -87,8 +97,6 @@ refs:
 
 Use contact points to select your preferred communication channel for receiving notifications when your alert rules are firing. You can add, edit, delete, export, and test a contact point.
 
-Testing a contact point is only available for Grafana Alertmanager.
-
 On the **Contact Points** tab, you can:
 
 - Search for name and type of contact points and integrations.
@@ -146,7 +154,7 @@ Complete the following steps to add templates to your contact point.
 
 ## Test a contact point
 
-** For Grafana Alertmanager only.**
+Testing a contact point is only available for Grafana Alertmanager.
 
 Complete the following steps to test a contact point.
 
@@ -166,17 +174,17 @@ The following table lists the contact point integrations supported by Grafana.
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | Alertmanager                 | `prometheus-alertmanager` |
-| Amazon SNS                   | `sns`                     |
+| [Amazon SNS](ref:sns)        | `sns`                     |
 | Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
 | [Discord](ref:discord)       | `discord`                 |
 | [Email](ref:email)           | `email`                   |
-| Google Chat                  | `googlechat`              |
+| [Google Chat](ref:gchat)     | `googlechat`              |
 | [Grafana Oncall](ref:oncall) | `oncall`                  |
 | Kafka REST Proxy             | `kafka`                   |
-| [MQTT](ref:mqtt)             | `mqtt`                    |
 | Line                         | `line`                    |
 | [Microsoft Teams](ref:teams) | `teams`                   |
+| [MQTT](ref:mqtt)             | `mqtt`                    |
 | [Opsgenie](ref:opsgenie)     | `opsgenie`                |
 | [Pagerduty](ref:pagerduty)   | `pagerduty`               |
 | Pushover                     | `pushover`                |
@@ -185,7 +193,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Telegram](ref:telegram)     | `telegram`                |
 | Threema Gateway              | `threema`                 |
 | VictorOps                    | `victorops`               |
-| WeCom                        | `wecom`                   |
 | [Webhook](ref:webhook)       | `webhook`                 |
+| WeCom                        | `wecom`                   |
 
 Some of these integrations are not compatible with [external Alertmanagers](ref:external-alertmanager). For the list of Prometheus Alertmanager integrations, refer to the [Prometheus Alertmanager receiver settings](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings).
