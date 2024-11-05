@@ -1306,6 +1306,13 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
+			Name:         "sqlQuerybuilderFunctionParameters",
+			Description:  "Enables SQL query builder function parameters",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOSSBigTent,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1561,6 +1568,21 @@ var (
 			Description:     "Enables experimental watcher for playlists",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "exploreMetricsRelatedLogs",
+			Description:  "Display Related Logs in Explore Metrics",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:            "enableExtensionsAdminPage",
+			Description:     "Enables the extension admin page regardless of development mode",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
 		},
 	}

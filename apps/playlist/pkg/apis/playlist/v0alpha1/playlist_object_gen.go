@@ -65,12 +65,13 @@ func (o *Playlist) SetSubresource(name string, value any) error {
 }
 
 func (o *Playlist) GetStaticMetadata() resource.StaticMetadata {
+	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
 		Namespace: o.ObjectMeta.Namespace,
-		Group:     o.GroupVersionKind().Group,
-		Version:   o.GroupVersionKind().Version,
-		Kind:      o.GroupVersionKind().Kind,
+		Group:     gvk.Group,
+		Version:   gvk.Version,
+		Kind:      gvk.Kind,
 	}
 }
 

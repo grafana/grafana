@@ -73,8 +73,8 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20241021123319-be61d61f71e7 // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20241018103850-afc1195d8240 // @grafana/identity-access-team
-	github.com/grafana/authlib/claims v0.0.0-20241018085709-130ad686d80e // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20241024120339-84cd3a898e8a // @grafana/identity-access-team
+	github.com/grafana/authlib/claims v0.0.0-20241024115517-d30b00d7666d // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -96,6 +96,7 @@ require (
 	// For local development grafana/grafana will always use the local files
 	// Check go.work file for details
 	github.com/grafana/grafana/pkg/promlib v0.0.6 // @grafana/observability-metrics
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // @grafana/grafana-app-platform-squad
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces-and-profiling
@@ -468,7 +469,7 @@ require (
 
 require (
 	github.com/getkin/kin-openapi v0.128.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-app-platform-squad
 )
 
 require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-access-team
@@ -479,15 +480,18 @@ require (
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 // indirect
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect
 	github.com/maypok86/otter v1.2.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
+	k8s.io/apiextensions-apiserver v0.31.1 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240523142256-cc370b98af7c
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.

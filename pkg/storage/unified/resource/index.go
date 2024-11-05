@@ -123,7 +123,7 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string,
 	}
 
 	tenants := make([]string, 0, len(tenantsWithChanges))
-	for tenant, _ := range tenantsWithChanges {
+	for tenant := range tenantsWithChanges {
 		tenants = append(tenants, tenant)
 	}
 

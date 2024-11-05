@@ -22,6 +22,7 @@ import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngin
 import { AutoQueryDef, AutoQueryInfo } from './AutomaticMetricQueries/types';
 import { buildLabelBreakdownActionScene } from './Breakdown/LabelBreakdownScene';
 import { MAIN_PANEL_MAX_HEIGHT, MAIN_PANEL_MIN_HEIGHT, MetricGraphScene } from './MetricGraphScene';
+import { buildRelatedLogsScene } from './RelatedLogs/RelatedLogsScene';
 import { ShareTrailButton } from './ShareTrailButton';
 import { useBookmarkState } from './TrailStore/useBookmarkState';
 import { reportExploreMetrics } from './interactions';
@@ -36,6 +37,8 @@ import {
   VAR_METRIC_EXPR,
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
+
+const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -118,6 +121,15 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
     description: 'Relevant metrics based on current label filters',
   },
 ];
+
+if (relatedLogsFeatureEnabled) {
+  actionViewsDefinitions.push({
+    displayName: 'Related logs',
+    value: 'related-logs',
+    getScene: buildRelatedLogsScene,
+    description: 'Relevant logs based on current label filters and time range',
+  });
+}
 
 export interface MetricActionBarState extends SceneObjectState {}
 

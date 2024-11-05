@@ -695,6 +695,10 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
+	// FlagSqlQuerybuilderFunctionParameters
+	// Enables SQL query builder function parameters
+	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
+
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -842,4 +846,12 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagExploreMetricsRelatedLogs
+	// Display Related Logs in Explore Metrics
+	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagEnableExtensionsAdminPage
+	// Enables the extension admin page regardless of development mode
+	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 )
