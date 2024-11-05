@@ -30,7 +30,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect; @grafana/grafana-backend-group
 	github.com/stretchr/testify v1.9.0 // @grafana/grafana-backend-group
 	github.com/urfave/cli v1.22.16 // @grafana/grafana-backend-group
-	github.com/urfave/cli/v2 v2.27.1 // @grafana/grafana-backend-group
+	github.com/urfave/cli/v2 v2.27.5 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0 // indirect; @grafana/plugins-platform-backend
 	go.opentelemetry.io/otel v1.31.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.31.0 // indirect; @grafana/grafana-backend-group
@@ -79,7 +79,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
+	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.56.0 // indirect
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
