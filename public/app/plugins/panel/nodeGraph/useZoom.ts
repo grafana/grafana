@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ZoomMode } from './panelcfg.gen';
 
-const defaultOptions: Options = {
-  stepDown: (s) => s / 1.5,
+const defaultOptions: Required<Options> = {
   stepUp: (s) => s * 1.5,
+  stepDown: (s) => s / 1.5,
   min: 0.13,
   max: 2.25,
   zoomMode: ZoomMode.Cooperative,
@@ -35,20 +35,23 @@ interface Options {
  * 'transform: scale'. It returns handler for manual buttons with zoom in/zoom out function and a ref that can be
  * used to zoom in/out with mouse wheel.
  */
-export function useZoom(options: Options) {
-  const { stepUp, stepDown, min, max, zoomMode } = { ...defaultOptions, ...options };
+export function useZoom(options: Options = defaultOptions) {
+  const { min, max, zoomMode } = options;
+  const stepUp = options.stepUp ?? defaultOptions.stepUp;
+  const stepDown = options.stepDown ?? defaultOptions.stepDown;
+
   const ref = useRef<HTMLElement | null>(null);
   const [scale, setScale] = useState(1);
 
   const onStepUp = useCallback(() => {
     if (scale < (max ?? Infinity)) {
-      setScale(stepUp!(scale));
+      setScale(stepUp(scale));
     }
   }, [scale, stepUp, max]);
 
   const onStepDown = useCallback(() => {
     if (scale > (min ?? -Infinity)) {
-      setScale(stepDown!(scale));
+      setScale(stepDown(scale));
     }
   }, [scale, stepDown, min]);
 
