@@ -138,11 +138,7 @@ export function isRetriableError(errorResponse: DataQueryResponse) {
     : (errorResponse.error?.message ?? '');
   if (message.includes('timeout')) {
     return true;
-  } else if (
-    message.includes('parse error') ||
-    message.includes('max entries') ||
-    message.includes('maximum of series')
-  ) {
+  } else if (message.includes('parse error')) {
     // If the error is a parse error, we want to signal to stop querying.
     throw new Error(message);
   }
