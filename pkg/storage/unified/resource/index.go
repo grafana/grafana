@@ -142,6 +142,9 @@ func (i *Index) Init(ctx context.Context) error {
 	totalObjects := 0
 	// Get all tenants currently in Unified Storage
 	tenants, err := i.s.backend.Namespaces(ctx)
+	if err != nil {
+		return err
+	}
 	for _, tenant := range tenants {
 		group.Go(func() error {
 			logger.Info("initializing index for tenant", "tenant", tenant)
