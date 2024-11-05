@@ -20,9 +20,13 @@ After you have [installed Grafana]({{< relref "../setup-grafana/installation" >}
 
 The following sections provide an overview of Grafana features and links to product documentation to help you learn more. For more guidance and ideas, check out our [Grafana Community forums](https://community.grafana.com/).
 
-## Explore metrics, logs, and traces
+## Explore telemetry data
 
-Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. Refer to [Explore]({{< relref "../explore" >}}) for more information.
+Use Grafana Explore to examine your data using ad-hoc queries and dynamic drilldown.
+Split view and compare different time ranges, queries and data sources side by side. 
+Refer to [Explore]({{< relref "../explore" >}}) for more information. 
+
+You can also use one of the [Explore Apps for simplified exploration]({{< relref "../explore/simplified-exploration" >}}) to browse your telemetry data without writing queries.
 
 ## Alerts
 
