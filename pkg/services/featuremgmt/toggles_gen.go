@@ -143,6 +143,10 @@ const (
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 
+	// FlagLokiShardSplitting
+	// Use stream shards to split queries into smaller subqueries
+	FlagLokiShardSplitting = "lokiShardSplitting"
+
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
@@ -250,10 +254,6 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
-	// FlagVizAndWidgetSplit
-	// Split panels between visualizations and widgets
-	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 
 	// FlagLogsExploreTableVisualisation
 	// A table visualisation for logs in Explore
@@ -495,6 +495,10 @@ const (
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"
 
+	// FlagDashboardNewLayouts
+	// Enables experimental new dashboard layouts
+	FlagDashboardNewLayouts = "dashboardNewLayouts"
+
 	// FlagPanelFilterVariable
 	// Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
 	FlagPanelFilterVariable = "panelFilterVariable"
@@ -691,6 +695,10 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
+	// FlagSqlQuerybuilderFunctionParameters
+	// Enables SQL query builder function parameters
+	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
+
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -719,9 +727,9 @@ const (
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
 
-	// FlagPassScopeToDashboardApi
-	// Enables the passing of scopes to dashboards fetching in Grafana
-	FlagPassScopeToDashboardApi = "passScopeToDashboardApi"
+	// FlagReloadDashboardsOnParamsChange
+	// Enables reload of dashboards on scopes, time range and variables changes
+	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
@@ -818,4 +826,24 @@ const (
 	// FlagUnifiedStorageBigObjectsSupport
 	// Enables to save big objects in blob storage
 	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
+
+	// FlagTimeRangeProvider
+	// Enables time pickers sync
+	FlagTimeRangeProvider = "timeRangeProvider"
+
+	// FlagPrometheusUsesCombobox
+	// Use new combobox component for Prometheus query editor
+	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagDashboardSchemaV2
+	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
+	FlagDashboardSchemaV2 = "dashboardSchemaV2"
+
+	// FlagPlaylistsWatcher
+	// Enables experimental watcher for playlists
+	FlagPlaylistsWatcher = "playlistsWatcher"
 )

@@ -7,10 +7,10 @@ import { SceneGridRow, VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { activateInActiveParents } from '../utils/utils';
+import { activateSceneObjectAndParentTree } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export interface Props {
@@ -65,7 +65,7 @@ export function PanelSearchLayout({ dashboard, panelSearch = '', panelsPerRow }:
 }
 
 function PanelSearchHit({ panel }: { panel: VizPanel }) {
-  useEffect(() => activateInActiveParents(panel), [panel]);
+  useEffect(() => activateSceneObjectAndParentTree(panel), [panel]);
 
   return <panel.Component model={panel} />;
 }

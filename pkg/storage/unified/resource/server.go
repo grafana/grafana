@@ -49,8 +49,25 @@ type ListIterator interface {
 	// Used for fast(er) authz filtering
 	Name() string
 
+	// Folder of the current item
+	// Used for fast(er) authz filtering
+	Folder() string
+
 	// Value for the current item
 	Value() []byte
+}
+
+type BackendReadResponse struct {
+	// Metadata
+	Key    *ResourceKey
+	Folder string
+
+	// The new resource version
+	ResourceVersion int64
+	// The properties
+	Value []byte
+	// Error details
+	Error *ErrorResult
 }
 
 // The StorageBackend is an internal abstraction that supports interacting with
@@ -63,7 +80,7 @@ type StorageBackend interface {
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
 	// Read a resource from storage optionally at an explicit version
-	ReadResource(context.Context, *ReadRequest) *ReadResponse
+	ReadResource(context.Context, *ReadRequest) *BackendReadResponse
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -168,6 +185,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	logger := slog.Default().With("logger", "resource-server")
+	// register metrics
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		logger.Warn("failed to register storage metrics", "error", err)
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
@@ -178,7 +201,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}))
 	return &server{
 		tracer:      opts.Tracer,
-		log:         slog.Default().With("logger", "resource-server"),
+		log:         logger,
 		backend:     opts.Backend,
 		index:       opts.Index,
 		blob:        blobstore,
@@ -272,6 +295,14 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	obj, err := utils.MetaAccessor(tmp)
 	if err != nil {
 		return nil, AsErrorResult(err)
+	}
+
+	if obj.GetUID() == "" {
+		s.log.Error("object is missing UID", "key", key)
+	}
+
+	if obj.GetResourceVersion() != "" {
+		s.log.Error("object must not include a resource version", "key", key)
 	}
 
 	event := &WriteEvent{
@@ -524,10 +555,17 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 
 	rsp := s.backend.ReadResource(ctx, req)
 	// TODO, check folder permissions etc
-	return rsp, nil
+	return &ReadResponse{
+		ResourceVersion: rsp.ResourceVersion,
+		Value:           rsp.Value,
+		Error:           rsp.Error,
+	}, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
@@ -711,6 +749,12 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				}
 				if err := srv.Send(resp); err != nil {
 					return err
+				}
+
+				// record latency - resource version is a unix timestamp in microseconds so we convert to seconds
+				latencySeconds := float64(time.Now().UnixMicro()-event.ResourceVersion) / 1e6
+				if latencySeconds > 0 {
+					StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 				}
 			}
 		}

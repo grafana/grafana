@@ -97,11 +97,11 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 | **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **Session Timezone**          | Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                      |
-| **Max open**                  | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Max open**                  | The maximum number of open connections to the database, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | **Auto (max idle)**           | Toggle to set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | **Allow cleartext passwords** | Allows the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) as required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/en/pam-pluggable-authentication.html). <br />**Sending passwords in clear text may be a security problem in some configurations**. To avoid password issues, it is recommended that clients connect to a MySQL server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. |
-| **Max lifetime**              | The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+). The default is `14400` or 4 hours.                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Max lifetime**              | The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL. The default is `14400` or 4 hours.                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### Min time interval
 
@@ -160,10 +160,10 @@ datasources:
     user: grafana
     jsonData:
       database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
     secureJsonData:
       password: ${GRAFANA_MYSQL_PASSWORD}
 ```
@@ -181,10 +181,10 @@ datasources:
     jsonData:
       tlsAuth: true
       database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
     secureJsonData:
       password: ${GRAFANA_MYSQL_PASSWORD}
       tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
@@ -205,10 +205,10 @@ datasources:
       tlsAuth: true
       tlsSkipVerify: true
       database: grafana
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
     secureJsonData:
       password: ${GRAFANA_MYSQL_PASSWORD}
       tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
@@ -246,6 +246,8 @@ When the dataset is selected, the table dropdown is populated with the tables th
 Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
 
 Add further value columns by clicking the plus button and another column dropdown appears.
+
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
 
 ### Filter data (WHERE)
 
@@ -294,7 +296,7 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 | `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value (only works with time series queries).                                         |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points (only works with time series queries).                                                                                                       |
 | `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only works with time series queries).                                        |
-| `$__timeGroupAlias(dateColumn,'5m')`                  | Will be replaced identical to $\_\_timeGroup but with an added column alias (only available in Grafana 5.3+).                                                                                                |
+| `$__timeGroupAlias(dateColumn,'5m')`                  | Will be replaced identical to $\_\_timeGroup but with an added column alias.                                                                                                                                 |
 | `$__unixEpochFilter(dateColumn)`                      | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                         |
 | `$__unixEpochFrom()`                                  | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                            |
 | `$__unixEpochTo()`                                    | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                              |
@@ -303,10 +305,6 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 | `$__unixEpochNanoTo()`                                | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                               |
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp (`fillMode` only works with time series queries).                                                                                              |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (`fillMode` only works with time series queries).                                                                                                                 |
-
-We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
-
-The query editor has a link named `Generated SQL` that shows up after a query has been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
 
@@ -492,8 +490,6 @@ SELECT hostname FROM my_host  WHERE region IN($region)
 
 #### Using `__searchFilter` to filter results in Query Variable
 
-> Available from Grafana 6.5 and above
-
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
 When nothing has been entered by the user the default value for `__searchFilter` is `%`.
 
@@ -509,9 +505,7 @@ SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 
 ### Using Variables in Queries
 
-From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
-
-From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+Template variable values are only quoted when the template variable is a `multi-value`.
 
 If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
@@ -593,12 +587,12 @@ WHERE
   $__timeFilter(native_date_time)
 ```
 
-| Name      | Description                                                                                                                       |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.                          |
-| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+) |
-| `text`    | Event description field.                                                                                                          |
-| `tags`    | Optional field name to use for event tags as a comma separated string.                                                            |
+| Name      | Description                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.          |
+| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. |
+| `text`    | Event description field.                                                                                          |
+| `tags`    | Optional field name to use for event tags as a comma separated string.                                            |
 
 ## Alerting
 

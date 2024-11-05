@@ -19,8 +19,6 @@ import { renderWithProvider } from '../../contact-points/ContactPoints.test';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
-import 'core-js/stable/structured-clone';
-
 setupMswServer();
 
 const ui = {

@@ -17,7 +17,6 @@ import {
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
-
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
@@ -36,7 +35,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
-    changelog: localChangelog || remote?.changelog,
+    lastCommitDate: remote?.lastCommitDate,
+    changelog: remote?.changelog || localChangelog,
   };
 }
 
@@ -122,7 +122,6 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
   try {
     const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/CHANGELOG`);
     const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
-
     return markdownAsHtml;
   } catch (error) {
     if (isFetchError(error)) {

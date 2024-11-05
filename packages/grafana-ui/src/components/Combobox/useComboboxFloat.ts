@@ -9,12 +9,12 @@ import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
-/**
- * Used with Downshift to get the height of each item
- */
-export function estimateSize() {
-  return 45;
-}
+// Used with Downshift to get the height of each item
+export const OPTION_HEIGHT = 45;
+const POPOVER_MAX_HEIGHT = OPTION_HEIGHT * 8.5;
+
+// Clearance around the popover to prevent it from being too close to the edge of the viewport
+const POPOVER_PADDING = 16;
 
 export const useComboboxFloat = (
   items: Array<ComboboxOption<string | number>>,
@@ -23,7 +23,7 @@ export const useComboboxFloat = (
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
-  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+  const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
@@ -35,8 +35,14 @@ export const useComboboxFloat = (
       boundary: document.body,
     }),
     size({
-      apply({ availableWidth }) {
-        setPopoverMaxWidth(availableWidth);
+      apply({ availableWidth, availableHeight }) {
+        const preferredMaxWidth = availableWidth - POPOVER_PADDING;
+        const preferredMaxHeight = availableHeight - POPOVER_PADDING;
+
+        const width = Math.max(preferredMaxWidth, 0);
+        const height = Math.min(Math.max(preferredMaxHeight, OPTION_HEIGHT), POPOVER_MAX_HEIGHT);
+
+        setPopoverMaxSize({ width, height });
       },
     }),
   ];
@@ -67,8 +73,10 @@ export const useComboboxFloat = (
   const floatStyles = {
     ...floatingStyles,
     width: longestItemWidth,
-    maxWidth: popoverMaxWidth,
+    maxWidth: popoverMaxSize?.width,
     minWidth: inputRef.current?.offsetWidth,
+
+    maxHeight: popoverMaxSize?.height,
   };
 
   return { inputRef, floatingRef, floatStyles };

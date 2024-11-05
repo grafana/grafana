@@ -65,6 +65,24 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 				zanzanaCollector(client, []string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
 				client,
 			),
+			newResourceReconciler(
+				"folder tree",
+				folderTreeCollector2(store),
+				zanzanaCollector(client, []string{zanzana.RelationParent}),
+				client,
+			),
+			newResourceReconciler(
+				"managed folder permissions",
+				managedPermissionsCollector2(store, zanzana.KindFolders),
+				zanzanaCollector(client, zanzana.Folder2Relations),
+				client,
+			),
+			newResourceReconciler(
+				"managed dashboard permissions",
+				managedPermissionsCollector2(store, zanzana.KindDashboards),
+				zanzanaCollector(client, zanzana.ResourceRelations),
+				client,
+			),
 		},
 	}
 }
@@ -136,7 +154,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
-	// in tests we can skip creating a lock
 	if r.lock == nil {
 		run(ctx)
 		return
