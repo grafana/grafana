@@ -71,7 +71,7 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const isFiringState = state !== PromAlertingRuleState.Firing;
+  const isNotFiringState = state !== PromAlertingRuleState.Firing;
   const hasRulesMatchingState = rules.length > 0;
 
   return (
@@ -82,7 +82,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
           <Counter value={rules.length} />
         </Stack>
       }
-      collapsed={isFiringState || hasRulesMatchingState}
+      collapsed={isNotFiringState || hasRulesMatchingState}
       pagination={
         <Pagination
           currentPage={page}
