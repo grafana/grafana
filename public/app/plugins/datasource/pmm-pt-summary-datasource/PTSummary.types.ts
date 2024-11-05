@@ -14,10 +14,16 @@ export interface DatabaseSummaryRequest {
   };
 }
 
-export interface PTSummaryResponse {
+export interface PTSummaryResult {
   action_id: string;
   pmm_agent_id: string;
 }
+
+export type PTSummaryResponse = {
+  pt_mongodb_summary?: PTSummaryResult;
+  pt_mysql_summary?: PTSummaryResult;
+  pt_postgres_summary?: PTSummaryResult;
+};
 
 export enum DatasourceType {
   postgresql = 'postgresql',
