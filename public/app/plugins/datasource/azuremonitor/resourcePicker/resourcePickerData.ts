@@ -31,7 +31,10 @@ const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).j
 
 export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
-export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
+export default class ResourcePickerData extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData
+> {
   private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;

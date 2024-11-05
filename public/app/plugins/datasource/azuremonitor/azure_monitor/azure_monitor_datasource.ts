@@ -39,7 +39,10 @@ function hasValue(item?: string) {
   return !!(item && item !== defaultDropdownValue);
 }
 
-export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureMonitorQuery, AzureMonitorDataSourceJsonData> {
+export default class AzureMonitorDatasource extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData
+> {
   private readonly credentials: AzureCredentials;
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';

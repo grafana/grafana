@@ -17,7 +17,10 @@ import { routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
-export type Props = DataSourcePluginOptionsEditorProps<AzureMonitorDataSourceJsonData, AzureMonitorDataSourceSecureJsonData>;
+export type Props = DataSourcePluginOptionsEditorProps<
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData
+>;
 
 interface ErrorMessage {
   title: string;
@@ -43,7 +46,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
   }
 
-  private updateOptions = (optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings): void => {
+  private updateOptions = (
+    optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings
+  ): void => {
     const updated = optionsFunc(this.props.options);
     this.props.onOptionsChange(updated);
 

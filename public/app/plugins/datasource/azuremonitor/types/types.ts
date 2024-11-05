@@ -1,20 +1,17 @@
 import { ScalarParameter, TabularParameter, Function, EntityGroup } from '@kusto/monaco-kusto';
 
 import { AzureDataSourceSecureJsonData, AzureDataSourceJsonData } from '@grafana/azure-sdk';
-import {
-  DataSourceInstanceSettings,
-  DataSourceSettings,
-  PanelData,
-  SelectableValue,
-  TimeRange,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceSettings, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 
 import Datasource from '../datasource';
 
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
-export type AzureMonitorDataSourceSettings = DataSourceSettings<AzureMonitorDataSourceJsonData, AzureMonitorDataSourceSecureJsonData>;
+export type AzureMonitorDataSourceSettings = DataSourceSettings<
+  AzureMonitorDataSourceJsonData,
+  AzureMonitorDataSourceSecureJsonData
+>;
 export type AzureMonitorDataSourceInstanceSettings = DataSourceInstanceSettings<AzureMonitorDataSourceJsonData>;
 
 export interface DatasourceValidationResult {
