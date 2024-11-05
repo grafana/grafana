@@ -24,13 +24,8 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
-  const layoutElement = panel.parent!;
-  const layoutElementState = layoutElement.useState();
 
-  const panelFrameOptions = useMemo(
-    () => getPanelFrameCategory2(panel, layoutElementState),
-    [panel, layoutElementState]
-  );
+  const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();

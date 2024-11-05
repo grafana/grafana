@@ -14,7 +14,7 @@ import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
 import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 

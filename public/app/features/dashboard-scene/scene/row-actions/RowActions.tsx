@@ -15,9 +15,9 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';

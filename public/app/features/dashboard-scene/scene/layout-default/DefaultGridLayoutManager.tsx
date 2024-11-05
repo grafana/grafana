@@ -22,11 +22,12 @@ import {
   getVizPanelKeyForPanelId,
   getDefaultVizPanel,
 } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
+
+import { DashboardGridItem } from './DashboardGridItem';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;

@@ -18,8 +18,8 @@ import {
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {

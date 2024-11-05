@@ -23,10 +23,9 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
-
-import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
-import { DashboardRepeatsProcessedEvent } from './types';
+import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
+import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
+import { DashboardRepeatsProcessedEvent } from '../types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;

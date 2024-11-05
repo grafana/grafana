@@ -60,7 +60,6 @@ import {
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -68,6 +67,7 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
 

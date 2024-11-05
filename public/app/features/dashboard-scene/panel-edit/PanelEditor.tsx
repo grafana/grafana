@@ -21,7 +21,7 @@ import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
-import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGridItem';
+import { DashboardGridItem, DashboardGridItemState } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
