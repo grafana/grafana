@@ -182,6 +182,7 @@ export const Combobox = <T extends string | number>({
 
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
+      console.time('filter');
       const customValueOption =
         createCustomValue &&
         inputValue &&
@@ -206,6 +207,7 @@ export const Combobox = <T extends string | number>({
       const filteredItems = options.filter(itemFilter(inputValue));
 
       setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
+      console.timeEnd('filter');
     },
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
