@@ -42,16 +42,8 @@ func schema_pkg_apis_userstorage_v0alpha1_Spec(ref common.ReferenceCallback) com
 							},
 						},
 					},
-					"userUID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "User UID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"serviceMap", "userUID"},
+				Required: []string{"serviceMap"},
 			},
 		},
 	}

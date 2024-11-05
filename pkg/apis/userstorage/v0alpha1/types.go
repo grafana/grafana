@@ -15,9 +15,6 @@ type UserStorage struct {
 type Spec struct {
 	// Map of service and JSON data
 	ServiceMap map[string]string `json:"serviceMap"`
-
-	// User UID
-	UserUID string `json:"userUID"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
