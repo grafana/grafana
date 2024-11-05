@@ -31,16 +31,16 @@ type IndexResults struct {
 }
 
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
-	ir.Uid = hit.Fields["Uid"].(string)
-	ir.Kind = hit.Fields["Kind"].(string)
-	ir.Name = hit.Fields["Name"].(string)
-	ir.Namespace = hit.Fields["Namespace"].(string)
-	ir.Group = hit.Fields["Group"].(string)
-	ir.CreatedAt = hit.Fields["CreatedAt"].(string)
-	ir.CreatedBy = hit.Fields["CreatedBy"].(string)
-	ir.UpdatedAt = hit.Fields["UpdatedAt"].(string)
-	ir.UpdatedBy = hit.Fields["UpdatedBy"].(string)
-	ir.Title = hit.Fields["Title"].(string)
+	ir.Uid = fieldValue("Uid", hit)
+	ir.Kind = fieldValue("Kind", hit)
+	ir.Name = fieldValue("Name", hit)
+	ir.Namespace = fieldValue("Namespace", hit)
+	ir.Group = fieldValue("Group", hit)
+	ir.CreatedAt = fieldValue("CreatedAt", hit)
+	ir.CreatedBy = fieldValue("CreatedBy", hit)
+	ir.UpdatedAt = fieldValue("UpdatedAt", hit)
+	ir.UpdatedBy = fieldValue("UpdatedBy", hit)
+	ir.Title = fieldValue("Title", hit)
 
 	// add indexed spec fields to search results
 	specResult := map[string]any{}
@@ -53,6 +53,13 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 	}
 
 	return ir
+}
+
+func fieldValue(field string, hit *search.DocumentMatch) string {
+	if val, ok := hit.Fields[field]; ok {
+		return val.(string)
+	}
+	return ""
 }
 
 // NewIndexedResource creates a new IndexedResource from a raw resource.
