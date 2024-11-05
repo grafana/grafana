@@ -7,4 +7,6 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "02:00"
+      timezone: UTC
