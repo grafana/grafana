@@ -53,14 +53,13 @@ func (r *APIGroupRunner) Init(ctx context.Context) error {
 	if restConfig == nil {
 		return fmt.Errorf("rest config is nil")
 	}
-	for i, g := range r.groups {
-		customCfg := g.builders[0].config.CustomConfig
+	for i := range r.groups {
 		appConfig := app.Config{
 			KubeConfig:     *restConfig,
-			ManifestData:   *g.provider.Manifest().ManifestData,
-			SpecificConfig: customCfg,
+			ManifestData:   *r.groups[i].provider.Manifest().ManifestData,
+			SpecificConfig: r.groups[i].customConfig,
 		}
-		app, err := g.provider.NewApp(appConfig)
+		app, err := r.groups[i].provider.NewApp(appConfig)
 		if err != nil {
 			return err
 		}
@@ -78,9 +77,10 @@ func (r *APIGroupRunner) GetBuilders() []AppBuilder {
 }
 
 type appBuilderGroup struct {
-	builders []AppBuilder
-	provider app.Provider
-	app      app.App
+	builders     []AppBuilder
+	provider     app.Provider
+	app          app.App
+	customConfig any
 }
 
 func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGroup, error) {
@@ -105,19 +105,22 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 			gv: kinds,
 		}
 		confCopy.groupVersion = gv
+		if confCopy.CustomConfig == nil {
+			group.customConfig = confCopy.CustomConfig
+		}
 		b, err := NewAppBuilder(confCopy)
 		if err != nil {
 			return group, err
 		}
 		group.builders = append(group.builders, b)
-		cfg.APIRegistrar.RegisterAPI(&b)
+		cfg.APIRegistrar.RegisterAPI(b)
 	}
 	return group, nil
 }
 
 func (g *appBuilderGroup) setApp(app app.App) {
 	g.app = app
-	for i := range g.builders {
-		g.builders[i].setApp(app)
+	for _, b := range g.builders {
+		b.SetApp(app)
 	}
 }
