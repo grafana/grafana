@@ -70,12 +70,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     const exportable = isSharingExternally
       ? await this._exporter.makeExportable(
-          new DashboardModel(saveModel, undefined, {
-            getVariablesFromState: () => {
-              return getVariablesCompatibility(window.__grafanaSceneContext);
-            },
-          })
-        )
+        new DashboardModel(saveModel, undefined, {
+          getVariablesFromState: () => {
+            return getVariablesCompatibility(window.__grafanaSceneContext);
+          },
+        })
+      )
       : saveModel;
 
     return exportable;
@@ -135,6 +135,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
   const dashboardJsonSchemaV2 = useAsync(async () => {
     if (isViewingJSONSchemaV2) {
       const json = await model.getExportableDashboardJsonSchemaV2();
+      console.log('json v2', json);
       return JSON.stringify(json, null, 2);
     }
     return '';

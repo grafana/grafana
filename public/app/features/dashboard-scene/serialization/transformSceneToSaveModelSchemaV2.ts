@@ -1,14 +1,23 @@
 import { behaviors, VizPanel } from '@grafana/scenes';
-import { DashboardCursorSync } from '@grafana/schema';
-import { GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
+import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
 import {
   DashboardV2,
   defaultDashboardSpec,
+  defaultFieldConfigSource,
+  PanelKind,
+  PanelQueryKind,
+  TransformationKind,
+  FieldConfigSource,
+  DashboardLink,
+  DashboardCursorSync,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getQueryRunnerFor } from '../utils/utils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -58,9 +67,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       // EOF variables
 
       // elements
-      elements: {
-        //FIXME
-      },
+      elements: getElements(oldDash),
       // EOF elements
 
       // annotations
@@ -81,8 +88,8 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
   if (isDashboardSchemaV2(dashboardSchemaV2)) {
     return dashboardSchemaV2;
   }
-
-  throw new Error('Invalid dashboard schema version 2');
+  console.error('Error transforming dashboard to schema v2');
+  throw new Error('Error transforming dashboard to schema v2');
 }
 
 function getCursorSync(state: DashboardSceneState) {
@@ -172,6 +179,117 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
   }
 
   return elementGridItem;
+}
+
+function getElements(state: DashboardSceneState) {
+  const panels = state.body.getVizPanels() ?? [];
+  const panelsArray = panels.reduce((acc: PanelKind[], vizPanel: VizPanel) => {
+    const elementSpec: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        uid: vizPanel.state.key ?? '', // FIXME: why is key optional?
+        title: vizPanel.state.title,
+        description: vizPanel.state.description ?? '',
+        links: getPanelLinks(vizPanel),
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            queries: getVizPanelQueries(vizPanel),
+            transformations: getVizPanelTransformations(vizPanel),
+            queryOptions: getVizPanelQueryOptions(vizPanel),
+          }
+        },
+        vizConfig: {
+          kind: vizPanel.state.pluginId,
+          spec: {
+            pluginVersion: vizPanel.state.pluginVersion ?? '',
+            options: vizPanel.state.options,
+            fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
+          }
+        }
+      },
+    }
+    acc.push(elementSpec);
+    return acc;
+  }, []);
+  // create elements
+
+  const elements = createElements(panelsArray);
+  return elements;
+}
+
+function getPanelLinks(panel: VizPanel): DashboardLink[] {
+  const vizLinks = dashboardSceneGraph.getPanelLinks(panel);
+  if (vizLinks) {
+    return (vizLinks.state.rawLinks as DashboardLink[]) ?? [];
+  }
+  return [];
+}
+
+function getVizPanelQueries(panel: VizPanel): PanelQueryKind[] {
+  const queries: PanelQueryKind[] = [];
+  //FIXME: Mocking the queries
+  const query = {
+    kind: 'PanelQuery',
+    spec: {},
+  } as PanelQueryKind;
+  queries.push(query);
+  return queries;
+}
+
+function getVizPanelTransformations(panel: VizPanel): TransformationKind[] {
+  // FIXME: Mocking the transformations
+  return [{
+    kind: 'Transformation',
+    spec: {
+      id: 'test',
+      disabled: false,
+      filter: {
+        id: 'test',
+        options: {},
+      },
+      topic: 'series',
+      options: {},
+    },
+  }];
+}
+
+function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
+  let queryOptions: QueryOptionsSpec = {};
+  const queryRunner = getQueryRunnerFor(vizPanel);
+
+  if (queryRunner) {
+    queryOptions.maxDataPoints = queryRunner.state.maxDataPoints;
+
+    if (queryRunner.state.cacheTimeout) {
+      queryOptions.cacheTimeout = queryRunner.state.cacheTimeout;
+    }
+
+    if (queryRunner.state.queryCachingTTL) {
+      queryOptions.queryCachingTTL = queryRunner.state.queryCachingTTL;
+    }
+    if (queryRunner.state.minInterval) {
+      queryOptions.interval = queryRunner.state.minInterval;
+    }
+  }
+
+  const panelTime = vizPanel.state.$timeRange;
+
+  if (panelTime instanceof PanelTimeRange) {
+    queryOptions.timeFrom = panelTime.state.timeFrom;
+    queryOptions.timeShift = panelTime.state.timeShift;
+  }
+  return queryOptions;
+}
+
+function createElements(
+  panels: PanelKind[]
+): Record<string, PanelKind> {
+  return panels.reduce((acc, panel) => {
+    const key = panel.spec.uid;
+    acc[key] = panel;
+    return acc;
+  }, {} as Record<string, PanelKind>);
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2

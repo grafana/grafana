@@ -107,7 +107,7 @@ export interface DashboardLink {
 
 export const defaultDashboardLink = (): DashboardLink => ({
   title: "",
-  type: DashboardLinkType.Link,
+  type: defaultDashboardLinkType(),// FIX in CUE PR, for now hardcoding the correct type
   icon: "",
   tooltip: "",
   tags: [],

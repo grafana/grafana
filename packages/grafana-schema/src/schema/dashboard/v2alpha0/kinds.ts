@@ -6,7 +6,7 @@ import {
   FieldConfigSource,
 } from '../../../index.gen';
 
-import { Kind, Reference } from './common';
+import { Kind } from './common';
 
 export interface VizConfigSpec {
   pluginVersion: string;
@@ -75,7 +75,7 @@ type PanelQueryKind = Kind<'PanelQuery', PanelQuerySpec>;
  * {
  *  kind: 'limitTransformation',
  *  spec: {
- 
+
  *   ...
  *  }
  */
@@ -90,10 +90,10 @@ export interface QueryGroupSpec {
 export type QueryGroupKind = Kind<'QueryGroup', QueryGroupSpec>;
 
 // TODO: Provide precise specs for each individual variable types
-export interface QueryVariableSpec {}
+export interface QueryVariableSpec { }
 export type QueryVariableKind = Kind<'QueryVariable', QueryVariableSpec>;
 
-export interface TextVariableSpec {}
+export interface TextVariableSpec { }
 export type TextVariableKind = Kind<'TextVariable', TextVariableSpec>;
 
 // Encapsulates time settings for a dashboard
