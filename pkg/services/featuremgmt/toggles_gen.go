@@ -583,6 +583,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
+	// FlagLogQLScope
+	// In-development feature that will allow injection of labels into loki queries.
+	FlagLogQLScope = "logQLScope"
+
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
 	FlagSqlExpressions = "sqlExpressions"
