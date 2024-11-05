@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	golog "log"
 	"path/filepath"
 	"sync"
@@ -141,12 +140,12 @@ func (i *Index) Init(ctx context.Context) error {
 	group.SetLimit(i.opts.Workers)
 
 	totalObjects := 0
-	// TODO get all tenants
-	// hacking this for now
-	for k := 1; k <= 1000; k++ {
+	// Get all tenants currently in Unified Storage
+	tenants, err := i.s.backend.Namespaces(ctx)
+	for _, tenant := range tenants {
 		group.Go(func() error {
-			logger.Info("initializing index for tenant", "tenant", fmt.Sprintf("stacks-%d", k))
-			objs, err := i.InitForTenant(ctx, fmt.Sprintf("stacks-%d", k))
+			logger.Info("initializing index for tenant", "tenant", tenant)
+			objs, err := i.InitForTenant(ctx, tenant)
 			if err != nil {
 				return err
 			}
@@ -155,7 +154,7 @@ func (i *Index) Init(ctx context.Context) error {
 		})
 	}
 
-	err := group.Wait()
+	err = group.Wait()
 	if err != nil {
 		return err
 	}
@@ -258,7 +257,7 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	// if tenant doesn't exist, they may have been created during initial indexing
 	_, ok := i.shards[tenant]
 	if !ok {
-		i.log.Info("tenant not found, initializing", "tenant", tenant)
+		i.log.Info("tenant not found, initializing their index", "tenant", tenant)
 		_, err = i.InitForTenant(ctx, tenant)
 		if err != nil {
 			return err
