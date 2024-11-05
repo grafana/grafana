@@ -1,5 +1,6 @@
 import { isArray, pick, reduce } from 'lodash';
 
+import { parseFlags } from '@grafana/data';
 import {
   AlertmanagerGroup,
   MatcherOperator,
@@ -236,11 +237,13 @@ const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
   // so we should also anchor our UI matches for consistency with this behaviour
   // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
   [MatcherOperator.regex]: (lv, mv) => {
-    const re = new RegExp(`^(?:${mv})$`);
+    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
+    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
     return re.test(lv);
   },
   [MatcherOperator.notRegex]: (lv, mv) => {
-    const re = new RegExp(`^(?:${mv})$`);
+    const valueWithFlagsParsed = parseFlags(`^(?:${mv})$`);
+    const re = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags);
     return !re.test(lv);
   },
 };

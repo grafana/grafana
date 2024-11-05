@@ -1,6 +1,6 @@
 import { isEqual, uniqWith } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { parseFlags, SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
   Matcher,
@@ -135,11 +135,18 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
       if (!isEqual && !isRegex) {
         valueMatches = value !== labelValue;
       }
-      if (isEqual && isRegex) {
-        valueMatches = new RegExp(value).test(labelValue);
-      }
-      if (!isEqual && isRegex) {
-        valueMatches = !new RegExp(value).test(labelValue);
+      if (isRegex) {
+        const valueWithFlagsParsed = parseFlags(value);
+        try {
+          valueMatches = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags).test(labelValue);
+        } catch (e) {
+          valueMatches = false;
+        }
+        if (isEqual) {
+          return valueMatches;
+        } else {
+          return !valueMatches;
+        }
       }
 
       return nameMatches && valueMatches;
