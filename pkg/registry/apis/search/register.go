@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -104,9 +105,11 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 						offset, _ = strconv.Atoi(queryParams.Get("offset"))
 					}
 
+					kind := queryParams.Get("kind")
+					kinds := strings.Split(kind, ",")
 					searchRequest := &resource.SearchRequest{
 						Tenant:    tenant,
-						Kind:      queryParams.Get("kind"),
+						Kind:      kinds,
 						QueryType: queryParams.Get("queryType"),
 						Query:     queryParams.Get("query"),
 						Limit:     int64(limit),
