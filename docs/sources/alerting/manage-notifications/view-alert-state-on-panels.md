@@ -25,16 +25,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
-  link-alert-rules-to-dashboards:
+  link-alert-rules-to-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-dashboards/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
 ---
 
 # View alert state on panels
 
-When an [alert rule is linked to a time series panel](ref:link-alert-rules-to-dashboards), the time series panel displays the alert state and alert events.
+When an [alert rule is linked to a time series panel](ref:link-alert-rules-to-panels), the time series panel displays the alert state and alert events.
 
 A heart icon near the panel title shows the current alert state:
 

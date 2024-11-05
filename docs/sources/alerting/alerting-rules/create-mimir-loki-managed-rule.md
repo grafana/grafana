@@ -29,11 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
-  link-alert-rules-to-dashboards:
+  link-alert-rules-to-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-dashboards/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-dashboards/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
 ---
 
 # Configure data source-managed alert rules
@@ -139,6 +139,6 @@ Annotations add metadata to provide more information on the alert in your alert 
 1. Optional: Add a custom annotation
 1. Optional: **Link dashboard and panel**.
 
-   [Link the alert rule to a panel](ref:link-alert-rules-to-dashboards) to facilitate alert investigation.
+   [Link the alert rule to a panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
 
 1. Click **Save rule**.

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../alerting/alerting-rules/create-alerts-panels/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-alerts-panels/
-canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/link-alert-rules-to-dashboards/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/link-alert-rules-to-panels/
 description: Grafana allows you to link alert rules with panels and dashboards. This helps connect alerts with an existing dashboard and informs alert responders on where to investigate.
 keywords:
   - grafana
