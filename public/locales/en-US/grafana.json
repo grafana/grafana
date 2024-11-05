@@ -448,6 +448,9 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": "An error occurred while loading options."
+    },
     "clear": {
       "title": "Clear value"
     },
@@ -1046,7 +1049,8 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
-      "noMatchingValue": "No values found matching; {{filter}}"
+      "noMatchingValue": "No values found matching; {{filter}}",
+      "sortBy": "Sort by"
     },
     "viewBy": "View by"
   },

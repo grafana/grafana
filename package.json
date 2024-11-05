@@ -246,6 +246,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
+    "@bsull/augurs": "0.4.2",
     "@emotion/css": "11.13.4",
     "@emotion/react": "11.13.3",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
@@ -268,8 +269,8 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "5.20.4",
-    "@grafana/scenes-react": "5.20.4",
+    "@grafana/scenes": "5.22.1",
+    "@grafana/scenes-react": "5.22.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
