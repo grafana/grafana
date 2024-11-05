@@ -1052,6 +1052,13 @@
       "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ; {{filter}}",
       "sortBy": "Ŝőřŧ þy"
     },
+    "related-logs": {
+      "docsLink": "Ŀőĸį Ŗęčőřđįŉģ Ŗūľę",
+      "openExploreLogs": "Øpęŉ Ēχpľőřę Ŀőģş",
+      "relatedLogsUnavailableAfterDocsLink": ", őř čĥęčĸ þäčĸ ľäŧęř äş ŵę ęχpäŉđ ŧĥę väřįőūş męŧĥőđş ƒőř ęşŧäþľįşĥįŉģ čőŉŉęčŧįőŉş þęŧŵęęŉ męŧřįčş äŉđ ľőģş.",
+      "relatedLogsUnavailableBeforeDocsLink": "Ŗęľäŧęđ ľőģş äřę ŉőŧ äväįľäþľę ƒőř ŧĥįş męŧřįč. Ŧřy şęľęčŧįŉģ ä męŧřįč čřęäŧęđ þy ä ",
+      "warnExperimentalFeature": "Ŗęľäŧęđ ľőģş įş äŉ ęχpęřįmęŉŧäľ ƒęäŧūřę."
+    },
     "viewBy": "Vįęŵ þy"
   },
   "export": {
