@@ -1665,16 +1665,14 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
-| ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
-| disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
-| name                                 | string                  | `string` |          |         | Name is used as grouping key in the UI. Contact points with the   |
-| same name will be grouped in the UI. | `webhook_1`             |
-| provenance                           | string                  | `string` |          |         |                                                                   |           |
-| settings                             | [JSON](#json)           | `JSON`   |    ✓     |         |                                                                   |           |
-| type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
-| uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
-| set by the user.                     | `my_external_reference` |
+| Name                  | Type          | Go type  | Required | Default | Description                                                                                          | Example                 |
+| --------------------- | ------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------------------------- | ----------------------- |
+| disableResolveMessage | boolean       | `bool`   |          |         |                                                                                                      | `false`                 |
+| name                  | string        | `string` |          |         | Name is used as grouping key in the UI. Contact points with the same name will be grouped in the UI. | `webhook_1`             |
+| provenance            | string        | `string` |          |         |                                                                                                      |                         |
+| settings              | [JSON](#json) | `JSON`   |    ✓     |         |                                                                                                      |                         |
+| type                  | string        | `string` |    ✓     |         |                                                                                                      | `webhook`               |
+| uid                   | string        | `string` |          |         | UID is the unique identifier of the contact point. The UID can be set by the user.                   | `my_external_reference` |
 
 {{% /responsive-table %}}
 
