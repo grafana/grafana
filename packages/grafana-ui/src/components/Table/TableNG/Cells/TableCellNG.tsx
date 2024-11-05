@@ -12,7 +12,7 @@ import { SparklineCell } from './SparklineCell';
 // }
 
 export function TableCellNG(props: any) {
-  const { field: shallowField, value, theme, timeRange, height } = props;
+  const { field: shallowField, value, theme, timeRange, height, justifyContent } = props;
   const { config: fieldConfig } = shallowField;
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
@@ -31,7 +31,7 @@ export function TableCellNG(props: any) {
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = <AutoCell value={value} field={shallowField} theme={theme} />;
+      cell = <AutoCell value={value} field={shallowField} theme={theme} justifyContent={justifyContent} />;
   }
 
   return cell;

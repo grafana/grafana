@@ -1,20 +1,21 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { getFooterValue } from '../TableRT/FooterRow'; // TODO pull this out of TableRT, not dependent on react-table
 import { FooterItem, TableNGProps } from '../types';
-import { getCellColors, getFooterItems } from '../utils';
+import { getCellColors, getTextAlign, getFooterItems } from '../utils';
 
+import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -33,16 +34,24 @@ interface TableColumn extends Column<TableRow> {
   field: Omit<Field, 'values'>;
 }
 
-interface TableHeaderProps {
+interface HeaderCellProps {
   column: Column<any>;
   onSort: (columnKey: string, direction: SortDirection) => void;
   direction: SortDirection | undefined;
+  justifyContent?: Property.JustifyContent;
 }
 
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const [revId, setRevId] = useState(0);
@@ -94,13 +103,13 @@ export function TableNG(props: TableNGProps) {
   }
   const rowHeightNumber = rowHeight();
 
-  const TableHeader: React.FC<TableHeaderProps> = ({ column, onSort, direction }) => {
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
     };
 
     return (
-      <div>
+      <div style={{ display: 'flex', justifyContent }}>
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
@@ -150,6 +159,8 @@ export function TableNG(props: TableNGProps) {
       const key = `${field.name}-${revId}`;
       const { values: _, ...shallowField } = field;
 
+      const justifyColumnContent = getTextAlign(field);
+
       // Add a column for each field
       columns.push({
         key,
@@ -181,16 +192,22 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={rowHeight}
+              justifyContent={justifyColumnContent}
             />
           );
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            return <>{getFooterValue(fieldIndex, footerItems)}</>;
+            return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
-          <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
+          <HeaderCell
+            column={column}
+            onSort={handleSort}
+            direction={sortDirection}
+            justifyContent={justifyColumnContent}
+          />
         ),
         width: columnWidth,
         minWidth: columnMinWidth,
