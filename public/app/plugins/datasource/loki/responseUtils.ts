@@ -135,7 +135,7 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 export function isRetriableError(errorResponse: DataQueryResponse) {
   const message = errorResponse.errors
     ? (errorResponse.errors[0].message ?? '').toLowerCase()
-    : errorResponse.error?.message ?? '';
+    : (errorResponse.error?.message ?? '');
   if (message.includes('timeout')) {
     return true;
   } else if (
