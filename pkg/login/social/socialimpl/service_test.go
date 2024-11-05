@@ -265,7 +265,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 		AutoLogin:               true,
 		ClientId:                "test_client_id",
 		ClientSecret:            "test_client_secret",
-		ClientSecretJWT:         "client_secret_jwt",
+		ClientSecretJWT:         "test_client_secret_jwt",
 		Scopes:                  []string{"openid", "profile", "email"},
 		EmptyScopes:             false,
 		EmailAttributeName:      "email:primary",
