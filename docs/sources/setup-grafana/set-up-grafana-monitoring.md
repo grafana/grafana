@@ -85,7 +85,7 @@ These instructions assume you have already added Prometheus as a data source in 
 1. Under your connections, click **Data Sources**.
 1. Select the **Prometheus** data source.
 1. Under the name of your data source, click **Dashboards**.
-1. On the Dashboards tab, **Import** the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
+1. On the Dashboards tab, click **Import** in the _Grafana metrics_ row to import the Grafana metrics dashboard. All scraped Grafana metrics are available in the dashboard.
 
 ### View Grafana metrics in Graphite
 
