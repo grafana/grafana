@@ -5,86 +5,21 @@ updates:
     schedule:
       interval: "daily"
   - package-ecosystem: "gomod"
-    directory: "/"
+    directories:
+      - "/"
+      - "/apps/playlist"
+      - "/pkg/aggregator"
+      - "/pkg/apimachinery"
+      - "/pkg/apiserver"
+      - "/pkg/build"
+      - "/pkg/build/wire"
+      - "/pkg/promlib"
+      - "/pkg/semconv"
+      - "/pkg/storage/unified/apistore"
+      - "/pkg/storage/unified/resource"
+      - "/pkg/util/xorm"
     schedule:
       interval: "daily"
       time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/apps/playlist"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/aggregator"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/apimachinery"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/apiserver"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/build"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/build/wire"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/promlib"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/semconv"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/storage/unified/apistore"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/storage/unified/resource"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
-    open-pull-requests-limit: 10
-  - package-ecosystem: "gomod"
-    directory: "/pkg/util/xorm"
-    schedule:
-      interval: "daily"
-      time: "02:00"
-      timezone: UTC
+      timezone: Etc/UTC
     open-pull-requests-limit: 10
