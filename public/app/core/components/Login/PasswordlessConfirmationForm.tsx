@@ -97,7 +97,7 @@ export const PasswordlessConfirmation = ({ onSubmit, isLoggingIn }: Props) => {
                 id={nameId}
                 autoFocus
                 autoCapitalize="none"
-                placeholder={t('login.form.confirmation-code-placeholder', 'name')}
+                placeholder={t('login.form.name-placeholder', 'name')}
                 data-testid={selectors.pages.PasswordlessLogin.email}
               />
             </Field>
