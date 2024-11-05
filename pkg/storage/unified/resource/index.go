@@ -167,16 +167,17 @@ func (i *Index) Init(ctx context.Context) error {
 		return err
 	}
 
-	span.AddEvent("indexing finished", trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjects))))
 	end := time.Now().Unix()
-	logger.Info("Initial indexing finished", "seconds", float64(end-start))
+	totalDocCount := getTotalDocCount(i)
+	logger.Info("Initial indexing finished", "seconds", float64(end-start), "objs_fetched", totalObjects, "objs_indexed", totalDocCount)
+	span.AddEvent(
+		"indexing finished",
+		trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalDocCount))),
+		trace.WithAttributes(attribute.Int64("objects_fetched", int64(totalObjects))),
+	)
 	if IndexServerMetrics != nil {
 		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
 	}
-
-	totalDocCount := getTotalDocCount(i)
-	fmt.Println("************Total doc count: ", totalDocCount)
-	fmt.Println("************Total objs fetched: ", totalObjects)
 
 	return nil
 }
