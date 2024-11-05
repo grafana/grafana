@@ -12,10 +12,10 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { getFooterValue } from '../TableRT/FooterRow'; // TODO pull this out of TableRT, not dependent on react-table
 import { FooterItem, TableNGProps } from '../types';
 import { getCellColors, getTextAlign, getFooterItems } from '../utils';
 
+import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -191,7 +191,7 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            return <>{getFooterValue(fieldIndex, footerItems)}</>;
+            return <>{getFooterValue(fieldIndex, footerItems, false, justifyColumnContent)}</>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
