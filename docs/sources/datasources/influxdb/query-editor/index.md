@@ -2,13 +2,13 @@
 aliases:
   - ../../data-sources/influxdb/query-editor/
   - influxdb-flux/
-description: Guide for Flux in Grafana
+description: This topic describes te InfluxDB query editor, modes and querying the InfluxDB data source.
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Query Editor
+title: InfluxDB query Editor
 weight: 400
 refs:
   explore:
@@ -36,6 +36,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#query-editors
+  build-dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/      
 ---
 
 # InfluxDB query editor
