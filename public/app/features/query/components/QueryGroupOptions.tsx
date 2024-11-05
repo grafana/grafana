@@ -129,7 +129,7 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
   const onMinIntervalBlur = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const minInterval = emptyToUndefined(event.target.value);
+      const minInterval = emptyToNull(event.target.value);
       if (minInterval !== options.minInterval) {
         onChange({
           ...options,
@@ -377,10 +377,6 @@ QueryGroupOptionsEditor.displayName = 'QueryGroupOptionsEditor';
 
 function timeRangeValidation(value: string | null) {
   return !value || rangeUtil.isValidTimeSpan(value);
-}
-
-function emptyToUndefined(value: string) {
-  return value === '' ? undefined : value;
 }
 
 function emptyToNull(value: string) {
