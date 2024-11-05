@@ -273,6 +273,14 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
     );
   }, []);
 
+  const loadOptionsWithErrors = useCallback((inputValue: string) => {
+    if (inputValue.length % 2 === 0) {
+      return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+    } else {
+      throw new Error('Could not retrieve options');
+    }
+  }, []);
+
   return (
     <>
       <Field
@@ -309,6 +317,18 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         />
       </Field>
 
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+        />
+      </Field>
       <Field label="Compared to AsyncSelect">
         <AsyncSelect
           id="test-async-select"

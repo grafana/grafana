@@ -69,6 +69,9 @@ func UIDToIDHandler(saService ServiceAccountRetriever) func(ctx context.Context,
 			OrgID: orgID,
 			UID:   resourceID,
 		})
+		if err != nil {
+			return "", err
+		}
 		return strconv.FormatInt(serviceAccount.Id, 10), err
 	}
 }
