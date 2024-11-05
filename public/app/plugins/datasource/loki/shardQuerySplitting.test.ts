@@ -15,8 +15,9 @@ jest.mock('uuid', () => ({
 const originalLog = console.log;
 const originalWarn = console.warn;
 beforeEach(() => {
-  //jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterAll(() => {
   console.log = originalLog;
@@ -179,6 +180,16 @@ describe('runShardSplitQuery()', () => {
       // 1 shard + empty shard + 1 retry = 3
       expect(response).toHaveLength(3);
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Failed requests have loading state Error', async () => {
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'parse error' }, data: [] }));
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+      expect(response[0].state).toBe(LoadingState.Error);
     });
   });
 

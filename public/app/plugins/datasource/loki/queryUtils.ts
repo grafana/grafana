@@ -316,6 +316,7 @@ export function requestSupportsSplitting(allQueries: LokiQuery[]) {
 export function requestSupportsSharding(allQueries: LokiQuery[]) {
   const queries = allQueries
     .filter((query) => !query.hide)
+    .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
     .filter((query) => query.direction === LokiQueryDirection.Scan || !isLogsQuery(query.expr));
