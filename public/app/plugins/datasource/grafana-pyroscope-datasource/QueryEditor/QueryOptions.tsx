@@ -91,12 +91,17 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
           </EditorField>
           <EditorField
             label={'Limit'}
-            tooltip={<>Sets the maximum number of series to return. Does not apply to profile query.</>}
+            tooltip={
+              <>
+                When &quot;Group by&quot; is set, limits the maximum number of series to return. Does not apply to
+                profile query.
+              </>
+            }
           >
             <Input
               value={query.limit || ''}
               type="number"
-              placeholder="20"
+              placeholder="0"
               onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
                 let newValue = parseInt(event.currentTarget.value, 10);
                 newValue = isNaN(newValue) ? 0 : newValue;
