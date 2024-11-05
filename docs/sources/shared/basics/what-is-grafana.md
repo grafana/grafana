@@ -12,7 +12,7 @@ Grafana open source is open source visualization and analytics software. It allo
 
 ### Grafana Loki
 
-Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](https://grafana.com/docs/loki/<LOKI_VERSION>/).
+Grafana Loki is an open-source set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](https://grafana.com/docs/loki/<LOKI_VERSION>/).
 
 ### Grafana Tempo
 
@@ -24,7 +24,7 @@ Grafana Mimir is an open source software project that provides a scalable long-t
 
 ### Grafana Pyroscope
 
-Grafana Pyroscope is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that helps you understand your workload’s resources usage down. For more information, refer to [Grafana Pyroscope documentation](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/).
+Grafana Pyroscope is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that helps you understand your workload’s resources usage. For more information, refer to [Grafana Pyroscope documentation](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/).
 
 ### Grafana Oncall
 
