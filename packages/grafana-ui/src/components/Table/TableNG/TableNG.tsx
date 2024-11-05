@@ -5,7 +5,7 @@ import React, { useMemo, useState, useLayoutEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -45,6 +45,13 @@ export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const [revId, setRevId] = useState(0);
@@ -191,7 +198,7 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            return <>{getFooterValue(fieldIndex, footerItems, false, justifyColumnContent)}</>;
+            return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
