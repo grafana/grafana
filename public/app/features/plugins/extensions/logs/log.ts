@@ -18,13 +18,17 @@ const channelName = 'ui-extension-logs';
 
 export class ExtensionsLog {
   private baseLabels: Labels | undefined;
-  private subject: ReplaySubject<ExtensionsLogItem> | undefined;
+  private subject: ReplaySubject<ExtensionsLogItem>;
   private channel: BroadcastChannel;
 
   constructor(baseLabels?: Labels, subject?: ReplaySubject<ExtensionsLogItem>, channel?: BroadcastChannel) {
     this.baseLabels = baseLabels;
     this.channel = channel ?? new BroadcastChannel(channelName);
-    this.subject = subject;
+    this.subject = subject ?? new ReplaySubject<ExtensionsLogItem>(1000, 1000 * 60 * 10);
+
+    if (!channel) {
+      this.channel.onmessage = (msg: MessageEvent<ExtensionsLogItem>) => this.subject.next(msg.data);
+    }
   }
 
   info(message: string, labels?: Labels): void {
@@ -67,17 +71,13 @@ export class ExtensionsLog {
       extensionPointId: isString(extensionPointId) ? extensionPointId : undefined,
     };
 
+    // We only receive messages from different contexts so adding the ones
+    // pushed by this log to the local subject.
+    this.subject.next(item);
     this.channel.postMessage(item);
   }
 
   asObservable(): Observable<ExtensionsLogItem> {
-    if (!this.subject) {
-      // Lazily create the subject on first subscription to prevent
-      // to create buffers when no subscribers exists
-      this.subject = new ReplaySubject<ExtensionsLogItem>(1000, 1000 * 60 * 10);
-      this.channel.onmessage = (msg: MessageEvent<ExtensionsLogItem>) => this.subject?.next(msg.data);
-    }
-
     return this.subject.asObservable();
   }
 
