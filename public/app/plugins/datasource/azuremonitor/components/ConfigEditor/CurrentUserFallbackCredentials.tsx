@@ -1,10 +1,6 @@
 import { useMemo } from 'react';
 
-import {
-  AadCurrentUserCredentials,
-  AzureCredentials,
-  instanceOfAzureCredential,
-} from '@grafana/azure-sdk';
+import { AadCurrentUserCredentials, AzureCredentials, instanceOfAzureCredential } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
