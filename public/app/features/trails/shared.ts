@@ -1,4 +1,4 @@
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
@@ -72,4 +72,8 @@ export function getVariablesWithOtelJoinQueryConstant(otelJoinQuery: string) {
 
 export class MetricSelectedEvent extends BusEventWithPayload<string | undefined> {
   public static type = 'metric-selected-event';
+}
+
+export class RefreshMetricsEvent extends BusEventBase {
+  public static type = 'refresh-metrics-event';
 }

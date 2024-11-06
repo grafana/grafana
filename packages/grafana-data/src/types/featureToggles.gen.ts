@@ -199,6 +199,7 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   zanzana?: boolean;
   reloadDashboardsOnParamsChange?: boolean;
+  enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
