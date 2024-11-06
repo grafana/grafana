@@ -75,6 +75,9 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 				common.NewFolderResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
 				common.NewFolderTuple("user:6", "read", "1"),
 				common.NewNamespaceResourceTuple("user:7", "read", folderGroup, folderResource),
+				common.NewFolderParentTuple("5", "4"),
+				common.NewFolderParentTuple("6", "5"),
+				common.NewFolderResourceTuple("user:8", "read", dashboardGroup, dashboardResource, "5"),
 			},
 		},
 	})
