@@ -22,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
-	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -727,15 +725,6 @@ func TestGetPlugins(t *testing.T) {
 		pluginsIDs = append(pluginsIDs, plugin.ID)
 	}
 	require.ElementsMatch(t, pluginsIDs, expectedPluginIDs)
-}
-
-func ctxWithSignedInUser() context.Context {
-	c := &contextmodel.ReqContext{
-		SignedInUser: &user.SignedInUser{OrgID: 1},
-	}
-	k := ctxkey.Key{}
-	ctx := context.WithValue(context.Background(), k, c)
-	return ctx
 }
 
 func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Service {
