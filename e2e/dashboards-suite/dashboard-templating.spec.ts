@@ -9,6 +9,9 @@ describe('Dashboard templating', () => {
     // Open dashboard global variables and interpolation
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const example = `Example: from=now-6h&to=now&timezone=${encodeURIComponent(timeZone)}`;
+
     const items: string[] = [];
     const expectedItems: string[] = [
       '__dashboard = Templating - Global variables and interpolation',
@@ -36,7 +39,7 @@ describe('Dashboard templating', () => {
       `Server:text = All`,
       `Server:queryparam = var-Server=$__all`,
       `1 < 2`,
-      `Example: from=now-6h&to=now`,
+      example,
     ];
 
     cy.get('.markdown-html li')
@@ -51,10 +54,10 @@ describe('Dashboard templating', () => {
       });
 
     // Check link interpolation is working correctly
-    cy.contains('a', 'Example: from=now-6h&to=now').should(
+    cy.contains('a', example).should(
       'have.attr',
       'href',
-      'https://example.com/?from=now-6h&to=now'
+      `https://example.com/?from=now-6h&to=now&timezone=${encodeURIComponent(timeZone)}`
     );
   });
 });
