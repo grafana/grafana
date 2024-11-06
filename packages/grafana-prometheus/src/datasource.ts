@@ -892,8 +892,6 @@ export class PrometheusDatasource
       value: '$__interval_ms',
     };
 
-    // interpolate expression
-
     // We need a first replace to evaluate variables before applying adhoc filters
     // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
