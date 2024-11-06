@@ -196,10 +196,6 @@ func (r *rowsWrapper) ResourceVersion() int64 {
 	return r.row.RV
 }
 
-func (r *rowsWrapper) Folder() string {
-	return r.row.FolderUID
-}
-
 // Value implements resource.ListIterator.
 func (r *rowsWrapper) Value() []byte {
 	b, err := json.Marshal(r.row.Dash)
