@@ -60,7 +60,7 @@ export const RestoreModal = ({
             </Trans>
           </Text>
           <Space v={1} />
-          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} createFolder={true} />
+          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
         </>
       }
       confirmText={
