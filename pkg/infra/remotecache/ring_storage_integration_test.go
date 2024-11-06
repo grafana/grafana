@@ -30,9 +30,9 @@ func TestIntegrationRingCacheStorage(t *testing.T) {
 	}
 
 	cfg := &setting.Cfg{
-		RemoteCache:       opts,
-		GRPCServerAddress: "127.0.0.1:5092",
-		GRPCServerNetwork: "tcp",
+		RemoteCacheOptions: opts,
+		GRPCServerAddress:  "127.0.0.1:5092",
+		GRPCServerNetwork:  "tcp",
 	}
 
 	testTracer := tracing.InitializeTracerForTest()

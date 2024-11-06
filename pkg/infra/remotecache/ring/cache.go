@@ -34,7 +34,7 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		return nil, err
 	}
 
-	advertiseAddr := cfg.RemoteCache.Ring.Addr
+	advertiseAddr := cfg.RemoteCacheOptions.Ring.Addr
 	// fallback to grpc address
 	if advertiseAddr == "" {
 		advertiseAddr = grpcAddr
@@ -42,10 +42,10 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 
 	memberlistsvc, client, err := newMemberlistService(memberlistConfig{
 		AdvertiseAddr: advertiseAddr,
-		AdvertisePort: cfg.RemoteCache.Ring.Port,
+		AdvertisePort: cfg.RemoteCacheOptions.Ring.Port,
 		Addr:          grpcAddr,
-		Port:          cfg.RemoteCache.Ring.Port,
-		JoinMembers:   cfg.RemoteCache.Ring.JoinMembers,
+		Port:          cfg.RemoteCacheOptions.Ring.Port,
+		JoinMembers:   cfg.RemoteCacheOptions.Ring.JoinMembers,
 	}, logger, reg)
 
 	if err != nil {
@@ -58,8 +58,8 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 		ringConfig{
 			Addr:             advertiseAddr,
 			Port:             grpcPort,
-			HeartbeatPeriod:  cfg.RemoteCache.Ring.HeartbeatPeriod,
-			HeartbeatTimeout: cfg.RemoteCache.Ring.HeartbeatTimeout,
+			HeartbeatPeriod:  cfg.RemoteCacheOptions.Ring.HeartbeatPeriod,
+			HeartbeatTimeout: cfg.RemoteCacheOptions.Ring.HeartbeatTimeout,
 		},
 		logger,
 		client,
