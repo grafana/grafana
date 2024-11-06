@@ -1,6 +1,5 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { Chance } from 'chance';
 import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -12,8 +11,6 @@ import { Field } from '../Forms/Field';
 import { Select, AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
-
-const chance = new Chance();
 
 type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
 
@@ -76,8 +73,8 @@ export const Basic: Story = {};
 
 async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
-    label: chance.sentence({ words: index % 5 }),
-    value: chance.guid(),
+    label: 'Option ' + index,
+    value: index.toString(),
   }));
 }
 
