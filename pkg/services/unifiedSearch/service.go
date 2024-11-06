@@ -165,7 +165,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	// will use stack id for cloud and org id for on-prem
 	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
 
-	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From), Kind: qry.Kind}
+	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
 		s.logger.Error("Failed to search resources", "error", err)
@@ -246,4 +246,35 @@ func getDoc(data []byte) (*DashboardListDoc, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	return &resource.SearchRequest{
+		Tenant: tenant,
+		Query:  qry.Query,
+		Limit:  int64(qry.Limit),
+		Offset: int64(qry.From),
+		Kind:   qry.Kind,
+		SortBy: []string{sortField(qry.Sort)},
+	}
+}
+
+const (
+	SortSuffix = "_sort"
+	Descending = "-"
+)
+
+func sortField(sort string) string {
+	sf := strings.TrimSuffix(sort, SortSuffix)
+	if !strings.HasPrefix(sf, Descending) {
+		return dashboardListFieldMapping[sf]
+	}
+	sf = strings.TrimPrefix(sf, Descending)
+	sf = dashboardListFieldMapping[sf]
+	return Descending + sf
+}
+
+// mapping of dashboard list fields to search doc fields
+var dashboardListFieldMapping = map[string]string{
+	"name": "title",
 }

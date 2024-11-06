@@ -160,44 +160,7 @@ type SpecFieldMapping struct {
 // Right now we are hardcoding which spec fields to index for each kind
 // In the future, which fields to index will be defined on the resources themselves by their owners.
 func getSpecObjectMappings() map[string][]SpecFieldMapping {
-	mappings := map[string][]SpecFieldMapping{
-		"Playlist": {
-			{
-				Field: "interval",
-				Type:  "string",
-			},
-			{
-				Field: "title",
-				Type:  "string",
-			},
-		},
-		"Folder": {
-			{
-				Field: "title",
-				Type:  "string",
-			},
-			{
-				Field: "description",
-				Type:  "string",
-			},
-		},
-		"Dashboard": {
-			{
-				Field: "title",
-				Type:  "string",
-			},
-			{
-				Field: "description",
-				Type:  "string",
-			},
-			{
-				Field: "tags",
-				Type:  "string[]",
-			},
-		},
-	}
-
-	return mappings
+	return specMappings
 }
 
 // Generate the spec field mapping for a given kind
@@ -229,4 +192,59 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 	}
 
 	return specMapping
+}
+
+func IsSpecField(field string) bool {
+	field = strings.TrimPrefix(field, "-")
+	_, ok := specFields[field]
+	return ok
+}
+
+var specFields = mapSpecFields()
+
+func mapSpecFields() map[string]bool {
+	fields := map[string]bool{}
+	for _, mappings := range specMappings {
+		for _, m := range mappings {
+			fields[m.Field] = true
+		}
+	}
+	return fields
+}
+
+var specMappings = map[string][]SpecFieldMapping{
+	"Playlist": {
+		{
+			Field: "interval",
+			Type:  "string",
+		},
+		{
+			Field: "title",
+			Type:  "string",
+		},
+	},
+	"Folder": {
+		{
+			Field: "title",
+			Type:  "string",
+		},
+		{
+			Field: "description",
+			Type:  "string",
+		},
+	},
+	"Dashboard": {
+		{
+			Field: "title",
+			Type:  "string",
+		},
+		{
+			Field: "description",
+			Type:  "string",
+		},
+		{
+			Field: "tags",
+			Type:  "string[]",
+		},
+	},
 }
