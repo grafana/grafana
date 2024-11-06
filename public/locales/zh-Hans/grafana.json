@@ -1043,6 +1043,13 @@
       "noMatchingValue": "",
       "sortBy": ""
     },
+    "related-logs": {
+      "docsLink": "",
+      "openExploreLogs": "",
+      "relatedLogsUnavailableAfterDocsLink": "",
+      "relatedLogsUnavailableBeforeDocsLink": "",
+      "warnExperimentalFeature": ""
+    },
     "viewBy": ""
   },
   "export": {
