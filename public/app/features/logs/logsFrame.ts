@@ -35,6 +35,17 @@ const DATAPLANE_SEVERITY_NAME = 'severity';
 const DATAPLANE_ID_NAME = 'id';
 const DATAPLANE_LABELS_NAME = 'labels';
 
+export function transformToLabels(data: FieldWithIndex[]): Labels[] {
+  const length = data[0].values.length;
+
+  return Array.from({ length }, (_, index) => {
+    return data.reduce((acc, field) => {
+      acc[field.name] = field.values[index];
+      return acc;
+    }, {} as Labels);
+  });
+}
+
 export function logFrameLabelsToLabels(logFrameLabels: LogFrameLabels): Labels {
   const result: Labels = {};
 

@@ -8,7 +8,7 @@ import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
-import { getAllFields, createLogLineLinks } from './logParser';
+import { getAllFields, createLogLineLinks, FieldDef } from './logParser';
 
 export interface Props extends Themeable2 {
   row: LogRowModel;
@@ -65,12 +65,16 @@ class UnThemedLogDetails extends PureComponent<Props> {
       (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
       (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
-    const fields =
-      row.dataFrame.meta?.type === DataFrameType.LogLines
+    // Some fields has existed in labels with SqlDataSource, then does't need fields
+    let fields: FieldDef[] = []
+    if (Object.keys(labels).length === 0) {
+      fields = row.dataFrame.meta?.type === DataFrameType.LogLines
         ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-          []
+        []
         : // for other frames, do not show the log message unless there is a link attached
-          fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
+        fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
+    }
+
     const fieldsAvailable = fields && fields.length > 0;
 
     // If logs with error, we are not showing the level color

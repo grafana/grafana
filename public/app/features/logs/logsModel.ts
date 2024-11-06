@@ -46,7 +46,7 @@ import { colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/types';
 
-import { LogsFrame, parseLogsFrame } from './logsFrame';
+import { LogsFrame, parseLogsFrame, transformToLabels } from './logsFrame';
 import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -350,6 +350,7 @@ function parseTime(
   };
 }
 
+
 /**
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
@@ -376,7 +377,12 @@ export function logSeriesToLogsModel(
       const logsFrame = parseLogsFrame(series);
       if (logsFrame != null) {
         // for now we ignore the nested-ness of attributes, and just stringify-them
-        const frameLabels = logsFrame.getLogFrameLabelsAsLabels() ?? undefined;
+        let frameLabels = logsFrame.getLogFrameLabelsAsLabels() ?? undefined;
+        // frameLabels is undefined with SqlDataSource, but maybe other fields has be stored extraFields of LogsFrame
+        // then try to initializing it
+        if (frameLabels === undefined && logsFrame.extraFields.length > 0) {
+          frameLabels = transformToLabels(logsFrame.extraFields)
+        }
         const info = {
           rawFrame: series,
           logsFrame: logsFrame,
@@ -638,7 +644,7 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
   let valueField;
   try {
     valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
-  } catch {}
+  } catch { }
   return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
 }
 

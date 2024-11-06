@@ -1,5 +1,5 @@
 import { lastValueFrom, Observable, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import {
   getDefaultTimeRange,
@@ -16,6 +16,15 @@ import {
   LegacyMetricFindQueryOptions,
   VariableWithMultiSupport,
   TimeRange,
+  DataSourceWithLogsContextSupport,
+  LogRowContextOptions,
+  LogRowModel,
+  DataQueryError,
+  LogRowContextQueryDirection,
+  rangeUtil,
+  toUtc,
+  FieldCache,
+  FieldType,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -37,7 +46,9 @@ import migrateAnnotation from '../utils/migration';
 
 import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
 
-export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
+
+export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions>
+  implements DataSourceWithLogsContextSupport {
   id: number;
   responseParser: ResponseParser;
   name: string;
@@ -65,6 +76,81 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       prepareAnnotation: migrateAnnotation,
       QueryEditor: SqlQueryEditor,
     };
+  }
+
+  // private method used in the `getLogRowContext` to create a log context data request.
+  private makeLogContextDataRequest = (row: LogRowModel, options?: LogRowContextOptions, query?: SQLQuery) => {
+    const direction = options?.direction || LogRowContextQueryDirection.Backward;
+    const contextTimeBuffer = 1 * 60 * 60 * 1000; // 1h buffer
+    const fieldCache = new FieldCache(row.dataFrame);
+    const tsField = fieldCache.getFirstFieldOfType(FieldType.time);
+    if (tsField === undefined) {
+      throw new Error('loki: data frame missing time-field, should never happen');
+    }
+    const tsValue = tsField.values[row.rowIndex];
+    const timestamp = toUtc(tsValue);
+    //const tsValue = tsField.values[row.rowIndex];
+    //const timestamp = toUtc(tsValue);
+    //const timestamp = toUtc(Date.now());
+
+    const timeRange =
+      direction === LogRowContextQueryDirection.Forward
+        ? {
+          // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
+          // and any other that were logged in the same ns but before the row. Right now these rows will be lost
+          // because the are before but came it he response that should return only rows after.
+          from: timestamp,
+          // convert to ns, we lose some precision here but it is not that important at the far points of the context
+          to: toUtc(row.timeEpochMs + contextTimeBuffer),
+        }
+        : {
+          // convert to ns, we lose some precision here but it is not that important at the far points of the context
+          from: toUtc(row.timeEpochMs - contextTimeBuffer),
+          to: timestamp,
+        };
+    const range: TimeRange = {
+      from: timeRange.from,
+      to: timeRange.to,
+      raw: timeRange,
+    };
+
+    const interval = rangeUtil.calculateInterval(range, 1);
+    let targetQuery: SQLQuery[] = [];
+    if (query && row.labels != null) {
+      // reconstruct sql with labels
+      const newQuery: SQLQuery =
+        targetQuery.push(newQuery);
+    }
+    const contextRequest: DataQueryRequest<SQLQuery> = {
+      requestId: `mysql-log-context-${row.dataFrame.refId}`,
+      targets: targetQuery,
+      interval: interval.interval,
+      intervalMs: interval.intervalMs,
+      range,
+      scopedVars: {},
+      timezone: 'UTC',
+      app: CoreApp.Explore,
+      startTime: Date.now(),
+      hideFromInspector: true,
+    };
+    return contextRequest;
+  }
+
+  // Acquire the log rows context from sql dataSource
+  getLogRowContext(row: LogRowModel, options?: LogRowContextOptions, query?: SQLQuery): Promise<DataQueryResponse> {
+    const contextRequest: DataQueryRequest<SQLQuery> = this.makeLogContextDataRequest(row, options, query);
+    return lastValueFrom(
+      this.query(contextRequest).pipe(
+        catchError((err) => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: err.status,
+            statusText: err.statusText,
+          };
+          throw error;
+        })
+      )
+    );
   }
 
   abstract getDB(dsID?: number): DB;
