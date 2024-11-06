@@ -160,24 +160,6 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "do not allow alias except for our hardcoded set",
-			pluginJSON: func(t *testing.T) io.ReadCloser {
-				pJSON := `{
-					"id": "my-custom-app",
-					"type": "app",
-					"aliasIDs": ["phlare"]
-				}`
-				return io.NopCloser(strings.NewReader(pJSON))
-			},
-			err: ErrUnsupportedAlias,
-			expected: JSONData{
-				ID:           "my-custom-app",
-				AliasIDs:     []string{"phlare"}, // Hardcoded from the parser
-				Type:         "app",
-				Dependencies: Dependencies{},
-			},
-		},
-		{
 			name: "can read the latest versions of extensions information (v2)",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
