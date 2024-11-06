@@ -111,7 +111,7 @@ describe('createUsagesNetwork', () => {
     expect(usagesNetwork[1].variable.state.name).toBe('query1');
   });
 
-  it('should create usage network for variables that are not part of the dashboard', () => {
+  it('should not create usage network for variables that are not part of the dashboard', () => {
     const variables = [
       new TestVariable({
         type: 'query',
