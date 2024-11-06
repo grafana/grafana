@@ -34,6 +34,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
+  getTemplateSrv: () => templateSrvStub,
 }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
@@ -93,6 +94,13 @@ describe('PrometheusDatasource', () => {
     });
     it('has function called getTagValues', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
+    });
+  });
+
+  describe('Type and version', () => {
+    it('Default support labels match endpoint over series when type and version not set', () => {
+      const labelsMatchSupport = ds.hasLabelsMatchAPISupport();
+      expect(labelsMatchSupport).toBe(true);
     });
   });
 
@@ -983,15 +991,7 @@ describe('PrometheusDatasource2', () => {
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
-      ds.createQuery(
-        target,
-        {
-          interval: '5m',
-          range: getMockTimeRange(),
-        } as DataQueryRequest<PromQuery>,
-        0,
-        10080
-      );
+      ds.createQuery(target, { interval: '5m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>, 0, 10080);
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('315s');
     });
     it('should fall back to a scrape interval of 15s if min step is set to 0, resulting in 4*15s = 60s', () => {
