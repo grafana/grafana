@@ -28,6 +28,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 	tables = append(tables, migrator.Table{
 		Name: "secure_value",
 		Columns: []*migrator.Column{
+			// TODO GE: let's pare this down to the minimum needed for now - what's in the existing
+			// secrets table and the fields required by the k8s spec
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 36, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
@@ -47,10 +49,13 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
 			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
+			// Annotations and labels come with the k8s specs
 			// JSON map[string]string
 			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
 			// JSON map[string]string
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
+
+			// TODO GE: This is intended to represent potential audiences, so let's make it audiences throughout
 			// JSON []string
 			{Name: "apis", Type: migrator.DB_Text, Nullable: true},
 		},

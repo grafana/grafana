@@ -5,6 +5,13 @@ The unified storage projects aims to provide a simple and extensible backend to 
 
 It provides generic storage for k8s objects, and can store data either within dedicated tables in the main Grafana database, or in separate storage.
 
+// TODO GE: Explain what the above means, what does it mean to stick something in "separate storage". Is that what we are doing with the sql store right now (in this POC?). Set up a chat with Owen. 
+
+When we are running Grafana locally, is the on-prem instance DB considered "unified storage" in that case? 
+  - When running on-prem existing instance db seems to become "unified storage"
+  - Is the only difference now how the tables are created? e.g. via the old migration framework or the new raw sql migrations?
+  - Ryan suggested something about having secrets in their own database? What would that entail?
+
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
 ## Storage Overview

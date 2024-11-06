@@ -22,15 +22,28 @@ type EncryptedValue struct {
 	Value    string                       // The encrypted value
 }
 
+// TODO GE: Let's call this the SecretsManagerService. It should have:
+//   - storage service for secret metadata
+//   - a "vault" service that will have all the responsibility for storing the secure portion of a secret
 type SecretManager interface {
 	GetKeeper(ctx context.Context, namespace string, name string) (SecretKeeper, error)
 	InitStorage(scheme *runtime.Scheme, storage map[string]rest.Storage, optsGetter generic.RESTOptionsGetter) error
 }
 
+// TODO GE: This should represent our "vault" service.
+// The SecretsManagerService should call this service to create and retrieve the secure portion of a secret
+// and provide details about how the data is encrypted and/or where it is stored.
+
+// In the diagram in this section: https://docs.google.com/document/d/1MrKIeGd1gUA0TfsRBJBUu3inWjA4AmDV1pptkKcOHQc/edit?tab=t.0#heading=h.2875ibkfmbxe
+// The vault should be the Secrets Manager. It should have dependencies on:
+//   - an encryption service (use the Grafana core envelope encryption service as the default) - the encryption service interface should ideally be generic enough to support other 3p encryption services in the future
+//   - a storage service - use the sql store as a base implementation but make it extensible for integration with 3p stores later
 type SecretKeeper interface {
+	// Make these just store and retrieve?
 	Encrypt(ctx context.Context, value string) (EncryptedValue, error)
 	Decrypt(ctx context.Context, value EncryptedValue) (string, error)
 
+	// Probably don't need anything below this point - already supported by envelope encryption
 	// The set of keys we can still use to decrypt, but are not using for encryption
 	RetiredKeyIDs(ctx context.Context) ([]string, error)
 
