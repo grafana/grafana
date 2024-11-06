@@ -95,6 +95,7 @@ export function MetricCombobox({
           options={loadOptions}
           value={query.metric}
           onChange={onComboboxChange}
+          createCustomValue
         />
 
         {metricsExplorerEnabled ? (
