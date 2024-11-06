@@ -2,7 +2,6 @@ SELECT
     kv.{{ .Ident "resource_version" }},
     kv.{{ .Ident "namespace" }},
     kv.{{ .Ident "name" }},
-    kv.{{ .Ident "folder" }},
     kv.{{ .Ident "value" }}
     FROM {{ .Ident "resource_history" }} as kv 
     INNER JOIN  (

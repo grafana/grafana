@@ -16,7 +16,8 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { MatcherFormatter, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
+import { objectLabelsToArray } from './labels';
+import { MatcherFormatter, matchLabelsSet, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -125,26 +126,10 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
-  return matchers.every(({ name, value, isRegex, isEqual }) => {
-    return Object.entries(labels).some(([labelKey, labelValue]) => {
-      const nameMatches = name === labelKey;
-      let valueMatches;
-      if (isEqual && !isRegex) {
-        valueMatches = value === labelValue;
-      }
-      if (!isEqual && !isRegex) {
-        valueMatches = value !== labelValue;
-      }
-      if (isEqual && isRegex) {
-        valueMatches = new RegExp(value).test(labelValue);
-      }
-      if (!isEqual && isRegex) {
-        valueMatches = !new RegExp(value).test(labelValue);
-      }
+  const labelsArray = objectLabelsToArray(labels);
+  const objectMatchers = matchers.map(matcherToObjectMatcher);
 
-      return nameMatches && valueMatches;
-    });
-  });
+  return matchLabelsSet(objectMatchers, labelsArray);
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {

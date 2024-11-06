@@ -456,6 +456,9 @@
     },
     "custom-value": {
       "create": "Create custom value"
+    },
+    "options": {
+      "no-found": "No options found."
     }
   },
   "command-palette": {
@@ -2176,6 +2179,12 @@
         "name-header": "Name",
         "update-header": "Update",
         "update-status-text": "plugins updated"
+      },
+      "versions": {
+        "confirmation-text-1": "Are you really sure you want to downgrade to version",
+        "confirmation-text-2": "You should normally not be doing this",
+        "downgrade-confirm": "Downgrade",
+        "downgrade-title": "Downgrade plugin version"
       }
     },
     "details": {

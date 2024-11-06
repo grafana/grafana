@@ -456,6 +456,9 @@
     },
     "custom-value": {
       "create": "Cřęäŧę čūşŧőm väľūę"
+    },
+    "options": {
+      "no-found": "Ńő őpŧįőŉş ƒőūŉđ."
     }
   },
   "command-palette": {
@@ -2176,6 +2179,12 @@
         "name-header": "Ńämę",
         "update-header": "Ůpđäŧę",
         "update-status-text": "pľūģįŉş ūpđäŧęđ"
+      },
+      "versions": {
+        "confirmation-text-1": "Åřę yőū řęäľľy şūřę yőū ŵäŉŧ ŧő đőŵŉģřäđę ŧő vęřşįőŉ",
+        "confirmation-text-2": "Ÿőū şĥőūľđ ŉőřmäľľy ŉőŧ þę đőįŉģ ŧĥįş",
+        "downgrade-confirm": "Đőŵŉģřäđę",
+        "downgrade-title": "Đőŵŉģřäđę pľūģįŉ vęřşįőŉ"
       }
     },
     "details": {

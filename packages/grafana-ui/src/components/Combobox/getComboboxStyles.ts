@@ -18,7 +18,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
-      overflowY: 'auto',
       position: 'relative',
     }),
     menuUlContainer: css({
