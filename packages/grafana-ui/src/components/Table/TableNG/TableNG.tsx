@@ -208,8 +208,9 @@ export function TableNG(props: TableNGProps) {
             justifyContent={justifyColumnContent}
           />
         ),
-        width: columnWidth,
-        minWidth: columnMinWidth,
+        // TODO these anys are making me sad
+        width: field.config.custom.width ?? columnWidth,
+        minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
 
       // Create row objects
@@ -319,6 +320,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        key={`DataGrid${revId}`}
         rows={sortedRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
