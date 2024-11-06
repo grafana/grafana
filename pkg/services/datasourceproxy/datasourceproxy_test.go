@@ -131,6 +131,6 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 type fakePluginRequestValidator struct{}
 
-func (rv *fakePluginRequestValidator) Validate(_ string, _ *http.Request) error {
+func (rv *fakePluginRequestValidator) Validate(_ datasources.DataSourceInfo, _ *http.Request) error {
 	return nil
 }

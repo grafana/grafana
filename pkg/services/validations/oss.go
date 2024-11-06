@@ -2,11 +2,13 @@ package validations
 
 import (
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 type OSSPluginRequestValidator struct{}
 
-func (*OSSPluginRequestValidator) Validate(string, *http.Request) error {
+func (*OSSPluginRequestValidator) Validate(datasources.DataSourceInfo, *http.Request) error {
 	return nil
 }
 

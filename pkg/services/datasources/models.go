@@ -40,6 +40,12 @@ const (
 
 type DsAccess string
 
+type DataSourceInfo interface {
+	GetURL() string
+	GetName() string
+	IsSecureSocksDSProxyEnabled() bool
+}
+
 type DataSource struct {
 	ID      int64 `json:"id,omitempty" xorm:"pk autoincr 'id'"`
 	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
@@ -70,6 +76,18 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+}
+
+func (ds *DataSource) GetURL() string {
+	return ds.URL
+}
+
+func (ds *DataSource) GetName() string {
+	return ds.Name
+}
+
+func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
+	return ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
 }
 
 type TeamHTTPHeadersJSONData struct {

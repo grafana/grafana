@@ -6,6 +6,7 @@ import (
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/validations"
 )
 
@@ -27,7 +28,7 @@ func RedirectLimitMiddleware(reqValidator validations.PluginRequestValidator) sd
 					return nil, locationErr
 				}
 
-				if validationErr := reqValidator.Validate(location.String(), nil); validationErr != nil {
+				if validationErr := reqValidator.Validate(&datasources.DataSource{URL: location.String()}, nil); validationErr != nil {
 					return nil, validationErr
 				}
 			}

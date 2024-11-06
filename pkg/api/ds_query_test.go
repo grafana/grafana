@@ -45,7 +45,7 @@ type secretsErrorResponseBody struct {
 	Message string `json:"message"`
 }
 
-func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
+func (rv *fakePluginRequestValidator) Validate(ds datasources.DataSourceInfo, req *http.Request) error {
 	return rv.err
 }
 
