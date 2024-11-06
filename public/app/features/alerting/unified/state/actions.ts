@@ -342,36 +342,6 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     )
 );
 
-export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return async (dispatch) => {
-    const config = await dispatch(
-      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
-    ).unwrap();
-
-    if (!config) {
-      throw new Error(`Config for ${alertManagerSourceName} not found`);
-    }
-    if (!config.alertmanager_config.receivers?.find((receiver) => receiver.name === receiverName)) {
-      throw new Error(`Cannot delete receiver ${receiverName}: not found in config.`);
-    }
-    const newConfig: AlertManagerCortexConfig = {
-      ...config,
-      alertmanager_config: {
-        ...config.alertmanager_config,
-        receivers: config.alertmanager_config.receivers.filter((receiver) => receiver.name !== receiverName),
-      },
-    };
-    return dispatch(
-      updateAlertManagerConfigAction({
-        newConfig,
-        oldConfig: config,
-        alertManagerSourceName,
-        successMessage: 'Contact point deleted.',
-      })
-    );
-  };
-};
-
 export const fetchFolderAction = createAsyncThunk(
   'unifiedalerting/fetchFolder',
   (uid: string): Promise<FolderDTO> => withSerializedError(backendSrv.getFolderByUid(uid, { withAccessControl: true }))

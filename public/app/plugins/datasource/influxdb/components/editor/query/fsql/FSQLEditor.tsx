@@ -118,17 +118,17 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  editorContainerStyles: css`
-    height: 200px;
-    max-width: 100%;
-    resize: vertical;
-    overflow: auto;
-    background-color: ${theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary};
-    padding-bottom: ${theme.spacing(1)};
-  `,
-  editorActions: css`
-    margin-top: 6px;
-  `,
+  editorContainerStyles: css({
+    height: '200px',
+    maxWidth: '100%',
+    resize: 'vertical',
+    overflow: 'auto',
+    backgroundColor: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+    paddingBottom: theme.spacing(1),
+  }),
+  editorActions: css({
+    marginTop: '6px',
+  }),
 });
 
 export const FSQLEditor = withTheme2(UnthemedSQLQueryEditor);

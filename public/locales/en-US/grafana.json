@@ -35,9 +35,6 @@
   },
   "alert-rule-form": {
     "evaluation-behaviour": {
-      "description": {
-        "text": "Define how the alert rule is evaluated."
-      },
       "info-help": {
         "text": "Define the alert behavior when the evaluation fails or the query returns no data."
       },
@@ -53,9 +50,39 @@
     "evaluation-behaviour-group": {
       "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
     },
-    "pause": "Pause evaluation"
+    "pause": {
+      "alerting": "Turn on to pause evaluation for this alert rule.",
+      "label": "Pause evaluation",
+      "recording": "Turn on to pause evaluation for this recording rule."
+    }
   },
   "alerting": {
+    "alert-recording-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the recording rule is evaluated."
+        }
+      }
+    },
+    "alert-rule-form": {
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        }
+      }
+    },
+    "alert-rules": {
+      "firing-for": "Firing for",
+      "next-evaluation": "Next evaluation",
+      "next-evaluation-in": "next evaluation in",
+      "rule-definition": "Rule definition"
+    },
+    "alertform": {
+      "labels": {
+        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
+        "recording": "Add labels to your rule."
+      }
+    },
     "annotations": {
       "description": "Add more context to your alert notifications.",
       "title": "Configure notification message"
@@ -113,6 +140,7 @@
     "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
+      "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
         "no-permissions": "You do not have the required permission to delete this contact point",
@@ -120,6 +148,7 @@
         "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
         "rules": "Contact point is referenced by one or more alert rules"
       },
+      "delivered-to": "Delivered to",
       "delivery-duration": "Last delivery took <1></1>",
       "empty-state": {
         "title": "You don't have any contact points yet"
@@ -140,6 +169,20 @@
     },
     "contactPointFilter": {
       "label": "Contact point"
+    },
+    "folderAndGroup": {
+      "evaluation": {
+        "modal": {
+          "text": {
+            "alerting": "Create a new evaluation group to use for this alert rule.",
+            "recording": "Create a new evaluation group to use for this recording rule."
+          }
+        },
+        "text": {
+          "alerting": "Define how often the alert rule is evaluated.",
+          "recording": "Define how often the recording rule is evaluated."
+        }
+      }
     },
     "list-view": {
       "empty": {
@@ -284,6 +327,11 @@
       "ofQuery": {
         "To": "TO"
       }
+    },
+    "templates": {
+      "misconfigured-badge-text": "Misconfigured",
+      "misconfigured-warning": "This template is misconfigured.",
+      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     }
   },
   "annotations": {
@@ -328,6 +376,9 @@
       "move-modal-title": "Move",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
+    },
+    "actions": {
+      "button-to-recently-deleted": "Recently deleted"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
@@ -397,6 +448,9 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": "An error occurred while loading options."
+    },
     "clear": {
       "title": "Clear value"
     },
@@ -430,11 +484,14 @@
     "cancel": "Cancel",
     "clear": "Clear",
     "close": "Close",
+    "collapse": "Collapse",
+    "edit": "Edit",
     "locale": {
       "default": "Default"
     },
     "save": "Save",
-    "search": "Search"
+    "search": "Search",
+    "view": "View"
   },
   "configuration-tracker": {
     "config-card": {
@@ -561,8 +618,7 @@
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization",
-      "widget": "Widget"
+      "visualization": "Visualization"
     },
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
@@ -575,9 +631,6 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-widget-body": "Create lists, markdowns and other widgets",
-      "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget",
       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
@@ -751,6 +804,11 @@
     }
   },
   "dashboards": {
+    "panel-edit": {
+      "angular-deprecation-button-open-panel-json": "Open JSON editor",
+      "angular-deprecation-description": "Angular panels options can only be edited using the JSON editor.",
+      "angular-deprecation-heading": "Panel options"
+    },
     "settings": {
       "variables": {
         "dependencies": {
@@ -808,6 +866,11 @@
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
+      "logs-volume": {
+        "add-filters": "Add more labels to your query to narrow down your search.",
+        "decrease-timerange": "Decrease the time range of your query.",
+        "much-data": "The query is trying to access too much data. Try one or more of the following:"
+      },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
@@ -823,8 +886,8 @@
       "private": "Private",
       "public": "Public",
       "query-deleted": "Query deleted",
-      "query-template-add-error": "Error attempting to add this query to the library",
-      "query-template-added": "Query template successfully added to the library",
+      "query-template-add-error": "Error attempting to save this query to the library",
+      "query-template-added": "Query successfully saved to the library",
       "query-template-edit-error": "Error attempting to edit this query",
       "query-template-edited": "Query template successfully edited",
       "save": "Save"
@@ -970,6 +1033,7 @@
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
       "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-label": "Share",
       "copy-shortened-link-menu": "Open copy link options",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
@@ -985,7 +1049,15 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
-      "noMatchingValue": "No values found matching; {{filter}}"
+      "noMatchingValue": "No values found matching; {{filter}}",
+      "sortBy": "Sort by"
+    },
+    "related-logs": {
+      "docsLink": "Loki Recording Rule",
+      "openExploreLogs": "Open Explore Logs",
+      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
+      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
   },
@@ -1013,11 +1085,73 @@
     "send-custom-feedback": "Send"
   },
   "grafana-ui": {
+    "auto-save-field": {
+      "saved": "Saved!",
+      "saving": "Saving <1></1>"
+    },
+    "color-picker-popover": {
+      "palette-tab": "Colors",
+      "spectrum-tab": "Custom"
+    },
+    "confirm-button": {
+      "cancel": "Cancel"
+    },
+    "data-link-editor": {
+      "info": "With data links you can reference data variables like series name, labels and values. Type CMD+Space, CTRL+Space, or $ to open variable suggestions."
+    },
+    "data-link-editor-modal": {
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "data-links-inline-editor": {
+      "add-link": "Add link",
+      "one-click-link": "One-click link"
+    },
+    "data-source-http-settings": {
+      "access-help": "Help <1></1>",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<1> <1>Server</1></1> should be the preferred way if nothing else is stated.",
+      "allowed-cookies": "Allowed cookies",
+      "auth": "Auth",
+      "basic-auth": "Basic Auth Details",
+      "browser-mode-description": "All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.",
+      "browser-mode-title": "<0>Browser access mode:</0>",
+      "default-url-tooltip": "Specify a complete HTTP URL (for example http://your_server:8080)",
+      "direct-url-tooltip": "Your access method is <1>Browser</1>, this means the URL needs to be accessible from the browser.",
+      "heading": "HTTP",
+      "proxy-url-tooltip": "Your access method is <1>Server</1>, this means the URL needs to be accessible from the grafana backend/server.",
+      "server-mode-description": "All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.",
+      "server-mode-title": "<0>Server access mode (Default):</0>"
+    },
+    "data-source-settings": {
+      "alerting-settings-heading": "Alerting",
+      "cert-key-reset": "Reset",
+      "custom-headers-add": "Add header",
+      "custom-headers-title": "Custom HTTP Headers",
+      "secure-socks-heading": "Secure Socks Proxy",
+      "tls-heading": "TLS/SSL Auth Details"
+    },
+    "date-time-picker": {
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
     "drawer": {
       "close": "Close"
     },
+    "field-link-list": {
+      "external-links-heading": "External links"
+    },
+    "file-dropzone": {
+      "cancel-upload": "Cancel upload",
+      "file-too-large": "File is larger than {{size}}"
+    },
+    "filter-input": {
+      "clear": "Clear"
+    },
     "modal": {
       "close-tooltip": "Close"
+    },
+    "secret-form-field": {
+      "reset": "Reset"
     },
     "segment-async": {
       "error": "Failed to load options",
@@ -1025,6 +1159,7 @@
       "no-options": "No options found"
     },
     "select": {
+      "default-create-label": "Hit enter to add",
       "no-options-label": "No options found",
       "placeholder": "Choose"
     },
@@ -1032,7 +1167,26 @@
       "aria-label": "Loading"
     },
     "table": {
-      "copy": "Copy to Clipboard"
+      "copy": "Copy to Clipboard",
+      "csv-counts": "Rows:{{rows}}, Columns:{{columns}}  <5></5>",
+      "filter-popup-apply": "Ok",
+      "filter-popup-cancel": "Cancel",
+      "filter-popup-clear": "Clear filter",
+      "filter-popup-heading": "Filter by values:",
+      "no-values-label": "No values",
+      "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows"
+    },
+    "tags-input": {
+      "add": "Add"
+    },
+    "user-icon": {
+      "active-text": "Active last 15m"
+    },
+    "viz-legend": {
+      "right-axis-indicator": "(right y-axis)"
+    },
+    "viz-tooltip": {
+      "footer-add-annotation": "Add annotation"
     }
   },
   "graph": {
@@ -1085,6 +1239,12 @@
     },
     "title": "Shortcuts"
   },
+  "help-wizard": {
+    "download-snapshot": "Download snapshot",
+    "github-comment": "Copy Github comment",
+    "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>.",
+    "troubleshooting-help": "To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The snapshot contains query response data and panel settings."
+  },
   "inspector": {
     "query": {
       "collapse-all": "Collapse all",
@@ -1097,7 +1257,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "description": "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
       "email-label": "Email",
       "label": "Attributes",
       "member-of-label": "Member Of",
@@ -1124,11 +1284,11 @@
       "root-ca-cert-label": "Root CA certificate path",
       "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
       "root-ca-cert-value-label": "Root CA certificate content",
+      "root-ca-cert-value-placeholder": "example: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t",
       "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
       "start-tls-label": "Start TLS",
-      "tls-ciphers-description": "List of comma- or space-separated ciphers",
       "tls-ciphers-label": "TLS ciphers",
-      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "tls-ciphers-placeholder": "example: TLS_AES_256_GCM_SHA384",
       "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
       "use-ssl-label": "Use SSL",
       "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to:"
@@ -1158,8 +1318,8 @@
         "button": "Add group mapping"
       },
       "description": "Map LDAP groups to Grafana org roles",
-      "group-search-base-dns-description": "Separate by commas or spaces",
       "group-search-base-dns-label": "Group search base DNS",
+      "group-search-base-dns-placeholder": "example: ou=groups,dc=example,dc=com",
       "group-search-filter-description": "Used to filter and identify group entries within the directory",
       "group-search-filter-label": "Group search filter",
       "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
@@ -1170,7 +1330,7 @@
     },
     "misc-section": {
       "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-      "allow-sign-up-label": "Allow sign up",
+      "allow-sign-up-label": "Allow sign-up",
       "label": "Misc",
       "port-description": "Default port is 389 without SSL or 636 with SSL",
       "port-label": "Port",
@@ -1202,20 +1362,16 @@
       "label": "Bind password"
     },
     "buttons-section": {
+      "disable-button": "Disable",
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
       "save-button": "Save"
     },
-    "discard-modal": {
-      "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
-      "discard-button": "Abandon LDAP",
-      "title": "Leave LDAP configuration?"
-    },
     "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
-      "label": "Server host *",
+      "error": "Server host is a required field",
+      "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
     "login-form-alert": {
@@ -1224,12 +1380,15 @@
     },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
-      "label": "Search filter *",
+      "error": "Search filter is a required field",
+      "label": "Search filter",
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
       "description": "An array of base dns to search through.",
-      "label": "Search base DNS *"
+      "error": "Search base DNS is a required field",
+      "label": "Search base DNS",
+      "placeholder": "example: dc=grafana,dc=org"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
@@ -1348,8 +1507,17 @@
       "connect": "Connect to this stack",
       "connecting": "Connecting to this stack...",
       "title": "Connect to a cloud stack",
-      "token-error-description": "There was an error saving the token. See the Grafana server logs for more details.",
       "token-error-title": "Error saving token",
+      "token-errors": {
+        "instance-request-error": "An error occurred while attempting to verify the cloud instance's connectivity. Please check the network settings or cloud instance status.",
+        "instance-unreachable": "The cloud instance cannot be reached. Make sure the instance is running and try again.",
+        "migration-disabled": "Cloud migrations are disabled on this instance.",
+        "session-creation-failure": "There was an error creating the migration. Please try again.",
+        "token-invalid": "Token is not valid. Generate a new token on your cloud instance and try again.",
+        "token-not-saved": "There was an error saving the token. See the Grafana server logs for more details.",
+        "token-request-error": "An error occurred while validating the token. Please check the Grafana instance logs.",
+        "token-validation-failure": "Token is not valid. Please ensure the token matches the migration token on your cloud instance."
+      },
       "token-required-error": "Migration token is required"
     },
     "cta": {
@@ -1392,9 +1560,15 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rules": "alert rules",
+      "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
-      "folders": "folders"
+      "folders": "folders",
+      "library_elements": "library elements",
+      "mute_timings": "mute timings",
+      "notification_policies": "notification policies",
+      "notification_templates": "notification templates"
     },
     "migration-token": {
       "delete-button": "Delete token",
@@ -1428,6 +1602,7 @@
       "snapshot-error-status-body": "There was an error creating the snapshot or starting the migration process. See the Grafana server logs for more details",
       "snapshot-error-status-title": "Error migrating resources",
       "success-message": "Successfully migrated {{successCount}} {{types, list}} to your Grafana Cloud instance.",
+      "success-message-generic": "Successfully migrated {{successCount}} resources to your Grafana Cloud instance.",
       "success-title": "Migration completed!",
       "upload-snapshot-error-title": "Error uploading snapshot"
     },
@@ -1448,6 +1623,20 @@
     },
     "resource-details": {
       "dismiss-button": "OK",
+      "error-messages": {
+        "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-already-managed": "Data source is already provisioned and managed by Grafana in the cloud instance. If this is a different resource, set another UID and try again.",
+        "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
+        "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
+        "folder-name-conflict": "There is a folder with the same name in the target instance. Rename one of them and try again.",
+        "generic-error": "There has been an error while migrating. Please check the cloud migration logs for more information.",
+        "internal-service-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "library-element-name-conflict": "There is a library element with the same name in the target instance. Rename one of them and try again.",
+        "only-core-data-sources": "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.",
+        "resource-conflict": "There is a resource conflict with the target instance. Please check the Grafana server logs for more details.",
+        "unexpected-error": "There has been an error while migrating. Please check the Grafana server logs for more details.",
+        "unsupported-data-type": "Migration of this data type is not currently supported."
+      },
       "error-title": "Unable to migrate this resource:",
       "generic-title": "Resource migration details:",
       "missing-message": "No message provided.",
@@ -1466,13 +1655,22 @@
       "warning-details-button": "Details"
     },
     "resource-table": {
+      "dashboard-load-error": "Unable to load dashboard",
+      "error-library-element-sub": "Library Element {uid}",
+      "error-library-element-title": "Unable to load library element",
       "unknown-datasource-title": "Data source {{datasourceUID}}",
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "alert_rule": "Alert Rule",
+      "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
       "folder": "Folder",
+      "library_element": "Library Element",
+      "mute_timing": "Mute Timing",
+      "notification_policy": "Notification Policy",
+      "notification_template": "Notification Template",
       "unknown": "Unknown"
     },
     "summary": {
@@ -1574,7 +1772,7 @@
     },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
-      "title": "Apps"
+      "title": "More apps"
     },
     "authentication": {
       "title": "Authentication"
@@ -1850,6 +2048,7 @@
       "close": "Close menu",
       "dock": "Dock menu",
       "list-label": "Navigation",
+      "open": "Open menu",
       "undock": "Undock menu"
     },
     "toolbar": {
@@ -1908,6 +2107,7 @@
     }
   },
   "panel-search": {
+    "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
@@ -1976,6 +2176,12 @@
         "name-header": "Name",
         "update-header": "Update",
         "update-status-text": "plugins updated"
+      },
+      "versions": {
+        "confirmation-text-1": "Are you really sure you want to downgrade to version",
+        "confirmation-text-2": "You should normally not be doing this",
+        "downgrade-confirm": "Downgrade",
+        "downgrade-title": "Downgrade plugin version"
       }
     },
     "details": {
@@ -1984,11 +2190,14 @@
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
+        "installedVersion": "Installed version: ",
+        "lastCommitDate": "Last commit date:",
+        "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
-        "updatedAt": "Last updated: ",
+        "updatedAt": "Last updated:",
         "version": "Version"
       }
     },
@@ -2197,7 +2406,12 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Delete query"
+    "datasource-names": "Datasource name(s):",
+    "delete-query-button": "Delete query",
+    "query-template-get-error": "Error attempting to get query template from the library: {{error}}",
+    "search": "Search by data source, query content or description",
+    "user-info-get-error": "Error attempting to get user info from the library: {{error}}",
+    "user-names": "User name(s):"
   },
   "query-operation": {
     "header": {
@@ -2274,6 +2488,16 @@
       "label": "Back to {{title}}"
     },
     "dismissable-button": "Close"
+  },
+  "role-picker": {
+    "title": {
+      "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
+    }
+  },
+  "role-picker-drawer": {
+    "basic-roles": {
+      "label": "Basic Roles"
+    }
   },
   "save-dashboards": {
     "name-exists": {
@@ -2354,6 +2578,21 @@
       "selected-count": "Selected "
     }
   },
+  "service-account-create-page": {
+    "create": {
+      "button": "Create"
+    },
+    "name": {
+      "label": "Display name",
+      "required-error": "Display name is required"
+    },
+    "page-nav": {
+      "label": "Create service account"
+    },
+    "role": {
+      "label": "Role"
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
@@ -2366,7 +2605,6 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
@@ -2645,10 +2883,16 @@
       "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
     },
     "time-range": {
+      "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
+      "example": "Example: to select a time range from 10 minutes ago to now",
+      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
-      "specify": "Specify time range <1></1>"
+      "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
+      "more-info": "For more information see <2>docs <1></1></2>.",
+      "specify": "Specify time range <1></1>",
+      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>"
     },
     "zone": {
       "select-aria-label": "Time zone picker",
@@ -2656,10 +2900,24 @@
     }
   },
   "trails": {
+    "bookmarks": {
+      "or-view-bookmarks": "Or view bookmarks"
+    },
+    "card": {
+      "data-source": "Data source: ",
+      "date-created": "Date created: ",
+      "metric": "Metric:"
+    },
+    "home": {
+      "learn-more": "Learn more",
+      "lets-start": "Let's start!",
+      "start-your-metrics-exploration": "Start your metrics exploration!",
+      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
+    },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
-      "metric-attributes": "Metric attributes",
+      "metric-attributes": "Attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
@@ -2668,6 +2926,9 @@
     "metric-select": {
       "filter-by": "Filter by",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Or view a recent exploration"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
@@ -2700,8 +2961,10 @@
     }
   },
   "user-session": {
+    "auth-module-column": "Identity Provider",
     "browser-column": "Browser & OS",
     "created-at-column": "Logged on",
+    "identity-provider-column": "Identity Provider",
     "ip-column": "IP address",
     "revoke": "Revoke user session",
     "seen-at-column": "Last seen"

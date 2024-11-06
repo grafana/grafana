@@ -50,9 +50,9 @@ func ProvideService(
 
 func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]any, error) {
 	stats := map[string]any{}
-	stats["stats.remote_cache."+ds.cfg.RemoteCache.Name+".count"] = 1
+	stats["stats.remote_cache."+ds.cfg.RemoteCacheOptions.Name+".count"] = 1
 	encryptVal := 0
-	if ds.cfg.RemoteCache.Encryption {
+	if ds.cfg.RemoteCacheOptions.Encryption {
 		encryptVal = 1
 	}
 
@@ -146,11 +146,11 @@ func createClient(
 	cfg *setting.Cfg, sqlstore db.DB, logger log.Logger,
 	secretsService secrets.Service, grpcProvider grpcserver.Provider, reg prometheus.Registerer,
 ) (cache CacheStorage, err error) {
-	switch cfg.RemoteCache.Name {
+	switch cfg.RemoteCacheOptions.Name {
 	case redisCacheType:
-		cache, err = newRedisStorage(cfg.RemoteCache)
+		cache, err = newRedisStorage(cfg.RemoteCacheOptions)
 	case memcachedCacheType:
-		cache = newMemcachedStorage(cfg.RemoteCache)
+		cache = newMemcachedStorage(cfg.RemoteCacheOptions)
 	case ring.CacheType:
 		if !grpcProvider.IsDisabled() {
 			cache, err = ring.NewCache(cfg, reg, grpcProvider)
@@ -166,11 +166,11 @@ func createClient(
 		return nil, err
 	}
 
-	if cfg.RemoteCache.Prefix != "" {
-		cache = &prefixCacheStorage{cache: cache, prefix: cfg.RemoteCache.Prefix}
+	if cfg.RemoteCacheOptions.Prefix != "" {
+		cache = &prefixCacheStorage{cache: cache, prefix: cfg.RemoteCacheOptions.Prefix}
 	}
 
-	if cfg.RemoteCache.Encryption {
+	if cfg.RemoteCacheOptions.Encryption {
 		cache = &encryptedCacheStorage{cache: cache, secretsService: secretsService}
 	}
 	return cache, nil

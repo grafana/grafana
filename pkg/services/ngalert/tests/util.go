@@ -65,7 +65,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
 	features := featuremgmt.WithFeatures()
 	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus, features, ac)
-	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac)
+	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService, &dashboards.FakeDashboardService{}, ac, bus)
 	require.NoError(tb, err)
 	ng, err := ngalert.ProvideService(
 		cfg, features, nil, nil, routing.NewRouteRegister(), sqlStore, kvstore.NewFakeKVStore(), nil, nil, quotatest.New(false, nil),
@@ -82,6 +82,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 		Logger:           log.New("ngalert-test"),
 		DashboardService: dashboardService,
 		FolderService:    folderService,
+		Bus:              bus,
 	}
 }
 

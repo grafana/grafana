@@ -23,11 +23,11 @@ type RemoteCacheRingSettings struct {
 	HeartbeatTimeout time.Duration
 }
 
-func (cfg *Cfg) readCacheSettings() {
+func (cfg *Cfg) readRemoteCacheSettings() {
 	cacheSec := cfg.Raw.Section("remote_cache")
 	ringCacheSec := cfg.Raw.Section("remote_cache.ring")
 
-	cfg.RemoteCache = &RemoteCacheSettings{
+	cfg.RemoteCacheOptions = &RemoteCacheSettings{
 		Name:       valueAsString(cacheSec, "type", "database"),
 		ConnStr:    valueAsString(cacheSec, "connstr", ""),
 		Prefix:     valueAsString(cacheSec, "prefix", ""),

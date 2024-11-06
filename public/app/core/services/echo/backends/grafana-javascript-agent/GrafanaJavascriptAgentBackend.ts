@@ -9,6 +9,7 @@ import {
   SessionInstrumentation,
   FetchTransport,
   type Instrumentation,
+  getWebInstrumentations,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
@@ -16,15 +17,27 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
+function isCrossOriginIframe() {
+  try {
+    return document.location.hostname !== window.parent.location.hostname;
+  } catch (e) {
+    return true;
+  }
+}
+
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
   user: User;
+  allInstrumentationsEnabled: boolean;
   errorInstrumentalizationEnabled: boolean;
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  ignoreUrls: RegExp[];
 }
+
+const TRACKING_URLS = [/.*.google-analytics.com*.*/, /.*.googletagmanager.com*.*/, /frontend-metrics/];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
@@ -38,7 +51,8 @@ export class GrafanaJavascriptAgentBackend
 
     const transports: BaseTransport[] = [new EchoSrvTransport()];
 
-    if (options.customEndpoint) {
+    // If in cross origin iframe, default to writing to instance logging endpoint
+    if (options.customEndpoint && !isCrossOriginIframe()) {
       transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
@@ -67,14 +81,16 @@ export class GrafanaJavascriptAgentBackend
         version: options.buildInfo.version,
         environment: options.buildInfo.env,
       },
-      instrumentations,
+      instrumentations: options.allInstrumentationsEnabled
+        ? instrumentations
+        : [...getWebInstrumentations(), new TracingInstrumentation()],
       transports,
       ignoreErrors: [
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
       ],
-      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
+      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls],
       sessionTracking: {
         persistent: true,
       },

@@ -4,7 +4,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { setBackendSrv, config } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { wellFormedDashboardMigrationItem, wellFormedDatasourceMigrationItem } from '../fixtures/migrationItems';
+import {
+  wellFormedDashboardMigrationItem,
+  wellFormedDatasourceMigrationItem,
+  wellFormedLibraryElementMigrationItem,
+} from '../fixtures/migrationItems';
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
@@ -84,6 +88,28 @@ describe('ResourcesTable', () => {
 
     expect(await screen.findByText('Unable to load dashboard')).toBeInTheDocument();
     expect(await screen.findByText('Dashboard dashboard-404')).toBeInTheDocument();
+  });
+
+  it('renders library elements', async () => {
+    const resources = [wellFormedLibraryElementMigrationItem(1)];
+
+    render({ resources });
+
+    expect(await screen.findByText('My Library Element')).toBeInTheDocument();
+    expect(await screen.findByText('FolderName')).toBeInTheDocument();
+  });
+
+  it('renders library elements when their data is missing', async () => {
+    const resources = [
+      wellFormedLibraryElementMigrationItem(2, {
+        refId: 'library-element-404',
+      }),
+    ];
+
+    render({ resources });
+
+    expect(await screen.findByText('Unable to load library element')).toBeInTheDocument();
+    expect(await screen.findByText('Library Element library-element-404')).toBeInTheDocument();
   });
 
   it('renders the success status correctly', () => {

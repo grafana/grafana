@@ -138,11 +138,11 @@ type Config struct {
 	Token  string
 }
 
-func New(cfg Config) Service {
+func New(cfg Config, httpClient *http.Client) Service {
 	return &GcomClient{
 		log:        log.New(LogPrefix),
 		cfg:        cfg,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 	}
 }
 
@@ -360,6 +360,7 @@ func (client *GcomClient) ListTokens(ctx context.Context, params ListTokenParams
 
 	return body.Items, nil
 }
+
 func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {

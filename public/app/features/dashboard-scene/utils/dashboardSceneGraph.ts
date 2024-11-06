@@ -13,12 +13,10 @@ function getRefreshPicker(scene: DashboardScene) {
 }
 
 function getPanelLinks(panel: VizPanel) {
-  if (
-    panel.state.titleItems &&
-    Array.isArray(panel.state.titleItems) &&
-    panel.state.titleItems[0] instanceof VizPanelLinks
-  ) {
-    return panel.state.titleItems[0];
+  if (panel.state.titleItems && Array.isArray(panel.state.titleItems)) {
+    // search panel.state.titleItems for VizPanelLinks
+    const panelLink = panel.state.titleItems.find((item) => item instanceof VizPanelLinks);
+    return panelLink ?? null;
   }
 
   return null;
@@ -48,16 +46,11 @@ export function getCursorSync(scene: DashboardScene) {
   return;
 }
 
-export function getNextPanelId(dashboard: DashboardScene): number {
-  return dashboard.state.body.getNextPanelId();
-}
-
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getPanelLinks,
   getVizPanels,
   getDataLayers,
-  getNextPanelId,
   getCursorSync,
 };

@@ -40,7 +40,10 @@ The Grafana Explore apps are designed for effortless data exploration through in
 
 Easily explore telemetry signals with these specialized tools, tailored specifically for the Grafana databases to provide quick and accurate insights.
 
-To learn more, read [A queryless experience for exploring metrics, logs, traces, and profiles: Introducing the Explore apps suite for Grafana](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/).
+To learn more, read:
+
+- [From multi-line queries to no-code investigations: meeting Grafana users where they are](https://grafana.com/blog/2024/10/22/from-multi-line-queries-to-no-code-investigations-meeting-grafana-users-where-they-are/)
+- [A queryless experience for exploring metrics, logs, traces, and profiles: Introducing the Explore apps suite for Grafana](https://grafana.com/blog/2024/09/24/queryless-metrics-logs-traces-profiles/).
 
 {{< youtube id="MSHeWWsHaIA" >}}
 

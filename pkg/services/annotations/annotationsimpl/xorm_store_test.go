@@ -133,7 +133,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		assert.Greater(t, organizationAnnotation2.ID, int64(0))
 
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  dashboard.ID,
 				From:         0,
@@ -182,7 +182,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err := store.AddMany(context.Background(), items)
 
 			require.NoError(t, err)
-			query := &annotations.ItemQuery{OrgID: 100, SignedInUser: testUser}
+			query := annotations.ItemQuery{OrgID: 100, SignedInUser: testUser}
 			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -209,7 +209,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			err := store.AddMany(context.Background(), items)
 
 			require.NoError(t, err)
-			query := &annotations.ItemQuery{OrgID: 101, SignedInUser: testUser}
+			query := annotations.ItemQuery{OrgID: 101, SignedInUser: testUser}
 			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
 			inserted, err := store.Get(context.Background(), query, accRes)
 			require.NoError(t, err)
@@ -217,7 +217,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can query for annotation by id", func(t *testing.T) {
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				AnnotationID: annotation2.ID,
 				SignedInUser: testUser,
@@ -237,7 +237,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         12,
@@ -253,7 +253,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         1,
@@ -270,7 +270,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         1,
@@ -287,7 +287,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         1,
@@ -301,7 +301,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 		t.Run("Should find two annotations using partial match", func(t *testing.T) {
 			accRes := &annotation_ac.AccessResources{CanAccessOrgAnnotations: true}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				From:         1,
 				To:           25,
@@ -318,7 +318,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				Dashboards:               map[string]int64{"foo": 1},
 				CanAccessDashAnnotations: true,
 			}
-			items, err := store.Get(context.Background(), &annotations.ItemQuery{
+			items, err := store.Get(context.Background(), annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         1,
@@ -331,7 +331,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can update annotation and remove all tags", func(t *testing.T) {
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         0,
@@ -366,7 +366,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can update annotation with new tags", func(t *testing.T) {
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         0,
@@ -399,7 +399,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can update annotation with additional tags", func(t *testing.T) {
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         0,
@@ -432,7 +432,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can update annotations with data", func(t *testing.T) {
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         0,
@@ -468,7 +468,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Can delete annotation", func(t *testing.T) {
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				DashboardID:  1,
 				From:         0,
@@ -512,7 +512,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 				CanAccessDashAnnotations: true,
 			}
 
-			query := &annotations.ItemQuery{
+			query := annotations.ItemQuery{
 				OrgID:        1,
 				AnnotationID: annotation3.ID,
 				SignedInUser: testUser,
@@ -531,7 +531,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by key", func(t *testing.T) {
-			result, err := store.GetTags(context.Background(), &annotations.TagsQuery{
+			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "server",
 			})
@@ -542,7 +542,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should find tags by value", func(t *testing.T) {
-			result, err := store.GetTags(context.Background(), &annotations.TagsQuery{
+			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 1,
 				Tag:   "outage",
 			})
@@ -555,7 +555,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags in other org", func(t *testing.T) {
-			result, err := store.GetTags(context.Background(), &annotations.TagsQuery{
+			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "server-1",
 			})
@@ -564,7 +564,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		})
 
 		t.Run("Should not find tags that do not exist", func(t *testing.T) {
-			result, err := store.GetTags(context.Background(), &annotations.TagsQuery{
+			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 0,
 				Tag:   "unknown:tag",
 			})
@@ -650,7 +650,7 @@ func benchmarkFindTags(b *testing.B, numAnnotations int) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		result, err := store.GetTags(context.Background(), &annotations.TagsQuery{
+		result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 			OrgID: 1,
 			Tag:   "outage",
 		})

@@ -312,11 +312,12 @@ export function Editor({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => css`
-  label: grafana-select-option-description;
-  font-weight: normal;
-  font-style: italic;
-  color: ${theme.colors.text.secondary};
-`;
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    label: 'grafana-select-option-description',
+    fontWeight: 'normal',
+    fontStyle: 'italic',
+    color: theme.colors.text.secondary,
+  });
 
 export const VisualMetricQueryEditor = React.memo(Editor);

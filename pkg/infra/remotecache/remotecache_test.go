@@ -92,7 +92,7 @@ func TestCollectUsageStats(t *testing.T) {
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
-	cfg.RemoteCache = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
+	cfg.RemoteCacheOptions = &setting.RemoteCacheSettings{Name: redisCacheType, Encryption: true}
 
 	remoteCache := &RemoteCache{cfg: cfg}
 

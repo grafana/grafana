@@ -1,17 +1,19 @@
 import { act, fireEvent } from '@testing-library/react';
 
-import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
+import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
+import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { scopesSelectorScene } from '../../instance';
 
 import {
+  dashboardReloadSpy,
   fetchDashboardsSpy,
   fetchNodesSpy,
   fetchScopeSpy,
   fetchSelectedScopesSpy,
   getMock,
-  locationReloadSpy,
 } from './mocks';
 import {
   getDashboardFolderExpand,
@@ -40,7 +42,7 @@ export const clearMocks = () => {
   fetchScopeSpy.mockClear();
   fetchSelectedScopesSpy.mockClear();
   fetchDashboardsSpy.mockClear();
-  locationReloadSpy.mockClear();
+  dashboardReloadSpy.mockClear();
   getMock.mockClear();
 };
 
@@ -87,7 +89,24 @@ export const expandDashboardFolder = (folder: string) => click(() => getDashboar
 export const enterEditMode = async (dashboardScene: DashboardScene) =>
   act(async () => dashboardScene.onEnterEditMode());
 
-export const getDashboardDTO = async () => {
-  setDashboardAPI(undefined);
-  await getDashboardAPI().getDashboardDTO('1');
+export const updateTimeRange = async (
+  dashboardScene: DashboardScene,
+  from: DateTime | string = 'now-6h',
+  to: DateTime | string = 'now',
+  timeZone: TimeZone = defaultTimeZone
+) =>
+  act(async () =>
+    sceneGraph
+      .getTimeRange(dashboardScene)
+      .onTimeRangeChange(makeTimeRange(dateMath.parse(from, false, timeZone)!, dateMath.parse(to, false, timeZone)!))
+  );
+
+export const updateVariable = async (dashboardScene: DashboardScene, name: string, value: VariableValue) => {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const variable = sceneGraph.lookupVariable(name, dashboardScene) as MultiValueVariable;
+
+  return act(async () => variable.changeValueTo(value));
 };
+
+export const updateMyVar = async (dashboardScene: DashboardScene, value: '1' | '2') =>
+  updateVariable(dashboardScene, 'myVar', value);

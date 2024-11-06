@@ -18,6 +18,8 @@ import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVari
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
+const DEFAULT_DATASOURCE = 'default';
+
 export function createVariablesForDashboard(oldModel: DashboardModel) {
   const variableObjects = oldModel.templating.list
     .map((v) => {
@@ -189,6 +191,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       isMulti: variable.multi,
       hide: variable.hide,
+      defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
     });
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
