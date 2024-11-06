@@ -7,7 +7,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 export const MENU_ITEM_FONT_SIZE = 14;
 export const MENU_ITEM_FONT_WEIGHT = 500;
 export const MENU_ITEM_PADDING_X = 8;
-export const MENU_ITEM_LINE_HEIGHT = 22;
+export const MENU_ITEM_LINE_HEIGHT = 1.5;
+
+// Used with Downshift to get the height of each item
+export const MENU_OPTION_HEIGHT = MENU_ITEM_PADDING_X * 2 + MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;
+export const POPOVER_MAX_HEIGHT = MENU_OPTION_HEIGHT * 8.5;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
@@ -85,7 +89,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         borderRadius: theme.shape.radius.default,
         content: '" "',
         display: 'block',
-        height: MENU_ITEM_PADDING_X * 2 + MENU_ITEM_LINE_HEIGHT,
+        height: MENU_OPTION_HEIGHT,
         position: 'absolute',
         width: theme.spacing(0.5),
         left: 0,
