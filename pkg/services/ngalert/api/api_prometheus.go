@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -331,8 +332,22 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleNamesSet[rn] = struct{}{}
 	}
 
+	var maxGroups int
+	if maxGroupsVal := opts.Query.Get("group_limit"); maxGroupsVal != "" {
+		maxGroups, err = strconv.Atoi(maxGroupsVal)
+		if err != nil || maxGroups < 0 {
+			ruleResponse.DiscoveryBase.Status = "error"
+			ruleResponse.DiscoveryBase.Error = err.Error()
+			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+			return ruleResponse
+		}
+	}
+	nextToken := opts.Query.Get("group_next_token")
+
 	groupedRules := getGroupedRules(ruleList, ruleNamesSet)
 	rulesTotals := make(map[string]int64, len(groupedRules))
+	var newToken string
+	foundToken := false
 	for groupKey, rules := range groupedRules {
 		folder, ok := opts.Namespaces[groupKey.NamespaceUID]
 		if !ok {
@@ -348,6 +363,19 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 		if !ok {
 			continue
+		}
+
+		if nextToken != "" && !foundToken {
+			if nextToken != getRuleGroupNextToken(folder, groupKey.RuleGroup) {
+				continue
+			}
+			fmt.Println("FAZ FOUND TOKEN: ", folder, groupKey.RuleGroup)
+			foundToken = true
+		}
+
+		if maxGroups > 0 && len(ruleResponse.Data.RuleGroups) == maxGroups {
+			newToken = getRuleGroupNextToken(folder, groupKey.RuleGroup)
+			break
 		}
 
 		ruleGroup, totals := toRuleGroup(log, manager, status, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
@@ -367,6 +395,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleResponse.Data.RuleGroups = append(ruleResponse.Data.RuleGroups, *ruleGroup)
 	}
 
+	ruleResponse.Data.NextToken = newToken
 	ruleResponse.Data.Totals = rulesTotals
 
 	// Sort Rule Groups before checking limits
@@ -376,6 +405,10 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	}
 
 	return ruleResponse
+}
+
+func getRuleGroupNextToken(namespace, group string) string {
+	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
 }
 
 func getGroupedRules(ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule {

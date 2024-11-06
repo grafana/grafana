@@ -664,6 +664,110 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
+	t.Run("when requesting rules with pagination", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		// Generate 9 rule groups across 3 namespaces
+		// Added in reverse order so we can check that
+		// they are sorted when returned
+		allRules := make([]*ngmodels.AlertRule, 0, 9)
+		for i := 8; i >= 0; i-- {
+			rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    fmt.Sprintf("rule_group_%d", i),
+				NamespaceUID: fmt.Sprintf("namespace_%d", i/9),
+				OrgID:        orgID,
+			})).GenerateManyRef(1)
+
+			allRules = append(allRules, rules...)
+			ruleStore.PutRule(context.Background(), rules...)
+		}
+
+		api := PrometheusSrv{
+			log:     log.NewNopLogger(),
+			manager: fakeAIM,
+			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
+			store:   ruleStore,
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		}
+
+		permissions := createPermissionsForRules(allRules, orgID)
+		user := &user.SignedInUser{
+			OrgID:       orgID,
+			Permissions: permissions,
+		}
+		c := &contextmodel.ReqContext{
+			SignedInUser: user,
+		}
+
+		t.Run("should return all groups when not specifying max_groups query param", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 9)
+			for i := 0; i < 9; i++ {
+				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				require.NoError(t, err)
+				require.Equal(t, folder.Fullpath, result.Data.RuleGroups[i].File)
+				require.Equal(t, fmt.Sprintf("rule_group_%d", i), result.Data.RuleGroups[i].Name)
+			}
+		})
+
+		t.Run("should return group_limit number of groups in each call", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=2", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.NotEmpty(t, result.Data.NextToken)
+			token := result.Data.NextToken
+
+			for i := 0; i < 3; i++ {
+				fmt.Println("FAZ: ", i)
+				r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?group_limit=2&group_next_token=%s", token), nil)
+				require.NoError(t, err)
+
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2)
+				require.NotEmpty(t, result.Data.NextToken)
+				token = result.Data.NextToken
+			}
+
+			// Final page should only return a single group and no token
+			r, err = http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?group_limit=2&group_next_token=%s", token), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp = api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result = &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			require.Empty(t, result.Data.NextToken)
+		})
+	})
+
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
