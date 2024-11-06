@@ -170,7 +170,6 @@ Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
 {
   "name": "MyTestTeam",
   "email": "email@test.com",
-  "orgId": 2
 }
 ```
 
