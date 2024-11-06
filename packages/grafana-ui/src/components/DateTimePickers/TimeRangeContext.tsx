@@ -42,7 +42,15 @@ export function TimeRangeProvider({ children }: { children: ReactNode }) {
       sync: (value: TimeRange) => setSyncedValue(value),
       unSync: () => setSyncedValue(undefined),
       addPicker: () => setPickersCount((val) => val + 1),
-      removePicker: () => setPickersCount((val) => val - 1),
+      removePicker: () => {
+        setPickersCount((val) => {
+          const newVal = val - 1;
+          if (newVal < 2) {
+            setSyncedValue(undefined);
+          }
+          return newVal;
+        });
+      },
       syncPossible: pickersCount > 1,
       synced: Boolean(syncedValue),
       syncedValue,

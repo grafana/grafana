@@ -692,8 +692,8 @@ embed.go @grafana/grafana-as-code
 /.github/dependabot.yml @grafana/frontend-ops
 /.github/issue-opened.json @grafana/grafana-community-support
 /.github/metrics-collector.json @torkelo
-/.github/pr-checks.json @marefr
-/.github/pr-commands.json @marefr
+/.github/pr-checks.json @tolzhabayev
+/.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
@@ -714,12 +714,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/issue-labeled.yml @armandgrillet
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
-/.github/workflows/milestone.yml @marefr
-/.github/workflows/pr-checks.yml @marefr
+/.github/workflows/milestone.yml @tolzhabayev
+/.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
-/.github/workflows/pr-commands.yml @marefr
+/.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
