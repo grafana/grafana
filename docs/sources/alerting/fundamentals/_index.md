@@ -114,7 +114,7 @@ In the alert rule, you can choose a contact point to receive the alert notificat
 
 ### Notification policies
 
-[Notification policies](ref:notification-policies) provide a flexible method to handle alert notifications for larger systems.
+[Notification policies](ref:notification-policies) is an advanced option to handle alert notifications for larger systems.
 
 Notification policies routes alerts to contact points via label matching. Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
 
