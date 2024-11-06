@@ -3324,7 +3324,6 @@ go.opencensus.io v0.22.5/go.mod h1:5pWMHQbX5EPX2/62yrJeAkowc+lfs/XD7Uxpq3pI6kk=
 go.opencensus.io v0.23.0/go.mod h1:XItmlyltB5F7CS4xOC1DcqMoFqwtC6OG2xF7mCv7P7E=
 go.opencensus.io v0.24.0 h1:y73uSU6J157QMP2kn2r30vwW1A2W2WFwSCGnAVxeaD0=
 go.opencensus.io v0.24.0/go.mod h1:vNK8G9p7aAivkbmorf4v+7Hgx+Zs0yY+0fOtgBfjQKo=
-go.opentelemetry.io/collector v0.102.1 h1:M/ciCcReQsSDYG9bJ2Qwqk7pQILDJ2bM/l0MdeCAvJE=
 go.opentelemetry.io/collector/featuregate v1.5.0/go.mod h1:w7nUODKxEi3FLf1HslCiE6YWtMtOOrMnSwsDam8Mg9w=
 go.opentelemetry.io/collector/featuregate v1.9.0 h1:mC4/HnR5cx/kkG1RKOQAvHxxg5Ktmd9gpFdttPEXQtA=
 go.opentelemetry.io/collector/featuregate v1.9.0/go.mod h1:PsOINaGgTiFc+Tzu2K/X2jP+Ngmlp7YKGV1XrnBkH7U=
