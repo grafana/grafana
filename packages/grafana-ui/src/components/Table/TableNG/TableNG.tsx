@@ -232,7 +232,7 @@ export function TableNG(props: TableNGProps) {
       const values = frame.fields.map(f => f.values);
 
       for (let i = 0; i < frame.length; i++) {
-        rows[i] = {${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
       }
 
       return rows;
