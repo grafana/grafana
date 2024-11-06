@@ -294,7 +294,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			Fingerprint:    labelFingerprint(sanitizedLabels),
+			Fingerprint:    calculateFingerprint(state.Labels),
 			RuleTitle:      rule.Title,
 			RuleID:         rule.ID,
 			RuleUID:        rule.UID,
@@ -321,6 +321,12 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 		Stream: labels,
 		Values: samples,
 	}
+}
+
+func calculateFingerprint(labels data.Labels) string {
+	cpLabels := labels.Copy()
+	delete(cpLabels, "__alert_rule_namespace_uid__")
+	return labelFingerprint(cpLabels)
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream Stream, logger log.Logger) error {
