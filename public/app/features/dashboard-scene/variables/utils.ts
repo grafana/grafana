@@ -1,7 +1,6 @@
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { GraphEdge, GraphNode, getPropsWithVariable } from 'app/features/variables/inspect/utils';
-
-import { DashboardScene } from '../scene/DashboardScene';
 
 export function createDependencyNodes(variables: Array<SceneVariable<SceneVariableState>>): GraphNode[] {
   return variables.map((variable) => ({ id: variable.state.name, label: `${variable.state.name}` }));
@@ -41,17 +40,16 @@ export interface UsagesToNetwork {
   showGraph: boolean;
 }
 
-export function createUsagesNetwork(variables: Array<SceneVariable<SceneVariableState>>, dashboard: DashboardScene) {
+export function createUsagesNetwork(variables: Array<SceneVariable<SceneVariableState>>, dashboard: Dashboard) {
   if (!dashboard) {
     return [];
   }
 
   let usages: VariableUsageTree[] = [];
-  const model = dashboard.getInitialSaveModel();
 
   for (const variable of variables) {
     const variableId = variable.state.name;
-    const props = getPropsWithVariable(variableId, { key: 'model', value: model }, {});
+    const props = getPropsWithVariable(variableId, { key: 'model', value: dashboard }, {});
 
     if (Object.keys(props).length) {
       usages.push({ variable, tree: props });

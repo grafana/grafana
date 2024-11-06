@@ -6,6 +6,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
 import { createUsagesNetwork, transformUsagesToNetwork } from '../variables/utils';
 
@@ -202,9 +203,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
   };
 
   public getUsagesNetwork = () => {
-    const usages = createUsagesNetwork(this.getVariables(), this.getDashboard());
+    const model = transformSceneToSaveModel(this.getDashboard());
+    const usages = createUsagesNetwork(this.getVariables(), model);
     const usagesNetwork = transformUsagesToNetwork(usages);
-
     return usagesNetwork;
   };
 }
