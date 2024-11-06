@@ -184,6 +184,19 @@ func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.
 	newState.EndsAt = existingState.EndsAt
 	newState.ResolvedAt = existingState.ResolvedAt
 	newState.LastSentAt = existingState.LastSentAt
+	// if the current state is "data source error" then it may have additional labels that may not exist in the new state.
+	// See https://github.com/grafana/grafana/blob/c7fdf8ce706c2c9d438f5e6eabd6e580bac4946b/pkg/services/ngalert/state/state.go#L161-L163
+	// copy known labels over to the new instance, it can help reduce flapping
+	// TODO fix this?
+	if existingState.State == eval.Error && result.State == eval.Error {
+		setIfExist := func(lbl string) {
+			if v, ok := existingState.Labels[lbl]; ok {
+				newState.Labels[lbl] = v
+			}
+		}
+		setIfExist("datasource_uid")
+		setIfExist("ref_id")
+	}
 	return &newState
 }
 
