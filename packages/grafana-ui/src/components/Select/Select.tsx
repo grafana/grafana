@@ -16,7 +16,7 @@ export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
 
 export function MultiSelect<T, Rest = {}>(props: MultiSelectCommonProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase {...props} isMulti menuShouldBlockScroll={false} />;
+  return <SelectBase {...props} isMulti />;
 }
 
 export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options'>, SelectAsyncProps<T> {
@@ -43,7 +43,7 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
 
 export function AsyncMultiSelect<T, Rest = {}>(props: AsyncMultiSelectProps<T> & Rest) {
   // @ts-ignore
-  return <SelectBase {...props} isMulti menuShouldBlockScroll={false} />;
+  return <SelectBase {...props} isMulti />;
 }
 
 export { SelectContainer, type SelectContainerProps };
