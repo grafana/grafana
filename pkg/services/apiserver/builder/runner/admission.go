@@ -30,13 +30,9 @@ func (b *appBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 	}
 
 	obj := a.GetObject()
-	if obj == nil {
-		return errors.New("object is nil")
+	if obj != nil && resp.UpdatedObject != nil {
+		reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(resp.UpdatedObject).Elem())
 	}
-	if resp.UpdatedObject == nil {
-		return errors.New("updated object is nil")
-	}
-	reflect.ValueOf(obj).Elem().Set(reflect.ValueOf(resp.UpdatedObject).Elem())
 
 	return nil
 }
