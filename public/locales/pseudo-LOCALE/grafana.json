@@ -456,6 +456,9 @@
     },
     "custom-value": {
       "create": "Cřęäŧę čūşŧőm väľūę"
+    },
+    "options": {
+      "no-found": "Ńő őpŧįőŉş ƒőūŉđ."
     }
   },
   "command-palette": {

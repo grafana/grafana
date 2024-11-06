@@ -456,6 +456,9 @@
     },
     "custom-value": {
       "create": "Create custom value"
+    },
+    "options": {
+      "no-found": "No options found."
     }
   },
   "command-palette": {
