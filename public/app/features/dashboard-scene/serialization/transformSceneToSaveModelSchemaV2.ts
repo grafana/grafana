@@ -1,4 +1,4 @@
-import { behaviors, SceneDataTransformer, VizPanel } from '@grafana/scenes';
+import { behaviors, SceneDataQuery, SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
 import {
@@ -12,6 +12,9 @@ import {
   DashboardLink,
   DashboardCursorSync,
   DataTransformerConfig,
+  PanelQuerySpec,
+  DataQueryKind,
+  defaultDataSourceRef,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -227,16 +230,40 @@ function getPanelLinks(panel: VizPanel): DashboardLink[] {
   return [];
 }
 
-function getVizPanelQueries(panel: VizPanel): PanelQueryKind[] {
+function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   const queries: PanelQueryKind[] = [];
-  //FIXME: Mocking the queries
-  const query = {
-    kind: 'PanelQuery',
-    spec: {},
-  } as PanelQueryKind;
-  queries.push(query);
+  const queryRunner = getQueryRunnerFor(vizPanel);
+  const vizPanelQueries = queryRunner?.state.queries;
+  const datasource = queryRunner?.state.datasource;
+
+  if (vizPanelQueries) {
+    vizPanelQueries.forEach((query) => {
+      const dataQuery: DataQueryKind = {
+        kind: getDataQueryKind(query),
+        spec: query,
+      }
+      const querySpec: PanelQuerySpec = {
+        datasource: datasource ?? defaultDataSourceRef(),
+        query: dataQuery,
+        refId: query.refId,
+        hidden: query.hidden,
+      };
+      queries.push({
+        kind: 'PanelQuery',
+        spec: querySpec,
+      });
+    });
+  }
   return queries;
 }
+
+function getDataQueryKind(query: SceneDataQuery): string {
+  // FIXME kind in the query object is the datasource type?
+  // what if the datasource is not set?
+  // should we use default datasource type?
+  return query.datasource?.type ?? '';
+}
+
 
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
