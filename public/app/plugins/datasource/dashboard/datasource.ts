@@ -78,7 +78,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return sourceDataProvider!.getResultsStream!().pipe(
         map((result) => {
           return {
-            data: result.data.series,
+            data: [...result.data.series, ...(result.data.annotations ?? [])],
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,

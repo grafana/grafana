@@ -29,7 +29,67 @@ func TestIndexDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
-	assertSearchCountEquals(t, index, "*", 1)
+	assertSearchCountEquals(t, index, "*", nil, 1)
+}
+
+func TestIndexFolder(t *testing.T) {
+	data := readTestData(t, "folder-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 1)
+	assertSearchCountEquals(t, index, "*", nil, 1)
+}
+
+func TestSearchFolder(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
+	folder := readTestData(t, "folder-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: folder}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 2)
+	assertSearchCountEquals(t, index, "*", []string{"folder"}, 1)
+}
+
+func TestSearchDashboardsAndFoldersOnly(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
+	folder := readTestData(t, "folder-resource.json")
+	playlist := readTestData(t, "playlist-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: folder}, {Value: playlist}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 3)
+	assertSearchCountEquals(t, index, "*", []string{"dashboard", "folder"}, 2)
+}
+
+func TestLookupNames(t *testing.T) {
+	records := 1000
+	folders, ids := simulateFolders(records)
+	list := &ListResponse{Items: []*ResourceWrapper{}}
+	for _, f := range folders {
+		list.Items = append(list.Items, &ResourceWrapper{Value: []byte(f)})
+	}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, uint64(records))
+	query := ""
+	chunk := ids[:100] // query for n folders by id
+	for _, id := range chunk {
+		query += `"` + id + `" `
+	}
+	assertSearchCountEquals(t, index, query, nil, int64(len(chunk)))
 }
 
 func TestIndexDashboardWithTags(t *testing.T) {
@@ -42,8 +102,8 @@ func TestIndexDashboardWithTags(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 2)
-	assertSearchCountEquals(t, index, "tag1", 2)
-	assertSearchCountEquals(t, index, "tag4", 1)
+	assertSearchCountEquals(t, index, "tag1", nil, 2)
+	assertSearchCountEquals(t, index, "tag4", nil, 1)
 	assertSearchGroupCountEquals(t, index, "*", "tags", 4)
 	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
 }
@@ -141,10 +201,13 @@ func assertCountEquals(t *testing.T, index *Index, expected uint64) {
 	assert.Equal(t, expected, total)
 }
 
-func assertSearchCountEquals(t *testing.T, index *Index, search string, expected int64) {
-	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0}
+func assertSearchCountEquals(t *testing.T, index *Index, search string, kind []string, expected int64) {
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Kind: kind}
+	start := time.Now()
 	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
+	elapsed := time.Since(start)
+	fmt.Println("Search time:", elapsed)
 	assert.Equal(t, expected, int64(len(results.Values)))
 }
 
@@ -162,4 +225,28 @@ func readTestData(t *testing.T, name string) []byte {
 	data, err := os.ReadFile("./testdata/" + name)
 	require.NoError(t, err)
 	return data
+}
+
+func simulateFolders(size int) ([]string, []string) {
+	folders := []string{}
+	ids := []string{}
+	for i := 0; i < size; i++ {
+		id := "folder-" + strconv.Itoa(i)
+		folder := `{
+			"kind": "Folder",
+			"title": "test",
+			"metadata": {
+				"uid": "` + id + `",
+				"name": "folder-` + strconv.Itoa(i) + `",
+				"namespace": "default"
+			},
+			"spec": {
+				"title": "test",
+				"description": "test"
+			}
+		}`
+		folders = append(folders, folder)
+		ids = append(ids, id)
+	}
+	return folders, ids
 }

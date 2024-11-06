@@ -731,6 +731,10 @@ const (
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
 
+	// FlagEnableScopesInMetricsExplore
+	// Enables the scopes usage in Metrics Explore
+	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
+
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
 	FlagAlertingApiServer = "alertingApiServer"
@@ -846,4 +850,12 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagExploreMetricsRelatedLogs
+	// Display Related Logs in Explore Metrics
+	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagEnableExtensionsAdminPage
+	// Enables the extension admin page regardless of development mode
+	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
 )

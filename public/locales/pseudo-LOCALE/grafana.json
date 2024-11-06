@@ -1055,6 +1055,13 @@
       "noMatchingValue": "Ńő väľūęş ƒőūŉđ mäŧčĥįŉģ; {{filter}}",
       "sortBy": "Ŝőřŧ þy"
     },
+    "related-logs": {
+      "docsLink": "Ŀőĸį Ŗęčőřđįŉģ Ŗūľę",
+      "openExploreLogs": "Øpęŉ Ēχpľőřę Ŀőģş",
+      "relatedLogsUnavailableAfterDocsLink": ", őř čĥęčĸ þäčĸ ľäŧęř äş ŵę ęχpäŉđ ŧĥę väřįőūş męŧĥőđş ƒőř ęşŧäþľįşĥįŉģ čőŉŉęčŧįőŉş þęŧŵęęŉ męŧřįčş äŉđ ľőģş.",
+      "relatedLogsUnavailableBeforeDocsLink": "Ŗęľäŧęđ ľőģş äřę ŉőŧ äväįľäþľę ƒőř ŧĥįş męŧřįč. Ŧřy şęľęčŧįŉģ ä męŧřįč čřęäŧęđ þy ä ",
+      "warnExperimentalFeature": "Ŗęľäŧęđ ľőģş įş äŉ ęχpęřįmęŉŧäľ ƒęäŧūřę."
+    },
     "viewBy": "Vįęŵ þy"
   },
   "export": {
@@ -2172,6 +2179,12 @@
         "name-header": "Ńämę",
         "update-header": "Ůpđäŧę",
         "update-status-text": "pľūģįŉş ūpđäŧęđ"
+      },
+      "versions": {
+        "confirmation-text-1": "Åřę yőū řęäľľy şūřę yőū ŵäŉŧ ŧő đőŵŉģřäđę ŧő vęřşįőŉ",
+        "confirmation-text-2": "Ÿőū şĥőūľđ ŉőřmäľľy ŉőŧ þę đőįŉģ ŧĥįş",
+        "downgrade-confirm": "Đőŵŉģřäđę",
+        "downgrade-title": "Đőŵŉģřäđę pľūģįŉ vęřşįőŉ"
       }
     },
     "details": {
