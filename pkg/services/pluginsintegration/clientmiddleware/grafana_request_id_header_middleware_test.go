@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -26,7 +26,7 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
 		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
 		cfg.IPRangeACSecretKey = "secret"
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context: &web.Context{Req: &http.Request{
@@ -35,7 +35,7 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 			SignedInUser: &user.SignedInUser{},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL: "https://logs.grafana.net",
@@ -68,14 +68,14 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
 		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
 		cfg.IPRangeACSecretKey = "secret"
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL: "https://logs.not-grafana.net",
@@ -93,14 +93,14 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
 		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
 		cfg.IPRangeACSecretKey = "secret"
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL: "https://logs.grafana.net/abc/../some/path",
@@ -118,14 +118,14 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		allowedURL := &url.URL{Scheme: "https", Host: "logs.grafana.net"}
 		cfg.IPRangeACAllowedURLs = []*url.URL{allowedURL}
 		cfg.IPRangeACSecretKey = "secret"
-		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+		cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
 			Context:      &web.Context{Req: &http.Request{}},
 			SignedInUser: &user.SignedInUser{},
 		})
 
-		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+		err := cdt.MiddlewareHandler.CallResource(ctx, &backend.CallResourceRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL: "https://logs.grafana.net",

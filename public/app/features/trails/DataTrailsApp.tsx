@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -8,7 +8,6 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
-import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
@@ -32,23 +31,24 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
     const { trail, home } = model.useState();
 
     return (
-      <Switch>
+      <Routes>
+        {/* The routes are relative to the HOME_ROUTE */}
         <Route
-          exact={true}
-          path={HOME_ROUTE}
-          render={() => (
+          path={'/'}
+          element={
             <Page
               navId="explore/metrics"
               layout={PageLayoutType.Standard}
-              renderTitle={() => <MetricsHeader />}
+              // Returning null to prevent default behavior which renders a header
+              renderTitle={() => null}
               subTitle=""
             >
               <home.Component model={home} />
             </Page>
-          )}
+          }
         />
-        <Route exact={true} path={TRAILS_ROUTE} render={() => <DataTrailView trail={trail} />} />
-      </Switch>
+        <Route path={TRAILS_ROUTE.replace(HOME_ROUTE, '')} element={<DataTrailView trail={trail} />} />
+      </Routes>
     );
   };
 }
@@ -59,7 +59,9 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
 
   useEffect(() => {
     if (!isInitialized) {
-      getTrailStore().setRecentTrail(trail);
+      if (trail.state.metric !== undefined) {
+        getTrailStore().setRecentTrail(trail);
+      }
       setIsInitialized(true);
     }
   }, [trail, isInitialized]);

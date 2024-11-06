@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/gcomsso"
@@ -29,7 +30,7 @@ type Registration struct{}
 func ProvideRegistration(
 	cfg *setting.Cfg, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
-	accessControlService accesscontrol.Service,
+	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService, userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
@@ -109,7 +110,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
-	rbacSync := sync.ProvideRBACSync(accessControlService, tracer)
+	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)

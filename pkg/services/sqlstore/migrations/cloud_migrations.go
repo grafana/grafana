@@ -158,4 +158,28 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	// -- delete the snapshot result column while still in the experimental phase
 	mg.AddMigration("delete cloud_migration_snapshot.result column", NewRawSQLMigration("ALTER TABLE cloud_migration_snapshot DROP COLUMN result"))
+
+	mg.AddMigration("add cloud_migration_resource.name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "name",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add cloud_migration_resource.parent_name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "parent_name",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add cloud_migration_resource.error_code column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "error_code",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
+
+	// -- increase the length of resource_uid column
+	// -- not needed in sqlite as type is TEXT with length defined by SQLITE_MAX_LENGTH preprocessor macro
+	mg.AddMigration("increase resource_uid column length", NewRawSQLMigration("").
+		Mysql("ALTER TABLE cloud_migration_resource MODIFY resource_uid NVARCHAR(255);").
+		Postgres("ALTER TABLE cloud_migration_resource ALTER COLUMN resource_uid TYPE VARCHAR(255);"))
 }

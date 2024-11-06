@@ -162,7 +162,7 @@ export const InfiniteScroll = ({
     <>
       {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
-      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && (
+      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && loadMoreLogs && (
         <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
           <div className={styles.navButtonContent}>
             <Icon name="angle-up" size="lg" />

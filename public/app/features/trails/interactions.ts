@@ -1,7 +1,7 @@
 import { AdHocVariableFilter } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { BreakdownLayoutType } from './ActionTabs/types';
+import { BreakdownLayoutType } from './Breakdown/types';
 import { TrailStepType } from './DataTrailsHistory';
 import { ActionViewType } from './shared';
 
@@ -18,6 +18,7 @@ type Interactions = {
       // By clicking on the label selector at the top of the breakdown
       | 'selector'
     );
+    otel_resource_attribute?: boolean;
   };
   // User changed a label filter.
   label_filter_changed: {
@@ -84,6 +85,13 @@ type Interactions = {
       | 'open_from_embedded'
     );
   };
+  // User clicks on one of the action buttons associated with related logs
+  related_logs_action_clicked: {
+    action: (
+      // Opens Explore Logs
+      | 'open_explore_logs'
+    );
+  };
   // User selects a metric
   metric_selected: {
     from: (
@@ -110,6 +118,11 @@ type Interactions = {
       | 'close'
     )
   };
+  sorting_changed: {
+      // type of sorting
+      sortBy: string
+  };
+  wasm_not_supported: {},
 };
 
 const PREFIX = 'grafana_explore_metrics_';

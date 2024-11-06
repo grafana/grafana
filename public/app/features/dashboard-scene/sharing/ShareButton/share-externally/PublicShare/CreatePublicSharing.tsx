@@ -14,7 +14,7 @@ import { AccessControlAction } from 'app/types';
 import { PublicDashboardAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
 
-const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally.Creation;
 
 export default function CreatePublicSharing({ hasError }: { hasError: boolean }) {
   const { dashboard, onDismiss } = useShareDrawerContext();
@@ -48,13 +48,14 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
                 'public-dashboard.public-sharing.public-ack',
                 'I understand that this entire dashboard will be public.*'
               )}
+              data-testid={selectors.willBePublicCheckbox}
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
-            <Button type="submit" disabled={!isValid} data-testid={selectors.CreateButton}>
+            <Button type="submit" disabled={!isValid} data-testid={selectors.PublicShare.createButton}>
               <Trans i18nKey="public-dashboard.public-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={onDismiss}>
+            <Button variant="secondary" onClick={onDismiss} data-testid={selectors.PublicShare.cancelButton}>
               <Trans i18nKey="public-dashboard.public-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}

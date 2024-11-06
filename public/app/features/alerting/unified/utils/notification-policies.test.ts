@@ -10,8 +10,6 @@ import {
   unquoteRouteMatchers,
 } from './notification-policies';
 
-import 'core-js/stable/structured-clone';
-
 const CATCH_ALL_ROUTE: Route = {
   receiver: 'ALL',
   object_matchers: [],

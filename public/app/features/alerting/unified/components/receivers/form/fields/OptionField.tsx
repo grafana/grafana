@@ -4,7 +4,17 @@ import { FC, useEffect } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, RadioButtonList, SecretInput, Select, TextArea, useStyles2 } from '@grafana/ui';
+import {
+  Checkbox,
+  Field,
+  Input,
+  RadioButtonList,
+  SecretInput,
+  SecretTextArea,
+  Select,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -222,17 +232,21 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           name={name}
           onSelectTemplate={onSelectTemplate}
         >
-          <TextArea
-            id={id}
-            readOnly={readOnly || useTemplates}
-            invalid={invalid}
-            placeholder={option.placeholder}
-            {...register(name, {
-              required: option.required ? 'Required' : false,
-              validate: (v) =>
-                option.validationRule !== '' ? validateOption(v, option.validationRule, option.required) : true,
-            })}
-          />
+          {isEncryptedInput ? (
+            <SecretTextArea onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+          ) : (
+            <TextArea
+              id={id}
+              readOnly={readOnly || useTemplates}
+              invalid={invalid}
+              placeholder={option.placeholder}
+              {...register(name, {
+                required: option.required ? 'Required' : false,
+                validate: (v) =>
+                  option.validationRule !== '' ? validateOption(v, option.validationRule, option.required) : true,
+              })}
+            />
+          )}
         </WrapWithTemplateSelection>
       );
     case 'string_array':
@@ -280,14 +294,17 @@ const validateOption = (value: string, validationRule: string, required: boolean
 };
 
 const determineRequired = (option: NotificationChannelOption, getValues: any, pathIndex: string) => {
+  const secureFields = getValues(`${pathIndex}secureFields`);
+  const secureSettings = getValues(`${pathIndex}secureSettings`);
+
   if (!option.dependsOn) {
     return option.required ? 'Required' : false;
   }
-  if (isEmpty(getValues(`${pathIndex}secureFields`))) {
-    const dependentOn = getValues(`${pathIndex}secureSettings.${option.dependsOn}`);
-    return !Boolean(dependentOn) && option.required ? 'Required' : false;
+  if (isEmpty(secureFields) || !secureFields[option.dependsOn]) {
+    const dependentOn = Boolean(secureSettings[option.dependsOn]);
+    return !dependentOn && option.required ? 'Required' : false;
   } else {
-    const dependentOn: boolean = getValues(`${pathIndex}secureFields.${option.dependsOn}`);
+    const dependentOn = Boolean(secureFields[option.dependsOn]);
     return !dependentOn && option.required ? 'Required' : false;
   }
 };

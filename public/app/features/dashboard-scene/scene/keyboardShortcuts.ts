@@ -1,4 +1,4 @@
-import { SetPanelAttentionEvent } from '@grafana/data';
+import { locationUtil, SetPanelAttentionEvent } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
@@ -14,6 +14,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -42,7 +43,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
       if (!scene.state.viewPanelScene) {
-        locationService.push(getViewPanelUrl(vizPanel));
+        const url = locationUtil.stripBaseFromUrl(getViewPanelUrl(vizPanel));
+        locationService.push(url);
       }
     }),
   });
@@ -172,7 +174,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         if (sceneRoot instanceof DashboardScene) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           if (!scene.state.editPanel) {
-            locationService.push(getEditPanelUrl(panelId));
+            const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
+            locationService.push(url);
           }
         }
       }),
@@ -214,7 +217,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'd shift+c',
       onTrigger: () => {
-        scene.collapseAllRows();
+        if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.collapseAllRows();
+        }
       },
     });
 
@@ -222,7 +227,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'd shift+e',
       onTrigger: () => {
-        scene.expandAllRows();
+        if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.expandAllRows();
+        }
       },
     });
   }

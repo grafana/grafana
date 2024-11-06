@@ -19,81 +19,77 @@ import * as React from 'react';
 import { TNil } from '../../types';
 import DraggableManager, { DraggableBounds, DraggingUpdate } from '../../utils/DraggableManager';
 
-export const getStyles = () => {
-  return {
-    TimelineColumnResizer: css`
-      left: 0;
-      position: absolute;
-      right: 0;
-      top: 0;
-    `,
-    wrapper: css`
-      bottom: 0;
-      position: absolute;
-      top: 0;
-    `,
-    dragger: css`
-      border-left: 2px solid transparent;
-      cursor: col-resize;
-      height: 5000px;
-      margin-left: -1px;
-      position: absolute;
-      top: 0;
-      width: 1px;
-      z-index: 10;
-      &:hover {
-        border-left: 2px solid rgba(0, 0, 0, 0.3);
-      }
-      &::before {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: -8px;
-        right: 0;
-        content: ' ';
-      }
-    `,
-    draggerDragging: css`
-      background: rgba(136, 0, 136, 0.05);
-      width: unset;
-      &::before {
-        left: -2000px;
-        right: -2000px;
-      }
-    `,
-    draggerDraggingLeft: css`
-      border-left: 2px solid #808;
-      border-right: 1px solid #999;
-    `,
-    draggerDraggingRight: css`
-      border-left: 1px solid #999;
-      border-right: 2px solid #808;
-    `,
-    gripIcon: css`
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      &::before,
-      &::after {
-        border-right: 1px solid #ccc;
-        content: ' ';
-        height: 9px;
-        position: absolute;
-        right: 9px;
-        top: 25px;
-      }
-      &::after {
-        right: 5px;
-      }
-    `,
-    gripIconDragging: css`
-      &::before,
-      &::after {
-        border-right: 1px solid rgba(136, 0, 136, 0.5);
-      }
-    `,
-  };
-};
+export const getStyles = () => ({
+  TimelineColumnResizer: css({
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  }),
+  wrapper: css({
+    bottom: 0,
+    position: 'absolute',
+    top: 0,
+  }),
+  dragger: css({
+    borderLeft: '2px solid transparent',
+    cursor: 'col-resize',
+    height: '5000px',
+    marginLeft: '-1px',
+    position: 'absolute',
+    top: 0,
+    width: '1px',
+    zIndex: 10,
+    '&:hover': {
+      borderLeft: '2px solid rgba(0, 0, 0, 0.3)',
+    },
+    '&::before': {
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: '-8px',
+      right: 0,
+      content: '" "',
+    },
+  }),
+  draggerDragging: css({
+    background: 'rgba(136, 0, 136, 0.05)',
+    width: 'unset',
+    '&::before': {
+      left: -2000,
+      right: -2000,
+    },
+  }),
+  draggerDraggingLeft: css({
+    borderLeft: '2px solid #808',
+    borderRight: '1px solid #999',
+  }),
+  draggerDraggingRight: css({
+    borderLeft: '1px solid #999',
+    borderRight: '2px solid #808',
+  }),
+  gripIcon: css({
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    '&::before, &::after': {
+      borderRight: '1px solid #ccc',
+      content: '" "',
+      height: '9px',
+      position: 'absolute',
+      right: '9px',
+      top: '25px',
+    },
+    '&::after': {
+      right: '5px',
+    },
+  }),
+  gripIconDragging: css({
+    '&::before, &::after': {
+      borderRight: '1px solid rgba(136, 0, 136, 0.5)',
+    },
+  }),
+});
 
 export type TimelineColumnResizerProps = {
   min: number;

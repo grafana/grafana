@@ -62,12 +62,13 @@ import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
-import { contextSrv } from './core/services/context_srv';
+import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
+import { BrowserConsoleBackend } from './core/services/echo/backends/analytics/BrowseConsoleBackend';
 import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
 import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend';
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
@@ -197,6 +198,10 @@ export class GrafanaApp {
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
+
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -322,6 +327,15 @@ function initEchoSrv() {
   }
 
   if (config.grafanaJavascriptAgent.enabled) {
+    // Ignore Rudderstack URLs
+    const rudderstackUrls = [
+      config.rudderstackConfigUrl,
+      config.rudderstackDataPlaneUrl,
+      config.rudderstackIntegrationsUrl,
+    ]
+      .filter(Boolean)
+      .map((url) => new RegExp(`${url}.*.`));
+
     registerEchoBackend(
       new GrafanaJavascriptAgentBackend({
         ...config.grafanaJavascriptAgent,
@@ -334,6 +348,7 @@ function initEchoSrv() {
           id: String(config.bootData.user?.id),
           email: config.bootData.user?.email,
         },
+        ignoreUrls: rudderstackUrls,
       })
     );
   }
@@ -377,6 +392,10 @@ function initEchoSrv() {
       })
     );
   }
+
+  if (config.analyticsConsoleReporting) {
+    registerEchoBackend(new BrowserConsoleBackend());
+  }
 }
 
 /**
@@ -388,6 +407,37 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
   if (metric) {
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
+  }
+}
+
+function handleRedirectTo(): void {
+  const queryParams = locationService.getSearch();
+  const redirectToParamKey = 'redirectTo';
+
+  if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
+    const rawRedirectTo = queryParams.get(redirectToParamKey)!;
+    window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
+    queryParams.delete(redirectToParamKey);
+    window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
+    return;
+  }
+
+  if (!contextSrv.user.isSignedIn) {
+    return;
+  }
+
+  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectTo) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(RedirectToUrlKey);
+  const decodedRedirectTo = decodeURIComponent(redirectTo);
+  if (decodedRedirectTo.startsWith('/goto/')) {
+    // In this case there should be a request to the backend
+    window.location.replace(decodedRedirectTo);
+  } else {
+    locationService.replace(decodedRedirectTo);
   }
 }
 

@@ -18,11 +18,17 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		_, err = s.NewKey("dualWriterMode", "2")
 		assert.NoError(t, err)
 
+		_, err = s.NewKey("dualWriterPeriodicDataSyncJobEnabled", "true")
+		assert.NoError(t, err)
+
 		cfg.setUnifiedStorageConfig()
 
 		value, exists := cfg.UnifiedStorage["playlists.playlist.grafana.app"]
 
 		assert.Equal(t, exists, true)
-		assert.Equal(t, value, UnifiedStorageConfig{DualWriterMode: 2})
+		assert.Equal(t, value, UnifiedStorageConfig{
+			DualWriterMode:                       2,
+			DualWriterPeriodicDataSyncJobEnabled: true,
+		})
 	})
 }

@@ -527,17 +527,26 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	fn := func(payload []byte) ([]byte, error) {
+		return am.decrypt(ctx, payload)
+	}
+
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
 		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+			decrypted, err := gr.DecryptSecureSettings(fn)
+			if err != nil {
+				return nil, 0, err
+			}
+
 			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
 				DisableResolveMessage: gr.DisableResolveMessage,
 				Settings:              json.RawMessage(gr.Settings),
-				SecureSettings:        gr.SecureSettings,
+				SecureSettings:        decrypted,
 			})
 		}
 		receivers = append(receivers, &alertingNotify.APIReceiver{

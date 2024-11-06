@@ -28,6 +28,11 @@ var (
 
 	ErrContactPointReferenced = errutil.Conflict("alerting.notifications.contact-points.referenced", errutil.WithPublicMessage("Contact point is currently referenced by a notification policy."))
 	ErrContactPointUsedInRule = errutil.Conflict("alerting.notifications.contact-points.used-by-rule", errutil.WithPublicMessage("Contact point is currently used in the notification settings of one or many alert rules."))
+
+	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
+		"Invalid format of the submitted route.",
+		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
+	)
 )
 
 // MakeErrTimeIntervalInvalid creates an error with the ErrTimeIntervalInvalid template
@@ -88,5 +93,14 @@ func MakeErrTimeIntervalDependentResourcesProvenance(usedByRoutes bool, rules []
 
 	return ErrTimeIntervalDependentResourcesProvenance.Build(errutil.TemplateData{
 		Public: data,
+	})
+}
+
+func MakeErrRouteInvalidFormat(err error) error {
+	return ErrRouteInvalidFormat.Build(errutil.TemplateData{
+		Public: map[string]any{
+			"Error": err.Error(),
+		},
+		Error: err,
 	})
 }

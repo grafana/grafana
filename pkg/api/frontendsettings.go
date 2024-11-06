@@ -41,7 +41,6 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	hash.Reset()
 	_, _ = hash.Write([]byte(setting.BuildVersion))
 	_, _ = hash.Write([]byte(setting.BuildCommit))
-	_, _ = hash.Write([]byte(fmt.Sprintf("%d", setting.BuildStamp)))
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
@@ -146,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
 			HideFromList:    panel.HideFromList,
@@ -176,6 +176,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagOnPremToCloudMigrations) && hs.Cfg.CloudMigration.IsTarget
+	featureToggles := hs.Features.GetEnabled(c.Req.Context())
+	// this is needed for backwards compatibility with external plugins
+	// we should remove this once we can be sure that no external plugins rely on this
+	featureToggles["topnav"] = true
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
@@ -209,6 +213,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
+		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -227,7 +232,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
+		EnableFrontendSandboxForPlugins:     hs.Cfg.EnableFrontendSandboxForPlugins,
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		CloudMigrationIsTarget:              isCloudMigrationTarget,
@@ -260,7 +265,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
 
-		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		FeatureToggles:                   featureToggles,
 		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		AnonymousDeviceLimit:             hs.Cfg.AnonymousDeviceLimit,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
@@ -454,6 +459,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			JSONData:                  plugin.JSONData,
 			Signature:                 plugin.Signature,
 			Module:                    plugin.Module,
+			ModuleHash:                hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
@@ -539,8 +545,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
 					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-					Angular:   ds.Angular,
+					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
+					BaseURL: ds.BaseURL,
+					Angular: ds.Angular,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -562,6 +569,9 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Preload:         false,
 		Angular:         plugin.Angular,
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
+		Extensions:      plugin.Extensions,
+		Dependencies:    plugin.Dependencies,
+		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 	}
 
 	if settings.Enabled {

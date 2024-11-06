@@ -155,7 +155,7 @@ We also bundle a dashboard within Grafana so you can start viewing your metrics 
 1. Navigate to the data source's [configuration page](ref:configure-prometheus-data-source).
 1. Select the **Dashboards** tab.
 
-This displays dashboards for Grafana and Prometheus.
+   This displays dashboards for Grafana and Prometheus.
 
 1. Select **Import** for the dashboard to import.
 
@@ -170,10 +170,6 @@ If you use an AWS Identity and Access Management (IAM) policy to control access 
 For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
 ### AWS Signature Version 4 authentication
-
-{{% admonition type="note" %}}
-Available in Grafana v7.3.5 and higher.
-{{% /admonition %}}
 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
@@ -203,7 +199,7 @@ Exemplars associate higher-cardinality metadata from a specific event with tradi
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
 {{% /admonition %}}
 
-Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
+Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 

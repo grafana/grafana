@@ -122,6 +122,7 @@ export const XYChartPanel2 = (props: Props2) => {
                     dismiss={dismiss}
                     isPinned={isPinned}
                     seriesIdx={seriesIdx!}
+                    replaceVariables={props.replaceVariables}
                   />
                 );
               }}

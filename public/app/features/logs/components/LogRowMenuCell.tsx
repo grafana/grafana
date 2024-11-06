@@ -1,4 +1,14 @@
-import { memo, FocusEvent, SyntheticEvent, useCallback } from 'react';
+import {
+  memo,
+  FocusEvent,
+  SyntheticEvent,
+  useCallback,
+  ReactNode,
+  useMemo,
+  cloneElement,
+  isValidElement,
+  MouseEvent,
+} from 'react';
 
 import { LogRowContextOptions, LogRowModel, getDefaultTimeRange, locationUtil, urlUtil } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -26,6 +36,8 @@ interface Props {
   mouseIsOver: boolean;
   onBlur: () => void;
   onPinToContentOutlineClick?: (row: LogRowModel, onOpenContext: (row: LogRowModel) => void) => void;
+  addonBefore?: ReactNode[];
+  addonAfter?: ReactNode[];
 }
 
 export const LogRowMenuCell = memo(
@@ -43,13 +55,18 @@ export const LogRowMenuCell = memo(
     mouseIsOver,
     onBlur,
     getRowContextQuery,
+    addonBefore,
+    addonAfter,
   }: Props) => {
-    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
+    const shouldShowContextToggle = useMemo(
+      () => (showContextToggle ? showContextToggle(row) : false),
+      [row, showContextToggle]
+    );
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
       e.stopPropagation();
     }, []);
     const onShowContextClick = useCallback(
-      async (event: SyntheticEvent<HTMLButtonElement, MouseEvent>) => {
+      async (event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
         // if ctrl or meta key is pressed, open query in new Explore tab
         if (
@@ -90,6 +107,21 @@ export const LogRowMenuCell = memo(
       [onBlur]
     );
     const getLogText = useCallback(() => logText, [logText]);
+
+    const beforeContent = useMemo(() => {
+      if (!addonBefore) {
+        return null;
+      }
+      return addClickListenersToNode(addonBefore, row);
+    }, [addonBefore, row]);
+
+    const afterContent = useMemo(() => {
+      if (!addonAfter) {
+        return null;
+      }
+      return addClickListenersToNode(addonAfter, row);
+    }, [addonAfter, row]);
+
     return (
       // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
@@ -108,6 +140,7 @@ export const LogRowMenuCell = memo(
         )}
         {mouseIsOver && (
           <>
+            {beforeContent}
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
@@ -165,11 +198,32 @@ export const LogRowMenuCell = memo(
                 tabIndex={0}
               />
             )}
+            {afterContent}
           </>
         )}
       </span>
     );
   }
 );
+
+type AddonOnClickListener = (event: MouseEvent, row: LogRowModel) => void | undefined;
+function addClickListenersToNode(nodes: ReactNode[], row: LogRowModel) {
+  return nodes.map((node, index) => {
+    if (isValidElement(node)) {
+      const onClick: AddonOnClickListener = node.props.onClick;
+      if (!onClick) {
+        return node;
+      }
+      return cloneElement(node, {
+        // @ts-expect-error
+        onClick: (event: MouseEvent<HTMLElement>) => {
+          onClick(event, row);
+        },
+        key: index,
+      });
+    }
+    return node;
+  });
+}
 
 LogRowMenuCell.displayName = 'LogRowMenuCell';

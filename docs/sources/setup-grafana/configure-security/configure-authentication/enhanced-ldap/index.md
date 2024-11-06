@@ -47,7 +47,7 @@ a user as member of a team, and it will not be removed when the user signs in. T
 
 In the open source version of Grafana, user data from LDAP is synchronized only during the login process when authenticating using LDAP.
 
-With active LDAP synchronization, available in Grafana Enterprise version 6.3 and later, you can configure Grafana to actively sync users with LDAP servers in the background. Only users that have logged into Grafana at least once are synchronized.
+With active LDAP synchronization, you can configure Grafana to actively sync users with LDAP servers in the background. Only users that have logged into Grafana at least once are synchronized.
 
 Users with updated role and team membership will need to refresh the page to get access to the new features.
 

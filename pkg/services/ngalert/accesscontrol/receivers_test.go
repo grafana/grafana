@@ -238,6 +238,65 @@ func TestReceiverAccess(t *testing.T) {
 				recv3.UID: permissions(),
 			},
 		},
+		// Receiver admin.
+		{
+			name: "receiver read permissions alone can't admin",
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversAll}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "receiver write permissions alone can't admin",
+			user: newViewUser(ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversAll}),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
+		{
+			name: "global receiver read + write permissions can admin",
+			user: newViewUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversAll},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversAll},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionAdmin),
+				recv2.UID: permissions(models.ReceiverPermissionAdmin),
+				recv3.UID: permissions(models.ReceiverPermissionAdmin),
+			},
+		},
+		{
+			name: "per-receiver read + write permissions should have per-receiver admin",
+			user: newViewUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(models.ReceiverPermissionAdmin),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(models.ReceiverPermissionAdmin),
+			},
+		},
+		{
+			name: "per-receiver admin should require read",
+			user: newEmptyUser(
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv1.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsRead, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+				ac.Permission{Action: ac.ActionAlertingReceiversPermissionsWrite, Scope: ScopeReceiversProvider.GetResourceScopeUID(recv3.UID)},
+			),
+			expected: map[string]models.ReceiverPermissionSet{
+				recv1.UID: permissions(),
+				recv2.UID: permissions(),
+				recv3.UID: permissions(),
+			},
+		},
 		// Mixed permissions.
 		{
 			name: "legacy provisioning secret read, receiver write",

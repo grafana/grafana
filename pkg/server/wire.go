@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -149,6 +150,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
+	"github.com/grafana/grafana/pkg/services/unifiedSearch"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -229,6 +231,8 @@ var wireBasicSet = wire.NewSet(
 	search.ProvideService,
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
+	unifiedSearch.ProvideService,
+	unifiedSearch.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
@@ -280,7 +284,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,
 	serviceaccountsretriever.ProvideService,
-	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
+	wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
 	serviceaccountsmanager.ProvideServiceAccountsService,
@@ -295,6 +299,8 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardPluginService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
+	folderimpl.ProvideStore,
+	wire.Bind(new(folder.Store), new(*folderimpl.FolderStoreImpl)),
 	folderimpl.ProvideDashboardFolderStore,
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
@@ -315,6 +321,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
+	ossaccesscontrol.ProvideReceiverPermissionsService,
+	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
 	starimpl.ProvideService,
 	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
@@ -383,19 +391,18 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
+	appregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
-	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
@@ -406,13 +413,11 @@ var wireCLISet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
-	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationService)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
@@ -423,14 +428,12 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
-	sqlstore.ProvideServiceWithReadReplicaForTests,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
@@ -444,7 +447,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, ReadReplStore: &sqlstore.ReplStore{}, Cfg: &setting.Cfg{}}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
@@ -469,5 +472,5 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 // Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
-	return &standalone.DummyAPIFactory{}, nil // Wire will replace this with a real interface
+	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }

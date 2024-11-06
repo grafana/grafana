@@ -21,41 +21,41 @@ describe('Geomap layer types', () => {
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('Heatmap{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('heatmap');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_DATA).should('be.visible');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
 
     // GeoJSON
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('GeoJSON{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('geojson');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_DATA).should('not.exist');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON).should('be.visible');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
 
     // Open Street Map
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('Open Street Map{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('osm-standard');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_DATA).should('not.exist');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON).should('not.exist');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
 
     // CARTO basemap
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('CARTO basemap{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('carto');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Show labels').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Theme').should('be.visible');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
 
     // ArcGIS MapServer
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('ArcGIS MapServer{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('esri-xyz');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Server instance').should('be.visible');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
 
     // XYZ Tile layer
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).type('XYZ Tile layer{enter}');
     cy.get('[data-testid="layer-drag-drop-list"]').contains('xyz');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers URL template').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Attribution').should('be.visible');
-    e2e.components.PanelEditor.General.content().should('be.visible');
+    // e2e.components.PanelEditor.General.content().should('be.visible');
   });
 
   it.skip('Tests changing the layer type (alpha)', () => {

@@ -5,10 +5,14 @@ const path = require('path');
 
 module.exports = function (options) {
   return {
-    test: /\.scss$/,
-    exclude: /node_modules/,
+    test: /\.(sa|sc|c)ss$/,
     use: [
-      MiniCssExtractPlugin.loader,
+      {
+        loader: MiniCssExtractPlugin.loader,
+        options: {
+          publicPath: './',
+        },
+      },
       {
         loader: 'css-loader',
         options: {

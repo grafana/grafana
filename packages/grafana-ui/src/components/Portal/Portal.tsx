@@ -55,21 +55,13 @@ export function PortalContainer() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
   return {
-    grafanaPortalContainer: css(
-      isBodyScrolling
-        ? {
-            position: 'fixed',
-            top: 0,
-            width: '100%',
-            zIndex: theme.zIndex.portal,
-          }
-        : {
-            position: 'absolute',
-            width: '100%',
-          }
-    ),
+    grafanaPortalContainer: css({
+      position: 'fixed',
+      top: 0,
+      width: '100%',
+      zIndex: theme.zIndex.portal,
+    }),
   };
 };
 

@@ -8,9 +8,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Called on create
@@ -25,11 +27,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, err
 	}
 	if obj.GetName() == "" {
-		return nil, fmt.Errorf("new object must have a name")
+		return nil, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
 	}
+
 	obj.SetGenerateName("") // Clear the random name field
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
@@ -45,9 +48,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(user.GetUID())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(newObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(newObject, &buf); err != nil {
 		return nil, err
+	}
+
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
 	}
 	return buf.Bytes(), nil
 }
@@ -71,9 +77,21 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err != nil {
 		return nil, err
 	}
-	obj.SetUID(previous.GetUID())
+
+	if previous.GetUID() == "" {
+		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+	} else if obj.GetUID() != previous.GetUID() {
+		klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		obj.SetUID(previous.GetUID())
+	}
+
+	if obj.GetName() != previous.GetName() {
+		return nil, fmt.Errorf("name mismatch between existing and updated object")
+	}
+
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
+	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
@@ -85,9 +103,32 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 
 	var buf bytes.Buffer
-	err = s.codec.Encode(updateObject, &buf)
-	if err != nil {
+	if err = s.codec.Encode(updateObject, &buf); err != nil {
 		return nil, err
+	}
+	if s.largeObjectSupport {
+		return s.handleLargeResources(ctx, obj, buf)
+	}
+	return buf.Bytes(), nil
+}
+
+func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
+	if buf.Len() > 1000 {
+		// !!! Currently just write the whole thing
+		// in reality we may only want to write the spec....
+		_, err := s.store.PutBlob(ctx, &resource.PutBlobRequest{
+			ContentType: "application/json",
+			Value:       buf.Bytes(),
+			Resource: &resource.ResourceKey{
+				Group:     s.gr.Group,
+				Resource:  s.gr.Resource,
+				Namespace: obj.GetNamespace(),
+				Name:      obj.GetName(),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	return buf.Bytes(), nil
 }

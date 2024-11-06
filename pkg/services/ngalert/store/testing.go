@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -134,7 +136,7 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	return nil
 }
 
-func SetupStoreForTesting(t *testing.T, db *sqlstore.ReplStore) *DBstore {
+func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}
@@ -146,6 +148,7 @@ func SetupStoreForTesting(t *testing.T, db *sqlstore.ReplStore) *DBstore {
 		Cfg:           cfg.UnifiedAlerting,
 		FolderService: service,
 		Logger:        &logtest.Fake{},
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	return store
 }

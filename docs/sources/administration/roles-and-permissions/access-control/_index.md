@@ -190,8 +190,8 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Provisioning](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/)
 - [Reports](ref:dashboards-create-reports)
 - [Roles](ref:roles-and-permissions)
-- [Settings](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/)
 - [Service accounts](ref:service-accounts)
+- [Settings](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/)
 - [Teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/)
 - [Users](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/)
 

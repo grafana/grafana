@@ -15,7 +15,7 @@ import { AccessControlAction } from 'app/types';
 
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
-const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally.Configuration;
 
 type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
 
@@ -72,7 +72,7 @@ export default function ShareConfiguration() {
                   render={({ field: { ref, ...field } }) => (
                     <Switch
                       {...field}
-                      data-testid={selectors.EnableTimeRangeSwitch}
+                      data-testid={selectors.enableTimeRangeSwitch}
                       onChange={(e) => {
                         DashboardInteractions.publicDashboardTimeSelectionChanged({
                           enabled: e.currentTarget.checked,
@@ -99,7 +99,7 @@ export default function ShareConfiguration() {
                   render={({ field: { ref, ...field } }) => (
                     <Switch
                       {...field}
-                      data-testid={selectors.EnableAnnotationsSwitch}
+                      data-testid={selectors.enableAnnotationsSwitch}
                       onChange={(e) => {
                         DashboardInteractions.publicDashboardAnnotationsSelectionChanged({
                           enabled: e.currentTarget.checked,

@@ -25,8 +25,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
@@ -216,11 +215,6 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
       if (isInspectingLibraryPanel) {
         objToStringify = libraryPanelToLegacyRepresentation(panel);
-        break;
-      }
-
-      if (panel.parent instanceof VizPanelManager) {
-        objToStringify = panel.parent.getPanelSaveModel();
         break;
       }
 
