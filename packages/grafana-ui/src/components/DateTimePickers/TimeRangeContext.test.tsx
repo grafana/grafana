@@ -1,4 +1,4 @@
-import { act, render, waitFor } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { useEffect } from 'react';
 
 import { makeTimeRange } from '@grafana/data';
