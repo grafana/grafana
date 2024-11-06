@@ -226,4 +226,5 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  alertingNotificationsStepMode?: boolean;
 }

@@ -215,6 +215,7 @@ Experimental features might be changed or removed without prior notice.
 | `unifiedStorageBigObjectsSupport`             | Enables to save big objects in blob storage                                                                                                                                                                                                                                       |
 | `timeRangeProvider`                           | Enables time pickers sync                                                                                                                                                                                                                                                         |
 | `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
+| `alertingNotificationsStepMode`               | Enables simplified step mode in the nottifications section                                                                                                                                                                                                                        |
 
 ## Development feature toggles
 

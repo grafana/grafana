@@ -1555,6 +1555,13 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
 		},
+		{
+			Name:         "alertingNotificationsStepMode",
+			Description:  "Enables simplified step mode in the nottifications section",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 

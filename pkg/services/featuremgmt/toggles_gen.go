@@ -838,4 +838,8 @@ const (
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagAlertingNotificationsStepMode
+	// Enables simplified step mode in the nottifications section
+	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 )
