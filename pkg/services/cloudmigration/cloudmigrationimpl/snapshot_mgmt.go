@@ -376,8 +376,8 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 }
 
 type PluginCmd struct {
+	ID         string                                `json:"id"`
 	Name       string                                `json:"name"`
-	ID         string                                `json:"uid"`
 	SettingCmd pluginsettings.UpdatePluginSettingCmd `json:"settingCmd"`
 }
 
@@ -399,42 +399,49 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 
 	results := make([]PluginCmd, 0)
 	plugins := s.pluginStore.Plugins(ctx)
+	// TODO: need permissions filtering?
 
 	for _, plugin := range plugins {
-		// Filter plugins to keep only non core, signed, with public signature type plugins
-		if !plugin.IsCorePlugin() && plugin.Signature.IsValid() && IsPublicSignatureType(plugin.SignatureType) {
-			pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
-				Enabled:       plugin.JSONData.AutoEnabled,
-				Pinned:        plugin.Pinned,
-				PluginVersion: plugin.Info.Version,
-				PluginId:      plugin.ID,
-			}
-
-			// Get plugin settings from db if they exist
-			ps, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
-				PluginID: plugin.ID,
-				OrgID:    signedInUser.OrgID,
-			})
-			if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-				return nil, fmt.Errorf("failed to get plugin settings: %w", err)
-			} else if ps != nil {
-				pluginSettingCmd.Enabled = ps.Enabled
-				pluginSettingCmd.Pinned = ps.Pinned
-				pluginSettingCmd.JsonData = ps.JSONData
-				// Decrypt secure json to send raw credentials
-				decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
-				if err != nil {
-					return nil, fmt.Errorf("failed to decrypt secure json data: %w", err)
-				}
-				pluginSettingCmd.SecureJsonData = decryptedData
-			}
-
-			results = append(results, PluginCmd{
-				ID:         plugin.ID,
-				Name:       plugin.Name,
-				SettingCmd: pluginSettingCmd,
-			})
+		// filter plugins to keep only non core, signed, with public signature type plugins
+		if plugin.IsCorePlugin() || !plugin.Signature.IsValid() || !IsPublicSignatureType(plugin.SignatureType) {
+			continue
 		}
+		// filter out dependent app plugins
+		if plugin.IncludedInAppID != "" {
+			continue
+		}
+
+		pluginSettingCmd := pluginsettings.UpdatePluginSettingCmd{
+			Enabled:       plugin.JSONData.AutoEnabled,
+			Pinned:        plugin.Pinned,
+			PluginVersion: plugin.Info.Version,
+			PluginId:      plugin.ID,
+		}
+
+		// get plugin settings from db if they exist
+		ps, err := s.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+			PluginID: plugin.ID,
+			OrgID:    signedInUser.OrgID,
+		})
+		if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+			return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+		} else if ps != nil {
+			pluginSettingCmd.Enabled = ps.Enabled
+			pluginSettingCmd.Pinned = ps.Pinned
+			pluginSettingCmd.JsonData = ps.JSONData
+			decryptedData, err := s.secretsService.DecryptJsonData(ctx, ps.SecureJSONData)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decrypt secure json data: %w", err)
+			}
+			pluginSettingCmd.SecureJsonData = decryptedData
+		}
+
+		results = append(results, PluginCmd{
+			ID:         plugin.ID,
+			Name:       plugin.Name,
+			SettingCmd: pluginSettingCmd,
+		})
+
 	}
 
 	return results, nil
