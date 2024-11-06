@@ -95,6 +95,7 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
+        'Failed sending payload to the receiver',
       ],
       ignoreUrls,
       sessionTracking: {
