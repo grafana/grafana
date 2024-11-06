@@ -1,4 +1,4 @@
-import { behaviors, VizPanel } from '@grafana/scenes';
+import { behaviors, SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
 import {
@@ -11,10 +11,11 @@ import {
   FieldConfigSource,
   DashboardLink,
   DashboardCursorSync,
+  DataTransformerConfig,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -237,21 +238,34 @@ function getVizPanelQueries(panel: VizPanel): PanelQueryKind[] {
   return queries;
 }
 
-function getVizPanelTransformations(panel: VizPanel): TransformationKind[] {
-  // FIXME: Mocking the transformations
-  return [{
-    kind: 'Transformation',
-    spec: {
-      id: 'test',
-      disabled: false,
-      filter: {
-        id: 'test',
-        options: {},
-      },
-      topic: 'series',
-      options: {},
-    },
-  }];
+function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
+  let transformations: TransformationKind[] = [];
+  const dataProvider = vizPanel.state.$data;
+  if (dataProvider instanceof SceneDataTransformer) {
+    const transformationList = dataProvider.state.transformations;
+    if (transformationList.length === 0) {
+      return [];
+    }
+    transformationList.forEach((transformationItem) => {
+      const transformation = transformationItem as DataTransformerConfig;
+      const transformationSpec: DataTransformerConfig = {
+        id: transformation.id,
+        disabled: transformation.disabled,
+        filter: {
+          id: transformation.filter?.id ?? '',
+          options: transformation.filter?.options ?? {},
+        },
+        topic: transformation.topic,
+        options: transformation.options,
+      };
+
+      transformations.push({
+        kind: transformation.id,
+        spec: transformationSpec,
+      });
+    });
+  }
+  return transformations;
 }
 
 function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
