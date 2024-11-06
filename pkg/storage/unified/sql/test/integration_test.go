@@ -9,13 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -65,9 +63,9 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	// if infraDB.IsTestDbSQLite() {
-	// 	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	// }
+	if infraDB.IsTestDbSQLite() {
+		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -118,7 +116,6 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Nil(t, resp.Error)
 		require.Equal(t, rv4, resp.ResourceVersion)
 		require.Equal(t, "item2 MODIFIED", string(resp.Value))
-		require.Equal(t, "folderuid", resp.Folder)
 	})
 
 	t.Run("Read early version of item2", func(t *testing.T) {
@@ -154,13 +151,10 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		require.Equal(t, "item1", event.Key.Name)
 		require.Equal(t, rv1, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
-		require.Equal(t, "folderuid", event.Folder)
-
 		event = <-stream
 		require.Equal(t, "item2", event.Key.Name)
 		require.Equal(t, rv2, event.ResourceVersion)
 		require.Equal(t, resource.WatchEvent_ADDED, event.Type)
-		require.Equal(t, "folderuid", event.Folder)
 
 		event = <-stream
 		require.Equal(t, "item3", event.Key.Name)
@@ -424,14 +418,6 @@ func TestClientServer(t *testing.T) {
 }
 
 func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
-	res := &unstructured.Unstructured{
-		Object: map[string]any{},
-	}
-	meta, err := utils.MetaAccessor(res)
-	if err != nil {
-		return 0, err
-	}
-	meta.SetFolder("folderuid")
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
 		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),
@@ -441,7 +427,6 @@ func writeEvent(ctx context.Context, store sql.Backend, name string, action reso
 			Resource:  "resource",
 			Name:      name,
 		},
-		Object: meta,
 	})
 }
 

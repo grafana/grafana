@@ -143,15 +143,12 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
+		// TODO: Set the Labels
+
 		// 1. Insert into resource
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource: %w", err)
@@ -161,7 +158,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -204,15 +200,12 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 	var newVersion int64
 	guid := uuid.New().String()
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
+		// TODO: Set the Labels
+
 		// 1. Update resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceUpdate, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			Folder:      folder,
 			GUID:        guid,
 		})
 		if err != nil {
@@ -223,7 +216,6 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -268,10 +260,8 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	guid := uuid.New().String()
 
 	err := b.db.WithTx(ctx, ReadCommitted, func(ctx context.Context, tx db.Tx) error {
-		folder := ""
-		if event.Object != nil {
-			folder = event.Object.GetFolder()
-		}
+		// TODO: Set the Labels
+
 		// 1. delete from resource
 		_, err := dbutil.Exec(ctx, tx, sqlResourceDelete, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
@@ -286,7 +276,6 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 		if _, err := dbutil.Exec(ctx, tx, sqlResourceHistoryInsert, sqlResourceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
-			Folder:      folder,
 			GUID:        guid,
 		}); err != nil {
 			return fmt.Errorf("insert into resource history: %w", err)
@@ -316,16 +305,16 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 	return newVersion, err
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.BackendReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *resource.ReadResponse {
 	_, span := b.tracer.Start(ctx, tracePrefix+".Read")
 	defer span.End()
 
 	// TODO: validate key ?
 
 	readReq := &sqlResourceReadRequest{
-		SQLTemplate: sqltemplate.New(b.dialect),
-		Request:     req,
-		Response:    NewReadResponse(),
+		SQLTemplate:  sqltemplate.New(b.dialect),
+		Request:      req,
+		readResponse: new(readResponse),
 	}
 
 	sr := sqlResourceRead
@@ -334,21 +323,21 @@ func (b *backend) ReadResource(ctx context.Context, req *resource.ReadRequest) *
 		sr = sqlResourceHistoryRead
 	}
 
-	var res *resource.BackendReadResponse
+	var res *readResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		res, err = dbutil.QueryRow(ctx, tx, sr, readReq)
 		return err
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{
+		return &resource.ReadResponse{
 			Error: resource.NewNotFoundError(req.Key),
 		}
 	} else if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		return &resource.ReadResponse{Error: resource.AsErrorResult(err)}
 	}
 
-	return res
+	return &res.ReadResponse
 }
 
 func (b *backend) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
@@ -382,7 +371,6 @@ type listIter struct {
 	value     []byte
 	namespace string
 	name      string
-	folder    string
 }
 
 // ContinueToken implements resource.ListIterator.
@@ -390,20 +378,19 @@ func (l *listIter) ContinueToken() string {
 	return ContinueToken{ResourceVersion: l.listRV, StartOffset: l.offset}.String()
 }
 
+// Error implements resource.ListIterator.
 func (l *listIter) Error() error {
 	return l.err
 }
 
+// Name implements resource.ListIterator.
 func (l *listIter) Name() string {
 	return l.name
 }
 
+// Namespace implements resource.ListIterator.
 func (l *listIter) Namespace() string {
 	return l.namespace
-}
-
-func (l *listIter) Folder() string {
-	return l.folder
 }
 
 // ResourceVersion implements resource.ListIterator.
@@ -420,7 +407,7 @@ func (l *listIter) Value() []byte {
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
 		l.offset++
-		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.folder, &l.value)
+		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.value)
 		return true
 	}
 	return false
@@ -668,7 +655,6 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 				Type:       resource.WatchEvent_Type(rec.Action),
 				PreviousRV: *prevRV,
 			},
-			Folder:          rec.Folder,
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
 		}

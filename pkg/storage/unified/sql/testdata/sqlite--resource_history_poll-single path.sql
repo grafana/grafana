@@ -4,7 +4,6 @@ SELECT
     "group",
     "resource",
     "name",
-    "folder",
     "value",
     "action",
     "previous_resource_version"

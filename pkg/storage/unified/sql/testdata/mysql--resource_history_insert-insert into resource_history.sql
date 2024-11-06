@@ -5,7 +5,6 @@ INSERT INTO `resource_history`
         `resource`,
         `namespace`,
         `name`,
-        `folder`,
         `previous_resource_version`,
         `value`,
         `action`
@@ -16,7 +15,6 @@ INSERT INTO `resource_history`
         'rr',
         'nn',
         'name',
-        'fldr',
         1234,
         '[]',
         'UNKNOWN'

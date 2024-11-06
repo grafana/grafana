@@ -24,8 +24,6 @@ type WriteEvent struct {
 // WriteEvents after they include a resource version
 type WrittenEvent struct {
 	WriteEvent
-	// Metadata
-	Folder string
 
 	// The resource version
 	ResourceVersion int64

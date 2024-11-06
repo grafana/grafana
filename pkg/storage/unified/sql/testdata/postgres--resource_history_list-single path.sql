@@ -2,7 +2,6 @@ SELECT
     kv."resource_version",
     kv."namespace",
     kv."name",
-    kv."folder",
     kv."value"
     FROM "resource_history" as kv 
     INNER JOIN  (
