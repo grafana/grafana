@@ -136,7 +136,7 @@ func Test_getOrCreate(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 		}
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -164,7 +164,7 @@ func Test_getOrCreate(t *testing.T) {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
 
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -180,7 +180,7 @@ func Test_getOrCreate(t *testing.T) {
 		for key := range rule.Labels {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range rule.Labels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -202,7 +202,7 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Labels = labelTemplates
 
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
@@ -229,7 +229,7 @@ func Test_getOrCreate(t *testing.T) {
 		}
 		rule.Annotations = annotationTemplates
 
-		state := c.getOrCreate(context.Background(), l, rule, result, extraLabels, url)
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
@@ -260,7 +260,7 @@ func Test_getOrCreate(t *testing.T) {
 
 		rule := generateRule()
 
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+		state := c.create(context.Background(), l, rule, result, nil, url)
 
 		for key := range models.LabelsUserCannotSpecify {
 			assert.NotContains(t, state.Labels, key)
@@ -282,7 +282,7 @@ func Test_getOrCreate(t *testing.T) {
 			result.Instance["label1_user"] = uuid.NewString()
 			result.Instance["label4_user"] = uuid.NewString()
 
-			state = c.getOrCreate(context.Background(), l, rule, result, nil, url)
+			state = c.create(context.Background(), l, rule, result, nil, url)
 			assert.NotContains(t, state.Labels, "__label1__")
 			assert.Contains(t, state.Labels, "label1")
 			assert.Equal(t, state.Labels["label1"], result.Instance["label1"])
@@ -292,65 +292,6 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, state.Labels["label4_user"], result.Instance["label4_user"])
 		})
 	})
-}
-
-func Test_getOrAdd(t *testing.T) {
-	logger := log.NewNopLogger()
-
-	type testCase struct {
-		name         string
-		initialState *State
-		newState     *State
-	}
-
-	orgID := int64(1)
-	alertRuleUID := "rule-uid"
-	cacheID := data.Fingerprint(12345)
-
-	cases := []testCase{
-		{
-			name:         "add new state",
-			initialState: nil,
-			newState: &State{
-				OrgID:        orgID,
-				AlertRuleUID: alertRuleUID,
-				CacheID:      cacheID,
-				Labels:       data.Labels{"label1": "value1"},
-			},
-		},
-		{
-			name: "retrieve existing state",
-			initialState: &State{
-				OrgID:        orgID,
-				AlertRuleUID: alertRuleUID,
-				CacheID:      cacheID,
-				Labels:       data.Labels{"label1": "value1"},
-			},
-			newState: &State{
-				OrgID:        orgID,
-				AlertRuleUID: alertRuleUID,
-				CacheID:      cacheID,
-				Labels:       data.Labels{"label2": "value2"},
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			c := newCache()
-			if tc.initialState != nil {
-				c.getOrAdd(*tc.initialState, logger)
-			}
-
-			result := c.getOrAdd(*tc.newState, logger)
-
-			if tc.initialState == nil {
-				require.Equal(t, tc.newState, result, "expected newState to be added")
-			} else {
-				require.Equal(t, tc.initialState, result, "expected to retrieve existing state")
-			}
-		})
-	}
 }
 
 func Test_mergeLabels(t *testing.T) {

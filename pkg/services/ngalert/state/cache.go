@@ -71,68 +71,7 @@ func (c *cache) countAlertsBy(state eval.State) float64 {
 	return count
 }
 
-func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
-	// Calculation of state ID involves label and annotation expansion, which may be resource intensive operations, and doing it in the context guarded by mtxStates may create a lot of contention.
-	// Instead of just calculating ID we create an entire state - a candidate. If rule states already hold a state with this ID, this candidate will be discarded and the existing one will be returned.
-	// Otherwise, this candidate will be added to the rule states and returned.
-	stateCandidate := calculateState(ctx, log, alertRule, result, extraLabels, externalURL)
-	return c.getOrAdd(stateCandidate, log)
-}
-
-// getOrAdd retrieves an existing State from the cache if it exists,
-// or adds the provided State if it is not present.
-func (c *cache) getOrAdd(state State, log log.Logger) *State {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-
-	// Retrieve or initialize the org-level map for storing rule states
-	var orgStates map[string]*ruleStates
-	var ok bool
-	if orgStates, ok = c.states[state.OrgID]; !ok {
-		orgStates = make(map[string]*ruleStates)
-		c.states[state.OrgID] = orgStates
-	}
-
-	// Retrieve or initialize the rule-level states map
-	var rs *ruleStates
-	if rs, ok = orgStates[state.AlertRuleUID]; !ok {
-		rs = &ruleStates{states: make(map[data.Fingerprint]*State)}
-		c.states[state.OrgID][state.AlertRuleUID] = rs
-	}
-
-	return rs.getOrAdd(state, log)
-}
-
-func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
-	state, ok := rs.states[stateCandidate.CacheID]
-	// Check if the state with this ID already exists.
-	if !ok {
-		rs.states[stateCandidate.CacheID] = &stateCandidate
-		return &stateCandidate
-	}
-
-	// Annotations can change over time, however we also want to maintain
-	// certain annotations across evaluations
-	for k, v := range state.Annotations {
-		if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
-			// If the annotation is not present then it should be copied from the
-			// previous state to the next state
-			if _, ok := stateCandidate.Annotations[k]; !ok {
-				stateCandidate.Annotations[k] = v
-			}
-		}
-	}
-	state.Annotations = stateCandidate.Annotations
-	state.Values = stateCandidate.Values
-	if state.ResultFingerprint != stateCandidate.ResultFingerprint {
-		log.Info("Result fingerprint has changed", "oldFingerprint", state.ResultFingerprint, "newFingerprint", stateCandidate.ResultFingerprint, "cacheID", state.CacheID, "stateLabels", state.Labels.String())
-		state.ResultFingerprint = stateCandidate.ResultFingerprint
-	}
-	rs.states[stateCandidate.CacheID] = state
-	return state
-}
-
-func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) State {
+func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	var reserved []string
 	resultLabels := result.Instance
 	if len(resultLabels) > 0 {
@@ -207,17 +146,45 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
 	newState := State{
-		AlertRuleUID:       alertRule.UID,
-		OrgID:              alertRule.OrgID,
-		CacheID:            cacheID,
-		Labels:             lbs,
-		Annotations:        annotations,
-		EvaluationDuration: result.EvaluationDuration,
-		StartsAt:           result.EvaluatedAt,
-		EndsAt:             result.EvaluatedAt,
-		ResultFingerprint:  result.Instance.Fingerprint(), // remember original result fingerprint
+		OrgID:                alertRule.OrgID,
+		AlertRuleUID:         alertRule.UID,
+		CacheID:              cacheID,
+		State:                eval.Normal,
+		StateReason:          "",
+		ResultFingerprint:    result.Instance.Fingerprint(), // remember original result fingerprint
+		LatestResult:         nil,
+		Error:                nil,
+		Image:                nil,
+		Annotations:          annotations,
+		Labels:               lbs,
+		Values:               nil,
+		StartsAt:             result.EvaluatedAt,
+		EndsAt:               result.EvaluatedAt,
+		ResolvedAt:           nil,
+		LastSentAt:           nil,
+		LastEvaluationString: "",
+		LastEvaluationTime:   result.EvaluatedAt,
+		EvaluationDuration:   result.EvaluationDuration,
 	}
-	return newState
+
+	existingState := c.get(alertRule.OrgID, alertRule.UID, cacheID)
+	if existingState == nil {
+		return &newState
+	}
+	// if there is existing state, copy over the current values that may be needed to determine the final state.
+	// TODO remove some unnecessary assignments below because they are overridden in setNextState
+	newState.State = existingState.State
+	newState.StateReason = existingState.StateReason
+	newState.Image = existingState.Image
+	newState.LatestResult = existingState.LatestResult
+	newState.Error = existingState.Error
+	newState.Values = existingState.Values
+	newState.LastEvaluationString = existingState.LastEvaluationString
+	newState.StartsAt = existingState.StartsAt
+	newState.EndsAt = existingState.EndsAt
+	newState.ResolvedAt = existingState.ResolvedAt
+	newState.LastSentAt = existingState.LastSentAt
+	return &newState
 }
 
 // expand returns the expanded templates of all annotations or labels for the template data.
