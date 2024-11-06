@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -283,7 +284,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,
 	serviceaccountsretriever.ProvideService,
-	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
+	wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
 	serviceaccountsmanager.ProvideServiceAccountsService,
@@ -390,6 +391,7 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
+	appregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(

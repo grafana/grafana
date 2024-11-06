@@ -3,8 +3,6 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import 'core-js/stable/structured-clone';
-
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
