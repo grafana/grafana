@@ -22,7 +22,7 @@ type IndexedResource struct {
 	UpdatedAt string
 	UpdatedBy string
 	FolderId  string
-	Spec      any
+	Spec      map[string]any
 }
 
 type IndexResults struct {
@@ -99,7 +99,10 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 	if err != nil {
 		return nil, err
 	}
-	ir.Spec = spec
+	specValues, ok := spec.(map[string]any)
+	if ok {
+		ir.Spec = specValues
+	}
 
 	return ir, nil
 }
