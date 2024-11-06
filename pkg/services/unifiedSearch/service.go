@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -211,10 +212,18 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 			return response
 		}
 		kind := strings.ToLower(doc.Kind)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, "", nil, doc.FolderID)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
 	}
 	response.Frames = append(response.Frames, frame)
 	return response
+}
+
+func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
+	if doc.FolderID == "" {
+		return fmt.Sprintf("%s/d/%s/%s", subURL, doc.Name, doc.Namespace)
+	}
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, doc.Name, doc.Namespace)
 }
 
 type customMeta struct {
