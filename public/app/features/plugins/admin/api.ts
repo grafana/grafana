@@ -156,13 +156,19 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
   return provisionedPlugins.map((plugin) => ({ slug: plugin.type }));
 }
 
-export async function installPlugin(id: string) {
+export async function installPlugin(id: string, version?: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, undefined, {
-    // Error is displayed in the page
-    showErrorAlert: false,
-  });
+  return await getBackendSrv().post(
+    `${API_ROOT}/${id}/install`,
+    {
+      version,
+    },
+    {
+      // Error is displayed in the page
+      showErrorAlert: false,
+    }
+  );
 }
 
 export async function uninstallPlugin(id: string) {
