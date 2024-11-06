@@ -44,7 +44,7 @@ type Index struct {
 }
 
 func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
-	idx := &Index{
+	return &Index{
 		shardMutex: sync.RWMutex{},
 		s:          s,
 		opts:       opts,
@@ -52,8 +52,6 @@ func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
 		log:        log.New("unifiedstorage.search.index"),
 		tracer:     tracer,
 	}
-
-	return idx
 }
 
 // IndexBatches goes through all the shards and indexes their batches if they are large enough
