@@ -17,8 +17,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { objectLabelsToArray } from './labels';
-import { MatcherFormatter, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
-import { matchLabelsSet } from './notification-policies';
+import { MatcherFormatter, matchLabelsSet, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
