@@ -149,11 +149,39 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
+export type RulesSourceIdentifier =
+  | {
+      uid: string;
+      //Name is here only for compatibility with existing code. Should be removed in the future.
+      name: string;
+    }
+  | 'grafana';
+
+export const rulesSourceIdentifier = {
+  getUid: (identifier: RulesSourceIdentifier) => {
+    return typeof identifier === 'string' ? identifier : identifier.uid;
+  },
+};
+
+export interface NamespaceIdentifier {
+  name: string;
+  /**
+   * Folder UID for Grafana-managed rules and name for datasource-managed rules
+   */
+  uid: string;
+}
+
 // identifier for where we can find a RuleGroup
 export interface RuleGroupIdentifier {
   dataSourceName: string;
   /** ⚠️ use the Grafana folder UID for Grafana-managed rules */
   namespaceName: string;
+  groupName: string;
+}
+
+export interface RuleGroupIdentifierV2 {
+  rulesSource: RulesSourceIdentifier;
+  namespace: NamespaceIdentifier;
   groupName: string;
 }
 

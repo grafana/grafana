@@ -17,6 +17,7 @@ import {
   Alert,
   CombinedRule,
   FilterState,
+  RuleGroupIdentifierV2,
   RuleIdentifier,
   RulesSource,
   SilenceFilterState,
@@ -24,11 +25,12 @@ import {
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
+  PromRuleDTO,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
-import { getRulesSourceName } from './datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
@@ -38,6 +40,16 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+export function createViewLinkV2(groupIdentifier: RuleGroupIdentifierV2, rule: PromRuleDTO, returnTo?: string): string {
+  const ruleSourceName =
+    groupIdentifier.rulesSource === 'grafana' ? GRAFANA_RULES_SOURCE_NAME : groupIdentifier.rulesSource.name;
+  const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.uid, groupIdentifier.groupName, rule);
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(ruleSourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }

@@ -1,18 +1,24 @@
 import { compact, isEqual } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button, Card, Stack } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, PromRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../api/prometheusApi';
 import { useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../utils/alertmanager';
+import { Annotation } from '../utils/constants';
 import { getDatasourceAPIUid } from '../utils/datasource';
 import { parseMatcher } from '../utils/matchers';
-import { isAlertingRule } from '../utils/rules';
+import { createViewLinkV2 } from '../utils/misc';
+import { getRulePluginOrigin, isAlertingRule } from '../utils/rules';
+
+import { AlertRuleListItem } from './components/AlertRuleListItem';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -22,31 +28,48 @@ export function FilterView({ filterState }: FilterViewProps) {
   const [prevFilterState, setPrevFilterState] = useState(filterState);
   const filterChanged = !isEqual(prevFilterState, filterState);
 
-  const { getFilteredRulesIterator } = usePaginatedFilteredRules();
+  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
   const rulesIterator = useRef(getFilteredRulesIterator(filterState));
 
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
-  // const [rulesLimit, setRulesLimit] = useState(20);
+  const [noMoreResults, setNoMoreResults] = useState(false);
 
   const defferedRules = useDeferredValue(rules);
 
   const [{ execute: loadNextPage }, state] = useAsync(async () => {
-    const pageSize = 20;
-    let currentRules = 0;
+    const pageSize = 10;
+    let fetchedRulesCount = 0;
+    let currentRulesArray: RuleWithOrigin[] = [];
 
-    while (currentRules < pageSize) {
+    // This is purely for performance reasons. We don't want to update the state on every rule fetch.
+    // On the other hand, we want to display rules as soon as they are fetched without waiting for all of them to be fetched
+    const rulesFlusher = () => {
+      if (currentRulesArray.length > 0) {
+        const rulesToAdd = [...currentRulesArray];
+        setRules((prev) => [...prev, ...rulesToAdd]);
+        currentRulesArray = [];
+      }
+    };
+
+    const interval = setInterval(rulesFlusher, 750);
+    while (fetchedRulesCount < pageSize) {
       const { value, done } = await rulesIterator.current.next();
       if (done) {
+        setNoMoreResults(true);
         break;
       }
-      setRules((prev) => [...prev, value]);
-      currentRules++;
+      currentRulesArray.push(value);
+      fetchedRulesCount++;
     }
+
+    rulesFlusher();
+    clearInterval(interval);
   });
 
   if (filterChanged) {
     rulesIterator.current = getFilteredRulesIterator(filterState);
     setRules([]);
+    setNoMoreResults(false);
     setPrevFilterState(filterState);
     loadNextPage();
   }
@@ -55,15 +78,37 @@ export function FilterView({ filterState }: FilterViewProps) {
     loadNextPage();
   }, [loadNextPage]);
 
+  const isLoading = state.status === 'loading' || defferedRules !== rules;
+
   return (
     <Stack direction="column" gap={1}>
-      {defferedRules.map((rule) => (
-        <Card key={rule.rule.name}>{rule.rule.name}</Card>
-      ))}
-      <Button onClick={loadNextPage} disabled={state.status === 'loading'}>
-        Load more...
-      </Button>
-      {/* Filter view content will be implemented here */}
+      {defferedRules.map(({ ruleIdentifier, rule, groupIdentifier }) => {
+        const { namespace, groupName } = groupIdentifier;
+
+        return (
+          <AlertRuleListItem
+            key={ruleIdentifier}
+            name={rule.name}
+            group={groupName}
+            namespace={namespace.name}
+            labels={rule.labels}
+            health={rule.health}
+            state={isAlertingRule(rule) ? rule.state : undefined}
+            origin={getRulePluginOrigin(rule)}
+            lastEvaluation={rule.lastEvaluation}
+            summary={isAlertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
+            instancesCount={isAlertingRule(rule) ? rule.alerts?.length : undefined}
+            href={createViewLinkV2(groupIdentifier, rule)}
+          />
+        );
+      })}
+      {isLoading ? (
+        <Skeleton height={16} count={12} />
+      ) : noMoreResults ? (
+        <Card>No more results</Card>
+      ) : (
+        <Button onClick={loadNextPage}>Load more...</Button>
+      )}
     </Stack>
   );
 }
@@ -71,15 +116,20 @@ export function FilterView({ filterState }: FilterViewProps) {
 const { useLazyGroupsQuery } = prometheusApi;
 
 interface RuleWithOrigin {
+  /**
+   * Artificial frontend-only identifier for the rule.
+   * It's used as a key for the rule in the rule list to prevent key duplication
+   */
+  ruleIdentifier: string;
   rule: PromRuleDTO;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
 interface GroupWithIdentifier extends PromRuleGroupDTO {
-  identifier: RuleGroupIdentifier;
+  identifier: RuleGroupIdentifierV2;
 }
 
-function usePaginatedFilteredRules() {
+function useFilteredRulesIteratorProvider() {
   const [fetchGroups] = useLazyGroupsQuery();
 
   const getGroups = useCallback(
@@ -169,6 +219,7 @@ function usePaginatedFilteredRules() {
 
 function mapGroupToRules(group: GroupWithIdentifier): RuleWithOrigin[] {
   return group.rules.map<RuleWithOrigin>((rule) => ({
+    ruleIdentifier: uuidv4(),
     rule,
     groupIdentifier: group.identifier,
   }));
@@ -178,8 +229,8 @@ function mapGroupToGroupWithIdentifier(group: PromRuleGroupDTO, ruleSourceName: 
   return {
     ...group,
     identifier: {
-      dataSourceName: ruleSourceName,
-      namespaceName: group.file,
+      rulesSource: { name: ruleSourceName, uid: getDatasourceAPIUid(ruleSourceName) },
+      namespace: { name: group.file, uid: group.file },
       groupName: group.name,
     },
   };
@@ -192,7 +243,7 @@ function mapGroupToGroupWithIdentifier(group: PromRuleGroupDTO, ruleSourceName: 
 function getFilteredGroup<T extends PromRuleGroupDTO>(group: T, filterState: RulesFilter): T | undefined {
   const { name, rules, file } = group;
 
-  // TODO Add fuzzy filtering
+  // TODO Add fuzzy filtering or not
   if (filterState.namespace && !file.includes(filterState.namespace)) {
     return undefined;
   }
