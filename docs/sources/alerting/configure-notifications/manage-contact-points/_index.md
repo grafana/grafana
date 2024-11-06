@@ -131,7 +131,7 @@ Complete the following steps to add a contact point.
 
 A contact point can have multiple integrations, or destinations for sending notifications.
 
-To add another integration to a contact point.
+To add another integration to a contact point, complete the following steps.
 
 1. Add or edit an existing contact point.
 1. Click **Add contact point integration** and repeat the same steps as [Add a contact point](#add-a-contact-point).
