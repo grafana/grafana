@@ -16,12 +16,15 @@ import (
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/infra/crypto"
 	plugins "github.com/grafana/grafana/pkg/plugins"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	libraryelements "github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
@@ -399,7 +402,17 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 
 	results := make([]PluginCmd, 0)
 	plugins := s.pluginStore.Plugins(ctx)
-	// TODO: need permissions filtering?
+
+	// Permissions for listing plugins, taken from plugins api
+	userIsOrgAdmin := signedInUser.HasRole(org.RoleAdmin)
+	hasAccess, _ := s.accessControl.Evaluate(ctx, signedInUser, ac.EvalAny(
+		ac.EvalPermission(datasources.ActionCreate),
+		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
+	))
+	if !(userIsOrgAdmin || hasAccess) {
+		s.log.Info("user is not allowed to list core plugins", "UID", signedInUser.UserUID)
+		return results, nil
+	}
 
 	for _, plugin := range plugins {
 		// filter plugins to keep only non core, signed, with public signature type plugins
@@ -408,6 +421,12 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 		}
 		// filter out dependent app plugins
 		if plugin.IncludedInAppID != "" {
+			continue
+		}
+
+		// Permissions filtering, taken from plugins api
+		hasAccess, _ = s.accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginaccesscontrol.ScopeProvider.GetResourceScope(plugin.ID)))
+		if !hasAccess {
 			continue
 		}
 

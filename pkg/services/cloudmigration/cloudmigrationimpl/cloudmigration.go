@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
@@ -63,6 +64,7 @@ type Service struct {
 	dashboardService       dashboards.DashboardService
 	folderService          folder.Service
 	pluginStore            pluginstore.Store
+	accessControl          accesscontrol.AccessControl
 	pluginSettingsService  pluginsettings.Service
 	secretsService         secrets.Service
 	kvStore                *kvstore.NamespacedKVStore
@@ -102,6 +104,7 @@ func ProvideService(
 	folderService folder.Service,
 	pluginStore pluginstore.Store,
 	pluginSettingsService pluginsettings.Service,
+	accessControl accesscontrol.AccessControl,
 	kvStore kvstore.KVStore,
 	libraryElementsService libraryelements.Service,
 	ngAlert *ngalert.AlertNG,
@@ -123,6 +126,7 @@ func ProvideService(
 		folderService:          folderService,
 		pluginStore:            pluginStore,
 		pluginSettingsService:  pluginSettingsService,
+		accessControl:          accessControl,
 		kvStore:                kvstore.WithNamespace(kvStore, 0, "cloudmigration"),
 		libraryElementsService: libraryElementsService,
 		ngAlert:                ngAlert,
