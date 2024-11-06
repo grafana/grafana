@@ -3,7 +3,6 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
 import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
-import { IconType } from 'src/types';
 
 import { useStyles2 } from '../../themes';
 import { t, Trans } from '../../utils/i18n';
@@ -13,7 +12,6 @@ import { Input, Props as InputProps } from '../Input/Input';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
-import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
