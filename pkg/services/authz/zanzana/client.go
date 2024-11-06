@@ -18,8 +18,8 @@ type Client interface {
 
 	CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
-	Read(ctx context.Context, namespace string, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
-	Write(ctx context.Context, namespace string, in *openfgav1.WriteRequest) error
+	Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
+	Write(ctx context.Context, req *authzextv1.WriteRequest) error
 }
 
 func NewNoopClient() *client.NoopClient {

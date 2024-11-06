@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 const (
@@ -182,4 +184,62 @@ func TranslateFixedRole(role string) string {
 // Translate "read" for the dashboard into "dashboard_read" for folder
 func TranslateToFolderRelation(relation, objectType string) string {
 	return fmt.Sprintf("%s_%s", objectType, relation)
+}
+
+func ToAuthzExtTuple(t *openfgav1.TupleKey) *authzextv1.TupleKey {
+	return &authzextv1.TupleKey{
+		User:     t.GetUser(),
+		Relation: t.GetRelation(),
+		Object:   t.GetObject(),
+		Condition: &authzextv1.RelationshipCondition{
+			Name:    t.GetCondition().GetName(),
+			Context: t.GetCondition().GetContext(),
+		},
+	}
+}
+
+func ToAuthzExtTuples(tuples []*openfgav1.TupleKey) []*authzextv1.TupleKey {
+	result := make([]*authzextv1.TupleKey, 0, len(tuples))
+	for _, t := range tuples {
+		result = append(result, ToAuthzExtTuple(t))
+	}
+	return result
+}
+
+func ToAuthzExtTupleWithoutCondition(t *openfgav1.TupleKeyWithoutCondition) *authzextv1.TupleKeyWithoutCondition {
+	return &authzextv1.TupleKeyWithoutCondition{
+		User:     t.GetUser(),
+		Relation: t.GetRelation(),
+		Object:   t.GetObject(),
+	}
+}
+
+func ToAuthzExtTuplesWithoutCondition(tuples []*openfgav1.TupleKeyWithoutCondition) []*authzextv1.TupleKeyWithoutCondition {
+	result := make([]*authzextv1.TupleKeyWithoutCondition, 0, len(tuples))
+	for _, t := range tuples {
+		result = append(result, ToAuthzExtTupleWithoutCondition(t))
+	}
+	return result
+}
+
+func ToOpenFGATuple(t *authzextv1.Tuple) *openfgav1.Tuple {
+	return &openfgav1.Tuple{
+		Key: &openfgav1.TupleKey{
+			User:     t.GetKey().GetUser(),
+			Relation: t.GetKey().GetRelation(),
+			Object:   t.GetKey().GetObject(),
+			Condition: &openfgav1.RelationshipCondition{
+				Name:    t.GetKey().GetCondition().GetName(),
+				Context: t.GetKey().GetCondition().GetContext(),
+			},
+		},
+	}
+}
+
+func ToOpenFGATuples(tuples []*authzextv1.Tuple) []*openfgav1.Tuple {
+	result := make([]*openfgav1.Tuple, 0, len(tuples))
+	for _, t := range tuples {
+		result = append(result, ToOpenFGATuple(t))
+	}
+	return result
 }

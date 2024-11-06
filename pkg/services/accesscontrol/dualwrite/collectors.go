@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 func teamMembershipCollector(store db.DB) legacyTupleCollector {
@@ -198,8 +199,9 @@ func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCol
 	return func(ctx context.Context, client zanzana.Client, object string, namespace string) (map[string]*openfgav1.TupleKey, error) {
 		// list will use continuation token to collect all tuples for object and relation
 		list := func(relation string) ([]*openfgav1.Tuple, error) {
-			first, err := client.Read(ctx, &openfgav1.ReadRequest{
-				TupleKey: &openfgav1.ReadRequestTupleKey{
+			first, err := client.Read(ctx, &authzextv1.ReadRequest{
+				Namespace: namespace,
+				TupleKey: &authzextv1.ReadRequestTupleKey{
 					Object:   object,
 					Relation: relation,
 				},
@@ -212,8 +214,9 @@ func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCol
 			c := first.ContinuationToken
 
 			for c != "" {
-				res, err := client.Read(ctx, &openfgav1.ReadRequest{
-					TupleKey: &openfgav1.ReadRequestTupleKey{
+				res, err := client.Read(ctx, &authzextv1.ReadRequest{
+					Namespace: namespace,
+					TupleKey: &authzextv1.ReadRequestTupleKey{
 						Object:   object,
 						Relation: relation,
 					},
@@ -226,7 +229,7 @@ func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCol
 				first.Tuples = append(first.Tuples, res.Tuples...)
 			}
 
-			return first.Tuples, nil
+			return zanzana.ToOpenFGATuples(first.Tuples), nil
 		}
 
 		out := make(map[string]*openfgav1.TupleKey)

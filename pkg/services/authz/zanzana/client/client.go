@@ -5,15 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	"github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -166,14 +165,6 @@ func (c *Client) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*
 	return c.openfga.Check(ctx, in)
 }
 
-func (c *Client) Read(ctx context.Context, namespace string, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
-	defer span.End()
-
-	in.StoreId = c.storeID
-	return c.openfga.Read(ctx, in)
-}
-
 func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
 	span.SetAttributes(attribute.String("resource.type", in.Type))
@@ -184,10 +175,18 @@ func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsReque
 	return c.openfga.ListObjects(ctx, in)
 }
 
-func (c *Client) Write(ctx context.Context, namespace string, in *openfgav1.WriteRequest) error {
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	_, err := c.openfga.Write(ctx, in)
+func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
+	defer span.End()
+
+	return c.authzext.Read(ctx, req)
+}
+
+func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Write")
+	defer span.End()
+
+	_, err := c.authzext.Write(ctx, req)
 	return err
 }
 

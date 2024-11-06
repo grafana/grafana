@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
-
-	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
@@ -114,9 +114,9 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 
 		for key, tuples := range tuplesMap {
 			if err := batch(tuples, 100, func(items []*openfgav1.TupleKey) error {
-				return r.client.Write(ctx, &openfgav1.WriteRequest{
-					Writes: &openfgav1.WriteRequestWrites{
-						TupleKeys: items,
+				return r.client.Write(ctx, &authzextv1.WriteRequest{
+					Writes: &authzextv1.WriteRequestWrites{
+						TupleKeys: zanzana.ToAuthzExtTuples(items),
 					},
 				})
 			}); err != nil {

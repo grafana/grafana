@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/authlib/claims"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 // legacyTupleCollector collects tuples groupd by object and tupleKey
@@ -92,8 +92,8 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 
 	if len(deletes) > 0 {
 		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
-			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: items},
+			return r.client.Write(ctx, &authzextv1.WriteRequest{
+				Deletes: &authzextv1.WriteRequestDeletes{TupleKeys: zanzana.ToAuthzExtTuplesWithoutCondition(items)},
 			})
 		})
 
@@ -104,8 +104,8 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 
 	if len(writes) > 0 {
 		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
-			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Writes: &openfgav1.WriteRequestWrites{TupleKeys: items},
+			return r.client.Write(ctx, &authzextv1.WriteRequest{
+				Writes: &authzextv1.WriteRequestWrites{TupleKeys: zanzana.ToAuthzExtTuples(items)},
 			})
 		})
 
