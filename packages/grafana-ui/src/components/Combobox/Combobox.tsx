@@ -345,12 +345,19 @@ export const Combobox = <T extends string | number>({
             })}
           </ul>
         )}
-        {asyncError && (
-          <Stack justifyContent="center" alignItems="center" height={8}>
-            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-            <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
-          </Stack>
-        )}
+        <div aria-live="polite">
+          {asyncError && (
+            <Stack justifyContent="center" alignItems="center" height={8}>
+              <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+              <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
+            </Stack>
+          )}
+          {items.length === 0 && !asyncError && (
+            <Stack justifyContent="center" alignItems="center" height={8}>
+              <Text color="secondary">{t('combobox.options.no-found', 'No options found.')}</Text>
+            </Stack>
+          )}
+        </div>
       </div>
     </div>
   );
