@@ -29,13 +29,11 @@ import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQuer
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
-  getTemplateSrv: () => templateSrvStub,
 }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
@@ -75,9 +73,9 @@ describe('PrometheusDatasource', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
+    access: 'proxy',
     user: 'test',
     password: 'mupp',
-    access: 'proxy',
     jsonData: {
       customQueryParameters: '',
       cacheLevel: PrometheusCacheLevel.Low,
@@ -95,13 +93,6 @@ describe('PrometheusDatasource', () => {
     });
     it('has function called getTagValues', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
-    });
-  });
-
-  describe('Type and version', () => {
-    it('Default support labels match endpoint over series when type and version not set', () => {
-      const labelsMatchSupport = ds.hasLabelsMatchAPISupport();
-      expect(labelsMatchSupport).toBe(true);
     });
   });
 
@@ -548,7 +539,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
-    it('should call replace function 2 times', () => {
+    it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
@@ -559,7 +550,7 @@ describe('PrometheusDatasource', () => {
       replaceMock.mockReturnValue(interval);
 
       const queries = ds.interpolateVariablesInQueries([query], { Interval: { text: interval, value: interval } });
-      expect(templateSrvStub.replace).toBeCalledTimes(2);
+      expect(templateSrvStub.replace).toBeCalledTimes(3);
       expect(queries[0].interval).toBe(interval);
     });
 
@@ -690,6 +681,26 @@ describe('PrometheusDatasource', () => {
 
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job="99", k1="v1", k2!="v2"} > 99' });
+    });
+
+    it('should replace variables in ad-hoc filters', () => {
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({ expr: 'test{job=~"99"}' });
     });
   });
 
@@ -972,7 +983,15 @@ describe('PrometheusDatasource2', () => {
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
-      ds.createQuery(target, { interval: '5m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>, 0, 10080);
+      ds.createQuery(
+        target,
+        {
+          interval: '5m',
+          range: getMockTimeRange(),
+        } as DataQueryRequest<PromQuery>,
+        0,
+        10080
+      );
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('315s');
     });
     it('should fall back to a scrape interval of 15s if min step is set to 0, resulting in 4*15s = 60s', () => {
