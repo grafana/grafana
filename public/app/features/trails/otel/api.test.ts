@@ -10,7 +10,9 @@ import {
 } from './api';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     publicDashboardAccessToken: '123',
   },
   getBackendSrv: () => {
