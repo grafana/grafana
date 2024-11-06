@@ -257,6 +257,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				name: "No metadata",
 				mutator: func(r *AlertRuleWithOptionals) {
 					r.Metadata = AlertRuleMetadata{}
+					r.HasMetadata = false
 				},
 			},
 		}
