@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, Icon, Input, LoadingBar, Space, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, Space, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
   skipToken,
@@ -92,6 +92,7 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [chooseExistingFolder, setChooseExistingFolder] = useState(true);
 
   const [newFolder] = useNewFolderMutation();
 
@@ -282,51 +283,72 @@ export function NestedFolderPicker({
   if (!overlayOpen) {
     return (
       <>
-        <Trigger
-          label={label}
-          handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
-          invalid={invalid}
-          isLoading={selectedFolder.isLoading}
-          autoFocus={autoFocusButton}
-          ref={refs.setReference}
-          aria-label={
-            label
-              ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
-                  label,
-                })
-              : undefined
-          }
-          {...getReferenceProps()}
-        />
-        {createFolder && !isCreatingFolder && (
-          <>
-            <Space v={1} />
-            <Button
-              onClick={() => {
-                setIsCreatingFolder(true);
-              }}
-              type="button"
-              icon="plus"
-              fill="outline"
-              variant="secondary"
-              disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-            >
-              <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">Create new folder</Trans>
-            </Button>
-          </>
-        )}
-        {createFolder && isCreatingFolder && (
-          <>
-            <Space v={1} />
-            <NewFolderForm
-              onConfirm={onCreateNewFolder}
-              onCancel={() => {
-                setIsCreatingFolder(false);
-              }}
-              preventDefault={true}
+        <TabsBar>
+          <Tab
+            label="Existing Folder"
+            active={chooseExistingFolder}
+            onChangeTab={() => setChooseExistingFolder(true)}
+          />
+          <Tab label="New Folder" active={!chooseExistingFolder} onChangeTab={() => setChooseExistingFolder(false)} />
+        </TabsBar>
+        <Space v={1} />
+        <TabContent>
+          {chooseExistingFolder && (
+            <Trigger
+              label={label}
+              handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
+              invalid={invalid}
+              isLoading={selectedFolder.isLoading}
+              autoFocus={autoFocusButton}
+              ref={refs.setReference}
+              aria-label={
+                label
+                  ? t(
+                      'browse-dashboards.folder-picker.accessible-label',
+                      'Select folder: {{ label }} currently selected',
+                      {
+                        label,
+                      }
+                    )
+                  : undefined
+              }
+              {...getReferenceProps()}
             />
-          </>
-        )}
+          )}
+          {!chooseExistingFolder && (
+            <>
+              {createFolder && !isCreatingFolder && (
+                <>
+                  <Space v={1} />
+                  <Button
+                    onClick={() => {
+                      setIsCreatingFolder(true);
+                    }}
+                    type="button"
+                    icon="plus"
+                    fill="outline"
+                    variant="secondary"
+                    disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                  >
+                    <Trans i18nKey="browse-dashboards.folder-picker.create-new-folder-button">Create new folder</Trans>
+                  </Button>
+                </>
+              )}
+              {createFolder && isCreatingFolder && (
+                <>
+                  <Space v={1} />
+                  <NewFolderForm
+                    onConfirm={onCreateNewFolder}
+                    onCancel={() => {
+                      setIsCreatingFolder(false);
+                    }}
+                    preventDefault={true}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </TabContent>
       </>
     );
   }
