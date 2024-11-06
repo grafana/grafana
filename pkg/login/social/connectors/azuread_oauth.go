@@ -176,25 +176,34 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 
 	oauthCfg := s.GetOAuthInfo()
 
-	if oauthCfg.ClientAuthentication == social.ClientSecretJWT {
+	// Handle client authentication types
+	switch oauthCfg.ClientAuthentication {
+	case social.ClientSecretJWT:
+		var clientAssertion string
+		var err error
+
+		// Generate client assertion based on ManagedIdentityClientID
 		if oauthCfg.ManagedIdentityClientID != "" {
-			clientAssertion, err := s.ManagedIdentityCallback(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			authOptions = append(authOptions,
-				oauth2.SetAuthURLParam("client_assertion", clientAssertion),
-				oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
-			)
-
-			// Remove client_secret from Config to avoid sending it in the request
-			s.Config.ClientSecret = ""
+			clientAssertion, err = s.ManagedIdentityCallback(ctx)
 		} else {
-			// manually construct the token and sign with the client secret
-			return nil, fmt.Errorf("client_secret_jwt is not supported without managed_identity_client_id")
+			clientAssertion, err = createJWT(*oauthCfg)
 		}
-	} else if oauthCfg.ClientAuthentication != social.ClientSecretPost {
+		if err != nil {
+			return nil, err
+		}
+
+		authOptions = append(authOptions,
+			oauth2.SetAuthURLParam("client_assertion", clientAssertion),
+			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
+		)
+
+		// Remove client_secret to avoid sending it in the request
+		s.Config.ClientSecret = ""
+
+	case social.ClientSecretPost:
+		// Use default behavior for ClientSecretPost, no additional setup needed
+
+	default:
 		return nil, fmt.Errorf("invalid client authentication method: %s", oauthCfg.ClientAuthentication)
 	}
 
@@ -202,6 +211,33 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
+// Creates and signs a JWT token using the shared client secret. Based on OIDC specification for client_secret_jwt.
+func createJWT(oauthCfg social.OAuthInfo) (string, error) {
+	now := time.Now().UTC()
+	claims := jwt.Claims{
+		Issuer:    oauthCfg.ClientId,
+		Subject:   oauthCfg.ClientId,
+		Audience:  jwt.Audience{oauthCfg.TokenUrl},
+		ID:        uuid.New().String(),
+		Expiry:    jwt.NewNumericDate(now.Add(5 * time.Minute)),
+		NotBefore: jwt.NewNumericDate(now),
+		IssuedAt:  jwt.NewNumericDate(now),
+	}
+
+	sharedSecret := oauthCfg.ClientSecret
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte(sharedSecret)}, nil)
+	if err != nil {
+		return "", err
+	}
+	jwt, err := jwt.Signed(signer).Claims(claims).CompactSerialize()
+	if err != nil {
+		return "", err
+	}
+
+	return jwt, nil
+}
+
+// ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
 func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context) (string, error) {
 	// exchange auth code to a valid token
 	managedIdentityClientID := s.GetOAuthInfo().ManagedIdentityClientID
