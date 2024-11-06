@@ -386,7 +386,7 @@ func (i *Index) Count() (int, error) {
 	for _, shard := range i.shards {
 		count, err := shard.index.DocCount()
 		if err != nil {
-			return 0, err
+			i.log.Error("failed to get doc count", "error", err)
 		}
 		total += int(count)
 	}
@@ -395,8 +395,8 @@ func (i *Index) Count() (int, error) {
 
 // allTenants returns a list of all tenants in the index
 func (i *Index) allTenants() []string {
-	tenants := make([]string, 0)
-	for tenant, _ := range i.shards {
+	tenants := make([]string, 0, len(i.shards))
+	for tenant := range i.shards {
 		tenants = append(tenants, tenant)
 	}
 	return tenants

@@ -29,6 +29,7 @@ func TestIndexDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
+	require.Equal(t, 1, len(index.allTenants()))
 	assertSearchCountEquals(t, index, "*", nil, 1)
 }
 
