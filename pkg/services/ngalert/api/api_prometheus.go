@@ -354,11 +354,6 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	var newToken string
 	foundToken := false
 	for _, rg := range groupedRules {
-		// folder, ok := opts.Namespaces[rg.GroupKey.NamespaceUID]
-		// if !ok {
-		// 	log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
-		// 	continue
-		// }
 		ok, err := opts.AuthorizeRuleGroup(rg.Rules)
 		if err != nil {
 			ruleResponse.DiscoveryBase.Status = "error"
@@ -402,8 +397,6 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	ruleResponse.Data.NextToken = newToken
 	ruleResponse.Data.Totals = rulesTotals
 
-	// Sort Rule Groups before checking limits
-	// apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
 	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}

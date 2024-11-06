@@ -732,7 +732,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
+			returnedGroups := make([]apimodels.RuleGroup, 0, len(allRules))
+
 			require.Len(t, result.Data.RuleGroups, 2)
+			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 			require.NotEmpty(t, result.Data.NextToken)
 			token := result.Data.NextToken
 
@@ -748,6 +751,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 				require.Len(t, result.Data.RuleGroups, 2)
+				returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 				require.NotEmpty(t, result.Data.NextToken)
 				token = result.Data.NextToken
 			}
@@ -764,7 +768,15 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 			require.Len(t, result.Data.RuleGroups, 1)
+			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 			require.Empty(t, result.Data.NextToken)
+
+			for i := 0; i < 9; i++ {
+				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				require.NoError(t, err)
+				require.Equal(t, folder.Fullpath, returnedGroups[i].File)
+				require.Equal(t, fmt.Sprintf("rule_group_%d", i), returnedGroups[i].Name)
+			}
 		})
 
 		t.Run("bad token should return no results", func(t *testing.T) {
