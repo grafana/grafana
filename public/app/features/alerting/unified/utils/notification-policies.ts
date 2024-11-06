@@ -316,5 +316,5 @@ export {
   findMatchingRoutes,
   getInheritedProperties,
   isLabelMatchInSet,
-  renameReceiverInRoute
+  renameReceiverInRoute,
 };
