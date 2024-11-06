@@ -174,7 +174,6 @@ export type MigrateDataResponseItemDto = {
     | 'RESOURCE_CONFLICT'
     | 'UNEXPECTED_STATUS_CODE'
     | 'INTERNAL_SERVICE_ERROR'
-    | 'ONLY_CORE_DATA_SOURCES'
     | 'GENERIC_ERROR';
   message?: string;
   name?: string;

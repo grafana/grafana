@@ -115,7 +115,6 @@ const (
 	ErrResourceConflict           ResourceErrorCode = "RESOURCE_CONFLICT"
 	ErrUnexpectedStatus           ResourceErrorCode = "UNEXPECTED_STATUS_CODE"
 	ErrInternalServiceError       ResourceErrorCode = "INTERNAL_SERVICE_ERROR"
-	ErrOnlyCoreDataSources        ResourceErrorCode = "ONLY_CORE_DATA_SOURCES"
 	ErrGeneric                    ResourceErrorCode = "GENERIC_ERROR"
 )
 
