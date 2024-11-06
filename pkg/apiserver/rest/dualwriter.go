@@ -169,6 +169,7 @@ func SetDualWritingMode(
 		"2": Mode2,
 		"3": Mode3,
 		"4": Mode4,
+		"5": Mode5,
 	}
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
@@ -218,6 +219,14 @@ func SetDualWritingMode(
 			return currentMode, errDualWriterSetCurrentMode
 		}
 		return desiredMode, nil
+	case desiredMode == Mode3 && currentMode > Mode3:
+		currentMode = desiredMode
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return currentMode, errDualWriterSetCurrentMode
+		}
+	case desiredMode > Mode3 && currentMode == 3:
+		return currentMode, errors.New("setting mode 4 and 5 not implemented yet")
 	default:
 		return Mode0, errDualWriterSetCurrentMode
 	}
