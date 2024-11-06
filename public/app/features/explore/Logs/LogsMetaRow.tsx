@@ -88,9 +88,39 @@ export const LogsMetaRow = memo(
           break;
         case DownloadFormat.CSV:
           const dataFrameMap = new Map<string, DataFrame>();
+
+          let sortedValue = new Map<string, any | undefined[]>();
           logRows.forEach((row) => {
+            if (row.dataFrame?.refId) {
+              // handle Time and Line
+              const timeKey = row.dataFrame.refId + 'Time';
+              const lineKey = row.dataFrame.refId + 'Line';
+              const labelKey = row.dataFrame.refId + 'labels';
+              if (!sortedValue.has(timeKey)) {
+                sortedValue.set(timeKey, []);
+              }
+              if (!sortedValue.has(lineKey)) {
+                sortedValue.set(lineKey, []);
+              }
+              if (!sortedValue.has(labelKey)) {
+                sortedValue.set(labelKey, []);
+              }
+              sortedValue.get(timeKey)?.push(row.timeEpochMs);
+              sortedValue.get(lineKey)?.push(row.entry);
+              sortedValue.get(labelKey)?.push(row.labels);
+            }
+          });
+
+          logRows.forEach((row) => {
+            // reorder dataFrame
             if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
-              dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+              for (let fieldIdx in row.dataFrame.fields) {
+                const key = row.dataFrame.refId + row.dataFrame.fields[fieldIdx].name;
+                if (sortedValue.has(key)) {
+                  row.dataFrame.fields[fieldIdx].values = sortedValue.get(key);
+                }
+              }
+              dataFrameMap.set(row.dataFrame.refId, row.dataFrame);
             }
           });
           dataFrameMap.forEach(async (dataFrame) => {
