@@ -260,18 +260,18 @@ func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
 }
 
 const (
-	SortSuffix = "_sort"
-	Descending = "-"
+	sortSuffix = "_sort"
+	descending = "-"
 )
 
 func sortField(sort string) string {
-	sf := strings.TrimSuffix(sort, SortSuffix)
-	if !strings.HasPrefix(sf, Descending) {
+	sf := strings.TrimSuffix(sort, sortSuffix)
+	if !strings.HasPrefix(sf, descending) {
 		return dashboardListFieldMapping[sf]
 	}
-	sf = strings.TrimPrefix(sf, Descending)
+	sf = strings.TrimPrefix(sf, descending)
 	sf = dashboardListFieldMapping[sf]
-	return Descending + sf
+	return descending + sf
 }
 
 // mapping of dashboard list fields to search doc fields
