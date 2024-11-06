@@ -1,9 +1,8 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
-import { Cell } from 'react-table';
 
 import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 
@@ -21,11 +20,7 @@ import { TableCellNG } from './Cells/TableCellNG';
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
 
-interface TableRow {
-  id: number;
-  title: string;
-  cell: Cell;
-}
+type TableRow = Record<string, unknown>;
 
 interface TableColumn extends Column<TableRow> {
   key: string;
@@ -147,7 +142,6 @@ export function TableNG(props: TableNGProps) {
 
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
-    const rows: Array<{ [key: string]: string }> = [];
 
     // Footer calculations
     let footerItems: FooterItem[] = [];
@@ -156,7 +150,7 @@ export function TableNG(props: TableNGProps) {
 
     main.fields.map((field, fieldIndex) => {
       filterFields.push({ id: fieldIndex.toString(), field });
-      const key = `${field.name}-${revId}`;
+      const key = field.name;
       const { values: _, ...shallowField } = field;
 
       const justifyColumnContent = getTextAlign(field);
@@ -169,11 +163,11 @@ export function TableNG(props: TableNGProps) {
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
-          const value = row[key];
-          const displayValue = shallowField.display!(value);
+          // const value = row[key];
+          // const displayValue = shallowField.display!(value);
 
           // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          let colors = getCellColors(theme, shallowField.config.custom, displayValue);
+          // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
           // }
 
           // css()
@@ -209,8 +203,9 @@ export function TableNG(props: TableNGProps) {
             justifyContent={justifyColumnContent}
           />
         ),
-        width: columnWidth,
-        minWidth: columnMinWidth,
+        // TODO these anys are making me sad
+        width: field.config.custom.width ?? columnWidth,
+        minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
 
       // Create row objects
@@ -218,15 +213,6 @@ export function TableNG(props: TableNGProps) {
         // Only populate 2d array if needed for footer calculations
         allValues.push(field.values);
       }
-      field.values.map((value, valueIndex) => {
-        const currentValue = { [key]: value };
-
-        if (rows.length > valueIndex) {
-          rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
-        } else {
-          rows[valueIndex] = currentValue;
-        }
-      });
     });
 
     if (footerOptions?.show && footerOptions.reducer.length > 0) {
@@ -237,12 +223,31 @@ export function TableNG(props: TableNGProps) {
       }
     }
 
-    return {
-      columns,
-      rows,
-    };
+    return columns;
   };
-  const { columns, rows } = mapFrameToDataGrid(props.data);
+
+  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+    const fnBody = `
+      const rows = Array(frame.length);
+      const values = frame.fields.map(f => f.values);
+
+      for (let i = 0; i < frame.length; i++) {
+        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+      }
+
+      return rows;
+    `;
+
+    const convert = new Function('frame', fnBody);
+
+    const records = convert(frame);
+
+    return records;
+  }, []);
+
+  const columns = mapFrameToDataGrid(props.data);
+
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
     return columns.reduce(
@@ -290,6 +295,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        key={`DataGrid${revId}`}
         rows={sortedRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
@@ -343,7 +349,7 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
+function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
   return <Row {...props} />;
