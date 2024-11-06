@@ -13,6 +13,11 @@ menuTitle: Introduction
 title: Introduction to Alerting
 weight: 100
 refs:
+  notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   notification-policies:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
@@ -129,12 +134,8 @@ Each notification policy decides where to send the alert (contact point) and whe
 
 Grafana Alerting is built on the Prometheus model of designing alerting systems. Prometheus-based alerting systems have two main components:
 
-- An alert generator that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
-- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for handling them and sending their notifications.
-
-Grafana Alerting doesn’t use Prometheus as its default alert generator because it works with many other data sources; not just Prometheus.
-
-However, Grafana can also use Prometheus as an alert generator (refer to [alert rule types](ref:alert-rules)), as well as external Alertmanagers.
+- An alert generator that [evaluates alert rules](ref:alert-rule-evaluation) and sends firing and resolved alerts to the alert receiver.
+- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for sending their [notifications](ref:notifications).
 
 ## Design your Alerting system
 
@@ -147,23 +148,23 @@ Here are some tips on how to create an effective alert management set up for you
 **Which are the key metrics for your business that you want to monitor and alert on?**
 
 - Find events that are important to know about and not so trivial or frequent that recipients ignore them.
-
 - Alerts should only be created for big events that require immediate attention or intervention.
-
 - Consider quality over quantity.
-
-**Which type of Alerting do you want to use?**
-
-- Choose between Grafana-managed Alerting or Grafana Mimir or Loki-managed Alerting; or both.
 
 **How do you want to organize your alerts and notifications?**
 
-- Be selective about who you set to receive alerts. Consider sending them to whoever is on call or a specific Slack channel.
-- Automate as far as possible using the Alerting API or alerts as code (Terraform).
+- Be selective about who you set to receive alerts. Consider sending them to the right teams, whoever is on call, and the specific channels.
+- Think carefully about priority and severity levels.
+- Automate as far as possible provisioning Alerting resources with the API or Terraform.
+
+**Which information should you include in notifications?**
+
+- Consider who the alert receivers and responders are.
+- Share information that helps responders identify and address potential issues.
+- Link alerts to dashboards to guide responders on which data to investigate.
 
 **How can you reduce alert fatigue?**
 
 - Avoid noisy, unnecessary alerts by using silences, mute timings, or pausing alert rule evaluation.
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
-- Think carefully about priority and severity levels.
 - Continually review your thresholds and evaluation rules.
