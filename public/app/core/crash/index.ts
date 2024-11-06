@@ -43,9 +43,15 @@ export function initializeCrashDetection() {
       return new SharedWorker(new URL('./detector.worker', import.meta.url));
     },
 
-    reportCrash: async (tab) => {
-      const preparedContext = prepareContext(tab);
+    reportCrash: async (report) => {
+      const preparedContext = prepareContext(report);
       logger.logWarning('browser crash detected', preparedContext);
+      return true;
+    },
+
+    reportStaleTab: async (report) => {
+      const preparedContext = prepareContext(report);
+      logger.logWarning('stale browser tab detected', preparedContext);
       return true;
     },
 
