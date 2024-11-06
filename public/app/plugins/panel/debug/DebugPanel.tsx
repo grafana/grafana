@@ -7,6 +7,7 @@ import { ComboBox } from './ComboBox';
 import { ReactWindow } from './ReactWindow';
 import { ReactWindowNativeScroll } from './ReactWindowNativeScroll';
 import { SelectThing } from './SelectThing';
+import { VirtualSelect } from './VirtualSelect';
 import { Options } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
@@ -16,6 +17,7 @@ const randStr = (len = 7) => Math.random().toString(36).slice(-len);
 const radioOpts: SelectableValue[] = [
   { label: 'Nothing', value: 'nothing' },
   { label: 'Select', value: 'select' },
+  { label: 'VirtualizedSelect', value: 'virtualizedselect' },
   { label: 'Combobox', value: 'combobox' },
   { label: 'react-window', value: 'reactwindow' },
   { label: 'react-window-native', value: 'reactwindow2' },
@@ -47,6 +49,7 @@ export const DebugPanel = (props: Props) => {
         <RadioButtonGroup options={radioOpts} value={selected} onChange={setSelected} />
       </div>
       {selected === 'select' && <SelectThing data={opts} />}
+      {selected === 'virtualizedselect' && <VirtualSelect data={opts} />}
       {selected === 'combobox' && <ComboBox data={opts} />}
       {selected === 'reactwindow' && <ReactWindow data={list} />}
       {selected === 'reactwindow2' && <ReactWindowNativeScroll data={list} />}
