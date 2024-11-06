@@ -723,10 +723,10 @@ export class PrometheusDatasource
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
         const withAdhocFilters = this.templateSrv.replace(
-              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
-              scopedVars,
-              this.interpolateQueryExpr
-            );
+          this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+          scopedVars,
+          this.interpolateQueryExpr
+        );
 
         const expandedQuery = {
           ...query,
@@ -898,7 +898,11 @@ export class PrometheusDatasource
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
-    const exprWithAdHocFilters = this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
+    const exprWithAdHocFilters = this.templateSrv.replace(
+      this.enhanceExprWithAdHocFilters(filters, expr),
+      variables,
+      this.interpolateQueryExpr
+    );
 
     return {
       ...target,

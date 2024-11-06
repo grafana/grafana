@@ -898,7 +898,11 @@ export class PrometheusDatasource
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
-    const exprWithAdHocFilters = this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
+    const exprWithAdHocFilters = this.templateSrv.replace(
+      this.enhanceExprWithAdHocFilters(filters, expr),
+      variables,
+      this.interpolateQueryExpr
+    );
 
     return {
       ...target,
