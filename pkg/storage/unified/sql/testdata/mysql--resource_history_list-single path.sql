@@ -3,23 +3,27 @@ SELECT
     kv.`namespace`,
     kv.`name`,
     kv.`value`
-    FROM `resource_history` as kv 
-    INNER JOIN  (
-        SELECT `namespace`, `group`, `resource`, `name`,  max(`resource_version`) AS `resource_version`
-        FROM `resource_history` AS mkv
-        WHERE 1 = 1
-            AND `resource_version` <=  0
-                AND `namespace` = 'ns'
-        GROUP BY mkv.`namespace`, mkv.`group`, mkv.`resource`, mkv.`name` 
-    ) AS maxkv
-    ON
-        maxkv.`resource_version`  = kv.`resource_version`
-        AND maxkv.`namespace`     = kv.`namespace`
-        AND maxkv.`group`         = kv.`group`
-        AND maxkv.`resource`      = kv.`resource`
-        AND maxkv.`name`          = kv.`name`
-    WHERE kv.`action`  != 3 
-        AND kv.`namespace` = 'ns'
-    ORDER BY kv.`namespace` ASC, kv.`name` ASC
-    LIMIT 10 OFFSET 0
+FROM (
+    SELECT
+        `resource_version`,
+        `namespace`,
+        `group`,
+        `resource`,
+        `name`,
+        `value`,
+        `action`,
+        MAX(`resource_version`) OVER (
+            PARTITION BY `namespace`, `group`, `resource`, `name`
+            ORDER BY `resource_version`
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        ) AS max_resource_version
+    FROM `resource_history`
+    WHERE 1 = 1
+        AND `resource_version` <= 0
+            AND `namespace` = 'ns'
+) AS kv
+WHERE kv.`resource_version` = kv.max_resource_version
+    AND kv.`action` != 3
+ORDER BY kv.`namespace` ASC, kv.`name` ASC
+LIMIT 10 OFFSET 0
 ;
