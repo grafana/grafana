@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/promlib
 go 1.23.1
 
 require (
-	github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3
+	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b
 	github.com/grafana/grafana-plugin-sdk-go v0.258.0
 	github.com/json-iterator/go v1.1.12
 	github.com/patrickmn/go-cache v2.1.0+incompatible
