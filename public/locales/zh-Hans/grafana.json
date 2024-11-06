@@ -447,6 +447,9 @@
     },
     "custom-value": {
       "create": ""
+    },
+    "options": {
+      "no-found": ""
     }
   },
   "command-palette": {
