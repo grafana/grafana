@@ -11,6 +11,8 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -21,7 +23,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator"
 
 // A TupleCollector is responsible to build and store [openfgav1.TupleKey] into provided tuple map.
 // They key used should be a unique group key for the collector so we can skip over an already synced group.
-type TupleCollector func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error
+type TupleCollector func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
@@ -30,6 +32,7 @@ type ZanzanaReconciler struct {
 	lock   *serverlock.ServerLockService
 	log    log.Logger
 	client zanzana.Client
+	store  db.DB
 	// collectors are one time best effort migrations that gives up on first conflict.
 	// These are deprecated and everything should move be resourceReconcilers that are periodically synced
 	// between grafana db and zanzana store.
@@ -94,31 +97,39 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
 	defer span.End()
 
-	tuplesMap := make(map[string][]*openfgav1.TupleKey)
-
-	for _, c := range r.collectors {
-		if err := c(ctx, tuplesMap); err != nil {
-			return fmt.Errorf("failed to collect permissions: %w", err)
-		}
+	orgIds, err := r.getOrgs(ctx)
+	if err != nil {
+		return err
 	}
+	for _, orgId := range orgIds {
+		ns := claims.OrgNamespaceFormatter(orgId)
 
-	for key, tuples := range tuplesMap {
-		if err := batch(tuples, 100, func(items []*openfgav1.TupleKey) error {
-			return r.client.Write(ctx, &openfgav1.WriteRequest{
-				Writes: &openfgav1.WriteRequestWrites{
-					TupleKeys: items,
-				},
-			})
-		}); err != nil {
-			if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
-				r.log.Debug("Skipping already synced permissions", "sync_key", key)
-				continue
+		tuplesMap := make(map[string][]*openfgav1.TupleKey)
+
+		for _, c := range r.collectors {
+			if err := c(ctx, ns, tuplesMap); err != nil {
+				return fmt.Errorf("failed to collect permissions: %w", err)
 			}
-			return err
 		}
-	}
 
-	r.reconcile(ctx)
+		for key, tuples := range tuplesMap {
+			if err := batch(tuples, 100, func(items []*openfgav1.TupleKey) error {
+				return r.client.Write(ctx, &openfgav1.WriteRequest{
+					Writes: &openfgav1.WriteRequestWrites{
+						TupleKeys: items,
+					},
+				})
+			}); err != nil {
+				if strings.Contains(err.Error(), "cannot write a tuple which already exists") {
+					r.log.Debug("Skipping already synced permissions", "sync_key", key)
+					continue
+				}
+				return err
+			}
+		}
+
+		r.reconcile(ctx)
+	}
 
 	return nil
 }
@@ -144,32 +155,57 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 }
 
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
-	run := func(ctx context.Context) {
+	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
 		for _, reconciler := range r.reconcilers {
-			if err := reconciler.reconcile(ctx); err != nil {
+			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
 		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
-	if r.lock == nil {
-		run(ctx)
+	orgIds, err := r.getOrgs(ctx)
+	if err != nil {
 		return
 	}
 
-	// We ignore the error for now
-	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-		run(ctx)
+	for _, orgId := range orgIds {
+		ns := claims.OrgNamespaceFormatter(orgId)
+
+		if r.lock == nil {
+			run(ctx, ns)
+			return
+		}
+
+		// We ignore the error for now
+		_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+			run(ctx, ns)
+		})
+	}
+
+}
+
+func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {
+	orgs := make([]int64, 0)
+	err := r.store.WithDbSession(ctx, func(sess *db.Session) error {
+		q := "SELECT id FROM org"
+		if err := sess.SQL(q).Find(&orgs); err != nil {
+			return err
+		}
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return orgs, nil
 }
 
 // managedPermissionsCollector collects managed permissions into provided tuple map.
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
 func managedPermissionsCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "managed"
 		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
@@ -229,7 +265,7 @@ func managedPermissionsCollector(store db.DB) TupleCollector {
 
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
 func folderTreeCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
@@ -277,7 +313,7 @@ func folderTreeCollector(store db.DB) TupleCollector {
 
 // basicRolesCollector migrates basic roles to OpenFGA tuples
 func basicRolesCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "basic_role"
 		const query = `
 			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
@@ -353,7 +389,7 @@ func basicRolesCollector(store db.DB) TupleCollector {
 
 // customRolesCollector migrates custom roles to OpenFGA tuples
 func customRolesCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "custom_role"
 		const query = `
 			SELECT r.name, r.uid as role_uid, p.action, p.kind, p.identifier, r.org_id
@@ -414,7 +450,7 @@ func customRolesCollector(store db.DB) TupleCollector {
 }
 
 func basicRoleAssignemtCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "basic_role_assignment"
 		query := `
 			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role, u.is_admin
@@ -462,7 +498,7 @@ func basicRoleAssignemtCollector(store db.DB) TupleCollector {
 }
 
 func userRoleAssignemtCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "user_role_assignment"
 		query := `
 			SELECT ur.org_id, u.uid AS user_uid, r.uid AS role_uid, r.name AS role_name
@@ -521,7 +557,7 @@ func userRoleAssignemtCollector(store db.DB) TupleCollector {
 }
 
 func teamRoleAssignemtCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "team_role_assignment"
 		const query = `
 			SELECT tr.org_id, t.uid AS team_uid, r.uid AS role_uid, r.name AS role_name
@@ -582,7 +618,7 @@ func teamRoleAssignemtCollector(store db.DB) TupleCollector {
 // fixedRoleTuplesCollector migrates fixed roles permissions that cannot be described in schema.
 // Those are permissions like general folder read and create that have specific resource id.
 func fixedRoleTuplesCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
+	return func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error {
 		const collectorID = "fixed_role"
 		type Org struct {
 			Id   int64
