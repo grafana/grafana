@@ -12,8 +12,8 @@ import { Input, Props as InputProps } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
-import { getComboboxStyles } from './getComboboxStyles';
-import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
+import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -133,7 +133,7 @@ export const Combobox = <T extends string | number>({
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
-    estimateSize: () => OPTION_HEIGHT,
+    estimateSize: () => MENU_OPTION_HEIGHT,
     overscan: 4,
   };
 
