@@ -9,8 +9,43 @@ It provides generic storage for k8s objects, and can store data either within de
 
 When we are running Grafana locally, is the on-prem instance DB considered "unified storage" in that case? 
   - When running on-prem existing instance db seems to become "unified storage"
+    - True - new sql tables would all be made in the instance db, or possibly a different db on the same server, but not much changes here significantly
   - Is the only difference now how the tables are created? e.g. via the old migration framework or the new raw sql migrations?
   - Ryan suggested something about having secrets in their own database? What would that entail?
+    - UniStore is intended to support 90% of use cases but some need their own data stores
+    - For example, alerting makes far too many queries, they'll have their own store
+    - If there's not a good reason not to use unified storage, we should use it
+      - However, right now it's a simple implementation with a lot of limitations
+      - Joins don't exist, analytical queries don't exist
+  - Onboarding a brand new data type into unistore is pretty easy. There are docs on it as well. 
+    - Is it possible to modify the json blob that goes into unistore before we persist it?
+    - When we store a secure value:
+        > Remove the secret value
+        > Replace it with UID
+        OR
+        > Just replace the raw value with the encrypted value
+
+What's the point of unified storage?
+  - Lets k8s style storage scale
+  - Using sql - probably not forever though
+  - Basically blob storage with some metadata and k8s-related columns
+  - "Storage-as-a-service"
+  - App platform abstracts away the MT components
+
+[secrets]
+  labels
+  annotations
+  spec:
+    name: michael's secret
+  ======
+  secureValue:
+    secret: my-password
+
+first impl = envelope encrypt
+  encrypt the secret portion
+  store the encrypted secret + data keys in sql
+
+later on = store vault paths, aws secret manager secret ids, etc 
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
