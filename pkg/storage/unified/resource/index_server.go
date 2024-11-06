@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -13,25 +14,32 @@ import (
 
 type IndexServer struct {
 	ResourceServer
-	s     *server
-	index *Index
-	ws    *indexWatchServer
-	log   *slog.Logger
-	cfg   *setting.Cfg
+	s      *server
+	index  *Index
+	ws     *indexWatchServer
+	log    *slog.Logger
+	cfg    *setting.Cfg
+	tracer tracing.Tracer
 }
 
+const tracingPrefixIndexServer = "unified_storage.index_server."
+
 func (is *IndexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	results, err := is.index.Search(ctx, req.Tenant, req.Query, int(req.Limit), int(req.Offset))
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Search")
+	defer span.End()
+
+	results, err := is.index.Search(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	res := &SearchResponse{}
-	for _, r := range results {
+	for _, r := range results.Values {
 		resJsonBytes, err := json.Marshal(r)
 		if err != nil {
 			return nil, err
 		}
 		res.Items = append(res.Items, &ResourceWrapper{Value: resJsonBytes})
+		res.Groups = results.Groups
 	}
 	return res, nil
 }
@@ -46,7 +54,16 @@ func (is *IndexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginR
 
 // Load the index
 func (is *IndexServer) Load(ctx context.Context) error {
-	is.index = NewIndex(is.s, Opts{}, is.cfg.IndexPath)
+	ctx, span := is.tracer.Start(ctx, tracingPrefixIndexServer+"Load")
+	defer span.End()
+
+	opts := Opts{
+		Workers:   is.cfg.IndexWorkers,
+		BatchSize: is.cfg.IndexMaxBatchSize,
+		ListLimit: is.cfg.IndexListLimit,
+		IndexDir:  is.cfg.IndexPath,
+	}
+	is.index = NewIndex(is.s, opts, is.tracer)
 	err := is.index.Init(ctx)
 	if err != nil {
 		return err
@@ -88,12 +105,13 @@ func (is *IndexServer) Init(ctx context.Context, rs *server) error {
 	return nil
 }
 
-func NewResourceIndexServer(cfg *setting.Cfg) ResourceIndexServer {
+func NewResourceIndexServer(cfg *setting.Cfg, tracer tracing.Tracer) ResourceIndexServer {
 	logger := slog.Default().With("logger", "index-server")
 
 	indexServer := &IndexServer{
-		log: logger,
-		cfg: cfg,
+		log:    logger,
+		cfg:    cfg,
+		tracer: tracer,
 	}
 
 	err := prometheus.Register(NewIndexMetrics(cfg.IndexPath, indexServer))

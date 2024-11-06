@@ -570,13 +570,6 @@ steps:
   image: golang:1.23.1-alpine
   name: verify-gen-jsonnet
 - commands:
-  - apk add --update make
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -606,9 +599,16 @@ steps:
     token:
       from_secret: drone_token
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    -a targz:grafana:linux/arm/v7 --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+    -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
   environment:
@@ -617,6 +617,27 @@ steps:
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - rgm-package
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: publish-images-grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -855,47 +876,6 @@ steps:
   failure: always
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
-- commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
-    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --go-version=1.23.1 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3 --tag-format='{{
-    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
-  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
-  depends_on:
-  - yarn-install
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-  image: grafana/grafana-build:main
-  name: rgm-build-docker
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
-  depends_on:
-  - rgm-build-docker
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  failure: ignore
-  image: google/cloud-sdk:431.0.0
-  name: publish-images-grafana
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
@@ -1988,13 +1968,6 @@ steps:
   image: golang:1.23.1-alpine
   name: verify-gen-jsonnet
 - commands:
-  - apk add --update make
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2023,9 +1996,16 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    -a targz:grafana:linux/arm/v7 --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+    -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
   environment:
@@ -2037,6 +2017,31 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - rgm-package
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - yarn e2e:plugin:build
   depends_on:
@@ -2309,54 +2314,9 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
-    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --go-version=1.23.1 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3 --tag-format='{{
-    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
-  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
-  depends_on:
-  - update-package-json-version
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-  image: grafana/grafana-build:main
-  name: rgm-build-docker
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
-  depends_on:
-  - rgm-build-docker
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk:431.0.0
-  name: publish-images-grafana
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  when:
-    repo:
-    - grafana/grafana
-- commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss
   depends_on:
-  - rgm-build-docker
+  - rgm-package
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -2401,10 +2361,7 @@ steps:
 - commands:
   - ./bin/build upload-packages --edition oss
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - rgm-package
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -2418,7 +2375,7 @@ steps:
 - commands:
   - ./bin/build upload-cdn --edition oss
   depends_on:
-  - grafana-server
+  - rgm-package
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads
@@ -4338,89 +4295,6 @@ image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: prerelease-windows-msi
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - curl -L0 https://nssm.cc/release/nssm-2.24.zip -o nssm-2.24.zip
-  image: byrnedo/alpine-curl:0.1.8
-  name: downlad-nssm
-- commands:
-  - mkdir wix3 && cd wix3
-  - curl -L0 https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
-    -o wix3.zip
-  - unzip wix3.zip
-  image: byrnedo/alpine-curl:0.1.8
-  name: download-wix3
-- commands:
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    grafana.zip'
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: download-zip
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - export WINEPATH=$(winepath ./wix3)
-  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
-  depends_on:
-  - downlad-nssm
-  - download-wix3
-  - grabpl
-  - download-zip
-  entrypoint:
-  - /bin/bash
-  image: scottyhardy/docker-wine:stable-9.0
-  name: build-msi
-- commands:
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
-  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
-  depends_on:
-  - build-msi
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: upload-msi-installer
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- prerelease-windows-msi
-- rgm-tag-prerelease
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
 name: rgm-tag-verify-prerelease-assets
 node:
   type: no-parallel
@@ -5662,82 +5536,6 @@ volumes:
 - name: config
   temp: {}
 ---
-clone:
-  retries: 3
-depends_on: []
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: windows-pipeline-manual
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - curl -L0 https://nssm.cc/release/nssm-2.24.zip -o nssm-2.24.zip
-  image: byrnedo/alpine-curl:0.1.8
-  name: downlad-nssm
-- commands:
-  - mkdir wix3 && cd wix3
-  - curl -L0 https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip
-    -o wix3.zip
-  - unzip wix3.zip
-  image: byrnedo/alpine-curl:0.1.8
-  name: download-wix3
-- commands:
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - bash -c 'gcloud storage cp gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release/grafana-$${DRONE_TAG:1}.windows-amd64.zip
-    grafana.zip'
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: download-zip
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - export WINEPATH=$(winepath ./wix3)
-  - ./bin/grabpl windows-installer --target grafana.zip --edition oss
-  depends_on:
-  - downlad-nssm
-  - download-wix3
-  - grabpl
-  - download-zip
-  entrypoint:
-  - /bin/bash
-  image: scottyhardy/docker-wine:stable-9.0
-  name: build-msi
-- commands:
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - bash -c 'gcloud storage cp *.msi gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
-  - bash -c 'gcloud storage cp *.msi.sha256 gs://grafana-prerelease/artifacts/downloads/$${DRONE_TAG}/oss/release'
-  depends_on:
-  - build-msi
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: upload-msi-installer
-trigger:
-  event:
-  - promote
-  target: build-msi
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
 get:
   name: credentials.json
   path: infra/data/ci/grafana-release-eng/grafanauploads
@@ -5937,6 +5735,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 54085f152d1aeb8bd67a69de6a253a75f7c1d2c2a842f9a467ce4a75e218aa84
+hmac: 250d3c2ae9ddf7cbfd2a9fed01fe81312a882ba09b8f8725f4704629da00a774
 
 ...

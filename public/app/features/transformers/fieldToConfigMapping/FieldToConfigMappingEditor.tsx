@@ -202,32 +202,31 @@ function configHandlerToSelectOption(
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    margin-top: ${theme.spacing(1)};
+  table: css({
+    marginTop: theme.spacing(1),
 
-    td,
-    th {
-      border-right: 4px solid ${theme.colors.background.primary};
-      border-bottom: 4px solid ${theme.colors.background.primary};
-      white-space: nowrap;
-    }
-    th {
-      font-size: ${theme.typography.bodySmall.fontSize};
-      line-height: ${theme.spacing(4)};
-      padding: ${theme.spacing(0, 1)};
-    }
-  `,
-  labelCell: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(0, 1)};
-    max-width: 400px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 140px;
-  `,
-  selectCell: css`
-    padding: 0;
-    min-width: 161px;
-  `,
+    'td, th': {
+      borderRight: `4px solid ${theme.colors.background.primary}`,
+      borderBottom: `4px solid ${theme.colors.background.primary}`,
+      whiteSpace: 'nowrap',
+    },
+    th: {
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.spacing(4),
+      padding: theme.spacing(0, 1),
+    },
+  }),
+  labelCell: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    background: theme.colors.background.secondary,
+    padding: theme.spacing(0, 1),
+    maxWidth: '400px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    minWidth: '140px',
+  }),
+  selectCell: css({
+    padding: 0,
+    minWidth: '161px',
+  }),
 });

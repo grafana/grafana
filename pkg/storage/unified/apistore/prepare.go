@@ -80,16 +80,18 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+	} else if obj.GetUID() != previous.GetUID() {
+		klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		obj.SetUID(previous.GetUID())
 	}
 
 	if obj.GetName() != previous.GetName() {
 		return nil, fmt.Errorf("name mismatch between existing and updated object")
 	}
 
-	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("")
+	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
