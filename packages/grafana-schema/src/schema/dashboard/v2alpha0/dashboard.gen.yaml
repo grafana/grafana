@@ -1,0 +1,943 @@
+openapi: 3.0.0
+info:
+  title: Converted from dashboard.gen.yaml with typeconv
+  version: '1'
+  x-id: dashboard.gen.yaml
+  x-comment: >-
+    Generated from
+    packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen.ts by
+    core-types-json-schema (https://github.com/grantila/core-types-json-schema)
+    on behalf of typeconv (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    DashboardV2:
+      properties:
+        kind:
+          title: DashboardV2.kind
+          enum:
+            - Dashboard
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardSpec'
+          title: DashboardV2.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: DashboardV2
+      type: object
+    DashboardSpec:
+      properties:
+        id:
+          title: DashboardSpec.id
+          type: number
+        title:
+          title: DashboardSpec.title
+          type: string
+        description:
+          title: DashboardSpec.description
+          type: string
+        cursorSync:
+          title: DashboardSpec.cursorSync
+        liveNow:
+          title: DashboardSpec.liveNow
+          type: boolean
+        preload:
+          title: DashboardSpec.preload
+          type: boolean
+        editable:
+          title: DashboardSpec.editable
+          type: boolean
+        links:
+          items:
+            $ref: '#/components/schemas/DashboardLink'
+            title: DashboardSpec.links.[]
+          title: DashboardSpec.links
+          type: array
+        tags:
+          items:
+            title: DashboardSpec.tags.[]
+            type: string
+          title: DashboardSpec.tags
+          type: array
+        timeSettings:
+          $ref: '#/components/schemas/TimeSettingsSpec'
+          title: DashboardSpec.timeSettings
+        variables:
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/QueryVariableKind'
+              - $ref: '#/components/schemas/TextVariableKind'
+          title: DashboardSpec.variables
+          type: array
+        elements:
+          title: DashboardSpec.elements
+        annotations:
+          items:
+            $ref: '#/components/schemas/AnnotationQueryKind'
+            title: DashboardSpec.annotations.[]
+          title: DashboardSpec.annotations
+          type: array
+        layout:
+          $ref: '#/components/schemas/GridLayoutKind'
+          title: DashboardSpec.layout
+      required:
+        - preload
+        - links
+        - timeSettings
+        - variables
+        - elements
+        - annotations
+        - layout
+      additionalProperties: false
+      title: DashboardSpec
+      type: object
+    AnnotationPanelFilter:
+      properties:
+        exclude:
+          title: AnnotationPanelFilter.exclude
+          type: boolean
+        ids:
+          items:
+            title: AnnotationPanelFilter.ids.[]
+            type: number
+          title: AnnotationPanelFilter.ids
+          type: array
+      required:
+        - ids
+      additionalProperties: false
+      title: AnnotationPanelFilter
+      type: object
+    DashboardLink:
+      properties:
+        title:
+          title: DashboardLink.title
+          type: string
+        type:
+          $ref: '#/components/schemas/DashboardLinkType'
+          title: DashboardLink.type
+        icon:
+          title: DashboardLink.icon
+          type: string
+        tooltip:
+          title: DashboardLink.tooltip
+          type: string
+        url:
+          title: DashboardLink.url
+          type: string
+        tags:
+          items:
+            title: DashboardLink.tags.[]
+            type: string
+          title: DashboardLink.tags
+          type: array
+        asDropdown:
+          title: DashboardLink.asDropdown
+          type: boolean
+        targetBlank:
+          title: DashboardLink.targetBlank
+          type: boolean
+        includeVars:
+          title: DashboardLink.includeVars
+          type: boolean
+        keepTime:
+          title: DashboardLink.keepTime
+          type: boolean
+      required:
+        - title
+        - type
+        - icon
+        - tooltip
+        - tags
+        - asDropdown
+        - targetBlank
+        - includeVars
+        - keepTime
+      additionalProperties: false
+      title: DashboardLink
+      type: object
+    DataSourceRef:
+      properties:
+        type:
+          title: DataSourceRef.type
+          type: string
+        uid:
+          title: DataSourceRef.uid
+          type: string
+      additionalProperties: false
+      title: DataSourceRef
+      type: object
+    DataTransformerConfig:
+      properties:
+        id:
+          title: DataTransformerConfig.id
+          type: string
+        disabled:
+          title: DataTransformerConfig.disabled
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/MatcherConfig'
+          title: DataTransformerConfig.filter
+        topic:
+          enum:
+            - series
+            - annotations
+            - alertStates
+          title: DataTransformerConfig.topic
+          type: string
+        options:
+          title: DataTransformerConfig.options
+      required:
+        - id
+        - options
+      additionalProperties: false
+      title: DataTransformerConfig
+      type: object
+    FieldConfigSource:
+      properties:
+        defaults:
+          $ref: '#/components/schemas/FieldConfig'
+          title: FieldConfigSource.defaults
+        overrides:
+          items:
+            properties:
+              matcher:
+                $ref: '#/components/schemas/MatcherConfig'
+                title: matcher
+              properties:
+                items:
+                  $ref: '#/components/schemas/DynamicConfigValue'
+                  title: properties.[]
+                title: properties
+                type: array
+            required:
+              - matcher
+              - properties
+            additionalProperties: false
+            type: object
+          title: FieldConfigSource.overrides
+          type: array
+      required:
+        - defaults
+        - overrides
+      additionalProperties: false
+      title: FieldConfigSource
+      type: object
+    FieldConfig:
+      properties:
+        displayName:
+          title: FieldConfig.displayName
+          type: string
+        displayNameFromDS:
+          title: FieldConfig.displayNameFromDS
+          type: string
+        description:
+          title: FieldConfig.description
+          type: string
+        path:
+          title: FieldConfig.path
+          type: string
+        writeable:
+          title: FieldConfig.writeable
+          type: boolean
+        filterable:
+          title: FieldConfig.filterable
+          type: boolean
+        unit:
+          title: FieldConfig.unit
+          type: string
+        decimals:
+          title: FieldConfig.decimals
+          type: number
+        min:
+          title: FieldConfig.min
+          type: number
+        max:
+          title: FieldConfig.max
+          type: number
+        mappings:
+          items:
+            $ref: '#/components/schemas/ValueMapping'
+            title: FieldConfig.mappings.[]
+          title: FieldConfig.mappings
+          type: array
+        thresholds:
+          $ref: '#/components/schemas/ThresholdsConfig'
+          title: FieldConfig.thresholds
+        color:
+          $ref: '#/components/schemas/FieldColor'
+          title: FieldConfig.color
+        links:
+          items:
+            title: FieldConfig.links.[]
+          title: FieldConfig.links
+          type: array
+        noValue:
+          title: FieldConfig.noValue
+          type: string
+        custom:
+          title: FieldConfig.custom
+      additionalProperties: false
+      title: FieldConfig
+      type: object
+    DynamicConfigValue:
+      properties:
+        id:
+          title: DynamicConfigValue.id
+          type: string
+        value:
+          title: DynamicConfigValue.value
+      required:
+        - id
+      additionalProperties: false
+      title: DynamicConfigValue
+      type: object
+    MatcherConfig:
+      properties:
+        id:
+          title: MatcherConfig.id
+          type: string
+        options:
+          title: MatcherConfig.options
+      required:
+        - id
+      additionalProperties: false
+      title: MatcherConfig
+      type: object
+    Threshold:
+      properties:
+        value:
+          title: Threshold.value
+          nullable: true
+          type: number
+        color:
+          title: Threshold.color
+          type: string
+      required:
+        - value
+        - color
+      additionalProperties: false
+      title: Threshold
+      type: object
+    ThresholdsConfig:
+      properties:
+        mode:
+          title: ThresholdsConfig.mode
+        steps:
+          items:
+            $ref: '#/components/schemas/Threshold'
+            title: ThresholdsConfig.steps.[]
+          title: ThresholdsConfig.steps
+          type: array
+      required:
+        - mode
+        - steps
+      additionalProperties: false
+      title: ThresholdsConfig
+      type: object
+    ValueMapping:
+      anyOf:
+        - $ref: '#/components/schemas/ValueMap'
+          title: ValueMapping
+        - $ref: '#/components/schemas/RangeMap'
+          title: ValueMapping
+        - $ref: '#/components/schemas/RegexMap'
+          title: ValueMapping
+        - $ref: '#/components/schemas/SpecialValueMap'
+          title: ValueMapping
+      title: ValueMapping
+    ValueMap:
+      properties:
+        type:
+          title: ValueMap.type
+          enum:
+            - value
+          type: string
+        options:
+          title: ValueMap.options
+      required:
+        - type
+        - options
+      additionalProperties: false
+      title: ValueMap
+      type: object
+    RangeMap:
+      properties:
+        type:
+          title: RangeMap.type
+          enum:
+            - range
+          type: string
+        options:
+          properties:
+            from:
+              title: RangeMap.options.from
+              nullable: true
+              type: number
+            to:
+              title: RangeMap.options.to
+              nullable: true
+              type: number
+            result:
+              $ref: '#/components/schemas/ValueMappingResult'
+              title: RangeMap.options.result
+          required:
+            - from
+            - to
+            - result
+          additionalProperties: false
+          title: RangeMap.options
+          type: object
+      required:
+        - type
+        - options
+      additionalProperties: false
+      title: RangeMap
+      type: object
+    RegexMap:
+      properties:
+        type:
+          title: RegexMap.type
+          enum:
+            - regex
+          type: string
+        options:
+          properties:
+            pattern:
+              title: RegexMap.options.pattern
+              type: string
+            result:
+              $ref: '#/components/schemas/ValueMappingResult'
+              title: RegexMap.options.result
+          required:
+            - pattern
+            - result
+          additionalProperties: false
+          title: RegexMap.options
+          type: object
+      required:
+        - type
+        - options
+      additionalProperties: false
+      title: RegexMap
+      type: object
+    SpecialValueMap:
+      properties:
+        type:
+          title: SpecialValueMap.type
+          enum:
+            - special
+          type: string
+        options:
+          properties:
+            match:
+              title: SpecialValueMap.options.match
+            result:
+              $ref: '#/components/schemas/ValueMappingResult'
+              title: SpecialValueMap.options.result
+          required:
+            - match
+            - result
+          additionalProperties: false
+          title: SpecialValueMap.options
+          type: object
+      required:
+        - type
+        - options
+      additionalProperties: false
+      title: SpecialValueMap
+      type: object
+    ValueMappingResult:
+      properties:
+        text:
+          title: ValueMappingResult.text
+          type: string
+        color:
+          title: ValueMappingResult.color
+          type: string
+        icon:
+          title: ValueMappingResult.icon
+          type: string
+        index:
+          title: ValueMappingResult.index
+          type: number
+      additionalProperties: false
+      title: ValueMappingResult
+      type: object
+    FieldColor:
+      properties:
+        mode:
+          title: FieldColor.mode
+        fixedColor:
+          title: FieldColor.fixedColor
+          type: string
+        seriesBy:
+          title: FieldColor.seriesBy
+      required:
+        - mode
+      additionalProperties: false
+      title: FieldColor
+      type: object
+    DashboardLinkType:
+      enum:
+        - link
+        - dashboards
+      title: DashboardLinkType
+      type: string
+    Kind:
+      properties:
+        kind:
+          title: Kind.kind
+          type: string
+        spec:
+          title: Kind.spec
+        metadata:
+          title: Kind.metadata
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: Kind
+      type: object
+    VizConfigSpec:
+      properties:
+        pluginVersion:
+          title: VizConfigSpec.pluginVersion
+          type: string
+        options:
+          title: VizConfigSpec.options
+        fieldConfig:
+          $ref: '#/components/schemas/FieldConfigSource'
+          title: VizConfigSpec.fieldConfig
+      required:
+        - pluginVersion
+        - options
+        - fieldConfig
+      additionalProperties: false
+      title: VizConfigSpec
+      type: object
+    VizConfigKind:
+      properties:
+        kind:
+          title: VizConfigKind.kind
+          type: string
+        spec:
+          $ref: '#/components/schemas/VizConfigSpec'
+          title: VizConfigKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: VizConfigKind
+      type: object
+    AnnotationQuerySpec:
+      properties:
+        datasource:
+          $ref: '#/components/schemas/DataSourceRef'
+          title: AnnotationQuerySpec.datasource
+        query:
+          $ref: '#/components/schemas/DataQueryKind'
+          title: AnnotationQuerySpec.query
+        enable:
+          title: AnnotationQuerySpec.enable
+          type: boolean
+        filter:
+          $ref: '#/components/schemas/AnnotationPanelFilter'
+          title: AnnotationQuerySpec.filter
+        hide:
+          title: AnnotationQuerySpec.hide
+          type: boolean
+        iconColor:
+          title: AnnotationQuerySpec.iconColor
+          type: string
+        name:
+          title: AnnotationQuerySpec.name
+          type: string
+      required:
+        - datasource
+        - query
+        - enable
+        - filter
+        - hide
+        - iconColor
+        - name
+      additionalProperties: false
+      title: AnnotationQuerySpec
+      type: object
+    AnnotationQueryKind:
+      properties:
+        kind:
+          title: AnnotationQueryKind.kind
+          enum:
+            - AnnotationQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/AnnotationQuerySpec'
+          title: AnnotationQueryKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: AnnotationQueryKind
+      type: object
+    QueryOptionsSpec:
+      properties:
+        timeFrom:
+          title: QueryOptionsSpec.timeFrom
+          type: string
+        maxDataPoints:
+          title: QueryOptionsSpec.maxDataPoints
+          type: number
+        timeShift:
+          title: QueryOptionsSpec.timeShift
+          type: string
+        queryCachingTTL:
+          title: QueryOptionsSpec.queryCachingTTL
+          type: number
+        interval:
+          title: QueryOptionsSpec.interval
+          type: string
+        cacheTimeout:
+          title: QueryOptionsSpec.cacheTimeout
+          type: string
+      additionalProperties: false
+      title: QueryOptionsSpec
+      type: object
+    DataQueryKind:
+      properties:
+        kind:
+          title: DataQueryKind.kind
+          type: string
+        spec:
+          title: DataQueryKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: DataQueryKind
+      type: object
+    PanelQuerySpec:
+      properties:
+        query:
+          $ref: '#/components/schemas/DataQueryKind'
+          title: PanelQuerySpec.query
+        datasource:
+          $ref: '#/components/schemas/DataSourceRef'
+          title: PanelQuerySpec.datasource
+        refId:
+          title: PanelQuerySpec.refId
+          type: string
+        hidden:
+          title: PanelQuerySpec.hidden
+          type: boolean
+      required:
+        - query
+        - datasource
+        - refId
+        - hidden
+      additionalProperties: false
+      title: PanelQuerySpec
+      type: object
+    PanelQueryKind:
+      properties:
+        kind:
+          title: PanelQueryKind.kind
+          enum:
+            - PanelQuery
+          type: string
+        spec:
+          $ref: '#/components/schemas/PanelQuerySpec'
+          title: PanelQueryKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: PanelQueryKind
+      type: object
+    TransformationKind:
+      properties:
+        kind:
+          title: TransformationKind.kind
+          type: string
+        spec:
+          $ref: '#/components/schemas/DataTransformerConfig'
+          title: TransformationKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: TransformationKind
+      type: object
+    QueryGroupSpec:
+      properties:
+        queries:
+          items:
+            $ref: '#/components/schemas/PanelQueryKind'
+            title: QueryGroupSpec.queries.[]
+          title: QueryGroupSpec.queries
+          type: array
+        transformations:
+          items:
+            $ref: '#/components/schemas/TransformationKind'
+            title: QueryGroupSpec.transformations.[]
+          title: QueryGroupSpec.transformations
+          type: array
+        queryOptions:
+          $ref: '#/components/schemas/QueryOptionsSpec'
+          title: QueryGroupSpec.queryOptions
+      required:
+        - queries
+        - transformations
+        - queryOptions
+      additionalProperties: false
+      title: QueryGroupSpec
+      type: object
+    QueryGroupKind:
+      properties:
+        kind:
+          title: QueryGroupKind.kind
+          enum:
+            - QueryGroup
+          type: string
+        spec:
+          $ref: '#/components/schemas/QueryGroupSpec'
+          title: QueryGroupKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: QueryGroupKind
+      type: object
+    QueryVariableSpec:
+      title: QueryVariableSpec
+    QueryVariableKind:
+      properties:
+        kind:
+          title: QueryVariableKind.kind
+          enum:
+            - QueryVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/QueryVariableSpec'
+          title: QueryVariableKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: QueryVariableKind
+      type: object
+    TextVariableSpec:
+      title: TextVariableSpec
+    TextVariableKind:
+      properties:
+        kind:
+          title: TextVariableKind.kind
+          enum:
+            - TextVariable
+          type: string
+        spec:
+          $ref: '#/components/schemas/TextVariableSpec'
+          title: TextVariableKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: TextVariableKind
+      type: object
+    TimeSettingsSpec:
+      properties:
+        timezone:
+          title: TimeSettingsSpec.timezone
+          type: string
+        from:
+          title: TimeSettingsSpec.from
+          type: string
+        to:
+          title: TimeSettingsSpec.to
+          type: string
+        autoRefresh:
+          title: TimeSettingsSpec.autoRefresh
+          type: string
+        autoRefreshIntervals:
+          items:
+            title: TimeSettingsSpec.autoRefreshIntervals.[]
+            type: string
+          title: TimeSettingsSpec.autoRefreshIntervals
+          type: array
+        quickRanges:
+          items:
+            title: TimeSettingsSpec.quickRanges.[]
+            type: string
+          title: TimeSettingsSpec.quickRanges
+          type: array
+        hideTimepicker:
+          title: TimeSettingsSpec.hideTimepicker
+          type: boolean
+        weekStart:
+          title: TimeSettingsSpec.weekStart
+          type: string
+        fiscalYearStartMonth:
+          title: TimeSettingsSpec.fiscalYearStartMonth
+          type: number
+        nowDelay:
+          title: TimeSettingsSpec.nowDelay
+          type: string
+      required:
+        - from
+        - to
+        - autoRefresh
+        - autoRefreshIntervals
+        - quickRanges
+        - hideTimepicker
+        - weekStart
+        - fiscalYearStartMonth
+      additionalProperties: false
+      title: TimeSettingsSpec
+      type: object
+    GridLayoutItemSpec:
+      properties:
+        x:
+          title: GridLayoutItemSpec.x
+          type: number
+        'y':
+          title: GridLayoutItemSpec.y
+          type: number
+        width:
+          title: GridLayoutItemSpec.width
+          type: number
+        height:
+          title: GridLayoutItemSpec.height
+          type: number
+        element:
+          $ref: '#/components/schemas/ElementReferenceKind'
+          title: GridLayoutItemSpec.element
+      required:
+        - x
+        - 'y'
+        - width
+        - height
+        - element
+      additionalProperties: false
+      title: GridLayoutItemSpec
+      type: object
+    GridLayoutItemKind:
+      properties:
+        kind:
+          title: GridLayoutItemKind.kind
+          enum:
+            - GridLayoutItem
+          type: string
+        spec:
+          $ref: '#/components/schemas/GridLayoutItemSpec'
+          title: GridLayoutItemKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: GridLayoutItemKind
+      type: object
+    GridLayoutSpec:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/GridLayoutItemKind'
+            title: GridLayoutSpec.items.[]
+          title: GridLayoutSpec.items
+          type: array
+      required:
+        - items
+      additionalProperties: false
+      title: GridLayoutSpec
+      type: object
+    GridLayoutKind:
+      properties:
+        kind:
+          title: GridLayoutKind.kind
+          enum:
+            - GridLayout
+          type: string
+        spec:
+          $ref: '#/components/schemas/GridLayoutSpec'
+          title: GridLayoutKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: GridLayoutKind
+      type: object
+    PanelSpec:
+      properties:
+        uid:
+          title: PanelSpec.uid
+          type: string
+        title:
+          title: PanelSpec.title
+          type: string
+        description:
+          title: PanelSpec.description
+          type: string
+        links:
+          items:
+            $ref: '#/components/schemas/DashboardLink'
+            title: PanelSpec.links.[]
+          title: PanelSpec.links
+          type: array
+        data:
+          $ref: '#/components/schemas/QueryGroupKind'
+          title: PanelSpec.data
+        vizConfig:
+          $ref: '#/components/schemas/VizConfigKind'
+          title: PanelSpec.vizConfig
+      required:
+        - uid
+        - title
+        - description
+        - links
+        - data
+        - vizConfig
+      additionalProperties: false
+      title: PanelSpec
+      type: object
+    PanelKind:
+      properties:
+        kind:
+          title: PanelKind.kind
+          enum:
+            - Panel
+          type: string
+        spec:
+          $ref: '#/components/schemas/PanelSpec'
+          title: PanelKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: PanelKind
+      type: object
+    ElementReferenceKind:
+      properties:
+        kind:
+          title: ElementReferenceKind.kind
+          enum:
+            - ElementReference
+          type: string
+        spec:
+          $ref: '#/components/schemas/ElementReferenceSpec'
+          title: ElementReferenceKind.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: ElementReferenceKind
+      type: object
+    ElementReferenceSpec:
+      properties:
+        name:
+          title: ElementReferenceSpec.name
+          type: string
+      required:
+        - name
+      additionalProperties: false
+      title: ElementReferenceSpec
+      type: object

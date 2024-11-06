@@ -1,0 +1,23 @@
+openapi: 3.0.0
+info:
+  title: Converted from common.yaml with typeconv
+  version: '1'
+  x-id: common.yaml
+  x-comment: >-
+    Generated from
+    packages/grafana-schema/src/schema/dashboard/v2alpha0/common.ts by
+    core-types-json-schema (https://github.com/grantila/core-types-json-schema)
+    on behalf of typeconv (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    Reference:
+      properties:
+        $ref:
+          title: Reference.$ref
+          type: string
+      required:
+        - $ref
+      additionalProperties: false
+      title: Reference
+      type: object

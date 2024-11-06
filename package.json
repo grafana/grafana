@@ -62,7 +62,8 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "generate-icons": "nx run grafana-icons:generate",
-    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
+    "generate-apis": "rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
+    "generate-schemas": "typeconv -f ts -t oapi packages/grafana-schema/src/schema/dashboard/v2alpha0/*.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v11-4/",
@@ -232,6 +233,7 @@
     "tracelib": "1.0.1",
     "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
+    "typeconv": "^2.3.1",
     "typescript": "5.5.4",
     "webpack": "5.95.0",
     "webpack-assets-manifest": "^5.1.0",

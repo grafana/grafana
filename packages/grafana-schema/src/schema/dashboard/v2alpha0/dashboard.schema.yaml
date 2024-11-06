@@ -1,0 +1,96 @@
+openapi: 3.0.0
+info:
+  title: Converted from dashboard.schema.yaml with typeconv
+  version: '1'
+  x-id: dashboard.schema.yaml
+  x-comment: >-
+    Generated from
+    packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.schema.ts by
+    core-types-json-schema (https://github.com/grantila/core-types-json-schema)
+    on behalf of typeconv (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    DashboardV2:
+      properties:
+        kind:
+          title: DashboardV2.kind
+          enum:
+            - Dashboard
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardSpec'
+          title: DashboardV2.spec
+      required:
+        - kind
+        - spec
+      additionalProperties: false
+      title: DashboardV2
+      type: object
+    DashboardSpec:
+      properties:
+        id:
+          title: DashboardSpec.id
+          description: >-
+            Unique numeric identifier for the dashboard.
+
+            `id` is internal to a specific Grafana instance. `uid` should be
+            used to identify a dashboard across Grafana instances.
+          default: '0'
+          type: number
+        title:
+          title: DashboardSpec.title
+          type: string
+        description:
+          title: DashboardSpec.description
+          type: string
+        cursorSync:
+          title: DashboardSpec.cursorSync
+        liveNow:
+          title: DashboardSpec.liveNow
+          type: boolean
+        preload:
+          title: DashboardSpec.preload
+          type: boolean
+        editable:
+          title: DashboardSpec.editable
+          type: boolean
+        links:
+          items: {}
+          title: DashboardSpec.links
+          type: array
+        tags:
+          items:
+            title: DashboardSpec.tags.[]
+            type: string
+          title: DashboardSpec.tags
+          type: array
+        timeSettings:
+          title: DashboardSpec.timeSettings
+        variables:
+          items:
+            anyOf: []
+          title: DashboardSpec.variables
+          type: array
+        elements:
+          title: DashboardSpec.elements
+        annotations:
+          items: {}
+          title: DashboardSpec.annotations
+          type: array
+        layout:
+          title: DashboardSpec.layout
+      required:
+        - liveNow
+        - preload
+        - editable
+        - links
+        - tags
+        - timeSettings
+        - variables
+        - elements
+        - annotations
+        - layout
+      additionalProperties: false
+      title: DashboardSpec
+      type: object

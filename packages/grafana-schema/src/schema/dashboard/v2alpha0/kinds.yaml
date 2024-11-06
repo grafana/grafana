@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: Converted from kinds.yaml with typeconv
+  version: '1'
+  x-id: kinds.yaml
+  x-comment: >-
+    Generated from
+    packages/grafana-schema/src/schema/dashboard/v2alpha0/kinds.ts by
+    core-types-json-schema (https://github.com/grantila/core-types-json-schema)
+    on behalf of typeconv (https://github.com/grantila/typeconv)
+paths: {}
+components:
+  schemas:
+    VizConfigSpec:
+      properties:
+        pluginVersion:
+          title: VizConfigSpec.pluginVersion
+          type: string
+        options:
+          title: VizConfigSpec.options
+        fieldConfig:
+          title: VizConfigSpec.fieldConfig
+      required:
+        - pluginVersion
+        - options
+        - fieldConfig
+      additionalProperties: false
+      title: VizConfigSpec
+      type: object
+    VizConfigKind:
+      title: VizConfigKind
+    AnnotationQueryKind:
+      title: AnnotationQueryKind
+    QueryOptionsSpec:
+      properties:
+        timeFrom:
+          title: QueryOptionsSpec.timeFrom
+          type: string
+        maxDataPoints:
+          title: QueryOptionsSpec.maxDataPoints
+          type: number
+        timeShift:
+          title: QueryOptionsSpec.timeShift
+          type: string
+        queryCachingTTL:
+          title: QueryOptionsSpec.queryCachingTTL
+          type: number
+        interval:
+          title: QueryOptionsSpec.interval
+          type: string
+        cacheTimeout:
+          title: QueryOptionsSpec.cacheTimeout
+          type: string
+      additionalProperties: false
+      title: QueryOptionsSpec
+      type: object
+    QueryGroupSpec:
+      properties:
+        queries:
+          items:
+            $ref: '#/components/schemas/PanelQueryKind'
+            title: QueryGroupSpec.queries.[]
+          title: QueryGroupSpec.queries
+          type: array
+        transformations:
+          items:
+            $ref: '#/components/schemas/TransformationKind'
+            title: QueryGroupSpec.transformations.[]
+          title: QueryGroupSpec.transformations
+          type: array
+        queryOptions:
+          $ref: '#/components/schemas/QueryOptionsSpec'
+          title: QueryGroupSpec.queryOptions
+      required:
+        - queries
+        - transformations
+        - queryOptions
+      additionalProperties: false
+      title: QueryGroupSpec
+      type: object
+    QueryGroupKind:
+      title: QueryGroupKind
+    QueryVariableSpec:
+      additionalProperties: false
+      title: QueryVariableSpec
+      type: object
+    QueryVariableKind:
+      title: QueryVariableKind
+    TextVariableSpec:
+      additionalProperties: false
+      title: TextVariableSpec
+      type: object
+    TextVariableKind:
+      title: TextVariableKind
+    TimeSettingsSpec:
+      properties:
+        timezone:
+          title: TimeSettingsSpec.timezone
+          type: string
+        from:
+          title: TimeSettingsSpec.from
+          type: string
+        to:
+          title: TimeSettingsSpec.to
+          type: string
+        autoRefresh:
+          title: TimeSettingsSpec.autoRefresh
+          type: string
+        autoRefreshIntervals:
+          items:
+            title: TimeSettingsSpec.autoRefreshIntervals.[]
+            type: string
+          title: TimeSettingsSpec.autoRefreshIntervals
+          type: array
+        quickRanges:
+          items:
+            title: TimeSettingsSpec.quickRanges.[]
+            type: string
+          title: TimeSettingsSpec.quickRanges
+          type: array
+        hideTimepicker:
+          title: TimeSettingsSpec.hideTimepicker
+          type: boolean
+        weekStart:
+          title: TimeSettingsSpec.weekStart
+          type: string
+        fiscalYearStartMonth:
+          title: TimeSettingsSpec.fiscalYearStartMonth
+          type: number
+        nowDelay:
+          title: TimeSettingsSpec.nowDelay
+          type: string
+      required:
+        - timezone
+        - from
+        - to
+        - autoRefresh
+        - autoRefreshIntervals
+        - quickRanges
+        - hideTimepicker
+        - weekStart
+        - fiscalYearStartMonth
+      additionalProperties: false
+      title: TimeSettingsSpec
+      type: object
+    GridLayoutItemKind:
+      title: GridLayoutItemKind
+    GridLayoutSpec:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/GridLayoutItemKind'
+            title: GridLayoutSpec.items.[]
+          title: GridLayoutSpec.items
+          type: array
+      required:
+        - items
+      additionalProperties: false
+      title: GridLayoutSpec
+      type: object
+    GridLayoutKind:
+      title: GridLayoutKind
+    PanelKind:
+      title: PanelKind
+    ElementReferenceKind:
+      title: ElementReferenceKind
+    PanelQueryKind:
+      title: PanelQueryKind
+    TransformationKind:
+      title: TransformationKind
+      description: |-
+        Represents a transformation, used within a QueryGroupKind
+        For example:
+        {
+         kind: 'limitTransformation',
+         spec: {
+
+          ...
+         }
