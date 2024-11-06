@@ -127,6 +127,11 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 	if !p.IsCorePlugin() && !p.IsBundledPlugin() {
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
+
+	if p.Backend {
+		metrics.SetPluginTargetInformation(p.ID, string(p.Target()))
+	}
+
 	return p, nil
 }
 
