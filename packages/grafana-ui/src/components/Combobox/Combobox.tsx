@@ -2,16 +2,16 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
-import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
@@ -347,14 +347,31 @@ export const Combobox = <T extends string | number>({
               })}
             </ul>
           )}
-          {asyncError && (
-            <Stack justifyContent="center" alignItems="center" height={8}>
-              <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-              <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
-            </Stack>
-          )}
+          <div aria-live="polite">
+            {asyncError && (
+              <MessageRow>
+                <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+                <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
+              </MessageRow>
+            )}
+            {items.length === 0 && !asyncError && (
+              <MessageRow>
+                <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
+              </MessageRow>
+            )}
+          </div>
         </ScrollContainer>
       </div>
     </div>
+  );
+};
+
+const MessageRow = ({ children }: { children: ReactNode }) => {
+  return (
+    <Box padding={2} color="secondary">
+      <Stack justifyContent="center" alignItems="center">
+        {children}
+      </Stack>
+    </Box>
   );
 };
