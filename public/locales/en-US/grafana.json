@@ -1052,6 +1052,13 @@
       "noMatchingValue": "No values found matching; {{filter}}",
       "sortBy": "Sort by"
     },
+    "related-logs": {
+      "docsLink": "Loki Recording Rule",
+      "openExploreLogs": "Open Explore Logs",
+      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
+      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "warnExperimentalFeature": "Related logs is an experimental feature."
+    },
     "viewBy": "View by"
   },
   "export": {
@@ -2169,6 +2176,12 @@
         "name-header": "Name",
         "update-header": "Update",
         "update-status-text": "plugins updated"
+      },
+      "versions": {
+        "confirmation-text-1": "Are you really sure you want to downgrade to version",
+        "confirmation-text-2": "You should normally not be doing this",
+        "downgrade-confirm": "Downgrade",
+        "downgrade-title": "Downgrade plugin version"
       }
     },
     "details": {
