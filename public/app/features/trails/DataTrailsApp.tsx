@@ -135,6 +135,7 @@ export function getDataTrailsApp() {
 
               if (trail instanceof DataTrail) {
                 trail.publishEvent(new RefreshMetricsEvent());
+                trail.checkDataSourceForOTelResources();
               }
             },
           }),
