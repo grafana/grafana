@@ -503,7 +503,6 @@ github.com/Azure/azure-amqp-common-go/v3 v3.2.3 h1:uDF62mbd9bypXWi19V1bN5NZEO84J
 github.com/Azure/azure-amqp-common-go/v3 v3.2.3/go.mod h1:7rPmbSfszeovxGfc5fSAXE4ehlXQZHpMja2OtxC2Tas=
 github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus v1.7.1 h1:o/Ws6bEqMeKZUfj1RRm3mQ51O8JGU5w+Qdg2AhHib6A=
 github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus v1.7.1/go.mod h1:6QAMYBAbQeeKX+REFJMZ1nFWu9XLw/PPcjYpuc9RDFs=
-github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.7.0/go.mod h1:QyiQdW4f4/BIfB8ZutZ2s+28RAgfa/pT+zS++ZHyM1I=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal v1.1.2 h1:mLY+pNLjCUeKhgnAJWAKhEUQM+RJQo2H1fuGSw1Ky1E=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/internal/v2 v2.0.0 h1:PTFGRSlMKCQelWwxUyYVEUqseBJVemLyqWJjvMyt0do=
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/managementgroups/armmanagementgroups v1.0.0 h1:pPvTJ1dY0sA35JOeFq6TsY2xj6Z85Yo23Pj4wCCvu4o=
@@ -580,7 +579,6 @@ github.com/Shopify/sarama v1.38.1 h1:lqqPUPQZ7zPqYlWpTh+LQ9bhYNu2xJL6k1SJN4WVe2A
 github.com/Shopify/sarama v1.38.1/go.mod h1:iwv9a67Ha8VNa+TifujYoWGxWnu2kNVAQdSdZ4X2o5g=
 github.com/Shopify/toxiproxy v2.1.4+incompatible h1:TKdv8HiTLgE5wdJuEML90aBgNWsokNbMijUGhmcoBJc=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
-github.com/Workiva/go-datastructures v1.1.5/go.mod h1:1yZL+zfsztete+ePzZz/Zb1/t5BnDuE2Ya2MMGhzP6A=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5 h1:rFw4nCn9iMW+Vajsk51NtYIcwSTkXr+JGrMd36kTDJw=
 github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
 github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVbJomOvKkmgYbo=
@@ -775,7 +773,6 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumC
 github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 h1:tdlZCpZ/P9DhczCTSixgIKmwPv6+wP5DGjqLYw5SUiA=
 github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2/go.mod h1:SqUrOPUnsFjfmXRMNPybcSiG0BgUW2AuFH8PAnS2iTw=
 github.com/dhui/dktest v0.3.0 h1:kwX5a7EkLcjo7VpsPQSYJcKGbXBXdjI9FGjuUj1jn6I=
-github.com/digitalocean/godo v1.118.0/go.mod h1:Vk0vpCot2HOAJwc5WE8wljZGtJ3ZtWIc8MQ8rF38sdo=
 github.com/dimchansky/utfbom v1.1.1 h1:vV6w1AhK4VMnhBno/TPVCoK9U/LP0PkLCS9tbxHdi/U=
 github.com/dimchansky/utfbom v1.1.1/go.mod h1:SxdoEBH5qIqFocHMyGOXVAybYJdr71b1Q/j0mACtrfE=
 github.com/dlclark/regexp2 v1.4.0 h1:F1rxgk7p4uKjwIQxBs9oAXe5CqrXlCduYEJvrF4u93E=
@@ -804,7 +801,6 @@ github.com/eapache/go-resiliency v1.6.0/go.mod h1:5yPzW0MIvSe0JDsv0v+DvcjEv2FyD6
 github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 h1:Oy0F4ALJ04o5Qqpdz8XLIpNA3WM/iSIXqxtqo7UGVws=
 github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3/go.mod h1:YvSRo5mw33fLEx1+DlK6L2VV43tJt5Eyel9n9XBcR+0=
 github.com/eapache/queue v1.1.0 h1:YOEu7KNc61ntiQlcEeUIoDTJ2o8mQznoNvUhiigpIqc=
-github.com/efficientgo/core v1.0.0-rc.3/go.mod h1:FfGdkzWarkuzOlY04VY+bGfb1lWrjaL6x/GLcQ4vJps=
 github.com/efficientgo/tools/core v0.0.0-20220225185207-fe763185946b h1:ZHiD4/yE4idlbqvAO6iYCOYRzOMRpxkW+FKasRA3tsQ=
 github.com/efficientgo/tools/core v0.0.0-20220225185207-fe763185946b/go.mod h1:OmVcnJopJL8d3X3sSXTiypGoUSgFq1aDGmlrdi9dn/M=
 github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 h1:clC1lXBpe2kTj2VHdaIu9ajZQe4kcEY9j0NsnDDBZ3o=
@@ -880,7 +876,6 @@ github.com/go-fonts/stix v0.2.2 h1:v9krocr13J1llaOHLEol1eaHsv8S43UuFX/1bFgEJJ4=
 github.com/go-fonts/stix v0.2.2/go.mod h1:SUxggC9dxd/Q+rb5PkJuvfvTbOPtNc2Qaua00fIp9iU=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1 h1:QbL/5oDUmRBzO9/Z7Seo6zf912W/a6Sr4Eu0G/3Jho0=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4 h1:WtGNWLvXpe6ZudgnXrq0barxBImvnnJoMEhXAzcbM0I=
-github.com/go-ini/ini v1.67.0/go.mod h1:ByCAeIL28uOIIG0E3PJtZPDL8WnHpFKFOtgjp+3Ies8=
 github.com/go-kit/kit v0.13.0 h1:OoneCcHKHQ03LfBpoQCUfCluwd2Vt3ohz+kvbJneZAU=
 github.com/go-kit/kit v0.13.0/go.mod h1:phqEHMMUbyrCFCTgH48JueqrM3md2HcAZ8N3XE4FKDg=
 github.com/go-latex/latex v0.0.0-20230307184459-12ec69307ad9 h1:NxXI5pTAtpEaU49bpLpQoDsu1zrteW/vxzTz8Cd2UAs=
@@ -954,7 +949,6 @@ github.com/googleapis/gax-go/v2 v2.12.5/go.mod h1:BUDKcWo+RaKq5SC9vVYL0wLADa3Vcf
 github.com/googleapis/go-type-adapters v1.0.0 h1:9XdMn+d/G57qq1s8dNc5IesGCXHf6V2HZ2JwRxfA2tA=
 github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720 h1:zC34cGQu69FG7qzJ3WiKW244WfhDC3xxYMeNOX2gtUQ=
 github.com/googleapis/google-cloud-go-testing v0.0.0-20210719221736-1c9a4c676720/go.mod h1:dvDLG8qkwmyD9a/MJJN3XJcT3xFxOKAvTZGvuZmac9g=
-github.com/gophercloud/gophercloud v1.13.0/go.mod h1:aAVqcocTSXh2vYFZ1JTvx4EQmfgzxRcNupUfxZbBNDM=
 github.com/gorilla/context v1.1.1 h1:AWwleXJkX/nhcU9bZSnZoi3h/qGYqQAGhq6zZe/aQW8=
 github.com/gorilla/css v1.0.0 h1:BQqNyPTi50JCFMTw/b67hByjMVXZRwGha6wxVGkeihY=
 github.com/gorilla/css v1.0.0/go.mod h1:Dn721qIggHpt4+EFCcTLTU/vk5ySda2ReITrtgBl60c=
@@ -971,6 +965,10 @@ github.com/grafana/cloudflare-go v0.0.0-20230110200409-c627cf6792f2/go.mod h1:w/
 github.com/grafana/cuetsy v0.1.10/go.mod h1:Ix97+CPD8ws9oSSxR3/Lf4ahU1I4Np83kjJmDVnLZvc=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
+github.com/grafana/go-json v0.0.0-20240212174302-e53f8071f0c1 h1:vuinElnCixECM4xxPi3d5LohaorOOTe0QgF4J8hY44g=
+github.com/grafana/go-json v0.0.0-20240212174302-e53f8071f0c1/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
+github.com/grafana/go-json v0.0.0-20241106155216-71a03f133f5c h1:yKBKEC347YZpgii1KazRCfxHsTaxMqWZzoivM1OTT50=
+github.com/grafana/go-json v0.0.0-20241106155216-71a03f133f5c/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
 github.com/grafana/gomemcache v0.0.0-20240229205252-cd6a66d6fb56/go.mod h1:PGk3RjYHpxMM8HFPhKKo+vve3DdlPUELZLSDEFehPuU=
 github.com/grafana/grafana-app-sdk v0.19.0/go.mod h1:y0BgzYxc+a7CwOqkwUhN9zXd5cgZJjd2zAbgHEd/xzo=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.6/go.mod h1:Tk376Nbldo4Cha9RgiU7ik8WKFkNpfds98aUzS8omLE=
@@ -985,10 +983,8 @@ github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed h1:5upAirOpQc
 github.com/hamba/avro/v2 v2.17.2 h1:6PKpEWzJfNnvBgn7m2/8WYaDOUASxfDU+Jyb4ojDgFY=
 github.com/hamba/avro/v2 v2.17.2/go.mod h1:Q9YK+qxAhtVrNqOhwlZTATLgLA8qxG2vtvkhK8fJ7Jo=
 github.com/hashicorp/consul/api v1.15.3/go.mod h1:/g/qgcoBcEXALCNZgRRisyTW0nY86++L0KbeAMXYCeY=
-github.com/hashicorp/consul/proto-public v0.6.2/go.mod h1:cXXbOg74KBNGajC+o8RlA502Esf0R9prcoJgiOX/2Tg=
 github.com/hashicorp/consul/sdk v0.11.0/go.mod h1:yPkX5Q6CsxTFMjQQDJwzeNmUUF5NUGGbrDsv9wTb8cw=
 github.com/hashicorp/consul/sdk v0.16.0 h1:SE9m0W6DEfgIVCJX7xU+iv/hUl4m/nxqMTnCdMxDpJ8=
-github.com/hashicorp/consul/sdk v0.16.1/go.mod h1:fSXvwxB2hmh1FMZCNl6PwX0Q/1wdWtHJcZ7Ea5tns0s=
 github.com/hashicorp/go-hclog v0.14.1/go.mod h1:whpDNt7SSdeAju8AWKIWsul05p54N/39EeqMAyrmvFQ=
 github.com/hashicorp/go-immutable-radix v1.3.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-msgpack/v2 v2.1.1 h1:xQEY9yB2wnHitoSzk/B9UjXWRQ67QKu5AOm8aFp8N3I=
@@ -1165,7 +1161,6 @@ github.com/miekg/dns v1.1.50/go.mod h1:e3IlAVfNqAllflbibAZEWOXOQ+Ynzk/dDozDxY7Xn
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 h1:AMFGa4R4MiIpspGNG7Z948v4n35fFGB3RR3G/ry4FWs=
 github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 h1:+n/aFZefKZp7spd8DFdX7uMikMLXX4oubIzJF4kv/wI=
 github.com/minio/highwayhash v1.0.2 h1:Aak5U0nElisjDCfPSG79Tgzkn2gl66NxOMspRrKnA/g=
-github.com/minio/minio-go/v7 v7.0.75/go.mod h1:qydcVzV8Hqtj1VtEocfxbmVFa2siu6HGa+LDEPogjD8=
 github.com/minio/sha256-simd v0.1.1 h1:5QHSlgo3nt5yKOJrC7W8w7X+NFl8cMPZm96iu8kKUJU=
 github.com/minio/sha256-simd v0.1.1/go.mod h1:B5e1o+1/KgNmWrSQK08Y6Z1Vb5pwIktudl0J58iy0KM=
 github.com/mitchellh/cli v1.1.5 h1:OxRIeJXpAMztws/XHlN2vu6imG5Dpq+j61AzAX5fLng=
@@ -1375,7 +1370,6 @@ github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg
 github.com/shoenig/test v1.7.1 h1:UJcjSAI3aUKx52kfcfhblgyhZceouhvvs3OYdWgn+PY=
 github.com/shurcooL/sanitized_anchor_name v1.0.0 h1:PdmoCO6wvbs+7yrJyMORt4/BmY5IYyJwS/kOiWx8mHo=
 github.com/sony/gobreaker v0.4.1 h1:oMnRNZXX5j85zso6xCPRNPtmAycat+WcoKbklScLDgQ=
-github.com/spaolacci/murmur3 v1.1.0/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/cobra v1.4.0/go.mod h1:Wo4iy3BUC+X2Fybo0PDqwJIv3dNRiZLHQymsfxlB84g=
 github.com/spf13/jwalterweatherman v1.1.0 h1:ue6voC5bR5F8YxI5S67j9i582FU4Qvo2bmqnqMYADFk=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad h1:fiWzISvDn0Csy5H0iwgAuJGQTUpVfEMJJd4nRFXogbc=
@@ -1389,7 +1383,6 @@ github.com/tdewolff/minify/v2 v2.12.9 h1:dvn5MtmuQ/DFMwqf5j8QhEVpPX6fi3WGImhv8RU
 github.com/tdewolff/minify/v2 v2.12.9/go.mod h1:qOqdlDfL+7v0/fyymB+OP497nIxJYSvX4MQWA8OoiXU=
 github.com/tdewolff/parse/v2 v2.6.8 h1:mhNZXYCx//xG7Yq2e/kVLNZw4YfYmeHbhx+Zc0OvFMA=
 github.com/tdewolff/parse/v2 v2.6.8/go.mod h1:XHDhaU6IBgsryfdnpzUXBlT6leW/l25yrFBTEb4eIyM=
-github.com/thanos-io/objstore v0.0.0-20240818203309-0363dadfdfb1/go.mod h1:3ukSkG4rIRUGkKM4oIz+BSuUx2e3RlQVVv3Cc3W+Tv4=
 github.com/tidwall/gjson v1.17.1 h1:wlYEnwqAHgzmhNUFfw7Xalt2JzQvsMx2Se4PcoFCT/U=
 github.com/tidwall/gjson v1.17.1/go.mod h1:/wbyibRr2FHMks5tjHJ5F8dMZh3AcwJEMf5vlfC0lxk=
 github.com/tidwall/gjson v1.17.3 h1:bwWLZU7icoKRG+C+0PNwIKC6FCJO/Q3p2pZvuP0jN94=
