@@ -34,7 +34,7 @@ func (nc NoopClient) CheckObject(ctx context.Context, in *openfgav1.CheckRequest
 	return nil, nil
 }
 
-func (nc NoopClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+func (nc NoopClient) Read(ctx context.Context, namespace string, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	return nil, nil
 }
 
@@ -42,6 +42,6 @@ func (nc NoopClient) ListObjects(ctx context.Context, in *openfgav1.ListObjectsR
 	return nil, nil
 }
 
-func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (nc NoopClient) Write(ctx context.Context, namespace string, in *openfgav1.WriteRequest) error {
 	return nil
 }

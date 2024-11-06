@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authz.AccessClient = (*Client)(nil)
@@ -47,6 +48,20 @@ type Client struct {
 	tenantID string
 	storeID  string
 	modelID  string
+}
+
+func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*Client, error) {
+	stackID := cfg.StackID
+	if stackID == "" {
+		stackID = "default"
+	}
+
+	return New(
+		ctx,
+		cc,
+		WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
+		WithLogger(log.New("zanzana-client")),
+	)
 }
 
 func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
@@ -151,7 +166,7 @@ func (c *Client) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*
 	return c.openfga.Check(ctx, in)
 }
 
-func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+func (c *Client) Read(ctx context.Context, namespace string, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
 
@@ -169,7 +184,7 @@ func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsReque
 	return c.openfga.ListObjects(ctx, in)
 }
 
-func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (c *Client) Write(ctx context.Context, namespace string, in *openfgav1.WriteRequest) error {
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	_, err := c.openfga.Write(ctx, in)
