@@ -138,7 +138,7 @@ export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: LogsSort
   return logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 };
 
-export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder): LogRowModel[] =>
+export const sortLogRows = (logRows: LogRowModel[], sortOrder: LogsSortOrder) =>
   sortOrder === LogsSortOrder.Ascending ? logRows.sort(sortInAscendingOrder) : logRows.sort(sortInDescendingOrder);
 
 // Currently supports only error condition in Loki logs
