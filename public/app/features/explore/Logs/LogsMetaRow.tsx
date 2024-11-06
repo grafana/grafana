@@ -105,9 +105,9 @@ export const LogsMetaRow = memo(
               if (!sortedValue.has(labelKey)) {
                 sortedValue.set(labelKey, []);
               }
-              sortedValue.get(timeKey)?.push(row.timeEpochMs);
-              sortedValue.get(lineKey)?.push(row.entry);
-              sortedValue.get(labelKey)?.push(row.labels);
+              sortedValue.get(timeKey).push(row.timeEpochMs);
+              sortedValue.get(lineKey).push(row.entry);
+              sortedValue.get(labelKey).push(row.labels);
             }
           });
 
