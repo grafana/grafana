@@ -9,7 +9,6 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
@@ -117,54 +116,4 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	s.modelID = modelID
 
 	return s, nil
-}
-
-func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
-	var continuationToken string
-
-	model, err := schema.TransformModulesToModel(modules)
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-		// So with a pageSize of 1 we will get the latest model.
-		res, err := s.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-			StoreId:           storeID,
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return "", fmt.Errorf("failed to load authorization model: %w", err)
-		}
-
-		for _, m := range res.GetAuthorizationModels() {
-			// If provided dsl is equal to a stored dsl we use that as the authorization id
-			if schema.EqualModels(m, model) {
-				return m.GetId(), nil
-			}
-		}
-
-		// If we have not found any matching authorization model we break the loop and create a new one
-		if res.GetContinuationToken() == "" {
-			break
-		}
-
-		continuationToken = res.GetContinuationToken()
-	}
-
-	writeRes, err := s.openfga.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         s.storeID,
-		TypeDefinitions: model.GetTypeDefinitions(),
-		SchemaVersion:   model.GetSchemaVersion(),
-		Conditions:      model.GetConditions(),
-	})
-
-	if err != nil {
-		return "", fmt.Errorf("failed to load authorization model: %w", err)
-	}
-
-	return writeRes.GetAuthorizationModelId(), nil
 }

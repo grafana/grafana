@@ -6,15 +6,18 @@ import (
 	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/openfga/language/pkg/go/transformer"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
 
-func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	store, err := s.getStore(ctx, name)
+func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
+	store, err := s.getStore(ctx, namespace)
 
 	if errors.Is(err, errStoreNotFound) {
 		var res *openfgav1.CreateStoreResponse
-		res, err = s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
+		res, err = s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
 		if res != nil {
 			store = &openfgav1.Store{
 				Id:        res.GetId(),
@@ -28,10 +31,19 @@ func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.
 	return store, err
 }
 
-func (s *Server) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	storeId, ok := s.storeMap[name]
+func (s *Server) getStoreId(namespace string) (string, error) {
+	storeId, ok := s.storeMap[namespace]
 	if !ok {
-		return nil, errStoreNotFound
+		return "", errStoreNotFound
+	}
+
+	return storeId, nil
+}
+
+func (s *Server) getStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
+	storeId, err := s.getStoreId(namespace)
+	if err != nil {
+		return nil, err
 	}
 
 	res, err := s.openfga.GetStore(ctx, &openfgav1.GetStoreRequest{
@@ -78,4 +90,59 @@ func (s *Server) initStores(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *Server) loadModel(ctx context.Context, namespace string, modules []transformer.ModuleFile) (string, error) {
+	var continuationToken string
+
+	model, err := schema.TransformModulesToModel(modules)
+	if err != nil {
+		return "", err
+	}
+
+	store, err := s.getStore(ctx, namespace)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
+		// So with a pageSize of 1 we will get the latest model.
+		res, err := s.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
+			StoreId:           store.GetId(),
+			PageSize:          &wrapperspb.Int32Value{Value: 20},
+			ContinuationToken: continuationToken,
+		})
+
+		if err != nil {
+			return "", fmt.Errorf("failed to load authorization model: %w", err)
+		}
+
+		for _, m := range res.GetAuthorizationModels() {
+			// If provided dsl is equal to a stored dsl we use that as the authorization id
+			if schema.EqualModels(m, model) {
+				return m.GetId(), nil
+			}
+		}
+
+		// If we have not found any matching authorization model we break the loop and create a new one
+		if res.GetContinuationToken() == "" {
+			break
+		}
+
+		continuationToken = res.GetContinuationToken()
+	}
+
+	writeRes, err := s.openfga.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
+		StoreId:         s.storeID,
+		TypeDefinitions: model.GetTypeDefinitions(),
+		SchemaVersion:   model.GetSchemaVersion(),
+		Conditions:      model.GetConditions(),
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to load authorization model: %w", err)
+	}
+
+	return writeRes.GetAuthorizationModelId(), nil
 }
