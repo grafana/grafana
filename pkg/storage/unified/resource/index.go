@@ -4,6 +4,7 @@ import (
 	"context"
 	golog "log"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,6 +18,8 @@ import (
 )
 
 const tracingPrexfixIndex = "unified_storage.index."
+const specFieldPrefix = "Spec."
+const descendingPrefix = "-"
 
 type Shard struct {
 	index bleve.Index
@@ -41,7 +44,7 @@ type Index struct {
 }
 
 func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
-	idx := &Index{
+	return &Index{
 		shardMutex: sync.RWMutex{},
 		s:          s,
 		opts:       opts,
@@ -49,8 +52,6 @@ func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
 		log:        log.New("unifiedstorage.search.index"),
 		tracer:     tracer,
 	}
-
-	return idx
 }
 
 // IndexBatches goes through all the shards and indexes their batches if they are large enough
@@ -343,9 +344,13 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	}
 
 	req := bleve.NewSearchRequest(query)
+	if len(request.SortBy) > 0 {
+		sorting := getSortFields(request)
+		req.SortBy(sorting)
+	}
 
 	for _, group := range request.GroupBy {
-		facet := bleve.NewFacetRequest("Spec."+group.Name, int(group.Limit))
+		facet := bleve.NewFacetRequest(specFieldPrefix+group.Name, int(group.Limit))
 		req.AddFacet(group.Name+"_facet", facet)
 	}
 
@@ -474,4 +479,22 @@ func fetchResourceTypes() []*ListOptions {
 			},
 		})
 	return items
+}
+
+func getSortFields(request *SearchRequest) []string {
+	sorting := make([]string, 0, len(request.SortBy))
+	for _, sort := range request.SortBy {
+		if IsSpecField(sort) {
+			descending := strings.HasPrefix(sort, descendingPrefix)
+			sort = strings.TrimPrefix(sort, descendingPrefix)
+			sortOrder := ""
+			if descending {
+				sortOrder = descendingPrefix
+			}
+			sorting = append(sorting, sortOrder+specFieldPrefix+sort)
+			continue
+		}
+		sorting = append(sorting, sort)
+	}
+	return sorting
 }

@@ -336,6 +336,8 @@ message SearchRequest {
   int64 offset = 6;
   // grouping (optional)
   repeated GroupBy groupBy = 8;
+  // sorting
+  repeated string sortBy = 9;
 }
 
 message GroupBy {
