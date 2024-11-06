@@ -29,6 +29,7 @@ func TestIndexDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
+	require.Equal(t, 1, len(index.allTenants()))
 	assertSearchCountEquals(t, index, "*", nil, 1)
 }
 
@@ -83,7 +84,7 @@ func TestLookupNames(t *testing.T) {
 	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	assertCountEquals(t, index, uint64(records))
+	assertCountEquals(t, index, records)
 	query := ""
 	chunk := ids[:100] // query for n folders by id
 	for _, id := range chunk {
@@ -185,7 +186,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 
 	return &Index{
 		tracer: trace,
-		shards: make(map[string]Shard),
+		shards: make(map[string]*Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
 			ListLimit: 5000,
@@ -195,7 +196,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 	}
 }
 
-func assertCountEquals(t *testing.T, index *Index, expected uint64) {
+func assertCountEquals(t *testing.T, index *Index, expected int) {
 	total, err := index.Count()
 	require.NoError(t, err)
 	assert.Equal(t, expected, total)

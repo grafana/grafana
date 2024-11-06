@@ -87,23 +87,23 @@ func (s *IndexMetrics) Describe(ch chan<- *prometheus.Desc) {
 	s.IndexLatency.Describe(ch)
 }
 
+// getTotalDocCount returns the total number of documents in the index
 func getTotalDocCount(index *Index) float64 {
 	var totalCount float64
 	totalCount = 0
 	if index == nil {
 		return totalCount
 	}
+
 	for _, shard := range index.shards {
-		docCount, err := shard.index.DocCount()
-		if err != nil {
-			continue
-		}
-		totalCount += float64(docCount)
+		count, _ := shard.index.DocCount()
+		totalCount += float64(count)
 	}
 
 	return totalCount
 }
 
+// getTotalIndexSize returns the total size of the index directory when using a file-based index
 func getTotalIndexSize(dir string) (int64, error) {
 	var totalSize int64
 
