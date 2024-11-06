@@ -43,6 +43,12 @@ With all of these dynamic elements, there's almost no limit to what a canvas can
 We'd love your feedback on the canvas visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 {{< /admonition >}}
 
+## Configure a bar gauge visualization
+
+The following video shows you how to create and configure a canvas visualization:
+
+{{< youtube id="b7AYKoFcPpY" >}}
+
 ## Supported data formats
 
 The canvas visualization is unique in that it doesn't have any specific data requirements. You can even start adding and configuring visual elements without providing any data. However, any data you plan to consume should be accessible through supported Grafana data sources and structured in a way that ensures smooth integration with your custom elements.
