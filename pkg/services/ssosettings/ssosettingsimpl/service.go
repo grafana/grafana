@@ -436,19 +436,19 @@ func (s *Service) decryptSecrets(ctx context.Context, settings map[string]any) (
 			if IsSecretField(k) && v != "" {
 				strValue, ok := v.(string)
 				if !ok {
-					s.logger.Error("Failed to parse secret value, it is not a string", "key", k)
+					s.logger.FromContext(ctx).Error("Failed to parse secret value, it is not a string", "key", k)
 					return nil, fmt.Errorf("secret value is not a string")
 				}
 
 				decoded, err := base64.RawStdEncoding.DecodeString(strValue)
 				if err != nil {
-					s.logger.Error("Failed to decode secret string", "err", err, "value")
+					s.logger.FromContext(ctx).Error("Failed to decode secret string", "err", err, "value")
 					return nil, err
 				}
 
 				decrypted, err := s.secrets.Decrypt(ctx, decoded)
 				if err != nil {
-					s.logger.Error("Failed to decrypt secret", "err", err)
+					s.logger.FromContext(ctx).Error("Failed to decrypt secret", "err", err)
 					return nil, err
 				}
 

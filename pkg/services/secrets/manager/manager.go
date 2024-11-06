@@ -331,7 +331,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 		}).Inc()
 
 		if err != nil {
-			s.log.Error("Failed to decrypt secret", "error", err)
+			s.log.FromContext(ctx).Error("Failed to decrypt secret", "error", err)
 		}
 	}()
 
@@ -371,7 +371,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 
 		dataKey, err = s.dataKeyById(ctx, string(keyId))
 		if err != nil {
-			s.log.Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
+			s.log.FromContext(ctx).Error("Failed to lookup data key by id", "id", string(keyId), "error", err)
 			return nil, err
 		}
 	}
