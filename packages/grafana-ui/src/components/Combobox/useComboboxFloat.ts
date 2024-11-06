@@ -4,13 +4,18 @@ import { useMemo, useRef, useState } from 'react';
 import { measureText } from '../../utils';
 
 import { ComboboxOption } from './Combobox';
-import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
+import {
+  MENU_ITEM_FONT_SIZE,
+  MENU_ITEM_FONT_WEIGHT,
+  MENU_ITEM_LINE_HEIGHT,
+  MENU_ITEM_PADDING_X,
+} from './getComboboxStyles';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
 
 // Used with Downshift to get the height of each item
-export const OPTION_HEIGHT = 45;
+export const OPTION_HEIGHT = MENU_ITEM_PADDING_X * 2 + MENU_ITEM_LINE_HEIGHT;
 const POPOVER_MAX_HEIGHT = OPTION_HEIGHT * 8.5;
 
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
