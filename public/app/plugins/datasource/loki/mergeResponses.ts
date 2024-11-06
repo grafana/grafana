@@ -280,6 +280,10 @@ function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
     return false;
   }
 
+  if (frame1.refId != null && frame2.refId != null && frame1.refId === frame2.refId) {
+    return true;
+  }
+
   const frameType1 = frame1.meta?.type;
   const frameType2 = frame2.meta?.type;
 

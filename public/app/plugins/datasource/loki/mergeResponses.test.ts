@@ -218,6 +218,7 @@ describe('combineResponses', () => {
     const responseA: DataQueryResponse = {
       data: [metricFrameA],
     };
+    metricFrameC.refId = 'B';
     const responseB: DataQueryResponse = {
       data: [metricFrameB, metricFrameC],
     };
@@ -654,7 +655,7 @@ describe('combineResponses', () => {
     });
   });
 
-  it('does not combine frames with different refId', () => {
+  it('does not combine frames with different name', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     metricFrameA.name = 'A';
     metricFrameB.name = 'B';
@@ -911,6 +912,7 @@ describe('mergeFrames', () => {
     const responseA: DataQueryResponse = {
       data: [metricFrameB],
     };
+    metricFrameC.refId = 'B';
     const responseB: DataQueryResponse = {
       data: [metricFrameA, metricFrameC],
     };
