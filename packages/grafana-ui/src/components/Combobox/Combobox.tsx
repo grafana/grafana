@@ -10,6 +10,7 @@ import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
@@ -132,7 +133,7 @@ export const Combobox = <T extends string | number>({
 
   const virtualizerOptions = {
     count: items.length,
-    getScrollElement: () => floatingRef.current,
+    getScrollElement: () => scrollRef.current,
     estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
@@ -239,7 +240,7 @@ export const Combobox = <T extends string | number>({
     },
   });
 
-  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
@@ -311,46 +312,48 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && !asyncError && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              return (
-                <li
-                  key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                  data-index={virtualRow.index}
-                  className={cx(
-                    styles.option,
-                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                    highlightedIndex === virtualRow.index && styles.optionFocused
-                  )}
-                  style={{
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  {...getItemProps({
-                    item: items[virtualRow.index],
-                    index: virtualRow.index,
-                  })}
-                >
-                  <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>
-                      {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                    </span>
-                    {items[virtualRow.index].description && (
-                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+        <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+          {isOpen && !asyncError && (
+            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                return (
+                  <li
+                    key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                    data-index={virtualRow.index}
+                    className={cx(
+                      styles.option,
+                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                      highlightedIndex === virtualRow.index && styles.optionFocused
                     )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {asyncError && (
-          <Stack justifyContent="center" alignItems="center" height={8}>
-            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-            <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
-          </Stack>
-        )}
+                    style={{
+                      height: virtualRow.size,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    {...getItemProps({
+                      item: items[virtualRow.index],
+                      index: virtualRow.index,
+                    })}
+                  >
+                    <div className={styles.optionBody}>
+                      <span className={styles.optionLabel}>
+                        {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                      </span>
+                      {items[virtualRow.index].description && (
+                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {asyncError && (
+            <Stack justifyContent="center" alignItems="center" height={8}>
+              <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+              <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
+            </Stack>
+          )}
+        </ScrollContainer>
       </div>
     </div>
   );
