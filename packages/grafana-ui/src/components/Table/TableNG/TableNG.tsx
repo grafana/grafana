@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect, useCallback } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
-import { Cell } from 'react-table';
 
 import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 
@@ -21,11 +20,7 @@ import { TableCellNG } from './Cells/TableCellNG';
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
 
-interface TableRow {
-  id: number;
-  title: string;
-  cell: Cell;
-}
+type TableRow = Record<string, unknown>;
 
 interface TableColumn extends Column<TableRow> {
   key: string;
@@ -168,11 +163,11 @@ export function TableNG(props: TableNGProps) {
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
-          const value = row[key];
-          const displayValue = shallowField.display!(value);
+          // const value = row[key];
+          // const displayValue = shallowField.display!(value);
 
           // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          let colors = getCellColors(theme, shallowField.config.custom, displayValue);
+          // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
           // }
 
           // css()
@@ -230,26 +225,6 @@ export function TableNG(props: TableNGProps) {
 
     return columns;
   };
-
-  // const frameToRecords = (main: DataFrame) => {
-  //   const rows: Array<{ [key: string]: string }> = [];
-
-  //   main.fields.map((field, fieldIndex) => {
-  //     const key = field.name;
-
-  //     field.values.map((value, valueIndex) => {
-  //       const currentValue = { [key]: value };
-
-  //       if (rows.length > valueIndex) {
-  //         rows[valueIndex] = { ...rows[valueIndex], ...currentValue };
-  //       } else {
-  //         rows[valueIndex] = currentValue;
-  //       }
-  //     });
-  //   });
-
-  //   return rows;
-  // };
 
   const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
     const fnBody = `
@@ -374,7 +349,7 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
+function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
   return <Row {...props} />;
