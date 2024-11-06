@@ -1334,6 +1334,8 @@ cloud.google.com/go/workflows v1.12.1/go.mod h1:5A95OhD/edtOhQd/O741NSfIMezNTbCw
 cloud.google.com/go/workflows v1.12.2/go.mod h1:+OmBIgNqYJPVggnMo9nqmizW0qEXHhmnAzK/CnBqsHc=
 cloud.google.com/go/workflows v1.12.3/go.mod h1:fmOUeeqEwPzIU81foMjTRQIdwQHADi/vEr1cx9R1m5g=
 cloud.google.com/go/workflows v1.12.4/go.mod h1:yQ7HUqOkdJK4duVtMeBCAOPiN1ZF1E9pAMX51vpwB/w=
+connectrpc.com/connect v1.16.2 h1:ybd6y+ls7GOlb7Bh5C8+ghA6SvCBajHwxssO2CGFjqE=
+connectrpc.com/connect v1.16.2/go.mod h1:n2kgwskMHXC+lVqb18wngEpF95ldBHXjZYJussz5FRc=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 filippo.io/age v1.1.1 h1:pIpO7l151hCnQ4BdyBujnGP2YlUo0uj6sAVNHGBvXHg=
 filippo.io/age v1.1.1/go.mod h1:l03SrzDUrBkdBx8+IILdnn2KZysqQdbEBUQ4p3sqEQE=
@@ -2328,8 +2330,8 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240930132144-b5e64e81e8d3/go.mod h1:YeND+6FDA7OuFgDzYODN8kfPhXLCehcpxe4T9mdnpCY=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
-github.com/grafana/pyroscope/api v0.3.0 h1:WcVKNZ8JlriJnD28wTkZray0wGo8dGkizSJXnbG7Gd8=
-github.com/grafana/pyroscope/api v0.3.0/go.mod h1:JggA80ToAAUACYGfwL49XoFk5aN5ecHp4pNIZhlk9Uc=
+github.com/grafana/pyroscope/api v1.0.0 h1:RWK3kpv8EAnB7JpOqnf//xwE84DdKF03N/iFxpFAoHY=
+github.com/grafana/pyroscope/api v1.0.0/go.mod h1:CUrgOgSZDnx4M1mlRoxhrVKkTuKIse9p4FtuPbrGA04=
 github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd/go.mod h1:M5qHK+eWfAv8VR/265dIuEpL3fNfeC21tXXp9itM24A=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrRoT6yV5+wkrOpcszoIsO4+4ds248=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
