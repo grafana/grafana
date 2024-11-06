@@ -726,18 +726,16 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const replacedInterpolatedQuery = config.featureToggles.promQLScope
-          ? interpolatedQuery
-          : this.templateSrv.replace(
-              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
-              scopedVars,
-              this.interpolateQueryExpr
-            );
+        const withAdhocFilters = this.templateSrv.replace(
+          this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+          scopedVars,
+          this.interpolateQueryExpr
+        );
 
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: replacedInterpolatedQuery,
+          expr: withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;
@@ -861,22 +859,6 @@ export class PrometheusDatasource
     return getOriginalMetricName(labelData);
   }
 
-  /**
-   * This converts the adhocVariableFilter array and converts it to scopeFilter array
-   * @param filters
-   */
-  generateScopeFilters(filters?: AdHocVariableFilter[]): ScopeSpecFilter[] {
-    if (!filters) {
-      return [];
-    }
-
-    return filters.map((f) => ({
-      ...f,
-      value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
-      operator: scopeFilterOperatorMap[f.operator],
-    }));
-  }
-
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
     if (!filters || filters.length === 0) {
       return expr;
@@ -922,14 +904,11 @@ export class PrometheusDatasource
 
     // Apply ad-hoc filters
     // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
-    const exprWithAdhoc = config.featureToggles.promQLScope
-      ? expr
-      : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
+    const exprWithAdHocFilters = this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
-      ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: exprWithAdhoc,
+      expr: exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
