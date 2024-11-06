@@ -329,7 +329,19 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 		request.Limit = 10
 	}
 
-	query := bleve.NewQueryStringQuery(request.Query)
+	textQuery := bleve.NewQueryStringQuery(request.Query)
+	query := bleve.NewConjunctionQuery(textQuery)
+
+	if len(request.Kind) > 0 {
+		// apply OR condition filter for each kind ( dashboard, folder, etc )
+		orQuery := bleve.NewDisjunctionQuery()
+		for _, term := range request.Kind {
+			termQuery := bleve.NewTermQuery(term)
+			orQuery.AddQuery(termQuery)
+		}
+		query.AddQuery(orQuery)
+	}
+
 	req := bleve.NewSearchRequest(query)
 
 	for _, group := range request.GroupBy {
