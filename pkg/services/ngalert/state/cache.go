@@ -76,22 +76,31 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 	// Instead of just calculating ID we create an entire state - a candidate. If rule states already hold a state with this ID, this candidate will be discarded and the existing one will be returned.
 	// Otherwise, this candidate will be added to the rule states and returned.
 	stateCandidate := calculateState(ctx, log, alertRule, result, extraLabels, externalURL)
+	return c.getOrAdd(stateCandidate, log)
+}
 
+// getOrAdd retrieves an existing State from the cache if it exists,
+// or adds the provided State if it is not present.
+func (c *cache) getOrAdd(state State, log log.Logger) *State {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
 
+	// Retrieve or initialize the org-level map for storing rule states
 	var orgStates map[string]*ruleStates
 	var ok bool
-	if orgStates, ok = c.states[stateCandidate.OrgID]; !ok {
+	if orgStates, ok = c.states[state.OrgID]; !ok {
 		orgStates = make(map[string]*ruleStates)
-		c.states[stateCandidate.OrgID] = orgStates
+		c.states[state.OrgID] = orgStates
 	}
-	var states *ruleStates
-	if states, ok = orgStates[stateCandidate.AlertRuleUID]; !ok {
-		states = &ruleStates{states: make(map[data.Fingerprint]*State)}
-		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
+
+	// Retrieve or initialize the rule-level states map
+	var rs *ruleStates
+	if rs, ok = orgStates[state.AlertRuleUID]; !ok {
+		rs = &ruleStates{states: make(map[data.Fingerprint]*State)}
+		c.states[state.OrgID][state.AlertRuleUID] = rs
 	}
-	return states.getOrAdd(stateCandidate, log)
+
+	return rs.getOrAdd(state, log)
 }
 
 func (rs *ruleStates) getOrAdd(stateCandidate State, log log.Logger) *State {
@@ -253,12 +262,6 @@ func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s
 		return ruleStates.deleteStates(predicate)
 	}
 	return nil
-}
-
-func (c *cache) setAllStates(newStates map[int64]map[string]*ruleStates) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	c.states = newStates
 }
 
 func (c *cache) set(entry *State) {
