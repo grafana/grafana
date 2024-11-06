@@ -34,8 +34,8 @@ interface QueryVariableEditorFormProps {
   onRefreshChange: (option: VariableRefresh) => void;
   isMulti: boolean;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
-  disallowCustomValues?: boolean;
-  onDisallowCustomValuesChange?: (event: FormEvent<HTMLInputElement>) => void;
+  allowCustomValue?: boolean;
+  onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
   includeAll: boolean;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
@@ -57,8 +57,8 @@ export function QueryVariableEditorForm({
   onRefreshChange,
   isMulti,
   onMultiChange,
-  disallowCustomValues,
-  onDisallowCustomValuesChange,
+  allowCustomValue,
+  onAllowCustomValueChange,
   includeAll,
   onIncludeAllChange,
   allValue,
@@ -130,12 +130,12 @@ export function QueryVariableEditorForm({
       <SelectionOptionsForm
         multi={!!isMulti}
         includeAll={!!includeAll}
-        disallowCustomValues={disallowCustomValues}
+        allowCustomValue={allowCustomValue}
         allValue={allValue}
         onMultiChange={onMultiChange}
         onIncludeAllChange={onIncludeAllChange}
         onAllValueChange={onAllValueChange}
-        onDisallowCustomValuesChange={onDisallowCustomValuesChange}
+        onAllowCustomValueChange={onAllowCustomValueChange}
       />
     </>
   );

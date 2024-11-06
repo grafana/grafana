@@ -14,7 +14,7 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, disallowCustomValues } =
+  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query, allowCustomValue } =
     variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
 
@@ -36,8 +36,8 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   const onAllValueChange = (event: FormEvent<HTMLInputElement>) => {
     variable.setState({ allValue: event.currentTarget.value });
   };
-  const onDisallowCustomValuesChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ disallowCustomValues: event.currentTarget.checked });
+  const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
   const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
     const datasource = getDataSourceRef(dsInstanceSettings);
@@ -82,8 +82,8 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onIncludeAllChange={onIncludeAllChange}
       allValue={allValue ?? ''}
       onAllValueChange={onAllValueChange}
-      disallowCustomValues={!!disallowCustomValues}
-      onDisallowCustomValuesChange={onDisallowCustomValuesChange}
+      allowCustomValue={allowCustomValue}
+      onAllowCustomValueChange={onAllowCustomValueChange}
     />
   );
 }

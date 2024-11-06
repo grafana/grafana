@@ -127,7 +127,7 @@ export interface VariableWithMultiSupport extends VariableWithOptions {
   multi: boolean;
   includeAll: boolean;
   allValue?: string | null;
-  disallowCustomValues?: boolean;
+  allowCustomValue?: boolean;
 }
 
 export interface VariableWithOptions extends BaseVariableModel {

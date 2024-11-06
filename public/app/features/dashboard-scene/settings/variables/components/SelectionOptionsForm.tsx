@@ -8,21 +8,21 @@ import { VariableTextField } from 'app/features/dashboard-scene/settings/variabl
 interface SelectionOptionsFormProps {
   multi: boolean;
   includeAll: boolean;
-  disallowCustomValues?: boolean;
+  allowCustomValue?: boolean;
   allValue?: string | null;
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onDisallowCustomValuesChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function SelectionOptionsForm({
   multi,
-  disallowCustomValues,
+  allowCustomValue,
   includeAll,
   allValue,
   onMultiChange,
-  onDisallowCustomValuesChange,
+  onAllowCustomValueChange,
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
@@ -35,12 +35,12 @@ export function SelectionOptionsForm({
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
-      {disallowCustomValues !== undefined && onDisallowCustomValuesChange && (
+      {onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
         <VariableCheckboxField
-          value={disallowCustomValues}
-          name="Disallow custom values"
-          description="Locks the list of values to the ones defined in the query"
-          onChange={onDisallowCustomValuesChange}
+          value={allowCustomValue ?? true}
+          name="Allow custom values"
+          description="Enables users to add custom values to the list"
+          onChange={onAllowCustomValueChange}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
         />
       )}

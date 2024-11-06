@@ -131,6 +131,10 @@ export interface VariableModel {
    */
   allValue?: string;
   /**
+   * Allow custom values to be entered in the variable
+   */
+  allowCustomValue?: boolean;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -194,6 +198,7 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
+  allowCustomValue: true,
   includeAll: false,
   multi: false,
   options: [],
