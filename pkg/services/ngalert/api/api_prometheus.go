@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -337,24 +338,28 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		maxGroups, err = strconv.Atoi(maxGroupsVal)
 		if err != nil || maxGroups < 0 {
 			ruleResponse.DiscoveryBase.Status = "error"
-			ruleResponse.DiscoveryBase.Error = err.Error()
+			if err != nil {
+				ruleResponse.DiscoveryBase.Error = err.Error()
+			} else {
+				ruleResponse.DiscoveryBase.Error = "group_limit must be > 0"
+			}
 			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
 			return ruleResponse
 		}
 	}
 	nextToken := opts.Query.Get("group_next_token")
 
-	groupedRules := getGroupedRules(ruleList, ruleNamesSet)
+	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.Namespaces)
 	rulesTotals := make(map[string]int64, len(groupedRules))
 	var newToken string
 	foundToken := false
-	for groupKey, rules := range groupedRules {
-		folder, ok := opts.Namespaces[groupKey.NamespaceUID]
-		if !ok {
-			log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
-			continue
-		}
-		ok, err := opts.AuthorizeRuleGroup(rules)
+	for _, rg := range groupedRules {
+		// folder, ok := opts.Namespaces[rg.GroupKey.NamespaceUID]
+		// if !ok {
+		// 	log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
+		// 	continue
+		// }
+		ok, err := opts.AuthorizeRuleGroup(rg.Rules)
 		if err != nil {
 			ruleResponse.DiscoveryBase.Status = "error"
 			ruleResponse.DiscoveryBase.Error = fmt.Sprintf("cannot authorize access to rule group: %s", err.Error())
@@ -366,19 +371,18 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		}
 
 		if nextToken != "" && !foundToken {
-			if nextToken != getRuleGroupNextToken(folder, groupKey.RuleGroup) {
+			if nextToken != getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup) {
 				continue
 			}
-			fmt.Println("FAZ FOUND TOKEN: ", folder, groupKey.RuleGroup)
 			foundToken = true
 		}
 
 		if maxGroups > 0 && len(ruleResponse.Data.RuleGroups) == maxGroups {
-			newToken = getRuleGroupNextToken(folder, groupKey.RuleGroup)
+			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(log, manager, status, groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
+		ruleGroup, totals := toRuleGroup(log, manager, status, rg.GroupKey, rg.Folder, rg.Rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -399,7 +403,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	ruleResponse.Data.Totals = rulesTotals
 
 	// Sort Rule Groups before checking limits
-	apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
+	// apimodels.RuleGroupsBy(apimodels.RuleGroupsByFileAndName).Sort(ruleResponse.Data.RuleGroups)
 	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}
@@ -411,7 +415,14 @@ func getRuleGroupNextToken(namespace, group string) string {
 	return base64.URLEncoding.EncodeToString([]byte(namespace + "/" + group))
 }
 
-func getGroupedRules(ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}) map[ngmodels.AlertRuleGroupKey][]*ngmodels.AlertRule {
+type ruleGroup struct {
+	Folder   string
+	GroupKey ngmodels.AlertRuleGroupKey
+	Rules    []*ngmodels.AlertRule
+}
+
+// Returns a slice of rule groups ordered by namespace and group name
+func getGroupedRules(log log.Logger, ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struct{}, namespaceMap map[string]string) []*ruleGroup {
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
 	// but in this API all rules belong to the same organization. Also filter by rule name if
 	// it was provided as a query param.
@@ -427,12 +438,38 @@ func getGroupedRules(ruleList ngmodels.RulesGroup, ruleNamesSet map[string]struc
 		ruleGroup = append(ruleGroup, rule)
 		groupedRules[groupKey] = ruleGroup
 	}
-	// Sort the rules in each rule group by index. We do this at the end instead of
-	// after each append to avoid having to sort each group multiple times.
-	for _, groupRules := range groupedRules {
+
+	ruleGroups := make([]*ruleGroup, 0, len(groupedRules))
+	for groupKey, groupRules := range groupedRules {
+		folder, ok := namespaceMap[groupKey.NamespaceUID]
+		if !ok {
+			log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
+			continue
+		}
+
+		// Sort the rules in each rule group by index. We do this at the end instead of
+		// after each append to avoid having to sort each group multiple times.
 		ngmodels.AlertRulesBy(ngmodels.AlertRulesByIndex).Sort(groupRules)
+
+		ruleGroups = append(ruleGroups, &ruleGroup{
+			Folder:   folder,
+			GroupKey: groupKey,
+			Rules:    groupRules,
+		})
 	}
-	return groupedRules
+
+	// Sort the groups first by namespace, then group name
+	slices.SortFunc(ruleGroups, func(a, b *ruleGroup) int {
+		nsCmp := strings.Compare(a.Folder, b.Folder)
+		if nsCmp != 0 {
+			return nsCmp
+		}
+
+		// If Namespaces are equal, check the group names
+		return strings.Compare(a.GroupKey.RuleGroup, b.GroupKey.RuleGroup)
+	})
+
+	return ruleGroups
 }
 
 func filterRules(ruleGroup *apimodels.RuleGroup, withStatesFast map[eval.State]struct{}) {
