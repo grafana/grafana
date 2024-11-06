@@ -41,6 +41,8 @@ type Server struct {
 	tenantID string
 	storeID  string
 	modelID  string
+
+	storeMap map[string]string
 }
 
 type ServerOption func(s *Server)
@@ -95,6 +97,11 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	}
 
 	ctx := context.Background()
+	err := s.initStores(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	store, err := s.getOrCreateStore(ctx, s.tenantID)
 	if err != nil {
 		return nil, err
@@ -110,55 +117,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	s.modelID = modelID
 
 	return s, nil
-}
-
-func (s *Server) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	store, err := s.getStore(ctx, name)
-
-	if errors.Is(err, errStoreNotFound) {
-		var res *openfgav1.CreateStoreResponse
-		res, err = s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
-		if res != nil {
-			store = &openfgav1.Store{
-				Id:        res.GetId(),
-				Name:      res.GetName(),
-				CreatedAt: res.GetCreatedAt(),
-			}
-		}
-	}
-
-	return store, err
-}
-
-func (s *Server) getStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	var continuationToken string
-
-	// OpenFGA client does not support any filters for stores.
-	// We should create an issue to support some way to get stores by name.
-	// For now we need to go thourh all stores until we find a match or we hit the end.
-	for {
-		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to initiate zanzana tenant: %w", err)
-		}
-
-		for _, s := range res.GetStores() {
-			if s.GetName() == name {
-				return s, nil
-			}
-		}
-
-		// we have no more stores to check
-		if res.GetContinuationToken() == "" {
-			return nil, errStoreNotFound
-		}
-
-		continuationToken = res.GetContinuationToken()
-	}
 }
 
 func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
