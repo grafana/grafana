@@ -460,7 +460,6 @@ func (s *Service) getPlugins(ctx context.Context, signedInUser *user.SignedInUse
 			Name:       plugin.Name,
 			SettingCmd: pluginSettingCmd,
 		})
-
 	}
 
 	return results, nil
