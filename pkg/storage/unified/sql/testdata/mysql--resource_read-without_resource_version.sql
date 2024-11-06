@@ -1,9 +1,4 @@
 SELECT
-    `namespace`,
-    `group`,
-    `resource`,
-    `name`,
-    `folder`,
     `resource_version`,
     `value`
     FROM `resource`
