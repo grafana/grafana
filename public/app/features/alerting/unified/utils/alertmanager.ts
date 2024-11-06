@@ -1,6 +1,6 @@
 import { isEqual, uniqWith } from 'lodash';
 
-import { parseFlags, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
   Matcher,
@@ -16,7 +16,9 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { objectLabelsToArray } from './labels';
 import { MatcherFormatter, parsePromQLStyleMatcherLooseSafe, unquoteWithUnescape } from './matchers';
+import { matchLabelsSet } from './notification-policies';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -125,33 +127,10 @@ export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
-  return matchers.every(({ name, value, isRegex, isEqual }) => {
-    return Object.entries(labels).some(([labelKey, labelValue]) => {
-      const nameMatches = name === labelKey;
-      let valueMatches;
-      if (isEqual && !isRegex) {
-        valueMatches = value === labelValue;
-      }
-      if (!isEqual && !isRegex) {
-        valueMatches = value !== labelValue;
-      }
-      if (isRegex) {
-        const valueWithFlagsParsed = parseFlags(value);
-        try {
-          valueMatches = new RegExp(valueWithFlagsParsed.cleaned, valueWithFlagsParsed.flags).test(labelValue);
-        } catch (e) {
-          valueMatches = false;
-        }
-        if (isEqual) {
-          return valueMatches;
-        } else {
-          return !valueMatches;
-        }
-      }
+  const labelsArray = objectLabelsToArray(labels);
+  const objectMatchers = matchers.map(matcherToObjectMatcher);
 
-      return nameMatches && valueMatches;
-    });
-  });
+  return matchLabelsSet(objectMatchers, labelsArray);
 }
 
 export function combineMatcherStrings(...matcherStrings: string[]): string {

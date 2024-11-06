@@ -262,7 +262,17 @@ function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
     throw new Error(`no such operator: ${operator}`);
   }
 
-  return matchFunction(labelValue, matcherValue);
+  try {
+    // This can throw because the regex operators use the JavaScript regex engine
+    // and "new RegExp()" throws on invalid regular expressions.
+    //
+    // This is usually a user-error (because matcher values are taken from user input)
+    // but we're still logging this as a warning because it _might_ be a programmer error.
+    return matchFunction(labelValue, matcherValue);
+  } catch (err) {
+    console.warn(err);
+    return false;
+  }
 }
 
 // ⚠️ DO NOT USE THIS FUNCTION FOR ROUTE SELECTION ALGORITHM
@@ -306,5 +316,6 @@ export {
   findMatchingRoutes,
   getInheritedProperties,
   isLabelMatchInSet,
-  renameReceiverInRoute,
+  renameReceiverInRoute
 };
+
