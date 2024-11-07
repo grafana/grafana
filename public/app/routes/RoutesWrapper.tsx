@@ -70,6 +70,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
     direction: 'row',
     initialSize: 0.6,
     dragPosition: 'end',
+    handleSize: 6,
   });
 
   // The style changes allow the resizing to be more flexible and not constrained by the content dimensions. In the

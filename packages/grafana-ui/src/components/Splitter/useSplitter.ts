@@ -21,6 +21,10 @@ export interface UseSplitterOptions {
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
+
+  // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
+  // pushing the left pane content left.
+  handleSize?: number;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -45,7 +49,7 @@ const propsForDirection = {
 export function useSplitter(options: UseSplitterOptions) {
   const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged } = options;
 
-  const handleSize = 16;
+  const handleSize = options.handleSize ?? 16;
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
   const secondPaneRef = useRef<HTMLDivElement | null>(null);
