@@ -998,47 +998,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Len(t, rg.Rules, 1)
 			}
 		})
-
-		t.Run("then with limit", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1", nil)
-			require.NoError(t, err)
-			c := &contextmodel.ReqContext{
-				Context: &web.Context{Req: r},
-				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
-				},
-			}
-			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var res apimodels.RuleResponse
-			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-
-			// There should be 2 inactive rules across all Rule Groups
-			require.Equal(t, map[string]int64{"inactive": 2}, res.Data.Totals)
-			require.Len(t, res.Data.RuleGroups, 1)
-			rg := res.Data.RuleGroups[0]
-			// The Rule Group within the limit should have 1 inactive rule
-			require.Equal(t, map[string]int64{"inactive": 1}, rg.Totals)
-			require.Len(t, rg.Rules, 1)
-		})
-
-		t.Run("then with limit larger than number of rule groups", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1", nil)
-			require.NoError(t, err)
-			c := &contextmodel.ReqContext{
-				Context: &web.Context{Req: r},
-				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
-				},
-			}
-			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var res apimodels.RuleResponse
-			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
-		})
 	})
 
 	t.Run("test with limit rules", func(t *testing.T) {
@@ -1072,7 +1031,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limit", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1088,15 +1047,18 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 			// There should be 2 inactive rules
 			require.Equal(t, map[string]int64{"inactive": 2}, res.Data.Totals)
-			require.Len(t, res.Data.RuleGroups, 1)
-			rg := res.Data.RuleGroups[0]
-			// The Rule Group within the limit should have 1 inactive rule because of the limit
-			require.Equal(t, map[string]int64{"inactive": 1}, rg.Totals)
-			require.Len(t, rg.Rules, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
+			// The Rule Groups should have 1 inactive rule because of the limit
+			rg1 := res.Data.RuleGroups[0]
+			require.Equal(t, map[string]int64{"inactive": 1}, rg1.Totals)
+			require.Len(t, rg1.Rules, 1)
+			rg2 := res.Data.RuleGroups[1]
+			require.Equal(t, map[string]int64{"inactive": 1}, rg2.Totals)
+			require.Len(t, rg2.Rules, 1)
 		})
 
 		t.Run("then with limit larger than number of rules", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=2", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=2", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1109,8 +1071,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, http.StatusOK, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
 			require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, res.Data.RuleGroups[1].Rules, 1)
 		})
 	})
 
@@ -1153,7 +1116,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limits", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1&limit_alerts=1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1&limit_alerts=1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1183,7 +1146,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limit larger than number of alerts", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1&limit_alerts=3", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1&limit_alerts=3", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1196,9 +1159,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, http.StatusOK, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
 			require.Len(t, res.Data.RuleGroups[0].Rules, 1)
 			require.Len(t, res.Data.RuleGroups[0].Rules[0].Alerts, 2)
+			require.Len(t, res.Data.RuleGroups[1].Rules, 1)
+			require.Len(t, res.Data.RuleGroups[1].Rules[0].Alerts, 2)
 		})
 	})
 
