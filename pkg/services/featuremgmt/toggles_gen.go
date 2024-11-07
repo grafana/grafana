@@ -862,4 +862,8 @@ const (
 	// FlagZipkinBackendMigration
 	// Enables querying Zipkin data source without the proxy
 	FlagZipkinBackendMigration = "zipkinBackendMigration"
+
+	// FlagEnableScim
+	// Enables SCIM support for user and group management
+	FlagEnableScim = "enableScim"
 )
