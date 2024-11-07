@@ -109,6 +109,33 @@ func TestIndexDashboardWithTags(t *testing.T) {
 	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
 }
 
+func TestSort(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
+	folder := readTestData(t, "folder-resource.json")
+	playlist := readTestData(t, "playlist-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: folder}, {Value: playlist}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 3)
+
+	req := &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"title"}}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val := results.Values[0]
+	assert.Equal(t, "dashboard-a", val.Spec["title"])
+
+	req = &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"-title"}}
+	results, err = index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val = results.Values[0]
+	assert.NotEqual(t, "dashboard-a", val.Spec["title"])
+}
+
 func TestIndexBatch(t *testing.T) {
 	index := newTestIndex(t, 1000)
 

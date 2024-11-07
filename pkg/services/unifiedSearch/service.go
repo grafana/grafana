@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -165,7 +166,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	// will use stack id for cloud and org id for on-prem
 	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
 
-	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From), Kind: qry.Kind}
+	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
 		s.logger.Error("Failed to search resources", "error", err)
@@ -173,6 +174,23 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 		return response
 	}
 
+	frame := newSearchFrame(res)
+	for _, r := range res.Items {
+		doc, err := getDoc(r.Value)
+		if err != nil {
+			s.logger.Error("Failed to parse doc", "error", err)
+			response.Error = err
+			return response
+		}
+		kind := strings.ToLower(doc.Kind)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
+	}
+	response.Frames = append(response.Frames, frame)
+	return response
+}
+
+func newSearchFrame(res *resource.SearchResponse) *data.Frame {
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -202,19 +220,14 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 			Count: uint64(len(res.Items)),
 		},
 	})
+	return frame
+}
 
-	for _, r := range res.Items {
-		doc, err := getDoc(r.Value)
-		if err != nil {
-			s.logger.Error("Failed to parse doc", "error", err)
-			response.Error = err
-			return response
-		}
-		kind := strings.ToLower(doc.Kind)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, "", nil, doc.FolderID)
+func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
+	if doc.FolderID == "" {
+		return fmt.Sprintf("%s/d/%s/%s", subURL, doc.Name, doc.Namespace)
 	}
-	response.Frames = append(response.Frames, frame)
-	return response
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, doc.Name, doc.Namespace)
 }
 
 type customMeta struct {
@@ -246,4 +259,35 @@ func getDoc(data []byte) (*DashboardListDoc, error) {
 		return nil, err
 	}
 	return res, nil
+}
+
+func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	return &resource.SearchRequest{
+		Tenant: tenant,
+		Query:  qry.Query,
+		Limit:  int64(qry.Limit),
+		Offset: int64(qry.From),
+		Kind:   qry.Kind,
+		SortBy: []string{sortField(qry.Sort)},
+	}
+}
+
+const (
+	sortSuffix = "_sort"
+	descending = "-"
+)
+
+func sortField(sort string) string {
+	sf := strings.TrimSuffix(sort, sortSuffix)
+	if !strings.HasPrefix(sf, descending) {
+		return dashboardListFieldMapping[sf]
+	}
+	sf = strings.TrimPrefix(sf, descending)
+	sf = dashboardListFieldMapping[sf]
+	return descending + sf
+}
+
+// mapping of dashboard list fields to search doc fields
+var dashboardListFieldMapping = map[string]string{
+	"name": "title",
 }
