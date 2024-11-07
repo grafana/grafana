@@ -38,7 +38,10 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		end := strings.LastIndex(errMsg, "}") + 1
 		if start == -1 || end == -1 {
 			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write([]byte("Could not extract JSON from error"))
+			_, writeErr := rw.Write([]byte("Could not extract JSON from error"))
+			if writeErr != nil {
+				return nil, fmt.Errorf("unable to write HTTP response: %v", writeErr)
+			}
 			return nil, err
 		}
 
