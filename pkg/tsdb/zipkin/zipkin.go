@@ -29,7 +29,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		httpClientOptions, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
+			return nil, backend.DownstreamError(fmt.Errorf("error reading settings: %w", err))
 		}
 
 		httpClient, err := httpClientProvider.New(httpClientOptions)
@@ -38,7 +38,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		if settings.URL == "" {
-			return nil, fmt.Errorf("error reading settings: url is empty")
+			return nil, backend.DownstreamError(fmt.Errorf("error reading settings: url is empty"))
 		}
 
 		logger := backend.NewLoggerWith("logger", "tsdb.zipkin")
