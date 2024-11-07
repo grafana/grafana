@@ -9,8 +9,8 @@ import {
 
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface AddLibraryPanelDrawerState extends SceneObjectState {
   panelToReplaceRef?: SceneObjectRef<VizPanel>;

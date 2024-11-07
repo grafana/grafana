@@ -1,28 +1,26 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
-import React, { useMemo, useState, useLayoutEffect } from 'react';
+import { Property } from 'csstype';
+import React, { useMemo, useState, useLayoutEffect, useCallback } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
-import { Cell } from 'react-table';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { TableCellDisplayMode, TableNGProps } from '../types';
-import { getCellColors } from '../utils';
+import { FooterItem, TableNGProps } from '../types';
+import { getCellColors, getTextAlign, getFooterItems } from '../utils';
 
+import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 
 const DEFAULT_CELL_PADDING = 6;
+const COLUMN_MIN_WIDTH = 150;
 
-interface TableRow {
-  id: number;
-  title: string;
-  cell: Cell;
-}
+type TableRow = Record<string, unknown>;
 
 interface TableColumn extends Column<TableRow> {
   key: string;
@@ -31,16 +29,24 @@ interface TableColumn extends Column<TableRow> {
   field: Field;
 }
 
-interface TableHeaderProps {
+interface HeaderCellProps {
   column: Column<any>;
   onSort: (columnKey: string, direction: SortDirection) => void;
   direction: SortDirection | undefined;
+  justifyContent?: Property.JustifyContent;
 }
 
 export function TableNG(props: TableNGProps) {
-  const { height, width, timeRange, cellHeight, noHeader, fieldConfig } = props;
+  const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const [revId, setRevId] = useState(0);
@@ -48,6 +54,7 @@ export function TableNG(props: TableNGProps) {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
@@ -91,20 +98,20 @@ export function TableNG(props: TableNGProps) {
   }
   const rowHeightNumber = rowHeight();
 
-  const TableHeader: React.FC<TableHeaderProps> = ({ column, onSort, direction }) => {
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
     };
 
     return (
-      <div>
+      <div style={{ display: 'flex', justifyContent }}>
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
             (direction === 'ASC' ? (
-              <Icon size="lg" name="arrow-down" className={styles.sortIcon} />
-            ) : (
               <Icon name="arrow-up" size="lg" className={styles.sortIcon} />
+            ) : (
+              <Icon name="arrow-down" size="lg" className={styles.sortIcon} />
             ))}
         </button>
 
@@ -135,11 +142,18 @@ export function TableNG(props: TableNGProps) {
 
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
-    const rows: Array<{ [key: string]: string }> = [];
 
-    main.fields.map((field) => {
-      const key = `${field.name}-${revId}`;
+    // Footer calculations
+    let footerItems: FooterItem[] = [];
+    const filterFields: Array<{ id: string; field?: Field } | undefined> = [];
+    const allValues: any[][] = [];
+
+    main.fields.map((field, fieldIndex) => {
+      filterFields.push({ id: fieldIndex.toString(), field });
+      const key = field.name;
       const { values: _, ...shallowField } = field;
+
+      const justifyColumnContent = getTextAlign(field);
 
       // Add a column for each field
       columns.push({
@@ -149,18 +163,18 @@ export function TableNG(props: TableNGProps) {
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
-          const value = row[key];
-          const displayValue = field.display!(value);
+          // const value = row[key];
+          // const displayValue = shallowField.display!(value);
 
           // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          let colors = getCellColors(theme, field.config.custom, displayValue);
+          // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
           // }
 
           // css()
           return 'my-class';
         },
         renderCell: (props: any) => {
-          const { row } = props;
+          const { row, rowIdx } = props;
           const value = row[key];
 
           // Cell level rendering here
@@ -172,34 +186,69 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={rowHeight}
-              {...props}
+              rowIdx={rowIdx}
+              justifyContent={justifyColumnContent}
             />
           );
         },
+        ...(footerOptions?.show && {
+          renderSummaryCell() {
+            return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
+          },
+        }),
         renderHeaderCell: ({ column, sortDirection }) => (
-          <TableHeader column={column} onSort={handleSort} direction={sortDirection} />
+          <HeaderCell
+            column={column}
+            onSort={handleSort}
+            direction={sortDirection}
+            justifyContent={justifyColumnContent}
+          />
         ),
-        width: columnWidth,
+        // TODO these anys are making me sad
+        width: field.config.custom.width ?? columnWidth,
+        minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
 
       // Create row objects
-      field.values.map((value, index) => {
-        const currentValue = { [key]: value };
-
-        if (rows.length > index) {
-          rows[index] = { ...rows[index], ...currentValue };
-        } else {
-          rows[index] = currentValue;
-        }
-      });
+      if (footerOptions?.show && footerOptions.reducer.length > 0) {
+        // Only populate 2d array if needed for footer calculations
+        allValues.push(field.values);
+      }
     });
 
-    return {
-      columns,
-      rows,
-    };
+    if (footerOptions?.show && footerOptions.reducer.length > 0) {
+      if (footerOptions.countRows) {
+        footerItems = ['Count', rows.length.toString()];
+      } else {
+        footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
+      }
+    }
+
+    return columns;
   };
-  const { columns, rows } = mapFrameToDataGrid(props.data);
+
+  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+    const fnBody = `
+      const rows = Array(frame.length);
+      const values = frame.fields.map(f => f.values);
+
+      for (let i = 0; i < frame.length; i++) {
+        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+      }
+
+      return rows;
+    `;
+
+    const convert = new Function('frame', fnBody);
+
+    const records = convert(frame);
+
+    return records;
+  }, []);
+
+  const columns = mapFrameToDataGrid(props.data);
+
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
     return columns.reduce(
@@ -247,6 +296,7 @@ export function TableNG(props: TableNGProps) {
   return (
     <>
       <DataGrid
+        key={`DataGrid${revId}`}
         rows={sortedRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
@@ -272,6 +322,9 @@ export function TableNG(props: TableNGProps) {
         }}
         // sorting
         sortColumns={sortColumns}
+        // footer
+        // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
+        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
       />
 
       {isContextMenuOpen && (
@@ -297,7 +350,7 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
+function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
   return <Row {...props} />;

@@ -36,13 +36,13 @@ require (
 	go.opentelemetry.io/otel/sdk v1.31.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.28.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.20.0 // @grafana/grafana-backend-group
+	golang.org/x/mod v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.30.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.19.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/tools v0.24.0 // indirect; @grafana/grafana-as-code
+	golang.org/x/tools v0.26.0 // indirect; @grafana/grafana-as-code
 	google.golang.org/api v0.191.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.67.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.1 // indirect; @grafana/plugins-platform-backend
@@ -111,7 +111,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.4.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
 	go.opentelemetry.io/otel/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
