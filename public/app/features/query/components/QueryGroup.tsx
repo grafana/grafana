@@ -195,7 +195,7 @@ export const QueryGroup = memo(
       [onOptionsChange, onRunQueries]
     );
 
-    const isExpressionsSupported = (dsSettings: DataSourceInstanceSettings): boolean => {
+    const isExpressionsSupported = (dsSettings: DataSourceInstanceSettings) => {
       return (dsSettings.meta.alerting || dsSettings.meta.mixed) === true;
     };
 
