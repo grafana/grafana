@@ -29,7 +29,6 @@ import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQuer
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
@@ -75,9 +74,9 @@ describe('PrometheusDatasource', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
+    access: 'proxy',
     user: 'test',
     password: 'mupp',
-    access: 'proxy',
     jsonData: {
       customQueryParameters: '',
       cacheLevel: PrometheusCacheLevel.Low,
@@ -548,7 +547,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('interpolateVariablesInQueries', () => {
-    it('should call replace function 2 times', () => {
+    it('should call replace function 3 times', () => {
       const query: PromQuery = {
         expr: 'test{job="testjob"}',
         format: 'time_series',
@@ -559,7 +558,7 @@ describe('PrometheusDatasource', () => {
       replaceMock.mockReturnValue(interval);
 
       const queries = ds.interpolateVariablesInQueries([query], { Interval: { text: interval, value: interval } });
-      expect(templateSrvStub.replace).toBeCalledTimes(2);
+      expect(templateSrvStub.replace).toBeCalledTimes(3);
       expect(queries[0].interval).toBe(interval);
     });
 
@@ -690,6 +689,26 @@ describe('PrometheusDatasource', () => {
 
       const result = ds.applyTemplateVariables(query, {}, filters);
       expect(result).toMatchObject({ expr: 'test{job="99", k1="v1", k2!="v2"} > 99' });
+    });
+
+    it('should replace variables in ad-hoc filters', () => {
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+
+      const query = {
+        expr: 'test',
+        refId: 'A',
+      };
+      const filters = [
+        {
+          key: 'job',
+          operator: '=~',
+          value: '$A',
+        },
+      ];
+
+      const result = ds.applyTemplateVariables(query, {}, filters);
+      expect(result).toMatchObject({ expr: 'test{job=~"99"}' });
     });
   });
 
