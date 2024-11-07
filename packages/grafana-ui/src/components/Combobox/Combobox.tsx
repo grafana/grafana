@@ -229,6 +229,11 @@ export const Combobox = <T extends string | number>({
     itemToString,
     selectedItem,
 
+    // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
+    // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
+    // in them.
+    // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
+
     onSelectedItemChange: ({ selectedItem }) => {
       console.log('> onSelectedItemChange', selectedItem);
 
@@ -245,12 +250,23 @@ export const Combobox = <T extends string | number>({
       // onInputValueChange is also called when an item is selected and the menu closes.
       // No need to update options in that case
       if (!isOpen) {
+        if (isAsync) {
+          setItems([], '');
+        }
+
         return;
       }
 
       if (!isAsync) {
         const filteredItems = options.filter(itemFilter(inputValue));
         setItems(filteredItems, inputValue);
+      } else {
+        if (inputValue && createCustomValue) {
+          setItems([], inputValue);
+        }
+
+        setAsyncLoading(true);
+        debounceAsync(inputValue);
       }
 
       // if (isAsync) {
@@ -267,6 +283,13 @@ export const Combobox = <T extends string | number>({
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
       console.log('> onIsOpenChange', { isOpen });
+
+      // Loading async options mostly happens in onInputValueChange, but if the menu is opened with an empty input
+      // then onInputValueChange isn't called (because the input value hasn't changed)
+      if (isOpen && inputValue === '') {
+        setAsyncLoading(true);
+        debounceAsync(inputValue);
+      }
 
       // // If the menu is closed, don't worry about doing anything :)
       // if (!isOpen) {
@@ -299,25 +322,31 @@ export const Combobox = <T extends string | number>({
     stateReducer(state, actionAndChanges) {
       console.log('> stateReducer', state, actionAndChanges);
       let { changes } = actionAndChanges;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+      const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
-      // When the input is opened, clear out the input value. This will trigger onInputValueChange
+      // When the menu is opened, clear out the input value. This will trigger onInputValueChange
       // to load async options
-      if (state.isOpen === false && changes.isOpen === true) {
+      if (menuBeingOpened) {
         changes = {
           ...changes,
           inputValue: '',
         };
+      } else if (menuBeingClosed) {
+        // When the menu is closed with a selected item, flush the selected item to the input value
+        if (changes.selectedItem) {
+          changes = {
+            ...changes,
+            inputValue: itemToString(changes.selectedItem),
+          };
+        } else {
+          // Otherwise clear the input value
+          changes = {
+            ...changes,
+            inputValue: '',
+          };
+        }
       }
-
-      // Also when closing the menu, we need to temporarily set the input value to the selected item
-      // to prevent flashing
-      if (state.isOpen === true && changes.isOpen === false && changes.selectedItem) {
-        changes = {
-          ...changes,
-          inputValue: itemToString(changes.selectedItem),
-        };
-      }
-
       return changes;
     },
   });
@@ -341,8 +370,6 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
-  const valueToDisplay = downshiftInputValue;
-
   useOnValueChange(isOpen, () => {
     renderLog('$ isOpen changed', isOpen);
   });
@@ -357,10 +384,6 @@ export const Combobox = <T extends string | number>({
 
   useOnValueChange(value, () => {
     renderLog('$ value prop changed', value);
-  });
-
-  useOnValueChange(valueToDisplay, () => {
-    renderLog('$ valueToDisplay changed', valueToDisplay);
   });
 
   return (
@@ -402,7 +425,6 @@ export const Combobox = <T extends string | number>({
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
           onChange: () => {},
-          value: valueToDisplay,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
