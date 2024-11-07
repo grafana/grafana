@@ -24,30 +24,32 @@ func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openf
 				Name:      res.GetName(),
 				CreatedAt: res.GetCreatedAt(),
 			}
-			s.storeMap[res.GetName()] = res.GetId()
+			s.storeMap[res.GetName()] = storeInfo{
+				Id: res.GetId(),
+			}
 		}
 	}
 
 	return store, err
 }
 
-func (s *Server) getStoreId(namespace string) (string, error) {
-	storeId, ok := s.storeMap[namespace]
+func (s *Server) getStoreInfo(namespace string) (*storeInfo, error) {
+	info, ok := s.storeMap[namespace]
 	if !ok {
-		return "", errStoreNotFound
+		return nil, errStoreNotFound
 	}
 
-	return storeId, nil
+	return &info, nil
 }
 
 func (s *Server) getStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
-	storeId, err := s.getStoreId(namespace)
+	storeInf, err := s.getStoreInfo(namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	res, err := s.openfga.GetStore(ctx, &openfgav1.GetStoreRequest{
-		StoreId: storeId,
+		StoreId: storeInf.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func (s *Server) getStore(ctx context.Context, namespace string) (*openfgav1.Sto
 }
 
 func (s *Server) initStores(ctx context.Context) error {
-	s.storeMap = make(map[string]string)
+	s.storeMap = make(map[string]storeInfo)
 	var continuationToken string
 
 	for {
@@ -78,7 +80,9 @@ func (s *Server) initStores(ctx context.Context) error {
 
 		for _, store := range res.GetStores() {
 			name := store.GetName()
-			s.storeMap[name] = store.GetId()
+			s.storeMap[name] = storeInfo{
+				Id: store.GetId(),
+			}
 		}
 
 		// we have no more stores to check
@@ -134,7 +138,7 @@ func (s *Server) loadModel(ctx context.Context, namespace string, modules []tran
 	}
 
 	writeRes, err := s.openfga.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         s.storeID,
+		StoreId:         store.GetId(),
 		TypeDefinitions: model.GetTypeDefinitions(),
 		SchemaVersion:   model.GetSchemaVersion(),
 		Conditions:      model.GetConditions(),
@@ -145,4 +149,32 @@ func (s *Server) loadModel(ctx context.Context, namespace string, modules []tran
 	}
 
 	return writeRes.GetAuthorizationModelId(), nil
+}
+
+func (s *Server) initNamespaceStore(ctx context.Context, namespace string) (*storeInfo, error) {
+	err := s.initStores(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	store, err := s.getOrCreateStore(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	modules := schema.SchemaModules
+	modelID, err := s.loadModel(ctx, namespace, modules)
+	if err != nil {
+		return nil, err
+	}
+
+	if info, ok := s.storeMap[store.GetName()]; ok {
+		s.storeMap[store.GetName()] = storeInfo{
+			Id:                   info.Id,
+			AuthorizationModelId: modelID,
+		}
+	}
+
+	updatedInfo := s.storeMap[store.GetName()]
+	return &updatedInfo, nil
 }

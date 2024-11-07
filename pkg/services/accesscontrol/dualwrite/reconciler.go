@@ -61,6 +61,7 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 		lock:       lock,
 		log:        log.New("zanzana.reconciler"),
 		collectors: collectors,
+		store:      store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
@@ -115,6 +116,7 @@ func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
 		for key, tuples := range tuplesMap {
 			if err := batch(tuples, 100, func(items []*openfgav1.TupleKey) error {
 				return r.client.Write(ctx, &authzextv1.WriteRequest{
+					Namespace: ns,
 					Writes: &authzextv1.WriteRequestWrites{
 						TupleKeys: zanzana.ToAuthzExtTuples(items),
 					},

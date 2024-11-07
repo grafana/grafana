@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -28,6 +27,7 @@ var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
 var errStoreNotFound = errors.New("store not found")
+var errAuthorizationModelNotInitialized = errors.New("authorization model not initialized")
 
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
@@ -41,16 +41,15 @@ type Server struct {
 	storeID  string
 	modelID  string
 
-	storeMap map[string]string
+	storeMap map[string]storeInfo
+}
+
+type storeInfo struct {
+	Id                   string
+	AuthorizationModelId string
 }
 
 type ServerOption func(s *Server)
-
-func WithTenantID(tenantID string) ServerOption {
-	return func(s *Server) {
-		s.tenantID = tenantID
-	}
-}
 
 func WithLogger(logger log.Logger) ServerOption {
 	return func(s *Server) {
@@ -70,10 +69,7 @@ func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*
 		stackID = "default"
 	}
 
-	return NewAuthz(
-		openfga,
-		WithTenantID(fmt.Sprintf("stacks-%s", stackID)),
-	)
+	return NewAuthz(openfga)
 }
 
 func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
@@ -100,20 +96,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 	if err != nil {
 		return nil, err
 	}
-
-	store, err := s.getOrCreateStore(ctx, s.tenantID)
-	if err != nil {
-		return nil, err
-	}
-
-	s.storeID = store.GetId()
-
-	modelID, err := s.loadModel(ctx, s.storeID, s.modules)
-	if err != nil {
-		return nil, err
-	}
-
-	s.modelID = modelID
 
 	return s, nil
 }
