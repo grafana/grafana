@@ -689,7 +689,7 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 
 ### actions_allow_post_url
 
-Sets API paths to be accessible between plugins using the POST verb. Leaving this value empty only allows remote requests to pass through the proxy, whereas setting this value lets you also send authenticated POST requests to the local server. You typically use this to enable backend communication between plugins.
+Sets API paths to be accessible between plugins using the POST verb. If the value is empty, you can only pass remote requests through the proxy. If the value is set, you can also send authenticated POST requests to the local server. You typically use this to enable backend communication between plugins.
 
 This is a comma separated list, and uses glob matching.
 
