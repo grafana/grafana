@@ -1,4 +1,4 @@
-import { PanelOptionsEditorBuilder } from '@grafana/data';
+import { PanelOptionsEditorBuilder, TimeRange } from '@grafana/data';
 import { ScaleDistribution, HeatmapCalculationMode, HeatmapCalculationOptions } from '@grafana/schema';
 import { ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
 
@@ -8,7 +8,8 @@ export function addHeatmapCalculationOptions(
   prefix: string,
   builder: PanelOptionsEditorBuilder<any>,
   source?: HeatmapCalculationOptions,
-  category?: string[]
+  category?: string[],
+  timeRange?: TimeRange
 ) {
   builder.addCustomEditor({
     id: 'xBuckets',
@@ -21,6 +22,7 @@ export function addHeatmapCalculationOptions(
     },
     settings: {
       allowInterval: true,
+      timeRange,
     },
   });
 

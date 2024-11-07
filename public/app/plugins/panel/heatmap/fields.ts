@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { HeatmapCellLayout } from '@grafana/schema';
+import { HeatmapCalculationMode, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,
@@ -98,15 +98,25 @@ export function prepareHeatmapData({
   });
 
   if (options.calculate) {
-    if (config.featureToggles.transformationsVariableSupport) {
-      const optionsCopy = {
-        ...options,
-        calculation: {
-          xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
-          yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
+    let optionsCopy: Options = {
+      ...options,
+      calculation: {
+        xBuckets: {
+          ...options.calculation?.xBuckets,
+          mode: options.calculation?.xBuckets?.mode ?? HeatmapCalculationMode.Size,
         },
-      };
+        yBuckets: {
+          ...options.calculation?.yBuckets,
+          mode: options.calculation?.yBuckets?.mode ?? HeatmapCalculationMode.Size,
+          scale: {
+            ...options.calculation?.yBuckets?.scale,
+            type: options.calculation?.yBuckets?.scale?.type ?? ScaleDistribution.Linear,
+          },
+        },
+      },
+    };
 
+    if (config.featureToggles.transformationsVariableSupport) {
       if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
         optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
       }
@@ -116,7 +126,7 @@ export function prepareHeatmapData({
       }
 
       return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
+        calculateHeatmapFromData(frames, { ...optionsCopy.calculation, timeRange }),
         exemplars,
         optionsCopy,
         palette,
@@ -125,9 +135,9 @@ export function prepareHeatmapData({
     }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, { ...options.calculation, timeRange }),
+      calculateHeatmapFromData(frames, { ...optionsCopy.calculation, timeRange }),
       exemplars,
-      options,
+      optionsCopy,
       palette,
       theme
     );
