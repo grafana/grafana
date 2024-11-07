@@ -276,6 +276,7 @@
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
+/pkg/tsdb/zipkin/ @grafana/oss-big-tent
 
 # Partner Datasources backend code
 /pkg/tsdb/mssql/ @grafana/partner-datasources
