@@ -23,6 +23,7 @@ type IndexMetrics struct {
 	IndexLatency      *prometheus.HistogramVec
 	IndexSize         prometheus.Gauge
 	IndexedDocs       prometheus.Gauge
+	IndexedKinds      *prometheus.CounterVec
 	IndexCreationTime *prometheus.HistogramVec
 }
 
@@ -52,6 +53,11 @@ func NewIndexMetrics(indexDir string, indexServer *IndexServer) *IndexMetrics {
 				Name:      "indexed_docs",
 				Help:      "Number of indexed documents by resource",
 			}),
+			IndexedKinds: prometheus.NewCounterVec(prometheus.CounterOpts{
+				Namespace: "index_server",
+				Name:      "indexed_kinds",
+				Help:      "Number of indexed documents by kind",
+			}, []string{"kind"}),
 			IndexCreationTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 				Namespace:                       "index_server",
 				Name:                            "index_creation_time_seconds",
@@ -70,6 +76,7 @@ func NewIndexMetrics(indexDir string, indexServer *IndexServer) *IndexMetrics {
 func (s *IndexMetrics) Collect(ch chan<- prometheus.Metric) {
 	s.IndexLatency.Collect(ch)
 	s.IndexCreationTime.Collect(ch)
+	s.IndexedKinds.Collect(ch)
 
 	// collect index size
 	totalSize, err := getTotalIndexSize(s.IndexDir)
@@ -85,22 +92,16 @@ func (s *IndexMetrics) Collect(ch chan<- prometheus.Metric) {
 
 func (s *IndexMetrics) Describe(ch chan<- *prometheus.Desc) {
 	s.IndexLatency.Describe(ch)
+	s.IndexSize.Describe(ch)
+	s.IndexedDocs.Describe(ch)
+	s.IndexedKinds.Describe(ch)
+	s.IndexCreationTime.Describe(ch)
 }
 
 // getTotalDocCount returns the total number of documents in the index
 func getTotalDocCount(index *Index) float64 {
-	var totalCount float64
-	totalCount = 0
-	if index == nil {
-		return totalCount
-	}
-
-	for _, shard := range index.shards {
-		count, _ := shard.index.DocCount()
-		totalCount += float64(count)
-	}
-
-	return totalCount
+	count, _ := index.Count()
+	return float64(count)
 }
 
 // getTotalIndexSize returns the total size of the index directory when using a file-based index

@@ -205,6 +205,9 @@ func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error
 				return totalObjectsFetched, err
 			}
 
+			// Record the number of objects indexed for the kind
+			IndexServerMetrics.IndexedKinds.WithLabelValues(rt.Key.Resource).Add(float64(len(list.Items)))
+
 			totalObjectsFetched += len(list.Items)
 
 			logger.Debug("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
@@ -276,6 +279,9 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	if err != nil {
 		return err
 	}
+
+	//record the kind of resource that was indexed
+	IndexServerMetrics.IndexedKinds.WithLabelValues(res.Kind).Inc()
 
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
