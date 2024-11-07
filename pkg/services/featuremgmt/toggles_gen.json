@@ -2559,6 +2559,18 @@
     },
     {
       "metadata": {
+        "name": "preinstallAutoUpdate",
+        "resourceVersion": "1730904343525",
+        "creationTimestamp": "2024-11-06T14:45:43Z"
+      },
+      "spec": {
+        "description": "Enables automatic updates for pre-installed plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "preserveDashboardStateWhenNavigating",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-05-27T12:28:06Z"

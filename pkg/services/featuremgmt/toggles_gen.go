@@ -843,6 +843,10 @@ const (
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 
+	// FlagPreinstallAutoUpdate
+	// Enables automatic updates for pre-installed plugins
+	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
+
 	// FlagDashboardSchemaV2
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
 	FlagDashboardSchemaV2 = "dashboardSchemaV2"
