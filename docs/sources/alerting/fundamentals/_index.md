@@ -112,7 +112,7 @@ A rule using the PromQL expression above creates as many alert instances as the 
 
 ### Notification messages
 
-Notification messages can be customized. The default notification messages include common alert details, which are usually sufficient. Set alert annotations to help responders address alert issues.
+By default, notification messages include alert details, such as the number of alerts, their status, and annotations to help responders address alert issues. Notification messages can also be customized.
 
 In the alert rule, you can choose a contact point to receive the alert notifications or use notification policies instead.
 

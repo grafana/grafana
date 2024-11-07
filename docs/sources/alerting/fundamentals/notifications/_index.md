@@ -86,7 +86,7 @@ Start defining your [contact points](ref:contact-points) to specify how to recei
 
 A contact point is a list of integrations, each sending a message to a specific destination.
 
-By default, notification messages include common alert details, which are typically sufficient. You can customize notification messages and use notification templates.
+By default, notification messages include common alert details, such as the number of alerts, alert names, labels, annotations, and other alert information. You can also customize notification messages and use notification templates.
 
 First, create the contact point and test the notifications. Then, configure the alert rule to send its notifications to either a contact point or through Notification Policies.
 
