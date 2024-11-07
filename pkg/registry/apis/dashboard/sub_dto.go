@@ -27,7 +27,6 @@ import (
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
-	resource      string
 	getter        rest.Getter
 	legacy        legacy.DashboardAccess
 	unified       resource.ResourceClient
@@ -44,7 +43,6 @@ func newDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport
 		unified:       builder.unified,
 		largeObjects:  largeObjects,
 		log:           builder.log,
-		resource:      dashboard.DashboardResourceInfo.GroupResource().Resource,
 	}
 	v.getter, ok = dash.(rest.Getter)
 	if !ok {
@@ -144,9 +142,10 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	// Check for blob info
 	blobInfo := obj.GetBlob()
 	if blobInfo != nil && r.largeObjects != nil {
+		gr := r.largeObjects.GroupResource()
 		err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
-			Group:     dashboard.GROUP,
-			Resource:  r.resource,
+			Group:     gr.Group,
+			Resource:  gr.Resource,
 			Namespace: obj.GetNamespace(),
 			Name:      obj.GetName(),
 		}, r.unified, obj)
