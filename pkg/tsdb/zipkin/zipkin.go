@@ -38,7 +38,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		if settings.URL == "" {
-			return nil, backend.DownstreamError(fmt.Errorf("error reading settings: url is empty"))
+			return nil, backend.DownstreamError(errors.New("error reading settings: url is empty"))
 		}
 
 		logger := backend.NewLoggerWith("logger", "tsdb.zipkin")
