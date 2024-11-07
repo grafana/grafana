@@ -1046,9 +1046,9 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
   );
 }
 
-// NOTE: these two functions are very similar to the escapeLabelValueIn* functions
-// in language_utils.ts, but they are not exactly the same algorithm, and we found
-// no way to reuse one in the another or vice versa.
+// NOTE: `prometheusRegularEscape` and `prometheusSpecialRegexEscape` are similar
+// to the escapeLabelValueIn* functions in language_utils.ts, but they are not exactly
+// the same algorithm, and we found no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
   if (typeof value !== 'string') {
     return value;
