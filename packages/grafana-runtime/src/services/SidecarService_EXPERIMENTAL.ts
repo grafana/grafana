@@ -110,8 +110,19 @@ export class SidecarService_EXPERIMENTAL {
   }
 
   /**
-   * This is mainly useful inside an app extensions which are executed outside of the main app context but can work
-   * differently depending whether their app is currently rendered or not.
+   * This is mainly useful inside an app extensions which are executed outside the main app context but can work
+   * differently depending on whether their app is currently rendered or not.
+   *
+   * This is also true only in case a sidecar is opened. In other cases, just to check if a single app is opened
+   * probably does not make sense.
+   *
+   * This means these are the states and the result of this function:
+   * Single app is opened: false (may seem strange from considering the function name, but the main point of
+   *   this is to recognize when the app needs to do specific alteration in context of running next to second app)
+   * 2 apps are opened and pluginId is the one in the main window: true
+   * 2 apps are opened and pluginId is the one in the sidecar window: true
+   * 2 apps are opened and pluginId is not one of those: false
+   *
    * @experimental
    */
   isAppOpened(pluginId: string) {
@@ -119,11 +130,10 @@ export class SidecarService_EXPERIMENTAL {
       return false;
     }
 
-    if (this._activePluginId.getValue() === pluginId || getMainAppPluginId() === pluginId) {
-      return true;
-    }
-
-    return false;
+    return !!(
+      this._activePluginId.getValue() &&
+      (this._activePluginId.getValue() === pluginId || getMainAppPluginId() === pluginId)
+    );
   }
 }
 
