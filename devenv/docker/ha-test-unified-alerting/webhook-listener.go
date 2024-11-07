@@ -104,6 +104,7 @@ func main() {
 
 	_, err := os.Stat(dumpDir)
 	if os.IsNotExist(err) {
+		// nolint:gosec
 		err = os.MkdirAll(dumpDir, os.ModePerm)
 		if err != nil {
 			log.Panicf("can't create directory '%s'", dumpDir)
@@ -112,10 +113,12 @@ func main() {
 
 	if logFile {
 		//create your file with desired read/write permissions
+		// nolint:gosec
 		f, err := os.OpenFile(logFileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 		if err != nil {
 			log.Fatal(err)
 		}
+		// nolint:errcheck
 		defer f.Close()
 		log.SetOutput(f)
 	}
@@ -123,6 +126,7 @@ func main() {
 	waitDuration := time.Duration(waitSeconds) * time.Second
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(http.StatusOK)
+		// nolint:errcheck
 		writer.Write([]byte(landingPage))
 	})
 
@@ -157,10 +161,12 @@ func main() {
 			return
 		}
 		w.Header().Add("Content-Type", "application/json")
+		// nolint:errcheck
 		w.Write(b)
 	})
 	log.Println("Listening")
 	log.Printf("Wait Duration %v\n", waitDuration)
+	// nolint:errcheck
 	http.ListenAndServe("0.0.0.0:8080", nil)
 }
 
