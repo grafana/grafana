@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
@@ -27,7 +29,11 @@ func New(url string, hc *http.Client, logger log.Logger) (ZipkinClient, error) {
 // https://zipkin.io/zipkin-api/#/default/get_services
 func (z *ZipkinClient) Services() ([]string, error) {
 	services := []string{}
-	res, err := z.httpClient.Get(fmt.Sprintf("%s/api/v2/services", z.url))
+	u, err := url.JoinPath(z.url, "/api/v2/services")
+	if err != nil {
+		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
+	}
+	res, err := z.httpClient.Get(u)
 	if err != nil {
 		return services, err
 	}
