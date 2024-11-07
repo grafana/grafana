@@ -46,7 +46,7 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"resource_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource)),
 				},
 			},
 		},

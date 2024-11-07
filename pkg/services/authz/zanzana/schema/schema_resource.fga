@@ -28,8 +28,8 @@ type resource
     define permissions_write: [user with group_filter, team#member with group_filter, role#assignee with group_filter] or admin
 
 
-condition group_filter(requested_group: string, resource_group: string) {
-  resource_group == requested_group
+condition group_filter(requested_group: string, group_resource: string) {
+  requested_group == group_resource
 }
 
 condition folder_group_filter(requested_group: string, group_resources: list<string>) {
