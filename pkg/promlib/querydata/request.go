@@ -234,9 +234,22 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
+		response := backend.DataResponse{
 			Error:  err,
 			Status: backend.StatusBadGateway,
+		}
+		// confirm that it is a downstream error
+		if backend.IsDownstreamHTTPError(err) {
+			response.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return response
+	}
+
+	if res.StatusCode/100 != 2 {
+		// for differentiating the source of http errors by status code
+		return backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
 
@@ -253,16 +266,29 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
+		response := backend.DataResponse{
 			Error:  err,
 			Status: backend.StatusBadGateway,
 		}
+		// confirm that it is a downstream error
+		if backend.IsDownstreamHTTPError(err) {
+			response.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return response
 	}
 
-	// This is only for health check fall back scenario
-	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
+	if res.StatusCode/100 != 2 {
+		// This is only for health check fall back scenario
+		// add more details to the health check error
+		if q.RefId == "__healthcheck__" {
+			return backend.DataResponse{
+				Error: errors.New(res.Status),
+			}
+		}
+		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			Error: errors.New(res.Status),
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
 
@@ -279,8 +305,21 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return backend.DataResponse{
+		response := backend.DataResponse{
 			Error: err,
+		}
+		// confirm that it is a downstream error
+		if backend.IsDownstreamHTTPError(err) {
+			response.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return response
+	}
+
+	if res.StatusCode/100 != 2 {
+		// for differentiating the source of http errors by status code
+		return backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
 
