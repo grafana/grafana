@@ -417,7 +417,8 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
 	transitions := make([]StateTransition, 0, len(currentStates))
 	for _, currentState := range currentStates {
-		t := st.setNextState(ctx, alertRule, currentState, result, extraAnnotations, logger)
+		newState := currentState.Copy()
+		t := st.setNextState(ctx, alertRule, newState, result, extraAnnotations, logger)
 		transitions = append(transitions, t)
 	}
 	return transitions
