@@ -59,26 +59,29 @@ export const QueryGroup = memo(
     const styles = useStyles(getStyles);
     const dataSourceSrv = getDataSourceSrv();
 
-    const setNewQueriesAndDatasource = useCallback(async (options: QueryGroupOptions) => {
-      try {
-        const ds = await dataSourceSrv.get(options.dataSource);
-        const dsSettings = dataSourceSrv.getInstanceSettings(options.dataSource);
-        const defaultDs = await dataSourceSrv.get();
-        const datasource = ds.getRef();
-        const newQueries = options.queries.map((q) => ({
-          ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
-          datasource,
-          ...q,
-        }));
+    const setNewQueriesAndDatasource = useCallback(
+      async (options: QueryGroupOptions) => {
+        try {
+          const ds = await dataSourceSrv.get(options.dataSource);
+          const dsSettings = dataSourceSrv.getInstanceSettings(options.dataSource);
+          const defaultDs = await dataSourceSrv.get();
+          const datasource = ds.getRef();
+          const newQueries = options.queries.map((q) => ({
+            ...(queryIsEmpty(q) && ds?.getDefaultQuery?.(CoreApp.PanelEditor)),
+            datasource,
+            ...q,
+          }));
 
-        setQueries(newQueries);
-        setDataSource(ds);
-        setDsSettings(dsSettings);
-        setDefaultDataSource(defaultDs);
-      } catch (error) {
-        console.error('failed to load data source', error);
-      }
-    }, []);
+          setQueries(newQueries);
+          setDataSource(ds);
+          setDsSettings(dsSettings);
+          setDefaultDataSource(defaultDs);
+        } catch (error) {
+          console.error('failed to load data source', error);
+        }
+      },
+      [dataSourceSrv]
+    );
 
     useEffect(() => {
       const subscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
