@@ -55,10 +55,9 @@ const meta: Meta<PropsAndCustomArgs> = {
 
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
-  const valueString = value ? JSON.stringify(value) : 'null';
 
   return (
-    <Field label={`Test input: ${valueString}`} description="Input with a few options">
+    <Field label="Test input" description="Input with a few options">
       <Combobox
         id="test-combobox"
         {...args}
