@@ -98,6 +98,7 @@ describe('sceneVariablesSetToVariables', () => {
       datasource: { uid: 'fake-std', type: 'fake-std' },
       query: 'query',
       includeAll: true,
+      allowCustomValue: true,
       allValue: 'test-all',
       isMulti: true,
     });
@@ -112,6 +113,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0]).toMatchInlineSnapshot(`
     {
       "allValue": "test-all",
+      "allowCustomValue": true,
       "current": {
         "text": [
           "selected-value-text",
@@ -151,6 +153,7 @@ describe('sceneVariablesSetToVariables', () => {
       definition: 'query',
       includeAll: true,
       allValue: 'test-all',
+      allowCustomValue: false,
       isMulti: true,
     });
     const set = new SceneVariableSet({
@@ -163,6 +166,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0]).toMatchInlineSnapshot(`
     {
       "allValue": "test-all",
+      "allowCustomValue": false,
       "current": {
         "text": [
           "selected-value-text",
@@ -256,6 +260,7 @@ describe('sceneVariablesSetToVariables', () => {
       pluginId: 'fake-std',
       includeAll: true,
       allValue: 'test-all',
+      allowCustomValue: true,
       isMulti: true,
     });
     const set = new SceneVariableSet({
@@ -268,6 +273,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0]).toMatchInlineSnapshot(`
     {
       "allValue": "test-all",
+      "allowCustomValue": true,
       "current": {
         "text": [
           "selected-ds-1-text",
@@ -307,6 +313,7 @@ describe('sceneVariablesSetToVariables', () => {
       ],
       includeAll: true,
       allValue: 'test-all',
+      allowCustomValue: true,
       isMulti: true,
     });
     const set = new SceneVariableSet({
@@ -319,6 +326,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result[0]).toMatchInlineSnapshot(`
     {
       "allValue": "test-all",
+      "allowCustomValue": true,
       "current": {
         "text": [
           "test",

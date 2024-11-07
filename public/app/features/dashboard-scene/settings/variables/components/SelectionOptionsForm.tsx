@@ -41,7 +41,7 @@ export function SelectionOptionsForm({
           name="Allow custom values"
           description="Enables users to add custom values to the list"
           onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
         />
       )}
       <VariableCheckboxField
