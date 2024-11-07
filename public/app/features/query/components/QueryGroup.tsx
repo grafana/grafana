@@ -43,8 +43,6 @@ export interface Props {
   onOptionsChange: (options: QueryGroupOptions) => void;
 }
 
-const dataSourceSrv = getDataSourceSrv();
-
 export const QueryGroup = memo(
   ({ queryRunner, options, onOpenQueryInspector, onRunQueries, onOptionsChange }: Props) => {
     const [dataSource, setDataSource] = useState<DataSourceApi>();
@@ -59,6 +57,7 @@ export const QueryGroup = memo(
     });
     const scrollElementRef = useRef<HTMLDivElement | null>(null);
     const styles = useStyles(getStyles);
+    const dataSourceSrv = getDataSourceSrv();
 
     const setNewQueriesAndDatasource = useCallback(async (options: QueryGroupOptions) => {
       try {
