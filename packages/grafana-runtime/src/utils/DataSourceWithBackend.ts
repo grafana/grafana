@@ -331,16 +331,34 @@ class DataSourceWithBackend<
     options?: Partial<BackendSrvRequest>
   ): Promise<T> {
     const headers = this.getRequestHeaders();
-    const result = await lastValueFrom(
-      getBackendSrv().fetch<T>({
-        ...options,
-        method: 'POST',
-        headers: options?.headers ? { ...options.headers, ...headers } : headers,
-        data: data ?? { ...data },
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
-      })
-    );
-    return result.data;
+
+    try {
+      const result = await lastValueFrom(
+        getBackendSrv().fetch<T>({
+          ...options,
+          method: 'POST',
+          headers: options?.headers ? { ...options.headers, ...headers } : headers,
+          data: data ?? { ...data },
+          url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+          responseType: 'text' // Fetch the response as text to address any JSON parsing issues
+        })
+      );
+
+      const contentType = result.headers.get('content-type');
+      if (contentType && contentType.includes("application/json")) {
+        if (typeof result.data === 'string') {
+          return JSON.parse(result.data) as T;
+        } else {
+          console.error("Expected result.data to be a string but got:", typeof result.data);
+          throw new Error("Response data is not a string, cannot parse as JSON.");
+        }
+      } else {
+        console.error("Unexpected response format. Content-Type:", contentType);
+      }
+      return result.data;
+    } catch (error) {
+      throw error
+    }
   }
 
   /**
