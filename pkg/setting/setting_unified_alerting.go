@@ -43,6 +43,7 @@ const (
 	}
 }
 `
+	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
@@ -80,6 +81,7 @@ type UnifiedAlertingSettings struct {
 	HARedisPassword                string
 	HARedisDB                      int
 	HARedisMaxConns                int
+	InitializationTimeout          time.Duration
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -190,6 +192,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			return err
 		}
 		uaCfg.DisabledOrgs[orgID] = struct{}{}
+	}
+
+	uaCfg.InitializationTimeout, err = gtime.ParseDuration(valueAsString(ua, "initialization_timeout", (alertingDefaultInitializationTimeout).String()))
+	if err != nil {
+		return err
 	}
 
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
