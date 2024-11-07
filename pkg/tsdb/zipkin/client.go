@@ -37,6 +37,12 @@ func (z *ZipkinClient) Services() ([]string, error) {
 	if err != nil {
 		return services, err
 	}
+
+	defer func() {
+		if err = res.Body.Close(); err != nil {
+			z.logger.Error("Failed to close response body", "error", err)
+		}
+	}()
 	if err := json.NewDecoder(res.Body).Decode(&services); err != nil {
 		return services, err
 	}
