@@ -65,7 +65,8 @@ const (
 )
 
 type CloudMigrationResource struct {
-	ID int64 `xorm:"pk autoincr 'id'"`
+	ID  int64  `xorm:"pk autoincr 'id'"`
+	UID string `xorm:"uid" json:"uid"`
 
 	Name      string            `xorm:"name" json:"name"`
 	Type      MigrateDataType   `xorm:"resource_type" json:"type"`

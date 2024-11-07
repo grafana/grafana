@@ -215,15 +215,19 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 
 		// If local resources are set, it means we have to create them for the first time
 		if len(update.LocalResources) > 0 {
+			start := time.Now()
 			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResources); err != nil {
 				return err
 			}
+			fmt.Printf("time to create %d local resources: %s\n", len(update.LocalResources), time.Since(start).String())
 		}
 		// If cloud resources are set, it means we have to update our resource local state
 		if len(update.CloudResources) > 0 {
+			start := time.Now()
 			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResources); err != nil {
 				return err
 			}
+			fmt.Printf("time to update %d local resources: %s\n", len(update.CloudResources), time.Since(start).String())
 		}
 
 		return nil
@@ -320,6 +324,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	for i := 0; i < len(resources); i++ {
+		resources[i].UID = util.GenerateShortUID()
 		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
 		resources[i].SnapshotUID = snapshotUid
 	}
@@ -333,7 +338,7 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("updating resources: %w", err)
+			return fmt.Errorf("creating resources: %w", err)
 		}
 
 		return nil
@@ -344,12 +349,12 @@ func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid str
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
 func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	// refIds of resources that migrated successfully in order to update in bulk
-	okIds := make([]string, 0, len(resources))
+	okIds := make([]any, 0, len(resources))
 	// Attempt to do the same thing with errors, but they are more complicated.
 	// I'm treating errCode+errStr as a key in order to group errors.
 	// However, I'm not sure how common it is to actually have error strings be equal.
 	// Perhaps Dana can recommend a better path forward given her work with error handling.
-	errorIds := make(map[string][]string)
+	errorIds := make(map[string][]any)
 
 	const delim string = "@@@"
 	for _, r := range resources {
@@ -359,9 +364,9 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 			// keys will look something like "DATASOURCE_NAME_CONFLICT@@@some error from GMS"
 			key := fmt.Sprintf("%s%s%s", r.ErrorCode, delim, r.Error)
 			if ids, ok := errorIds[key]; ok {
-				ids = append(ids, r.RefID)
+				errorIds[key] = append(ids, r.RefID)
 			} else {
-				errorIds[key] = []string{r.RefID}
+				errorIds[key] = []any{r.RefID}
 			}
 		}
 	}
@@ -372,9 +377,12 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	}
 
 	// The first thing we do is prepare a sql statement for all of the OK statuses
-	okUpdateStatement := statement{
-		sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
-		args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds),
+	var okUpdateStatement statement
+	if len(okIds) > 0 {
+		okUpdateStatement = statement{
+			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
+			args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds...),
+		}
 	}
 	// Then however many sql statements are necessary for the next piece
 	errorStatements := []statement{}
@@ -382,7 +390,7 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 		err := strings.Split(k, delim)
 		errorStatements = append(errorStatements, statement{
 			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=?, error_code=?, error_string=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(ids)-1)),
-			args: append([]any{cloudmigration.ItemStatusError, err[0], err[1], snapshotUid}, ids),
+			args: append([]any{cloudmigration.ItemStatusError, err[0], err[1], snapshotUid}, ids...),
 		})
 	}
 
