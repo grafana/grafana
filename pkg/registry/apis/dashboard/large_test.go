@@ -42,7 +42,6 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.NoError(t, err)
 
 	small, err := json.MarshalIndent(&dash.Spec, "", "  ")
-	// fmt.Printf("SMALL: %s", small)
 	require.NoError(t, err)
 	require.JSONEq(t, `{
 		"schemaVersion": 33,
