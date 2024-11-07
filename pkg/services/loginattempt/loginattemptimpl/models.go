@@ -14,11 +14,6 @@ type GetUserLoginAttemptCountQuery struct {
 	Since    time.Time
 }
 
-type GetIPLoginAttemptCountQuery struct {
-	IPAddress string
-	Since     time.Time
-}
-
 type DeleteOldLoginAttemptsCommand struct {
 	OlderThan time.Time
 }
