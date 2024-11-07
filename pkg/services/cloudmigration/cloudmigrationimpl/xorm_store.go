@@ -354,6 +354,8 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	// I'm treating errCode+errStr as a key in order to group errors.
 	// However, I'm not sure how common it is to actually have error strings be equal.
 	// Perhaps Dana can recommend a better path forward given her work with error handling.
+	//
+	// UPDATE - after some testing, this seems like a decent strategy. A lot of the errors are "check the logs" so we end up with some groupings.
 	errorIds := make(map[string][]any)
 
 	const delim string = "@@@"

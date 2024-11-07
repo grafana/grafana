@@ -183,6 +183,7 @@ func Test_SnapshotResources(t *testing.T) {
 				Status: cloudmigration.ItemStatusOK,
 			},
 		})
+		assert.NoError(t, err)
 		err = s.UpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
 				RefID:  "ejcx4d",
@@ -403,12 +404,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_resource (snapshot_uid, resource_type, resource_uid, status, error_string)
+			cloud_migration_resource (snapshot_uid, uid, resource_type, resource_uid, status, error_string)
 		VALUES
-			('poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
-			('poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
-			('poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
-			('39fi39', 'FOLDER', 'fi39fj', 'OK', '');
+			('poiuy', '38fh38f', 'DATASOURCE', 'jf38gh', 'OK', ''),
+			('poiuy', 'cnued28', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
+			('poiuy', 'ogfij9f', 'FOLDER', 'fi39fj', 'PENDING', ''),
+			('39fi39', '1249jfdf', 'FOLDER', 'fi39fj', 'OK', '');
 		`,
 	)
 	require.NoError(t, err)

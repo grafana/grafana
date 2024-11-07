@@ -566,15 +566,8 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			return snapshot, nil
 		}
 
-		// For 11.2 we only support core data sources. Apply a warning for any non-core ones before storing.
-		resources, err := s.getResourcesWithPluginWarnings(ctx, snapshotMeta.Results)
-		if err != nil {
-			// treat this as non-fatal since the migration still succeeded
-			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
-		}
-
 		// Log the errors for resources with errors at migration
-		for _, resource := range resources {
+		for _, resource := range snapshotMeta.Results {
 			if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
 				s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error)
 			}
@@ -585,7 +578,7 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 			UID:            snapshot.UID,
 			SessionID:      sessionUid,
 			Status:         localStatus,
-			CloudResources: resources,
+			CloudResources: snapshotMeta.Results,
 		}); err != nil {
 			return nil, fmt.Errorf("error updating snapshot status: %w", err)
 		}
@@ -595,6 +588,14 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		if err != nil {
 			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 		}
+	}
+
+	// For 11.2 we only support core data sources. Apply a warning for any non-core ones before returning to the frontend.
+	if r, err := s.getResourcesWithPluginWarnings(ctx, snapshot.Resources); err != nil {
+		// treat this as non-fatal since the migration still succeeded
+		s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
+	} else {
+		snapshot.Resources = r
 	}
 
 	return snapshot, nil
