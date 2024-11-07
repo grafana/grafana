@@ -650,3 +650,7 @@ func (p *FakeBackendPlugin) Kill() {
 	defer p.mutex.Unlock()
 	p.Running = false
 }
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
+}
