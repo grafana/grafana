@@ -230,9 +230,6 @@ issues:
   exclude-dirs:
     - devenv
     - scripts
-  exclude-files:
-    - pkg/util/xorm/*.go
-    - pkg/build/wire/*.go
   exclude-rules:
     - linters:
         - stylecheck
