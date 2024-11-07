@@ -80,7 +80,7 @@ func ProvideRegistration(
 		}
 	}
 
-	if cfg.PasswordlessEnabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
 		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
 		authnSvc.RegisterClient(passwordless)
 	}

@@ -188,7 +188,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 			"Email":            email,
 			"ConfirmationCode": confirmationCode,
 			"Code":             code,
-			"Expire":           c.cfg.PasswordlessCodeExpiration.Minutes(),
+			"Expire":           c.cfg.PasswordlessMagicLinkAuth.CodeExpiration.Minutes(),
 		},
 	}
 
@@ -216,7 +216,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	cacheKey = fmt.Sprintf(passwordlessKeyPrefix, code)
-	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessMagicLinkAuth.CodeExpiration)
 	if err != nil {
 		return "", errPasswordlessClientInternal.Errorf("cache error: %s", err)
 	}
@@ -232,7 +232,7 @@ func (c *Passwordless) startPasswordless(ctx context.Context, email string) (str
 	}
 
 	cacheKey = fmt.Sprintf(passwordlessKeyPrefix, email)
-	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessCodeExpiration)
+	err = c.cache.Set(ctx, cacheKey, valueBytes, c.cfg.PasswordlessMagicLinkAuth.CodeExpiration)
 	if err != nil {
 		return "", errPasswordlessClientInternal.Errorf("cache error: %s", err)
 	}
@@ -264,7 +264,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 		return nil, errPasswordlessClientInvalidConfirmationCode
 	}
 
-	ok, err := c.loginAttempts.ValidateUsername(ctx, codeEntry.Email)
+	ok, err := c.loginAttempts.Validate(ctx, codeEntry.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -296,6 +296,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 			Name:  form.Name,
 		}
 
+		// TODO: use user sync hook to create user
 		usr, err = c.userService.Create(ctx, &createUserCmd)
 		if err != nil {
 			return nil, err
@@ -322,7 +323,7 @@ func (c *Passwordless) authenticatePasswordless(ctx context.Context, r *authn.Re
 	}
 
 	// user was found so set auth module in req metadata
-	r.SetMeta(authn.MetaKeyAuthModule, "passwordless")
+	r.SetMeta(authn.MetaKeyAuthModule, login.PasswordlessAuthModule)
 
 	return &authn.Identity{
 		ID:              strconv.FormatInt(usr.ID, 10),

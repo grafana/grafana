@@ -247,10 +247,6 @@ type Cfg struct {
 	IDResponseHeaderNamespaces    map[string]struct{}
 	ManagedServiceAccountsEnabled bool
 
-	// Passwordless Magic Link Auth
-	PasswordlessEnabled        bool
-	PasswordlessCodeExpiration time.Duration
-
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
 	AWSAssumeRoleEnabled      bool
@@ -274,6 +270,8 @@ type Cfg struct {
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
+
+	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
 
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
@@ -1252,6 +1250,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
+	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1653,11 +1652,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
-
-	// passwordless auth
-	passwordlessSection := iniFile.Section("auth.passwordless")
-	cfg.PasswordlessEnabled = passwordlessSection.Key("enabled").MustBool(false)
-	cfg.PasswordlessCodeExpiration = passwordlessSection.Key("code_expiration").MustDuration(1 * time.Minute)
 
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
