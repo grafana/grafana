@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -43,9 +42,7 @@ func NewRESTOptionsGetterForClient(client resource.ResourceClient, original stor
 }
 
 func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, features map[string]any) (*RESTOptionsGetter, error) {
-	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
-		Bucket: memblob.OpenBucket(&memblob.Options{}),
-	})
+	backend, err := resource.NewMemoryBackend()
 	if err != nil {
 		return nil, err
 	}
