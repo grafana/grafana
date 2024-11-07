@@ -98,6 +98,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
+	defer span.End()
 	span.SetAttributes(attribute.Bool("fallback_used", false))
 	// Try to authenticate with the new authenticator first
 	newCtx, err := f.authenticator.Authenticate(ctx)
