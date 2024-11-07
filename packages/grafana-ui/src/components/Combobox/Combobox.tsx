@@ -74,21 +74,6 @@ function itemFilter<T extends string | number>(inputValue: string) {
 
 const asyncNoop = () => Promise.resolve([]);
 
-function useOnValueChange<T>(value: T, fn: Function) {
-  const ref = useRef<T | null>(null);
-
-  if (ref.current !== value) {
-    fn();
-    ref.current = value;
-  }
-}
-
-function CloseLogGroup() {
-  console.groupEnd();
-
-  return <></>;
-}
-
 /**
  * A performant Select replacement.
  *
@@ -105,17 +90,6 @@ export const Combobox = <T extends string | number>({
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
-  let _hasLoggedThisRender = false;
-  function renderLog(...args) {
-    if (!_hasLoggedThisRender) {
-      console.group('Combobox render');
-      _hasLoggedThisRender = true;
-    }
-
-    console.log(...args);
-  }
-
-  // console.log('--- Combobox render ---');
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
@@ -210,13 +184,12 @@ export const Combobox = <T extends string | number>({
   );
 
   const {
-    getInputProps,
-    getMenuProps,
-    getItemProps,
     isOpen,
     highlightedIndex,
 
-    inputValue: downshiftInputValue,
+    getInputProps,
+    getMenuProps,
+    getItemProps,
 
     openMenu,
     closeMenu,
@@ -235,9 +208,6 @@ export const Combobox = <T extends string | number>({
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      console.log('> onSelectedItemChange', selectedItem);
-
-      console.log('< emit onChange', selectedItem);
       onChange(selectedItem);
     },
 
@@ -246,14 +216,13 @@ export const Combobox = <T extends string | number>({
     scrollIntoView: () => {},
 
     onInputValueChange: ({ inputValue, isOpen }) => {
-      console.log('> onInputValueChange', { inputValue, isOpen });
-      // onInputValueChange is also called when an item is selected and the menu closes.
-      // No need to update options in that case
       if (!isOpen) {
+        // Prevent stale options from showing on reopen
         if (isAsync) {
           setItems([], '');
         }
 
+        // Otherwise there's nothing else to do when the menu isnt open
         return;
       }
 
@@ -268,59 +237,23 @@ export const Combobox = <T extends string | number>({
         setAsyncLoading(true);
         debounceAsync(inputValue);
       }
-
-      // if (isAsync) {
-      //   if (inputValue && createCustomValue) {
-      //     setItems([], inputValue);
-      //   }
-
-      //   setAsyncLoading(true);
-      //   debounceAsync(inputValue);
-
-      //   return;
-      // }
     },
 
     onIsOpenChange: ({ isOpen, inputValue }) => {
-      console.log('> onIsOpenChange', { isOpen });
-
       // Loading async options mostly happens in onInputValueChange, but if the menu is opened with an empty input
       // then onInputValueChange isn't called (because the input value hasn't changed)
       if (isOpen && inputValue === '') {
         setAsyncLoading(true);
         debounceAsync(inputValue);
       }
-
-      // // If the menu is closed, don't worry about doing anything :)
-      // if (!isOpen) {
-      //   return;
-      // }
-
-      // // Clear out stale async options
-      // if (isAsync) {
-      //   setAsyncLoading(true);
-      //   setItems([], undefined);
-      // }
-
-      // // Clear out any previous search value when the menu is opened. This will trigger onInputValueChange
-      // // which will update the options
-      // setInputValue('');
-
-      // // However, if the input value is already empty, onInputValueChange won't be called, so we need to
-      // // manually trigger it
-      // if (isAsync && !inputValue) {
-      //   debounceAsync('');
-      // }
     },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      // console.log('> onHighlightedIndexChange', { highlightedIndex, type });
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
         rowVirtualizer.scrollToIndex(highlightedIndex);
       }
     },
 
     stateReducer(state, actionAndChanges) {
-      console.log('> stateReducer', state, actionAndChanges);
       let { changes } = actionAndChanges;
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
       const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
@@ -332,30 +265,29 @@ export const Combobox = <T extends string | number>({
           ...changes,
           inputValue: '',
         };
-      } else if (menuBeingClosed) {
-        // When the menu is closed with a selected item, flush the selected item to the input value
+      }
+
+      if (menuBeingClosed) {
+        // Flush the selected item to the input when the menu is closed
         if (changes.selectedItem) {
           changes = {
             ...changes,
             inputValue: itemToString(changes.selectedItem),
           };
         } else {
-          // Otherwise clear the input value
+          // Otherwise if no selected value, clear any search from the input
           changes = {
             ...changes,
             inputValue: '',
           };
         }
       }
+
       return changes;
     },
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
-
-  // const onBlur = useCallback(() => {
-  //   setInputValue(selectedItem?.label ?? value?.toString() ?? '');
-  // }, [selectedItem, setInputValue, value]);
 
   const handleSuffixClick = useCallback(() => {
     isOpen ? closeMenu() : openMenu();
@@ -369,22 +301,6 @@ export const Combobox = <T extends string | number>({
       isOpen
       ? 'search'
       : 'angle-down';
-
-  useOnValueChange(isOpen, () => {
-    renderLog('$ isOpen changed', isOpen);
-  });
-
-  useOnValueChange(downshiftInputValue, () => {
-    renderLog('$ downshiftInputValue changed', downshiftInputValue);
-  });
-
-  useOnValueChange(selectedItem, () => {
-    renderLog('$ selectedItem changed', selectedItem);
-  });
-
-  useOnValueChange(value, () => {
-    renderLog('$ value prop changed', value);
-  });
 
   return (
     <div>
@@ -488,8 +404,6 @@ export const Combobox = <T extends string | number>({
           </div>
         </ScrollContainer>
       </div>
-
-      <CloseLogGroup />
     </div>
   );
 };
