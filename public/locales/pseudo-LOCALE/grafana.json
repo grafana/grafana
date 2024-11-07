@@ -234,6 +234,7 @@
     },
     "rule-form": {
       "evaluation": {
+        "evaluation-group-and-interval": "Ēväľūäŧįőŉ ģřőūp äŉđ įŉŧęřväľ",
         "group": {
           "cancel": "Cäŉčęľ",
           "create": "Cřęäŧę",
@@ -245,7 +246,8 @@
         "pause": {
           "alerting": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş äľęřŧ řūľę.",
           "recording": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş řęčőřđįŉģ řūľę."
-        }
+        },
+        "select-folder-before": "Ŝęľęčŧ ƒőľđęř þęƒőřę şęŧŧįŉģ ęväľūäŧįőŉ ģřőūp äŉđ įŉŧęřväľ"
       },
       "evaluation-behaviour": {
         "description": {

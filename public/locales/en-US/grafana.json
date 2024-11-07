@@ -234,6 +234,7 @@
     },
     "rule-form": {
       "evaluation": {
+        "evaluation-group-and-interval": "Evaluation group and interval",
         "group": {
           "cancel": "Cancel",
           "create": "Create",
@@ -245,7 +246,8 @@
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
-        }
+        },
+        "select-folder-before": "Select folder before setting evaluation group and interval"
       },
       "evaluation-behaviour": {
         "description": {
