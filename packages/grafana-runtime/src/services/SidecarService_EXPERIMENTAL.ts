@@ -130,7 +130,7 @@ export class SidecarService_EXPERIMENTAL {
       return false;
     }
 
-    return (
+    return !!(
       this._activePluginId.getValue() &&
       (this._activePluginId.getValue() === pluginId || getMainAppPluginId() === pluginId)
     );
