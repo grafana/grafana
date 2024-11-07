@@ -168,16 +168,24 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err := s.GetSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 3)
+		for _, r := range resources {
+			if r.RefID == "ejcx4d" {
+				assert.Equal(t, cloudmigration.ItemStatusError, r.Status)
+				break
+			}
+		}
 
-		// create a new resource and update an existing resource
-		err = s.CreateUpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
+		// create a new resource
+		err = s.CreateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
 				Type:   cloudmigration.DatasourceDataType,
 				RefID:  "mi39fj",
 				Status: cloudmigration.ItemStatusOK,
 			},
+		})
+		err = s.UpdateSnapshotResources(ctx, "poiuy", []cloudmigration.CloudMigrationResource{
 			{
-				UID:    "qwerty",
+				RefID:  "ejcx4d",
 				Status: cloudmigration.ItemStatusOK,
 			},
 		})
@@ -187,16 +195,16 @@ func Test_SnapshotResources(t *testing.T) {
 		resources, err = s.GetSnapshotResources(ctx, "poiuy", 0, 100)
 		assert.NoError(t, err)
 		assert.Len(t, resources, 4)
-		// ensure existing resource was updated
+		// ensure existing resource was updated from ERROR
 		for _, r := range resources {
-			if r.UID == "querty" {
+			if r.RefID == "ejcx4d" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}
 		}
 		// ensure a new one was made
 		for _, r := range resources {
-			if r.UID == "mi39fj" {
+			if r.RefID == "mi39fj" {
 				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
 				break
 			}
@@ -395,12 +403,12 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 
 	_, err = testDB.GetSqlxSession().Exec(ctx, `
 		INSERT INTO
-			cloud_migration_resource (uid, snapshot_uid, resource_type, resource_uid, status, error_string)
+			cloud_migration_resource (snapshot_uid, resource_type, resource_uid, status, error_string)
 		VALUES
-			('mnbvde', 'poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
-			('qwerty', 'poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
-			('zxcvbn', 'poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
-			('4fi9sd', '39fi39', 'FOLDER', 'fi39fj', 'OK', '');
+			('poiuy', 'DATASOURCE', 'jf38gh', 'OK', ''),
+			('poiuy', 'DASHBOARD', 'ejcx4d', 'ERROR', 'fake error'),
+			('poiuy', 'FOLDER', 'fi39fj', 'PENDING', ''),
+			('39fi39', 'FOLDER', 'fi39fj', 'OK', '');
 		`,
 	)
 	require.NoError(t, err)

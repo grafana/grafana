@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -212,12 +213,19 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 			}
 		}
 
-		// Update resources if set
-		if len(update.Resources) > 0 {
-			if err := ss.CreateUpdateSnapshotResources(ctx, update.UID, update.Resources); err != nil {
+		// If local resources are set, it means we have to create them for the first time
+		if len(update.LocalResources) > 0 {
+			if err := ss.CreateSnapshotResources(ctx, update.UID, update.LocalResources); err != nil {
 				return err
 			}
 		}
+		// If cloud resources are set, it means we have to update our resource local state
+		if len(update.CloudResources) > 0 {
+			if err := ss.UpdateSnapshotResources(ctx, update.UID, update.CloudResources); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 
@@ -308,30 +316,82 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 	return snapshots, nil
 }
 
-// CreateUpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
+// CreateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
-func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	for i := 0; i < len(resources); i++ {
+		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
+		resources[i].SnapshotUID = snapshotUid
+	}
+
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
-		sql := "UPDATE cloud_migration_resource SET status=?, error_string=?, error_code=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			for _, r := range resources {
-				// try an update first
-				result, err := sess.Exec(sql, r.Status, r.Error, r.ErrorCode, r.UID, snapshotUid, r.RefID)
-				if err != nil {
+			_, err := sess.Insert(resources)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("updating resources: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// UpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
+// If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
+func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+	// refIds of resources that migrated successfully in order to update in bulk
+	okIds := make([]string, 0, len(resources))
+	// Attempt to do the same thing with errors, but they are more complicated.
+	// I'm treating errCode+errStr as a key in order to group errors.
+	// However, I'm not sure how common it is to actually have error strings be equal.
+	// Perhaps Dana can recommend a better path forward given her work with error handling.
+	errorIds := make(map[string][]string)
+
+	const delim string = "@@@"
+	for _, r := range resources {
+		if r.Status == cloudmigration.ItemStatusOK {
+			okIds = append(okIds, r.RefID)
+		} else if r.Status == cloudmigration.ItemStatusError {
+			// keys will look something like "DATASOURCE_NAME_CONFLICT@@@some error from GMS"
+			key := fmt.Sprintf("%s%s%s", r.ErrorCode, delim, r.Error)
+			if ids, ok := errorIds[key]; ok {
+				ids = append(ids, r.RefID)
+			} else {
+				errorIds[key] = []string{r.RefID}
+			}
+		}
+	}
+
+	type statement struct {
+		sql  string
+		args []any
+	}
+
+	// The first thing we do is prepare a sql statement for all of the OK statuses
+	okUpdateStatement := statement{
+		sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(okIds)-1)),
+		args: append([]any{cloudmigration.ItemStatusOK, snapshotUid}, okIds),
+	}
+	// Then however many sql statements are necessary for the next piece
+	errorStatements := []statement{}
+	for k, ids := range errorIds {
+		err := strings.Split(k, delim)
+		errorStatements = append(errorStatements, statement{
+			sql:  fmt.Sprintf("UPDATE cloud_migration_resource SET status=?, error_code=?, error_string=? WHERE snapshot_uid=? AND resource_uid IN (?%s)", strings.Repeat(", ?", len(ids)-1)),
+			args: append([]any{cloudmigration.ItemStatusError, err[0], err[1], snapshotUid}, ids),
+		})
+	}
+
+	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
+		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			// now we just execute the minimum number of required statements!
+			for _, q := range append(errorStatements, okUpdateStatement) {
+				if _, err := sess.Exec(append([]any{q.sql}, q.args...)...); err != nil {
 					return err
-				}
-				// if this had no effect, assign a uid and insert instead
-				n, err := result.RowsAffected()
-				if err != nil {
-					return err
-				} else if n == 0 {
-					r.UID = util.GenerateShortUID()
-					// ensure snapshot_uids are consistent so that we can use them to query when uid isn't known
-					r.SnapshotUID = snapshotUid
-					_, err := sess.Insert(r)
-					if err != nil {
-						return err
-					}
 				}
 			}
 			return nil
