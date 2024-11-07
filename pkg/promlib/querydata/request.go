@@ -235,9 +235,8 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error:       err,
-			Status:      backend.StatusBadGateway,
-			ErrorSource: backend.ErrorSourceDownstream,
+			Error:  err,
+			Status: backend.StatusBadGateway,
 		}
 	}
 
@@ -255,17 +254,15 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error:       err,
-			Status:      backend.StatusBadGateway,
-			ErrorSource: backend.ErrorSourceDownstream,
+			Error:  err,
+			Status: backend.StatusBadGateway,
 		}
 	}
 
 	// This is only for health check fall back scenario
 	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
-			Error:       errors.New(res.Status),
-			ErrorSource: backend.ErrorSourceDownstream,
+			Error: errors.New(res.Status),
 		}
 	}
 
@@ -283,8 +280,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
-			Error:       err,
-			ErrorSource: backend.ErrorSourceDownstream,
+			Error: err,
 		}
 	}
 
