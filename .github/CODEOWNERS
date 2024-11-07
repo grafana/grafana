@@ -43,12 +43,12 @@
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
 /docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
-/docs/sources/fundamentals                                                        @chri2547
-/docs/sources/getting-started/                                                    @chri2547
-/docs/sources/introduction/                                                       @chri2547
+/docs/sources/fundamentals                                                        @irenerl24
+/docs/sources/getting-started/                                                    @irenerl24
+/docs/sources/introduction/                                                       @irenerl24
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/                                                      @chri2547
+/docs/sources/setup-grafana/                                                      @irenerl24
 /docs/sources/upgrade-guide/                                                      @imatwawana
 /docs/sources/whatsnew/                                                           @imatwawana
 

@@ -112,7 +112,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/{DatasourceUID}/api/v1/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalRead, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 	case http.MethodPost + "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstancesExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
+		eval = ac.EvalPermission(ac.ActionAlertingRuleExternalWrite, datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":DatasourceUID")))
 
 	// Lotex Prometheus-compatible Paths
 	case http.MethodGet + "/api/prometheus/{DatasourceUID}/api/v1/rules":

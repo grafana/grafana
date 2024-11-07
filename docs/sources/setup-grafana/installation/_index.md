@@ -61,7 +61,7 @@ Grafana requires a database to store its configuration data, such as users, data
 Grafana supports the following databases:
 
 - [SQLite 3](https://www.sqlite.org/index.html)
-- [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
+- [MySQL 8.0+](https://www.mysql.com/support/supportedplatforms/database.html)
 - [PostgreSQL 12+](https://www.postgresql.org/support/versioning/)
 
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.

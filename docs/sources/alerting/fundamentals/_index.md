@@ -57,7 +57,11 @@ refs:
 
 # Introduction to Alerting
 
-Whether you’re just starting out or you're a more experienced user of Grafana Alerting, learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly. For a hands-on introduction, refer to our [tutorial to get started with Grafana Alerting](http://grafana.com/tutorials/alerting-get-started/).
+Whether you’re just starting out or you're a more experienced user of Grafana Alerting, learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
+
+{{< admonition type="tip" >}}
+For a hands-on introduction, refer to our [tutorial to get started with Grafana Alerting](http://grafana.com/tutorials/alerting-get-started/).
+{{< /admonition  >}}
 
 The following diagram gives you an overview of Grafana Alerting and introduces you to some of the fundamental features that are the principles of how Grafana Alerting works.
 

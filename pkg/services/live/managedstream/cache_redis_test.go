@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +31,25 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		Addr: addr,
 		DB:   db,
 	})
-	c := NewRedisFrameCache(redisClient)
+	prefix := uuid.New().String()
+
+	t.Cleanup(redisCleanup(t, redisClient, prefix))
+
+	c := NewRedisFrameCache(redisClient, prefix)
 	require.NotNil(t, c)
 	testFrameCache(t, c)
+}
+
+func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func() {
+	return func() {
+		keys, err := redisClient.Keys(redisClient.Context(), prefix+"*").Result()
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		for _, key := range keys {
+			_, err := redisClient.Del(redisClient.Context(), key).Result()
+			require.NoError(t, err)
+		}
+	}
 }

@@ -6,6 +6,15 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+# ## 8.1.0 (2024-08-22)
+#
+# ### Added
+#
+# - Additional website mounts for projects that use the website repository.
+#
+#   Mounts are required for `make docs` to work in the website repository or with the website project.
+#   The Makefile is also mounted for convenient development of the procedure that repository.
+#
 # ## 8.0.1 (2024-07-01)
 #
 # ### Fixed
@@ -727,6 +736,9 @@ POSIX_HERESTRING
 
     _repo="$(repo_path website)"
     volumes="--volume=${_repo}/config:/hugo/config:z"
+    volumes="${volumes} --volume=${_repo}/content/guides:/hugo/content/guides:z"
+    volumes="${volumes} --volume=${_repo}/content/whats-new:/hugo/content/whats-new:z"
+    volumes="${volumes} --volume=${_repo}/Makefile:/hugo/Makefile:z"
     volumes="${volumes} --volume=${_repo}/layouts:/hugo/layouts:z"
     volumes="${volumes} --volume=${_repo}/scripts:/hugo/scripts:z"
   fi

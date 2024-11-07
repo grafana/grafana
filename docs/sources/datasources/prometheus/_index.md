@@ -155,7 +155,7 @@ We also bundle a dashboard within Grafana so you can start viewing your metrics 
 1. Navigate to the data source's [configuration page](ref:configure-prometheus-data-source).
 1. Select the **Dashboards** tab.
 
-This displays dashboards for Grafana and Prometheus.
+   This displays dashboards for Grafana and Prometheus.
 
 1. Select **Import** for the dashboard to import.
 
