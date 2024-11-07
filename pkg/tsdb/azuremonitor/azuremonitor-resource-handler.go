@@ -47,10 +47,13 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 
 		jsonPart := errMsg[start:end]
 		var jsonData map[string]interface{}
-		if json.Unmarshal([]byte(jsonPart), &jsonData) != nil {
+		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write([]byte("Invalid JSON format"))
-			return nil, err
+			_, writeErr := rw.Write([]byte("Invalid JSON format"))
+			if writeErr != nil {
+				return nil, fmt.Errorf("unable to write HTTP response: %v", writeErr)
+			}
+			return nil, unmarshalErr
 		}
 
 		errorType, _ := jsonData["error"].(string)
