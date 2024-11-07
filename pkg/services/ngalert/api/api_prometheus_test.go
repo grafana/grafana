@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -713,6 +712,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 			require.Len(t, result.Data.RuleGroups, 9)
+			require.NotZero(t, len(result.Data.Totals))
 			for i := 0; i < 9; i++ {
 				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
 				require.NoError(t, err)
@@ -735,6 +735,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			returnedGroups := make([]apimodels.RuleGroup, 0, len(allRules))
 
 			require.Len(t, result.Data.RuleGroups, 2)
+			require.Len(t, result.Data.Totals, 0)
 			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 			require.NotEmpty(t, result.Data.NextToken)
 			token := result.Data.NextToken
@@ -751,6 +752,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 				require.Len(t, result.Data.RuleGroups, 2)
+				require.Len(t, result.Data.Totals, 0)
 				returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 				require.NotEmpty(t, result.Data.NextToken)
 				token = result.Data.NextToken
@@ -768,6 +770,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
 			require.Len(t, result.Data.RuleGroups, 1)
+			require.Len(t, result.Data.Totals, 0)
 			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
 			require.Empty(t, result.Data.NextToken)
 
@@ -793,20 +796,18 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, result.Data.RuleGroups, 0)
 		})
 
-		t.Run("should error when passing invalid group_limit value", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=-1", nil)
+		t.Run("should return nothing when using group_limit=0", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=0", nil)
 			require.NoError(t, err)
 
 			c.Context = &web.Context{Req: r}
 
 			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusBadRequest, resp.Status())
+			require.Equal(t, http.StatusOK, resp.Status())
 			result := &apimodels.RuleResponse{}
 			require.NoError(t, json.Unmarshal(resp.Body(), result))
 
-			require.Equal(t, result.Status, "error")
-			require.Equal(t, result.ErrorType, apiv1.ErrBadData)
-			require.Equal(t, result.Error, "group_limit must be > 0")
+			require.Len(t, result.Data.RuleGroups, 0)
 		})
 	})
 

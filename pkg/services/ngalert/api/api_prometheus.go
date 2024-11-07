@@ -266,7 +266,6 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		return ruleResponse
 	}
 
-	limitGroups := getInt64WithDefault(opts.Query, "limit", -1)
 	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
 	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
 	matchers, err := getMatchersFromQuery(opts.Query)
@@ -333,20 +332,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleNamesSet[rn] = struct{}{}
 	}
 
-	var maxGroups int
-	if maxGroupsVal := opts.Query.Get("group_limit"); maxGroupsVal != "" {
-		maxGroups, err = strconv.Atoi(maxGroupsVal)
-		if err != nil || maxGroups < 0 {
-			ruleResponse.DiscoveryBase.Status = "error"
-			if err != nil {
-				ruleResponse.DiscoveryBase.Error = err.Error()
-			} else {
-				ruleResponse.DiscoveryBase.Error = "group_limit must be > 0"
-			}
-			ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
-			return ruleResponse
-		}
-	}
+	maxGroups := getInt64WithDefault(opts.Query, "group_limit", -1)
 	nextToken := opts.Query.Get("group_next_token")
 
 	groupedRules := getGroupedRules(log, ruleList, ruleNamesSet, opts.Namespaces)
@@ -372,7 +358,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 			foundToken = true
 		}
 
-		if maxGroups > 0 && len(ruleResponse.Data.RuleGroups) == maxGroups {
+		if maxGroups > -1 && len(ruleResponse.Data.RuleGroups) == int(maxGroups) {
 			newToken = getRuleGroupNextToken(rg.Folder, rg.GroupKey.RuleGroup)
 			break
 		}
@@ -395,10 +381,10 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 	}
 
 	ruleResponse.Data.NextToken = newToken
-	ruleResponse.Data.Totals = rulesTotals
 
-	if limitGroups > -1 && int64(len(ruleResponse.Data.RuleGroups)) >= limitGroups {
-		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
+	// Only return Totals if there is no pagination
+	if maxGroups == -1 {
+		ruleResponse.Data.Totals = rulesTotals
 	}
 
 	return ruleResponse
