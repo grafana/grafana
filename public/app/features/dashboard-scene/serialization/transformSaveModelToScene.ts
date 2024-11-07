@@ -1,7 +1,8 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   VizPanel,
   SceneTimePicker,
@@ -213,6 +214,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       name: 'Alert States',
     });
   }
+  console.log(config);
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
     editable: oldModel.editable,
@@ -246,8 +248,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         sync: oldModel.graphTooltip,
       }),
       new behaviors.SceneQueryController({
-        enableProfiling: true, // TODO config for this
-        onProfileComplete: reportDashboardInteractions,
+        enableProfiling: config.dashboardPerformanceMetrics, // TODO config for this
+        onProfileComplete: getDashboardInteractionCallback(oldModel.uid),
       }),
       registerDashboardMacro,
       registerPanelInteractionsReporter,
@@ -426,28 +428,26 @@ function trackIfEmpty(grid: SceneGridLayout) {
   };
 }
 
-function reportDashboardInteractions(e: SceneInteractionProfileEvent) {
-  let interactionType = '';
+function getDashboardInteractionCallback(uid: string) {
+  return (e: SceneInteractionProfileEvent) => {
+    let interactionType = '';
 
-  if (e.origin === 'SceneTimeRange') {
-    interactionType = 'time-range-change';
-  } else if (e.origin === 'SceneRefreshPicker') {
-    interactionType = 'refresh';
-  } else if (e.origin === 'DashboardScene') {
-    interactionType = 'view';
-  } else if (e.origin.indexOf('Variable') > -1) {
-    interactionType = 'variable-change';
-  }
+    if (e.origin === 'SceneTimeRange') {
+      interactionType = 'time-range-change';
+    } else if (e.origin === 'SceneRefreshPicker') {
+      interactionType = 'refresh';
+    } else if (e.origin === 'DashboardScene') {
+      interactionType = 'view';
+    } else if (e.origin.indexOf('Variable') > -1) {
+      interactionType = 'variable-change';
+    }
 
-  if (interactionType !== '') {
-    reportInteraction('dashboard-render', {
-      interactionType,
+    logMeasurement(`dashboard.${uid}.${interactionType}`, {
       duration: e.duration,
       networkDuration: e.networkDuration,
       totalJSHeapSize: e.totalJSHeapSize,
       usedJSHeapSize: e.usedJSHeapSize,
       jsHeapSizeLimit: e.jsHeapSizeLimit,
-      crumbs: e.crumbs,
     });
-  }
+  };
 }
