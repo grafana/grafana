@@ -74,7 +74,7 @@ export function FilterView({ filterState }: FilterViewProps) {
   const loading = isLoading(state) || transitionPending;
 
   return (
-    <Stack direction="column" gap={1}>
+    <Stack direction="column" gap={0}>
       {rules.map(({ ruleKey, rule, groupIdentifier }) => {
         const { rulesSource, namespace, groupName } = groupIdentifier;
 

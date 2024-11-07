@@ -22,9 +22,9 @@ import { RuleListIcon } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
 interface AlertRuleListItemProps {
-  name: ReactNode;
+  name: string;
   href: string;
-  summary?: ReactNode;
+  summary?: string;
   error?: string;
   state?: PromAlertingRuleState;
   isPaused?: boolean;
