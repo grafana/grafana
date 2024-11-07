@@ -447,6 +447,9 @@
     },
     "custom-value": {
       "create": ""
+    },
+    "options": {
+      "no-found": ""
     }
   },
   "command-palette": {
@@ -1042,6 +1045,13 @@
       "labelSelect": "",
       "noMatchingValue": "",
       "sortBy": ""
+    },
+    "related-logs": {
+      "docsLink": "",
+      "openExploreLogs": "",
+      "relatedLogsUnavailableAfterDocsLink": "",
+      "relatedLogsUnavailableBeforeDocsLink": "",
+      "warnExperimentalFeature": ""
     },
     "viewBy": ""
   },
@@ -2159,6 +2169,12 @@
         "name-header": "",
         "update-header": "",
         "update-status-text": ""
+      },
+      "versions": {
+        "confirmation-text-1": "",
+        "confirmation-text-2": "",
+        "downgrade-confirm": "",
+        "downgrade-title": ""
       }
     },
     "details": {

@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   FieldType,
@@ -13,7 +12,15 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
 import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
@@ -24,7 +31,7 @@ export interface ZipkinJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
 }
 
-export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData> {
+export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   spanBar?: SpanBarOptions;
@@ -66,6 +73,10 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
   }
 
   async testDatasource(): Promise<{ status: string; message: string }> {
+    if (config.featureToggles.zipkinBackendMigration) {
+      return await super.testDatasource();
+    }
+
     await this.metadataRequest(`${apiPrefix}/services`);
     return { status: 'success', message: 'Data source is working' };
   }
