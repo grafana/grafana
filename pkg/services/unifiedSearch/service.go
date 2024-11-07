@@ -174,6 +174,23 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 		return response
 	}
 
+	frame := newSearchFrame(res)
+	for _, r := range res.Items {
+		doc, err := getDoc(r.Value)
+		if err != nil {
+			s.logger.Error("Failed to parse doc", "error", err)
+			response.Error = err
+			return response
+		}
+		kind := strings.ToLower(doc.Kind)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
+	}
+	response.Frames = append(response.Frames, frame)
+	return response
+}
+
+func newSearchFrame(res *resource.SearchResponse) *data.Frame {
 	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
 	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -203,20 +220,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 			Count: uint64(len(res.Items)),
 		},
 	})
-
-	for _, r := range res.Items {
-		doc, err := getDoc(r.Value)
-		if err != nil {
-			s.logger.Error("Failed to parse doc", "error", err)
-			response.Error = err
-			return response
-		}
-		kind := strings.ToLower(doc.Kind)
-		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
-	}
-	response.Frames = append(response.Frames, frame)
-	return response
+	return frame
 }
 
 func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
