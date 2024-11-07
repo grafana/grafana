@@ -101,5 +101,13 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'grafana-select-warning-icon',
       color: theme.colors.text.secondary,
     }),
+    suffix: css({
+      label: 'grafana-select-suffix',
+      position: 'absolute',
+      right: theme.spacing(1),
+      top: theme.spacing(0.5),
+      zIndex: 1,
+      color: theme.colors.text.secondary,
+    }),
   };
 };

@@ -260,36 +260,9 @@ export const Combobox = <T extends string | number>({
       : 'angle-down';
 
   return (
-    <div>
+    <Box position="relative">
       <InputComponent
         width={width === 'auto' ? undefined : width}
-        suffix={
-          <>
-            {!!value && value === selectedItem?.value && isClearable && (
-              <Icon
-                name="times"
-                className={styles.clear}
-                title={t('combobox.clear.title', 'Clear value')}
-                tabIndex={0}
-                role="button"
-                onClick={() => {
-                  selectItem(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    selectItem(null);
-                  }
-                }}
-              />
-            )}
-
-            {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
-                translated to the input, so it blocks the input from being focused. So we need an additional event
-                handler here to open/close the menu. It should not have button role because we intentionally don't
-                want it in the a11y tree. */}
-            <Icon name={suffixIcon} onClick={handleSuffixClick} />
-          </>
-        }
         {...restProps}
         {...getInputProps({
           ref: inputRef,
@@ -302,6 +275,31 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
+      <div className={styles.suffix}>
+        {!!value && value === selectedItem?.value && isClearable && (
+          <Icon
+            name="times"
+            className={styles.clear}
+            title={t('combobox.clear.title', 'Clear value')}
+            tabIndex={0}
+            role="button"
+            onClick={() => {
+              selectItem(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                selectItem(null);
+              }
+            }}
+          />
+        )}
+
+        {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
+            translated to the input, so it blocks the input from being focused. So we need an additional event
+            handler here to open/close the menu. It should not have button role because we intentionally don't
+            want it in the a11y tree. */}
+        <Icon name={suffixIcon} onClick={handleSuffixClick} />
+      </div>
       <div
         className={cx(styles.menu, !isOpen && styles.menuClosed)}
         style={{
@@ -362,7 +360,7 @@ export const Combobox = <T extends string | number>({
           </div>
         </ScrollContainer>
       </div>
-    </div>
+    </Box>
   );
 };
 
