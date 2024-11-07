@@ -186,13 +186,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
     display: 'flex',
     flexDirection: 'column',
+    flexGrow: 1,
     gap: theme.spacing(1),
-    height: '100%',
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
-    height: '100%',
+    flexGrow: 1,
   }),
 
   filters: css({

@@ -106,7 +106,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       alignItems: 'center',
       flexDirection: 'column',
-      height: '100%',
+      flexGrow: 1,
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow
     }),
     homepageBox: css({
