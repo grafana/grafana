@@ -163,6 +163,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 		dir, err := filepath.Abs(rootDir)
 		require.NoError(t, err)
 
+		// When running within an enterprise test, we need to move to the grafana directory
+		if strings.HasSuffix(dir, "grafana-enterprise") {
+			rootDir = filepath.Join(rootDir, "..", "grafana")
+			dir, err = filepath.Abs(rootDir)
+			require.NoError(t, err)
+		}
+
 		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
 		require.NoError(t, err)
 
