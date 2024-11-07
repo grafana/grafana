@@ -141,7 +141,7 @@ export interface DashboardProps {
   toString: () => string;
 }
 
-export interface DashboardVariableModel extends SystemVariable<DashboardProps> { }
+export interface DashboardVariableModel extends SystemVariable<DashboardProps> {}
 
 export interface OrgProps {
   name: string;
@@ -149,7 +149,7 @@ export interface OrgProps {
   toString: () => string;
 }
 
-export interface OrgVariableModel extends SystemVariable<OrgProps> { }
+export interface OrgVariableModel extends SystemVariable<OrgProps> {}
 
 export interface UserProps {
   login: string;
@@ -158,7 +158,7 @@ export interface UserProps {
   toString: () => string;
 }
 
-export interface UserVariableModel extends SystemVariable<UserProps> { }
+export interface UserVariableModel extends SystemVariable<UserProps> {}
 
 export interface SystemVariable<TProps extends { toString: () => string }> extends BaseVariableModel {
   type: 'system';

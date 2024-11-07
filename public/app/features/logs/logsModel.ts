@@ -644,7 +644,7 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
   let valueField;
   try {
     valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
-  } catch { }
+  } catch {}
   return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
 }
 
