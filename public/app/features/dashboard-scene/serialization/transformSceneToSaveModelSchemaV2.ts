@@ -67,7 +67,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       // EOF time settings
 
       // variables
-      variables: [], //FIXME
+      variables: getVariables(oldDash),
       // EOF variables
 
       // elements
@@ -331,6 +331,10 @@ function createElements(
     acc[key] = panel;
     return acc;
   }, {} as Record<string, PanelKind>);
+}
+
+function getVariables(oldDash: DashboardSceneState) {
+  return [];
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2

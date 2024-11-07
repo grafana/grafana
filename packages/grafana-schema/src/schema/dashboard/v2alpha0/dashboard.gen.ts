@@ -1,5 +1,7 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+import { VariableRefresh, VariableSort, VariableType } from "../../../index.gen";
+
 export interface DashboardV2 {
   kind: "Dashboard";
   spec: DashboardSpec;
@@ -613,33 +615,223 @@ export const defaultQueryGroupKind = (): QueryGroupKind => ({
   spec: defaultQueryGroupSpec(),
 });
 
-export type QueryVariableSpec = any;
+/*** Start FIXME: variables - in CUE PR - this are things that should be added into the cue schema **/
 
-export const defaultQueryVariableSpec = (): QueryVariableSpec => ({});
+// Variable types
+export type VariableValue = VariableValueSingle | VariableValueSingle[];
+/**
+ * Used in CustomFormatterFn
+ */
+export interface CustomFormatterVariable {
+  name: string;
+  type: VariableType;
+  multi?: boolean;
+  includeAll?: boolean;
+}
+
+export type VariableCustomFormatterFn = (
+  value: unknown,
+  legacyVariableModel: Partial<CustomFormatterVariable>,
+  legacyDefaultFormatter?: VariableCustomFormatterFn
+) => string;
+
+/**
+ * This is for edge case values like the custom "allValue" that should not be escaped/formatted like other values
+ * The custom all value usually contain wildcards that should not be escaped.
+ */
+export interface CustomVariableValue {
+  /**
+   * The format name or function used in the expression
+   */
+  formatter(formatNameOrFn?: string | VariableCustomFormatterFn): string;
+}
+
+export type VariableValueSingle = string | boolean | number | CustomVariableValue;
+
+export interface VariableValueOption {
+  label: string;
+  value: VariableValueSingle;
+  group?: string;
+}
+
+// query variable
+export type QueryVariableSpec = {
+  name: string;
+  value: VariableValue;
+  text: VariableValue;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+  datasource: DataSourceRef;
+  query: string | DataQueryKind;
+  regex: string;
+  sort: VariableSort
+  definition?: string;
+  options: VariableValueOption[];
+  isMulti: boolean;
+  includeAll: boolean;
+  allValue?: string | null;
+  placeholder?: string;
+};
+
+export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
+  name: "",
+  value: "",
+  datasource: {},//FIXME: check if this is undefined. null or empty object in provisioning use case when we want to fallback to the default datasource
+  text: "",
+  query: "",
+  regex: "",
+  sort: VariableSort.disabled,
+  options: [],
+  isMulti: false,
+  includeAll: false,
+});
 
 export interface QueryVariableKind {
-  kind: "QueryVariable";
+  kind: "Query";
   spec: QueryVariableSpec;
 }
 
 export const defaultQueryVariableKind = (): QueryVariableKind => ({
-  kind: "QueryVariable",
+  kind: "Query",
   spec: defaultQueryVariableSpec(),
 });
 
-export type TextVariableSpec = any;
+// Text variable
+export type TextVariableSpec = {
+  name: string;
+  value: string;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+};
 
-export const defaultTextVariableSpec = (): TextVariableSpec => ({});
+export const defaultTextVariableSpec = (): TextVariableSpec => ({
+  name: "",
+  value: "",
+});
 
 export interface TextVariableKind {
-  kind: "TextVariable";
+  kind: "Text";
   spec: TextVariableSpec;
 }
 
 export const defaultTextVariableKind = (): TextVariableKind => ({
-  kind: "TextVariable",
+  kind: "Text",
   spec: defaultTextVariableSpec(),
 });
+
+// constant variable
+export interface ConstantVariableKind {
+  kind: "Constant";
+  spec: ConstantVariableSpec;
+}
+
+export interface ConstantVariableSpec {
+  name: string;
+  value: string;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+}
+
+export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
+  name: "",
+  value: "",
+});
+
+// datasource variable
+
+export interface DatasourceVariableKind {
+  kind: "Datasource";
+  spec: DatasourceVariableSpec;
+}
+
+export interface DatasourceVariableSpec {
+  name: string;
+  value: string;
+  text: string;
+  pluginId: string;
+  regex: string;
+  defaultOptionEnabled: boolean; // FIXME: is this going to be removed in the future https://github.com/grafana/scenes/blob/main/packages/scenes/src/variables/variants/DataSourceVariable.tsx#L24?
+  options: VariableValueOption[];
+  isMulti: boolean;
+  includeAll: boolean;
+  allValue?: string;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+}
+
+export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
+  name: "",
+  value: "",
+  text: "",
+  options: [],
+  pluginId: "",
+  regex: "",
+  defaultOptionEnabled: false,
+  isMulti: false,
+  includeAll: false,
+})
+
+// interval variable
+export interface IntervalVariableKind {
+  kind: "Interval";
+  spec: IntervalVariableSpec;
+}
+
+export interface IntervalVariableSpec {
+  name: string;
+  value: string;
+  intervals: string[];
+  autoEnabled: boolean;
+  autoMinInterval: string;
+  autoStepCount: number;
+  refresh: VariableRefresh;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+}
+
+export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
+  name: "",
+  value: "",
+  intervals: [],
+  autoEnabled: false,
+  autoMinInterval: "",
+  autoStepCount: 0,
+  refresh: VariableRefresh.onTimeRangeChanged,
+});
+
+// custom variable
+export interface CustomVariableKind {
+  kind: "Custom";
+  spec: CustomVariableSpec;
+}
+
+export interface CustomVariableSpec {
+  name: string;
+  value: VariableValue;
+  query: string;
+  text: VariableValue;
+  options: VariableValueOption[];
+  isMulti: boolean;
+  includeAll: boolean;
+  allValue?: string;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+};
+
+
+/***END  FIXME:variables - in CUE PR - this are things that should be added into the cue schema **/
 
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
