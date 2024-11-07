@@ -640,7 +640,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: prometheusRegularEscape(f.value),
+      value: f.value,
       op: f.operator,
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
@@ -672,7 +672,7 @@ export class PrometheusDatasource
 
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
-      value: prometheusRegularEscape(f.value),
+      value: f.value,
       op: f.operator,
     }));
 
@@ -1045,14 +1045,9 @@ export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQ
 // in language_utils.ts, but they are not exactly the same algorithm, and we found
 // no way to reuse one in the another or vice versa.
 export function prometheusRegularEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/"/g, '\\"') : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'") : value;
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string'
-    ? value
-        .replace(/\\/g, '\\\\\\\\')
-        .replace(/"/g, '\\\\\\"')
-        .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&')
-    : value;
+  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
