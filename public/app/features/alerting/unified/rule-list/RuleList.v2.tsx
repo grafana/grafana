@@ -27,7 +27,7 @@ import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
-import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
+import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -101,12 +101,9 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
 
   // 2. grab prometheus rule groups with max_groups if supported
   if (dataSourceInfo) {
-    const rulerEnabled = Boolean(dataSourceInfo.rulerConfig);
-
     return (
       <PaginatedDataSourceLoader
         ruleSourceName={dataSourceInfo.name}
-        rulerEnabled={rulerEnabled}
         uid={uid}
         name={name}
         application={dataSourceInfo.application}
@@ -119,16 +116,9 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
 
 interface PaginatedDataSourceLoaderProps extends Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'> {
   ruleSourceName: string;
-  rulerEnabled?: boolean;
 }
 
-function PaginatedDataSourceLoader({
-  ruleSourceName,
-  rulerEnabled = false,
-  name,
-  uid,
-  application,
-}: PaginatedDataSourceLoaderProps) {
+function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: PaginatedDataSourceLoaderProps) {
   const {
     page: ruleNamespaces,
     nextPage,
@@ -180,14 +170,7 @@ function PaginatedDataSourceLoader({
                     namespaceName: namespace.name,
                   };
 
-                  return (
-                    <AlertRuleLoader
-                      key={hashRule(rule)}
-                      rule={rule}
-                      groupIdentifier={groupIdentifier}
-                      rulerEnabled={rulerEnabled}
-                    />
-                  );
+                  return <AlertRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />;
                 })}
               </ListGroup>
             ))}
@@ -235,10 +218,10 @@ function LazyPagination({ canMoveForward, canMoveBackward, nextPage, previousPag
 interface AlertRuleLoaderProps {
   rule: Rule;
   groupIdentifier: RuleGroupIdentifier;
-  rulerEnabled?: boolean;
+  // rulerEnabled?: boolean;
 }
 
-function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertRuleLoaderProps) {
+export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps) {
   const { dataSourceName, namespaceName, groupName } = groupIdentifier;
 
   const ruleIdentifier = fromRule(dataSourceName, namespaceName, groupName, rule);
@@ -246,7 +229,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   const originMeta = getRulePluginOrigin(rule);
 
   // @TODO work with context API to propagate rulerConfig and such
-  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ rulesSourceName: dataSourceName });
+  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: getDatasourceAPIUid(dataSourceName) });
 
   // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
   const {
@@ -279,10 +262,6 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
   // 2.2 render provisioning badge and contact point metadata, etc.
 
   const actions = useMemo(() => {
-    if (!rulerEnabled) {
-      return null;
-    }
-
     if (isLoading) {
       return <ActionsLoader />;
     }
@@ -292,12 +271,14 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
     }
 
     return null;
-  }, [groupIdentifier, isLoading, rule, rulerEnabled, rulerRule]);
+  }, [groupIdentifier, isLoading, rule, rulerRule]);
 
   if (isAlertingRule(rule)) {
     return (
       <AlertRuleListItem
         name={rule.name}
+        group={groupName}
+        namespace={namespaceName}
         href={href}
         summary={rule.annotations?.summary}
         state={rule.state}
@@ -305,7 +286,7 @@ function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertR
         error={rule.lastError}
         labels={rule.labels}
         isProvisioned={undefined}
-        instancesCount={undefined}
+        instancesCount={rule.alerts?.length}
         actions={actions}
         origin={originMeta}
       />

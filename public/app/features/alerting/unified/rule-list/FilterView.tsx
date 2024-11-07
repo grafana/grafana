@@ -1,24 +1,22 @@
 import { compact, isEqual } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Button, Card, Stack } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { DataSourceNamespaceIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
 import { PromRuleGroupDTO, PromRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../api/prometheusApi';
-import { useAsync } from '../hooks/useAsync';
+import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../utils/alertmanager';
-import { Annotation } from '../utils/constants';
 import { getDatasourceAPIUid } from '../utils/datasource';
 import { parseMatcher } from '../utils/matchers';
-import { createViewLinkV2 } from '../utils/misc';
-import { getRulePluginOrigin, isAlertingRule } from '../utils/rules';
+import { hashRule } from '../utils/rule-id';
+import { isAlertingRule } from '../utils/rules';
 
-import { AlertRuleListItem } from './components/AlertRuleListItem';
+import { AlertRuleLoader } from './RuleList.v2';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -78,31 +76,26 @@ export function FilterView({ filterState }: FilterViewProps) {
     loadNextPage();
   }, [loadNextPage]);
 
-  const isLoading = state.status === 'loading' || defferedRules !== rules;
+  const loading = isLoading(state) || defferedRules !== rules;
 
   return (
     <Stack direction="column" gap={1}>
-      {defferedRules.map(({ ruleIdentifier, rule, groupIdentifier }) => {
-        const { namespace, groupName } = groupIdentifier;
+      {defferedRules.map(({ ruleKey, rule, groupIdentifier }) => {
+        const { rulesSource, namespace, groupName } = groupIdentifier;
 
         return (
-          <AlertRuleListItem
-            key={ruleIdentifier}
-            name={rule.name}
-            group={groupName}
-            namespace={namespace.name}
-            labels={rule.labels}
-            health={rule.health}
-            state={isAlertingRule(rule) ? rule.state : undefined}
-            origin={getRulePluginOrigin(rule)}
-            lastEvaluation={rule.lastEvaluation}
-            summary={isAlertingRule(rule) ? rule.annotations?.[Annotation.summary] : undefined}
-            instancesCount={isAlertingRule(rule) ? rule.alerts?.length : undefined}
-            href={createViewLinkV2(groupIdentifier, rule)}
+          <AlertRuleLoader
+            key={ruleKey}
+            rule={rule}
+            groupIdentifier={{
+              dataSourceName: rulesSource.name,
+              namespaceName: namespace.name,
+              groupName,
+            }}
           />
         );
       })}
-      {isLoading ? (
+      {loading ? (
         <Skeleton height={16} count={12} />
       ) : noMoreResults ? (
         <Card>No more results</Card>
@@ -113,6 +106,27 @@ export function FilterView({ filterState }: FilterViewProps) {
   );
 }
 
+// function FilteredRuleItem({ ruleWithOrigin }: { ruleWithOrigin: RuleWithOrigin }) {
+//   const { ruleKey, rule, groupIdentifier } = ruleWithOrigin;
+//   const { rulesSource, namespace, groupName } = groupIdentifier;
+
+//   // TODO We need to find a better way to handle Grafana rules
+//   const dataSourceUid = rulesSource.uid === GrafanaRulesSourceSymbol ? 'grafana' : rulesSource.uid;
+//   const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: dataSourceUid });
+
+//   return (
+//     <AlertRuleLoader
+//       key={ruleKey}
+//       rule={rule}
+//       groupIdentifier={{
+//         dataSourceName: rulesSource.name,
+//         namespaceName: namespace.name,
+//         groupName,
+//       }}
+//     />
+//   );
+// }
+
 const { useLazyGroupsQuery } = prometheusApi;
 
 interface RuleWithOrigin {
@@ -120,13 +134,13 @@ interface RuleWithOrigin {
    * Artificial frontend-only identifier for the rule.
    * It's used as a key for the rule in the rule list to prevent key duplication
    */
-  ruleIdentifier: string;
+  ruleKey: string;
   rule: PromRuleDTO;
-  groupIdentifier: RuleGroupIdentifierV2;
+  groupIdentifier: RuleGroupIdentifierV2<DataSourceNamespaceIdentifier>;
 }
 
 interface GroupWithIdentifier extends PromRuleGroupDTO {
-  identifier: RuleGroupIdentifierV2;
+  identifier: RuleGroupIdentifierV2<DataSourceNamespaceIdentifier>;
 }
 
 function useFilteredRulesIteratorProvider() {
@@ -219,7 +233,7 @@ function useFilteredRulesIteratorProvider() {
 
 function mapGroupToRules(group: GroupWithIdentifier): RuleWithOrigin[] {
   return group.rules.map<RuleWithOrigin>((rule) => ({
-    ruleIdentifier: uuidv4(),
+    ruleKey: `${group.identifier.rulesSource.name}-${hashRule(rule)}`,
     rule,
     groupIdentifier: group.identifier,
   }));
@@ -230,7 +244,7 @@ function mapGroupToGroupWithIdentifier(group: PromRuleGroupDTO, ruleSourceName: 
     ...group,
     identifier: {
       rulesSource: { name: ruleSourceName, uid: getDatasourceAPIUid(ruleSourceName) },
-      namespace: { name: group.file, uid: group.file },
+      namespace: { name: group.file },
       groupName: group.name,
     },
   };

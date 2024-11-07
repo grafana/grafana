@@ -2,6 +2,7 @@
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 import { PromOptions } from '@grafana/prometheus';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
@@ -149,27 +150,27 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
+export const GrafanaRulesSourceSymbol = Symbol('grafana');
+export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
+
 export type RulesSourceIdentifier =
   | {
       uid: string;
       //Name is here only for compatibility with existing code. Should be removed in the future.
       name: string;
     }
-  | 'grafana';
+  | {
+      uid: typeof GrafanaRulesSourceSymbol;
+      name: typeof GRAFANA_RULES_SOURCE_NAME;
+    };
 
-export const rulesSourceIdentifier = {
-  getUid: (identifier: RulesSourceIdentifier) => {
-    return typeof identifier === 'string' ? identifier : identifier.uid;
-  },
-};
-
-export interface NamespaceIdentifier {
-  name: string;
-  /**
-   * Folder UID for Grafana-managed rules and name for datasource-managed rules
-   */
-  uid: string;
-}
+// export interface NamespaceIdentifier {
+//   name: string;
+//   /**
+//    * Folder UID for Grafana-managed rules and name for datasource-managed rules
+//    */
+//   uid: string;
+// }
 
 // identifier for where we can find a RuleGroup
 export interface RuleGroupIdentifier {
@@ -179,9 +180,17 @@ export interface RuleGroupIdentifier {
   groupName: string;
 }
 
-export interface RuleGroupIdentifierV2 {
+export interface GrafanaNamespaceIdentifier {
+  uid: string;
+}
+
+export interface DataSourceNamespaceIdentifier {
+  name: string;
+}
+
+export interface RuleGroupIdentifierV2<T extends GrafanaNamespaceIdentifier | DataSourceNamespaceIdentifier> {
   rulesSource: RulesSourceIdentifier;
-  namespace: NamespaceIdentifier;
+  namespace: T;
   groupName: string;
 }
 
