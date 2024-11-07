@@ -128,6 +128,11 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 
+	return p, nil
+}
+
+// ReportTargetMetrics reports target information for all backend plugins.
+func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.Backend {
 		metrics.SetPluginTargetInformation(p.ID, string(p.Target()))
 	}
