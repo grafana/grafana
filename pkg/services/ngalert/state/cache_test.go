@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"testing"
 	"time"
@@ -117,7 +118,7 @@ func Test_expand(t *testing.T) {
 	})
 }
 
-func Test_getOrCreate(t *testing.T) {
+func Test_create(t *testing.T) {
 	url := &url.URL{
 		Scheme: "http",
 		Host:   "localhost:3000",
@@ -210,7 +211,6 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
 	})
-
 	t.Run("rule annotations should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
@@ -237,7 +237,6 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
 	})
-
 	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
@@ -292,6 +291,120 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, state.Labels["label4_user"], result.Instance["label4_user"])
 		})
 	})
+
+	t.Run("creates a state with preset fields if there is no current state", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+		}
+
+		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url)
+
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
+
+		assert.Equal(t, rule.OrgID, state.OrgID)
+		assert.Equal(t, rule.UID, state.AlertRuleUID)
+		assert.Equal(t, state.Labels.Fingerprint(), state.CacheID)
+		assert.Equal(t, result.State, state.State)
+		assert.Equal(t, "", state.StateReason)
+		assert.Equal(t, result.Instance.Fingerprint(), state.ResultFingerprint)
+		assert.Nil(t, state.LatestResult)
+		assert.Nil(t, state.Error)
+		assert.Nil(t, state.Image)
+		assert.EqualValues(t, expectedAnn, state.Annotations)
+		assert.EqualValues(t, expectedLbl, state.Labels)
+		assert.Nil(t, state.Values)
+		assert.Equal(t, result.EvaluatedAt, state.StartsAt)
+		assert.Equal(t, result.EvaluatedAt, state.EndsAt)
+		assert.Nil(t, state.ResolvedAt)
+		assert.Nil(t, state.LastSentAt)
+		assert.Equal(t, "", state.LastEvaluationString)
+		assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
+		assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
+	})
+
+	t.Run("it populates some fields from the current state if it exists", func(t *testing.T) {
+		rule := generateRule()
+
+		extraLabels := models.GenerateAlertLabels(2, "extra-")
+
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+		}
+
+		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url)
+
+		current := randomSate(rule.GetKey())
+		current.CacheID = expectedLbl.Fingerprint()
+
+		c.set(&current)
+
+		state := c.create(context.Background(), l, rule, result, extraLabels, url)
+
+		assert.Equal(t, rule.OrgID, state.OrgID)
+		assert.Equal(t, rule.UID, state.AlertRuleUID)
+		assert.Equal(t, state.Labels.Fingerprint(), state.CacheID)
+		assert.Equal(t, result.Instance.Fingerprint(), state.ResultFingerprint)
+		assert.EqualValues(t, expectedAnn, state.Annotations)
+		assert.EqualValues(t, expectedLbl, state.Labels)
+		assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
+		assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
+
+		assert.Equal(t, current.State, state.State)
+		assert.Equal(t, current.StateReason, state.StateReason)
+		assert.Equal(t, current.Image, state.Image)
+		assert.Equal(t, current.LatestResult, state.LatestResult)
+		assert.Equal(t, current.Error, state.Error)
+		assert.Equal(t, current.Values, state.Values)
+		assert.Equal(t, current.StartsAt, state.StartsAt)
+		assert.Equal(t, current.EndsAt, state.EndsAt)
+		assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
+		assert.Equal(t, current.LastSentAt, state.LastSentAt)
+		assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
+
+		t.Run("if result Error and current state is Error it should copy datasource_uid and ref_id labels", func(t *testing.T) {
+			current = randomSate(rule.GetKey())
+			current.CacheID = expectedLbl.Fingerprint()
+			current.State = eval.Error
+			current.Labels["datasource_uid"] = util.GenerateShortUID()
+			current.Labels["ref_id"] = util.GenerateShortUID()
+
+			c.set(&current)
+
+			result.State = eval.Error
+			state = c.create(context.Background(), l, rule, result, extraLabels, url)
+
+			l := expectedLbl.Copy()
+			l["datasource_uid"] = current.Labels["datasource_uid"]
+			l["ref_id"] = current.Labels["ref_id"]
+
+			assert.Equal(t, current.CacheID, state.CacheID)
+			assert.EqualValues(t, l, state.Labels)
+
+			assert.Equal(t, rule.OrgID, state.OrgID)
+			assert.Equal(t, rule.UID, state.AlertRuleUID)
+
+			assert.Equal(t, result.Instance.Fingerprint(), state.ResultFingerprint)
+			assert.EqualValues(t, expectedAnn, state.Annotations)
+			assert.Equal(t, result.EvaluatedAt, state.LastEvaluationTime)
+			assert.Equal(t, result.EvaluationDuration, state.EvaluationDuration)
+
+			assert.Equal(t, current.State, state.State)
+			assert.Equal(t, current.StateReason, state.StateReason)
+			assert.Equal(t, current.Image, state.Image)
+			assert.Equal(t, current.LatestResult, state.LatestResult)
+			assert.Equal(t, current.Error, state.Error)
+			assert.Equal(t, current.Values, state.Values)
+			assert.Equal(t, current.StartsAt, state.StartsAt)
+			assert.Equal(t, current.EndsAt, state.EndsAt)
+			assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
+			assert.Equal(t, current.LastSentAt, state.LastSentAt)
+			assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
+		})
+	})
 }
 
 func Test_mergeLabels(t *testing.T) {
@@ -325,4 +438,40 @@ func Test_mergeLabels(t *testing.T) {
 			require.Equal(t, val, result[key])
 		}
 	})
+}
+
+func randomSate(ruleKey models.AlertRuleKey) State {
+	return State{
+		OrgID:             ruleKey.OrgID,
+		AlertRuleUID:      ruleKey.UID,
+		CacheID:           data.Fingerprint(rand.Int63()),
+		ResultFingerprint: data.Fingerprint(rand.Int63()),
+		State:             eval.Alerting,
+		StateReason:       util.GenerateShortUID(),
+		LatestResult: &Evaluation{
+			EvaluationTime:  time.Time{},
+			EvaluationState: eval.Error,
+			Values: map[string]float64{
+				"A": rand.Float64(),
+			},
+			Condition: "A",
+		},
+		Error: errors.New(util.GenerateShortUID()),
+		Image: &models.Image{
+			ID:    rand.Int63(),
+			Token: util.GenerateShortUID(),
+		},
+		Annotations: models.GenerateAlertLabels(2, "current-"),
+		Labels:      models.GenerateAlertLabels(2, "current-"),
+		Values: map[string]float64{
+			"A": rand.Float64(),
+		},
+		StartsAt:             randomTimeInPast(),
+		EndsAt:               randomTimeInFuture(),
+		ResolvedAt:           util.Pointer(randomTimeInPast()),
+		LastSentAt:           util.Pointer(randomTimeInPast()),
+		LastEvaluationString: util.GenerateShortUID(),
+		LastEvaluationTime:   randomTimeInPast(),
+		EvaluationDuration:   time.Duration(6000),
+	}
 }
