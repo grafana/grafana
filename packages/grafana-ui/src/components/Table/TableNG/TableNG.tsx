@@ -30,7 +30,7 @@ interface TableRow {
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
-  rowHeight: number;
+  // rowHeight: number;
   field: Omit<Field, 'values'>;
 }
 
@@ -58,7 +58,7 @@ export function TableNG(props: TableNGProps) {
   const columnWidth = useMemo(() => {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
-  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fieldConfig, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
 
   const [contextMenuProps, setContextMenuProps] = useState<{
@@ -88,20 +88,20 @@ export function TableNG(props: TableNGProps) {
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
-  function rowHeight() {
-    const bodyFontSize = theme.typography.fontSize;
-    const lineHeight = theme.typography.body.lineHeight;
+  // function rowHeight() {
+  //   const bodyFontSize = theme.typography.fontSize;
+  //   const lineHeight = theme.typography.body.lineHeight;
 
-    switch (cellHeight) {
-      case 'md':
-        return 42;
-      case 'lg':
-        return 48;
-    }
+  //   switch (cellHeight) {
+  //     case 'md':
+  //       return 42;
+  //     case 'lg':
+  //       return 48;
+  //   }
 
-    return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
-  }
-  const rowHeightNumber = rowHeight();
+  //   return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
+  // }
+  // const rowHeightNumber = rowHeight();
 
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
     const handleSort = () => {
@@ -166,19 +166,19 @@ export function TableNG(props: TableNGProps) {
         key,
         name: field.name,
         field: shallowField,
-        rowHeight: rowHeightNumber,
-        cellClass: (row) => {
-          // eslint-ignore-next-line
-          const value = row[key];
-          const displayValue = shallowField.display!(value);
+        // cellClass: (row) => {
+        //   // eslint-ignore-next-line
+        //   const value = row[key];
+        //   const displayValue = shallowField.display!(value);
 
-          // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          let colors = getCellColors(theme, shallowField.config.custom, displayValue);
-          // }
+        //   // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
+        //   let colors = getCellColors(theme, shallowField.config.custom, displayValue);
+        //   // }
 
-          // css()
-          return 'my-class';
-        },
+        //   // css()
+        //   return 'my-class';
+        // },
+        cellClass: styles.cell,
         renderCell: (props: any) => {
           const { row } = props;
           const value = row[key];
@@ -191,7 +191,8 @@ export function TableNG(props: TableNGProps) {
               field={shallowField}
               theme={theme}
               timeRange={timeRange}
-              height={rowHeight}
+              // height={rowHeight}
+              height={75}
               justifyContent={justifyColumnContent}
             />
           );
@@ -297,7 +298,8 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={rowHeightNumber}
+        // rowHeight={rowHeightNumber}
+        rowHeight={rowHeight}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
@@ -341,6 +343,12 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
+}
+
+function rowHeight(row) {
+  console.log(row);
+  // should be based on the content of the row
+  return 25 + Math.round(Math.random() * 75);
 }
 
 function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
@@ -399,5 +407,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sortIcon: css({
     marginLeft: theme.spacing(0.5),
+  }),
+  cell: css({
+    whiteSpace: 'nowrap',
+    wordWrap: 'break-word',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    // whiteSpace: 'nowrap',
+    // overflow: 'clip',
+    // textOverflow: 'ellipsis',
+    // outline: 'none',
   }),
 });
