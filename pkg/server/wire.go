@@ -173,6 +173,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 var wireBasicSet = wire.NewSet(
@@ -267,6 +268,7 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
+	zipkin.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,

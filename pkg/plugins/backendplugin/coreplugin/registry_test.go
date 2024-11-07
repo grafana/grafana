@@ -35,6 +35,7 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Tempo},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
+		{ID: Zipkin},
 	}
 
 	for _, tc := range tcs {
