@@ -15,7 +15,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, useStyles } from '@grafana/ui';
+import { Button, CustomScrollbar, InlineFormLabel, Modal, Stack, useStyles } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
@@ -137,7 +137,7 @@ export const QueryGroup = ({ queryRunner, options, onOpenQueryInspector, onRunQu
     }
   };
 
-  const newQuery = useCallback((): Partial<DataQuery> => {
+  const newQuery = useCallback(() => {
     const ds =
       dsSettings && !dsSettings.meta.mixed
         ? getDataSourceRef(dsSettings)
@@ -215,19 +215,6 @@ export const QueryGroup = ({ queryRunner, options, onOpenQueryInspector, onRunQu
     );
   };
 
-  const renderQueries = (dsSettings: DataSourceInstanceSettings) => (
-    <div aria-label={selectors.components.QueryTab.content}>
-      <QueryEditorRows
-        queries={queries}
-        dsSettings={dsSettings}
-        onQueriesChange={onQueriesChange}
-        onAddQuery={onAddQuery}
-        onRunQueries={onRunQueries}
-        data={data}
-      />
-    </div>
-  );
-
   const renderExtraActions = () => {
     return GroupActionComponents.getAllExtraRenderAction()
       .map((action, index) =>
@@ -240,45 +227,48 @@ export const QueryGroup = ({ queryRunner, options, onOpenQueryInspector, onRunQu
       .filter(Boolean);
   };
 
-  const renderAddQueryRow = (dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) => {
-    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
-
-    return (
-      <HorizontalGroup spacing="md" align="flex-start">
-        {showAddButton && (
-          <Button
-            icon="plus"
-            onClick={onAddQueryClick}
-            variant="secondary"
-            data-testid={selectors.components.QueryTab.addQuery}
-          >
-            Add query
-          </Button>
-        )}
-        {config.expressionsEnabled && isExpressionsSupported(dsSettings) && (
-          <Button
-            icon="plus"
-            onClick={onAddExpressionClick}
-            variant="secondary"
-            className={styles.expressionButton}
-            data-testid="query-tab-add-expression"
-          >
-            <span>Expression&nbsp;</span>
-          </Button>
-        )}
-        {renderExtraActions()}
-      </HorizontalGroup>
-    );
-  };
-
   return (
     <CustomScrollbar autoHeightMin="100%" scrollRefCallback={(el) => (scrollElementRef.current = el)}>
       <div className={styles.innerWrapper}>
         {renderTopSection()}
         {dsSettings && (
           <>
-            <div className={styles.queriesWrapper}>{renderQueries(dsSettings)}</div>
-            {renderAddQueryRow(dsSettings, styles)}
+            <div className={styles.queriesWrapper}>
+              <div aria-label={selectors.components.QueryTab.content}>
+                <QueryEditorRows
+                  queries={queries}
+                  dsSettings={dsSettings}
+                  onQueriesChange={onQueriesChange}
+                  onAddQuery={onAddQuery}
+                  onRunQueries={onRunQueries}
+                  data={data}
+                />
+              </div>
+            </div>
+            <Stack gap={2} alignItems="flex-start">
+              {!isSharedDashboardQuery(dsSettings.name) && (
+                <Button
+                  icon="plus"
+                  onClick={onAddQueryClick}
+                  variant="secondary"
+                  data-testid={selectors.components.QueryTab.addQuery}
+                >
+                  Add query
+                </Button>
+              )}
+              {config.expressionsEnabled && isExpressionsSupported(dsSettings) && (
+                <Button
+                  icon="plus"
+                  onClick={onAddExpressionClick}
+                  variant="secondary"
+                  className={styles.expressionButton}
+                  data-testid="query-tab-add-expression"
+                >
+                  <span>Expression&nbsp;</span>
+                </Button>
+              )}
+              {renderExtraActions()}
+            </Stack>
             {isHelpOpen && (
               <Modal title="Data source help" isOpen={true} onDismiss={() => setIsHelpOpen(false)}>
                 <PluginHelp pluginId={dsSettings.meta.id} />
@@ -318,8 +308,6 @@ const getStyles = (theme: GrafanaTheme) => {
     }),
   };
 };
-
-type QueriesTabStyles = ReturnType<typeof getStyles>;
 
 interface QueryGroupTopSectionProps {
   data: PanelData;
