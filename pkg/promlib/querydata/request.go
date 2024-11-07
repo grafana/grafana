@@ -234,15 +234,7 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		response := backend.DataResponse{
-			Error:  err,
-			Status: backend.StatusBadGateway,
-		}
-		// confirm that it is a downstream error
-		if backend.IsDownstreamHTTPError(err) {
-			response.ErrorSource = backend.ErrorSourceDownstream
-		}
-		return response
+		return addErrorSourceToDataResponse(err)
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -266,15 +258,8 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		response := backend.DataResponse{
-			Error:  err,
-			Status: backend.StatusBadGateway,
-		}
 		// confirm that it is a downstream error
-		if backend.IsDownstreamHTTPError(err) {
-			response.ErrorSource = backend.ErrorSourceDownstream
-		}
-		return response
+		return addErrorSourceToDataResponse(err)
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -305,14 +290,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		response := backend.DataResponse{
-			Error: err,
-		}
-		// confirm that it is a downstream error
-		if backend.IsDownstreamHTTPError(err) {
-			response.ErrorSource = backend.ErrorSourceDownstream
-		}
-		return response
+		return addErrorSourceToDataResponse(err)
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -342,4 +320,16 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)
+}
+
+func addErrorSourceToDataResponse(err error) backend.DataResponse {
+	response := backend.DataResponse{
+		Error:  err,
+		Status: backend.StatusBadGateway,
+	}
+
+	if backend.IsDownstreamHTTPError(err) {
+		response.ErrorSource = backend.ErrorSourceDownstream
+	}
+	return response
 }
