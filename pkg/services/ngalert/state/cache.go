@@ -71,7 +71,7 @@ func (c *cache) countAlertsBy(state eval.State) float64 {
 	return count
 }
 
-func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) (data.Labels, data.Labels) {
 	var reserved []string
 	resultLabels := result.Instance
 	if len(resultLabels) > 0 {
@@ -140,9 +140,13 @@ func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.
 	if len(dupes) > 0 {
 		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
 	}
+	return lbs, annotations
+}
+
+func (c *cache) create(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+	lbs, annotations := expandAnnotationsAndLabels(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	cacheID := lbs.Fingerprint()
-
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
 	newState := State{
