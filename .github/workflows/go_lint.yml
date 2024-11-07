@@ -2,7 +2,6 @@ name: golangci-lint
 on:
   push:
     paths:
-      - apps/**
       - pkg/**
       - .github/workflows/go_lint.yml
       - go.*
@@ -14,7 +13,6 @@ permissions:
   contents: read
 
 jobs:
-
   lint-go:
     runs-on: ubuntu-latest
     steps:
@@ -22,11 +20,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: ./go.mod
+      - run: CODEGEN_VERIFY=1 make gen-cue
       - run: make gen-go
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.61.0
+          version: v1.60.1
           args: |
-            --verbose $(go list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
+            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(./scripts/go-workspace/golangci-lint-includes.sh)
+          skip-cache: true
           install-mode: binary
