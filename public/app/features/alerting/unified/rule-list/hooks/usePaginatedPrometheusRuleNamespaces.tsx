@@ -51,12 +51,12 @@ export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pag
     }
   }, [canMoveBackward]);
 
-  // useEffect(() => {
-  // We fetch 2 pages to load the page in the background rather than waiting for the user to click next
-  if (groups.length - pageSize < pageSize * currentPage) {
-    fetchMoreGroups(pageSize * 2).then((result) => {
+  // groups.length - pageSize to have one more page loaded to prevent flickering with loading state
+  const shouldFetchNextPage = groups.length - pageSize < pageSize * currentPage && !lastPage;
+  if (shouldFetchNextPage) {
+    fetchMoreGroups(pageSize).then((result) => {
       if (result.done) {
-        setLastPage(currentPage);
+        setLastPage(Math.ceil(groups.length / pageSize));
       }
       setGroups((groups) => [...groups, ...result.groups]);
     });
