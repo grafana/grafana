@@ -448,11 +448,17 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": ""
+    },
     "clear": {
       "title": ""
     },
     "custom-value": {
       "create": ""
+    },
+    "options": {
+      "no-found": ""
     }
   },
   "command-palette": {
@@ -615,8 +621,7 @@
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
       "row": "Ligne",
-      "visualization": "Visualisation",
-      "widget": "Widget"
+      "visualization": "Visualisation"
     },
     "alert-rules-drawer": {
       "redirect-link": "Liste dans Alertes Grafana",
@@ -629,9 +634,6 @@
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
       "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
-      "add-widget-body": "Créez des listes, des markdowns et d'autres widgets",
-      "add-widget-button": "Ajouter un widget",
-      "add-widget-header": "Ajouter un widget",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importer un tableau de bord",
       "import-dashboard-button": "Importer un tableau de bord"
@@ -1050,7 +1052,15 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
-      "noMatchingValue": ""
+      "noMatchingValue": "",
+      "sortBy": ""
+    },
+    "related-logs": {
+      "docsLink": "",
+      "openExploreLogs": "",
+      "relatedLogsUnavailableAfterDocsLink": "",
+      "relatedLogsUnavailableBeforeDocsLink": "",
+      "warnExperimentalFeature": ""
     },
     "viewBy": ""
   },
@@ -2169,6 +2179,12 @@
         "name-header": "",
         "update-header": "",
         "update-status-text": ""
+      },
+      "versions": {
+        "confirmation-text-1": "",
+        "confirmation-text-2": "",
+        "downgrade-confirm": "",
+        "downgrade-title": ""
       }
     },
     "details": {
@@ -2888,7 +2904,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2902,6 +2929,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",

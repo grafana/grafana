@@ -2119,13 +2119,14 @@
     },
     "/reports/{id}": {
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Get a report.",
         "operationId": "getReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2157,13 +2158,14 @@
         }
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Update a report.",
         "operationId": "updateReport",
+        "deprecated": true,
         "parameters": [
           {
             "name": "body",
@@ -2203,13 +2205,14 @@
         }
       },
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "tags": [
           "reports",
           "enterprise"
         ],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
+        "deprecated": true,
         "parameters": [
           {
             "type": "integer",
@@ -2716,6 +2719,9 @@
           "format": "int64"
         },
         "message": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -4077,6 +4083,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "title": {
           "type": "string"
         },
@@ -4101,6 +4110,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }
@@ -6031,6 +6043,9 @@
           "format": "int64"
         },
         "role": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         },
         "userId": {
@@ -8600,6 +8615,9 @@
         "login": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -8972,6 +8990,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "teamUid": {
+          "type": "string"
+        },
         "userAvatarUrl": {
           "type": "string"
         },
@@ -8980,6 +9001,9 @@
           "format": "int64"
         },
         "userLogin": {
+          "type": "string"
+        },
+        "userUid": {
           "type": "string"
         }
       }

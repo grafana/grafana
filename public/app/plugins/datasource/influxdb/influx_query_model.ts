@@ -11,7 +11,6 @@ import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 export default class InfluxQueryModel {
   target: InfluxQuery;
   selectModels: QueryPart[][] = [];
-  queryBuilder: any;
   groupByParts: QueryPart[] = [];
   templateSrv: any;
   scopedVars: ScopedVars | undefined;

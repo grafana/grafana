@@ -7,6 +7,10 @@ ARTIFACTS_DIR="./npm-artifacts"
 
 for file in "$ARTIFACTS_DIR"/*.tgz; do
   echo "🔍 Checking NPM package: $file"
+
+  # Ignore named-exports for now as builds aren't compatible yet.
+  yarn dlx @arethetypeswrong/cli "$file" --ignore-rules "named-exports"
+
   # get filename then strip everything after package name.
   dir_name=$(basename "$file" .tgz | sed -E 's/@([a-zA-Z0-9-]+)-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9-]+)?/\1/')
   mkdir -p "./npm-artifacts/$dir_name"
