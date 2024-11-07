@@ -9,14 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-const (
-	// If search query string shorter than this value, then "List, then check" strategy will be used
-	listQueryLengthThreshold = 8
-	// If query limit set to value higher than this value, then "List, then check" strategy will be used
-	listQueryLimitThreshold = 50
-	defaultQueryLimit       = 1000
-)
-
 type searchResult struct {
 	runner   string
 	result   []dashboards.DashboardSearchProjection

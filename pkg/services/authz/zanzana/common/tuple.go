@@ -9,7 +9,7 @@ import (
 
 const (
 	resourceType       = "resource"
-	resourceTypeFolder = "folder2"
+	resourceTypeFolder = "folder"
 	namespaceType      = "namespace"
 )
 
@@ -26,7 +26,7 @@ func NewResourceIdent(group, resource, name string) string {
 }
 
 func NewFolderIdent(name string) string {
-	return fmt.Sprintf("folder2:%s", name)
+	return fmt.Sprintf("%s:%s", resourceTypeFolder, name)
 }
 
 func NewNamespaceResourceIdent(group, resource string) string {
@@ -88,7 +88,7 @@ func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
 }
 
 func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
-	return NewTypedTuple("folder2", subject, relation, name)
+	return NewTypedTuple(resourceTypeFolder, subject, relation, name)
 }
 
 func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {
