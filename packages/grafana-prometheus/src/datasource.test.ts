@@ -21,6 +21,7 @@ import { config, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runt
 import {
   alignRange,
   extractRuleMappingFromGroups,
+  prometheusAdhocFilterEscape,
   PrometheusDatasource,
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
@@ -474,33 +475,37 @@ describe('PrometheusDatasource', () => {
       expect(prometheusRegularEscape(12)).toEqual(12);
     });
 
-    it('should not escape simple string', () => {
+    it('should not escape strings without special characters', () => {
       expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
     });
 
-    it("should escape '", () => {
-      expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
+    it('should escape backslashes', () => {
+      expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
     });
 
-    it('should escape \\', () => {
-      expect(prometheusRegularEscape('looking\\glass')).toEqual('looking\\\\glass');
+    it('should escape single quotes with double backslashes', () => {
+      expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
     });
 
     it('should escape multiple characters', () => {
       expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
     });
 
-    it('should escape multiple different characters', () => {
+    it('should handle combinations of quotes and backslashes', () => {
       expect(prometheusRegularEscape("'loo\\king'glass'")).toEqual("\\\\'loo\\\\king\\\\'glass\\\\'");
     });
   });
 
   describe('Prometheus regexes escaping', () => {
-    it('should not escape simple string', () => {
+    it('should not escape non-string', () => {
+      expect(prometheusRegularEscape(12)).toEqual(12);
+    });
+
+    it('should not escape strings without special characters', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
 
-    it('should escape $^*+?.()|\\', () => {
+    it('should escape regex metacharacters with double backslashes', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -518,8 +523,62 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
     });
 
-    it('should escape multiple special characters', () => {
+    it('should escape curly braces with double backslashes', () => {
+      expect(prometheusSpecialRegexEscape('{4,5}')).toBe('\\\\{4,5\\\\}');
+      expect(prometheusSpecialRegexEscape('{{test}}')).toBe('\\\\{\\\\{test\\\\}\\\\}');
+    });
+
+    it('should escape multiple regex metacharacters', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+    });
+
+    it('should handle complex regex patterns', () => {
+      expect(prometheusSpecialRegexEscape('[a-z]+.{1,3}')).toBe('\\\\[a-z\\\\]\\\\+\\\\.\\\\{1,3\\\\}');
+      expect(prometheusSpecialRegexEscape('(foo|bar)+')).toBe('\\\\(foo\\\\|bar\\\\)\\\\+');
+    });
+
+    it('should escape backslashes with four backslashes', () => {
+      expect(prometheusSpecialRegexEscape('\\d')).toBe('\\\\\\\\d');
+      expect(prometheusSpecialRegexEscape('\\\\test')).toBe('\\\\\\\\\\\\\\\\test');
+    });
+  });
+
+  describe('prometheusAdhocFilterEscape', () => {
+    it('should not escape non-string values', () => {
+      expect(prometheusAdhocFilterEscape(100)).toBe(100);
+      expect(prometheusAdhocFilterEscape(null)).toBe(null);
+      expect(prometheusAdhocFilterEscape(undefined)).toBe(undefined);
+    });
+
+    it('should not modify strings without special characters', () => {
+      expect(prometheusAdhocFilterEscape('abcd')).toBe('abcd');
+      expect(prometheusAdhocFilterEscape('ABCD')).toBe('ABCD');
+      expect(prometheusAdhocFilterEscape('123')).toBe('123');
+    });
+
+    it('should escape backslashes', () => {
+      expect(prometheusAdhocFilterEscape('back\\slash')).toBe('back\\\\slash');
+      expect(prometheusAdhocFilterEscape('double\\\\slash')).toBe('double\\\\\\\\slash');
+    });
+
+    it('should escape double quotes', () => {
+      expect(prometheusAdhocFilterEscape('"value"')).toBe('\\"value\\"');
+      expect(prometheusAdhocFilterEscape('""')).toBe('\\"\\"');
+    });
+
+    it('should not escape single quotes', () => {
+      expect(prometheusAdhocFilterEscape("don't")).toBe("don't");
+      expect(prometheusAdhocFilterEscape("''")).toBe("''");
+    });
+
+    it('should preserve regex metacharacters', () => {
+      expect(prometheusAdhocFilterEscape('.*+')).toBe('.*+');
+      expect(prometheusAdhocFilterEscape('[a-z]+')).toBe('[a-z]+');
+    });
+
+    it('should handle combinations of special characters', () => {
+      expect(prometheusAdhocFilterEscape('"test"\\with\\.*+')).toBe('\\"test\\"\\\\with\\\\.*+');
+      expect(prometheusAdhocFilterEscape('\\"quoted\\"+pattern')).toBe('\\\\\\"quoted\\\\\\"+pattern');
     });
   });
 
