@@ -256,6 +256,13 @@ export function GrafanaEvaluationBehaviorStep({
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
+  const label =
+    isGrafanaManagedRuleByType(type) && !folder
+      ? t(
+          'alerting.rule-form.evaluation.select-folder-before',
+          'Select folder before setting evaluation group and interval'
+        )
+      : t('alerting.rule-form.evaluation.evaluation-group-and-interval', 'Evaluation group and interval');
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -268,7 +275,7 @@ export function GrafanaEvaluationBehaviorStep({
         <Stack alignItems="center">
           <div style={{ width: 420 }}>
             <Field
-              label="Evaluation group and interval"
+              label={label}
               data-testid="group-picker"
               className={styles.formInput}
               error={errors.group?.message}
