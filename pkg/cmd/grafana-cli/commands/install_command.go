@@ -40,7 +40,10 @@ func validateInput(c utils.CommandLine) error {
 		version := args.Get(1)
 		_, err := semver.NewVersion(version)
 		if err != nil {
-			logger.Info(color.YellowString("The provided version doesn't use semantic versioning format\n\n"))
+			_, err = semver.NewConstraint(version)
+			if err != nil {
+				logger.Info(color.YellowString("The provided version doesn't use semantic versioning format\n\n"))
+			}
 		}
 	}
 
