@@ -48,10 +48,6 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
-	}
-
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
 		opts.WriteAccess = resource.WriteAccessHooks{
 			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
@@ -61,6 +57,10 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 				return true
 			},
 		}
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
 	}
 
 	rs, err := resource.NewResourceServer(opts)
