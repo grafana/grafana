@@ -219,7 +219,7 @@ Experimental features might be changed or removed without prior notice.
 | `playlistsWatcher`                            | Enables experimental watcher for playlists                                                                                                                                                                                                                                        |
 | `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
-| `enableScim`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
+| `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
 
 ## Development feature toggles
 
