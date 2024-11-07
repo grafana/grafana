@@ -15,7 +15,12 @@ import {
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { HeatmapCalculationMode, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
+import {
+  HeatmapCalculationMode,
+  HeatmapCalculationOptions,
+  HeatmapCellLayout,
+  ScaleDistribution,
+} from '@grafana/schema';
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,
@@ -98,46 +103,31 @@ export function prepareHeatmapData({
   });
 
   if (options.calculate) {
-    let optionsCopy: Options = {
-      ...options,
-      calculation: {
-        xBuckets: {
-          ...options.calculation?.xBuckets,
-          mode: options.calculation?.xBuckets?.mode ?? HeatmapCalculationMode.Size,
-        },
-        yBuckets: {
-          ...options.calculation?.yBuckets,
-          mode: options.calculation?.yBuckets?.mode ?? HeatmapCalculationMode.Size,
-          scale: {
-            ...options.calculation?.yBuckets?.scale,
-            type: options.calculation?.yBuckets?.scale?.type ?? ScaleDistribution.Linear,
-          },
-        },
-      },
-    };
+    // if calculate is true, we need to have the default values for the calculation if they don't exist
+    let calculation = getCalculationObjectWithDefaults(options.calculation);
 
     if (config.featureToggles.transformationsVariableSupport) {
-      if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
-        optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
+      if (calculation.xBuckets?.value && replaceVariables !== undefined) {
+        calculation.xBuckets.value = replaceVariables(calculation.xBuckets.value);
       }
 
-      if (optionsCopy.calculation?.yBuckets?.value && replaceVariables !== undefined) {
-        optionsCopy.calculation.yBuckets.value = replaceVariables(optionsCopy.calculation.yBuckets.value);
+      if (calculation?.yBuckets?.value && replaceVariables !== undefined) {
+        calculation.yBuckets.value = replaceVariables(calculation.yBuckets.value);
       }
 
       return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, { ...optionsCopy.calculation, timeRange }),
+        calculateHeatmapFromData(frames, { ...calculation, timeRange }),
         exemplars,
-        optionsCopy,
+        { ...options, calculation: calculation },
         palette,
         theme
       );
     }
 
     return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, { ...optionsCopy.calculation, timeRange }),
+      calculateHeatmapFromData(frames, { ...calculation, timeRange }),
       exemplars,
-      optionsCopy,
+      { ...options, calculation: calculation },
       palette,
       theme
     );
@@ -216,6 +206,23 @@ export function prepareHeatmapData({
     series: rowsHeatmap,
   };
 }
+
+const getCalculationObjectWithDefaults = (calculation?: HeatmapCalculationOptions): HeatmapCalculationOptions => {
+  return {
+    xBuckets: {
+      ...calculation?.xBuckets,
+      mode: calculation?.xBuckets?.mode ?? HeatmapCalculationMode.Size,
+    },
+    yBuckets: {
+      ...calculation?.yBuckets,
+      mode: calculation?.yBuckets?.mode ?? HeatmapCalculationMode.Size,
+      scale: {
+        ...calculation?.yBuckets?.scale,
+        type: calculation?.yBuckets?.scale?.type ?? ScaleDistribution.Linear,
+      },
+    },
+  };
+};
 
 const getSparseHeatmapData = (
   frame: DataFrame,
