@@ -1568,6 +1568,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "preinstallAutoUpdate",
+			Description: "Enables automatic updates for pre-installed plugins",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "dashboardSchemaV2",
 			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
 			Stage:        FeatureStageExperimental,
