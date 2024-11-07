@@ -3,18 +3,15 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func TestSimpleServer(t *testing.T) {
@@ -28,21 +25,7 @@ func TestSimpleServer(t *testing.T) {
 	}
 	ctx := claims.WithClaims(context.Background(), testUserA)
 
-	bucket := memblob.OpenBucket(nil)
-	if false {
-		tmp, err := os.MkdirTemp("", "xxx-*")
-		require.NoError(t, err)
-
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-		fmt.Printf("ROOT: %s\n\n", tmp)
-	}
-	store, err := NewCDKBackend(ctx, CDKBackendOptions{
-		Bucket: bucket,
-	})
+	store, err := NewMemoryBackend()
 	require.NoError(t, err)
 
 	server, err := NewResourceServer(ResourceServerOptions{
@@ -57,6 +40,7 @@ func TestSimpleServer(t *testing.T) {
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
 				"namespace": "default",
+				"uid": "xxxxxx",
 				"annotations": {
 					"grafana.app/originName": "elsewhere",
 					"grafana.app/originPath": "path/to/item",
@@ -172,6 +156,7 @@ func TestSimpleServer(t *testing.T) {
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
 				"namespace": "default",
+				"uid": "dummyuid",
 				"annotations": {
 					"grafana.app/originName": "elsewhere",
 					"grafana.app/originPath": "path/to/item",
