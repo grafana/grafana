@@ -1,6 +1,7 @@
 package azuremonitor
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,8 +31,32 @@ type httpServiceProxy struct {
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	res, err := cli.Do(req)
 	if err != nil {
+		errMsg := fmt.Sprintf("unexpected error %v", err)
+
+		// Locate JSON portion in error message
+		start := strings.Index(errMsg, "{")
+		end := strings.LastIndex(errMsg, "}") + 1
+		if start == -1 || end == -1 {
+			rw.WriteHeader(http.StatusInternalServerError)
+			rw.Write([]byte("Could not extract JSON from error"))
+			return nil, err
+		}
+
+		jsonPart := errMsg[start:end]
+		var jsonData map[string]interface{}
+		if json.Unmarshal([]byte(jsonPart), &jsonData) != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			rw.Write([]byte("Invalid JSON format"))
+			return nil, err
+		}
+
+		errorType, _ := jsonData["error"].(string)
+		errorDescription, _ := jsonData["error_description"].(string)
+		formattedError := fmt.Sprintf("%s: %s", errorType, errorDescription)
+
+		rw.Header().Set("Content-Type", "text/plain")
 		rw.WriteHeader(http.StatusInternalServerError)
-		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
+		_, err = rw.Write([]byte(formattedError))
 		if err != nil {
 			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}
@@ -43,6 +68,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}()
 
+	// Normal response handling
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -52,6 +78,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 		return nil, err
 	}
+
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
@@ -64,7 +91,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 			rw.Header().Add(k, v)
 		}
 	}
-	// Returning the response write for testing purposes
+
 	return rw, nil
 }
 
