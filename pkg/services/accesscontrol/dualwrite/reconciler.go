@@ -43,8 +43,6 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 	// Append shared collectors that is used by both enterprise and oss
 	collectors = append(
 		collectors,
-		managedPermissionsCollector(store),
-		folderTreeCollector(store),
 		basicRolesCollector(store),
 		customRolesCollector(store),
 		basicRoleAssignemtCollector(store),
@@ -62,25 +60,25 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 			newResourceReconciler(
 				"team memberships",
 				teamMembershipCollector(store),
-				zanzanaCollector(client, []string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
+				zanzanaCollector([]string{zanzana.RelationTeamMember, zanzana.RelationTeamAdmin}),
 				client,
 			),
 			newResourceReconciler(
 				"folder tree",
-				folderTreeCollector2(store),
-				zanzanaCollector(client, []string{zanzana.RelationParent}),
+				folderTreeCollector(store),
+				zanzanaCollector([]string{zanzana.RelationParent}),
 				client,
 			),
 			newResourceReconciler(
 				"managed folder permissions",
-				managedPermissionsCollector2(store, zanzana.KindFolders),
-				zanzanaCollector(client, zanzana.Folder2Relations),
+				managedPermissionsCollector(store, zanzana.KindFolders),
+				zanzanaCollector(zanzana.Folder2Relations),
 				client,
 			),
 			newResourceReconciler(
 				"managed dashboard permissions",
-				managedPermissionsCollector2(store, zanzana.KindDashboards),
-				zanzanaCollector(client, zanzana.ResourceRelations),
+				managedPermissionsCollector(store, zanzana.KindDashboards),
+				zanzanaCollector(zanzana.ResourceRelations),
 				client,
 			),
 		},
@@ -163,116 +161,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
 		run(ctx)
 	})
-}
-
-// managedPermissionsCollector collects managed permissions into provided tuple map.
-// It will only store actions that are supported by our schema. Managed permissions can
-// be directly mapped to user/team/role without having to write an intermediate role.
-func managedPermissionsCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		const collectorID = "managed"
-		query := `
-			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
-			FROM permission p
-			INNER JOIN role r ON p.role_id = r.id
-			LEFT JOIN user_role ur ON r.id = ur.role_id
-			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ur.user_id
-			LEFT JOIN team_role tr ON r.id = tr.role_id
-			LEFT JOIN team t ON tr.team_id = t.id
-			LEFT JOIN builtin_role br ON r.id  = br.role_id
-			WHERE r.name LIKE 'managed:%'
-		`
-		type Permission struct {
-			RoleName   string `xorm:"role_name"`
-			OrgID      int64  `xorm:"org_id"`
-			Action     string `xorm:"action"`
-			Kind       string
-			Identifier string
-			UserUID    string `xorm:"user_uid"`
-			TeamUID    string `xorm:"team_uid"`
-		}
-
-		var permissions []Permission
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&permissions)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, p := range permissions {
-			var subject string
-			if len(p.UserUID) > 0 {
-				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
-			} else if len(p.TeamUID) > 0 {
-				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, "member")
-			} else {
-				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
-				continue
-			}
-
-			tuple, ok := zanzana.TranslateToTuple(subject, p.Action, p.Kind, p.Identifier, p.OrgID)
-			if !ok {
-				continue
-			}
-
-			// our "sync key" is a combination of collectorID and action so we can run this
-			// sync new data when more actions are supported
-			key := fmt.Sprintf("%s-%s", collectorID, p.Action)
-			tuples[key] = append(tuples[key], tuple)
-		}
-
-		return nil
-	}
-}
-
-// folderTreeCollector collects folder tree structure and writes it as relation tuples
-func folderTreeCollector(store db.DB) TupleCollector {
-	return func(ctx context.Context, tuples map[string][]*openfgav1.TupleKey) error {
-		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
-		defer span.End()
-
-		const collectorID = "folder"
-		const query = `
-			SELECT uid, parent_uid, org_id FROM folder
-		`
-		type folder struct {
-			OrgID     int64  `xorm:"org_id"`
-			FolderUID string `xorm:"uid"`
-			ParentUID string `xorm:"parent_uid"`
-		}
-
-		var folders []folder
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&folders)
-		})
-
-		if err != nil {
-			return err
-		}
-
-		for _, f := range folders {
-			var tuple *openfgav1.TupleKey
-			if f.ParentUID != "" {
-				tuple = &openfgav1.TupleKey{
-					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
-					Relation: zanzana.RelationParent,
-					User:     zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.ParentUID, "", strconv.FormatInt(f.OrgID, 10)),
-				}
-			} else {
-				// Map root folders to org
-				tuple = &openfgav1.TupleKey{
-					Object:   zanzana.NewScopedTupleEntry(zanzana.TypeFolder, f.FolderUID, "", strconv.FormatInt(f.OrgID, 10)),
-					Relation: zanzana.RelationOrg,
-					User:     zanzana.NewTupleEntry(zanzana.TypeOrg, strconv.FormatInt(f.OrgID, 10), ""),
-				}
-			}
-			tuples[collectorID] = append(tuples[collectorID], tuple)
-		}
-
-		return nil
-	}
 }
 
 // basicRolesCollector migrates basic roles to OpenFGA tuples
