@@ -4,6 +4,8 @@ import { Observable, ReplaySubject } from 'rxjs';
 
 import { Labels, LogLevel } from '@grafana/data';
 
+import { isGrafanaDevMode } from '../utils';
+
 export type ExtensionsLogItem = {
   level: LogLevel;
   timestamp: number;
@@ -32,13 +34,16 @@ export class ExtensionsLog {
   }
 
   warning(message: string, labels?: Labels): void {
-    console.warn(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.warning, message, labels);
+
+    if (isGrafanaDevMode()) {
+      console.warn(message, { ...this.baseLabels, ...labels });
+    }
   }
 
   error(message: string, labels?: Labels): void {
-    console.error(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.error, message, labels);
+    console.error(message, { ...this.baseLabels, ...labels });
   }
 
   debug(message: string, labels?: Labels): void {
