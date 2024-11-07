@@ -1608,6 +1608,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOSSBigTent,
 		},
+		{
+			Name:        "enableSCIM",
+			Description: "Enables SCIM support for user and group management",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+		},
 	}
 )
 
