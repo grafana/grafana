@@ -22,7 +22,7 @@ export function mapSegmentsToSelectables(segments: GraphiteSegment[]): Array<Sel
 }
 
 export function mapFuncDefsToSelectables(funcDefs: FuncDefs): Array<SelectableValue<string>> {
-  const categories: any = {};
+  const categories: Record<string, SelectableValue<string>> = {};
 
   forEach(funcDefs, (funcDef) => {
     if (!funcDef.category) {

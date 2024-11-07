@@ -112,12 +112,15 @@ func newDatasourceVariableLookup(dsLookup DatasourceLookup) *datasourceVariableL
 	}
 }
 
-// nolint:gocyclo
 // ReadDashboard will take a byte stream and return dashboard info
-func readDashboard(stream io.Reader, lookup DatasourceLookup) (*dashboardInfo, error) {
-	dash := &dashboardInfo{}
-
+func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardSummaryInfo, error) {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
+	return readDashboardIter(iter, lookup)
+}
+
+// nolint:gocyclo
+func readDashboardIter(iter *jsoniter.Iterator, lookup DatasourceLookup) (*DashboardSummaryInfo, error) {
+	dash := &DashboardSummaryInfo{}
 
 	datasourceVariablesLookup := newDatasourceVariableLookup(lookup)
 
@@ -129,6 +132,14 @@ func readDashboard(stream io.Reader, lookup DatasourceLookup) (*dashboardInfo, e
 		}
 
 		switch l1Field {
+		// k8s metadata wrappers (skip)
+		case "metadata", "kind", "apiVersion":
+			_ = iter.Read()
+
+		// recursively read the spec as dashboard json
+		case "spec":
+			return readDashboardIter(iter, lookup)
+
 		case "id":
 			dash.ID = iter.ReadInt64()
 
@@ -268,7 +279,12 @@ func readDashboard(stream io.Reader, lookup DatasourceLookup) (*dashboardInfo, e
 	filterOutSpecialDatasources(dash)
 
 	targets := newTargetInfo(lookup)
-	for _, panel := range dash.Panels {
+	for idx, panel := range dash.Panels {
+		if panel.Type == "row" {
+			dash.Panels[idx].Datasource = nil
+			continue
+		}
+
 		targets.addPanel(panel)
 	}
 	dash.Datasource = targets.GetDatasourceInfo()
@@ -276,13 +292,13 @@ func readDashboard(stream io.Reader, lookup DatasourceLookup) (*dashboardInfo, e
 	return dash, iter.Error
 }
 
-func panelRequiresDatasource(panel panelInfo) bool {
+func panelRequiresDatasource(panel PanelSummaryInfo) bool {
 	return panel.Type != "row"
 }
 
-func fillDefaultDatasources(dash *dashboardInfo, lookup DatasourceLookup) {
+func fillDefaultDatasources(dash *DashboardSummaryInfo, lookup DatasourceLookup) {
 	for i, panel := range dash.Panels {
-		if len(panel.Datasource) != 0 || !panelRequiresDatasource(panel) {
+		if len(panel.Datasource) != 0 || !panelRequiresDatasource(PanelSummaryInfo{}) {
 			continue
 		}
 
@@ -293,7 +309,7 @@ func fillDefaultDatasources(dash *dashboardInfo, lookup DatasourceLookup) {
 	}
 }
 
-func filterOutSpecialDatasources(dash *dashboardInfo) {
+func filterOutSpecialDatasources(dash *DashboardSummaryInfo) {
 	for i, panel := range dash.Panels {
 		var dsRefs []DataSourceRef
 
@@ -315,7 +331,7 @@ func filterOutSpecialDatasources(dash *dashboardInfo) {
 	}
 }
 
-func replaceDatasourceVariables(dash *dashboardInfo, datasourceVariablesLookup *datasourceVariableLookup) {
+func replaceDatasourceVariables(dash *DashboardSummaryInfo, datasourceVariablesLookup *datasourceVariableLookup) {
 	for i, panel := range dash.Panels {
 		var dsVariableRefs []DataSourceRef
 		var dsRefs []DataSourceRef
@@ -362,8 +378,8 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // will always return strings for now
-func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) panelInfo {
-	panel := panelInfo{}
+func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) PanelSummaryInfo {
+	panel := PanelSummaryInfo{}
 
 	targets := newTargetInfo(lookup)
 
