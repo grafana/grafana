@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/mattn/go-sqlite3"
+	//"github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/ncruces/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

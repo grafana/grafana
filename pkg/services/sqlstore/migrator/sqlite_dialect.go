@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mattn/go-sqlite3"
+	//"github.com/mattn/go-sqlite3"
+
+	sqlite3 "github.com/ncruces/go-sqlite3"
 	"xorm.io/xorm"
 )
 
@@ -134,7 +136,7 @@ func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
 func (db *SQLite3) isThisError(err error, errcode int) bool {
 	var driverErr sqlite3.Error
 	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == errcode {
+		if int(driverErr.ExtendedCode()) == errcode {
 			return true
 		}
 	}
@@ -144,14 +146,14 @@ func (db *SQLite3) isThisError(err error, errcode int) bool {
 
 func (db *SQLite3) ErrorMessage(err error) string {
 	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
+	if driverErr.As(err) {
 		return driverErr.Error()
 	}
 	return ""
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+	return db.isThisError(err, int(sqlite3.CONSTRAINT_UNIQUE)) || db.isThisError(err, int(sqlite3.CONSTRAINT_PRIMARYKEY))
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

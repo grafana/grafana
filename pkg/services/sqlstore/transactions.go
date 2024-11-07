@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
+	//"github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/ncruces/go-sqlite3"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -65,7 +66,7 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
 	var sqlError sqlite3.Error
-	if errors.As(err, &sqlError) && retry < ss.dbCfg.TransactionRetries && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+	if errors.As(err, &sqlError) && retry < ss.dbCfg.TransactionRetries && (sqlError.Code() == sqlite3.LOCKED || sqlError.Code() == sqlite3.BUSY) {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
 		}

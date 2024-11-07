@@ -2,12 +2,12 @@ package sqlstore
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
+	//"github.com/mattn/go-sqlite3"
+	sqlite3 "github.com/ncruces/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -89,7 +89,7 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 		ctxLogger := tsclogger.FromContext(ctx)
 
 		var sqlError sqlite3.Error
-		if errors.As(err, &sqlError) && (sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy) {
+		if sqlError.As(err) && (sqlError.Code() == sqlite3.LOCKED || sqlError.Code() == sqlite3.BUSY) {
 			ctxLogger.Info("Database locked, sleeping then retrying", "error", err, "retry", retry, "code", sqlError.Code)
 			// retryer immediately returns the error (if there is one) without checking the response
 			// therefore we only have to send it if we have reached the maximum retries
