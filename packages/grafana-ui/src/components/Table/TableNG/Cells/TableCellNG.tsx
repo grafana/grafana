@@ -27,7 +27,9 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
+      cell = (
+        <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} rowIdx={rowIdx} />
+      );
       break;
     case TableCellDisplayMode.Auto:
     default:

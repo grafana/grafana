@@ -174,7 +174,7 @@ export function TableNG(props: TableNGProps) {
           return 'my-class';
         },
         renderCell: (props: any) => {
-          const { row } = props;
+          const { row, rowIdx } = props;
           const value = row[key];
 
           // Cell level rendering here
@@ -187,7 +187,7 @@ export function TableNG(props: TableNGProps) {
               timeRange={timeRange}
               height={rowHeight()}
               justifyContent={justifyColumnContent}
-              {...props}
+              rowIdx={rowIdx}
             />
           );
         },
