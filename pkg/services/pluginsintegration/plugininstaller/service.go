@@ -130,7 +130,7 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 		return false
 	}
 
-	// In other case, we should update the plugin
+	// We should update the plugin
 	return true
 }
 

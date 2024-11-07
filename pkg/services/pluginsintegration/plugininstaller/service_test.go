@@ -43,7 +43,7 @@ func TestService_Run(t *testing.T) {
 		name             string
 		shouldInstall    bool
 		pluginsToInstall []setting.InstallPlugin
-		existinPlugins   []*plugins.Plugin
+		existingPlugins  []*plugins.Plugin
 		pluginsToFail    []string
 		blocking         bool
 		latestPlugin     *repo.PluginArchiveInfo
@@ -62,13 +62,13 @@ func TestService_Run(t *testing.T) {
 			name:             "Skips already installed plugin",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			existinPlugins:   []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin"}}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin"}}},
 		},
 		{
 			name:             "Still installs a plugin if the plugin version does not match",
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
-			existinPlugins:   []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 		},
 		{
 			name:             "Install multiple plugins",
@@ -98,28 +98,28 @@ func TestService_Run(t *testing.T) {
 			name:             "Updates a plugin",
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existinPlugins:   []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.1"},
 		},
 		{
 			name:             "Should not update a plugin if the latest version is installed",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existinPlugins:   []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0"},
 		},
 		{
 			name:             "Should not update a plugin if the latest version is a major version",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existinPlugins:   []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "2.0.0"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			preg := registry.NewInMemory()
-			for _, plugin := range tt.existinPlugins {
+			for _, plugin := range tt.existingPlugins {
 				err := preg.Add(context.Background(), plugin)
 				require.NoError(t, err)
 			}
