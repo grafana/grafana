@@ -110,6 +110,7 @@
     "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
+      "custom-template-value": "Custom template value",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
         "no-permissions": "You do not have the required permission to delete this contact point",
@@ -458,11 +459,17 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": "An error occurred while loading options."
+    },
     "clear": {
       "title": "Clear value"
     },
     "custom-value": {
       "create": "Create custom value"
+    },
+    "options": {
+      "no-found": "No options found."
     }
   },
   "command-palette": {
@@ -625,8 +632,7 @@
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization",
-      "widget": "Widget"
+      "visualization": "Visualization"
     },
     "alert-rules-drawer": {
       "redirect-link": "List in Grafana Alerting",
@@ -639,9 +645,6 @@
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
-      "add-widget-body": "Create lists, markdowns and other widgets",
-      "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget",
       "import-a-dashboard-body": "Import dashboards from files or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
@@ -1060,7 +1063,15 @@
     "breakdown": {
       "clearFilter": "Clear filter",
       "labelSelect": "Select",
-      "noMatchingValue": "No values found matching; {{filter}}"
+      "noMatchingValue": "No values found matching; {{filter}}",
+      "sortBy": "Sort by"
+    },
+    "related-logs": {
+      "docsLink": "Loki Recording Rule",
+      "openExploreLogs": "Open Explore Logs",
+      "relatedLogsUnavailableAfterDocsLink": ", or check back later as we expand the various methods for establishing connections between metrics and logs.",
+      "relatedLogsUnavailableBeforeDocsLink": "Related logs are not available for this metric. Try selecting a metric created by a ",
+      "warnExperimentalFeature": "Related logs is an experimental feature."
     },
     "viewBy": "View by"
   },
@@ -1563,6 +1574,7 @@
       "title": "Let us help you migrate to this stack"
     },
     "migrated-counts": {
+      "alert_rules": "alert rules",
       "contact_points": "contact points",
       "dashboards": "dashboards",
       "datasources": "data sources",
@@ -1627,6 +1639,7 @@
       "dismiss-button": "OK",
       "error-messages": {
         "dashboard-already-managed": "Dashboard is already provisioned and managed by Grafana in the cloud instance. We recommend using the provisioned dashboard going forward. If you still wish to copy the dashboard to the cloud instance, then change the dashboard ID in the dashboard JSON, save a new snapshot and upload again.",
+        "datasource-already-managed": "Data source is already provisioned and managed by Grafana in the cloud instance. If this is a different resource, set another UID and try again.",
         "datasource-invalid-url": "There is a data source which has an invalid URL. Provide a valid URL and try again.",
         "datasource-name-conflict": "There is a data source with the same name in the target instance. Rename one of them and try again.",
         "folder-name-conflict": "There is a folder with the same name in the target instance. Rename one of them and try again.",
@@ -1663,6 +1676,7 @@
       "unknown-datasource-type": "Unknown data source"
     },
     "resource-type": {
+      "alert_rule": "Alert Rule",
       "contact_point": "Contact Point",
       "dashboard": "Dashboard",
       "datasource": "Data source",
@@ -2176,6 +2190,12 @@
         "name-header": "Name",
         "update-header": "Update",
         "update-status-text": "plugins updated"
+      },
+      "versions": {
+        "confirmation-text-1": "Are you really sure you want to downgrade to version",
+        "confirmation-text-2": "You should normally not be doing this",
+        "downgrade-confirm": "Downgrade",
+        "downgrade-title": "Downgrade plugin version"
       }
     },
     "details": {
@@ -2185,12 +2205,13 @@
         "downloads": "Downloads",
         "from": "From",
         "installedVersion": "Installed version: ",
+        "lastCommitDate": "Last commit date:",
         "latestVersion": "Latest version: ",
         "links": "Links ",
         "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
-        "updatedAt": "Last updated: ",
+        "updatedAt": "Last updated:",
         "version": "Version"
       }
     },
@@ -2894,12 +2915,23 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": "You haven't created any bookmarks yet. Use the Explore Metrics bookmarks feature to save your panels as bookmarks."
+      "or-view-bookmarks": "Or view bookmarks"
+    },
+    "card": {
+      "data-source": "Data source: ",
+      "date-created": "Date created: ",
+      "metric": "Metric:"
+    },
+    "home": {
+      "learn-more": "Learn more",
+      "lets-start": "Let's start!",
+      "start-your-metrics-exploration": "Start your metrics exploration!",
+      "subtitle": "Explore your Prometheus-compatible metrics without writing a query."
     },
     "metric-overview": {
       "description-label": "Description",
       "labels": "Labels",
-      "metric-attributes": "Metric attributes",
+      "metric-attributes": "Attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
@@ -2908,6 +2940,9 @@
     "metric-select": {
       "filter-by": "Filter by",
       "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": "Or view a recent exploration"
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",

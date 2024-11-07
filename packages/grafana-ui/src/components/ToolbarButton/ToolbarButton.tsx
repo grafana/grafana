@@ -166,10 +166,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-      '&:hover': {
-        boxShadow: theme.shadows.z1,
-      },
-
       '&[disabled], &:disabled': {
         cursor: 'not-allowed',
         opacity: theme.colors.action.disabledOpacity,
@@ -190,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         color: theme.colors.text.primary,
-        background: theme.colors.background.secondary,
+        background: theme.colors.action.hover,
       },
     }),
     canvas: defaultOld,

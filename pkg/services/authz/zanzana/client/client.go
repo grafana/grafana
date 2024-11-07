@@ -6,15 +6,21 @@ import (
 	"fmt"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/claims"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
+
+var _ authz.AccessClient = (*Client)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
@@ -32,16 +38,12 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
-func WithSchema(modules []transformer.ModuleFile) ClientOption {
-	return func(c *Client) {
-		c.modules = modules
-	}
-}
-
 type Client struct {
 	logger   log.Logger
-	client   openfgav1.OpenFGAServiceClient
-	modules  []transformer.ModuleFile
+	openfga  openfgav1.OpenFGAServiceClient
+	authz    authzv1.AuthzServiceClient
+	authzext authzextv1.AuthzExtentionServiceClient
+
 	tenantID string
 	storeID  string
 	modelID  string
@@ -49,7 +51,9 @@ type Client struct {
 
 func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		client: openfgav1.NewOpenFGAServiceClient(cc),
+		openfga:  openfgav1.NewOpenFGAServiceClient(cc),
+		authz:    authzv1.NewAuthzServiceClient(cc),
+		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
 	}
 
 	for _, o := range opts {
@@ -61,21 +65,17 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	}
 
 	if c.tenantID == "" {
-		c.tenantID = "stack-default"
+		c.tenantID = "stacks-default"
 	}
 
-	if len(c.modules) == 0 {
-		c.modules = schema.SchemaModules
-	}
-
-	store, err := c.getOrCreateStore(ctx, c.tenantID)
+	store, err := c.getStore(ctx, c.tenantID)
 	if err != nil {
 		return nil, err
 	}
 
 	c.storeID = store.GetId()
 
-	modelID, err := c.loadModel(ctx, c.storeID, c.modules)
+	modelID, err := c.loadModel(ctx, c.storeID)
 	if err != nil {
 		return nil, err
 	}
@@ -85,13 +85,70 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 	return c, nil
 }
 
-func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+// Check implements authz.AccessClient.
+func (c *Client) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
+	res, err := c.authz.Check(ctx, &authzv1.CheckRequest{
+		Subject:     id.GetUID(),
+		Verb:        req.Verb,
+		Group:       req.Group,
+		Resource:    req.Resource,
+		Namespace:   req.Namespace,
+		Name:        req.Name,
+		Subresource: req.Subresource,
+		Path:        req.Path,
+		Folder:      req.Folder,
+	})
+
+	if err != nil {
+		return authz.CheckResponse{}, err
+	}
+
+	return authz.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
+func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Compile")
+	defer span.End()
+
+	_, err := c.authzext.List(ctx, &authzextv1.ListRequest{
+		Subject:   id.GetUID(),
+		Group:     req.Group,
+		Verb:      utils.VerbList,
+		Resource:  req.Resource,
+		Namespace: req.Namespace,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// FIXME: implement checker
+	return func(namespace, name, folder string) bool { return false }, nil
+}
+
+func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
+	defer span.End()
+
+	return c.authzext.List(ctx, &authzextv1.ListRequest{
+		Subject:   id.GetUID(),
+		Group:     req.Group,
+		Verb:      utils.VerbList,
+		Resource:  req.Resource,
+		Namespace: req.Namespace,
+	})
+}
+
+func (c *Client) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.CheckObject")
 	defer span.End()
 
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	return c.client.Check(ctx, in)
+	return c.openfga.Check(ctx, in)
 }
 
 func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
@@ -99,7 +156,7 @@ func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav
 	defer span.End()
 
 	in.StoreId = c.storeID
-	return c.client.Read(ctx, in)
+	return c.openfga.Read(ctx, in)
 }
 
 func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
@@ -109,32 +166,14 @@ func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsReque
 
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	return c.client.ListObjects(ctx, in)
+	return c.openfga.ListObjects(ctx, in)
 }
 
 func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
-	_, err := c.client.Write(ctx, in)
+	_, err := c.openfga.Write(ctx, in)
 	return err
-}
-
-func (c *Client) getOrCreateStore(ctx context.Context, name string) (*openfgav1.Store, error) {
-	store, err := c.getStore(ctx, name)
-
-	if errors.Is(err, errStoreNotFound) {
-		var res *openfgav1.CreateStoreResponse
-		res, err = c.client.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: name})
-		if res != nil {
-			store = &openfgav1.Store{
-				Id:        res.GetId(),
-				Name:      res.GetName(),
-				CreatedAt: res.GetCreatedAt(),
-			}
-		}
-	}
-
-	return store, err
 }
 
 var errStoreNotFound = errors.New("store not found")
@@ -146,7 +185,7 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	// We should create an issue to support some way to get stores by name.
 	// For now we need to go thourh all stores until we find a match or we hit the end.
 	for {
-		res, err := c.client.ListStores(ctx, &openfgav1.ListStoresRequest{
+		res, err := c.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
 			PageSize:          &wrapperspb.Int32Value{Value: 20},
 			ContinuationToken: continuationToken,
 		})
@@ -170,52 +209,21 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	}
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
-	var continuationToken string
-
-	model, err := schema.TransformModulesToModel(modules)
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
-		// So with a pageSize of 1 we will get the latest model.
-		res, err := c.client.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
-			StoreId:           storeID,
-			PageSize:          &wrapperspb.Int32Value{Value: 20},
-			ContinuationToken: continuationToken,
-		})
-
-		if err != nil {
-			return "", fmt.Errorf("failed to load authorization model: %w", err)
-		}
-
-		for _, m := range res.GetAuthorizationModels() {
-			// If provided dsl is equal to a stored dsl we use that as the authorization id
-			if schema.EqualModels(m, model) {
-				return m.GetId(), nil
-			}
-		}
-
-		// If we have not found any matching authorization model we break the loop and create a new one
-		if res.GetContinuationToken() == "" {
-			break
-		}
-
-		continuationToken = res.GetContinuationToken()
-	}
-
-	writeRes, err := c.client.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{
-		StoreId:         c.storeID,
-		TypeDefinitions: model.GetTypeDefinitions(),
-		SchemaVersion:   model.GetSchemaVersion(),
-		Conditions:      model.GetConditions(),
+func (c *Client) loadModel(ctx context.Context, storeID string) (string, error) {
+	// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
+	// So with a pageSize of 1 we will get the latest model.
+	res, err := c.openfga.ReadAuthorizationModels(ctx, &openfgav1.ReadAuthorizationModelsRequest{
+		StoreId:  storeID,
+		PageSize: &wrapperspb.Int32Value{Value: 1},
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to load authorization model: %w", err)
+		return "", fmt.Errorf("failed to load latest authorization model: %w", err)
 	}
 
-	return writeRes.GetAuthorizationModelId(), nil
+	if len(res.AuthorizationModels) != 1 {
+		return "", fmt.Errorf("failed to load latest authorization model")
+	}
+
+	return res.AuthorizationModels[0].GetId(), nil
 }

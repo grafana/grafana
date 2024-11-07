@@ -73,8 +73,8 @@ export const PluginActions = ({ plugin }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    message: css`
-      color: ${theme.colors.text.secondary};
-    `,
+    message: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };

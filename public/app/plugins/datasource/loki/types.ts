@@ -66,6 +66,7 @@ export type DerivedFieldConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
   matcherType?: 'label' | 'regex';
+  targetBlank?: boolean;
 };
 
 export enum LokiVariableQueryType {
