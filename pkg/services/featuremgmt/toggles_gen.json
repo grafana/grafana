@@ -1233,6 +1233,18 @@
     },
     {
       "metadata": {
+        "name": "enableSCIM",
+        "resourceVersion": "1730980484343",
+        "creationTimestamp": "2024-11-07T11:54:44Z"
+      },
+      "spec": {
+        "description": "Enables SCIM support for user and group management",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "enableScopesInMetricsExplore",
         "resourceVersion": "1729765731452",
         "creationTimestamp": "2024-10-24T10:28:51Z"

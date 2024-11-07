@@ -214,3 +214,4 @@ playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,fal
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 zipkinBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
+enableSCIM,experimental,@grafana/identity-access-team,false,false,false
