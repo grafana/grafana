@@ -100,8 +100,8 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    disabled: css`
-      color: ${theme.colors.text.secondary};
-    `,
+    disabled: css({
+      color: theme.colors.text.secondary,
+    }),
   };
 };

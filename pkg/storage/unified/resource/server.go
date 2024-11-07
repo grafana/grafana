@@ -75,6 +75,8 @@ type StorageBackend interface {
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
+
+	Namespaces(ctx context.Context) ([]string, error)
 }
 
 // This interface is not exposed to end users directly
@@ -182,7 +184,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 			UserID:         1,
 			IsGrafanaAdmin: true,
 		}))
-	return &server{
+	s := &server{
 		tracer:      opts.Tracer,
 		log:         logger,
 		backend:     opts.Backend,
@@ -194,7 +196,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
-	}, nil
+	}
+
+	return s, nil
 }
 
 var _ ResourceServer = &server{}
@@ -542,6 +546,9 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "storage_server.List")
+	defer span.End()
+
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
@@ -762,6 +769,10 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 
 // Index returns the search index. If the index is not initialized, it will be initialized.
 func (s *server) Index(ctx context.Context) (*Index, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
 	index := s.index.(*IndexServer)
 	if index.index == nil {
 		err := index.Init(ctx, s)

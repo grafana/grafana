@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 
 import {
+  addDropToQuery,
   addLabelFormatToQuery,
   addLabelToQuery,
   addLineFilter,
@@ -202,6 +203,44 @@ describe('addLabelFormatToQuery', () => {
     ).toBe(
       'rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m]) + rate({job="grafana"} | logfmt | label_format a=b | label_format level=lvl [5m])'
     );
+  });
+});
+
+describe('addDropToQuery', () => {
+  describe('when query has a line filter', () => {
+    it('should add drop after the line filter', () => {
+      expect(addDropToQuery('{job="grafana"} |= "error"', ['__stream_shard__'])).toBe(
+        '{job="grafana"} |= "error" | drop __stream_shard__'
+      );
+    });
+
+    it('should add the parser after multiple line filters', () => {
+      expect(addDropToQuery('{job="grafana"} |= "error" |= "info" |= "debug"', ['label1', 'label2'])).toBe(
+        '{job="grafana"} |= "error" |= "info" |= "debug" | drop label1, label2'
+      );
+    });
+  });
+
+  describe('when the query has no line filters', () => {
+    it('should add the parser after the log stream selector in logs query', () => {
+      expect(addDropToQuery('{job="grafana"}', ['label1', 'label2'])).toBe('{job="grafana"} | drop label1, label2');
+    });
+
+    it('should add the parser after the log stream selector in a metric query', () => {
+      expect(addDropToQuery('rate({job="grafana"} [5m])', ['__stream_shard__'])).toBe(
+        'rate({job="grafana"} | drop __stream_shard__ [5m])'
+      );
+    });
+
+    it('should modify all metric queries', () => {
+      expect(
+        addDropToQuery('sum(count_over_time({job="grafana"} [5m])) + sum(count_over_time({job="grafana"} [5m]))', [
+          '__stream_shard__',
+        ])
+      ).toBe(
+        'sum(count_over_time({job="grafana"} | drop __stream_shard__ [5m])) + sum(count_over_time({job="grafana"} | drop __stream_shard__ [5m]))'
+      );
+    });
   });
 });
 

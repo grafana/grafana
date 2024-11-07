@@ -22,23 +22,28 @@ type IndexedResource struct {
 	UpdatedAt string
 	UpdatedBy string
 	FolderId  string
-	Spec      any
+	Spec      map[string]any
+}
+
+type IndexResults struct {
+	Values []IndexedResource
+	Groups []*Group
 }
 
 func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResource {
-	ir.Uid = hit.Fields["Uid"].(string)
-	ir.Kind = hit.Fields["Kind"].(string)
-	ir.Name = hit.Fields["Name"].(string)
-	ir.Namespace = hit.Fields["Namespace"].(string)
-	ir.Group = hit.Fields["Group"].(string)
-	ir.CreatedAt = hit.Fields["CreatedAt"].(string)
-	ir.CreatedBy = hit.Fields["CreatedBy"].(string)
-	ir.UpdatedAt = hit.Fields["UpdatedAt"].(string)
-	ir.UpdatedBy = hit.Fields["UpdatedBy"].(string)
-	ir.Title = hit.Fields["Title"].(string)
+	ir.Uid = fieldValue("Uid", hit)
+	ir.Kind = fieldValue("Kind", hit)
+	ir.Name = fieldValue("Name", hit)
+	ir.Namespace = fieldValue("Namespace", hit)
+	ir.Group = fieldValue("Group", hit)
+	ir.CreatedAt = fieldValue("CreatedAt", hit)
+	ir.CreatedBy = fieldValue("CreatedBy", hit)
+	ir.UpdatedAt = fieldValue("UpdatedAt", hit)
+	ir.UpdatedBy = fieldValue("UpdatedBy", hit)
+	ir.Title = fieldValue("Title", hit)
 
 	// add indexed spec fields to search results
-	specResult := map[string]interface{}{}
+	specResult := map[string]any{}
 	for k, v := range hit.Fields {
 		if strings.HasPrefix(k, "Spec.") {
 			specKey := strings.TrimPrefix(k, "Spec.")
@@ -50,11 +55,16 @@ func (ir IndexedResource) FromSearchHit(hit *search.DocumentMatch) IndexedResour
 	return ir
 }
 
+func fieldValue(field string, hit *search.DocumentMatch) string {
+	if val, ok := hit.Fields[field]; ok {
+		return val.(string)
+	}
+	return ""
+}
+
 // NewIndexedResource creates a new IndexedResource from a raw resource.
 // rawResource is the raw json for the resource from unified storage.
 func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
-	ir := &IndexedResource{}
-
 	k8sObj := unstructured.Unstructured{}
 	err := k8sObj.UnmarshalJSON(rawResource)
 	if err != nil {
@@ -66,6 +76,7 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 		return nil, err
 	}
 
+	ir := &IndexedResource{}
 	ir.Uid = string(meta.GetUID())
 	ir.Name = meta.GetName()
 	ir.Title = meta.FindTitle("")
@@ -88,7 +99,10 @@ func NewIndexedResource(rawResource []byte) (*IndexedResource, error) {
 	if err != nil {
 		return nil, err
 	}
-	ir.Spec = spec
+	specValues, ok := spec.(map[string]any)
+	if ok {
+		ir.Spec = specValues
+	}
 
 	return ir, nil
 }
@@ -149,30 +163,7 @@ type SpecFieldMapping struct {
 // Right now we are hardcoding which spec fields to index for each kind
 // In the future, which fields to index will be defined on the resources themselves by their owners.
 func getSpecObjectMappings() map[string][]SpecFieldMapping {
-	mappings := map[string][]SpecFieldMapping{
-		"Playlist": {
-			{
-				Field: "interval",
-				Type:  "string",
-			},
-			{
-				Field: "title",
-				Type:  "string",
-			},
-		},
-		"Folder": {
-			{
-				Field: "title",
-				Type:  "string",
-			},
-			{
-				Field: "description",
-				Type:  "string",
-			},
-		},
-	}
-
-	return mappings
+	return specMappings
 }
 
 // Generate the spec field mapping for a given kind
@@ -189,7 +180,7 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 
 		// Create a field mapping based on field type
 		switch fieldType {
-		case "string":
+		case "string", "string[]":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewTextFieldMapping())
 		case "int", "int64", "float64":
 			specMapping.AddFieldMappingsAt(fieldName, bleve.NewNumericFieldMapping())
@@ -204,4 +195,59 @@ func createSpecObjectMapping(kind string) *mapping.DocumentMapping {
 	}
 
 	return specMapping
+}
+
+func IsSpecField(field string) bool {
+	field = strings.TrimPrefix(field, "-")
+	_, ok := specFields[field]
+	return ok
+}
+
+var specFields = mapSpecFields()
+
+func mapSpecFields() map[string]bool {
+	fields := map[string]bool{}
+	for _, mappings := range specMappings {
+		for _, m := range mappings {
+			fields[m.Field] = true
+		}
+	}
+	return fields
+}
+
+var specMappings = map[string][]SpecFieldMapping{
+	"Playlist": {
+		{
+			Field: "interval",
+			Type:  "string",
+		},
+		{
+			Field: "title",
+			Type:  "string",
+		},
+	},
+	"Folder": {
+		{
+			Field: "title",
+			Type:  "string",
+		},
+		{
+			Field: "description",
+			Type:  "string",
+		},
+	},
+	"Dashboard": {
+		{
+			Field: "title",
+			Type:  "string",
+		},
+		{
+			Field: "description",
+			Type:  "string",
+		},
+		{
+			Field: "tags",
+			Type:  "string[]",
+		},
+	},
 }

@@ -3,10 +3,10 @@ import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 import { AccessControlAction } from 'app/types';
@@ -118,18 +118,19 @@ function FolderCreationModal({
   onCreate: (folder: Folder) => void;
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
+  const appNotification = useAppNotification();
 
   const [title, setTitle] = useState('');
   const onSubmit = async () => {
     const newFolder = await createFolder({ title: title });
     if (!newFolder.uid) {
-      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
+      appNotification.error('Folder could not be created');
       return;
     }
 
     const folder: Folder = { title: newFolder.title, uid: newFolder.uid };
     onCreate(folder);
-    appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+    appNotification.success('Folder created');
   };
 
   const error = containsSlashes(title);
