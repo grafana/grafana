@@ -214,7 +214,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       name: 'Alert States',
     });
   }
-  console.log(config);
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
     editable: oldModel.editable,
@@ -226,6 +225,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     tags: oldModel.tags || [],
     title: oldModel.title,
     uid: oldModel.uid,
+    reportPerformanceMetrics: dto.reportPerformanceMetrics ?? false,
     version: oldModel.version,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
@@ -248,7 +248,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         sync: oldModel.graphTooltip,
       }),
       new behaviors.SceneQueryController({
-        enableProfiling: config.dashboardPerformanceMetrics, // TODO config for this
+        enableProfiling: config.dashboardPerformanceMetrics && dto.reportPerformanceMetrics, // TODO config for this
         onProfileComplete: getDashboardInteractionCallback(oldModel.uid),
       }),
       registerDashboardMacro,

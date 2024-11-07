@@ -126,6 +126,8 @@ export interface DashboardSceneState extends SceneObjectState {
   panelSearch?: string;
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
+  /** Report performance mterics to Faro */
+  reportPerformanceMetrics?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {

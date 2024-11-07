@@ -166,12 +166,16 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ preload });
   };
 
+  public onReportPerformanceMetricsChange = (reportPerformanceMetrics: boolean) => {
+    this._dashboard.setState({ reportPerformanceMetrics });
+  };
+
   public onDeleteDashboard = () => {};
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const dashboard = model.getDashboard();
     const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
-    const { title, description, tags, meta, editable } = dashboard.useState();
+    const { title, description, tags, meta, editable, reportPerformanceMetrics } = dashboard.useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker().useState();
@@ -291,6 +295,23 @@ export class GeneralSettingsEditView
               />
             </Field>
           </CollapsableSection>
+
+          {config.dashboardPerformanceMetrics && (
+            <CollapsableSection label={t('dashboard-settings.general.metrics-label', 'Metrics')} isOpen={true}>
+              <Field
+                label={t('dashboard-settings.general.track-performance-metrics', 'Track performance metrics')}
+                description={t(
+                  'dashboard-settings.general.track-performance-metrics-description',
+                  'Records performance metrics for this dashboard and reports to Faro'
+                )}
+              >
+                <Switch
+                  onChange={(e) => model.onReportPerformanceMetricsChange(e.currentTarget.checked)}
+                  value={reportPerformanceMetrics}
+                />
+              </Field>
+            </CollapsableSection>
+          )}
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
         </div>

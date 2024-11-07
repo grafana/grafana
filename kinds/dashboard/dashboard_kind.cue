@@ -61,6 +61,9 @@ lineage: schemas: [{
 			// The month that the fiscal year starts on.  0 = January, 11 = December
 			fiscalYearStartMonth?: uint8 & <12 | *0
 
+			// Enable reporting of dashboard performance metrics
+			reportPerformanceMetrics?: bool
+
 			// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 			// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 			// avoid dashboards presenting stale live data
