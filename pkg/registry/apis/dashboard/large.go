@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func newDashboardLargeObjectSupport() apistore.LargeObjectSupport {
+func newDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboard.DashboardResourceInfo.GroupResource(),
 
