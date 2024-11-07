@@ -11,9 +11,12 @@ export function isSharedWithMe(uid: string) {
   return uid === config.sharedWithMeFolderUID;
 }
 
-// Append orgId to the folder URL
-export function getFolderURL(url: string) {
+// Construct folder URL and append orgId to it
+export function getFolderURL(uid: string) {
   const { orgId } = contextSrv.user;
+  const subUrlPrefix = config.appSubUrl ?? '';
+  const url = `${subUrlPrefix}/dashboards/f/${uid}/`;
+
   if (orgId) {
     return `${url}?orgId=${orgId}`;
   }

@@ -12,7 +12,7 @@ import { Indent } from '../../../core/components/Indent/Indent';
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeCellProps } from '../types';
 
-import { getFolderURL, makeRowID } from './utils';
+import { makeRowID } from './utils';
 
 const CHEVRON_SIZE = 'md';
 const ICON_SIZE = 'sm';
@@ -93,7 +93,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID }: Nam
               onClick={() => {
                 reportInteraction('manage_dashboards_result_clicked');
               }}
-              href={getFolderURL(item.url)}
+              href={item.url}
               className={styles.link}
             >
               {item.title}
