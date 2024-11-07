@@ -27,6 +27,7 @@ export interface AlertManagerManualRouting {
 
 export interface SimplifiedEditor {
   simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
 }
 
 export interface RuleFormValues {

@@ -69,6 +69,7 @@ export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
 export const SIMPLIFIED_QUERY_EDITOR_KEY = 'grafana.alerting.simplifiedQueryEditor';
+export const SIMPLIFIED_NOTIFICATION_STEP_KEY = 'grafana.alerting.simplifiedNotificationStep';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
@@ -132,10 +133,12 @@ function getDefaultEditorSettings() {
   if (!editorSettingsEnabled) {
     return undefined;
   }
-  //then, check in local storage if the user has saved last rule with simplified query editor
+  //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = localStorage.getItem(SIMPLIFIED_NOTIFICATION_STEP_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
+    simplifiedNotificationEditor: notificationStepSettings !== 'false',
   };
 }
 
@@ -225,6 +228,7 @@ export function getNotificationSettingsForDTO(
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+    simplified_notification_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
@@ -344,11 +348,13 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+      simplifiedNotificationEditor: ga.metadata.editor_settings.simplified_notification_section,
     };
   }
 
   return {
     simplifiedQueryEditor: false,
+    simplifiedNotificationEditor: Boolean(ga.notification_settings), // in case this rule was created before the new field was added, we'll default to current routing settings
   };
 }
 
