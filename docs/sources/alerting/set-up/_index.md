@@ -7,7 +7,7 @@ labels:
   products:
     - oss
 menuTitle: Advanced configuration
-title: Advanced configuration
+title: Additional configuration
 weight: 160
 refs:
   terraform-provisioning:
@@ -49,7 +49,7 @@ refs:
     - destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/
 ---
 
-# Advanced configuration
+# Additional configuration
 
 Grafana Alerting offers a variety of advanced configuration options to further tailor your alerting setup. These optional features include configuring up permissions and role-based access control, adding external Alertmanagers, or defining your alerting setup as code. While not essential for basic alerting, these options can enhance security, scalability, and automation in complex environments.
 
@@ -58,7 +58,7 @@ The following topics provide you with advanced configuration options for Grafana
 - [Configure roles and permissions](ref:alerting-permissions)
 - [Configure RBAC](ref:alerting-rbac)
 - [Configure alert state history](ref:alert-state-history)
-- [Provision alert rules using file provisioning](ref:file-provisioning)
-- [Provision alert rules using Terraform](ref:terraform-provisioning)
-- [Add an external Alertmanager](ref:configure-alertmanager)
+- [Use configuration files to provision](ref:file-provisioning)
+- [Use Terraform to provision](ref:terraform-provisioning)
+- [Configure Alertmanagers](ref:configure-alertmanager)
 - [Configure high availability](ref:configure-high-availability)
