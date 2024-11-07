@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -43,8 +44,16 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 			URL:      latestForArch.URL,
 		}, nil
 	}
+	constraint, err := semver.NewConstraint(version)
+	if err != nil {
+		log.Debugf("Failed to parse version as a constraint %s for plugin %s", version, pluginID)
+	}
 	for _, v := range versions {
-		if v.Version == version {
+		parsedVersion, err := semver.NewVersion(v.Version)
+		if err != nil {
+			log.Debugf("Failed to parse version %s for plugin %s", v.Version, pluginID)
+		}
+		if v.Version == version || (constraint != nil && parsedVersion != nil && constraint.Check(parsedVersion)) {
 			ver = v
 			break
 		}

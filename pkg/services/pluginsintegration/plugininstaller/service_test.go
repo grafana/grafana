@@ -69,6 +69,7 @@ func TestService_Run(t *testing.T) {
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.1"},
 		},
 		{
 			name:             "Install multiple plugins",
@@ -114,6 +115,13 @@ func TestService_Run(t *testing.T) {
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
 			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "2.0.0"},
+		},
+		{
+			name:             "Updates a plugin when the version is a range",
+			shouldInstall:    true,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: "> 1.0.0"}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.1"},
 		},
 	}
 	for _, tt := range tests {

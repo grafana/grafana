@@ -101,8 +101,14 @@ func (s *Service) installPluginsWithTimeout() error {
 	}
 }
 
-func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion string) bool {
-	info, err := s.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, "", repo.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH))
+func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion, targetVersion string) bool {
+	// If the targetVersion is already installed, skip the update
+	if currentVersion == targetVersion {
+		s.log.Debug("Plugin already installed", "pluginId", pluginID, "version", currentVersion)
+		return false
+	}
+
+	info, err := s.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, targetVersion, repo.NewCompatOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH))
 	if err != nil {
 		s.log.Error("Failed to get plugin info", "pluginId", pluginID, "error", err)
 		return false
@@ -141,21 +147,14 @@ func (s *Service) installPlugins(ctx context.Context) error {
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
-			// If it's installed, check if we are looking for a specific version
-			if p.Info.Version == installPlugin.Version {
-				s.log.Debug("Plugin already installed", "pluginId", installPlugin.ID, "version", installPlugin.Version)
+			if !s.features.IsEnabled(ctx, featuremgmt.FlagPreinstallAutoUpdate) {
+				// Skip updating the plugin if the feature flag is disabled
 				continue
 			}
-			if installPlugin.Version == "" {
-				if !s.features.IsEnabled(ctx, featuremgmt.FlagPreinstallAutoUpdate) {
-					// Skip updating the plugin if the feature flag is disabled
-					continue
-				}
-				// The plugin is installed but it's not pinned to a specific version
-				// Check if there is a newer version available
-				if !s.shouldUpdate(ctx, installPlugin.ID, p.Info.Version) {
-					continue
-				}
+			// The plugin is installed but it's not pinned to a specific version
+			// Check if there is a newer version available
+			if !s.shouldUpdate(ctx, installPlugin.ID, p.Info.Version, installPlugin.Version) {
+				continue
 			}
 		}
 

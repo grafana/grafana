@@ -73,4 +73,13 @@ func TestSelectSystemCompatibleVersion(t *testing.T) {
 		)
 		require.ErrorContains(t, err, "not compatible")
 	})
+
+	t.Run("Should return requested version when it's a range", func(t *testing.T) {
+		ver, err := SelectSystemCompatibleVersion(logger, createPluginVersions(
+			versionArg{version: "2.0.0"},
+			versionArg{version: "1.0.0"}),
+			"test", "> 1.0.0", fakeCompatOpts())
+		require.NoError(t, err)
+		require.Equal(t, "2.0.0", ver.Version)
+	})
 }
