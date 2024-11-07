@@ -2,6 +2,7 @@ package zipkin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -55,7 +56,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 	instance, ok := i.(*datasourceInfo)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast datasource info")
+		return nil, errors.New("failed to cast datasource info")
 	}
 	return instance, nil
 }
