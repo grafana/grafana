@@ -267,7 +267,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		// add more details to the health check error
 		if q.RefId == "__healthcheck__" {
 			return backend.DataResponse{
-				Error: errors.New(res.Status),
+				Error:       errors.New(res.Status),
+				ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 			}
 		}
 		// for differentiating the source of http errors by status code
