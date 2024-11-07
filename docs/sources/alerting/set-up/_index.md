@@ -35,7 +35,7 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
   file-provisioning:
     - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-roles//alerting/set-up/provision-alerting-resources/file-provisioning/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/
   alerting-permissions:
     - pattern: /docs/
     - destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-roles//alerting/set-up/configure-roles/
