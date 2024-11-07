@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,6 +43,7 @@ type FolderAPIBuilder struct {
 	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
+	storage       grafanarest.Storage
 	accessControl accesscontrol.AccessControl
 }
 
@@ -130,6 +132,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
 }
 
@@ -183,10 +186,6 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
-	return nil
-}
-
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
 	verb := attr.GetVerb()
 	name := attr.GetName()
@@ -219,4 +218,48 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}
 	return &authorizerParams{evaluator: eval, user: user}, nil
+}
+
+var folderValidationRules = struct {
+	maxDepth     int
+	invalidNames []string
+}{
+	maxDepth:     5,
+	invalidNames: []string{"general"},
+}
+
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	id := a.GetName()
+	for _, invalidName := range folderValidationRules.invalidNames {
+		if id == invalidName {
+			return dashboards.ErrFolderInvalidUID
+		}
+	}
+
+	obj := a.GetObject()
+
+	for i := 1; i <= folderValidationRules.maxDepth; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		if i == folderValidationRules.maxDepth {
+			return folder.ErrMaximumDepthReached
+		}
+
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		obj = parentObj
+	}
+	return nil
+}
+
+func getParent(o runtime.Object) string {
+	meta, err := utils.MetaAccessor(o)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }

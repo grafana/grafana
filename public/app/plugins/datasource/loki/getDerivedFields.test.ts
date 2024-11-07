@@ -122,6 +122,7 @@ describe('getDerivedFields', () => {
         matcherType: 'regex',
         name: 'trace1',
         url: 'http://localhost/${__value.raw}',
+        targetBlank: true,
       },
       {
         matcherRegex: 'trace3',
@@ -141,6 +142,7 @@ describe('getDerivedFields', () => {
     expect(trace1!.config.links![0]).toEqual({
       url: 'http://localhost/${__value.raw}',
       title: '',
+      targetBlank: true,
     });
 
     const trace3 = newFields.find((f) => f.name === 'trace3Name');

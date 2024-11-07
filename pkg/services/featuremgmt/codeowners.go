@@ -29,5 +29,6 @@ const (
 	grafanaSharingSquad                         codeowner = "@grafana/sharing-squad"
 	grafanaDatabasesFrontend                    codeowner = "@grafana/databases-frontend"
 	grafanaMesaVerde                            codeowner = "@grafana/mesa-verde"
+	grafanaOSSBigTent                           codeowner = "@grafana/oss-big-tent"
 	growthAndOnboarding                         codeowner = "@grafana/growth-and-onboarding"
 )

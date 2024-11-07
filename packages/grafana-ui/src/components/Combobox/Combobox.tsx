@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
+import { debounce } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
@@ -8,9 +9,11 @@ import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Stack } from '../Layout/Stack/Stack';
+import { Text } from '../Text/Text';
 
 import { getComboboxStyles } from './getComboboxStyles';
-import { estimateSize, useComboboxFloat } from './useComboboxFloat';
+import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -93,6 +96,7 @@ export const Combobox = <T extends string | number>({
   const isAsync = typeof options === 'function';
   const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
   const [asyncLoading, setAsyncLoading] = useState(false);
+  const [asyncError, setAsyncError] = useState(false);
 
   const [items, setItems] = useState(isAsync ? [] : options);
 
@@ -129,11 +133,30 @@ export const Combobox = <T extends string | number>({
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => floatingRef.current,
-    estimateSize,
+    estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
 
   const rowVirtualizer = useVirtualizer(virtualizerOptions);
+
+  const debounceAsync = useMemo(
+    () =>
+      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+            }
+          });
+      }, 200),
+    [loadOptions]
+  );
 
   const {
     getInputProps,
@@ -175,17 +198,7 @@ export const Combobox = <T extends string | number>({
           setItems([customValueOption]);
         }
         setAsyncLoading(true);
-        loadOptions(inputValue)
-          .then((opts) => {
-            setItems(customValueOption ? [customValueOption, ...opts] : opts);
-            setAsyncLoading(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
-              setAsyncLoading(false);
-            }
-          });
+        debounceAsync(inputValue, customValueOption);
 
         return;
       }
@@ -195,7 +208,7 @@ export const Combobox = <T extends string | number>({
       setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
     },
 
-    onIsOpenChange: ({ isOpen }) => {
+    onIsOpenChange: ({ isOpen, inputValue }) => {
       // Default to displaying all values when opening
       if (isOpen && !isAsync) {
         setItems(options);
@@ -204,10 +217,18 @@ export const Combobox = <T extends string | number>({
 
       if (isOpen && isAsync) {
         setAsyncLoading(true);
-        loadOptions('').then((options) => {
-          setItems(options);
-          setAsyncLoading(false);
-        });
+        loadOptions(inputValue ?? '')
+          .then((options) => {
+            setItems(options);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+            }
+          });
         return;
       }
     },
@@ -290,7 +311,7 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && (
+        {isOpen && !asyncError && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
@@ -323,6 +344,12 @@ export const Combobox = <T extends string | number>({
               );
             })}
           </ul>
+        )}
+        {asyncError && (
+          <Stack justifyContent="center" alignItems="center" height={8}>
+            <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+            <Text color="secondary">{t('combobox.async.error', 'An error occurred while loading options.')}</Text>
+          </Stack>
         )}
       </div>
     </div>

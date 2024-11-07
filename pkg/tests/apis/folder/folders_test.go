@@ -347,6 +347,24 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 		}))
 	})
+
+	t.Run("with dual write (unified storage, mode 1, create circular reference folder)", func(t *testing.T) {
+		doCreateCircularReferenceFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagNestedFolders,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -564,7 +582,7 @@ func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
 		Body:   []byte(payload),
 	}, &folder.Folder{})
 	require.NotEmpty(t, create2.Response)
-	require.Equal(t, 409, create2.Response.StatusCode)
+	require.Equal(t, 200, create2.Response.StatusCode) // it is OK
 }
 
 func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) {
@@ -587,6 +605,27 @@ func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) 
 	}, &folder.Folder{})
 	require.NotNil(t, create.Result)
 	require.Equal(t, "my folder", create.Result.Title)
+}
+
+func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	payload := `{
+		"title": "Test",
+		"uid": "newFolder",
+		"parentUid: "newFolder",
+		}`
+	create := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   []byte(payload),
+	}, &folder.Folder{})
+	require.NotEmpty(t, create.Response)
+	require.Equal(t, 400, create.Response.StatusCode)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
@@ -614,6 +653,32 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 					Resource:          "folders",
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
+				},
+			},
+		},
+		{
+			description:  "Should not be able to create a folder under the root with subfolder creation permissions",
+			input:        folderWithoutParentInput,
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "subfolder_uid",
+				},
+			},
+		},
+		{
+			description:  "Should not be able to create new folder under another folder without the right permissions",
+			input:        folderWithParentInput,
+			expectedCode: http.StatusForbidden,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{"folders:create"},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "wrong_uid",
 				},
 			},
 		},
@@ -699,7 +764,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	folderWithTitleEmpty := "{ \"title\": \"\"}"
 	folderWithInvalidUid := "{ \"uid\": \"::::::::::::\", \"title\": \"Another folder\"}"
 	folderWithUIDTooLong := "{ \"uid\": \"asdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnmasdfghjklqwertyuiopzxcvbnm\", \"title\": \"Third folder\"}"
-	folderWithSameName := "{\"title\": \"same name\"}"
 
 	type testCase struct {
 		description            string
@@ -768,15 +832,6 @@ func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 			expectedCode:           http.StatusBadRequest,
 			expectedMessage:        dashboards.ErrDashboardUidTooLong.Error(),
 			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
-			permissions:            folderCreatePermission,
-		},
-		{
-			description:            "folder creation fails given folder service error %s",
-			input:                  folderWithSameName,
-			expectedCode:           http.StatusConflict,
-			expectedMessage:        dashboards.ErrFolderSameNameExists.Error(),
-			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
-			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
 		{

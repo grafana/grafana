@@ -12,7 +12,7 @@ import { SparklineCell } from './SparklineCell';
 // }
 
 export function TableCellNG(props: any) {
-  const { field, value, theme, timeRange, height, rowIdx } = props;
+  const { field, value, theme, timeRange, height, rowIdx, justifyContent } = props;
   const { config: fieldConfig } = field;
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
@@ -27,13 +27,11 @@ export function TableCellNG(props: any) {
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = (
-        <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} rowIdx={rowIdx} />
-      );
+      cell = <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = <AutoCell value={value} field={field} theme={theme} />;
+      cell = <AutoCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
   }
 
   return cell;
