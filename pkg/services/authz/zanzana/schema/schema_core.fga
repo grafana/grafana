@@ -28,5 +28,5 @@ type team
     define read: [role#assignee] or member
     define write: [role#assignee] or admin
     define delete: [role#assignee] or admin
-    define permissions_read: [role#assignee]
-    define permissions_write: [role#assignee]
+    define permissions_read: [role#assignee] or admin
+    define permissions_write: [role#assignee] or admin
