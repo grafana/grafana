@@ -408,6 +408,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	for _, result := range results {
 		currentState := st.cache.create(ctx, logger, alertRule, result, extraLabels, st.externalURL)
 		s := st.setNextState(ctx, alertRule, currentState, result, nil, logger)
+		st.cache.set(currentState) // replace the existing state with the new one
 		transitions = append(transitions, s)
 	}
 	return transitions
@@ -416,11 +417,16 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger, extraAnnotations data.Labels) []StateTransition {
 	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
 	transitions := make([]StateTransition, 0, len(currentStates))
+	updated := ruleStates{
+		states: make(map[data.Fingerprint]*State, len(currentStates)),
+	}
 	for _, currentState := range currentStates {
 		newState := currentState.Copy()
 		t := st.setNextState(ctx, alertRule, newState, result, extraAnnotations, logger)
+		updated.states[newState.CacheID] = newState
 		transitions = append(transitions, t)
 	}
+	st.cache.setRuleStates(alertRule.GetKey(), updated)
 	return transitions
 }
 
@@ -516,8 +522,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	for key, val := range extraAnnotations {
 		currentState.Annotations[key] = val
 	}
-
-	st.cache.set(currentState) // replace the existing state with the new one
 
 	nextState := StateTransition{
 		State:               currentState,

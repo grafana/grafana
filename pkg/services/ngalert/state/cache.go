@@ -248,6 +248,15 @@ func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s
 	return nil
 }
 
+func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if _, ok := c.states[ruleKey.OrgID]; !ok {
+		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	c.states[ruleKey.OrgID][ruleKey.UID] = &s
+}
+
 func (c *cache) set(entry *State) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
