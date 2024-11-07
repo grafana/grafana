@@ -1,11 +1,11 @@
 import { compact, isEqual } from 'lodash';
-import { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Button, Card, Stack } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { DataSourceNamespaceIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO, PromRuleDTO } from 'app/types/unified-alerting-dto';
+import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../api/prometheusApi';
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -17,6 +17,9 @@ import { hashRule } from '../utils/rule-id';
 import { isAlertingRule } from '../utils/rules';
 
 import { AlertRuleLoader } from './RuleList.v2';
+import { ListItem } from './components/ListItem';
+import { ActionsLoader } from './components/RuleActionsButtons.V2';
+import { RuleListIcon } from './components/RuleListIcon';
 
 interface FilterViewProps {
   filterState: RulesFilter;
@@ -25,6 +28,7 @@ interface FilterViewProps {
 export function FilterView({ filterState }: FilterViewProps) {
   const [prevFilterState, setPrevFilterState] = useState(filterState);
   const filterChanged = !isEqual(prevFilterState, filterState);
+  const [transitionPending, startTransition] = useTransition();
 
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
   const rulesIterator = useRef(getFilteredRulesIterator(filterState));
@@ -32,36 +36,27 @@ export function FilterView({ filterState }: FilterViewProps) {
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [noMoreResults, setNoMoreResults] = useState(false);
 
-  const defferedRules = useDeferredValue(rules);
-
   const [{ execute: loadNextPage }, state] = useAsync(async () => {
-    const pageSize = 10;
+    const pageSize = 50;
     let fetchedRulesCount = 0;
-    let currentRulesArray: RuleWithOrigin[] = [];
 
-    // This is purely for performance reasons. We don't want to update the state on every rule fetch.
-    // On the other hand, we want to display rules as soon as they are fetched without waiting for all of them to be fetched
-    const rulesFlusher = () => {
-      if (currentRulesArray.length > 0) {
-        const rulesToAdd = [...currentRulesArray];
-        setRules((prev) => [...prev, ...rulesToAdd]);
-        currentRulesArray = [];
-      }
-    };
-
-    const interval = setInterval(rulesFlusher, 750);
     while (fetchedRulesCount < pageSize) {
       const { value, done } = await rulesIterator.current.next();
       if (done) {
         setNoMoreResults(true);
         break;
       }
-      currentRulesArray.push(value);
+
+      // ⚠️ use transitions here so `setRules` doesn't cascade into a _ton_ of re-renders and blocks the entire main thread
+      // this startTransition will ensure the state updates are all batched.
+      startTransition(() => {
+        setRules((rules) => rules.concat(value));
+      });
+
       fetchedRulesCount++;
     }
 
-    rulesFlusher();
-    clearInterval(interval);
+    // setRules((currentRules) => currentRules.concat(fetchedRules));
   });
 
   if (filterChanged) {
@@ -76,11 +71,11 @@ export function FilterView({ filterState }: FilterViewProps) {
     loadNextPage();
   }, [loadNextPage]);
 
-  const loading = isLoading(state) || defferedRules !== rules;
+  const loading = isLoading(state) || transitionPending;
 
   return (
     <Stack direction="column" gap={1}>
-      {defferedRules.map(({ ruleKey, rule, groupIdentifier }) => {
+      {rules.map(({ ruleKey, rule, groupIdentifier }) => {
         const { rulesSource, namespace, groupName } = groupIdentifier;
 
         return (
@@ -96,7 +91,11 @@ export function FilterView({ filterState }: FilterViewProps) {
         );
       })}
       {loading ? (
-        <Skeleton height={16} count={12} />
+        <>
+          <AlertRuleListItemLoader />
+          <AlertRuleListItemLoader />
+          <AlertRuleListItemLoader />
+        </>
       ) : noMoreResults ? (
         <Card>No more results</Card>
       ) : (
@@ -106,26 +105,14 @@ export function FilterView({ filterState }: FilterViewProps) {
   );
 }
 
-// function FilteredRuleItem({ ruleWithOrigin }: { ruleWithOrigin: RuleWithOrigin }) {
-//   const { ruleKey, rule, groupIdentifier } = ruleWithOrigin;
-//   const { rulesSource, namespace, groupName } = groupIdentifier;
-
-//   // TODO We need to find a better way to handle Grafana rules
-//   const dataSourceUid = rulesSource.uid === GrafanaRulesSourceSymbol ? 'grafana' : rulesSource.uid;
-//   const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: dataSourceUid });
-
-//   return (
-//     <AlertRuleLoader
-//       key={ruleKey}
-//       rule={rule}
-//       groupIdentifier={{
-//         dataSourceName: rulesSource.name,
-//         namespaceName: namespace.name,
-//         groupName,
-//       }}
-//     />
-//   );
-// }
+const AlertRuleListItemLoader = () => (
+  <ListItem
+    title={<Skeleton width={64} />}
+    icon={<RuleListIcon isPaused={false} />}
+    description={<Skeleton width={256} />}
+    actions={<ActionsLoader />}
+  />
+);
 
 const { useLazyGroupsQuery } = prometheusApi;
 
@@ -232,8 +219,9 @@ function useFilteredRulesIteratorProvider() {
 }
 
 function mapGroupToRules(group: GroupWithIdentifier): RuleWithOrigin[] {
+  const groupKey = `${group.identifier.namespace.name}${group.identifier.groupName}`;
   return group.rules.map<RuleWithOrigin>((rule) => ({
-    ruleKey: `${group.identifier.rulesSource.name}-${hashRule(rule)}`,
+    ruleKey: `${group.identifier.rulesSource.name}-${groupKey}-${hashRule(rule)}`,
     rule,
     groupIdentifier: group.identifier,
   }));
