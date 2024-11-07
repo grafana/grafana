@@ -31,6 +31,7 @@ const defaultProps: Props = {
   ...initialUserState,
   user: {
     id: 1,
+    uid: 'aaaaaa',
     name: 'Test User',
     email: 'test@test.com',
     login: 'test',

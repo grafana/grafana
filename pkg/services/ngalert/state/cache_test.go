@@ -294,6 +294,65 @@ func Test_getOrCreate(t *testing.T) {
 	})
 }
 
+func Test_getOrAdd(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	type testCase struct {
+		name         string
+		initialState *State
+		newState     *State
+	}
+
+	orgID := int64(1)
+	alertRuleUID := "rule-uid"
+	cacheID := data.Fingerprint(12345)
+
+	cases := []testCase{
+		{
+			name:         "add new state",
+			initialState: nil,
+			newState: &State{
+				OrgID:        orgID,
+				AlertRuleUID: alertRuleUID,
+				CacheID:      cacheID,
+				Labels:       data.Labels{"label1": "value1"},
+			},
+		},
+		{
+			name: "retrieve existing state",
+			initialState: &State{
+				OrgID:        orgID,
+				AlertRuleUID: alertRuleUID,
+				CacheID:      cacheID,
+				Labels:       data.Labels{"label1": "value1"},
+			},
+			newState: &State{
+				OrgID:        orgID,
+				AlertRuleUID: alertRuleUID,
+				CacheID:      cacheID,
+				Labels:       data.Labels{"label2": "value2"},
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := newCache()
+			if tc.initialState != nil {
+				c.getOrAdd(*tc.initialState, logger)
+			}
+
+			result := c.getOrAdd(*tc.newState, logger)
+
+			if tc.initialState == nil {
+				require.Equal(t, tc.newState, result, "expected newState to be added")
+			} else {
+				require.Equal(t, tc.initialState, result, "expected to retrieve existing state")
+			}
+		})
+	}
+}
+
 func Test_mergeLabels(t *testing.T) {
 	t.Run("merges two maps", func(t *testing.T) {
 		a := models.GenerateAlertLabels(5, "set1-")

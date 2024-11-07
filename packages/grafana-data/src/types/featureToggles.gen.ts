@@ -80,7 +80,6 @@ export interface FeatureToggles {
   pluginsDetailsRightPanel?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   recordedQueriesMulti?: boolean;
-  vizAndWidgetSplit?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
@@ -191,6 +190,7 @@ export interface FeatureToggles {
   preserveDashboardStateWhenNavigating?: boolean;
   alertingCentralAlertHistory?: boolean;
   pluginProxyPreserveTrailingSlash?: boolean;
+  sqlQuerybuilderFunctionParameters?: boolean;
   azureMonitorPrometheusExemplars?: boolean;
   pinNavItems?: boolean;
   authZGRPCServer?: boolean;
@@ -199,6 +199,7 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   zanzana?: boolean;
   reloadDashboardsOnParamsChange?: boolean;
+  enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -227,4 +228,8 @@ export interface FeatureToggles {
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   dashboardSchemaV2?: boolean;
+  playlistsWatcher?: boolean;
+  exploreMetricsRelatedLogs?: boolean;
+  enableExtensionsAdminPage?: boolean;
+  zipkinBackendMigration?: boolean;
 }

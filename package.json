@@ -245,6 +245,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
+    "@bsull/augurs": "0.4.2",
     "@emotion/css": "11.13.4",
     "@emotion/react": "11.13.3",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
@@ -267,8 +268,8 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "5.20.4",
-    "@grafana/scenes-react": "5.20.4",
+    "@grafana/scenes": "5.23.1",
+    "@grafana/scenes-react": "5.23.1",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -359,7 +360,7 @@
     "rc-tree": "5.9.0",
     "re-resizable": "6.10.0",
     "react": "18.2.0",
-    "react-diff-viewer": "^3.1.1",
+    "react-diff-viewer-continued": "^3.4.0",
     "react-dom": "18.2.0",
     "react-draggable": "4.4.6",
     "react-dropzone": "^14.2.3",

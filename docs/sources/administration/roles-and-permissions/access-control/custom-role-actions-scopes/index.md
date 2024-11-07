@@ -188,16 +188,16 @@ The following list contains role-based access control actions used by Grafana Ad
 
 | Action                                               | Applicable scopes | Description                                           |
 | ---------------------------------------------------- | ----------------- | ----------------------------------------------------- |
-| `grafana‑adaptive‑metrics‑app.plugin:access`         | None              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
-| `grafana‑adaptive‑metrics‑app.config:read`           | None              | Read the Adaptive Metrics app configuration.          |
-| `grafana‑adaptive‑metrics‑app.config:write`          | None              | Update the Adaptive Metrics app configuration.        |
-| `grafana‑adaptive‑metrics‑app.recommendations:read`  | None              | Read aggregation recommendations.                     |
-| `grafana‑adaptive‑metrics‑app.recommendations:apply` | None              | Apply aggregation recommendations.                    |
-| `grafana‑adaptive‑metrics‑app.rules:read`            | None              | Read aggregation rules.                               |
-| `grafana‑adaptive‑metrics‑app.rules:write`           | None              | Create aggregation rules.                             |
-| `grafana‑adaptive‑metrics‑app.rules:delete`          | None              | Delete aggregation rules.                             |
-| `grafana‑adaptive‑metrics‑app.exemptions:read`       | None              | Read recommendation exemptions.                       |
-| `grafana‑adaptive‑metrics‑app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
+| `grafana-adaptive-metrics-app.plugin:access`         | None              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
+| `grafana-adaptive-metrics-app.config:read`           | None              | Read the Adaptive Metrics app configuration.          |
+| `grafana-adaptive-metrics-app.config:write`          | None              | Update the Adaptive Metrics app configuration.        |
+| `grafana-adaptive-metrics-app.recommendations:read`  | None              | Read aggregation recommendations.                     |
+| `grafana-adaptive-metrics-app.recommendations:apply` | None              | Apply aggregation recommendations.                    |
+| `grafana-adaptive-metrics-app.rules:read`            | None              | Read aggregation rules.                               |
+| `grafana-adaptive-metrics-app.rules:write`           | None              | Create aggregation rules.                             |
+| `grafana-adaptive-metrics-app.rules:delete`          | None              | Delete aggregation rules.                             |
+| `grafana-adaptive-metrics-app.exemptions:read`       | None              | Read recommendation exemptions.                       |
+| `grafana-adaptive-metrics-app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
 
 ### Grafana Alerting Notification action definitions
 

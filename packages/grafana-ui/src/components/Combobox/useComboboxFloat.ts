@@ -23,6 +23,7 @@ export const useComboboxFloat = (
 ) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [popoverMaxSize, setPopoverMaxSize] = useState<{ width: number; height: number } | undefined>(undefined);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
@@ -79,7 +80,7 @@ export const useComboboxFloat = (
     maxHeight: popoverMaxSize?.height,
   };
 
-  return { inputRef, floatingRef, floatStyles };
+  return { inputRef, floatingRef, scrollRef, floatStyles };
 };
 
 // Creates a temporary div with a scrolling inner div to calculate the width of the scrollbar

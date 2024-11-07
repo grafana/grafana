@@ -21,7 +21,7 @@ interface TransformationEditorProps {
   debugMode?: boolean;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistryItem<any>;
+  uiConfig: TransformerRegistryItem;
   configs: TransformationsEditorTransformation[];
   onChange: (index: number, config: DataTransformerConfig) => void;
   toggleShowDebug: () => void;
