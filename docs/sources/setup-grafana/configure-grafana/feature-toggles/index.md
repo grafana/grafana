@@ -218,6 +218,8 @@ Experimental features might be changed or removed without prior notice.
 | `preinstallAutoUpdate`                        | Enables automatic updates for pre-installed plugins                                                                                                                                                                                                                               |
 | `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
 | `playlistsWatcher`                            | Enables experimental watcher for playlists                                                                                                                                                                                                                                        |
+| `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |
+| `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

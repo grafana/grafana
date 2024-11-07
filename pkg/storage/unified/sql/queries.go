@@ -55,13 +55,15 @@ var (
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  true,
 	}
+	RepeatableRead = &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	}
 )
 
 type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
-	Folder     string
 }
 
 func (r sqlResourceRequest) Validate() error {
@@ -74,7 +76,6 @@ type historyPollResponse struct {
 	PreviousRV      *int64
 	Value           []byte
 	Action          int
-	Folder          string
 }
 
 func (r *historyPollResponse) Results() (*historyPollResponse, error) {
@@ -107,7 +108,6 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 			Resource:  r.Response.Key.Resource,
 			Name:      r.Response.Key.Name,
 		},
-		Folder:          r.Response.Folder,
 		ResourceVersion: r.Response.ResourceVersion,
 		PreviousRV:      prevRV,
 		Value:           r.Response.Value,
@@ -116,24 +116,33 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
-func NewReadResponse() *resource.BackendReadResponse {
-	return &resource.BackendReadResponse{
-		Key: &resource.ResourceKey{},
-	}
+
+type readResponse struct {
+	resource.ReadResponse
+}
+
+func (r *readResponse) Results() (*readResponse, error) {
+	return r, nil
 }
 
 type sqlResourceReadRequest struct {
 	sqltemplate.SQLTemplate
-	Request  *resource.ReadRequest
-	Response *resource.BackendReadResponse
+	Request *resource.ReadRequest
+	*readResponse
 }
 
 func (r *sqlResourceReadRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r *sqlResourceReadRequest) Results() (*resource.BackendReadResponse, error) {
-	return r.Response, nil
+func (r *sqlResourceReadRequest) Results() (*readResponse, error) {
+	return &readResponse{
+		ReadResponse: resource.ReadResponse{
+			Error:           r.ReadResponse.Error,
+			ResourceVersion: r.ReadResponse.ResourceVersion,
+			Value:           r.ReadResponse.Value,
+		},
+	}, nil
 }
 
 // List
@@ -148,7 +157,6 @@ func (r sqlResourceListRequest) Validate() error {
 
 type historyListRequest struct {
 	ResourceVersion, Limit, Offset int64
-	Folder                         string
 	Options                        *resource.ListOptions
 }
 type sqlResourceHistoryListRequest struct {

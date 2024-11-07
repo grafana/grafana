@@ -289,6 +289,16 @@ describe('PrometheusDatasource', () => {
           operator: '=~',
           value: `v'.*`,
         },
+        {
+          key: 'k3',
+          operator: '=~',
+          value: `v".*`,
+        },
+        {
+          key: 'k4',
+          operator: '=~',
+          value: `\\v.*`,
+        },
       ];
       ds.query({
         interval: '15s',
@@ -298,7 +308,7 @@ describe('PrometheusDatasource', () => {
       } as DataQueryRequest<PromQuery>);
       const [result] = fetchMockCalledWith(fetchMock);
       expect(result).toMatchObject({
-        expr: `metric{job="foo", k1=~"v.*", k2=~"v\\\\'.*"} - metric{k1=~"v.*", k2=~"v\\\\'.*"}`,
+        expr: `metric{job="foo", k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"} - metric{k1=~"v.*", k2=~"v'.*", k3=~"v\\".*", k4=~"\\\\v.*"}`,
       });
     });
   });
@@ -478,8 +488,12 @@ describe('PrometheusDatasource', () => {
       expect(prometheusRegularEscape('cryptodepression')).toEqual('cryptodepression');
     });
 
-    it("should escape '", () => {
-      expect(prometheusRegularEscape("looking'glass")).toEqual("looking\\\\'glass");
+    it("should not escape '", () => {
+      expect(prometheusRegularEscape("looking'glass")).toEqual("looking'glass");
+    });
+
+    it('should escape "', () => {
+      expect(prometheusRegularEscape('looking"glass')).toEqual('looking\\"glass');
     });
 
     it('should escape \\', () => {
@@ -487,11 +501,11 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should escape multiple characters', () => {
-      expect(prometheusRegularEscape("'looking'glass'")).toEqual("\\\\'looking\\\\'glass\\\\'");
+      expect(prometheusRegularEscape('"looking"glass"')).toEqual('\\"looking\\"glass\\"');
     });
 
     it('should escape multiple different characters', () => {
-      expect(prometheusRegularEscape("'loo\\king'glass'")).toEqual("\\\\'loo\\\\king\\\\'glass\\\\'");
+      expect(prometheusRegularEscape('"loo\\king"glass"')).toEqual('\\"loo\\\\king\\"glass\\"');
     });
   });
 
@@ -500,8 +514,9 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
 
-    it('should escape $^*+?.()|\\', () => {
+    it('should escape $^*+?.()|\\"', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
+      expect(prometheusSpecialRegexEscape('looking"glass')).toEqual('looking\\\\\\"glass');
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
       expect(prometheusSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
@@ -549,8 +564,8 @@ describe('PrometheusDatasource', () => {
     });
 
     describe('and value is a string', () => {
-      it('should only escape single quotes', () => {
-        expect(ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", customVariable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+      it('should only escape double quotes and backslashes', () => {
+        expect(ds.interpolateQueryExpr('abc\'"$^*{}[]+?.()|\\', customVariable)).toEqual('abc\'\\"$^*{}[]+?.()|\\\\');
       });
     });
 
