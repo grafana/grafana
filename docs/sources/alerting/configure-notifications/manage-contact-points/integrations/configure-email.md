@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Email
 title: Configure email for Alerting
-weight: 0
+weight: 110
 refs:
   notification-templates:
     - pattern: /docs/grafana/

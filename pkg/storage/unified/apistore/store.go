@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -472,11 +473,16 @@ func (s *Storage) GuaranteedUpdate(
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
 			res.ResourceVersion = uint64(rsp.ResourceVersion)
 
-			if err := preconditions.Check(key, existingObj); err != nil {
-				if attempt >= MaxUpdateAttempts {
-					return fmt.Errorf("precondition failed: %w", err)
+			if rest.IsDualWriteUpdate(ctx) {
+				// Ignore the RV when updating legacy values
+				mmm.SetResourceVersion("")
+			} else {
+				if err := preconditions.Check(key, existingObj); err != nil {
+					if attempt >= MaxUpdateAttempts {
+						return fmt.Errorf("precondition failed: %w", err)
+					}
+					continue
 				}
-				continue
 			}
 
 			// restore the original object before tryUpdate
