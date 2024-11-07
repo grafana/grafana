@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
+var logger = backend.NewLoggerWith("logger", "tsdb.zipkin")
+
 type Service struct {
 	im instancemgmt.InstanceManager
 }
@@ -42,8 +44,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, backend.DownstreamError(errors.New("error reading settings: url is empty"))
 		}
 
-		logger := backend.NewLoggerWith("logger", "tsdb.zipkin")
-
+		logger := logger.FromContext(ctx)
 		zipkinClient, err := New(settings.URL, httpClient, logger)
 		return &datasourceInfo{ZipkinClient: zipkinClient}, err
 	}
