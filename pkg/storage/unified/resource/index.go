@@ -4,6 +4,8 @@ import (
 	"context"
 	golog "log"
 	"path/filepath"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
@@ -16,6 +18,8 @@ import (
 )
 
 const tracingPrexfixIndex = "unified_storage.index."
+const specFieldPrefix = "Spec."
+const descendingPrefix = "-"
 
 type Shard struct {
 	index bleve.Index
@@ -31,23 +35,23 @@ type Opts struct {
 }
 
 type Index struct {
-	shards map[string]Shard
-	opts   Opts
-	s      *server
-	log    log.Logger
-	tracer tracing.Tracer
+	shardMutex sync.RWMutex
+	shards     map[string]*Shard
+	opts       Opts
+	s          *server
+	log        log.Logger
+	tracer     tracing.Tracer
 }
 
 func NewIndex(s *server, opts Opts, tracer tracing.Tracer) *Index {
-	idx := &Index{
-		s:      s,
-		opts:   opts,
-		shards: make(map[string]Shard),
-		log:    log.New("unifiedstorage.search.index"),
-		tracer: tracer,
+	return &Index{
+		shardMutex: sync.RWMutex{},
+		s:          s,
+		opts:       opts,
+		shards:     make(map[string]*Shard),
+		log:        log.New("unifiedstorage.search.index"),
+		tracer:     tracer,
 	}
-
-	return idx
 }
 
 // IndexBatches goes through all the shards and indexes their batches if they are large enough
@@ -128,32 +132,86 @@ func (i *Index) AddToBatches(ctx context.Context, list *ListResponse) ([]string,
 }
 
 func (i *Index) Init(ctx context.Context) error {
+	logger := i.log.FromContext(ctx)
 	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"Init")
+	defer span.End()
+
+	start := time.Now().Unix()
+	group := errgroup.Group{}
+	group.SetLimit(i.opts.Workers)
+
+	totalObjects := 0
+	// Get all tenants currently in Unified Storage
+	tenants, err := i.s.backend.Namespaces(ctx)
+	if err != nil {
+		return err
+	}
+	for _, tenant := range tenants {
+		group.Go(func() error {
+			logger.Info("initializing index for tenant", "tenant", tenant)
+			objs, err := i.InitForTenant(ctx, tenant)
+			if err != nil {
+				return err
+			}
+			totalObjects += objs
+			return nil
+		})
+	}
+
+	err = group.Wait()
+	if err != nil {
+		return err
+	}
+
+	//index all remaining batches for all tenants
+	logger.Info("indexing remaining batches", "shards", len(i.shards))
+	err = i.IndexBatches(ctx, 1, i.allTenants())
+	if err != nil {
+		return err
+	}
+
+	end := time.Now().Unix()
+	totalDocCount := getTotalDocCount(i)
+	logger.Info("Initial indexing finished", "seconds", float64(end-start), "objs_fetched", totalObjects, "objs_indexed", totalDocCount)
+	span.AddEvent(
+		"indexing finished",
+		trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalDocCount))),
+		trace.WithAttributes(attribute.Int64("objects_fetched", int64(totalObjects))),
+	)
+	if IndexServerMetrics != nil {
+		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
+	}
+
+	return nil
+}
+
+func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error) {
+	ctx, span := i.tracer.Start(ctx, tracingPrexfixIndex+"InitForTenant")
 	defer span.End()
 	logger := i.log.FromContext(ctx)
 
-	start := time.Now().Unix()
 	resourceTypes := fetchResourceTypes()
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
-		logger.Info("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers)
+		logger.Debug("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
 		r := &ListRequest{Options: rt, Limit: int64(i.opts.ListLimit)}
+		r.Options.Key.Namespace = namespace // scope the list to a tenant or this will take forever when US has 1M+ resources
 
 		// Paginate through the list of resources and index each page
 		for {
-			logger.Info("fetching resource list", "kind", rt.Key.Resource)
+			logger.Debug("fetching resource list", "kind", rt.Key.Resource, "namespace", namespace)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
-				return err
+				return totalObjectsFetched, err
 			}
 
 			totalObjectsFetched += len(list.Items)
 
-			logger.Info("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items))
+			logger.Debug("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
 			//add changes to batches for shards with changes in the List
 			err = i.writeBatch(ctx, list)
 			if err != nil {
-				return err
+				return totalObjectsFetched, err
 			}
 
 			if list.NextPageToken == "" {
@@ -164,21 +222,13 @@ func (i *Index) Init(ctx context.Context) error {
 		}
 	}
 
-	//index all remaining batches
-	logger.Info("indexing remaining batches", "shards", len(i.shards))
-	err := i.IndexBatches(ctx, 1, i.allTenants())
-	if err != nil {
-		return err
-	}
+	span.AddEvent(
+		"indexing finished for tenant",
+		trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjectsFetched))),
+		trace.WithAttributes(attribute.String("tenant", namespace)),
+	)
 
-	span.AddEvent("indexing finished", trace.WithAttributes(attribute.Int64("objects_indexed", int64(totalObjectsFetched))))
-	end := time.Now().Unix()
-	logger.Info("Initial indexing finished", "seconds", float64(end-start))
-	if IndexServerMetrics != nil {
-		IndexServerMetrics.IndexCreationTime.WithLabelValues().Observe(float64(end - start))
-	}
-
-	return nil
+	return totalObjectsFetched, nil
 }
 
 func (i *Index) writeBatch(ctx context.Context, list *ListResponse) error {
@@ -207,6 +257,17 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 	}
 	tenant := res.Namespace
 	logger.Debug("indexing resource for tenant", "res", string(data.Value.Value), "tenant", tenant)
+
+	// if tenant doesn't exist, they may have been created during initial indexing
+	_, ok := i.shards[tenant]
+	if !ok {
+		i.log.Info("tenant not found, initializing their index", "tenant", tenant)
+		_, err = i.InitForTenant(ctx, tenant)
+		if err != nil {
+			return err
+		}
+	}
+
 	shard, err := i.getShard(tenant)
 	if err != nil {
 		return err
@@ -283,9 +344,13 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	}
 
 	req := bleve.NewSearchRequest(query)
+	if len(request.SortBy) > 0 {
+		sorting := getSortFields(request)
+		req.SortBy(sorting)
+	}
 
 	for _, group := range request.GroupBy {
-		facet := bleve.NewFacetRequest("Spec."+group.Name, int(group.Limit))
+		facet := bleve.NewFacetRequest(specFieldPrefix+group.Name, int(group.Limit))
 		req.AddFacet(group.Name+"_facet", facet)
 	}
 
@@ -320,18 +385,20 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	return &IndexResults{Values: results, Groups: groups}, nil
 }
 
-func (i *Index) Count() (uint64, error) {
-	var total uint64
+// Count returns the total doc count
+func (i *Index) Count() (int, error) {
+	total := 0
 	for _, shard := range i.shards {
 		count, err := shard.index.DocCount()
 		if err != nil {
 			i.log.Error("failed to get doc count", "error", err)
 		}
-		total += count
+		total += int(count)
 	}
 	return total, nil
 }
 
+// allTenants returns a list of all tenants in the index
 func (i *Index) allTenants() []string {
 	tenants := make([]string, 0, len(i.shards))
 	for tenant := range i.shards {
@@ -340,7 +407,10 @@ func (i *Index) allTenants() []string {
 	return tenants
 }
 
-func (i *Index) getShard(tenant string) (Shard, error) {
+func (i *Index) getShard(tenant string) (*Shard, error) {
+	i.shardMutex.Lock()
+	defer i.shardMutex.Unlock()
+
 	shard, ok := i.shards[tenant]
 	if ok {
 		return shard, nil
@@ -348,16 +418,16 @@ func (i *Index) getShard(tenant string) (Shard, error) {
 
 	index, path, err := i.createIndex()
 	if err != nil {
-		return Shard{}, err
+		return &Shard{}, err
 	}
 
-	shard = Shard{
+	shard = &Shard{
 		index: index,
 		path:  path,
 		batch: index.NewBatch(),
 	}
-	// TODO: do we need to lock this?
 	i.shards[tenant] = shard
+
 	return shard, nil
 }
 
@@ -389,17 +459,19 @@ func createInMemoryIndex() (bleve.Index, string, error) {
 // TODO - fetch from api
 func fetchResourceTypes() []*ListOptions {
 	items := []*ListOptions{}
-	items = append(items, &ListOptions{
-		Key: &ResourceKey{
-			Group:    "playlist.grafana.app",
-			Resource: "playlists",
+	items = append(items,
+		&ListOptions{
+			Key: &ResourceKey{
+				Group:    "playlist.grafana.app",
+				Resource: "playlists",
+			},
 		},
-	}, &ListOptions{
-		Key: &ResourceKey{
-			Group:    "folder.grafana.app",
-			Resource: "folders",
+		&ListOptions{
+			Key: &ResourceKey{
+				Group:    "folder.grafana.app",
+				Resource: "folders",
+			},
 		},
-	},
 		&ListOptions{
 			Key: &ResourceKey{
 				Group:    "dashboard.grafana.app",
@@ -407,4 +479,22 @@ func fetchResourceTypes() []*ListOptions {
 			},
 		})
 	return items
+}
+
+func getSortFields(request *SearchRequest) []string {
+	sorting := make([]string, 0, len(request.SortBy))
+	for _, sort := range request.SortBy {
+		if IsSpecField(sort) {
+			descending := strings.HasPrefix(sort, descendingPrefix)
+			sort = strings.TrimPrefix(sort, descendingPrefix)
+			sortOrder := ""
+			if descending {
+				sortOrder = descendingPrefix
+			}
+			sorting = append(sorting, sortOrder+specFieldPrefix+sort)
+			continue
+		}
+		sorting = append(sorting, sort)
+	}
+	return sorting
 }
