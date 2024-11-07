@@ -485,17 +485,12 @@ func (s *Storage) GuaranteedUpdate(
 				}
 			}
 
-			// restore the original object before tryUpdate
+			// restore the full original object before tryUpdate
 			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
-				b, err := s.store.GetBlob(ctx, &resource.GetBlobRequest{
-					Resource:        req.Key,
-					MustProxyBytes:  true,
-					ResourceVersion: rsp.ResourceVersion,
-				})
+				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
 				if err != nil {
 					return err
 				}
-				fmt.Printf("TODO... build full spec from: %s", b.ContentType)
 			}
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)

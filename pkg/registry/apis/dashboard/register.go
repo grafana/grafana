@@ -1,8 +1,6 @@
 package dashboard
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,7 +10,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -141,30 +138,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Split dashboards when they are large
+	var largeObjects apistore.LargeObjectSupport
 	if b.legacy.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		largeObjects = newDashboardLargeObjectSupport()
 		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
-			LargeObjectSupport: &apistore.BasicLargeObjectSupport{
-				ThresholdSize: 10, // byte size (right now everything bigger than 10bytes)
-				ReduceSpec: func(obj runtime.Object) error {
-					dash, ok := obj.(*dashboard.Dashboard)
-					if !ok {
-						return fmt.Errorf("expected dashboard")
-					}
-					old := dash.Spec.Object
-					spec := commonV0.Unstructured{Object: make(map[string]any)}
-					dash.Spec = spec
-					dash.SetManagedFields(nil) // this could be bigger than the object!
-
-					keep := []string{"title", "description", "schemaVersion"}
-					for _, k := range keep {
-						v, ok := old[k]
-						if ok {
-							spec.Object[k] = v
-						}
-					}
-					return nil
-				},
-			},
+			LargeObjectSupport: largeObjects,
 		})
 	}
 
@@ -188,7 +166,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], largeObjects, b)
 	if err != nil {
 		return err
 	}

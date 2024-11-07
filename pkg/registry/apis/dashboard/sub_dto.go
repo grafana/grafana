@@ -2,12 +2,11 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -31,16 +31,18 @@ type DTOConnector struct {
 	getter        rest.Getter
 	legacy        legacy.DashboardAccess
 	unified       resource.ResourceClient
+	largeObjects  apistore.LargeObjectSupport
 	accessControl accesscontrol.AccessControl
 	log           log.Logger
 }
 
-func newDTOConnector(dash rest.Storage, builder *DashboardsAPIBuilder) (rest.Storage, error) {
+func newDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, builder *DashboardsAPIBuilder) (rest.Storage, error) {
 	ok := false
 	v := &DTOConnector{
 		legacy:        builder.legacy.access,
 		accessControl: builder.accessControl,
 		unified:       builder.unified,
+		largeObjects:  largeObjects,
 		log:           builder.log,
 		resource:      dashboard.DashboardResourceInfo.GroupResource().Resource,
 	}
@@ -90,7 +92,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	rawobj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	rawobj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -141,31 +143,15 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	// Check for blob info
 	blobInfo := obj.GetBlob()
-	if blobInfo != nil {
-		rv, _ := obj.GetResourceVersionInt64()
-		rsp, err := r.unified.GetBlob(ctx, &resource.GetBlobRequest{
-			Resource: &resource.ResourceKey{
-				Group:     dashboard.GROUP,
-				Resource:  r.resource,
-				Namespace: obj.GetNamespace(),
-				Name:      obj.GetName(),
-			},
-			MustProxyBytes:  true,
-			ResourceVersion: rv,
-		})
+	if blobInfo != nil && r.largeObjects != nil {
+		err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
+			Group:     dashboard.GROUP,
+			Resource:  r.resource,
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		}, r.unified, obj)
 		if err != nil {
 			return nil, err
-		}
-		if rsp.Error != nil {
-			return nil, fmt.Errorf("error loading value from object store %+v", rsp.Error)
-		}
-
-		// Replace the spec with the value saved in the blob store
-		if len(rsp.Value) > 0 {
-			err = json.Unmarshal(rsp.Value, &dash.Spec)
-			if err != nil {
-				return nil, err
-			}
 		}
 	}
 
