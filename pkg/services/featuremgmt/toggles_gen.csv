@@ -212,3 +212,4 @@ dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
+zipkinBackendMigration,experimental,@grafana/oss-big-tent,false,false,false

@@ -3403,6 +3403,18 @@
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
+    },
+    {
+      "metadata": {
+        "name": "zipkinBackendMigration",
+        "resourceVersion": "1730907578997",
+        "creationTimestamp": "2024-11-06T15:39:38Z"
+      },
+      "spec": {
+        "description": "Enables querying Zipkin data source without the proxy",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
     }
   ]
 }
