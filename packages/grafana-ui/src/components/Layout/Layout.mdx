@@ -1,4 +1,4 @@
-import { Preview, ArgTypes } from '@storybook/blocks';
+import { Canvas, ArgTypes } from '@storybook/blocks';
 import { Layout, HorizontalGroup, VerticalGroup } from './Layout';
 import { Button } from '../Button';
 import { Select } from '../index';
@@ -19,14 +19,14 @@ Expects multiple elements as `children` prop. This is the base for more speciali
 
 Used for horizontally aligning several elements (e.g. Button, Select) with a predefined spacing between them.
 
-<Preview>
+<Canvas>
   <HorizontalGroup>
     <Button>Button 1</Button>
     <Button>Button 2</Button>
     <Button>Button 3</Button>
   </HorizontalGroup>
-</Preview>
-<Preview>
+</Canvas>
+<Canvas>
   <HorizontalGroup>
     <Select
       width={25}
@@ -53,20 +53,20 @@ Used for horizontally aligning several elements (e.g. Button, Select) with a pre
       ]}
     />
   </HorizontalGroup>
-</Preview>
+</Canvas>
 
 ## Vertical
 
 Used for vertically aligning several elements (e.g. Button, Select) with a predefined spacing between them.
 
-<Preview>
+<Canvas>
   <VerticalGroup>
     <Button>Button 1</Button>
     <Button>Button 2</Button>
     <Button>Button 3</Button>
   </VerticalGroup>
-</Preview>
-<Preview>
+</Canvas>
+<Canvas>
   <VerticalGroup justify="center">
     <Select
       width={25}
@@ -93,4 +93,4 @@ Used for vertically aligning several elements (e.g. Button, Select) with a prede
       ]}
     />
   </VerticalGroup>
-</Preview>
+</Canvas>
