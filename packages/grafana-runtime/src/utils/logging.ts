@@ -66,11 +66,13 @@ export function logError(err: Error, contexts?: LogContext) {
 export type MeasurementValues = Record<string, number>;
 export function logMeasurement(type: string, values: MeasurementValues, context?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushMeasurement({
-      type,
-      values,
-      context,
-    });
+    faro.api.pushMeasurement(
+      {
+        type,
+        values,
+      },
+      { context: context }
+    );
   }
 }
 

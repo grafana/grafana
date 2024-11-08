@@ -442,12 +442,16 @@ function getDashboardInteractionCallback(uid: string) {
       interactionType = 'variable-change';
     }
 
-    logMeasurement(`dashboard.${uid}.${interactionType}`, {
-      duration: e.duration,
-      networkDuration: e.networkDuration,
-      totalJSHeapSize: e.totalJSHeapSize,
-      usedJSHeapSize: e.usedJSHeapSize,
-      jsHeapSizeLimit: e.jsHeapSizeLimit,
-    });
+    logMeasurement(
+      `dashboard.${interactionType}`,
+      {
+        duration: e.duration,
+        networkDuration: e.networkDuration,
+        totalJSHeapSize: e.totalJSHeapSize,
+        usedJSHeapSize: e.usedJSHeapSize,
+        jsHeapSizeLimit: e.jsHeapSizeLimit,
+      },
+      { dashboard: uid }
+    );
   };
 }

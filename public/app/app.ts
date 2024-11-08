@@ -296,12 +296,12 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  const echo = new Echo({ debug: process.env.NODE_ENV === 'development' });
+  //const echo = new Echo({ debug: process.env.NODE_ENV === 'development' });
 
   // TODO: Run only when performing benchmark run
   // @ts-ignore
-  window.__grafanaEcho = echo;
-  setEchoSrv(echo);
+  //window.__grafanaEcho = echo;
+  //setEchoSrv(echo);
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
@@ -320,7 +320,7 @@ function initEchoSrv() {
   });
 
   // TODO: Run only when performing benchmark run
-  registerEchoBackend(new DashboardBenchmarkBackend({}));
+  //registerEchoBackend(new DashboardBenchmarkBackend({}));
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
