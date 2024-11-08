@@ -14,7 +14,7 @@ const refIdMatcher: FrameMatcherInfo<string> = {
   get: (pattern: string) => {
     const regex = stringToJsRegex(pattern);
     return (frame: DataFrame) => {
-      return regex.test(frame.refId || '');
+      return regex.test(frame.refId || '') || pattern === frame.refId;
     };
   },
 
