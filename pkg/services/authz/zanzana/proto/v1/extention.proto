@@ -83,7 +83,6 @@ message WriteRequest {
   string namespace = 1;
   WriteRequestWrites writes = 2;
   WriteRequestDeletes deletes = 3;
-  string authorization_model_id = 4;
 }
 
 message WriteResponse {}
