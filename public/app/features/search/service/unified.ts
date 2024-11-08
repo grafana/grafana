@@ -65,7 +65,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       ...query,
       query: query.query ?? '*',
       sort: undefined, // no need to sort the initial query results (not used)
-      facet: [{ field: 'tag' }],
+      facet: [{ field: 'tags' }],
       limit: 1, // 0 would be better, but is ignored by the backend
     };
 
@@ -77,7 +77,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     }
 
     for (const frame of frames) {
-      if (frame.fields[0].name === 'tag') {
+      if (frame.name === 'tags') {
         return getTermCountsFrom(frame);
       }
     }
@@ -222,11 +222,11 @@ const firstPageSize = 50;
 const nextPageSizes = 100;
 
 function getTermCountsFrom(frame: DataFrame): TermCount[] {
-  const keys = frame.fields[0].values;
+  const tags = frame.fields[0].values;
   const vals = frame.fields[1].values;
   const counts: TermCount[] = [];
   for (let i = 0; i < frame.length; i++) {
-    counts.push({ term: keys[i], count: vals[i] });
+    counts.push({ term: tags[i], count: vals[i] });
   }
   return counts;
 }
