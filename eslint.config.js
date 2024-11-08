@@ -9,6 +9,7 @@ const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
+const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
@@ -233,6 +234,9 @@ module.exports = [
   },
   {
     name: 'grafana/alerting-overrides',
+    plugins: {
+      unicorn: unicornPlugin,
+    },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'dot-notation': 'error',
