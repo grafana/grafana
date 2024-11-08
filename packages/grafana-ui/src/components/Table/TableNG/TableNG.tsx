@@ -151,7 +151,6 @@ export function TableNG(props: TableNGProps) {
     main.fields.map((field, fieldIndex) => {
       filterFields.push({ id: fieldIndex.toString(), field });
       const key = field.name;
-      const { values: _, ...shallowField } = field;
 
       const justifyColumnContent = getTextAlign(field);
 
