@@ -5,7 +5,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -23,12 +23,12 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 
 	writeTuples := make([]*openfgav1.TupleKey, 0)
 	for _, t := range req.GetWrites().GetTupleKeys() {
-		writeTuples = append(writeTuples, zanzana.ToOpenFGATupleKey(t))
+		writeTuples = append(writeTuples, common.ToOpenFGATupleKey(t))
 	}
 
 	deleteTuples := make([]*openfgav1.TupleKeyWithoutCondition, 0)
 	for _, t := range req.GetDeletes().GetTupleKeys() {
-		deleteTuples = append(deleteTuples, zanzana.ToOpenFGATupleKeyWithoutCondition(t))
+		deleteTuples = append(deleteTuples, common.ToOpenFGATupleKeyWithoutCondition(t))
 	}
 
 	writeReq := &openfgav1.WriteRequest{

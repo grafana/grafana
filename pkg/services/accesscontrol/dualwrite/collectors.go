@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -229,7 +230,7 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 				first.Tuples = append(first.Tuples, res.Tuples...)
 			}
 
-			return zanzana.ToOpenFGATuples(first.Tuples), nil
+			return common.ToOpenFGATuples(first.Tuples), nil
 		}
 
 		out := make(map[string]*openfgav1.TupleKey)

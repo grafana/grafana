@@ -5,7 +5,7 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -35,7 +35,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	tuples := make([]*authzextv1.Tuple, 0)
 	for _, t := range res.GetTuples() {
 		tuples = append(tuples, &authzextv1.Tuple{
-			Key:       zanzana.ToAuthzExtTupleKey(t.GetKey()),
+			Key:       common.ToAuthzExtTupleKey(t.GetKey()),
 			Timestamp: t.GetTimestamp(),
 		})
 	}

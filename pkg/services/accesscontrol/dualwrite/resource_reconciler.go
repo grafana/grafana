@@ -8,6 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
@@ -94,7 +95,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
 			return r.client.Write(ctx, &authzextv1.WriteRequest{
 				Namespace: namespace,
-				Deletes:   &authzextv1.WriteRequestDeletes{TupleKeys: zanzana.ToAuthzExtTupleKeysWithoutCondition(items)},
+				Deletes:   &authzextv1.WriteRequestDeletes{TupleKeys: common.ToAuthzExtTupleKeysWithoutCondition(items)},
 			})
 		})
 
@@ -107,7 +108,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
 			return r.client.Write(ctx, &authzextv1.WriteRequest{
 				Namespace: namespace,
-				Writes:    &authzextv1.WriteRequestWrites{TupleKeys: zanzana.ToAuthzExtTupleKeys(items)},
+				Writes:    &authzextv1.WriteRequestWrites{TupleKeys: common.ToAuthzExtTupleKeys(items)},
 			})
 		})
 
