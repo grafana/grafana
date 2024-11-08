@@ -499,6 +499,7 @@ func setupEnv(t *testing.T, replStore db.ReplDB, cfg *setting.Cfg, b bus.Bus, qu
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	ruleStore, err := ngstore.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
 	require.NoError(t, err)
+	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
