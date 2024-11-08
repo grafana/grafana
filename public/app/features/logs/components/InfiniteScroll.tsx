@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
@@ -39,8 +40,11 @@ export const InfiniteScroll = ({
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
+  const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
+  const [onBottomEdge, setOnBottomEdge] = useState(scrollElement?.scrollTop === scrollSize || false);
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
+  const debouncedSetOnBottomEdge = debounce(setOnBottomEdge, 400);
 
   // Reset messages when range/order/rows change
   useEffect(() => {
@@ -84,16 +88,34 @@ export const InfiniteScroll = ({
       if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
         return;
       }
-      event.stopImmediatePropagation();
+
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
-      if (scrollDirection === ScrollDirection.NoScroll) {
+
+      // Give users a change to reach the bottom of the log list
+      if (!scrollOnEdge(scrollElement) || scrollDirection === ScrollDirection.NoScroll) {
         return;
-      } else if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
+      }
+
+      event.stopImmediatePropagation();
+
+      if (scrollDirection === ScrollDirection.Top && topScrollEnabled) {
         scrollTop();
       } else if (scrollDirection === ScrollDirection.Bottom) {
         scrollBottom();
       }
+    }
+
+    function scrollOnEdge(scrollElement: HTMLDivElement) {
+      const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
+      debouncedSetOnBottomEdge.cancel();
+      if (scrollElement.scrollTop === scrollSize) {
+        debouncedSetOnBottomEdge(true);
+      } else {
+        setOnBottomEdge(false);
+        return false;
+      }
+      return onBottomEdge;
     }
 
     function scrollTop() {
@@ -133,7 +155,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone, topScrollEnabled]);
+  }, [debouncedSetOnBottomEdge, loadMoreLogs, loading, onBottomEdge, range, rows, scrollElement, scrollSize, sortOrder, timeZone, topScrollEnabled]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
