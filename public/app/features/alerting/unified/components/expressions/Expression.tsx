@@ -327,10 +327,6 @@ const Header: FC<HeaderProps> = ({
               autoFocus
               defaultValue={refId}
               minWidth={5}
-              onChange={(event) => {
-                onUpdateRefId(event.currentTarget.value);
-                setEditMode(false);
-              }}
               onFocus={(event) => event.target.select()}
               onBlur={(event) => {
                 onUpdateRefId(event.currentTarget.value);
