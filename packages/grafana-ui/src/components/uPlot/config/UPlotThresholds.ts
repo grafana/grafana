@@ -58,13 +58,13 @@ export function getThresholdsDrawHook(options: UPlotThresholdOptions) {
         color.setAlpha(0.7);
       }
 
-      const isVertical = u.scales.x ? u.scales.x.ori !== ScaleOrientation.Vertical : true;
+      const isHorizontal = u.scales.x!.ori === ScaleOrientation.Horizontal;
       const scaleVal = u.valToPos(step.value, yScaleKey, true);
 
-      let x0 = Math.round(isVertical ? u.bbox.left : scaleVal);
-      let y0 = Math.round(isVertical ? scaleVal : u.bbox.top);
-      let x1 = Math.round(isVertical ? u.bbox.left + u.bbox.width : scaleVal);
-      let y1 = Math.round(isVertical ? scaleVal : u.bbox.top + u.bbox.height);
+      let x0 = Math.round(isHorizontal ? u.bbox.left : scaleVal);
+      let y0 = Math.round(isHorizontal ? scaleVal : u.bbox.top);
+      let x1 = Math.round(isHorizontal ? u.bbox.left + u.bbox.width : scaleVal);
+      let y1 = Math.round(isHorizontal ? scaleVal : u.bbox.top + u.bbox.height);
 
       ctx.beginPath();
       ctx.moveTo(x0, y0);
