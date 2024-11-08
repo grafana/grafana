@@ -72,6 +72,7 @@ function itemFilter<T extends string | number>(inputValue: string) {
   };
 }
 
+const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
 
 /**
@@ -244,7 +245,19 @@ export const Combobox = <T extends string | number>({
       // then onInputValueChange isn't called (because the input value hasn't changed)
       if (isAsync && isOpen && inputValue === '') {
         setAsyncLoading(true);
-        debounceAsync(inputValue);
+        // TODO: dedupe this loading logic with debounceAsync
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(opts, inputValue);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
+              setAsyncLoading(false);
+            }
+          });
       }
     },
 
@@ -259,9 +272,10 @@ export const Combobox = <T extends string | number>({
       const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
       const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
 
-      // When the menu is opened, clear out the input value. This will trigger onInputValueChange
-      // to load async options
-      if (menuBeingOpened) {
+      // Reset the input value when the menu is opened. If the menu is opened due to an input change
+      // then make sure we keep that.
+      // This will trigger onInputValueChange to load async options
+      if (menuBeingOpened && changes.inputValue === state.inputValue) {
         changes = {
           ...changes,
           inputValue: '',
@@ -275,7 +289,7 @@ export const Combobox = <T extends string | number>({
             ...changes,
             inputValue: itemToString(changes.selectedItem),
           };
-        } else {
+        } else if (changes.inputValue !== '') {
           // Otherwise if no selected value, clear any search from the input
           changes = {
             ...changes,
@@ -341,7 +355,7 @@ export const Combobox = <T extends string | number>({
            *  See issue here: https://github.com/downshift-js/downshift/issues/718
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
-          onChange: () => {},
+          onChange: noop,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
