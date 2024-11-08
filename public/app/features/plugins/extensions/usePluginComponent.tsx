@@ -5,6 +5,7 @@ import { usePluginContext } from '@grafana/data';
 import { UsePluginComponentResult } from '@grafana/runtime';
 
 import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { log } from './logs/log';
 import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
 import { isExposedComponentDependencyMissing } from './validators';
@@ -35,9 +36,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
     });
 
     if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
-      componentLog.error(
-        'Invalid extension point. Reason: The exposed component is not recorded in the "plugin.json" file. Exposed components must be listed in the dependencies[] section.'
-      );
+      componentLog.error(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
       return {
         isLoading: false,
         component: null,

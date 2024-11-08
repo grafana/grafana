@@ -22,6 +22,9 @@ export const EXPOSED_COMPONENT_ALREADY_EXISTS = 'An exposed component with the s
 export const EXPOSED_COMPONENT_META_INFO_MISSING =
   'The extension was not recorded in the plugin.json. Exposed component extensions must be listed in the section "extensions.exposedComponents[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
 
+export const EXPOSED_COMPONENT_DEPENDENCY_MISSING =
+  'Invalid extension point. Reason: The exposed component is not recorded in the "plugin.json" file. Exposed components must be listed in the dependencies[] section.';
+
 export const ADDED_COMPONENT_META_INFO_MISSING =
   'The extension was not recorded in the plugin.json. Added component extensions must be listed in the section "extensions.addedComponents[]". Currently, this is only required in development but will be enforced also in production builds in the future.';
 
