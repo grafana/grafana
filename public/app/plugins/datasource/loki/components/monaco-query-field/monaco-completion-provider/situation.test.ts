@@ -367,7 +367,7 @@ describe('situation', () => {
     });
   });
 
-  it('identifies all labels from queries when cursor is the beginning', () => {
+  it('identifies all labels from queries when cursor is at the beginning', () => {
     assertSituation('{^,two!="val2",three=~"val3",four!~"val4"}', {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [
