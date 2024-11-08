@@ -242,11 +242,12 @@ export const Combobox = <T extends string | number>({
     onIsOpenChange: ({ isOpen, inputValue }) => {
       // Loading async options mostly happens in onInputValueChange, but if the menu is opened with an empty input
       // then onInputValueChange isn't called (because the input value hasn't changed)
-      if (isOpen && inputValue === '') {
+      if (isAsync && isOpen && inputValue === '') {
         setAsyncLoading(true);
         debounceAsync(inputValue);
       }
     },
+
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
         rowVirtualizer.scrollToIndex(highlightedIndex);
