@@ -257,6 +257,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				name: "No metadata",
 				mutator: func(r *AlertRuleWithOptionals) {
 					r.Metadata = AlertRuleMetadata{}
+					r.HasMetadata = false
 				},
 			},
 		}
@@ -883,4 +884,28 @@ func TestTimeRangeYAML(t *testing.T) {
 	serialized, err := yaml.Marshal(rtr)
 	require.NoError(t, err)
 	require.Equal(t, yamlRaw, string(serialized))
+}
+
+func TestAlertRuleGetKey(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.GenerateRef()
+		expected := AlertRuleKey{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		}
+		require.Equal(t, expected, rule.GetKey())
+	})
+}
+
+func TestAlertRuleGetKeyWithGroup(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.With(
+			RuleMuts.WithUniqueGroupIndex(),
+		).GenerateRef()
+		expected := AlertRuleKeyWithGroup{
+			AlertRuleKey: rule.GetKey(),
+			RuleGroup:    rule.RuleGroup,
+		}
+		require.Equal(t, expected, rule.GetKeyWithGroup())
+	})
 }

@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -522,7 +523,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser) {
+	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := dto.User.GetInternalID()
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
@@ -716,7 +717,13 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	res, err := dr.FindDashboards(ctx, query)
+	var res []dashboards.DashboardSearchProjection
+	var err error
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
+		res, err = dr.FindDashboardsZanzana(ctx, query)
+	} else {
+		res, err = dr.FindDashboards(ctx, query)
+	}
 	if err != nil {
 		return nil, err
 	}

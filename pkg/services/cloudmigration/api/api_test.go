@@ -345,7 +345,7 @@ func TestCloudMigrationAPI_GetSnapshot(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshot/1",
 			basicRole:          org.RoleAdmin,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z","results":[],"stats":{"types":{},"statuses":{},"total":0}}`,
+			expectedBody:       `{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z","results":[{"name":"dashboard name","parentName":"dashboard parent name","type":"DASHBOARD","refId":"123","status":"PENDING"},{"name":"datasource name","parentName":"dashboard parent name","type":"DATASOURCE","refId":"456","status":"OK"}],"stats":{"types":{},"statuses":{},"total":0}}`,
 		},
 		{
 			desc:               "should return 403 if no used is not admin",

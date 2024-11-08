@@ -27,10 +27,10 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 import { DashboardDataDTO } from 'app/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
@@ -583,6 +583,18 @@ describe('transformSaveModelToScene', () => {
 
       expect(vizPanel.state.displayMode).toEqual('transparent');
       expect(vizPanel.state.hoverHeader).toEqual(true);
+    });
+
+    it('should set hoverHeader to true if timeFrom and hideTimeOverride is true', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        hideTimeOverride: true,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+
+      expect(vizPanel.state.hoverHeader).toBe(true);
     });
 
     it('should initalize the VizPanel with min interval set', () => {

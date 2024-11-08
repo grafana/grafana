@@ -3,11 +3,7 @@ import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  testWithFeatureToggles,
-  testWithLicenseFeatures,
-  flushMicrotasks,
-} from 'app/features/alerting/unified/test/test-utils';
+import { flushMicrotasks, testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -19,7 +15,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { ContactPoint } from './ContactPoint';
-import ContactPointsPageContents from './ContactPoints';
+import { ContactPointsPageContents } from './ContactPoints';
 import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimirFlavoredServer';
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
@@ -45,7 +41,7 @@ import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } 
  */
 const server = setupMswServer();
 
-const renderWithProvider = (
+export const renderWithProvider = (
   children: ReactNode,
   historyOptions?: MemoryHistoryBuildOptions,
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
@@ -95,7 +91,26 @@ const attemptDeleteContactPoint = async (name: string) => {
   return user.click(await screen.findByRole('button', { name: /delete contact point/i }));
 };
 
+const alertManager = mockDataSource<AlertManagerDataSourceJsonData>({
+  name: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+  uid: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+  type: DataSourceType.Alertmanager,
+  jsonData: {
+    implementation: AlertManagerImplementation.prometheus,
+    handleGrafanaManagedAlerts: true,
+  },
+});
+
+const mimirDatasource = mockDataSource({
+  type: DataSourceType.Alertmanager,
+  name: MIMIR_DATASOURCE_UID,
+  uid: MIMIR_DATASOURCE_UID,
+});
+
 describe('contact points', () => {
+  beforeEach(() => {
+    setupDataSources(alertManager, mimirDatasource);
+  });
   describe('Contact points with Grafana managed alertmanager', () => {
     beforeEach(() => {
       grantUserPermissions([
@@ -127,6 +142,18 @@ describe('contact points', () => {
         renderWithProvider(<ContactPointsPageContents />);
 
         expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('templates tab', () => {
+      it('does not show a warning for a "misconfigured" template', async () => {
+        renderWithProvider(
+          <ContactPointsPageContents />,
+          { initialEntries: ['/?tab=templates'] },
+          { alertmanagerSourceName: GRAFANA_RULES_SOURCE_NAME }
+        );
+        await screen.findByText(/create notification templates/i);
+        expect(screen.queryByText(/^misconfigured$/i)).not.toBeInTheDocument();
       });
     });
 
@@ -211,16 +238,6 @@ describe('contact points', () => {
       await attemptDeleteContactPoint('lotsa-emails');
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-
-    it('should disable edit button', async () => {
-      renderWithProvider(<ContactPoint contactPoint={basicContactPoint} disabled={true} />);
-
-      const moreActions = screen.getByRole('button', { name: /More/ });
-      expect(moreActions).toBeEnabled();
-
-      const editAction = screen.getByTestId('edit-action');
-      expect(editAction).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('should show warning when no receivers are configured', async () => {
@@ -335,13 +352,6 @@ describe('contact points', () => {
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]);
-      setupDataSources(
-        mockDataSource({
-          type: DataSourceType.Alertmanager,
-          name: MIMIR_DATASOURCE_UID,
-          uid: MIMIR_DATASOURCE_UID,
-        })
-      );
     });
 
     it('should show / hide loading states, have the right actions enabled', async () => {
@@ -374,6 +384,17 @@ describe('contact points', () => {
         expect(button).toBeEnabled();
       });
     });
+
+    describe('templates tab', () => {
+      it('shows a warning when a template is misconfigured', async () => {
+        renderWithProvider(
+          <ContactPointsPageContents />,
+          { initialEntries: ['/?tab=templates'] },
+          { alertmanagerSourceName: MIMIR_DATASOURCE_UID }
+        );
+        expect((await screen.findAllByText(/^misconfigured$/i))[0]).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Vanilla Alertmanager ', () => {
@@ -383,23 +404,11 @@ describe('contact points', () => {
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]);
-
-      const alertManager = mockDataSource<AlertManagerDataSourceJsonData>({
-        name: VANILLA_ALERTMANAGER_DATASOURCE_UID,
-        uid: VANILLA_ALERTMANAGER_DATASOURCE_UID,
-        type: DataSourceType.Alertmanager,
-        jsonData: {
-          implementation: AlertManagerImplementation.prometheus,
-          handleGrafanaManagedAlerts: true,
-        },
-      });
-
-      setupDataSources(alertManager);
     });
 
     it("should not allow any editing because it's not supported", async () => {
       const { user } = renderWithProvider(<ContactPointsPageContents />, undefined, {
-        alertmanagerSourceName: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+        alertmanagerSourceName: alertManager.name,
       });
 
       await waitForElementToBeRemoved(screen.queryByText('Loading...'));
@@ -543,32 +552,20 @@ describe('contact points', () => {
       ).toBeInTheDocument();
     });
 
-    it('does not show manage permissions', async () => {
-      renderGrafanaContactPoints();
+    it('shows manage permissions and allows closing', async () => {
+      const { user } = renderGrafanaContactPoints();
 
       await clickMoreActionsButton('lotsa-emails');
 
-      expect(screen.queryByRole('menuitem', { name: /manage permissions/i })).not.toBeInTheDocument();
-    });
+      await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
-    describe('accesscontrol license feature enabled', () => {
-      testWithLicenseFeatures(['accesscontrol']);
+      const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
 
-      it('shows manage permissions and allows closing', async () => {
-        const { user } = renderGrafanaContactPoints();
+      expect(permissionsDialog).toBeInTheDocument();
+      expect(await screen.findByRole('table')).toBeInTheDocument();
 
-        await clickMoreActionsButton('lotsa-emails');
-
-        await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
-
-        const permissionsDialog = await screen.findByRole('dialog', { name: /drawer title manage permissions/i });
-
-        expect(permissionsDialog).toBeInTheDocument();
-        expect(await screen.findByRole('table')).toBeInTheDocument();
-
-        await user.click(within(permissionsDialog).getAllByRole('button', { name: /close/i })[0]);
-        expect(permissionsDialog).not.toBeInTheDocument();
-      });
+      await user.click(within(permissionsDialog).getAllByRole('button', { name: /close/i })[0]);
+      expect(permissionsDialog).not.toBeInTheDocument();
     });
   });
 });

@@ -15,6 +15,9 @@ export interface Props {
   onClose: () => void;
 }
 
+export const DOCK_MENU_BUTTON_ID = 'dock-menu-button';
+export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
+
 export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Props) {
   const theme = useTheme2();
   const { chrome } = useGrafana();
@@ -23,14 +26,19 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center" minWidth={0}>
-        <ToolbarButton narrow onClick={handleMegaMenu}>
+      <Stack alignItems="center" minWidth={0} gap={0.25}>
+        <ToolbarButton
+          narrow
+          id={MEGA_MENU_HEADER_TOGGLE_ID}
+          onClick={handleMegaMenu}
+          tooltip={t('navigation.megamenu.close', 'Close menu')}
+        >
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
         <OrganizationSwitcher />
       </Stack>
       <IconButton
-        id="dock-menu-button"
+        id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
         tooltip={
           state.megaMenuDocked
@@ -69,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 0.5),
+    padding: theme.spacing(0, 1, 0, 0.75),
     height: TOP_BAR_LEVEL_HEIGHT,
     minHeight: TOP_BAR_LEVEL_HEIGHT,
   }),

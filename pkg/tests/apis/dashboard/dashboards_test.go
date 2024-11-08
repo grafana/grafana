@@ -5,16 +5,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var gvr = schema.GroupVersionResource{
@@ -34,7 +35,7 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true, // should fail
 		DisableAnonymous:     true,
-		APIServerStorageType: options.StorageTypeUnifiedGrpc, // tests remote connection
+		APIServerStorageType: options.StorageTypeUnified, // tests local unified storage connection
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
@@ -117,10 +118,9 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -134,10 +134,9 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("with dual writer mode 1", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -151,10 +150,9 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("with dual writer mode 2", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -168,10 +166,9 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("with dual writer mode 3", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -185,10 +182,9 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 
 	t.Run("with dual writer mode 4", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false, // required for experimental APIs
-			DisableAnonymous:  true,
+			DisableAnonymous: true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboardsAPI,
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -204,7 +200,7 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesDashboardsAPI, // Required to start the example service
 		},
 	})
 

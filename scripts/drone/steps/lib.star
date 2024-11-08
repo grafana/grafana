@@ -156,9 +156,7 @@ def lint_starlark_step():
             "go install github.com/bazelbuild/buildtools/buildifier@latest",
             "buildifier --lint=warn -mode=check -r .",
         ],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
+        "depends_on": [],
     }
 
 def enterprise_downstream_step(ver_mode):
@@ -407,13 +405,14 @@ def playwright_e2e_report_post_link():
         ],
     }
 
-def upload_cdn_step(ver_mode, trigger = None):
+def upload_cdn_step(ver_mode, trigger = None, depends_on = ["grafana-server"]):
     """Uploads CDN assets using the Grafana build tool.
 
     Args:
       ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
       trigger: a Drone trigger for the step.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.
@@ -422,9 +421,7 @@ def upload_cdn_step(ver_mode, trigger = None):
     step = {
         "name": "upload-cdn-assets",
         "image": images["publish"],
-        "depends_on": [
-            "grafana-server",
-        ],
+        "depends_on": depends_on,
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
@@ -931,7 +928,7 @@ def fetch_images_step():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_images_step(ver_mode, docker_repo, trigger = None):
+def publish_images_step(ver_mode, docker_repo, trigger = None, depends_on = ["rgm-build-docker"]):
     """Generates a step for publishing public Docker images with grabpl.
 
     Args:
@@ -941,6 +938,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         It is combined with the 'grafana/' library prefix.
       trigger: a Drone trigger for the pipeline.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.
@@ -961,7 +959,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         docker_repo,
     )
 
-    deps = ["rgm-build-docker"]
+    deps = depends_on
     if ver_mode == "release":
         deps = ["fetch-images"]
         cmd += " --version-tag ${DRONE_TAG}"
@@ -1131,7 +1129,7 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
-            "apk add --update bash",
+            "apk add --update bash git",
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }
@@ -1151,7 +1149,12 @@ def release_canary_npm_packages_step(trigger = None):
 
     return step
 
-def upload_packages_step(ver_mode, trigger = None):
+def upload_packages_step(ver_mode, trigger = None, depends_on = [
+    "end-to-end-tests-dashboards-suite",
+    "end-to-end-tests-panels-suite",
+    "end-to-end-tests-smoke-tests-suite",
+    "end-to-end-tests-various-suite",
+]):
     """Upload packages to object storage.
 
     Args:
@@ -1159,6 +1162,7 @@ def upload_packages_step(ver_mode, trigger = None):
         edition packages when executed.
       trigger: a Drone trigger for the step.
         Defaults to None.
+      depends_on: drone steps that this step depends on
 
     Returns:
       Drone step.
@@ -1166,7 +1170,7 @@ def upload_packages_step(ver_mode, trigger = None):
     step = {
         "name": "upload-packages",
         "image": images["publish"],
-        "depends_on": end_to_end_tests_deps(),
+        "depends_on": depends_on,
         "environment": {
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -1285,13 +1289,14 @@ def retry_command(command, attempts = 60, delay = 30):
     ]
 
 def verify_linux_DEB_packages_step(depends_on = []):
-    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=${TAG} >/dev/null 2>&1"
+    install_command = "apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get install -yq grafana=$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-DEB-packages",
         "image": images["ubuntu"],
         "environment": {},
         "commands": [
+            'export version=$(echo ${TAG} | sed -e "s/+security-/-/g")',
             'echo "Step 1: Updating package lists..."',
             "apt-get update >/dev/null 2>&1",
             'echo "Step 2: Installing prerequisites..."',
@@ -1305,10 +1310,10 @@ def verify_linux_DEB_packages_step(depends_on = []):
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
         ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
-            'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            'if dpkg -s grafana | grep -q "Version: $version"; then',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',
@@ -1329,7 +1334,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1345,7 +1350,8 @@ def verify_linux_RPM_packages_step(depends_on = []):
             'echo "Step 4: Configuring Grafana repository..."',
             "echo -e '" + repo_config + "' > /etc/yum.repos.d/grafana.repo",
             'echo "Step 5: Checking RPM repository..."',
-            "dnf list available grafana-${TAG}",
+            'export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")',
+            "dnf list available grafana-$version",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
         ] + retry_command(install_command) + [
@@ -1353,16 +1359,16 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "    rpm --import https://rpm.grafana.com/gpg.key",
             "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
             "else",
-            '    echo "Grafana package version ${TAG} not found in repository."',
+            '    echo "Grafana package version $version not found in repository."',
             "    dnf repolist",
             "    dnf list available grafana*",
             "    exit 1",
             "fi",
             'echo "Step 6: Verifying Grafana installation..."',
-            'if rpm -q grafana | grep -q "${TAG}"; then',
-            '    echo "Successfully verified Grafana version ${TAG}"',
+            'if rpm -q grafana | grep -q "$verison"; then',
+            '    echo "Successfully verified Grafana version $version"',
             "else",
-            '    echo "Failed to verify Grafana version ${TAG}"',
+            '    echo "Failed to verify Grafana version $version"',
             "    exit 1",
             "fi",
             'echo "Verification complete."',

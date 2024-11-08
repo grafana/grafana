@@ -22,7 +22,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
     model.useState();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight);
+  const styles = useStyles2(getStyles, headerHeight ?? 0);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
@@ -99,7 +99,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number) {
   return {
     pageContainer: css({
       display: 'grid',

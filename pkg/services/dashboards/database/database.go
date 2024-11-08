@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -25,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboard/database")
@@ -79,12 +80,6 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		isParentFolderChanged, err = getExistingDashboardByIDOrUIDForUpdate(sess, dashboard, overwrite)
-		if err != nil {
-			return err
-		}
-
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, overwrite,
-			isParentFolderChanged)
 		if err != nil {
 			return err
 		}
@@ -347,49 +342,6 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 	// do not allow plugin dashboard updates without overwrite flag
 	if existing.PluginID != "" && !overwrite {
 		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-// getExistingDashboardByTitleAndFolder returns a boolean (on whether the parent folder changed) and an error for if the dashboard already exists.
-func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, overwrite,
-	isParentFolderChanged bool) (bool, error) {
-	var existing dashboards.Dashboard
-	condition := "org_id=? AND title=?"
-	args := []any{dash.OrgID, dash.Title}
-	if dash.FolderUID != "" {
-		condition += " AND folder_uid=?"
-		args = append(args, dash.FolderUID)
-	} else {
-		condition += " AND folder_uid IS NULL"
-	}
-	exists, err := sess.Where(condition, args...).Get(&existing)
-	if err != nil {
-		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
-	}
-	if exists && dash.ID != existing.ID {
-		if existing.IsFolder && !dash.IsFolder {
-			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameAsFolder
-		}
-
-		if !existing.IsFolder && dash.IsFolder {
-			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
-		}
-
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
-			isParentFolderChanged = true
-		}
-
-		if overwrite {
-			dash.SetID(existing.ID)
-			dash.SetUID(existing.UID)
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameInFolderExists
-		}
 	}
 
 	return isParentFolderChanged, nil
@@ -796,8 +748,8 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 
 		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
 		mustCols := []string{}
-		if query.Title != nil {
-			dashboard.Title = *query.Title
+		if query.Title != nil { // nolint:staticcheck
+			dashboard.Title = *query.Title // nolint:staticcheck
 			mustCols = append(mustCols, "title")
 		}
 
@@ -805,8 +757,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			dashboard.FolderUID = *query.FolderUID
 			mustCols = append(mustCols, "folder_uid")
 		} else if query.FolderID != nil { // nolint:staticcheck
-			// nolint:staticcheck
-			dashboard.FolderID = *query.FolderID
+			dashboard.FolderID = *query.FolderID // nolint:staticcheck
 			mustCols = append(mustCols, "folder_id")
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		}
@@ -942,7 +893,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.K6FolderFilter{})
 	}
 
-	filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
+	if !query.SkipAccessControlFilter {
+		filters = append(filters, permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported))
+	}
 
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 

@@ -1,7 +1,7 @@
 import { isUndefined, omitBy, pick, sum } from 'lodash';
 import pluralize from 'pluralize';
-import { Fragment, useDeferredValue, useMemo } from 'react';
 import * as React from 'react';
+import { Fragment, useDeferredValue, useMemo } from 'react';
 
 import { Badge, Stack } from '@grafana/ui';
 import {
@@ -121,7 +121,7 @@ export function getComponentsFromStats(
   }
 
   if (stats.error) {
-    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} errors`} />);
+    statsComponents.push(<Badge color="red" key="errors" text={`${stats.error} ${pluralize('error', stats.error)}`} />);
   }
 
   if (stats.nodata) {

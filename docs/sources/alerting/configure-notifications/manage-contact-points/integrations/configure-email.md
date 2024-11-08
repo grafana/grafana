@@ -13,12 +13,20 @@ labels:
     - oss
 menuTitle: Email
 title: Configure email for Alerting
-weight: 0
+weight: 110
+refs:
+  notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
 # Configure email for Alerting
 
 Use the Grafana Alerting - email integration to send email notifications when your alerts are firing. An email is sent when an alert fires and when an alert gets resolved.
+
+Note that you can customize the `subject` and `message` of the email using [notification templates](ref:notification-templates). However, you cannot add HTML and CSS to email notifications for visual changes.
 
 ## Before you begin
 

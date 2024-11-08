@@ -18,9 +18,9 @@ import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -277,13 +277,17 @@ describe('PanelEditor', () => {
 
   describe('PanelDataPane', () => {
     it('should not exist if panel is skipDataQuery', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: true });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
+
+      expect(panel.state.$data).toBeUndefined();
     });
 
     it('should exist if panel is supporting querying', async () => {
-      const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+      const { panelEditor, panel } = await setup({ pluginSkipDataQuery: false });
       expect(panelEditor.state.dataPane).toBeDefined();
+
+      expect(panel.state.$data).toBeDefined();
     });
   });
 });

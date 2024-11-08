@@ -53,12 +53,18 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(pluginId: string, extensionPointId: string) {
-  return Boolean(
-    extensionPointId.startsWith('grafana/') ||
-      extensionPointId?.startsWith('plugins/') ||
-      extensionPointId?.startsWith(pluginId)
-  );
+export function isExtensionPointIdValid({
+  extensionPointId,
+  pluginId,
+}: {
+  extensionPointId: string;
+  pluginId: string;
+}) {
+  if (extensionPointId.startsWith('grafana/')) {
+    return true;
+  }
+
+  return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {

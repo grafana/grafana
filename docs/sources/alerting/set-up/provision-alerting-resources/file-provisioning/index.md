@@ -270,8 +270,8 @@ settings:
   url: https://discord/webhook
   # <string>
   avatar_url: https://my_avatar
-  # <string>
-  use_discord_username: Grafana
+  # <bool>
+  use_discord_username: false
   # <string>
   message: |
     {{ template "default.message" . }}
@@ -616,6 +616,16 @@ settings:
   authorization_credentials: abc123
   # <string>
   maxAlerts: '10'
+  # <map>
+  tlsConfig:
+    # <bool>
+    insecureSkipVerify: false
+    # <string>
+    clientCertificate: certificate in PEM format
+    # <string>
+    clientKey: key in PEM format
+    # <string>
+    caCertificate: CA certificate in PEM format
 ```
 
 {{< /collapse >}}

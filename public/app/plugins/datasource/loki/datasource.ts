@@ -82,9 +82,11 @@ import {
   getStreamSelectorsFromQuery,
   isLogsQuery,
   isQueryWithError,
+  requestSupportsSharding,
   requestSupportsSplitting,
 } from './queryUtils';
 import { replaceVariables, returnVariables } from './querybuilder/parsingUtils';
+import { runShardSplitQuery } from './shardQuerySplitting';
 import { convertToWebSocketUrl, doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -359,7 +361,13 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
+    if (
+      config.featureToggles.lokiShardSplitting &&
+      requestSupportsSharding(fixedRequest.targets) &&
+      fixedRequest.app === CoreApp.Explore
+    ) {
+      return runShardSplitQuery(this, fixedRequest);
+    } else if (config.featureToggles.lokiQuerySplitting && requestSupportsSplitting(fixedRequest.targets)) {
       return runSplitQuery(this, fixedRequest);
     }
 
@@ -533,7 +541,12 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data || [];
+
+    // detected_field/${label}/values has different structure then other metadata responses
+    if (!res.data && res.values) {
+      return res.values ?? [];
+    }
+    return res.data ?? [];
   }
 
   /**

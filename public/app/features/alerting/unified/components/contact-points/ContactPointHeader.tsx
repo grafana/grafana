@@ -27,11 +27,10 @@ import { ContactPointWithMetadata, showManageContactPointPermissions } from './u
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
-  disabled?: boolean;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
 }
 
-export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }: ContactPointHeaderProps) => {
+export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeaderProps) => {
   const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
@@ -160,7 +159,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
           ariaLabel="delete"
           icon="trash-alt"
           destructive
-          disabled={disabled || !canBeDeleted}
+          disabled={!canBeDeleted}
           onClick={() => onDelete(contactPoint)}
         />
       </ConditionalWrap>
@@ -182,8 +181,8 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={1}>
-          <Text element="h2" variant="body" weight="medium">
+        <Stack alignItems="center" gap={1} minWidth={0}>
+          <Text element="h2" variant="body" weight="medium" truncate>
             {name}
           </Text>
         </Stack>
@@ -219,7 +218,6 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
           type="button"
-          disabled={disabled}
           aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}

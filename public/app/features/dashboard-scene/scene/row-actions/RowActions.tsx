@@ -15,9 +15,9 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
@@ -54,15 +54,21 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
       }
     }
 
-    if (repeat && !repeatBehavior) {
-      const repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
-      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
-    } else if (repeatBehavior) {
-      repeatBehavior.removeBehavior();
-    }
-
     if (title !== row.state.title) {
       row.setState({ title });
+    }
+
+    if (repeat) {
+      // Remove repeat behavior if it exists
+      // to retrigger repeat when adding new one
+      if (repeatBehavior) {
+        repeatBehavior.removeBehavior();
+      }
+
+      repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
+      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+    } else {
+      repeatBehavior?.removeBehavior();
     }
   };
 

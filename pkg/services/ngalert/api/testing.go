@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -104,6 +103,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 }
 
 type recordingAccessControlFake struct {
+	ac.AccessControl
 	Disabled           bool
 	EvaluateRecordings []struct {
 		User      *user.SignedInUser
@@ -122,20 +122,6 @@ func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.R
 		return false, nil
 	}
 	return a.Callback(u, evaluator)
-}
-
-func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix string, resolver ac.ScopeAttributeResolver) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) WithoutResolvers() ac.AccessControl {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) IsDisabled() bool {
-	return a.Disabled
 }
 
 var _ ac.AccessControl = &recordingAccessControlFake{}

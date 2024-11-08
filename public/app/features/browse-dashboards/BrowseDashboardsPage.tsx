@@ -4,11 +4,14 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { getConfig } from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
+import { contextSrv } from '../../core/services/context_srv';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -78,9 +81,12 @@ const BrowseDashboardsPage = memo(() => {
 
   const hasSelection = useHasSelection();
 
-  const { data: rootFolder } = useGetFolderQuery('general');
-  let folder = folderDTO ? folderDTO : rootFolder;
+  // Fetch the root (aka general) folder if we're not in a specific folder
+  const { data: rootFolderDTO } = useGetFolderQuery(folderDTO ? skipToken : 'general');
+  const folder = folderDTO ?? rootFolderDTO;
+
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;
@@ -93,7 +99,6 @@ const BrowseDashboardsPage = memo(() => {
       if ('error' in result) {
         reportInteraction('grafana_browse_dashboards_page_edit_folder_name', {
           status: 'failed_with_error',
-          error: result.error,
         });
         throw result.error;
       } else {
@@ -104,6 +109,12 @@ const BrowseDashboardsPage = memo(() => {
     }
   };
 
+  const handleButtonClickToRecentlyDeleted = () => {
+    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted', {
+      origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
+    });
+  };
+
   return (
     <Page
       navId="dashboards/browse"
@@ -111,6 +122,15 @@ const BrowseDashboardsPage = memo(() => {
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
+          {config.featureToggles.dashboardRestore && hasAdminRights && (
+            <LinkButton
+              variant="secondary"
+              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+              onClick={handleButtonClickToRecentlyDeleted}
+            >
+              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+            </LinkButton>
+          )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton

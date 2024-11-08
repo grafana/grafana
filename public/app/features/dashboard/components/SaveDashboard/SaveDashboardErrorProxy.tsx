@@ -31,7 +31,7 @@ export const SaveDashboardErrorProxy = ({
   setErrorIsHandled,
 }: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave();
-  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI;
+  const isRestoreDashboardsEnabled = config.featureToggles.dashboardRestore;
   return (
     <>
       {error.data && error.data.status === 'version-mismatch' && (

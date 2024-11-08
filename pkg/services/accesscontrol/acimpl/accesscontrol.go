@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
@@ -118,27 +117,8 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		kind, _, identifier := accesscontrol.SplitScope(scope)
-		key, ok := zanzana.TranslateToTuple(user.GetUID(), action, kind, identifier, user.GetOrgID())
-		if !ok {
-			// unsupported translation
-			return false, errAccessNotImplemented
-		}
-
-		a.log.Debug("evaluating zanzana", "user", key.User, "relation", key.Relation, "object", key.Object)
-		res, err := a.zclient.Check(ctx, &openfgav1.CheckRequest{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     key.User,
-				Relation: key.Relation,
-				Object:   key.Object,
-			},
-		})
-
-		if err != nil {
-			return false, err
-		}
-
-		return res.Allowed, nil
+		// FIXME: Implement using new schema / apis
+		return false, nil
 	})
 }
 

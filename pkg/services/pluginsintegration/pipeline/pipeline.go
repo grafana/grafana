@@ -68,11 +68,12 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
-			initialization.BackendClientInitStep(pluginEnvProvider, bp),
+			initialization.BackendClientInitStep(pluginEnvProvider, bp, tracer),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
 			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
+			ReportTargetMetrics,
 			initialization.PluginRegistrationStep(pr),
 		},
 	})

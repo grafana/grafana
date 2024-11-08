@@ -1647,6 +1647,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 		},
 		Logger:        log.NewNopLogger(),
 		FolderService: folderService,
+		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}
