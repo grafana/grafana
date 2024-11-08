@@ -41,10 +41,12 @@ export const InfiniteScroll = ({
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
   const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
-  const [onBottomEdge, setOnBottomEdge] = useState(scrollElement?.scrollTop === scrollSize || false);
+  const [onEdge, setOnEdge] = useState(
+    scrollElement?.scrollTop === scrollSize || scrollElement?.scrollTop === 0 || false
+  );
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
-  const debouncedSetOnBottomEdge = debounce(setOnBottomEdge, 400);
+  const debouncedSetOnEdge = debounce(setOnEdge, 400);
 
   // Reset messages when range/order/rows change
   useEffect(() => {
@@ -108,14 +110,14 @@ export const InfiniteScroll = ({
 
     function scrollOnEdge(scrollElement: HTMLDivElement) {
       const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
-      debouncedSetOnBottomEdge.cancel();
-      if (scrollElement.scrollTop === scrollSize) {
-        debouncedSetOnBottomEdge(true);
+      debouncedSetOnEdge.cancel();
+      if (scrollElement.scrollTop >= scrollSize || scrollElement.scrollTop <= 0) {
+        debouncedSetOnEdge(true);
       } else {
-        setOnBottomEdge(false);
+        setOnEdge(false);
         return false;
       }
-      return onBottomEdge;
+      return onEdge;
     }
 
     function scrollTop() {
@@ -155,7 +157,19 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [debouncedSetOnBottomEdge, loadMoreLogs, loading, onBottomEdge, range, rows, scrollElement, scrollSize, sortOrder, timeZone, topScrollEnabled]);
+  }, [
+    debouncedSetOnEdge,
+    loadMoreLogs,
+    loading,
+    onEdge,
+    range,
+    rows,
+    scrollElement,
+    scrollSize,
+    sortOrder,
+    timeZone,
+    topScrollEnabled,
+  ]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);

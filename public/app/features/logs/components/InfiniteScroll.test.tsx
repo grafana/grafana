@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { debounce } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 
 import { CoreApp, LogRowModel, dateTimeForTimeZone } from '@grafana/data';
@@ -9,6 +10,11 @@ import { LogsSortOrder } from '@grafana/schema';
 
 import { InfiniteScroll, Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
 import { createLogRow } from './__mocks__/logRow';
+
+jest.mock('lodash', () => ({
+  ...jest.requireActual('lodash'),
+  debounce: jest.fn(),
+}));
 
 const defaultTz = 'browser';
 
@@ -68,10 +74,12 @@ function setup(
       events['scroll'](new Event('scroll'));
     });
 
-    // When scrolling top, we wait for the user to reach the top, and then for a new scrolling event
+    // When scrolling, we allow the user to reach the edge, and then we wait a new scrolling event
     // in the same direction before triggering a new query.
     if (position === 0) {
       wheel(-1);
+    } else if (position === element.scrollHeight - element.clientHeight) {
+      wheel(1);
     }
   }
   function wheel(deltaY: number) {
@@ -108,6 +116,17 @@ afterAll(() => {
 });
 
 describe('InfiniteScroll', () => {
+  beforeAll(() => {
+    jest.mocked(debounce).mockImplementation((callback) => {
+      function debounced(...args: unknown[]) {
+        callback(...args);
+      }
+      debounced.cancel = () => {};
+      debounced.flush = () => {};
+      return debounced;
+    });
+  });
+
   test('Wraps components without adding DOM elements', async () => {
     const { container } = render(
       <ScrollWithWrapper {...defaultProps}>
@@ -173,6 +192,9 @@ describe('InfiniteScroll', () => {
 
           expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
+          // Reach edge
+          wheel(deltaY);
+          // Request more
           wheel(deltaY);
 
           expect(loadMoreMock).toHaveBeenCalled();
