@@ -348,8 +348,8 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	if len(request.Filters) > 0 {
 		orQuery := bleve.NewDisjunctionQuery()
 		for _, filter := range request.Filters {
-			termQuery := bleve.NewMatchQuery(filter)
-			orQuery.AddQuery(termQuery)
+			matchQuery := bleve.NewMatchQuery(filter)
+			orQuery.AddQuery(matchQuery)
 		}
 		query.AddQuery(orQuery)
 	}
