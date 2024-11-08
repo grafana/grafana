@@ -186,8 +186,8 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.31.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.31.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.31.2 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.31.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.31.1 // @grafana/grafana-app-platform-squad
 	k8s.io/component-base v0.31.1 // @grafana/grafana-app-platform-squad
