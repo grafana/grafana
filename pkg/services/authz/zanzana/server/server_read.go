@@ -38,6 +38,10 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 				User:     t.GetKey().GetUser(),
 				Relation: t.GetKey().GetRelation(),
 				Object:   t.GetKey().GetObject(),
+				Condition: &authzextv1.RelationshipCondition{
+					Name:    t.GetKey().GetCondition().GetName(),
+					Context: t.GetKey().GetCondition().GetContext(),
+				},
 			},
 			Timestamp: t.GetTimestamp(),
 		})

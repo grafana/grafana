@@ -26,6 +26,10 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 			User:     t.GetUser(),
 			Relation: t.GetRelation(),
 			Object:   t.GetObject(),
+			Condition: &openfgav1.RelationshipCondition{
+				Name:    t.GetCondition().GetName(),
+				Context: t.GetCondition().GetContext(),
+			},
 		})
 	}
 
