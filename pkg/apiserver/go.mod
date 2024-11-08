@@ -11,7 +11,7 @@ require (
 	go.opentelemetry.io/contrib/propagators/jaeger v1.31.0
 	go.opentelemetry.io/otel v1.31.0
 	go.opentelemetry.io/otel/trace v1.31.0
-	k8s.io/apimachinery v0.31.1
+	k8s.io/apimachinery v0.31.2
 	k8s.io/apiserver v0.31.1
 	k8s.io/component-base v0.31.1
 	k8s.io/klog/v2 v2.130.1
@@ -92,7 +92,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.31.1 // indirect
+	k8s.io/api v0.31.2 // indirect
 	k8s.io/client-go v0.31.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.30.3 // indirect
