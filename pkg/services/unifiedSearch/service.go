@@ -151,13 +151,11 @@ func (s *StandardSearchService) DoQuery(ctx context.Context, user *backend.User,
 		return &backend.DataResponse{Error: err}
 	}
 
-	query := s.doQuery(ctx, signedInUser, orgID, q)
-	return query
+	return s.doQuery(ctx, signedInUser, orgID, q)
 }
 
 func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q Query) *backend.DataResponse {
-	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
-	return response
+	return s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
 }
 
 func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string, orgID int64) *backend.DataResponse {
@@ -169,40 +167,50 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to search resources", "error", err)
-		response.Error = err
-		return response
+		return s.error(err, "Failed to search resources", response)
 	}
 
-	frame := newSearchFrame(res)
-	for _, r := range res.Items {
-		doc, err := getDoc(r.Value)
-		if err != nil {
-			s.logger.Error("Failed to parse doc", "error", err)
-			response.Error = err
-			return response
-		}
-		kind := strings.ToLower(doc.Kind)
-		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, doc.Spec.Tags, doc.FolderID)
+	frame, err := loadSearchResponse(res, s)
+	if err != nil {
+		return s.error(err, "Failed to load search response", response)
 	}
+
 	response.Frames = append(response.Frames, frame)
 
 	if len(res.Groups) > 0 {
-		tagsFrame := newTagsFrame()
-		for _, grp := range res.Groups {
-			tagsFrame.AppendRow(grp.Name, grp.Count)
-		}
+		tagsFrame := loadTagsResponse(res)
 		response.Frames = append(response.Frames, tagsFrame)
 	}
 
 	return response
 }
 
-func newTagsFrame() *data.Frame {
-	fTag := newField("tag", data.FieldTypeString)
-	fCount := newField("count", data.FieldTypeInt64)
-	tagsFrame := data.NewFrame("tags", fTag, fCount)
+func (s *StandardSearchService) error(err error, message string, response *backend.DataResponse) *backend.DataResponse {
+	s.logger.Error(message, "error", err)
+	response.Error = err
+	return response
+}
+
+func loadSearchResponse(res *resource.SearchResponse, s *StandardSearchService) (*data.Frame, error) {
+	frame := newSearchFrame(res)
+	for _, r := range res.Items {
+		doc, err := getDoc(r.Value)
+		if err != nil {
+			s.logger.Error("Failed to parse doc", "error", err)
+			return nil, err
+		}
+		kind := strings.ToLower(doc.Kind)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, doc.Spec.Tags, doc.FolderID)
+	}
+	return frame, nil
+}
+
+func loadTagsResponse(res *resource.SearchResponse) *data.Frame {
+	tagsFrame := newTagsFrame()
+	for _, grp := range res.Groups {
+		tagsFrame.AppendRow(grp.Name, grp.Count)
+	}
 	return tagsFrame
 }
 
@@ -228,6 +236,13 @@ func newSearchFrame(res *resource.SearchResponse) *data.Frame {
 		},
 	})
 	return frame
+}
+
+func newTagsFrame() *data.Frame {
+	fTag := newField("tag", data.FieldTypeString)
+	fCount := newField("count", data.FieldTypeInt64)
+	tagsFrame := data.NewFrame("tags", fTag, fCount)
+	return tagsFrame
 }
 
 func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
