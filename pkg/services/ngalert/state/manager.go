@@ -31,8 +31,8 @@ type AlertInstanceManager interface {
 }
 
 type StatePersister interface {
-	Async(ctx context.Context, cache *cache)
-	Sync(ctx context.Context, span trace.Span, states StateTransitions)
+	Async(ctx context.Context, instancesProvider AlertInstancesProvider)
+	Sync(ctx context.Context, span trace.Span, ruleKey ngModels.AlertRuleKeyWithGroup, states StateTransitions)
 }
 
 // Sender is an optional callback intended for sending the states to an alertmanager.
@@ -123,7 +123,7 @@ func (st *Manager) Run(ctx context.Context) error {
 	return nil
 }
 
-func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
+func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceReader InstanceReader) {
 	if st.instanceStore == nil {
 		st.log.Info("Skip warming the state because instance store is not configured")
 		return
@@ -131,13 +131,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
 
-	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
+	orgIds, err := instanceReader.FetchOrgIds(ctx)
 	if err != nil {
 		st.log.Error("Unable to fetch orgIds", "error", err)
 	}
 
 	statesCount := 0
-	states := make(map[int64]map[string]*ruleStates, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -168,14 +167,11 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			}
 		}
 
-		orgStates := make(map[string]*ruleStates, len(ruleByUID))
-		states[orgId] = orgStates
-
 		// Get Instances
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
 		}
@@ -193,12 +189,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				annotations = make(map[string]string)
 			}
 
-			rulesStates, ok := orgStates[entry.RuleUID]
-			if !ok {
-				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
-				orgStates[entry.RuleUID] = rulesStates
-			}
-
 			lbs := map[string]string(entry.Labels)
 			cacheID := entry.Labels.Fingerprint()
 			var resultFp data.Fingerprint
@@ -209,7 +199,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				}
 				resultFp = data.Fingerprint(fp)
 			}
-			rulesStates.states[cacheID] = &State{
+			state := State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheID:              cacheID,
@@ -225,11 +215,11 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
 			}
+			st.cache.getOrAdd(state, st.log)
 			statesCount++
 		}
 	}
 
-	st.cache.setAllStates(states)
 	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
@@ -240,7 +230,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprin
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
 // to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
 // history.
-func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, reason string) []StateTransition {
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKeyWithGroup, reason string) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
 
@@ -290,7 +280,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
-	ruleKey := rule.GetKey()
+	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
 	if rule == nil || st.historian == nil || len(transitions) == 0 {
@@ -347,7 +337,7 @@ func (st *Manager) ProcessEvalResults(
 		statesToSend = st.updateLastSentAt(allChanges, evaluatedAt)
 	}
 
-	st.persister.Sync(ctx, span, allChanges)
+	st.persister.Sync(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
 	if st.historian != nil {
 		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}

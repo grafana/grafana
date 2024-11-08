@@ -120,7 +120,6 @@ func (ns *NotificationService) Run(ctx context.Context) error {
 		select {
 		case webhook := <-ns.webhookQueue:
 			err := ns.sendWebRequestSync(context.Background(), webhook)
-
 			if err != nil {
 				ns.log.Error("Failed to send webrequest ", "error", err)
 			}
@@ -155,6 +154,7 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *SendWeb
 		HttpMethod:  cmd.HttpMethod,
 		HttpHeader:  cmd.HttpHeader,
 		ContentType: cmd.ContentType,
+		TLSConfig:   cmd.TLSConfig,
 		Validation:  cmd.Validation,
 	})
 }
@@ -211,7 +211,6 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 		Subject:       cmd.Subject,
 		ReplyTo:       cmd.ReplyTo,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,6 @@ func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, 
 
 func (ns *NotificationService) SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error {
 	message, err := ns.buildEmailMessage(cmd)
-
 	if err != nil {
 		return err
 	}
@@ -304,7 +302,6 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 			"SignUpUrl": setting.ToAbsUrl(fmt.Sprintf("signup/?email=%s&code=%s", url.QueryEscape(evt.Email), url.QueryEscape(evt.Code))),
 		},
 	})
-
 	if err != nil {
 		return err
 	}

@@ -2,7 +2,7 @@ package resource
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -25,7 +25,7 @@ import (
 
 type CDKBackendOptions struct {
 	Tracer     trace.Tracer
-	Bucket     *blob.Bucket
+	Bucket     CDKBucket
 	RootFolder string
 }
 
@@ -60,7 +60,7 @@ func NewCDKBackend(ctx context.Context, opts CDKBackendOptions) (StorageBackend,
 
 type cdkBackend struct {
 	tracer trace.Tracer
-	bucket *blob.Bucket
+	bucket CDKBucket
 	root   string
 
 	mutex sync.Mutex
@@ -106,6 +106,10 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 		buffer.WriteString(fmt.Sprintf("/%d.json", rv))
 	}
 	return buffer.String()
+}
+
+func (s *cdkBackend) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
@@ -247,7 +251,7 @@ type cdkVersion struct {
 }
 
 type cdkListIterator struct {
-	bucket *blob.Bucket
+	bucket CDKBucket
 	ctx    context.Context
 	err    error
 

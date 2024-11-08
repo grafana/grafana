@@ -218,11 +218,17 @@ export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<
     (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
   const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
+  const whenField = reduceExpression?.model.reducer ?? ReducerID.last;
+  const params = conditionsFromThreshold[0]?.evaluator?.params
+    ? [...conditionsFromThreshold[0]?.evaluator?.params]
+    : [0];
+  const type = conditionsFromThreshold[0]?.evaluator?.type ?? EvalFunction.IsAbove;
+
   return {
-    whenField: reduceExpression?.model.reducer ?? ReducerID.last,
+    whenField: whenField,
     evaluator: {
-      params: [...conditionsFromThreshold[0]?.evaluator?.params] ?? [0],
-      type: conditionsFromThreshold[0]?.evaluator?.type ?? EvalFunction.IsAbove,
+      params: params,
+      type: type,
     },
   };
 }

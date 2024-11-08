@@ -10,9 +10,9 @@ interface Props {
   user: UserDTO;
 
   onUserUpdate: (user: UserDTO) => void;
-  onUserDelete: (userId: number) => void;
-  onUserDisable: (userId: number) => void;
-  onUserEnable: (userId: number) => void;
+  onUserDelete: (userUid: string) => void;
+  onUserDisable: (userUid: string) => void;
+  onUserEnable: (userUid: string) => void;
   onPasswordChange(password: string): void;
 }
 
@@ -43,11 +43,11 @@ export function UserProfile({
     }
   };
 
-  const handleUserDelete = () => onUserDelete(user.id);
+  const handleUserDelete = () => onUserDelete(user.uid);
 
-  const handleUserDisable = () => onUserDisable(user.id);
+  const handleUserDisable = () => onUserDisable(user.uid);
 
-  const handleUserEnable = () => onUserEnable(user.id);
+  const handleUserEnable = () => onUserEnable(user.uid);
 
   const onUserNameChange = (newValue: string) => {
     onUserUpdate({
@@ -87,6 +87,7 @@ export function UserProfile({
         <div>
           <table className="filter-table form-inline">
             <tbody>
+              <UserProfileRow label="Numerical identifier" value={user.id.toString()} locked={true} />
               <UserProfileRow
                 label="Name"
                 value={user.name}
@@ -244,9 +245,9 @@ export class UserProfileRow extends PureComponent<UserProfileRowProps, UserProfi
     const { value } = this.state;
     const labelClass = cx(
       'width-16',
-      css`
-        font-weight: 500;
-      `
+      css({
+        fontWeight: 500,
+      })
     );
 
     if (locked) {
@@ -296,15 +297,15 @@ interface LockedRowProps {
 }
 
 export const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
-  const lockMessageClass = css`
-    font-style: italic;
-    margin-right: 0.6rem;
-  `;
+  const lockMessageClass = css({
+    fontStyle: 'italic',
+    marginRight: '0.6rem',
+  });
   const labelClass = cx(
     'width-16',
-    css`
-      font-weight: 500;
-    `
+    css({
+      fontWeight: 500,
+    })
   );
 
   return (

@@ -11,17 +11,15 @@ let searcher: GrafanaSearcher | undefined = undefined;
 export function getGrafanaSearcher(): GrafanaSearcher {
   if (!searcher) {
     const sqlSearcher = new SQLSearcher();
+
     const useBluge = config.featureToggles.panelTitleSearch;
     searcher = useBluge ? new BlugeSearcher(sqlSearcher) : sqlSearcher;
-
-    const useUnified = config.featureToggles.unifiedStorageSearch;
-    if (useUnified) {
-      searcher = new UnifiedSearcher(sqlSearcher);
-    }
-
     if (useBluge && location.search.includes('do-frontend-query')) {
-      searcher = new FrontendSearcher(searcher);
+      return new FrontendSearcher(searcher);
     }
+
+    const useUnifiedStorageSearch = config.featureToggles.unifiedStorageSearch;
+    searcher = useUnifiedStorageSearch ? new UnifiedSearcher(sqlSearcher) : sqlSearcher;
   }
   return searcher!;
 }

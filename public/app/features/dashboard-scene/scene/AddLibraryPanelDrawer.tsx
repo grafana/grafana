@@ -9,8 +9,8 @@ import {
 
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 
 export interface AddLibraryPanelDrawerState extends SceneObjectState {
   panelToReplaceRef?: SceneObjectRef<VizPanel>;
@@ -23,8 +23,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
   public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
-
-    const newPanel = getDefaultVizPanel(dashboard);
+    const newPanel = getDefaultVizPanel();
 
     newPanel.setState({
       $behaviors: [new LibraryPanelBehavior({ uid: panelInfo.uid, name: panelInfo.name })],

@@ -35,20 +35,9 @@ export function isOnCallContactPointReady(contactPoints: Receiver[]) {
   );
 }
 
-export function useGetContactPoints() {
-  const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
-    GRAFANA_RULES_SOURCE_NAME,
-    {
-      refetchOnFocus: true,
-      refetchOnReconnect: true,
-      refetchOnMountOrArgChange: true,
-    }
-  );
-
-  const contactPoints = alertmanagerConfiguration.data?.alertmanager_config?.receivers ?? [];
-  return { contactPoints, isLoading: alertmanagerConfiguration.isLoading };
-}
-
+/**
+ * @deprecated Will be removed when notification policies is moved to k8s API. Do not use!
+ */
 export function useGetDefaultContactPoint() {
   const alertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
     GRAFANA_RULES_SOURCE_NAME,

@@ -12,14 +12,13 @@ import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { AccessControlAction } from 'app/types';
 
-import 'core-js/stable/structured-clone';
 import ContactPoints from './components/contact-points/ContactPoints';
 import EditContactPoint from './components/contact-points/EditContactPoint';
 import NewReceiverView from './components/receivers/NewReceiverView';
 
 const server = setupMswServer();
 
-const assertSaveWasSuccessful = async () => {
+const expectSaveWasSuccessful = async () => {
   // TODO: Have a better way to assert that the contact point was saved. This is instead asserting on some
   // text that's present on the list page, as there's a lot of overlap in text between the form and the list page
   return waitFor(() => expect(screen.getByText(/search by name or type/i)).toBeInTheDocument(), { timeout: 2000 });
@@ -77,7 +76,7 @@ it('can save a contact point with a select dropdown', async () => {
 
   await saveContactPoint();
 
-  await assertSaveWasSuccessful();
+  await expectSaveWasSuccessful();
 });
 
 it('can save existing Telegram contact point', async () => {
@@ -89,5 +88,5 @@ it('can save existing Telegram contact point', async () => {
   // trigger this error if it regresses
   await saveContactPoint();
 
-  await assertSaveWasSuccessful();
+  await expectSaveWasSuccessful();
 });

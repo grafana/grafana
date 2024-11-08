@@ -146,79 +146,78 @@ const renderDataSource = <TQuery extends DataQuery>(
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      label: Wrapper;
-      display: flex;
-      align-items: center;
-      margin-left: ${theme.spacing(0.5)};
-      overflow: hidden;
-    `,
-    queryNameWrapper: css`
-      display: flex;
-      cursor: pointer;
-      border: 1px solid transparent;
-      border-radius: ${theme.shape.borderRadius(2)};
-      align-items: center;
-      padding: 0 0 0 ${theme.spacing(0.5)};
-      margin: 0;
-      background: transparent;
-      overflow: hidden;
+    wrapper: css({
+      label: 'Wrapper',
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: theme.spacing(0.5),
+      overflow: 'hidden',
+    }),
+    queryNameWrapper: css({
+      display: 'flex',
+      cursor: 'pointer',
+      border: '1px solid transparent',
+      borderRadius: theme.shape.radius.default,
+      alignItems: 'center',
+      padding: theme.spacing(0, 0, 0, 0.5),
+      margin: 0,
+      background: 'transparent',
+      overflow: 'hidden',
 
-      &:hover {
-        background: ${theme.colors.action.hover};
-        border: 1px dashed ${theme.colors.border.strong};
-      }
+      '&:hover': {
+        background: theme.colors.action.hover,
+        border: `1px dashed ${theme.colors.border.strong}`,
+      },
 
-      &:focus {
-        border: 2px solid ${theme.colors.primary.border};
-      }
+      '&:focus': {
+        border: `2px solid ${theme.colors.primary.border}`,
+      },
 
-      &:hover,
-      &:focus {
-        .query-name-edit-icon {
-          visibility: visible;
-        }
-      }
-    `,
-    queryName: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.primary.text};
-      cursor: pointer;
-      overflow: hidden;
-      margin-left: ${theme.spacing(0.5)};
-    `,
+      '&:hover, &:focus': {
+        '.query-name-edit-icon': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    queryName: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.primary.text,
+      cursor: 'pointer',
+      overflow: 'hidden',
+      marginLeft: theme.spacing(0.5),
+    }),
     queryEditIcon: cx(
-      css`
-        margin-left: ${theme.spacing(2)};
-        visibility: hidden;
-      `,
+      css({
+        marginLeft: theme.spacing(2),
+        visibility: 'hidden',
+      }),
       'query-name-edit-icon'
     ),
-    queryNameInput: css`
-      max-width: 300px;
-      margin: -4px 0;
-    `,
-    collapsedText: css`
-      font-weight: ${theme.typography.fontWeightRegular};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      padding-left: ${theme.spacing(1)};
-      align-items: center;
-      overflow: hidden;
-      font-style: italic;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    `,
-    contextInfo: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-style: italic;
-      color: ${theme.colors.text.secondary};
-      padding-left: 10px;
-      padding-right: 10px;
-    `,
-    itemWrapper: css`
-      display: flex;
-      margin-left: 4px;
-    `,
+    queryNameInput: css({
+      maxWidth: '300px',
+      margin: '-4px 0',
+    }),
+    collapsedText: css({
+      fontWeight: theme.typography.fontWeightRegular,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      paddingLeft: theme.spacing(1),
+      alignItems: 'center',
+      overflow: 'hidden',
+      fontStyle: 'italic',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+    }),
+    contextInfo: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontStyle: 'italic',
+      color: theme.colors.text.secondary,
+      paddingLeft: '10px',
+      paddingRight: '10px',
+    }),
+    itemWrapper: css({
+      display: 'flex',
+      marginLeft: '4px',
+    }),
   };
 };

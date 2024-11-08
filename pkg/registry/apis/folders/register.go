@@ -2,22 +2,24 @@ package folders
 
 import (
 	"context"
+	"errors"
 
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -28,8 +30,12 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
+var _ builder.APIGroupValidation = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
+
+var errNoUser = errors.New("valid user is required")
+var errNoResource = errors.New("resource name is required")
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
@@ -37,6 +43,7 @@ type FolderAPIBuilder struct {
 	features      featuremgmt.FeatureToggles
 	namespacer    request.NamespaceMapper
 	folderSvc     folder.Service
+	storage       grafanarest.Storage
 	accessControl accesscontrol.AccessControl
 }
 
@@ -95,7 +102,11 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(b.gv)
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
+
 	legacyStore := &legacyStorage{
 		service:        b.folderSvc,
 		namespacer:     b.namespacer,
@@ -121,6 +132,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	b.storage = storage[resourceInfo.StoragePath()].(grafanarest.Storage)
 	return nil
 }
 
@@ -151,40 +163,103 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
+type authorizerParams struct {
+	user      identity.Requester
+	evaluator accesscontrol.Evaluator
+}
+
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() || attr.GetName() == "" {
-				return authorizer.DecisionNoOpinion, "", nil
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		in, err := authorizerFunc(ctx, attr)
+		if err != nil {
+			if errors.Is(err, errNoUser) {
+				return authorizer.DecisionDeny, "", nil
 			}
+			return authorizer.DecisionNoOpinion, "", nil
+		}
 
-			// require a user
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "valid user is required", err
-			}
+		ok, err := b.accessControl.Evaluate(ctx, in.user, in.evaluator)
+		if ok {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return authorizer.DecisionDeny, "folder", err
+	})
+}
 
-			action := dashboards.ActionFoldersRead
-			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(attr.GetName())
+func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
+	verb := attr.GetVerb()
+	name := attr.GetName()
+	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
+		return nil, errNoResource
+	}
 
-			// "get" is used for sub-resources with GET http (parents, access, count)
-			switch attr.GetVerb() {
-			case "patch":
-				fallthrough
-			case "create":
-				fallthrough
-			case "update":
-				action = dashboards.ActionFoldersWrite
-			case "deletecollection":
-				fallthrough
-			case "delete":
-				action = dashboards.ActionFoldersDelete
-			}
+	// require a user
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, errNoUser
+	}
 
-			ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action, scope))
-			if ok {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "folder", err
-		})
+	scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(name)
+	var eval accesscontrol.Evaluator
+
+	// "get" is used for sub-resources with GET http (parents, access, count)
+	switch verb {
+	case utils.VerbCreate:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+	case utils.VerbPatch:
+		fallthrough
+	case utils.VerbUpdate:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scope)
+	case utils.VerbDeleteCollection:
+		fallthrough
+	case utils.VerbDelete:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
+	default:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
+	}
+	return &authorizerParams{evaluator: eval, user: user}, nil
+}
+
+var folderValidationRules = struct {
+	maxDepth     int
+	invalidNames []string
+}{
+	maxDepth:     5,
+	invalidNames: []string{"general"},
+}
+
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	id := a.GetName()
+	for _, invalidName := range folderValidationRules.invalidNames {
+		if id == invalidName {
+			return dashboards.ErrFolderInvalidUID
+		}
+	}
+
+	obj := a.GetObject()
+
+	for i := 1; i <= folderValidationRules.maxDepth; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		if i == folderValidationRules.maxDepth {
+			return folder.ErrMaximumDepthReached
+		}
+
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		obj = parentObj
+	}
+	return nil
+}
+
+func getParent(o runtime.Object) string {
+	meta, err := utils.MetaAccessor(o)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }

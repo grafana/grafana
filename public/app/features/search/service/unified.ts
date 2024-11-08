@@ -1,4 +1,3 @@
-// TODO: fix - copied from bluge.ts
 import {
   DataFrame,
   DataFrameJSON,
@@ -12,7 +11,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
 import { replaceCurrentFolderQuery } from './utils';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
+import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -36,7 +35,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return this.doSearchQuery(query);
   }
 
-  // TODO: fix - copied from bluge.ts
   async starred(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
@@ -62,7 +60,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     };
   }
 
-  // TODO: fix - copied from bluge.ts
   async tags(query: SearchQuery): Promise<TermCount[]> {
     const req = {
       ...query,
@@ -88,7 +85,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return [];
   }
 
-  // TODO: fix - copied from bluge.ts
+  // TODO: Implement this correctly
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
       { value: folderViewSort, label: 'Alphabetically (A-Z)' },
@@ -109,7 +106,6 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return Promise.resolve(opts);
   }
 
-  // TODO: update - copied from bluge.ts
   async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     query = await replaceCurrentFolderQuery(query);
     const req = {
@@ -142,7 +138,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       };
     }
 
-    const meta = first.meta.custom || {};
+    const meta = first.meta.custom as SearchResultMeta;
     if (!meta.locationInfo) {
       meta.locationInfo = {}; // always set it so we can append
     }
@@ -190,7 +186,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
         view.dataFrame.length = length;
 
         // Add all the location lookup info
-        const submeta = frame.meta?.custom;
+        const submeta = frame.meta?.custom as SearchResultMeta;
         if (submeta?.locationInfo && meta) {
           for (const [key, value] of Object.entries(submeta.locationInfo)) {
             meta.locationInfo[key] = value;

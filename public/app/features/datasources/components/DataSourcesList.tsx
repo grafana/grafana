@@ -9,7 +9,8 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
-import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+import { ROUTES } from '../../connections/constants';
+import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
 import { trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListCard } from './DataSourcesListCard';
@@ -54,7 +55,6 @@ export function DataSourcesListView({
   hasExploreRights,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
-  const dataSourcesRoutes = useDataSourcesRoutes();
   const location = useLocation();
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function DataSourcesListView({
       <EmptyState
         variant="call-to-action"
         button={
-          <LinkButton disabled={!hasCreateRights} href={dataSourcesRoutes.New} icon="database" size="lg">
+          <LinkButton disabled={!hasCreateRights} href={ROUTES.DataSourcesNew} icon="database" size="lg">
             <Trans i18nKey="data-source-list.empty-state.button-title">Add data source</Trans>
           </LinkButton>
         }

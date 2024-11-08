@@ -72,17 +72,9 @@ steps:
   image: alpine:3.20.3
   name: identify-runner
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
   - buildifier --lint=warn -mode=check -r .
-  depends_on:
-  - compile-build-cmd
+  depends_on: []
   image: golang:1.23.1-alpine
   name: lint-starlark
 trigger:
@@ -547,7 +539,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -578,13 +570,6 @@ steps:
   image: golang:1.23.1-alpine
   name: verify-gen-jsonnet
 - commands:
-  - apk add --update make
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -614,9 +599,16 @@ steps:
     token:
       from_secret: drone_token
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    -a targz:grafana:linux/arm/v7 --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+    -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
   environment:
@@ -625,6 +617,27 @@ steps:
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - rgm-package
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: publish-images-grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -863,47 +876,6 @@ steps:
   failure: always
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
-- commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
-    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --go-version=1.23.1 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3 --tag-format='{{
-    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
-  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
-  depends_on:
-  - yarn-install
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-  image: grafana/grafana-build:main
-  name: rgm-build-docker
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
-  depends_on:
-  - rgm-build-docker
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  failure: ignore
-  image: google/cloud-sdk:431.0.0
-  name: publish-images-grafana
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
 trigger:
   event:
   - pull_request
@@ -1003,7 +975,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1278,13 +1250,6 @@ platform:
   os: linux
 services: []
 steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
 - commands:
   - apt-get update -yq && apt-get install shellcheck
   - shellcheck -e SC1071 -e SC2162 scripts/**/*.sh
@@ -1972,7 +1937,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2003,13 +1968,6 @@ steps:
   image: golang:1.23.1-alpine
   name: verify-gen-jsonnet
 - commands:
-  - apk add --update make
-  - make gen-go
-  depends_on:
-  - verify-gen-cue
-  image: golang:1.23.1-alpine
-  name: wire-install
-- commands:
   - yarn install --immutable || yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2038,9 +1996,16 @@ steps:
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build artifacts -a targz:grafana:linux/amd64 -a targz:grafana:linux/arm64
-    -a targz:grafana:linux/arm/v7 --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+    -a targz:grafana:linux/arm/v7 -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
+    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
+    -a docker:grafana:linux/arm/v7:ubuntu --go-version=1.23.1 --yarn-cache=$$YARN_CACHE_FOLDER
+    --build-id=$$DRONE_BUILD_NUMBER --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' --verify='false' --grafana-dir=$$PWD
+    > packages.txt
+  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
   environment:
@@ -2052,6 +2017,31 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - rgm-package
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USER:
+      from_secret: docker_username
+    GCP_KEY:
+      from_secret: gcp_grafanauploads
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
+  name: publish-images-grafana
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  when:
+    repo:
+    - grafana/grafana
 - commands:
   - yarn e2e:plugin:build
   depends_on:
@@ -2324,54 +2314,9 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
-    -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
-    -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --go-version=1.23.1 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.20.3 --tag-format='{{
-    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
-  - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
-  depends_on:
-  - update-package-json-version
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-  image: grafana/grafana-build:main
-  name: rgm-build-docker
-  pull: always
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
-  depends_on:
-  - rgm-build-docker
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
-    GITHUB_APP_PRIVATE_KEY:
-      from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk:431.0.0
-  name: publish-images-grafana
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-  when:
-    repo:
-    - grafana/grafana
-- commands:
   - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss
   depends_on:
-  - rgm-build-docker
+  - rgm-package
   environment:
     DOCKER_PASSWORD:
       from_secret: docker_password
@@ -2394,7 +2339,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update bash
+  - apk add --update bash git
   - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
   - end-to-end-tests-dashboards-suite
@@ -2416,10 +2361,7 @@ steps:
 - commands:
   - ./bin/build upload-packages --edition oss
   depends_on:
-  - end-to-end-tests-dashboards-suite
-  - end-to-end-tests-panels-suite
-  - end-to-end-tests-smoke-tests-suite
-  - end-to-end-tests-various-suite
+  - rgm-package
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -2433,7 +2375,7 @@ steps:
 - commands:
   - ./bin/build upload-cdn --edition oss
   depends_on:
-  - grafana-server
+  - rgm-package
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads
@@ -2525,7 +2467,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2707,53 +2649,6 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- main-test-frontend
-- main-test-backend
-- main-build-e2e-publish
-- main-integration-tests
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: main-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-  repo:
-  - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
 - main-build-e2e-publish
 - main-integration-tests
 environment:
@@ -2805,7 +2700,6 @@ depends_on:
 - main-test-backend
 - main-build-e2e-publish
 - main-integration-tests
-- main-windows
 kind: pipeline
 name: main-notify
 platform:
@@ -3157,7 +3051,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3402,7 +3296,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3434,31 +3328,32 @@ steps:
   - |2-
 
         bash -c '
+        IMAGE_TAG=$(echo "$${TAG}" | sed -e "s/+/-/g")
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
 
         # Push the grafana-image-tags images
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-armv7
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64       grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
-        $$debug docker manifest push grafana/grafana:$${TAG}
-        $$debug docker manifest push grafana/grafana:$${TAG}-ubuntu
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}-ubuntu
 
         # if LATEST is set, then also create & push latest
         if [[ -n $${LATEST} ]]; then
-            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64           grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7
-            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${IMAGE_TAG}-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
             $$debug docker manifest push grafana/grafana:latest
             $$debug docker manifest push grafana/grafana:latest-ubuntu
@@ -3533,7 +3428,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3565,31 +3460,32 @@ steps:
   - |2-
 
         bash -c '
+        IMAGE_TAG=$(echo "$${TAG}" | sed -e "s/+/-/g")
         debug=
         if [[ -n $${DRY_RUN} ]];  then debug=echo; fi
         docker login -u $${DOCKER_USER} -p $${DOCKER_PASSWORD}
 
         # Push the grafana-image-tags images
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-armv7
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-amd64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-arm64
-        $$debug docker push grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64
+        $$debug docker push grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Create the grafana manifests
-        $$debug docker manifest create grafana/grafana:${TAG}       grafana/grafana-image-tags:$${TAG}-amd64       grafana/grafana-image-tags:$${TAG}-arm64       grafana/grafana-image-tags:$${TAG}-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}       grafana/grafana-image-tags:$${IMAGE_TAG}-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
 
-        $$debug docker manifest create grafana/grafana:${TAG}-ubuntu       grafana/grafana-image-tags:$${TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+        $$debug docker manifest create grafana/grafana:$${IMAGE_TAG}-ubuntu       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64       grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
         # Push the grafana manifests
-        $$debug docker manifest push grafana/grafana:$${TAG}
-        $$debug docker manifest push grafana/grafana:$${TAG}-ubuntu
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}
+        $$debug docker manifest push grafana/grafana:$${IMAGE_TAG}-ubuntu
 
         # if LATEST is set, then also create & push latest
         if [[ -n $${LATEST} ]]; then
-            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${TAG}-amd64           grafana/grafana-image-tags:$${TAG}-arm64           grafana/grafana-image-tags:$${TAG}-armv7
-            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${TAG}-ubuntu-armv7
+            $$debug docker manifest create grafana/grafana:latest           grafana/grafana-image-tags:$${IMAGE_TAG}-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-armv7
+            $$debug docker manifest create grafana/grafana:latest-ubuntu           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-amd64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-arm64           grafana/grafana-image-tags:$${IMAGE_TAG}-ubuntu-armv7
 
             $$debug docker manifest push grafana/grafana:latest
             $$debug docker manifest push grafana/grafana:latest-ubuntu
@@ -3681,7 +3577,8 @@ steps:
   image: golang:1.23.1-alpine
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --artifacts-editions=oss --tag $${DRONE_TAG} --src-bucket
+    $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -3691,19 +3588,6 @@ steps:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
-- commands:
-  - ./bin/build artifacts static-assets --tag ${DRONE_TAG} --static-asset-editions=grafana-oss
-  depends_on:
-  - compile-build-cmd
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-    STATIC_ASSET_EDITIONS:
-      from_secret: static_asset_editions
-  image: grafana/grafana-ci-deploy:1.3.3
-  name: publish-static-assets
 - commands:
   - ./bin/build artifacts storybook --tag ${DRONE_TAG}
   depends_on:
@@ -3723,7 +3607,6 @@ steps:
     -f latest=$${LATEST} --repo=grafana/grafana release-pr.yml
   depends_on:
   - publish-artifacts
-  - publish-static-assets
   environment:
     GH_CLI_URL: https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz
     GITHUB_TOKEN:
@@ -3855,6 +3738,7 @@ platform:
 services: []
 steps:
 - commands:
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -3870,7 +3754,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3884,10 +3768,10 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -3915,11 +3799,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -3936,16 +3821,16 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - if rpm -q grafana | grep -q "$verison"; then
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4032,6 +3917,7 @@ steps:
       from_secret: packages_service_account
     target_bucket: grafana-packages
 - commands:
+  - export version=$(echo ${TAG} | sed -e "s/+security-/-/g")
   - 'echo "Step 1: Updating package lists..."'
   - apt-get update >/dev/null 2>&1
   - 'echo "Step 2: Installing prerequisites..."'
@@ -4047,7 +3933,7 @@ steps:
   - 'echo "Step 5: Installing Grafana..."'
   - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
-    install -yq grafana=${TAG} >/dev/null 2>&1; then'
+    install -yq grafana=$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4061,10 +3947,10 @@ steps:
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - 'if dpkg -s grafana | grep -q "Version: ${TAG}"; then'
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - 'if dpkg -s grafana | grep -q "Version: $version"; then'
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4093,11 +3979,12 @@ steps:
     sslcacert=/etc/pki/tls/certs/ca-bundle.crt
     ' > /etc/yum.repos.d/grafana.repo
   - 'echo "Step 5: Checking RPM repository..."'
-  - dnf list available grafana-${TAG}
+  - export version=$(echo "${TAG}" | sed -e "s/+security-/^security_/g")
+  - dnf list available grafana-$version
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
   - for i in $(seq 1 60); do
-  - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
+  - '    if dnf install -y --nogpgcheck grafana-$version >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
@@ -4114,16 +4001,16 @@ steps:
   - '    rpm --import https://rpm.grafana.com/gpg.key'
   - '    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana'
   - else
-  - '    echo "Grafana package version ${TAG} not found in repository."'
+  - '    echo "Grafana package version $version not found in repository."'
   - '    dnf repolist'
   - '    dnf list available grafana*'
   - '    exit 1'
   - fi
   - 'echo "Step 6: Verifying Grafana installation..."'
-  - if rpm -q grafana | grep -q "${TAG}"; then
-  - '    echo "Successfully verified Grafana version ${TAG}"'
+  - if rpm -q grafana | grep -q "$verison"; then
+  - '    echo "Successfully verified Grafana version $version"'
   - else
-  - '    echo "Failed to verify Grafana version ${TAG}"'
+  - '    echo "Failed to verify Grafana version $version"'
   - '    exit 1'
   - fi
   - echo "Verification complete."
@@ -4287,51 +4174,6 @@ volumes:
 clone:
   retries: 3
 depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: release-whatsnew-checker
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.23.1-alpine
-  name: compile-build-cmd
-- commands:
-  - ./bin/build whatsnew-checker
-  depends_on:
-  - compile-build-cmd
-  image: golang:1.23.1-alpine
-  name: whats-new-checker
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
 image_pull_secrets:
 - gcr
 - gar
@@ -4402,53 +4244,34 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on:
-- rgm-tag-prerelease
+depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - gcr
 - gar
 kind: pipeline
-name: rgm-tag-prerelease-windows
+name: release-whatsnew-checker
+node:
+  type: no-parallel
 platform:
   arch: amd64
-  os: windows
-  version: "1809"
+  os: linux
 services: []
 steps:
 - commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
-  - dos2unix gcpkey.json
-  - gcloud auth activate-service-account --key-file=gcpkey.json
-  - rm gcpkey.json
-  - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss ${DRONE_TAG}
-  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
-  depends_on:
-  - windows-init
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-  image: grafana/ci-wix:0.1.1
-  name: build-windows-installer
+    CGO_ENABLED: 0
+  image: golang:1.23.1-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build whatsnew-checker
+  depends_on:
+  - compile-build-cmd
+  image: golang:1.23.1-alpine
+  name: whats-new-checker
 trigger:
   event:
     exclude:
@@ -4461,14 +4284,13 @@ trigger:
 type: docker
 volumes:
 - host:
-    path: //./pipe/docker_engine/
+    path: /var/run/docker.sock
   name: docker
 ---
 clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-- rgm-tag-prerelease-windows
 image_pull_secrets:
 - gcr
 - gar
@@ -5105,59 +4927,6 @@ volumes:
   name: docker
 ---
 clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: testing-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .
-  - git checkout -f $$env:DRONE_COMMIT
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands: []
-  depends_on:
-  - clone
-  image: golang:1.23.1-windowsservercore-1809
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: golang:1.23.1-windowsservercore-1809
-  name: wire-install
-- commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  image: golang:1.23.1-windowsservercore-1809
-  name: test-backend
-trigger:
-  event:
-  - promote
-  target:
-  - test-windows
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
   retries: 3
 depends_on: []
 environment:
@@ -5221,7 +4990,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.53/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.1.1/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5385,55 +5154,6 @@ volumes:
 - name: mysql80
   temp:
     medium: memory
----
-clone:
-  disable: true
-depends_on: []
-image_pull_secrets:
-- gcr
-- gar
-kind: pipeline
-name: publish-ci-windows-test-image
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-ci-sandbox.git"
-    .
-  - git checkout -f $$env:DRONE_COMMIT
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cd scripts\build\ci-windows-test
-  - docker login -u $$env:DOCKER_USERNAME -p $$env:DOCKER_PASSWORD
-  - docker build -t grafana/grafana-ci-windows-test:$$env:TAG .
-  - docker push grafana/grafana-ci-windows-test:$$env:TAG
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USERNAME:
-      from_secret: docker_username
-  image: docker:windowsservercore-1809
-  name: build-and-publish
-  volumes:
-  - name: docker
-    path: //./pipe/docker_engine/
-trigger:
-  event:
-  - promote
-  target:
-  - ci-windows-test-image
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
 ---
 clone:
   retries: 3
@@ -5745,6 +5465,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM scottyhardy/docker-wine:stable-9.0
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -5782,6 +5503,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
+  - trivy --exit-code 1 --severity HIGH,CRITICAL scottyhardy/docker-wine:stable-9.0
   depends_on:
   - authenticate-gcr
   environment:
@@ -6013,6 +5735,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e618274ea7a8bfbf3d5e151d459348aa9382fe63fe7fef76c997db3cba74779f
+hmac: 250d3c2ae9ddf7cbfd2a9fed01fe81312a882ba09b8f8725f4704629da00a774
 
 ...

@@ -1,18 +1,14 @@
-import { locationUtil } from '@grafana/data';
+import { isEqual } from 'lodash';
+
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { default as localStorageStore } from 'app/core/store';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
-import {
-  DASHBOARD_FROM_LS_KEY,
-  removeDashboardToFetchFromLocalStorage,
-} from 'app/features/dashboard/state/initDashboard';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -25,6 +21,7 @@ import { updateNavModel } from './utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  options?: LoadDashboardOptions;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -47,12 +44,7 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
-  // A temporary approach not to clean the dashboard from local storage when navigating from Explore to Dashboard
-  // We currently need it as there are two flows of fetching dashboard. The legacy one (initDashboard), uses the new one(DashboardScenePageStateManager.fetch) where the
-  // removal of the dashboard from local storage is implemented. So in the old flow we wouldn't be able to early return dashboard from local storage, if we prematurely
-  // removed it when prefetching the dashboard in DashboardPageProxy.
-  // This property will be removed when the old flow (initDashboard) is removed.
-  keepDashboardFromExploreInLocalStorage?: boolean;
+  queryParams?: UrlQueryMap;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -67,22 +59,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     uid,
     route,
     urlFolderUid,
-    keepDashboardFromExploreInLocalStorage,
+    queryParams,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
-    const model = localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY);
-
-    if (model) {
-      if (!keepDashboardFromExploreInLocalStorage) {
-        removeDashboardToFetchFromLocalStorage();
-      }
-      return model;
-    }
-
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
-    if (cachedDashboard) {
-      return cachedDashboard;
+    if (!queryParams) {
+      const cachedDashboard = this.getDashboardFromCache(cacheKey);
+
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
     }
 
     let rsp: DashboardDTO;
@@ -111,7 +97,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -184,7 +170,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      this.setState({ dashboard: dashboard, isLoading: false });
+      this.setState({ dashboard: dashboard, isLoading: false, options });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
@@ -202,30 +188,62 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
-    const comingFromExplore = Boolean(
-      localStorageStore.getObject<DashboardDTO>(DASHBOARD_FROM_LS_KEY) &&
-        options.keepDashboardFromExploreInLocalStorage === false
-    );
+  public async reloadDashboard(queryParams?: LoadDashboardOptions['queryParams'] | undefined) {
+    if (!this.state.options) {
+      return;
+    }
 
+    const options = {
+      ...this.state.options,
+      queryParams,
+    };
+
+    if (isEqual(options, this.state.options)) {
+      return;
+    }
+
+    try {
+      this.setState({ isLoading: true });
+
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        this.setState({ isLoading: false });
+        return;
+      }
+
+      if (!rsp?.dashboard) {
+        this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+        return;
+      }
+
+      const scene = transformSaveModelToScene(rsp);
+
+      this.setSceneCache(options.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false, options });
+    } catch (err) {
+      const msg = getMessageFromError(err);
+      this.setState({ isLoading: false, loadError: msg });
+    }
+  }
+
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {
     this.setState({ dashboard: undefined, isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
     const fromCache = this.getSceneFromCache(options.uid);
-
-    // When coming from Explore, skip returnning scene from cache
-    if (!comingFromExplore) {
-      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-        return fromCache;
-      }
+    if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      return fromCache;
     }
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
 
       // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid && !comingFromExplore) {
+      if (options.uid) {
         this.setSceneCache(options.uid, scene);
       }
 
@@ -243,7 +261,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public getDashboardFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
-    cacheKey = this.getCacheKey(cacheKey);
 
     if (
       cachedDashboard &&
@@ -268,8 +285,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
@@ -278,25 +293,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getSceneFromCache(cacheKey: string) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     return this.cache[cacheKey];
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.cache[cacheKey] = scene;
   }
 
-  public getCacheKey(cacheKey: string): string {
-    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__');
-
-    if (!scopesCacheKey) {
-      return cacheKey;
-    }
-
-    return `${cacheKey}__scp__${scopesCacheKey}`;
+  public clearSceneCache() {
+    this.cache = {};
   }
 }
 

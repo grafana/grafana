@@ -1,19 +1,21 @@
 import { css, cx } from '@emotion/css';
 import { addMinutes, subDays, subHours } from 'date-fns';
 import { Location } from 'history';
-import { useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config as runtimeConfig, isFetchError, locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
+  Dropdown,
   FieldSet,
   Input,
   LinkButton,
+  Menu,
   useStyles2,
   Stack,
   useSplitter,
@@ -21,7 +23,6 @@ import {
   InlineField,
   Box,
 } from '@grafana/ui';
-import { usePageToolbar } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
@@ -44,6 +45,7 @@ import {
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
+import { GlobalTemplateDataExamples } from './TemplateDataExamples';
 import { TemplateEditor } from './TemplateEditor';
 import { TemplatePreview } from './TemplatePreview';
 import { snippets } from './editor/templateDataSuggestions';
@@ -93,7 +95,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const createNewTemplate = useCreateNotificationTemplate({ alertmanager });
   const updateTemplate = useUpdateNotificationTemplate({ alertmanager });
-  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager });
+  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager, originalTemplate });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
@@ -158,33 +160,34 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
     }
   };
 
-  const actionButtons = useMemo(
-    () => (
-      <Stack>
-        <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
-          Save
-        </Button>
-        <LinkButton
-          disabled={isSubmitting}
-          href={makeAMLink('alerting/notifications', alertmanager, {
-            tab: ContactPointsActiveTabs.NotificationTemplates,
-          })}
-          variant="secondary"
-          size="sm"
-        >
-          Cancel
-        </LinkButton>
-      </Stack>
-    ),
-    [alertmanager, isSubmitting]
-  );
+  const appendExample = (example: string) => {
+    const content = getValues('content'),
+      newValue = !content ? example : `${content}\n${example}`;
+    setValue('content', newValue);
+  };
 
-  usePageToolbar(actionButtons);
+  const actionButtons = (
+    <Stack>
+      <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
+        Save
+      </Button>
+      <LinkButton
+        disabled={isSubmitting}
+        href={makeAMLink('alerting/notifications', alertmanager, {
+          tab: ContactPointsActiveTabs.NotificationTemplates,
+        })}
+        variant="secondary"
+        size="sm"
+      >
+        Cancel
+      </LinkButton>
+    </Stack>
+  );
 
   return (
     <>
       <FormProvider {...formApi}>
-        {!runtimeConfig.featureToggles.singleTopNav && <AppChromeUpdate actions={actionButtons} />}
+        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form} aria-label="Template form">
           {/* error message */}
           {error && (
@@ -229,20 +232,51 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                   <div {...columnSplitter.primaryProps}>
                     {/* primaryProps will set "minHeight: min-content;" so we have to make sure to apply minHeight to the child */}
                     <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
-                      <EditorColumnHeader
-                        label="Template"
-                        actions={
-                          <Button
-                            icon="question-circle"
-                            size="sm"
-                            fill="outline"
-                            variant="secondary"
-                            onClick={toggleCheatsheetOpened}
-                          >
-                            Help
-                          </Button>
-                        }
-                      />
+                      <div>
+                        <EditorColumnHeader
+                          label="Template"
+                          actions={
+                            <>
+                              {/* examples dropdown – only available for Grafana Alertmanager */}
+                              {isGrafanaAlertManager && (
+                                <Dropdown
+                                  overlay={
+                                    <Menu>
+                                      {GlobalTemplateDataExamples.map((item, index) => (
+                                        <Menu.Item
+                                          key={index}
+                                          label={item.description}
+                                          onClick={() => appendExample(item.example)}
+                                        />
+                                      ))}
+                                      <Menu.Divider />
+                                      <Menu.Item
+                                        label={'Examples documentation'}
+                                        url="https://grafana.com/docs/grafana/latest/alerting/configure-notifications/template-notifications/examples/"
+                                        target="_blank"
+                                        icon="external-link-alt"
+                                      />
+                                    </Menu>
+                                  }
+                                >
+                                  <Button variant="secondary" size="sm" icon="angle-down">
+                                    Add example
+                                  </Button>
+                                </Dropdown>
+                              )}
+                              <Button
+                                icon="question-circle"
+                                size="sm"
+                                fill="outline"
+                                variant="secondary"
+                                onClick={toggleCheatsheetOpened}
+                              >
+                                Reference
+                              </Button>
+                            </>
+                          }
+                        />
+                      </div>
                       <Box flex={1}>
                         <AutoSizer>
                           {({ width, height }) => (

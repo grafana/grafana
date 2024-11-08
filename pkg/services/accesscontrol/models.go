@@ -234,10 +234,12 @@ type ResourcePermission struct {
 	RoleName         string
 	Actions          []string
 	Scope            string
-	UserId           int64
+	UserID           int64
+	UserUID          string
 	UserLogin        string
 	UserEmail        string
-	TeamId           int64
+	TeamID           int64
+	TeamUID          string
 	TeamEmail        string
 	Team             string
 	BuiltInRole      string
@@ -460,6 +462,10 @@ const (
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
+	// Alerting routes policies actions
+	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
+	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
 	ActionAlertingRuleExternalRead  = "alert.rules.external:read"
@@ -589,9 +595,12 @@ type QueryWithOrg struct {
 }
 
 type CheckRequest struct {
-	User     string
-	Relation string
-	Object   string
+	Namespace  string
+	User       string
+	Relation   string
+	Object     string
+	ObjectType string
+	Parent     string
 }
 
 type ListObjectsRequest struct {

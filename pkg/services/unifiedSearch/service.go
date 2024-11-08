@@ -2,7 +2,11 @@ package unifiedSearch
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -11,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -151,26 +156,138 @@ func (s *StandardSearchService) DoQuery(ctx context.Context, user *backend.User,
 }
 
 func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q Query) *backend.DataResponse {
-	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL)
+	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
 	return response
 }
 
-func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string) *backend.DataResponse {
+func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string, orgID int64) *backend.DataResponse {
 	response := &backend.DataResponse{}
 
-	req := &resource.SearchRequest{Tenant: s.cfg.StackID, Query: qry.Query}
+	// will use stack id for cloud and org id for on-prem
+	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
+
+	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
+		s.logger.Error("Failed to search resources", "error", err)
 		response.Error = err
 		return response
 	}
 
-	// TODO: implement this correctly
-	frame := data.NewFrame("results", data.NewField("value", nil, []string{}))
-	frame.Meta = &data.FrameMeta{Notices: []data.Notice{{Text: "TODO"}}}
+	frame := newSearchFrame(res)
 	for _, r := range res.Items {
-		frame.AppendRow(string(r.Value))
+		doc, err := getDoc(r.Value)
+		if err != nil {
+			s.logger.Error("Failed to parse doc", "error", err)
+			response.Error = err
+			return response
+		}
+		kind := strings.ToLower(doc.Kind)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
 	}
 	response.Frames = append(response.Frames, frame)
 	return response
+}
+
+func newSearchFrame(res *resource.SearchResponse) *data.Frame {
+	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
+	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
+
+	fScore.Name = "score"
+	fUID.Name = "uid"
+	fKind.Name = "kind"
+	fName.Name = "name"
+	fLocation.Name = "location"
+	fURL.Name = "url"
+	fURL.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{Title: "link", URL: "${__value.text}"},
+		},
+	}
+	fTags.Name = "tags"
+
+	frame := data.NewFrame("Query results", fKind, fUID, fName, fURL, fTags, fLocation)
+
+	frame.SetMeta(&data.FrameMeta{
+		Type: "search-results",
+		Custom: &customMeta{
+			Count: uint64(len(res.Items)),
+		},
+	})
+	return frame
+}
+
+func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
+	if doc.FolderID == "" {
+		return fmt.Sprintf("%s/d/%s/%s", subURL, doc.Name, doc.Namespace)
+	}
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, doc.Name, doc.Namespace)
+}
+
+type customMeta struct {
+	Count    uint64  `json:"count"`
+	MaxScore float64 `json:"max_score,omitempty"`
+	SortBy   string  `json:"sortBy,omitempty"`
+}
+
+type DashboardListDoc struct {
+	UID       string    `json:"Uid"`
+	Group     string    `json:"Group"`
+	Namespace string    `json:"Namespace"`
+	Kind      string    `json:"Kind"`
+	Name      string    `json:"Name"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	CreatedBy string    `json:"CreatedBy"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
+	UpdatedBy string    `json:"UpdatedBy"`
+	FolderID  string    `json:"FolderId"`
+	Spec      struct {
+		Title string `json:"title"`
+	} `json:"Spec"`
+}
+
+func getDoc(data []byte) (*DashboardListDoc, error) {
+	res := &DashboardListDoc{}
+	err := json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	return &resource.SearchRequest{
+		Tenant: tenant,
+		Query:  qry.Query,
+		Limit:  int64(qry.Limit),
+		Offset: int64(qry.From),
+		Kind:   qry.Kind,
+		SortBy: []string{sortField(qry.Sort)},
+	}
+}
+
+const (
+	sortSuffix = "_sort"
+	descending = "-"
+)
+
+func sortField(sort string) string {
+	sf := strings.TrimSuffix(sort, sortSuffix)
+	if !strings.HasPrefix(sf, descending) {
+		return dashboardListFieldMapping[sf]
+	}
+	sf = strings.TrimPrefix(sf, descending)
+	sf = dashboardListFieldMapping[sf]
+	return descending + sf
+}
+
+// mapping of dashboard list fields to search doc fields
+var dashboardListFieldMapping = map[string]string{
+	"name": "title",
 }
