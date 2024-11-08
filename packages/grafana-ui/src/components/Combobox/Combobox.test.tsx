@@ -126,7 +126,6 @@ describe('Combobox', () => {
 
       await userEvent.click(input);
       await userEvent.keyboard('{Enter}'); // Select 1 as the first option
-      console.log(onChangeHandler.mock.calls[1][0].value);
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
     });
