@@ -279,10 +279,11 @@ export function useContactPointsWithStatus({
   alertmanager,
   fetchStatuses,
   fetchPolicies,
-}: GrafanaFetchOptions & BaseAlertmanagerArgs) {
+  skip,
+}: GrafanaFetchOptions & BaseAlertmanagerArgs & Skippable) {
   const isGrafanaAlertmanager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
   const grafanaResponse = useGrafanaContactPoints({
-    skip: !isGrafanaAlertmanager,
+    skip: skip || !isGrafanaAlertmanager,
     fetchStatuses,
     fetchPolicies,
   });
@@ -299,7 +300,7 @@ export function useContactPointsWithStatus({
           })
         : [],
     }),
-    skip: isGrafanaAlertmanager,
+    skip: skip || isGrafanaAlertmanager,
   });
 
   return isGrafanaAlertmanager ? grafanaResponse : alertmanagerConfigResponse;
