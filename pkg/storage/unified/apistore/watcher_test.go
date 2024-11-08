@@ -7,14 +7,11 @@ package apistore
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob/fileblob"
-	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/api/apitesting"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,25 +95,12 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Resource: "pods",
 	}
 
-	bucket := memblob.OpenBucket(nil)
-	if true {
-		tmp, err := os.MkdirTemp("", "xxx-*")
-		require.NoError(t, err)
-
-		bucket, err = fileblob.OpenBucket(tmp, &fileblob.Options{
-			CreateDir: true,
-			Metadata:  fileblob.MetadataDontWrite, // skip
-		})
-		require.NoError(t, err)
-	}
 	ctx := storagetesting.NewContext()
 
 	var server resource.ResourceServer
 	switch setupOpts.storageType {
 	case StorageTypeFile:
-		backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
-			Bucket: bucket,
-		})
+		backend, err := resource.NewMemoryBackend()
 		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{

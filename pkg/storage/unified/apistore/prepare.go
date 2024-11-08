@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
@@ -31,6 +33,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
+	}
+	if obj.GetUID() == "" {
+		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
 	obj.SetGenerateName("") // Clear the random name field
