@@ -15,7 +15,3 @@ type folder
     define delete: [user, team#member, role#assignee] or edit or delete from parent
     define permissions_read: [user, team#member, role#assignee] or admin or permissions_read from parent
     define permissions_write: [user, team#member, role#assignee] or admin or permissions_write from parent
-
-
-
-

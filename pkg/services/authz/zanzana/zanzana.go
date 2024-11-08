@@ -10,40 +10,61 @@ import (
 )
 
 const (
-	TypeUser     string = "user"
-	TypeTeam     string = "team"
-	TypeRole     string = "role"
-	TypeFolder   string = "folder"
-	TypeResource string = "resource"
+	TypeUser      = common.TypeUser
+	TypeTeam      = common.TypeTeam
+	TypeRole      = common.TypeRole
+	TypeFolder    = common.TypeFolder
+	TypeResource  = common.TypeResource
+	TypeNamespace = common.TypeNamespace
 )
 
 const (
-	RelationTeamMember string = "member"
-	RelationTeamAdmin  string = "admin"
-	RelationParent     string = "parent"
-	RelationAssignee   string = "assignee"
-	RelationOrg        string = "org"
+	RelationTeamMember = common.RelationTeamMember
+	RelationTeamAdmin  = common.RelationTeamAdmin
+	RelationParent     = common.RelationParent
+	RelationAssignee   = common.RelationAssignee
 
-	// FIXME action sets
-	RelationAdmin            string = "admin"
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	RelationSetView  = common.RelationSetView
+	RelationSetEdit  = common.RelationSetEdit
+	RelationSetAdmin = common.RelationSetAdmin
 
-	FolderResourceRelationAdmin            string = "resource_admin"
-	FolderResourceRelationRead             string = "resource_read"
-	FolderResourceRelationWrite            string = "resource_write"
-	FolderResourceRelationCreate           string = "resource_create"
-	FolderResourceRelationDelete           string = "resource_delete"
-	FolderResourceRelationPermissionsRead  string = "resource_permissions_read"
-	FolderResourceRelationPermissionsWrite string = "resource_permissions_write"
+	RelationRead             = common.RelationRead
+	RelationWrite            = common.RelationWrite
+	RelationCreate           = common.RelationCreate
+	RelationDelete           = common.RelationDelete
+	RelationPermissionsRead  = common.RelationPermissionsRead
+	RelationPermissionsWrite = common.RelationPermissionsWrite
+
+	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
+	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
+	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
+
+	RelationFolderResourceRead             = common.RelationFolderResourceRead
+	RelationFolderResourceWrite            = common.RelationFolderResourceWrite
+	RelationFolderResourceCreate           = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete           = common.RelationFolderResourceDelete
+	RelationFolderResourcePermissionsRead  = common.RelationFolderResourcePermissionsRead
+	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
 )
 
-var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
-var FolderRelations = append(ResourceRelations, FolderResourceRelationRead, FolderResourceRelationWrite, FolderResourceRelationCreate, FolderResourceRelationDelete, FolderResourceRelationPermissionsRead, FolderResourceRelationPermissionsWrite)
+var ResourceRelations = []string{
+	RelationRead,
+	RelationWrite,
+	RelationCreate,
+	RelationDelete,
+	RelationPermissionsRead,
+	RelationPermissionsWrite,
+}
+
+var FolderRelations = append(
+	ResourceRelations,
+	RelationFolderResourceRead,
+	RelationFolderResourceWrite,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+	RelationFolderResourcePermissionsRead,
+	RelationFolderResourcePermissionsWrite,
+)
 
 const (
 	KindDashboards string = "dashboards"
