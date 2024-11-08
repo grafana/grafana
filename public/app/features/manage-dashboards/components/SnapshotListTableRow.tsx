@@ -4,7 +4,9 @@ import Skeleton from 'react-loading-skeleton';
 import { Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
 import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { AccessControlAction } from 'app/types';
 
 export interface Props {
   snapshot: Snapshot;
@@ -33,9 +35,11 @@ const SnapshotListTableRowComponent = ({ snapshot, onRemove }: Props) => {
           <Trans i18nKey="snapshot.view-button">View</Trans>
         </LinkButton>
       </td>
-      <td className="text-right">
-        <Button variant="destructive" size="sm" icon="times" onClick={onRemove} />
-      </td>
+      {contextSrv.hasPermission(AccessControlAction.SnapshotsDelete) && (
+        <td className="text-right">
+          <Button variant="destructive" size="sm" icon="times" onClick={onRemove} />
+        </td>
+      )}
     </tr>
   );
 };
