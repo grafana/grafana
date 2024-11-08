@@ -21106,6 +21106,9 @@
         },
         "teamId": {
           "type": "string"
+        },
+        "teamUid": {
+          "type": "string"
         }
       }
     },

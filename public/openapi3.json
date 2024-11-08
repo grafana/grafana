@@ -11063,6 +11063,9 @@
           },
           "teamId": {
             "type": "string"
+          },
+          "teamUid": {
+            "type": "string"
           }
         },
         "type": "object"
