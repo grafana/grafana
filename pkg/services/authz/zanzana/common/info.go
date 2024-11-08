@@ -14,7 +14,7 @@ var typedResources = map[string]TypeInfo{
 	NewNamespaceResourceIdent(
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
-	): {Type: "folder2"},
+	): {Type: "folder"},
 }
 
 func GetTypeInfo(group, resource string) (TypeInfo, bool) {

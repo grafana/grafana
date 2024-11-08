@@ -29,6 +29,7 @@ func TestIndexDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
+	require.Equal(t, 1, len(index.allTenants()))
 	assertSearchCountEquals(t, index, "*", nil, 1)
 }
 
@@ -83,7 +84,7 @@ func TestLookupNames(t *testing.T) {
 	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	assertCountEquals(t, index, uint64(records))
+	assertCountEquals(t, index, records)
 	query := ""
 	chunk := ids[:100] // query for n folders by id
 	for _, id := range chunk {
@@ -106,6 +107,33 @@ func TestIndexDashboardWithTags(t *testing.T) {
 	assertSearchCountEquals(t, index, "tag4", nil, 1)
 	assertSearchGroupCountEquals(t, index, "*", "tags", 4)
 	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
+}
+
+func TestSort(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
+	folder := readTestData(t, "folder-resource.json")
+	playlist := readTestData(t, "playlist-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: folder}, {Value: playlist}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 3)
+
+	req := &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"title"}}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val := results.Values[0]
+	assert.Equal(t, "dashboard-a", val.Spec["title"])
+
+	req = &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"-title"}}
+	results, err = index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val = results.Values[0]
+	assert.NotEqual(t, "dashboard-a", val.Spec["title"])
 }
 
 func TestIndexBatch(t *testing.T) {
@@ -185,7 +213,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 
 	return &Index{
 		tracer: trace,
-		shards: make(map[string]Shard),
+		shards: make(map[string]*Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
 			ListLimit: 5000,
@@ -195,7 +223,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 	}
 }
 
-func assertCountEquals(t *testing.T, index *Index, expected uint64) {
+func assertCountEquals(t *testing.T, index *Index, expected int) {
 	total, err := index.Count()
 	require.NoError(t, err)
 	assert.Equal(t, expected, total)
