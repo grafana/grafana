@@ -74,7 +74,6 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}()
 
-	// Normal response handling
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -98,6 +97,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 
+	// Returning the response write for testing purposes
 	return rw, nil
 }
 
