@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -49,13 +48,10 @@ type Service struct {
 	log *log.ConcreteLogger
 	cfg *setting.Cfg
 
-	// FIXME: the concurrency control implemented here only works for a single session / snapshot
 	buildSnapshotMutex sync.Mutex
 
 	cancelMutex sync.Mutex
 	cancelFunc  context.CancelFunc
-
-	isSyncSnapshotStatusFromGMSRunning int32
 
 	features      featuremgmt.FeatureToggles
 	gmsClient     gmsclient.Client
@@ -550,111 +546,58 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
 	}
 
-	asyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
-	go s.syncSnapshotStatusFromGMSUntilDone(asyncCtx, session, snapshot)
+	// Ask GMS for snapshot status while the source of truth is in the cloud
+	if snapshot.ShouldQueryGMS() {
+		// Calculate offset based on how many results we currently have responses for
+		pending := snapshot.StatsRollup.CountsByStatus[cloudmigration.ItemStatusPending]
+		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot, snapshot.StatsRollup.Total-pending)
+		if err != nil {
+			return snapshot, fmt.Errorf("error fetching snapshot status from GMS: sessionUid: %s, snapshotUid: %s", sessionUid, snapshotUid)
+		}
+
+		if snapshotMeta.State == cloudmigration.SnapshotStateUnknown {
+			// If a status from Grafana Migration Service is unavailable, return the snapshot as-is
+			return snapshot, nil
+		}
+
+		localStatus, ok := gmsStateToLocalStatus[snapshotMeta.State]
+		if !ok {
+			s.log.Error("unexpected GMS snapshot state: %s", snapshotMeta.State)
+			return snapshot, nil
+		}
+
+		// For 11.2 we only support core data sources. Apply a warning for any non-core ones before storing.
+		resources, err := s.getResourcesWithPluginWarnings(ctx, snapshotMeta.Results)
+		if err != nil {
+			// treat this as non-fatal since the migration still succeeded
+			s.log.Error("error applying plugin warnings, please open a bug report: %w", err)
+		}
+
+		// Log the errors for resources with errors at migration
+		for _, resource := range resources {
+			if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
+				s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error)
+			}
+		}
+
+		// We need to update the snapshot in our db before reporting anything
+		if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
+			UID:       snapshot.UID,
+			SessionID: sessionUid,
+			Status:    localStatus,
+			Resources: resources,
+		}); err != nil {
+			return nil, fmt.Errorf("error updating snapshot status: %w", err)
+		}
+
+		// Refresh the snapshot after the update
+		snapshot, err = s.store.GetSnapshotByUID(ctx, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+		if err != nil {
+			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
+		}
+	}
 
 	return snapshot, nil
-}
-
-func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot) {
-	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.syncSnapshotStatusFromGMSUntilDone")
-	span.SetAttributes(
-		attribute.String("sessionUID", session.UID),
-		attribute.String("snapshotUID", snapshot.UID),
-	)
-	defer span.End()
-
-	// Ensure only one in-flight sync running
-	if !atomic.CompareAndSwapInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0, 1) {
-		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-		return
-	}
-	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
-
-	s.cancelMutex.Lock()
-	defer func() {
-		s.cancelFunc = nil
-		s.cancelMutex.Unlock()
-	}()
-
-	ctx, s.cancelFunc = context.WithCancel(ctx)
-
-	tick := time.NewTicker(5 * time.Second)
-
-	for snapshot.ShouldQueryGMS() {
-		// FIXME: missing close on graceful shutdown
-		select {
-		case <-ctx.Done():
-			s.log.Info("cancelling snapshot status polling", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-			return
-		case <-tick.C:
-			err := s.fetchSnapshotStatusFromGMS(ctx, session, snapshot)
-			if err != nil {
-				s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-				continue
-			}
-
-			snapshot, err = s.store.GetSnapshotByUID(ctx, session.UID, snapshot.UID, 0, 0)
-			if err != nil {
-				s.log.Error("error refetching updated snapshot", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-			}
-		}
-	}
-}
-
-func (s *Service) fetchSnapshotStatusFromGMS(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot) error {
-	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.fetchSnapshotStatusFromGMS")
-	pending := snapshot.StatsRollup.CountsByStatus[cloudmigration.ItemStatusPending]
-	span.SetAttributes(
-		attribute.String("sessionUID", session.UID),
-		attribute.String("snapshotUID", snapshot.UID),
-		attribute.Int("pending", pending),
-	)
-
-	defer span.End()
-
-	s.log.Info("fetching snapshot status from GMS", "sessionUID", session.UID, "snapshotUID", snapshot.UID, "pending", pending)
-
-	// Calculate offset based on how many results we currently have responses for
-	snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot, snapshot.StatsRollup.Total-pending)
-	if err != nil {
-		return fmt.Errorf("error fetching snapshot status from GMS: %w", err)
-	}
-
-	if snapshotMeta.State == cloudmigration.SnapshotStateUnknown {
-		return fmt.Errorf("Grafana Migration Service is unavailable. Snapshot state is unknown")
-	}
-
-	localStatus, ok := gmsStateToLocalStatus[snapshotMeta.State]
-	if !ok {
-		return fmt.Errorf("unexpected GMS snapshot state: %s", snapshotMeta.State)
-	}
-
-	// For 11.2 we only support core data sources. Apply a warning for any non-core ones before storing.
-	resources, err := s.getResourcesWithPluginWarnings(ctx, snapshotMeta.Results)
-	if err != nil {
-		// treat this as non-fatal since the migration still succeeded
-		s.log.Error("error applying plugin warnings, please open a bug report", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-	}
-
-	// Log the errors for resources with errors at migration
-	for _, resource := range resources {
-		if resource.Status == cloudmigration.ItemStatusError && resource.Error != "" {
-			s.log.Error("Could not migrate resource", "resourceID", resource.RefID, "error", resource.Error, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
-		}
-	}
-
-	// We need to update the snapshot in our db before reporting anything
-	if err := s.store.UpdateSnapshot(ctx, cloudmigration.UpdateSnapshotCmd{
-		UID:       snapshot.UID,
-		SessionID: session.UID,
-		Status:    localStatus,
-		Resources: resources,
-	}); err != nil {
-		return fmt.Errorf("updating snapshot status: %w", err)
-	}
-
-	return nil
 }
 
 var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
@@ -751,12 +694,6 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 		}
 
 		s.report(asyncCtx, session, gmsclient.EventDoneUploadingSnapshot, time.Since(start), err)
-
-		// Create a context out the span context to ensure the trace is propagated
-		asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
-		// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
-		// and anybody is interested in the status.
-		go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot)
 	}()
 
 	return nil
