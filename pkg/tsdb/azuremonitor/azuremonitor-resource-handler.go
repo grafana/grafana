@@ -69,7 +69,6 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		return nil, s.writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error: %v", err))
 	}
 
-	// Process the response normally if no error occurred
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Warn("Failed to close response body", "err", err)
@@ -86,14 +85,12 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		return nil, err
 	}
 
-	// Write the response headers and body
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 	}
 
-	// Copy headers from the original response to the client response
 	for k, v := range res.Header {
 		rw.Header().Set(k, v[0])
 		for _, v := range v[1:] {
