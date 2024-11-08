@@ -97,9 +97,6 @@ func NewRESTOptionsGetterForFile(path string,
 }
 
 func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts StorageOptions) {
-	if r.options == nil {
-		r.options = make(map[string]StorageOptions)
-	}
 	r.options[gr.String()] = opts
 }
 
@@ -122,10 +119,6 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
 		},
 		GroupResource: resource,
-	}
-
-	if r.options == nil {
-		r.options = make(map[string]StorageOptions)
 	}
 
 	ret := generic.RESTOptions{
