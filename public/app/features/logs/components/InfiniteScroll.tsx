@@ -94,7 +94,7 @@ export const InfiniteScroll = ({
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
 
-      // Give users a change to reach the bottom of the log list
+      // Give users a change to reach the bottom/top of the log list
       if (!scrollOnEdge(scrollElement) || scrollDirection === ScrollDirection.NoScroll) {
         return;
       }
