@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-// FIXME: REEXPORT
 const (
 	TypeUser      = common.TypeUser
 	TypeTeam      = common.TypeTeam
