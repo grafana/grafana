@@ -240,7 +240,6 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	if res.StatusCode/100 != 2 {
 		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
@@ -273,7 +272,6 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		}
 		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
@@ -297,7 +295,6 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	if res.StatusCode/100 != 2 {
 		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			Error:       err,
 			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
 		}
 	}
