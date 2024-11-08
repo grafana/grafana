@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,46 +29,47 @@ type httpServiceProxy struct {
 	logger log.Logger
 }
 
+func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+
+	// Attempt to locate JSON portion in error message
+	re := regexp.MustCompile(`\{.*?\}`)
+	jsonPart := re.FindString(message)
+
+	var jsonData map[string]interface{}
+	if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
+		errorMsg, _ := json.Marshal(map[string]string{"error": "Invalid JSON format in error message"})
+		_, err := rw.Write(errorMsg)
+		if err != nil {
+			return fmt.Errorf("unable to write HTTP response: %v", err)
+		}
+		return unmarshalErr
+	}
+
+	// Extract relevant fields for a formatted error message
+	errorType, _ := jsonData["error"].(string)
+	errorDescription, _ := jsonData["error_description"].(string)
+	if errorType == "" {
+		errorType = "UnknownError"
+	}
+	formattedError := fmt.Sprintf("%s: %s", errorType, errorDescription)
+
+	errorMsg, _ := json.Marshal(map[string]string{"error": formattedError})
+	_, err := rw.Write(errorMsg)
+	if err != nil {
+		return fmt.Errorf("unable to write HTTP response: %v", err)
+	}
+	return nil
+}
+
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	res, err := cli.Do(req)
 	if err != nil {
-		errMsg := fmt.Sprintf("unexpected error %v", err)
-
-		// Locate JSON portion in error message
-		start := strings.Index(errMsg, "{")
-		end := strings.LastIndex(errMsg, "}") + 1
-		if start == -1 || end == -1 {
-			rw.WriteHeader(http.StatusInternalServerError)
-			_, writeErr := rw.Write([]byte("Could not extract JSON from error"))
-			if writeErr != nil {
-				return nil, fmt.Errorf("unable to write HTTP response: %v", writeErr)
-			}
-			return nil, err
-		}
-
-		jsonPart := errMsg[start:end]
-		var jsonData map[string]interface{}
-		if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			_, writeErr := rw.Write([]byte("Invalid JSON format"))
-			if writeErr != nil {
-				return nil, fmt.Errorf("unable to write HTTP response: %v", writeErr)
-			}
-			return nil, unmarshalErr
-		}
-
-		errorType, _ := jsonData["error"].(string)
-		errorDescription, _ := jsonData["error_description"].(string)
-		formattedError := fmt.Sprintf("%s: %s", errorType, errorDescription)
-
-		rw.Header().Set("Content-Type", "text/plain")
-		rw.WriteHeader(http.StatusInternalServerError)
-		_, err = rw.Write([]byte(formattedError))
-		if err != nil {
-			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
-		}
-		return nil, err
+		return nil, s.writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error: %v", err))
 	}
+
+	// Process the response normally if no error occurred
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Warn("Failed to close response body", "err", err)
@@ -84,12 +86,14 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		return nil, err
 	}
 
+	// Write the response headers and body
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 	}
 
+	// Copy headers from the original response to the client response
 	for k, v := range res.Header {
 		rw.Header().Set(k, v[0])
 		for _, v := range v[1:] {
@@ -97,7 +101,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 
-	// Returning the response write for testing purposes
+	// Return the ResponseWriter for testing purposes
 	return rw, nil
 }
 
