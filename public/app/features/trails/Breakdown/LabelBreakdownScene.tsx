@@ -4,6 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
@@ -40,6 +41,7 @@ import { getSortByPreference } from '../services/store';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
 import {
   MDP_METRIC_PREVIEW,
+  RefreshMetricsEvent,
   trailDS,
   VAR_FILTERS,
   VAR_GROUP_BY,
@@ -94,6 +96,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     init().then(() => console.debug('Grafana ML initialized'));
 
     const variable = this.getVariable();
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      this._subs.add(
+        this.subscribeToEvent(RefreshMetricsEvent, () => {
+          this.updateBody(this.getVariable());
+        })
+      );
+    }
 
     variable.subscribeToState((newState, oldState) => {
       if (
