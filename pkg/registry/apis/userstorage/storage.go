@@ -8,6 +8,7 @@ import (
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
@@ -16,10 +17,10 @@ type storage struct {
 	*genericregistry.Store
 }
 
-func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
+func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, registerer prometheus.Registerer) (*storage, error) {
 	resourceInfo := userstorage.UserStorageResourceInfo
 	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
-	createStrategy := newStrategy(scheme, resourceInfo.GroupVersion())
+	storageStrategy := newStrategy(scheme, resourceInfo.GroupVersion(), registerer)
 
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
@@ -30,8 +31,8 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		DefaultQualifiedResource:  resourceInfo.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            resourceInfo.TableConverter(),
-		CreateStrategy:            createStrategy,
-		UpdateStrategy:            strategy,
+		CreateStrategy:            storageStrategy,
+		UpdateStrategy:            storageStrategy,
 		DeleteStrategy:            strategy,
 	}
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}

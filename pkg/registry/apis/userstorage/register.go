@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	userstorage "github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -20,14 +21,18 @@ import (
 
 var _ builder.APIGroupBuilder = (*UserStorageAPIBuilder)(nil)
 
-type UserStorageAPIBuilder struct{}
+type UserStorageAPIBuilder struct {
+	registerer prometheus.Registerer
+}
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *UserStorageAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, registerer prometheus.Registerer) *UserStorageAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagUserStorageAPI) {
 		return nil
 	}
 
-	builder := &UserStorageAPIBuilder{}
+	builder := &UserStorageAPIBuilder{
+		registerer: registerer,
+	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -58,7 +63,7 @@ func (b *UserStorageAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserve
 	resourceInfo := userstorage.UserStorageResourceInfo
 	storage := map[string]rest.Storage{}
 
-	storageReg, err := newStorage(opts.Scheme, opts.OptsGetter)
+	storageReg, err := newStorage(opts.Scheme, opts.OptsGetter, b.registerer)
 	if err != nil {
 		return err
 	}

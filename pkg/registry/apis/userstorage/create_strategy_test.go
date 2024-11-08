@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,7 +43,7 @@ func TestValidate(t *testing.T) {
 			}
 			ctx := identity.WithRequester(context.Background(), requester)
 
-			strategy := newStrategy(nil, schema.GroupVersion{})
+			strategy := newStrategy(nil, schema.GroupVersion{}, prometheus.DefaultRegisterer)
 			errs := strategy.Validate(ctx, obj)
 
 			if tt.expectError {
