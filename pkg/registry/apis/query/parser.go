@@ -80,7 +80,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			return rsp, MakePublicQueryError(q.RefID, "multiple queries with same refId")
 		}
 
-		ds, err := p.getValidDataSourceRef(ctx, q)
+		ds, err := p.getValidDataSourceRef(ctx, q.Datasource, q.DatasourceID)
 		if err != nil {
 			return rsp, err
 		}
@@ -194,30 +194,16 @@ func getTimeRangeForQuery(parentTimerange, queryTimerange *data.TimeRange) data.
 	}
 }
 
-func (p *queryParser) getValidDataSourceRef(ctx context.Context, dataQuery data.DataQuery) (*data.DataSourceRef, error) {
-	ds := dataQuery.Datasource
-	id := dataQuery.DatasourceID
-
+func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSourceRef, id int64) (*data.DataSourceRef, error) {
 	if ds == nil {
 		if id == 0 {
-			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("missing datasource reference or id"))
+			return nil, fmt.Errorf("missing datasource reference or id")
 		}
-
 		if p.legacy == nil {
 			return nil, fmt.Errorf("legacy datasource lookup unsupported (id:%d)", id)
 		}
 		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, "", id)
 	}
-
-	if ds.UID[0] == '$' {
-		uid, ok := dataQuery.Get("datasourceUid")
-		if ok {
-			return p.legacy.GetDataSourceFromDeprecatedFields(ctx, uid.(string), 0) // uid can be name in this scenario
-		} else {
-			return nil, NewErrorWithRefID(dataQuery.RefID, fmt.Errorf("missing datasource reference or id"))
-		}
-	}
-
 	if ds.Type == "" {
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")
