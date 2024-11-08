@@ -158,7 +158,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultToAll: Boolean(variable.includeAll),
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      allowCustomValue: variable.allowCustomValue,
+      allowCustomValue: variable.allowCustomValue ?? true,
     });
   } else if (variable.type === 'query') {
     return new QueryVariable({
@@ -178,7 +178,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
       definition: variable.definition,
-      allowCustomValue: variable.allowCustomValue,
+      allowCustomValue: variable.allowCustomValue ?? true,
     });
   } else if (variable.type === 'datasource') {
     return new DataSourceVariable({
@@ -194,7 +194,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.multi,
       hide: variable.hide,
       defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
-      allowCustomValue: variable.allowCustomValue,
+      allowCustomValue: variable.allowCustomValue ?? true,
     });
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);
