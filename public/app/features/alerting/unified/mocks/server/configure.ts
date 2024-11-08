@@ -14,6 +14,7 @@ import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -145,4 +146,20 @@ export const makeAllAlertmanagerConfigFetchFail = (
   responseOverride: ReturnType<typeof getErrorResponse> = defaultError
 ) => {
   server.use(getAlertmanagerConfigHandler(responseOverride));
+};
+
+export const makeAllK8sGetEndpointsFail = (message = 'could not find an Alertmanager configuration', status = 500) => {
+  server.use(
+    http.get(ALERTING_API_SERVER_BASE_URL + '/*', () => {
+      const errorResponse = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        metadata: {},
+        status: 'Failure',
+        message,
+        code: status,
+      };
+      return HttpResponse.json(errorResponse, { status });
+    })
+  );
 };
