@@ -123,27 +123,32 @@ func TranslateToFolderRelation(relation, objectType string) string {
 	return fmt.Sprintf("%s_%s", objectType, relation)
 }
 
-func ToAuthzExtTuple(t *openfgav1.TupleKey) *authzextv1.TupleKey {
-	return &authzextv1.TupleKey{
+func ToAuthzExtTupleKey(t *openfgav1.TupleKey) *authzextv1.TupleKey {
+	tupleKey := &authzextv1.TupleKey{
 		User:     t.GetUser(),
 		Relation: t.GetRelation(),
 		Object:   t.GetObject(),
-		Condition: &authzextv1.RelationshipCondition{
+	}
+
+	if t.GetCondition() != nil {
+		tupleKey.Condition = &authzextv1.RelationshipCondition{
 			Name:    t.GetCondition().GetName(),
 			Context: t.GetCondition().GetContext(),
-		},
+		}
 	}
+
+	return tupleKey
 }
 
-func ToAuthzExtTuples(tuples []*openfgav1.TupleKey) []*authzextv1.TupleKey {
+func ToAuthzExtTupleKeys(tuples []*openfgav1.TupleKey) []*authzextv1.TupleKey {
 	result := make([]*authzextv1.TupleKey, 0, len(tuples))
 	for _, t := range tuples {
-		result = append(result, ToAuthzExtTuple(t))
+		result = append(result, ToAuthzExtTupleKey(t))
 	}
 	return result
 }
 
-func ToAuthzExtTupleWithoutCondition(t *openfgav1.TupleKeyWithoutCondition) *authzextv1.TupleKeyWithoutCondition {
+func ToAuthzExtTupleKeyWithoutCondition(t *openfgav1.TupleKeyWithoutCondition) *authzextv1.TupleKeyWithoutCondition {
 	return &authzextv1.TupleKeyWithoutCondition{
 		User:     t.GetUser(),
 		Relation: t.GetRelation(),
@@ -151,25 +156,43 @@ func ToAuthzExtTupleWithoutCondition(t *openfgav1.TupleKeyWithoutCondition) *aut
 	}
 }
 
-func ToAuthzExtTuplesWithoutCondition(tuples []*openfgav1.TupleKeyWithoutCondition) []*authzextv1.TupleKeyWithoutCondition {
+func ToAuthzExtTupleKeysWithoutCondition(tuples []*openfgav1.TupleKeyWithoutCondition) []*authzextv1.TupleKeyWithoutCondition {
 	result := make([]*authzextv1.TupleKeyWithoutCondition, 0, len(tuples))
 	for _, t := range tuples {
-		result = append(result, ToAuthzExtTupleWithoutCondition(t))
+		result = append(result, ToAuthzExtTupleKeyWithoutCondition(t))
 	}
 	return result
 }
 
+func ToOpenFGATupleKey(t *authzextv1.TupleKey) *openfgav1.TupleKey {
+	tupleKey := &openfgav1.TupleKey{
+		User:     t.GetUser(),
+		Relation: t.GetRelation(),
+		Object:   t.GetObject(),
+	}
+
+	if t.GetCondition() != nil {
+		tupleKey.Condition = &openfgav1.RelationshipCondition{
+			Name:    t.GetCondition().GetName(),
+			Context: t.GetCondition().GetContext(),
+		}
+	}
+
+	return tupleKey
+}
+
+func ToOpenFGATupleKeyWithoutCondition(t *authzextv1.TupleKeyWithoutCondition) *openfgav1.TupleKeyWithoutCondition {
+	return &openfgav1.TupleKeyWithoutCondition{
+		User:     t.GetUser(),
+		Relation: t.GetRelation(),
+		Object:   t.GetObject(),
+	}
+}
+
 func ToOpenFGATuple(t *authzextv1.Tuple) *openfgav1.Tuple {
 	return &openfgav1.Tuple{
-		Key: &openfgav1.TupleKey{
-			User:     t.GetKey().GetUser(),
-			Relation: t.GetKey().GetRelation(),
-			Object:   t.GetKey().GetObject(),
-			Condition: &openfgav1.RelationshipCondition{
-				Name:    t.GetKey().GetCondition().GetName(),
-				Context: t.GetKey().GetCondition().GetContext(),
-			},
-		},
+		Key:       ToOpenFGATupleKey(t.GetKey()),
+		Timestamp: t.GetTimestamp(),
 	}
 }
 

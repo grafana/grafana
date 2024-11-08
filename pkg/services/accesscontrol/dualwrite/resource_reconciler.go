@@ -94,7 +94,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		err := batch(deletes, 100, func(items []*openfgav1.TupleKeyWithoutCondition) error {
 			return r.client.Write(ctx, &authzextv1.WriteRequest{
 				Namespace: namespace,
-				Deletes:   &authzextv1.WriteRequestDeletes{TupleKeys: zanzana.ToAuthzExtTuplesWithoutCondition(items)},
+				Deletes:   &authzextv1.WriteRequestDeletes{TupleKeys: zanzana.ToAuthzExtTupleKeysWithoutCondition(items)},
 			})
 		})
 
@@ -107,7 +107,7 @@ func (r resourceReconciler) reconcile(ctx context.Context, namespace string) err
 		err := batch(writes, 100, func(items []*openfgav1.TupleKey) error {
 			return r.client.Write(ctx, &authzextv1.WriteRequest{
 				Namespace: namespace,
-				Writes:    &authzextv1.WriteRequestWrites{TupleKeys: zanzana.ToAuthzExtTuples(items)},
+				Writes:    &authzextv1.WriteRequestWrites{TupleKeys: zanzana.ToAuthzExtTupleKeys(items)},
 			})
 		})
 
