@@ -10,9 +10,41 @@ import (
 )
 
 const (
-	TypeResource  = "resource"
-	TypeFolder    = "folder"
-	TypeNamespace = "namespace"
+	TypeUser      string = "user"
+	TypeTeam      string = "team"
+	TypeRole      string = "role"
+	TypeFolder    string = "folder"
+	TypeResource  string = "resource"
+	TypeNamespace string = "namespace"
+)
+
+const (
+	RelationTeamMember string = "member"
+	RelationTeamAdmin  string = "admin"
+	RelationParent     string = "parent"
+	RelationAssignee   string = "assignee"
+
+	RelationSetView  string = "view"
+	RelationSetEdit  string = "edit"
+	RelationSetAdmin string = "admin"
+
+	RelationRead             string = "read"
+	RelationWrite            string = "write"
+	RelationCreate           string = "create"
+	RelationDelete           string = "delete"
+	RelationPermissionsRead  string = "permissions_read"
+	RelationPermissionsWrite string = "permissions_write"
+
+	RelationFolderResourceSetView  string = "resource_" + RelationSetView
+	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
+	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
+
+	RelationFolderResourceRead             string = "resource_" + RelationRead
+	RelationFolderResourceWrite            string = "resource_" + RelationWrite
+	RelationFolderResourceCreate           string = "resource_" + RelationCreate
+	RelationFolderResourceDelete           string = "resource_" + RelationDelete
+	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
+	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
 )
 
 func FolderResourceRelation(relation string) string {
@@ -55,12 +87,17 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 	}
 }
 
+func isFolderResourceRelationSet(relation string) bool {
+	return relation == RelationFolderResourceSetView ||
+		relation == RelationFolderResourceSetEdit ||
+		relation == RelationFolderResourceSetAdmin
+}
+
 func NewFolderResourceTuple(subject, relation, group, resource, folder string) *openfgav1.TupleKey {
-	return &openfgav1.TupleKey{
-		User:     subject,
-		Relation: FolderResourceRelation(relation),
-		Object:   NewFolderIdent(folder),
-		Condition: &openfgav1.RelationshipCondition{
+	relation = FolderResourceRelation(relation)
+	var condition *openfgav1.RelationshipCondition
+	if !isFolderResourceRelationSet(relation) {
+		condition = &openfgav1.RelationshipCondition{
 			Name: "folder_group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
@@ -69,7 +106,14 @@ func NewFolderResourceTuple(subject, relation, group, resource, folder string) *
 					}),
 				},
 			},
-		},
+		}
+	}
+
+	return &openfgav1.TupleKey{
+		User:      subject,
+		Relation:  relation,
+		Object:    NewFolderIdent(folder),
+		Condition: condition,
 	}
 }
 
