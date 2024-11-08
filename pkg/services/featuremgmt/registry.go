@@ -1486,7 +1486,7 @@ var (
 		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
