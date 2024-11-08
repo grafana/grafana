@@ -39,6 +39,8 @@ func GetSuggestions(ctx context.Context, lokiAPI *LokiAPI, req *backend.CallReso
 
 	values := url.Values{}
 	if sugReq.Query != "" {
+		// the query is used to find label/labelvalues the duration and interval does not matter.
+		// If the user want to filter values based on time it should used the `start` and `end` fields
 		interpolatedQuery := interpolateVariables(sugReq.Query, time.Minute, time.Minute, dataquery.LokiQueryTypeRange, time.Minute)
 
 		if len(sugReq.Scopes) > 0 {
