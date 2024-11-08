@@ -99,7 +99,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(zclient, db, lock),
+		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock),
 		permRegistry:   permRegistry,
 	}
 
