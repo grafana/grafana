@@ -1,6 +1,14 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import {
+  PERMISSIONS_CONTACT_POINTS_MODIFY,
+  PERMISSIONS_CONTACT_POINTS_READ,
+} from 'app/features/alerting/unified/components/contact-points/permissions';
+import {
+  PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+  PERMISSIONS_NOTIFICATION_POLICIES_READ,
+} from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -231,9 +239,21 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       // TODO: Move this into the permissions config and generalise that code to allow for an array of permissions
       isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversCreate : null
     ),
-    [AlertmanagerAction.ViewContactPoint]: toAbility(AlwaysSupported, notificationsPermissions.read),
-    [AlertmanagerAction.UpdateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
-    [AlertmanagerAction.DeleteContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    [AlertmanagerAction.ViewContactPoint]: toAbility(
+      AlwaysSupported,
+      notificationsPermissions.read,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
+    ),
+    [AlertmanagerAction.UpdateContactPoint]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.update,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_MODIFY : [])
+    ),
+    [AlertmanagerAction.DeleteContactPoint]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.delete,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_MODIFY : [])
+    ),
     // At the time of writing, only Grafana flavored alertmanager supports exporting,
     // and if a user can view the contact point, then they can also export it
     // So the only check we make is if the alertmanager is Grafana flavored
@@ -244,10 +264,26 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
     [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
-    [AlertmanagerAction.CreateNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
-    [AlertmanagerAction.ViewNotificationPolicyTree]: toAbility(AlwaysSupported, notificationsPermissions.read),
-    [AlertmanagerAction.UpdateNotificationPolicyTree]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
-    [AlertmanagerAction.DeleteNotificationPolicy]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    [AlertmanagerAction.CreateNotificationPolicy]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
+    [AlertmanagerAction.ViewNotificationPolicyTree]: toAbility(
+      AlwaysSupported,
+      notificationsPermissions.read,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_READ : [])
+    ),
+    [AlertmanagerAction.UpdateNotificationPolicyTree]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.update,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
+    [AlertmanagerAction.DeleteNotificationPolicy]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.delete,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_NOTIFICATION_POLICIES_MODIFY : [])
+    ),
     [AlertmanagerAction.ExportNotificationPolicies]: toAbility(
       isGrafanaFlavoredAlertmanager,
       notificationsPermissions.read
