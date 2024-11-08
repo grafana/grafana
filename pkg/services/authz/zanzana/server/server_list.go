@@ -22,13 +22,19 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 
 	return s.listGeneric(ctx, r)
 }
+
 func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo) (*authzextv1.ListResponse, error) {
+	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -45,8 +51,8 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 
 	// 2. List all resources user has access too
 	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		Type:                 info.Type,
 		Relation:             relation,
 		User:                 r.GetSubject(),
@@ -61,12 +67,17 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 }
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
+	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has access through namespace because then they can read all of them
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -83,9 +94,9 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 
 	// 2. List all folders subject has access to resource type in
 	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
-		Type:                 "folder2",
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
+		Type:                 common.TypeFolder,
 		Relation:             common.FolderResourceRelation(relation),
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
@@ -100,9 +111,9 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 
 	// 3. List all resource directly assigned to subject
 	direct, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
-		Type:                 "resource",
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
+		Type:                 common.TypeResource,
 		Relation:             relation,
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
@@ -116,7 +127,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	}
 
 	return &authzextv1.ListResponse{
-		Folders: folderObject(r.GetGroup(), r.GetResource(), folders.GetObjects()),
+		Folders: folderObject(folders.GetObjects()),
 		Items:   directObjects(r.GetGroup(), r.GetResource(), direct.GetObjects()),
 	}, nil
 }
@@ -137,7 +148,7 @@ func directObjects(group, resource string, objects []string) []string {
 	return objects
 }
 
-func folderObject(group, resource string, objects []string) []string {
+func folderObject(objects []string) []string {
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
 	}

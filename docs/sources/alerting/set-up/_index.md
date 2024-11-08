@@ -6,7 +6,7 @@ description: Advanced configuration for Grafana Alerting
 labels:
   products:
     - oss
-menuTitle: Advanced configuration
+menuTitle: Additional configuration
 title: Additional configuration
 weight: 160
 refs:
