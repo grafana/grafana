@@ -59,7 +59,7 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 }
 
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
-func folderTreeCollector2(store db.DB) legacyTupleCollector {
+func folderTreeCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
@@ -110,7 +110,7 @@ func folderTreeCollector2(store db.DB) legacyTupleCollector {
 // managedPermissionsCollector collects managed permissions into provided tuple map.
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
-func managedPermissionsCollector2(store db.DB, kind string) legacyTupleCollector {
+func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector {
 	return func(ctx context.Context) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
@@ -193,7 +193,7 @@ func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 	return s
 }
 
-func zanzanaCollector(client zanzana.Client, relations []string) zanzanaTupleCollector {
+func zanzanaCollector(relations []string) zanzanaTupleCollector {
 	return func(ctx context.Context, client zanzana.Client, object string) (map[string]*openfgav1.TupleKey, error) {
 		// list will use continuation token to collect all tuples for object and relation
 		list := func(relation string) ([]*openfgav1.Tuple, error) {

@@ -7,7 +7,6 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -142,31 +141,12 @@ func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListReq
 	})
 }
 
-func (c *Client) CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.CheckObject")
-	defer span.End()
-
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	return c.openfga.Check(ctx, in)
-}
-
 func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
 
 	in.StoreId = c.storeID
 	return c.openfga.Read(ctx, in)
-}
-
-func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
-	span.SetAttributes(attribute.String("resource.type", in.Type))
-	defer span.End()
-
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	return c.openfga.ListObjects(ctx, in)
 }
 
 func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {

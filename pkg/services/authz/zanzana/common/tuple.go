@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	resourceType       = "resource"
-	resourceTypeFolder = "folder2"
-	namespaceType      = "namespace"
+	TypeResource  = "resource"
+	TypeFolder    = "folder"
+	TypeNamespace = "namespace"
 )
 
 func FolderResourceRelation(relation string) string {
-	return fmt.Sprintf("%s_%s", resourceType, relation)
+	return fmt.Sprintf("%s_%s", TypeResource, relation)
 }
 
 func NewTypedIdent(typ string, name string) string {
@@ -22,15 +22,15 @@ func NewTypedIdent(typ string, name string) string {
 }
 
 func NewResourceIdent(group, resource, name string) string {
-	return fmt.Sprintf("%s:%s/%s", resourceType, FormatGroupResource(group, resource), name)
+	return fmt.Sprintf("%s:%s/%s", TypeResource, FormatGroupResource(group, resource), name)
 }
 
 func NewFolderIdent(name string) string {
-	return fmt.Sprintf("folder2:%s", name)
+	return fmt.Sprintf("%s:%s", TypeFolder, name)
 }
 
 func NewNamespaceResourceIdent(group, resource string) string {
-	return fmt.Sprintf("%s:%s", namespaceType, FormatGroupResource(group, resource))
+	return fmt.Sprintf("%s:%s", TypeNamespace, FormatGroupResource(group, resource))
 }
 
 func FormatGroupResource(group, resource string) string {
@@ -46,7 +46,7 @@ func NewResourceTuple(subject, relation, group, resource, name string) *openfgav
 			Name: "group_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"resource_group": structpb.NewStringValue(FormatGroupResource(group, resource)),
+					"group_resource": structpb.NewStringValue(FormatGroupResource(group, resource)),
 				},
 			},
 		},
@@ -88,7 +88,7 @@ func NewFolderParentTuple(folder, parent string) *openfgav1.TupleKey {
 }
 
 func NewFolderTuple(subject, relation, name string) *openfgav1.TupleKey {
-	return NewTypedTuple("folder2", subject, relation, name)
+	return NewTypedTuple(TypeFolder, subject, relation, name)
 }
 
 func NewTypedTuple(typ, subject, relation, name string) *openfgav1.TupleKey {

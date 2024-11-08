@@ -20,9 +20,7 @@ type Client interface {
 	authz.AccessClient
 	List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error)
 
-	CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error)
-	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Write(ctx context.Context, in *openfgav1.WriteRequest) error
 }
 

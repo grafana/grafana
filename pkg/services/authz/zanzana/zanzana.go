@@ -2,7 +2,6 @@ package zanzana
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -10,14 +9,11 @@ import (
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeFolder2   string = "folder2"
-	TypeDashboard string = "dashboard"
-	TypeOrg       string = "org"
-	TypeResource  string = "resource"
+	TypeUser     string = "user"
+	TypeTeam     string = "team"
+	TypeRole     string = "role"
+	TypeFolder   string = "folder"
+	TypeResource string = "resource"
 )
 
 const (
@@ -46,10 +42,9 @@ const (
 )
 
 var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
-var Folder2Relations = append(ResourceRelations, FolderResourceRelationRead, FolderResourceRelationWrite, FolderResourceRelationCreate, FolderResourceRelationDelete, FolderResourceRelationPermissionsRead, FolderResourceRelationPermissionsWrite)
+var FolderRelations = append(ResourceRelations, FolderResourceRelationRead, FolderResourceRelationWrite, FolderResourceRelationCreate, FolderResourceRelationDelete, FolderResourceRelationPermissionsRead, FolderResourceRelationPermissionsWrite)
 
 const (
-	KindOrg        string = "org"
 	KindDashboards string = "dashboards"
 	KindFolders    string = "folders"
 )
@@ -78,40 +73,6 @@ func NewTupleEntry(objectType, id, relation string) string {
 	return obj
 }
 
-// NewScopedTupleEntry constructs new openfga entry type:id[#relation]
-// with id prefixed by scope (usually org id)
-func NewScopedTupleEntry(objectType, id, relation, scope string) string {
-	return NewTupleEntry(objectType, fmt.Sprintf("%s-%s", scope, id), relation)
-}
-
-func TranslateToTuple(user string, action, kind, identifier string, orgID int64) (*openfgav1.TupleKey, bool) {
-	typeTranslation, ok := actionKindTranslations[kind]
-	if !ok {
-		return nil, false
-	}
-
-	relation, ok := typeTranslation.translations[action]
-	if !ok {
-		return nil, false
-	}
-
-	tuple := &openfgav1.TupleKey{
-		Relation: relation,
-	}
-
-	tuple.User = user
-	tuple.Relation = relation
-
-	// Some uid:s in grafana are not guarantee to be unique across orgs so we need to scope them.
-	if typeTranslation.orgScoped {
-		tuple.Object = NewScopedTupleEntry(typeTranslation.objectType, identifier, "", strconv.FormatInt(orgID, 10))
-	} else {
-		tuple.Object = NewTupleEntry(typeTranslation.objectType, identifier, "")
-	}
-
-	return tuple, true
-}
-
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
 	translation, ok := resourceTranslations[kind]
 
@@ -128,7 +89,7 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
 	}
 
-	if translation.typ == TypeFolder2 {
+	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
 			return common.NewFolderResourceTuple(subject, m.relation, m.group, m.resource, name), true
 		}
@@ -140,37 +101,13 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 }
 
 func IsFolderResourceTuple(t *openfgav1.TupleKey) bool {
-	return strings.HasPrefix(t.Object, TypeFolder2) && strings.HasPrefix(t.Relation, "resource_")
+	return strings.HasPrefix(t.Object, TypeFolder) && strings.HasPrefix(t.Relation, "resource_")
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va := a.Condition.Context.Fields["group_resources"]
 	vb := b.Condition.Context.Fields["group_resources"]
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
-}
-
-func TranslateToOrgTuple(user string, action string, orgID int64) (*openfgav1.TupleKey, bool) {
-	typeTranslation, ok := actionKindTranslations[KindOrg]
-	if !ok {
-		return nil, false
-	}
-
-	relation, ok := typeTranslation.translations[action]
-	if !ok {
-		return nil, false
-	}
-
-	tuple := &openfgav1.TupleKey{
-		Relation: relation,
-		User:     user,
-		Object:   NewTupleEntry(typeTranslation.objectType, strconv.FormatInt(orgID, 10), ""),
-	}
-
-	return tuple, true
-}
-
-func TranslateBasicRole(role string) string {
-	return basicRolesTranslations[role]
 }
 
 func TranslateFixedRole(role string) string {
