@@ -421,6 +421,48 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 			},
 		},
+
+		{
+			Type:        "messagebird",
+			Name:        "MessageBird",
+			Description: "Sends HTTP POST request to MessageBird",
+			Heading:     "MessageBird settings",
+			Options: []NotifierOption{
+				// https://developers.messagebird.com/api/sms-messaging/#send-outbound-sms
+				{
+					Label:        "AccessKey",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "test_gshuPaZoeEG6ovbc8M79w0QyM",
+					PropertyName: "access_key",
+					Required:     true,
+				},
+				{
+					Label:        "Originator",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "The sender of the message.",
+					Placeholder:  "31612345678",
+					PropertyName: "originator",
+				},
+				{
+					Label:        "Recipients",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "You can enter multiple recipients using a \";\", \"\\n\" or  \",\" separator",
+					Placeholder:  "31612345678;31687654321",
+					PropertyName: "recipients",
+				},
+				{
+					Label:        "Body",
+					Element:      ElementTypeTextArea,
+					Description:  "Custom MessageBird body. You can use template variables.",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+					PropertyName: "body",
+				},
+			},
+		},
+
 		{
 			Type:        "oncall",
 			Name:        "Grafana OnCall",

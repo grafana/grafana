@@ -951,6 +951,7 @@ global:
     victorops_api_url: https://alert.victorops.com/integrations/generic/20131114/alert/
     telegram_api_url: https://api.telegram.org
     webex_api_url: https://webexapis.com/v1/messages
+    messagebird_api_url: https://rest.messagebird.com/messages
 route:
     receiver: empty-receiver
     continue: false
