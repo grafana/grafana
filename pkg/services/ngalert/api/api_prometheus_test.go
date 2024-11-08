@@ -664,6 +664,153 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 	})
 
+	t.Run("when requesting rules with pagination", func(t *testing.T) {
+		ruleStore := fakes.NewRuleStore(t)
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		// Generate 9 rule groups across 3 namespaces
+		// Added in reverse order so we can check that
+		// they are sorted when returned
+		allRules := make([]*ngmodels.AlertRule, 0, 9)
+		for i := 8; i >= 0; i-- {
+			rules := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{
+				RuleGroup:    fmt.Sprintf("rule_group_%d", i),
+				NamespaceUID: fmt.Sprintf("namespace_%d", i/9),
+				OrgID:        orgID,
+			})).GenerateManyRef(1)
+
+			allRules = append(allRules, rules...)
+			ruleStore.PutRule(context.Background(), rules...)
+		}
+
+		api := PrometheusSrv{
+			log:     log.NewNopLogger(),
+			manager: fakeAIM,
+			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
+			store:   ruleStore,
+			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		}
+
+		permissions := createPermissionsForRules(allRules, orgID)
+		user := &user.SignedInUser{
+			OrgID:       orgID,
+			Permissions: permissions,
+		}
+		c := &contextmodel.ReqContext{
+			SignedInUser: user,
+		}
+
+		t.Run("should return all groups when not specifying max_groups query param", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 9)
+			require.NotZero(t, len(result.Data.Totals))
+			for i := 0; i < 9; i++ {
+				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				require.NoError(t, err)
+				require.Equal(t, folder.Fullpath, result.Data.RuleGroups[i].File)
+				require.Equal(t, fmt.Sprintf("rule_group_%d", i), result.Data.RuleGroups[i].Name)
+			}
+		})
+
+		t.Run("should return group_limit number of groups in each call", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=2", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			returnedGroups := make([]apimodels.RuleGroup, 0, len(allRules))
+
+			require.Len(t, result.Data.RuleGroups, 2)
+			require.Len(t, result.Data.Totals, 0)
+			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
+			require.NotEmpty(t, result.Data.NextToken)
+			token := result.Data.NextToken
+
+			for i := 0; i < 3; i++ {
+				r, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?group_limit=2&group_next_token=%s", token), nil)
+				require.NoError(t, err)
+
+				c.Context = &web.Context{Req: r}
+
+				resp := api.RouteGetRuleStatuses(c)
+				require.Equal(t, http.StatusOK, resp.Status())
+				result := &apimodels.RuleResponse{}
+				require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+				require.Len(t, result.Data.RuleGroups, 2)
+				require.Len(t, result.Data.Totals, 0)
+				returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
+				require.NotEmpty(t, result.Data.NextToken)
+				token = result.Data.NextToken
+			}
+
+			// Final page should only return a single group and no token
+			r, err = http.NewRequest("GET", fmt.Sprintf("/api/v1/rules?group_limit=2&group_next_token=%s", token), nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp = api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result = &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 1)
+			require.Len(t, result.Data.Totals, 0)
+			returnedGroups = append(returnedGroups, result.Data.RuleGroups...)
+			require.Empty(t, result.Data.NextToken)
+
+			for i := 0; i < 9; i++ {
+				folder, err := api.store.GetNamespaceByUID(context.Background(), fmt.Sprintf("namespace_%d", i/9), orgID, user)
+				require.NoError(t, err)
+				require.Equal(t, folder.Fullpath, returnedGroups[i].File)
+				require.Equal(t, fmt.Sprintf("rule_group_%d", i), returnedGroups[i].Name)
+			}
+		})
+
+		t.Run("bad token should return no results", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=10&group_next_token=foobar", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 0)
+		})
+
+		t.Run("should return nothing when using group_limit=0", func(t *testing.T) {
+			r, err := http.NewRequest("GET", "/api/v1/rules?group_limit=0", nil)
+			require.NoError(t, err)
+
+			c.Context = &web.Context{Req: r}
+
+			resp := api.RouteGetRuleStatuses(c)
+			require.Equal(t, http.StatusOK, resp.Status())
+			result := &apimodels.RuleResponse{}
+			require.NoError(t, json.Unmarshal(resp.Body(), result))
+
+			require.Len(t, result.Data.RuleGroups, 0)
+		})
+	})
+
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("should return only rules if the user can query all data sources", func(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
@@ -851,47 +998,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Len(t, rg.Rules, 1)
 			}
 		})
-
-		t.Run("then with limit", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1", nil)
-			require.NoError(t, err)
-			c := &contextmodel.ReqContext{
-				Context: &web.Context{Req: r},
-				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
-				},
-			}
-			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var res apimodels.RuleResponse
-			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-
-			// There should be 2 inactive rules across all Rule Groups
-			require.Equal(t, map[string]int64{"inactive": 2}, res.Data.Totals)
-			require.Len(t, res.Data.RuleGroups, 1)
-			rg := res.Data.RuleGroups[0]
-			// The Rule Group within the limit should have 1 inactive rule
-			require.Equal(t, map[string]int64{"inactive": 1}, rg.Totals)
-			require.Len(t, rg.Rules, 1)
-		})
-
-		t.Run("then with limit larger than number of rule groups", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1", nil)
-			require.NoError(t, err)
-			c := &contextmodel.ReqContext{
-				Context: &web.Context{Req: r},
-				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
-				},
-			}
-			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var res apimodels.RuleResponse
-			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
-		})
 	})
 
 	t.Run("test with limit rules", func(t *testing.T) {
@@ -925,7 +1031,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limit", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -941,15 +1047,18 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 
 			// There should be 2 inactive rules
 			require.Equal(t, map[string]int64{"inactive": 2}, res.Data.Totals)
-			require.Len(t, res.Data.RuleGroups, 1)
-			rg := res.Data.RuleGroups[0]
-			// The Rule Group within the limit should have 1 inactive rule because of the limit
-			require.Equal(t, map[string]int64{"inactive": 1}, rg.Totals)
-			require.Len(t, rg.Rules, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
+			// The Rule Groups should have 1 inactive rule because of the limit
+			rg1 := res.Data.RuleGroups[0]
+			require.Equal(t, map[string]int64{"inactive": 1}, rg1.Totals)
+			require.Len(t, rg1.Rules, 1)
+			rg2 := res.Data.RuleGroups[1]
+			require.Equal(t, map[string]int64{"inactive": 1}, rg2.Totals)
+			require.Len(t, rg2.Rules, 1)
 		})
 
 		t.Run("then with limit larger than number of rules", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=2", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=2", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -962,8 +1071,9 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, http.StatusOK, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
 			require.Len(t, res.Data.RuleGroups[0].Rules, 1)
+			require.Len(t, res.Data.RuleGroups[1].Rules, 1)
 		})
 	})
 
@@ -1006,7 +1116,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limits", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1&limit_alerts=1", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1&limit_alerts=1", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1036,7 +1146,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with limit larger than number of alerts", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit=1&limit_rules=1&limit_alerts=3", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?limit_rules=1&limit_alerts=3", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -1049,9 +1159,11 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Equal(t, http.StatusOK, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-			require.Len(t, res.Data.RuleGroups, 1)
+			require.Len(t, res.Data.RuleGroups, 2)
 			require.Len(t, res.Data.RuleGroups[0].Rules, 1)
 			require.Len(t, res.Data.RuleGroups[0].Rules[0].Alerts, 2)
+			require.Len(t, res.Data.RuleGroups[1].Rules, 1)
+			require.Len(t, res.Data.RuleGroups[1].Rules[0].Alerts, 2)
 		})
 	})
 
