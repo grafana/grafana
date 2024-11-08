@@ -1,10 +1,6 @@
-import {
-  AnnotationPanelFilter,
-  DashboardLink,
-  DataSourceRef,
-  DataTransformerConfig,
-  FieldConfigSource,
-} from '../../../index.gen';
+import { DataLink } from '@grafana/data';
+
+import { AnnotationPanelFilter, DataSourceRef, DataTransformerConfig, FieldConfigSource } from '../../../index.gen';
 
 import { Kind } from './common';
 
@@ -42,6 +38,7 @@ export interface QueryOptionsSpec {
   queryCachingTTL?: number;
   interval?: string;
   cacheTimeout?: string;
+  hideTimeOverride?: boolean;
 }
 
 /**
@@ -75,7 +72,7 @@ type PanelQueryKind = Kind<'PanelQuery', PanelQuerySpec>;
  * {
  *  kind: 'limitTransformation',
  *  spec: {
-
+ 
  *   ...
  *  }
  */
@@ -90,10 +87,10 @@ export interface QueryGroupSpec {
 export type QueryGroupKind = Kind<'QueryGroup', QueryGroupSpec>;
 
 // TODO: Provide precise specs for each individual variable types
-export interface QueryVariableSpec { }
+export interface QueryVariableSpec {}
 export type QueryVariableKind = Kind<'QueryVariable', QueryVariableSpec>;
 
-export interface TextVariableSpec { }
+export interface TextVariableSpec {}
 export type TextVariableKind = Kind<'TextVariable', TextVariableSpec>;
 
 // Encapsulates time settings for a dashboard
@@ -132,7 +129,7 @@ interface PanelSpec {
   uid: string;
   title: string;
   description: string;
-  links: DashboardLink[];
+  links: DataLink[];
   data: QueryGroupKind;
   vizConfig: VizConfigKind;
 }

@@ -1,73 +1,31 @@
-import { DashboardCursorSync, DashboardLink } from '../../../index.gen';
+import { DashboardCursorSync } from './dashboard.gen';
+import { DashboardV2 } from './dashboard.schema';
 
-import { Kind, Referenceable } from './common';
-import {
-  AnnotationQueryKind,
-  GridLayoutKind,
-  PanelKind,
-  QueryVariableKind,
-  TextVariableKind,
-  TimeSettingsSpec,
-} from './kinds';
-
-// This kind will not be necessary in the future, the k8s envelope will be provided through ScopedResourceClient
-// See public/app/features/apiserver/client.ts
-export type DashboardV2 = Kind<'Dashboard', DashboardSpec>;
-
-interface DashboardSpec {
-  id?: number;
-
-  // dashboard settings
-  title: string;
-  description: string;
-  cursorSync: DashboardCursorSync;
-  liveNow: boolean; // FIXME: it can be undefined, should this be optional?
-  preload: boolean;
-  editable: boolean;
-  links: DashboardLink[];
-  tags: string[];
-  // EOf dashboard settings
-
-  timeSettings: TimeSettingsSpec;
-  variables: Array<QueryVariableKind | TextVariableKind /* | ... */>;
-  elements: Referenceable<PanelKind /** | ... more element types in the future? */>;
-  annotations: AnnotationQueryKind[];
-  layout: GridLayoutKind;
-
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion
-
-  // revision?: number; // for plugins only
-  // gnetId?: string; // ??? Wat is this used for?
-}
-
-export const defaultDashboardSpecV2: Partial<DashboardSpec> = {
-  editable: true,
-  liveNow: false,
-  cursorSync: DashboardCursorSync.Off,
-  links: [],
-  tags: [],
-  elements: {},
-  layout: {
-    kind: 'GridLayout',
-    spec: {
-      items: [],
-    },
-  },
-};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const handyTestingSchema: DashboardV2 = {
+export const fullDashboardV2: DashboardV2 = {
   kind: 'Dashboard',
   spec: {
     id: 1,
-    title: 'Default Dashboard',
-    description: 'This is a default dashboard',
-    cursorSync: 0,
+    title: 'Full Dashboard',
+    description: 'This is a full dashboard with all possible fields.',
+    cursorSync: DashboardCursorSync.Off,
     liveNow: false,
     preload: false,
     editable: true,
-    links: [],
-    tags: [],
+    links: [
+      {
+        title: 'Example Link',
+        url: 'https://example.com',
+        icon: 'external-link',
+        tooltip: 'Example Tooltip',
+        asDropdown: false,
+        includeVars: false,
+        keepTime: false,
+        tags: [],
+        targetBlank: false,
+        type: 'link',
+      },
+    ],
+    tags: ['tag1', 'tag2'],
     timeSettings: {
       timezone: 'browser',
       from: 'now-6h',
@@ -79,7 +37,44 @@ export const handyTestingSchema: DashboardV2 = {
       weekStart: 'sunday',
       fiscalYearStartMonth: 1,
     },
-
+    variables: [
+      {
+        kind: 'QueryVariable',
+        spec: {
+          name: 'queryVar',
+          query: {
+            kind: 'prometheus',
+            spec: {
+              query: 'up',
+            },
+          },
+          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+          refresh: 1,
+          regex: '',
+          sort: 1,
+          multi: false,
+          includeAll: false,
+          allValue: '',
+          current: {
+            text: 'current',
+            value: 'current',
+          },
+          options: [
+            {
+              text: 'option1',
+              value: 'option1',
+            },
+          ],
+        },
+      },
+      {
+        kind: 'TextVariable',
+        spec: {
+          name: 'textVar',
+          value: 'textValue',
+        },
+      },
+    ],
     elements: {
       timeSeriesTest: {
         kind: 'Panel',
@@ -111,7 +106,7 @@ export const handyTestingSchema: DashboardV2 = {
                 {
                   kind: 'LimitTransformation',
                   spec: {
-                    id: 'limit', // id is competing w/ kind
+                    id: 'limit',
                     options: {
                       limit: 10,
                     },
@@ -145,7 +140,7 @@ export const handyTestingSchema: DashboardV2 = {
           {
             kind: 'GridLayoutItem',
             spec: {
-              element: { $ref: '#/spec/elements/timeSeriesTest' },
+              element: { kind: 'ElementReference', spec: { name: 'timeSeriesTest' } },
               x: 0,
               y: 0,
               width: 12,
@@ -155,7 +150,6 @@ export const handyTestingSchema: DashboardV2 = {
         ],
       },
     },
-    variables: [],
     annotations: [
       {
         kind: 'AnnotationQuery',
