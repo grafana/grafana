@@ -5,6 +5,7 @@ import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
 import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
@@ -114,6 +115,7 @@ interface TemplateRowProps {
 
 function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClick }: TemplateRowProps) {
   const tableStyles = useStyles2(getAlertTableStyles);
+  const isGrafanaAlertmanager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
@@ -128,7 +130,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
         </td>
         <td>
           {name} {isProvisioned && <ProvisioningBadge />}{' '}
-          {missing && (
+          {missing && !isGrafanaAlertmanager && (
             <Tooltip
               content={
                 <>

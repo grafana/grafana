@@ -1,8 +1,10 @@
+import init from '@bsull/augurs';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
@@ -32,12 +34,15 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
+import { RelatedLogsScene } from '../RelatedLogs/RelatedLogsScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
+import { getSortByPreference } from '../services/store';
 import { ALL_VARIABLE_VALUE } from '../services/variables';
 import {
   MDP_METRIC_PREVIEW,
+  RefreshMetricsEvent,
   trailDS,
   VAR_FILTERS,
   VAR_GROUP_BY,
@@ -50,15 +55,18 @@ import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
 import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
+import { SortByScene, SortCriteriaChanged } from './SortByScene';
 import { BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
 import { getLabelOptions } from './utils';
 import { BreakdownAxisChangeEvent, yAxisSyncBehavior } from './yAxisSyncBehavior';
 
 const MAX_PANELS_IN_ALL_LABELS_BREAKDOWN = 60;
+const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
 
 export interface LabelBreakdownSceneState extends SceneObjectState {
   body?: LayoutSwitcher;
   search: BreakdownSearchScene;
+  sortBy: SortByScene;
   labels: Array<SelectableValue<string>>;
   value?: string;
   loading?: boolean;
@@ -76,6 +84,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     super({
       ...state,
       labels: state.labels ?? [],
+      sortBy: new SortByScene({ target: 'labels' }),
       search: new BreakdownSearchScene('labels'),
     });
 
@@ -85,7 +94,18 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   private _query?: AutoQueryDef;
 
   private _onActivate() {
+    // eslint-disable-next-line no-console
+    init().then(() => console.debug('Grafana ML initialized'));
+
     const variable = this.getVariable();
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      this._subs.add(
+        this.subscribeToEvent(RefreshMetricsEvent, () => {
+          this.updateBody(this.getVariable());
+        })
+      );
+    }
 
     variable.subscribeToState((newState, oldState) => {
       if (
@@ -102,6 +122,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         this.state.search.clearValueFilter();
       })
     );
+    this._subs.add(this.subscribeToEvent(SortCriteriaChanged, this.handleSortByChange));
 
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
     const metric = metricScene.state.metric;
@@ -204,6 +225,20 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
     return variable;
   }
 
+  private handleSortByChange = (event: SortCriteriaChanged) => {
+    if (event.target !== 'labels') {
+      return;
+    }
+    if (this.state.body instanceof LayoutSwitcher) {
+      this.state.body.state.breakdownLayouts.forEach((layout) => {
+        if (layout instanceof ByFrameRepeater) {
+          layout.sort(event.sortBy);
+        }
+      });
+    }
+    reportExploreMetrics('sorting_changed', { sortBy: event.sortBy });
+  };
+
   private onReferencedVariableValueChanged() {
     const variable = this.getVariable();
     variable.changeValueTo(ALL_VARIABLE_VALUE);
@@ -291,7 +326,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
   }
 
   public static Component = ({ model }: SceneComponentProps<LabelBreakdownScene>) => {
-    const { labels, body, search, loading, value, blockingMessage } = model.useState();
+    const { labels, body, search, sortBy, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
     const trail = getTrailFor(model);
@@ -311,6 +346,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       }
     }, [model, useOtelExperience]);
 
+    const relatedLogsScene = new RelatedLogsScene({});
+
     return (
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
@@ -322,9 +359,12 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
             )}
 
             {value !== ALL_VARIABLE_VALUE && (
-              <Field label="Search" className={styles.searchField}>
-                <search.Component model={search} />
-              </Field>
+              <>
+                <Field label="Search" className={styles.searchField}>
+                  <search.Component model={search} />
+                </Field>
+                <sortBy.Component model={sortBy} />
+              </>
             )}
             {body instanceof LayoutSwitcher && (
               <Field label="View">
@@ -333,6 +373,7 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
             )}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
+          {relatedLogsFeatureEnabled && <relatedLogsScene.Component model={relatedLogsScene} />}
         </StatusWrapper>
       </div>
     );
@@ -470,6 +511,7 @@ function buildNormalLayout(
     return item;
   }
 
+  const { sortBy } = getSortByPreference('labels', 'outliers');
   const getFilter = () => searchScene.state.filter ?? '';
 
   return new LayoutSwitcher({
@@ -511,6 +553,7 @@ function buildNormalLayout(
           ],
         }),
         getLayoutChild,
+        sortBy,
         getFilter,
       }),
       new ByFrameRepeater({
@@ -520,6 +563,7 @@ function buildNormalLayout(
           children: [],
         }),
         getLayoutChild,
+        sortBy,
         getFilter,
       }),
     ],

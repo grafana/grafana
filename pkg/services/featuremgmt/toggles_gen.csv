@@ -171,6 +171,7 @@ alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,fal
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
 pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,false,false
+sqlQuerybuilderFunctionParameters,experimental,@grafana/oss-big-tent,false,false,true
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,GA,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
@@ -179,6 +180,7 @@ ssoSettingsLDAP,preview,@grafana/identity-access-team,false,true,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
+enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 alertingApiServer,experimental,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 cloudwatchMetricInsightsCrossAccount,GA,@grafana/aws-datasources,false,false,true
@@ -208,3 +210,5 @@ prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,f
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
+exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
+enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
