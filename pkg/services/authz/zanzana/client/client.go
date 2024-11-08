@@ -155,18 +155,18 @@ func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListReq
 	})
 }
 
-func (c *Client) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
 
-	in.StoreId = c.storeID
-	return c.openfga.Read(ctx, in)
+	return c.authzext.Read(ctx, req)
 }
 
-func (c *Client) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
-	in.StoreId = c.storeID
-	in.AuthorizationModelId = c.modelID
-	_, err := c.openfga.Write(ctx, in)
+func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Write")
+	defer span.End()
+
+	_, err := c.authzext.Write(ctx, req)
 	return err
 }
 
