@@ -26,6 +26,7 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, 200*time.Millisecond, cfg.UnifiedAlerting.HAGossipInterval)
 		require.Equal(t, time.Minute, cfg.UnifiedAlerting.HAPushPullInterval)
 		require.Equal(t, 6*time.Hour, cfg.UnifiedAlerting.HAReconnectTimeout)
+		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
 	// With peers set, it correctly parses them.
@@ -35,10 +36,13 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.NoError(t, err)
 		_, err = s.NewKey("ha_peers", "hostname1:9090,hostname2:9090,hostname3:9090")
 		require.NoError(t, err)
+		_, err = s.NewKey("initialization_timeout", "123s")
+		require.NoError(t, err)
 
 		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 3)
 		require.ElementsMatch(t, []string{"hostname1:9090", "hostname2:9090", "hostname3:9090"}, cfg.UnifiedAlerting.HAPeers)
+		require.Equal(t, 123*time.Second, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
 	t.Run("should read 'scheduler_tick_interval'", func(t *testing.T) {

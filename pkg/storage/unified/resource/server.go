@@ -49,25 +49,8 @@ type ListIterator interface {
 	// Used for fast(er) authz filtering
 	Name() string
 
-	// Folder of the current item
-	// Used for fast(er) authz filtering
-	Folder() string
-
 	// Value for the current item
 	Value() []byte
-}
-
-type BackendReadResponse struct {
-	// Metadata
-	Key    *ResourceKey
-	Folder string
-
-	// The new resource version
-	ResourceVersion int64
-	// The properties
-	Value []byte
-	// Error details
-	Error *ErrorResult
 }
 
 // The StorageBackend is an internal abstraction that supports interacting with
@@ -80,7 +63,7 @@ type StorageBackend interface {
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
 	// Read a resource from storage optionally at an explicit version
-	ReadResource(context.Context, *ReadRequest) *BackendReadResponse
+	ReadResource(context.Context, *ReadRequest) *ReadResponse
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -92,6 +75,8 @@ type StorageBackend interface {
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
+
+	Namespaces(ctx context.Context) ([]string, error)
 }
 
 // This interface is not exposed to end users directly
@@ -199,7 +184,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 			UserID:         1,
 			IsGrafanaAdmin: true,
 		}))
-	return &server{
+	s := &server{
 		tracer:      opts.Tracer,
 		log:         logger,
 		backend:     opts.Backend,
@@ -211,7 +196,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
-	}, nil
+	}
+
+	return s, nil
 }
 
 var _ ResourceServer = &server{}
@@ -555,11 +542,7 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 
 	rsp := s.backend.ReadResource(ctx, req)
 	// TODO, check folder permissions etc
-	return &ReadResponse{
-		ResourceVersion: rsp.ResourceVersion,
-		Value:           rsp.Value,
-		Error:           rsp.Error,
-	}, nil
+	return rsp, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
@@ -786,6 +769,10 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 
 // Index returns the search index. If the index is not initialized, it will be initialized.
 func (s *server) Index(ctx context.Context) (*Index, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
 	index := s.index.(*IndexServer)
 	if index.index == nil {
 		err := index.Init(ctx, s)
