@@ -47,6 +47,9 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
   if (query.groupBy?.length) {
     collapsedInfo.push(`Group by: ${query.groupBy.join(', ')}`);
   }
+  if (query.limit) {
+    collapsedInfo.push(`Limit: ${query.limit}`);
+  }
   if (query.spanSelector?.length) {
     collapsedInfo.push(`Span ID: ${query.spanSelector.join(', ')}`);
   }
@@ -83,6 +86,26 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                   return c.value!;
                 });
                 onQueryChange({ ...query, groupBy: changes });
+              }}
+            />
+          </EditorField>
+          <EditorField
+            label={'Limit'}
+            tooltip={
+              <>
+                When &quot;Group by&quot; is set, limits the maximum number of series to return. Does not apply to
+                profile query.
+              </>
+            }
+          >
+            <Input
+              value={query.limit || ''}
+              type="number"
+              placeholder="0"
+              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
+                let newValue = parseInt(event.currentTarget.value, 10);
+                newValue = isNaN(newValue) ? 0 : newValue;
+                onQueryChange({ ...query, limit: newValue });
               }}
             />
           </EditorField>
