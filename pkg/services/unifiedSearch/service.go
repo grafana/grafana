@@ -200,37 +200,24 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 }
 
 func newTagsFrame() *data.Frame {
-	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fName.Name = "tag"
-
-	fCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-	fCount.Name = "count"
-
-	tagsFrame := data.NewFrame("tags", fName, fCount)
+	fTag := newField("tag", data.FieldTypeString)
+	fCount := newField("count", data.FieldTypeInt64)
+	tagsFrame := data.NewFrame("tags", fTag, fCount)
 	return tagsFrame
 }
 
 func newSearchFrame(res *resource.SearchResponse) *data.Frame {
-	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
-
-	fScore.Name = "score"
-	fUID.Name = "uid"
-	fKind.Name = "kind"
-	fName.Name = "name"
-	fLocation.Name = "location"
-	fURL.Name = "url"
+	fUID := newField("uid", data.FieldTypeString)
+	fKind := newField("kind", data.FieldTypeString)
+	fName := newField("name", data.FieldTypeString)
+	fLocation := newField("location", data.FieldTypeString)
+	fTags := newField("tags", data.FieldTypeNullableJSON)
+	fURL := newField("url", data.FieldTypeString)
 	fURL.Config = &data.FieldConfig{
 		Links: []data.DataLink{
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
-	fTags.Name = "tags"
 
 	frame := data.NewFrame("Query results", fKind, fUID, fName, fURL, fTags, fLocation)
 
@@ -318,4 +305,10 @@ func sortField(sort string) string {
 // mapping of dashboard list fields to search doc fields
 var dashboardListFieldMapping = map[string]string{
 	"name": "title",
+}
+
+func newField(name string, typ data.FieldType) *data.Field {
+	f := data.NewFieldFromFieldType(typ, 0)
+	f.Name = name
+	return f
 }
