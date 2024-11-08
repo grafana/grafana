@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Form } from 'react-final-form';
+import { Field, Form } from 'react-final-form';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
 
@@ -24,9 +24,13 @@ describe('Nodes Agents:: ', () => {
     render(
       <Provider store={configureStore()}>
         <Form
+          initialValues={{
+            address: '',
+          }}
           onSubmit={submitMock}
           render={({ handleSubmit, form, values }) => (
             <form data-testid="node-agents-form" onSubmit={handleSubmit}>
+              <Field name="address" component="input" data-testid="address-field" />
               <NodesAgents form={form} />
               <p data-testid="node">{values.node?.value}</p>
               <p data-testid="agent">{values.pmm_agent_id?.value}</p>
@@ -129,6 +133,46 @@ describe('Nodes Agents:: ', () => {
         pmm_agent_id: expect.objectContaining({
           value: 'pmm-server',
         }),
+      }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it("shouldn't change address on node change if already filled out", async () => {
+    jest
+      .spyOn(InventoryService, 'getNodes')
+      .mockReturnValue(Promise.resolve({ nodes: nodesMockMultipleAgentsNoPMMServer }));
+
+    setup();
+    await waitFor(() => {
+      expect(fetchNodesActionActionSpy).toHaveBeenCalled();
+    });
+
+    const form = screen.getByTestId('node-agents-form');
+
+    const address = screen.getByTestId('address-field');
+    fireEvent.change(address, { target: { value: 'some-address' } });
+
+    const nodesSelect = screen.getByLabelText('Nodes');
+    await waitFor(() =>
+      selectEvent.select(nodesSelect, [nodesMockMultipleAgentsNoPMMServer[0].node_name], {
+        container: document.body,
+      })
+    );
+
+    const agentsSelect = screen.getByLabelText('Agents');
+    await waitFor(() =>
+      selectEvent.select(agentsSelect, nodesMockMultipleAgentsNoPMMServer[0].agents[0].agent_id, {
+        container: document.body,
+      })
+    );
+
+    fireEvent.submit(form);
+
+    expect(submitMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: 'some-address',
       }),
       expect.anything(),
       expect.anything()

@@ -39,10 +39,12 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
   }, []);
 
   const changeAgentValue = (value: AgentsOption) => {
-    if (value.label !== PMM_SERVER_NODE_AGENT_ID) {
-      form?.change('address', 'localhost');
-    } else {
-      form?.change('address', '');
+    if (!form?.getState().values?.address) {
+      if (value.label !== PMM_SERVER_NODE_AGENT_ID) {
+        form?.change('address', 'localhost');
+      } else {
+        form?.change('address', '');
+      }
     }
   };
 
@@ -57,13 +59,9 @@ export const NodesAgents: FC<NodesAgentsProps> = ({ form }) => {
     }
     if (selectedAgent) {
       form?.change('pmm_agent_id', selectedAgent);
-
-      if (selectedAgent.value !== PMM_SERVER_NODE_AGENT_ID) {
-        form?.change('address', 'localhost');
-      }
+      changeAgentValue(selectedAgent);
     } else {
       form?.change('pmm_agent_id', undefined);
-      form?.change('address', '');
     }
   };
 

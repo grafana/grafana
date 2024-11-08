@@ -10,6 +10,8 @@ services:
       - "./:/workspace"
       - "./public:/usr/share/grafana/public"
       - "./conf/grafana.local-dev.ini:/usr/share/grafana/conf/defaults.ini"
+      # pmm
+      # - "../pmm:/root/go/src/github.com/percona/pmm"
     ports:
       - 80:8080
       - 443:8443
