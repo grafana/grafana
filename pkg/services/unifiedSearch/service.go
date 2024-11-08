@@ -241,8 +241,7 @@ func newSearchFrame(res *resource.SearchResponse) *data.Frame {
 func newTagsFrame() *data.Frame {
 	fTag := newField("tag", data.FieldTypeString)
 	fCount := newField("count", data.FieldTypeInt64)
-	tagsFrame := data.NewFrame("tags", fTag, fCount)
-	return tagsFrame
+	return data.NewFrame("tags", fTag, fCount)
 }
 
 func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
