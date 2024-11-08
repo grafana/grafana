@@ -76,7 +76,7 @@ func (is *IndexServer) Watch(ctx context.Context) error {
 	rtList := fetchResourceTypes()
 	for _, rt := range rtList {
 		wr := &WatchRequest{
-			Options: rt,
+			Options: rt.ListOptions,
 		}
 
 		go func() {
