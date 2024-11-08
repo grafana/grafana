@@ -4,11 +4,13 @@ import (
 	"context"
 	golog "log"
 	"path/filepath"
+	reflect "reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/search"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -343,6 +345,15 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 		query.AddQuery(orQuery)
 	}
 
+	if len(request.Filters) > 0 {
+		orQuery := bleve.NewDisjunctionQuery()
+		for _, filter := range request.Filters {
+			termQuery := bleve.NewMatchQuery(filter)
+			orQuery.AddQuery(termQuery)
+		}
+		query.AddQuery(orQuery)
+	}
+
 	req := bleve.NewSearchRequest(query)
 	if len(request.SortBy) > 0 {
 		sorting := getSortFields(request)
@@ -377,7 +388,8 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	groups := []*Group{}
 	for _, group := range request.GroupBy {
 		groupByFacet := res.Facets[group.Name+"_facet"]
-		for _, term := range groupByFacet.Terms.Terms() {
+		terms := getTermFacets(groupByFacet.Terms)
+		for _, term := range terms {
 			groups = append(groups, &Group{Name: term.Term, Count: int64(term.Count)})
 		}
 	}
@@ -497,4 +509,47 @@ func getSortFields(request *SearchRequest) []string {
 		sorting = append(sorting, sort)
 	}
 	return sorting
+}
+
+func getTermFacets(f *search.TermFacets) []*search.TermFacet {
+	e := reflect.ValueOf(f).Elem()
+	if e.Kind() != reflect.Struct {
+		return []*search.TermFacet{}
+	}
+	// workaround - this field is private, so we need to use reflection to access it
+	// TODO - fork bleve and create a pr to make this field accessible
+	v := e.FieldByName("termLookup")
+	if v.Kind() != reflect.Map {
+		return []*search.TermFacet{}
+	}
+
+	terms := []*search.TermFacet{}
+	termsRange := v.MapRange()
+	for termsRange.Next() {
+		value := termsRange.Value()
+		// facet value is *search.TermFacet
+		if value.Kind() == reflect.Pointer {
+			val := value.Elem()
+			if val.Kind() == reflect.Struct {
+				group := newTerm(val)
+				terms = append(terms, group)
+			}
+		}
+	}
+	return terms
+}
+
+func newTerm(val reflect.Value) *search.TermFacet {
+	term := &search.TermFacet{}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		if field.Kind() == reflect.String {
+			term.Term = field.String()
+		}
+		if field.Kind() == reflect.Int {
+			term.Count = int(field.Int())
+		}
+	}
+	return term
 }

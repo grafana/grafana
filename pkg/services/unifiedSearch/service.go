@@ -184,9 +184,25 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 		}
 		kind := strings.ToLower(doc.Kind)
 		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, doc.Spec.Tags, doc.FolderID)
 	}
 	response.Frames = append(response.Frames, frame)
+
+	if len(res.Groups) > 0 {
+		fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+		fName.Name = "tag"
+
+		fCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+		fCount.Name = "count"
+
+		tagsFrame := data.NewFrame("tags", fName, fCount)
+
+		for _, grp := range res.Groups {
+			tagsFrame.AppendRow(grp.Name, grp.Count)
+		}
+		response.Frames = append(response.Frames, tagsFrame)
+	}
+
 	return response
 }
 
@@ -248,7 +264,8 @@ type DashboardListDoc struct {
 	UpdatedBy string    `json:"UpdatedBy"`
 	FolderID  string    `json:"FolderId"`
 	Spec      struct {
-		Title string `json:"title"`
+		Title string           `json:"title"`
+		Tags  *json.RawMessage `json:"tags"`
 	} `json:"Spec"`
 }
 
@@ -262,13 +279,20 @@ func getDoc(data []byte) (*DashboardListDoc, error) {
 }
 
 func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	var groupBy []*resource.GroupBy
+	for _, g := range qry.Facet {
+		groupBy = append(groupBy, &resource.GroupBy{Name: g.Field, Limit: int64(g.Limit)})
+	}
+
 	return &resource.SearchRequest{
-		Tenant: tenant,
-		Query:  qry.Query,
-		Limit:  int64(qry.Limit),
-		Offset: int64(qry.From),
-		Kind:   qry.Kind,
-		SortBy: []string{sortField(qry.Sort)},
+		Tenant:  tenant,
+		Query:   qry.Query,
+		Limit:   int64(qry.Limit),
+		Offset:  int64(qry.From),
+		Kind:    qry.Kind,
+		SortBy:  []string{sortField(qry.Sort)},
+		GroupBy: groupBy,
+		Filters: qry.Tags,
 	}
 }
 
