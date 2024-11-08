@@ -8,7 +8,7 @@ export function ToLabel() {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.button}>
-      <Trans i18nKey="alerting.threshold.To">TO</Trans>
+      <Trans i18nKey="alerting.threshold.to">TO</Trans>
     </div>
   );
 }

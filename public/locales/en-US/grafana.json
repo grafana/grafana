@@ -331,7 +331,7 @@
       "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
     },
     "threshold": {
-      "To": "TO"
+      "to": "TO"
     }
   },
   "annotations": {
