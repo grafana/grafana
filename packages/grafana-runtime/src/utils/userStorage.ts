@@ -14,10 +14,7 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export type UserStorageSpec = {
-  serviceMap: { [key: string]: string };
-  UserUID: string;
-};
+export type UserStorageSpec = { [key: string]: string };
 
 async function apiRequest<T>(requestOptions: RequestOptions) {
   try {
@@ -34,20 +31,21 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
   }
 }
 
-function getUserUID() {
-  if (config.bootData.user.uid === '') {
-    return `user:${config.bootData.user.id}`;
-  }
-  return `user:${config.bootData.user.uid}`;
+function getUserUID(): string {
+  return config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
+}
+
+function getResourceName(scope: string): string {
+  return `${scope}:${getUserUID()}`;
 }
 
 function canUseUserStorage(): boolean {
   return config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
 }
 
-async function getUserStorage(): Promise<{ spec: UserStorageSpec } | null> {
+async function getUserStorage(resourceName: string): Promise<{ spec: UserStorageSpec } | null> {
   const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
-    url: `/${getUserUID()}`,
+    url: `/${resourceName}`,
     method: 'GET',
     showErrorAlert: false,
   });
@@ -63,55 +61,55 @@ async function getUserStorage(): Promise<{ spec: UserStorageSpec } | null> {
 
 /**
  * Retrieves an item from the backend user storage or local storage if not enabled.
+ * @param service - The name of the service, like the plugin ID or the internal service name.
  * @param key - The key of the item to retrieve.
  * @returns A promise that resolves to the item value or null if not found.
  */
-export async function getItem(key: string): Promise<string | null> {
+export async function getItem(service: string, key: string): Promise<string | null> {
+  const resourceName = getResourceName(service);
   if (!canUseUserStorage()) {
     // Fallback to localStorage
-    return localStorage.getItem(key);
+    return localStorage.getItem(resourceName);
   }
-  const userStorage = await getUserStorage();
+  const userStorage = await getUserStorage(resourceName);
   if (!userStorage) {
     // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
-    return localStorage.getItem(key);
+    return localStorage.getItem(resourceName);
   }
-  return userStorage.spec.serviceMap[key];
+  return userStorage.spec[key];
 }
 
 /**
  * Sets an item in the backend user storage or local storage if not enabled.
+ * @param service - The name of the service, like the plugin ID or the internal service name.
  * @param key - The key of the item to set.
  * @param value - The value of the item to set.
  * @returns A promise that resolves when the item is set.
  */
-export async function setItem(key: string, value: string): Promise<void> {
+export async function setItem(service: string, key: string, value: string): Promise<void> {
+  const resourceName = getResourceName(service);
   if (!canUseUserStorage()) {
     // Fallback to localStorage
     localStorage.setItem(key, value);
     return;
   }
 
-  const userUID = getUserUID();
-  const userStorage = await getUserStorage();
+  const userStorage = await getUserStorage(resourceName);
   if (!userStorage) {
     // No user storage found, create a new one
-    const userStorageData = {
-      serviceMap: { [key]: value },
-      UserUID: userUID,
-    };
+    const userStorageData = { [key]: value };
     await apiRequest<UserStorageSpec>({
       url: `/`,
       method: 'POST',
-      body: { metadata: { name: userUID }, spec: userStorageData },
+      body: { metadata: { name: resourceName, labels: { user: getUserUID(), service } }, spec: userStorageData },
     });
     return;
   }
 
   // Update existing user storage
-  userStorage.spec.serviceMap[key] = value;
+  userStorage.spec[key] = value;
   await apiRequest<UserStorageSpec>({
-    url: `/${userUID}`,
+    url: `/${resourceName}`,
     method: 'PUT',
     body: userStorage,
   });
