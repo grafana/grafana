@@ -247,7 +247,7 @@
     "yargs": "^17.5.1"
   },
   "dependencies": {
-    "@bsull/augurs": "0.4.2",
+    "@bsull/augurs": "^0.6.0",
     "@emotion/css": "11.13.4",
     "@emotion/react": "11.13.3",
     "@fingerprintjs/fingerprintjs": "^3.4.2",

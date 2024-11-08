@@ -1,4 +1,4 @@
-import init from '@bsull/augurs';
+import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect } from 'react';
