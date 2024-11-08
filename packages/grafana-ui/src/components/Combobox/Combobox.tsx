@@ -4,6 +4,8 @@ import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
 import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
+import { logInfo } from '@grafana/runtime';
+
 import { useStyles2 } from '../../themes';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
@@ -41,6 +43,8 @@ interface ComboboxBaseProps<T extends string | number>
    * */
   width?: number | 'auto';
 }
+
+const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 
 type AutoSizeConditionals =
   | {
@@ -259,9 +263,18 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
-  if (items.length > 100_000) {
+  if (items.length > RECOMMENDED_ITEMS_AMOUNT) {
     const msg = `[Combobox] Items exceed the recommended amount ${RECOMMENDED_ITEMS_AMOUNT}.`;
     console.warn(msg);
+    try {
+      logInfo(msg, {
+        itemsCount: '' + items.length,
+        'aria-labelledby': ariaLabelledBy ?? '',
+        id: id ?? '',
+      });
+    } catch (e) {
+      console.warn('Failed to log faro event!');
+    }
   }
 
   return (
