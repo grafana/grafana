@@ -471,8 +471,18 @@ type IndexerListOptions struct {
 }
 
 // TODO - fetch from api
+// Folders need to be indexed first as dashboards depend on them to be indexed already.
 func fetchResourceTypes() []*IndexerListOptions {
 	return []*IndexerListOptions{
+		{
+			ListOptions: &ListOptions{
+				Key: &ResourceKey{
+					Group:    "folder.grafana.app",
+					Resource: "folders",
+				},
+			},
+			Kind: "Folder",
+		},
 		{
 			ListOptions: &ListOptions{
 				Key: &ResourceKey{
@@ -490,15 +500,6 @@ func fetchResourceTypes() []*IndexerListOptions {
 				},
 			},
 			Kind: "Dashboard",
-		},
-		{
-			ListOptions: &ListOptions{
-				Key: &ResourceKey{
-					Group:    "folder.grafana.app",
-					Resource: "folders",
-				},
-			},
-			Kind: "Folder",
 		},
 	}
 }
