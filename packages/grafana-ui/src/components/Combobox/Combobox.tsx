@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useId, useMemo, useRef, useState } from 'react';
 
 import { logInfo } from '@grafana/runtime';
 
@@ -263,6 +263,7 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
+  const warningLogRef = useRef<boolean>(false);
   if (items.length > RECOMMENDED_ITEMS_AMOUNT) {
     const msg = `[Combobox] Items exceed the recommended amount ${RECOMMENDED_ITEMS_AMOUNT}.`;
     console.warn(msg);
@@ -275,6 +276,8 @@ export const Combobox = <T extends string | number>({
     } catch (e) {
       console.warn('Failed to log faro event!');
     }
+    // Log only once to prevent noise
+    warningLogRef.current = true;
   }
 
   return (
