@@ -35,7 +35,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
     });
 
     if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
-      componentLog.warning(
+      componentLog.error(
         'Invalid extension point. Reason: The exposed component is not recorded in the "plugin.json" file. Exposed components must be listed in the dependencies[] section.'
       );
       return {

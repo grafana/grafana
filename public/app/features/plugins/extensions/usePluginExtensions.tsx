@@ -34,8 +34,8 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
       }
 
       if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-        pointLog.warning(
-          `Extension point usePluginExtensions("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
+        pointLog.error(
+          'Invalid extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1".'
         );
         return {
           isLoading: false,
