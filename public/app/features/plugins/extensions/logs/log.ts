@@ -32,7 +32,6 @@ export class ExtensionsLog {
   }
 
   warning(message: string, labels?: Labels): void {
-    console.warn(message, { ...this.baseLabels, ...labels });
     this.log(LogLevel.warning, message, labels);
   }
 
