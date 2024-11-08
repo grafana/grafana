@@ -622,7 +622,7 @@ func (s *Service) fetchSnapshotStatusFromGMS(ctx context.Context, session *cloud
 	}
 
 	if snapshotMeta.State == cloudmigration.SnapshotStateUnknown {
-		return fmt.Errorf("grafana migration service is unavailable")
+		return fmt.Errorf("Grafana Migration Service is unavailable. Snapshot state is unknown")
 	}
 
 	localStatus, ok := gmsStateToLocalStatus[snapshotMeta.State]
