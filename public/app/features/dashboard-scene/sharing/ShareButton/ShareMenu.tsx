@@ -70,14 +70,17 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      renderCondition: config.snapshotEnabled && contextSrv.hasPermission(AccessControlAction.SnapshotsCreate),
+      renderCondition:
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate),
       onClick: () => {
         onMenuItemClick(shareDashboardType.snapshot);
       },
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel, dashboard]);
+  }, [panel]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({
