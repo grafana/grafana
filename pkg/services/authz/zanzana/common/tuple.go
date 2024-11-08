@@ -15,7 +15,7 @@ const (
 	TypeRole      string = "role"
 	TypeFolder    string = "folder"
 	TypeResource  string = "resource"
-	TypeNamespace        = "namespace"
+	TypeNamespace string = "namespace"
 )
 
 const (
