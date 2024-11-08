@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,40 +43,32 @@ func (s *memoryBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv in
 		defer s.mutex.Unlock()
 
 		tree := s.getResourceTree(event.Key)
+		value := &memoryValue{
+			rv:     rv,
+			ns:     event.Key.Namespace,
+			name:   event.Key.Name,
+			folder: event.Object.GetFolder(),
+			value:  event.Value,
+		}
 
 		switch event.Type {
 		case WatchEvent_ADDED:
-			val := tree.get(event.Key)
-			if val != nil {
+			val := tree.get(event.Key, 0)
+			if val != nil && !val.deleted {
 				return 0, fmt.Errorf("key already exists")
 			}
-			err = tree.add(event.Key, &memoryValue{
-				rv:     rv,
-				ns:     event.Key.Namespace,
-				name:   event.Key.Name,
-				folder: event.Object.GetFolder(),
-				value:  event.Value,
-			})
+			err = tree.add(event.Key, value)
 
 		case WatchEvent_MODIFIED:
-			val := tree.get(event.Key)
-			if val == nil {
-				return 0, fmt.Errorf("not found")
-			}
-			val.rv = rv
-			val.value = event.Value
-			val.folder = event.Object.GetFolder()
+			err = tree.add(event.Key, value)
 
 		case WatchEvent_DELETED:
-			ns, ok := tree.namespaces[event.Key.Namespace]
-			if !ok {
-				return 0, fmt.Errorf("namespace no found")
+			current := tree.get(event.Key, 0) // the latest
+			if current == nil || current.deleted {
+				return 0, fmt.Errorf("not found")
 			}
-			if _, ok := ns.names[event.Key.Name]; ok {
-				delete(ns.names, event.Key.Name)
-				return rv, nil
-			}
-			return 0, fmt.Errorf("name no found")
+			value.deleted = true
+			err = tree.add(event.Key, value)
 
 		// ignore
 		default:
@@ -102,7 +95,7 @@ func (s *memoryBackend) ReadResource(ctx context.Context, req *ReadRequest) *Rea
 	defer s.mutex.Unlock()
 
 	tree := s.getResourceTree(req.Key)
-	val := tree.get(req.Key)
+	val := tree.get(req.Key, req.ResourceVersion)
 	if val == nil {
 		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
@@ -140,7 +133,17 @@ func (s *memoryBackend) ListIterator(ctx context.Context, req *ListRequest, cb f
 	tree := s.getResourceTree(key)
 	iter := &memoryListIterator{
 		index: -1,
-		rv:    s.rv.Load(),
+		rv:    req.ResourceVersion,
+	}
+	if iter.rv == 0 {
+		iter.rv = s.rv.Load()
+	}
+	if req.NextPageToken != "" {
+		idx, err := strconv.Atoi(req.NextPageToken)
+		if err != nil {
+			return 0, fmt.Errorf("invalid next token")
+		}
+		iter.index = idx
 	}
 
 	if key.Namespace == "" {
@@ -153,6 +156,7 @@ func (s *memoryBackend) ListIterator(ctx context.Context, req *ListRequest, cb f
 			iter.add(ns)
 		}
 	}
+
 	// sort?
 	return iter.rv, cb(iter)
 }
@@ -198,10 +202,10 @@ type memoryResource struct {
 	namespaces map[string]*memoryNamespace
 }
 
-func (v *memoryResource) get(key *ResourceKey) *memoryValue {
+func (v *memoryResource) get(key *ResourceKey, rv int64) *memoryValue {
 	ns, ok := v.namespaces[key.Namespace]
 	if ok {
-		return ns.get(key)
+		return ns.get(key, rv)
 	}
 	return nil
 }
@@ -210,7 +214,7 @@ func (v *memoryResource) add(key *ResourceKey, val *memoryValue) error {
 	ns, ok := v.namespaces[key.Namespace]
 	if !ok {
 		ns = &memoryNamespace{
-			names: make(map[string]*memoryValue),
+			names: make(map[string]*memoryValues),
 		}
 		v.namespaces[key.Namespace] = ns
 	}
@@ -218,32 +222,62 @@ func (v *memoryResource) add(key *ResourceKey, val *memoryValue) error {
 }
 
 type memoryNamespace struct {
-	names map[string]*memoryValue
+	names map[string]*memoryValues
 }
 
-func (v *memoryNamespace) get(key *ResourceKey) *memoryValue {
+func (v *memoryNamespace) get(key *ResourceKey, rv int64) *memoryValue {
 	vv, ok := v.names[key.Name]
 	if ok {
-		return vv
+		return vv.get(rv)
 	}
 	return nil
 }
 
 func (v *memoryNamespace) add(key *ResourceKey, val *memoryValue) error {
-	_, ok := v.names[key.Name]
-	if ok {
-		return fmt.Errorf("key already exists")
+	vals, ok := v.names[key.Name]
+	if !ok {
+		vals = &memoryValues{
+			version: []*memoryValue{val},
+		}
+		v.names[key.Name] = vals
+		return nil
 	}
-	v.names[key.Name] = val
+
+	current := vals.get(0)
+	if current != nil && current.rv > val.rv {
+		return fmt.Errorf("addign an RV with lower value")
+	}
+
+	vals.version = append(vals.version, val)
+	return nil
+}
+
+type memoryValues struct {
+	version []*memoryValue
+}
+
+// Get the closest (but not greater than)
+func (v *memoryValues) get(rv int64) *memoryValue {
+	if len(v.version) == 0 {
+		return nil
+	}
+
+	for i := len(v.version) - 1; i >= 0; i-- {
+		v := v.version[i]
+		if v.rv > rv {
+			return v
+		}
+	}
 	return nil
 }
 
 type memoryValue struct {
-	rv     int64
-	ns     string
-	name   string
-	folder string
-	value  []byte
+	deleted bool
+	rv      int64
+	ns      string
+	name    string
+	folder  string
+	value   []byte
 }
 
 type memoryListIterator struct {
@@ -255,8 +289,11 @@ type memoryListIterator struct {
 }
 
 func (c *memoryListIterator) add(ns *memoryNamespace) {
-	for _, v := range ns.names {
-		c.values = append(c.values, v)
+	for _, r := range ns.names {
+		v := r.get(c.rv) // get the closest (but not over)
+		if v != nil {
+			c.values = append(c.values, v)
+		}
 	}
 }
 
@@ -291,7 +328,7 @@ func (c *memoryListIterator) Value() []byte {
 
 // ContinueToken implements ListIterator.
 func (c *memoryListIterator) ContinueToken() string {
-	return fmt.Sprintf("index:%d", c.index)
+	return fmt.Sprintf("%d", c.index)
 }
 
 // Name implements ListIterator.
