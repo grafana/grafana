@@ -308,7 +308,7 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 		return err
 	}
 
-	IndexServerMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(-1)
+	IndexServerMetrics.IndexedKinds.WithLabelValues(key.Resource).Dec()
 
 	return nil
 }

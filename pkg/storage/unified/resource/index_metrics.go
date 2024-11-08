@@ -23,7 +23,7 @@ type IndexMetrics struct {
 	IndexLatency      *prometheus.HistogramVec
 	IndexSize         prometheus.Gauge
 	IndexedDocs       prometheus.Gauge
-	IndexedKinds      *prometheus.CounterVec
+	IndexedKinds      *prometheus.GaugeVec
 	IndexCreationTime *prometheus.HistogramVec
 }
 
@@ -53,7 +53,7 @@ func NewIndexMetrics(indexDir string, indexServer *IndexServer) *IndexMetrics {
 				Name:      "indexed_docs",
 				Help:      "Number of indexed documents by resource",
 			}),
-			IndexedKinds: prometheus.NewCounterVec(prometheus.CounterOpts{
+			IndexedKinds: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 				Namespace: "index_server",
 				Name:      "indexed_kinds",
 				Help:      "Number of indexed documents by kind",
