@@ -219,7 +219,7 @@ func SetDualWritingMode(
 			return currentMode, errDualWriterSetCurrentMode
 		}
 		return desiredMode, nil
-	case desiredMode >= Mode3 && currentMode > Mode3:
+	case desiredMode >= Mode3 && currentMode >= Mode3:
 		currentMode = desiredMode
 		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
