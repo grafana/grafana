@@ -94,9 +94,9 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 			}
 
 			tuple = &openfgav1.TupleKey{
-				Object:   zanzana.NewTupleEntry("folder2", f.FolderUID, ""),
+				Object:   zanzana.NewTupleEntry(common.TypeFolder, f.FolderUID, ""),
 				Relation: zanzana.RelationParent,
-				User:     zanzana.NewTupleEntry("folder2", f.ParentUID, ""),
+				User:     zanzana.NewTupleEntry(common.TypeFolder, f.ParentUID, ""),
 			}
 
 			if tuples[tuple.Object] == nil {
