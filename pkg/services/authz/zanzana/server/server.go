@@ -60,11 +60,6 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 }
 
 func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
-	stackID := cfg.StackID
-	if stackID == "" {
-		stackID = "default"
-	}
-
 	return NewAuthz(openfga)
 }
 

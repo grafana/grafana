@@ -40,10 +40,7 @@ type Client struct {
 	openfga  openfgav1.OpenFGAServiceClient
 	authz    authzv1.AuthzServiceClient
 	authzext authzextv1.AuthzExtentionServiceClient
-
 	tenantID string
-	storeID  string
-	modelID  string
 }
 
 func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cfg) (*Client, error) {

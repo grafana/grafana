@@ -129,7 +129,6 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 			run(ctx, ns)
 		})
 	}
-
 }
 
 func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {
