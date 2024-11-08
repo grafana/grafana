@@ -858,4 +858,8 @@ const (
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
+
+	// FlagZipkinBackendMigration
+	// Enables querying Zipkin data source without the proxy
+	FlagZipkinBackendMigration = "zipkinBackendMigration"
 )

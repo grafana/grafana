@@ -1596,6 +1596,12 @@ var (
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "zipkinBackendMigration",
+			Description: "Enables querying Zipkin data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
 	}
 )
 
