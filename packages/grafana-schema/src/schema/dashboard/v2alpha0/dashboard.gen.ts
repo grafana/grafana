@@ -615,7 +615,12 @@ export const defaultQueryGroupKind = (): QueryGroupKind => ({
   spec: defaultQueryGroupSpec(),
 });
 
-/*** Start FIXME: variables - in CUE PR - this are things that should be added into the cue schema **/
+/*** Start FIXME: variables - in CUE PR - this are things that should be added into the cue schema
+*
+* TODO: properties such as `hide`, `skipUrlSync`, `multi` are type boolean, and in the old schema they are conditional,
+* should we make them conditional in the new schema as well? or should we make them required but default to false?
+*
+* **/
 
 // Variable types
 export type VariableValue = VariableValueSingle | VariableValueSingle[];
@@ -625,8 +630,8 @@ export type VariableValue = VariableValueSingle | VariableValueSingle[];
 export interface CustomFormatterVariable {
   name: string;
   type: VariableType;
-  multi?: boolean;
-  includeAll?: boolean;
+  multi: boolean;
+  includeAll: boolean;
 }
 
 export type VariableCustomFormatterFn = (
@@ -661,8 +666,8 @@ export type QueryVariableSpec = {
   text: VariableValue;
   current: VariableOption;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
   datasource: DataSourceRef;
   query: string | DataQueryKind;
@@ -672,7 +677,7 @@ export type QueryVariableSpec = {
   options: VariableValueOption[];
   isMulti: boolean;
   includeAll: boolean;
-  allValue?: string | null;
+  allValue?: string;
   placeholder?: string;
 };
 
@@ -691,6 +696,8 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
+  hide: false,
+  skipUrlSync: false,
 });
 
 export interface QueryVariableKind {
@@ -708,14 +715,16 @@ export type TextVariableSpec = {
   name: string;
   value: string;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 };
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
   name: "",
   value: "",
+  hide: false,
+  skipUrlSync: false,
 });
 
 export interface TextVariableKind {
@@ -738,14 +747,16 @@ export interface ConstantVariableSpec {
   name: string;
   value: string;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
   name: "",
   value: "",
+  hide: false,
+  skipUrlSync: false,
 });
 
 // datasource variable
@@ -768,8 +779,8 @@ export interface DatasourceVariableSpec {
   includeAll: boolean;
   allValue?: string;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 }
 
@@ -787,6 +798,8 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
   defaultOptionEnabled: false,
   isMulti: false,
   includeAll: false,
+  hide: false,
+  skipUrlSync: false,
 })
 
 // interval variable
@@ -805,8 +818,8 @@ export interface IntervalVariableSpec {
   autoStepCount: number;
   refresh: VariableRefresh;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 }
 
@@ -822,6 +835,8 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
   autoMinInterval: "",
   autoStepCount: 0,
   refresh: VariableRefresh.onTimeRangeChanged,
+  hide: false,
+  skipUrlSync: false,
 });
 
 // custom variable
@@ -841,8 +856,8 @@ export interface CustomVariableSpec {
   includeAll: boolean;
   allValue?: string;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 };
 
@@ -858,6 +873,8 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
+  hide: false,
+  skipUrlSync: false,
 });
 
 // group variable
@@ -877,8 +894,8 @@ export interface GroupVariableSpec {
   includeAll: boolean;
   allValue?: string;
   label?: string;
-  hide?: boolean;
-  skipUrlSync?: boolean;
+  hide: boolean;
+  skipUrlSync: boolean;
   description?: string;
 }
 
@@ -890,6 +907,62 @@ export const defaultGroupVariableSpec = (): GroupVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
+  hide: false,
+  skipUrlSync: false,
+});
+
+// adhoc variable
+export interface AdhocVariableKind {
+  kind: "Adhoc";
+  spec: AdhocVariableSpec;
+}
+
+//Start FIXME: grafana-data? verify where this types should live, right now are defined in grafana-data package
+export interface AdHocVariableFilter {
+  key: string;
+  operator: string;
+  value: string;
+  values?: string[];
+  /** @deprecated  */
+  condition?: string;
+}
+
+export interface AdHocFilterWithLabels extends AdHocVariableFilter {
+  keyLabel?: string;
+  valueLabels?: string[];
+  // this is used to externally trigger edit mode in combobox filter UI
+  forceEdit?: boolean;
+}
+
+export interface MetricFindValue {
+  text: string;
+  value?: string | number;
+  group?: string;
+  expandable?: boolean;
+}
+
+//End FIXME: grafana-data? verify where this types should live, right now are defined in grafana-data package
+
+export interface AdhocVariableSpec {
+  name: string;
+  datasource: DataSourceRef;
+  baseFilters: AdHocFilterWithLabels[];
+  filters: AdHocFilterWithLabels[];
+  defaultKeys: MetricFindValue[];
+  label?: string;
+  hide: boolean;
+  skipUrlSync: boolean;
+  description?: string;
+}
+
+export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
+  name: "",
+  datasource: {},
+  baseFilters: [],
+  filters: [],
+  defaultKeys: [],
+  hide: false,
+  skipUrlSync: false,
 });
 
 
