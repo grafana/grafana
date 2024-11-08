@@ -1568,6 +1568,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "preinstallAutoUpdate",
+			Description: "Enables automatic updates for pre-installed plugins",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "dashboardSchemaV2",
 			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
 			Stage:        FeatureStageExperimental,
@@ -1595,6 +1601,18 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:        "zipkinBackendMigration",
+			Description: "Enables querying Zipkin data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
+			Name:        "enableSCIM",
+			Description: "Enables SCIM support for user and group management",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

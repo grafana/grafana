@@ -14,14 +14,13 @@ import (
 func testCheck(t *testing.T, server *Server) {
 	newRead := func(subject, group, resource, folder, name string) *authzv1.CheckRequest {
 		return &authzv1.CheckRequest{
-			// FIXME: namespace should map to store
-			// Namespace: storeID,
-			Subject:  subject,
-			Verb:     utils.VerbGet,
-			Group:    group,
-			Resource: resource,
-			Name:     name,
-			Folder:   folder,
+			Namespace: "default",
+			Subject:   subject,
+			Verb:      utils.VerbGet,
+			Group:     group,
+			Resource:  resource,
+			Name:      name,
+			Folder:    folder,
 		}
 	}
 
