@@ -7,7 +7,7 @@ import { ComboboxOption } from './Combobox';
 import {
   MENU_ITEM_FONT_SIZE,
   MENU_ITEM_FONT_WEIGHT,
-  MENU_ITEM_PADDING_X,
+  MENU_ITEM_PADDING,
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
@@ -70,7 +70,7 @@ export const useComboboxFloat = (
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    return size + MENU_ITEM_PADDING_X * 2 + scrollbarWidth;
+    return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
