@@ -3,13 +3,13 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { config, getScopesDashboards, getScopesSelector, setPluginImportUtils } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
+import { initializeScopes } from '../../initialize';
 import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
 import { initialSelectorState } from '../../internal/ScopesSelectorScene';
 
@@ -202,7 +202,7 @@ export function renderDashboard(
 export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  scopesSelectorScene?.setState(initialSelectorState);
-  scopesDashboardsScene?.setState(getInitialDashboardsState());
+  getScopesSelector()?.setState(initialSelectorState);
+  getScopesDashboards()?.setState(getInitialDashboardsState());
   cleanup();
 }

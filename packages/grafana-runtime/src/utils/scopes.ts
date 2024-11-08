@@ -1,12 +1,11 @@
 import { Scope } from '@grafana/data';
 import { sceneGraph, SceneObject } from '@grafana/scenes';
 
-import { ScopesFacade } from './ScopesFacadeScene';
-import { scopesDashboardsScene, scopesSelectorScene } from './instance';
-import { getScopesFromSelectedScopes } from './internal/utils';
+import { ScopesFacade } from '../components/ScopesFacadeScene';
+import { getScopesDashboards, getScopesSelector } from '../services';
 
 export function getSelectedScopes(): Scope[] {
-  return getScopesFromSelectedScopes(scopesSelectorScene?.state.scopes ?? []);
+  return (getScopesSelector()?.state.scopes ?? []).map(({ scope }) => scope);
 }
 
 export function getSelectedScopesNames(): string[] {
@@ -14,26 +13,30 @@ export function getSelectedScopesNames(): string[] {
 }
 
 export function enableScopes() {
-  scopesSelectorScene?.enable();
-  scopesDashboardsScene?.enable();
+  getScopesSelector()?.enable();
+  getScopesDashboards()?.enable();
 }
 
 export function disableScopes() {
-  scopesSelectorScene?.disable();
-  scopesDashboardsScene?.disable();
+  getScopesSelector()?.disable();
+  getScopesDashboards()?.disable();
 }
 
 export function exitScopesReadOnly() {
-  scopesSelectorScene?.exitReadOnly();
-  scopesDashboardsScene?.exitReadOnly();
+  getScopesSelector()?.exitReadOnly();
+  getScopesDashboards()?.exitReadOnly();
 }
 
 export function enterScopesReadOnly() {
-  scopesSelectorScene?.enterReadOnly();
-  scopesDashboardsScene?.enterReadOnly();
+  getScopesSelector()?.enterReadOnly();
+  getScopesDashboards()?.enterReadOnly();
 }
 
 export function getClosestScopesFacade(scene: SceneObject): ScopesFacade | null {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return sceneGraph.findObject(scene, (obj) => obj instanceof ScopesFacade) as ScopesFacade | null;
 }
+
+export const useScopesDashboardsState = () => {
+  return getScopesDashboards()?.useState();
+};

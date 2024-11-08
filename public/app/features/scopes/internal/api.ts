@@ -1,8 +1,16 @@
-import { Scope, ScopeDashboardBinding, ScopeNode, ScopeSpec } from '@grafana/data';
+import {
+  InternalScopeNodeReason,
+  InternalScopeNodesMap,
+  InternalSelectedScope,
+  InternalTreeScope,
+  Scope,
+  ScopeDashboardBinding,
+  ScopeNode,
+  ScopeSpec,
+} from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 
-import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope, mergeScopes } from './utils';
 
 const group = 'scope.grafana.app';
@@ -28,8 +36,8 @@ async function fetchScopeNodes(parent: string, query: string): Promise<ScopeNode
   }
 }
 
-export async function fetchNodes(parent: string, query: string): Promise<NodesMap> {
-  return (await fetchScopeNodes(parent, query)).reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
+export async function fetchNodes(parent: string, query: string): Promise<InternalScopeNodesMap> {
+  return (await fetchScopeNodes(parent, query)).reduce<InternalScopeNodesMap>((acc, { metadata: { name }, spec }) => {
     acc[name] = {
       name,
       ...spec,
@@ -37,7 +45,7 @@ export async function fetchNodes(parent: string, query: string): Promise<NodesMa
       isSelectable: spec.linkType === 'scope',
       isExpanded: false,
       query: '',
-      reason: NodeReason.Result,
+      reason: InternalScopeNodeReason.Result,
       nodes: {},
     };
     return acc;
@@ -74,10 +82,10 @@ export async function fetchScopes(names: string[]): Promise<Scope[]> {
   return await Promise.all(names.map(fetchScope));
 }
 
-export async function fetchSelectedScopes(treeScopes: TreeScope[]): Promise<SelectedScope[]> {
+export async function fetchSelectedScopes(treeScopes: InternalTreeScope[]): Promise<InternalSelectedScope[]> {
   const scopes = await fetchScopes(treeScopes.map(({ scopeName }) => scopeName));
 
-  return scopes.reduce<SelectedScope[]>((acc, scope, idx) => {
+  return scopes.reduce<InternalSelectedScope[]>((acc, scope, idx) => {
     acc.push({
       scope,
       path: treeScopes[idx].path,

@@ -1,8 +1,6 @@
-import { config } from '@grafana/runtime';
+import { config, getClosestScopesFacade } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { getClosestScopesFacade } from '../utils';
 
 import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
 import { expectNotDashboardReload, expectScopesSelectorValue } from './utils/assertions';

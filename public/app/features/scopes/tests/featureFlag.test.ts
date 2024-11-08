@@ -1,6 +1,4 @@
-import { config } from '@grafana/runtime';
-
-import { scopesSelectorScene } from '../instance';
+import { config, getScopesSelector } from '@grafana/runtime';
 
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard } from './utils/render';
@@ -22,6 +20,6 @@ describe('Feature flag off', () => {
 
   it('Does not initialize', () => {
     renderDashboard();
-    expect(scopesSelectorScene).toBeNull();
+    expect(getScopesSelector()).toBeNull();
   });
 });

@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, ScopesSelector } from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -24,7 +24,6 @@ import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { ScopesSelector } from 'app/features/scopes';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';

@@ -10,7 +10,7 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
 } from '@grafana/data';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getClosestScopesFacade, locationService, RefreshEvent, ScopesFacade } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridRow,
@@ -33,7 +33,6 @@ import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';

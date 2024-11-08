@@ -561,6 +561,15 @@ export {
   type PluginExtensionAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
+  type InternalScopeNode,
+  InternalScopeNodeReason,
+  type InternalScopeNodesMap,
+  type InternalSelectedScope,
+  type InternalSuggestedDashboard,
+  type InternalSuggestedDashboardsFolder,
+  type InternalSuggestedDashboardsFoldersMap,
+  type InternalSuggestedDashboardsMap,
+  type InternalTreeScope,
   type ScopeDashboardBindingSpec,
   type ScopeDashboardBinding,
   type ScopeFilterOperator,

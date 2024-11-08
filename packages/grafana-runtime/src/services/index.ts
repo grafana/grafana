@@ -35,4 +35,14 @@ export { setPluginComponentsHook, usePluginComponents } from './pluginExtensions
 export { setPluginLinksHook, usePluginLinks } from './pluginExtensions/usePluginLinks';
 
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
+export {
+  getScopesSelector,
+  getScopesDashboards,
+  setScopesSelector,
+  setScopesDashboards,
+  ScopesSelectorLike,
+  ScopesDashboardsLike,
+  type ScopesSelectorLikeState,
+  type ScopesDashboardsLikeState,
+} from './scopes';
 export { setCurrentUser } from './user';

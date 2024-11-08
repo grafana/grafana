@@ -1,27 +1,17 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { finalize, from, Subscription } from 'rxjs';
+import { finalize, from } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  SceneObjectWithUrlSync,
-} from '@grafana/scenes';
+import { GrafanaTheme2, InternalScopeNodeReason, InternalScopeNodesMap } from '@grafana/data';
+import { config, ScopesSelectorLike, ScopesSelectorLikeState } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectUrlValues } from '@grafana/scenes';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
 
-import { ScopesDashboardsScene } from './ScopesDashboardsScene';
 import { ScopesInput } from './ScopesInput';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
-import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import {
   getBasicScope,
   getScopeNamesFromSelectedScopes,
@@ -29,23 +19,11 @@ import {
   getTreeScopesFromSelectedScopes,
 } from './utils';
 
-export interface ScopesSelectorSceneState extends SceneObjectState {
-  dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
-  nodes: NodesMap;
-  loadingNodeName: string | undefined;
-  scopes: SelectedScope[];
-  treeScopes: TreeScope[];
-  isReadOnly: boolean;
-  isLoadingScopes: boolean;
-  isPickerOpened: boolean;
-  isEnabled: boolean;
-}
-
-export const initialSelectorState: Omit<ScopesSelectorSceneState, 'dashboards'> = {
+export const initialSelectorState: Omit<ScopesSelectorLikeState, 'dashboards'> = {
   nodes: {
     '': {
       name: '',
-      reason: NodeReason.Result,
+      reason: InternalScopeNodeReason.Result,
       nodeType: 'container',
       title: '',
       isExpandable: true,
@@ -64,12 +42,8 @@ export const initialSelectorState: Omit<ScopesSelectorSceneState, 'dashboards'> 
   isEnabled: false,
 };
 
-export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneState> implements SceneObjectWithUrlSync {
+export class ScopesSelectorScene extends ScopesSelectorLike {
   static Component = ScopesSelectorSceneRenderer;
-
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
-
-  private nodesFetchingSub: Subscription | undefined;
 
   constructor() {
     super({
@@ -107,7 +81,7 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.nodesFetchingSub?.unsubscribe();
 
     let nodes = { ...this.state.nodes };
-    let currentLevel: NodesMap = nodes;
+    let currentLevel: InternalScopeNodesMap = nodes;
 
     for (let idx = 0; idx < path.length - 1; idx++) {
       currentLevel = currentLevel[path[idx]].nodes;
@@ -141,10 +115,10 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
           const persistedNodes = treeScopes
             .map(({ path }) => path[path.length - 1])
             .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
-            .reduce<NodesMap>((acc, nodeName) => {
+            .reduce<InternalScopeNodesMap>((acc, nodeName) => {
               acc[nodeName] = {
                 ...currentNode.nodes[nodeName],
-                reason: NodeReason.Persisted,
+                reason: InternalScopeNodeReason.Persisted,
               };
 
               return acc;
@@ -260,8 +234,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ isEnabled: false });
   }
 
-  private closeNodes(nodes: NodesMap): NodesMap {
-    return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
+  public closeNodes(nodes: InternalScopeNodesMap): InternalScopeNodesMap {
+    return Object.entries(nodes).reduce<InternalScopeNodesMap>((acc, [id, node]) => {
       acc[id] = {
         ...node,
         isExpanded: false,
@@ -272,7 +246,7 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     }, {});
   }
 
-  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+  public expandNodes(nodes: InternalScopeNodesMap, path: string[]): InternalScopeNodesMap {
     nodes = { ...nodes };
     let currentNodes = nodes;
 

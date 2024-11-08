@@ -11,7 +11,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { getPrometheusTime } from '@grafana/prometheus/src/language_utils';
-import { config, FetchResponse, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, FetchResponse, getBackendSrv, getClosestScopesFacade, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   sceneGraph,
@@ -23,7 +23,6 @@ import {
   SceneVariable,
   SceneVariableState,
 } from '@grafana/scenes';
-import { getClosestScopesFacade } from 'app/features/scopes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 

@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { scopesSelectorScene } from '../../instance';
+import { getScopesSelector } from '@grafana/runtime';
 
 const selectors = {
   tree: {
@@ -86,8 +86,8 @@ export const getResultCloudDevRadio = () =>
 export const getResultCloudOpsRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
 
-export const getListOfSelectedScopes = () => scopesSelectorScene?.state.scopes;
-export const getListOfTreeScopes = () => scopesSelectorScene?.state.treeScopes;
+export const getListOfSelectedScopes = () => getScopesSelector()?.state.scopes;
+export const getListOfTreeScopes = () => getScopesSelector()?.state.treeScopes;
 export const getSelectedScope = (name: string) =>
   getListOfSelectedScopes()?.find((selectedScope) => selectedScope.scope.metadata.name === name);
 export const getTreeScope = (name: string) => getListOfTreeScopes()?.find((treeScope) => treeScope.scopeName === name);

@@ -43,6 +43,9 @@ export {
   type DataSourcePickerProps,
   type DataSourcePickerState,
 } from './components/DataSourcePicker';
+export { ScopesDashboards } from './components/ScopesDashboards';
+export { ScopesFacade, type ScopesFacadeState } from './components/ScopesFacadeScene';
+export { ScopesSelector } from './components/ScopesSelector';
 export {
   type PluginEventProperties,
   createPluginEventProperties,
@@ -56,3 +59,13 @@ export { type EmbeddedDashboardProps, EmbeddedDashboard, setEmbeddedDashboard } 
 export { hasPermission, hasPermissionInMetadata, hasAllPermissions, hasAnyPermission } from './utils/rbac';
 export { QueryEditorWithMigration } from './components/QueryEditorWithMigration';
 export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest } from './utils/migrationHandler';
+export {
+  disableScopes,
+  enableScopes,
+  enterScopesReadOnly,
+  exitScopesReadOnly,
+  getClosestScopesFacade,
+  getSelectedScopes,
+  getSelectedScopesNames,
+  useScopesDashboardsState,
+} from './utils/scopes';

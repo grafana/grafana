@@ -1,37 +1,19 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { finalize, from, Subscription } from 'rxjs';
+import { finalize, from } from 'rxjs';
 
-import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
+import { GrafanaTheme2, InternalSuggestedDashboardsFoldersMap } from '@grafana/data';
+import { ScopesDashboardsLike, ScopesDashboardsLikeState } from '@grafana/runtime';
+import { SceneComponentProps } from '@grafana/scenes';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
-import { ScopesSelectorScene } from './ScopesSelectorScene';
 import { fetchDashboards } from './api';
-import { SuggestedDashboardsFoldersMap } from './types';
 import { filterFolders, getScopeNamesFromSelectedScopes, groupDashboards } from './utils';
 
-export interface ScopesDashboardsSceneState extends SceneObjectState {
-  selector: SceneObjectRef<ScopesSelectorScene> | null;
-  // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
-  dashboards: ScopeDashboardBinding[];
-  // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
-  folders: SuggestedDashboardsFoldersMap;
-  // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
-  filteredFolders: SuggestedDashboardsFoldersMap;
-  forScopeNames: string[];
-  isLoading: boolean;
-  isPanelOpened: boolean;
-  isEnabled: boolean;
-  isReadOnly: boolean;
-  scopesSelected: boolean;
-  searchQuery: string;
-}
-
-export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, 'selector'> = () => ({
+export const getInitialDashboardsState: () => Omit<ScopesDashboardsLikeState, 'selector'> = () => ({
   dashboards: [],
   folders: {},
   filteredFolders: {},
@@ -44,10 +26,8 @@ export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, '
   searchQuery: '',
 });
 
-export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsSceneState> {
+export class ScopesDashboardsScene extends ScopesDashboardsLike {
   static Component = ScopesDashboardsSceneRenderer;
-
-  private dashboardsFetchingSub: Subscription | undefined;
 
   constructor() {
     super({
@@ -142,8 +122,8 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public updateFolder(path: string[], isExpanded: boolean) {
     let folders = { ...this.state.folders };
     let filteredFolders = { ...this.state.filteredFolders };
-    let currentLevelFolders: SuggestedDashboardsFoldersMap = folders;
-    let currentLevelFilteredFolders: SuggestedDashboardsFoldersMap = filteredFolders;
+    let currentLevelFolders: InternalSuggestedDashboardsFoldersMap = folders;
+    let currentLevelFilteredFolders: InternalSuggestedDashboardsFoldersMap = filteredFolders;
 
     for (let idx = 0; idx < path.length - 1; idx++) {
       currentLevelFolders = currentLevelFolders[path[idx]].folders;

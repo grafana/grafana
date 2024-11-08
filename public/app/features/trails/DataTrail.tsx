@@ -11,7 +11,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { getSelectedScopes, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -37,7 +37,6 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';

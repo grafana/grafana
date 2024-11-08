@@ -4,10 +4,10 @@ import { memo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
+import { ScopesSelector } from '@grafana/runtime';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { ScopesSelector } from 'app/features/scopes';
 import { useSelector } from 'app/types';
 
 import { Branding } from '../../Branding/Branding';

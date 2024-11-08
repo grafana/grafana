@@ -1,11 +1,10 @@
 import { act, fireEvent } from '@testing-library/react';
 
 import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
+import { getScopesSelector } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { scopesSelectorScene } from '../../instance';
 
 import {
   dashboardReloadSpy,
@@ -54,7 +53,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
 
 export const updateScopes = async (scopes: string[]) =>
   act(async () =>
-    scopesSelectorScene?.updateScopes(
+    getScopesSelector()?.updateScopes(
       scopes.map((scopeName) => ({
         scopeName,
         path: [],

@@ -1,6 +1,8 @@
-import { scopesDashboardsScene } from './instance';
+import { getScopesDashboards } from '../services';
 
 export function ScopesDashboards() {
+  const scopesDashboardsScene = getScopesDashboards();
+
   if (!scopesDashboardsScene) {
     return null;
   }

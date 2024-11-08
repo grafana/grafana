@@ -2,10 +2,16 @@ import { isEqual } from 'lodash';
 
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
-import { scopesSelectorScene } from './instance';
-import { disableScopes, enableScopes, enterScopesReadOnly, exitScopesReadOnly, getSelectedScopes } from './utils';
+import { getScopesSelector } from '../services';
+import {
+  disableScopes,
+  enableScopes,
+  enterScopesReadOnly,
+  exitScopesReadOnly,
+  getSelectedScopes,
+} from '../utils/scopes';
 
-interface ScopesFacadeState extends SceneObjectState {
+export interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
   handler?: (facade: ScopesFacade) => void;
 }
@@ -21,7 +27,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
     this.enable();
 
     this._subs.add(
-      scopesSelectorScene?.subscribeToState((newState, prevState) => {
+      getScopesSelector()?.subscribeToState((newState, prevState) => {
         if (!newState.isLoadingScopes && (prevState.isLoadingScopes || !isEqual(newState.scopes, prevState.scopes))) {
           this.state.handler?.(this);
         }

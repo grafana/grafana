@@ -1,6 +1,11 @@
-import { Scope, ScopeDashboardBinding } from '@grafana/data';
-
-import { NodesMap, SelectedScope, SuggestedDashboardsFoldersMap, TreeScope } from './types';
+import {
+  InternalScopeNodesMap,
+  InternalSelectedScope,
+  InternalSuggestedDashboardsFoldersMap,
+  InternalTreeScope,
+  Scope,
+  ScopeDashboardBinding,
+} from '@grafana/data';
 
 export function getBasicScope(name: string): Scope {
   return {
@@ -29,18 +34,18 @@ export function mergeScopes(scope1: Scope, scope2: Scope): Scope {
   };
 }
 
-export function getTreeScopesFromSelectedScopes(scopes: SelectedScope[]): TreeScope[] {
+export function getTreeScopesFromSelectedScopes(scopes: InternalSelectedScope[]): InternalTreeScope[] {
   return scopes.map(({ scope, path }) => ({
     scopeName: scope.metadata.name,
     path,
   }));
 }
 
-export function getScopesFromSelectedScopes(scopes: SelectedScope[]): Scope[] {
+export function getScopesFromSelectedScopes(scopes: InternalSelectedScope[]): Scope[] {
   return scopes.map(({ scope }) => scope);
 }
 
-export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string[] {
+export function getScopeNamesFromSelectedScopes(scopes: InternalSelectedScope[]): string[] {
   return scopes.map(({ scope }) => scope.metadata.name);
 }
 
@@ -48,11 +53,11 @@ export function getScopeNamesFromSelectedScopes(scopes: SelectedScope[]): string
 // needed to maintain selected scopes in tree for example when navigating
 // between categories or when loading scopes from URL to find the scope's path
 export function getScopesAndTreeScopesWithPaths(
-  selectedScopes: SelectedScope[],
-  treeScopes: TreeScope[],
+  selectedScopes: InternalSelectedScope[],
+  treeScopes: InternalTreeScope[],
   path: string[],
-  childNodes: NodesMap
-): [SelectedScope[], TreeScope[]] {
+  childNodes: InternalScopeNodesMap
+): [InternalSelectedScope[], InternalTreeScope[]] {
   const childNodesArr = Object.values(childNodes);
 
   // Get all scopes without paths
@@ -97,8 +102,8 @@ export function getScopesAndTreeScopesWithPaths(
   return [newSelectedScopes, newTreeScopes];
 }
 
-export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedDashboardsFoldersMap {
-  return dashboards.reduce<SuggestedDashboardsFoldersMap>(
+export function groupDashboards(dashboards: ScopeDashboardBinding[]): InternalSuggestedDashboardsFoldersMap {
+  return dashboards.reduce<InternalSuggestedDashboardsFoldersMap>(
     (acc, dashboard) => {
       const rootNode = acc[''];
       const groups = dashboard.status.groups ?? [];
@@ -144,10 +149,13 @@ export function groupDashboards(dashboards: ScopeDashboardBinding[]): SuggestedD
   );
 }
 
-export function filterFolders(folders: SuggestedDashboardsFoldersMap, query: string): SuggestedDashboardsFoldersMap {
+export function filterFolders(
+  folders: InternalSuggestedDashboardsFoldersMap,
+  query: string
+): InternalSuggestedDashboardsFoldersMap {
   query = (query ?? '').toLowerCase();
 
-  return Object.entries(folders).reduce<SuggestedDashboardsFoldersMap>((acc, [folderId, folder]) => {
+  return Object.entries(folders).reduce<InternalSuggestedDashboardsFoldersMap>((acc, [folderId, folder]) => {
     // If folder matches the query, we show everything inside
     if (folder.title.toLowerCase().includes(query)) {
       acc[folderId] = {

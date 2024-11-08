@@ -1,6 +1,8 @@
-import { scopesSelectorScene } from './instance';
+import { getScopesSelector } from '../services';
 
 export function ScopesSelector() {
+  const scopesSelectorScene = getScopesSelector();
+
   if (!scopesSelectorScene) {
     return null;
   }

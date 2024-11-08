@@ -2,15 +2,13 @@ import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, InternalScopeNodesMap, InternalSelectedScope } from '@grafana/data';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { NodesMap, SelectedScope } from './types';
-
 export interface ScopesInputProps {
-  nodes: NodesMap;
-  scopes: SelectedScope[];
+  nodes: InternalScopeNodesMap;
+  scopes: InternalSelectedScope[];
   isDisabled: boolean;
   isLoading: boolean;
   onInputClick: () => void;

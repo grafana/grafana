@@ -3,7 +3,7 @@ import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
-import { config, isFetchError } from '@grafana/runtime';
+import { config, getSelectedScopes, isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -27,7 +27,6 @@ import {
 } from '@grafana/scenes';
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { getSelectedScopes } from 'app/features/scopes';
 
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
