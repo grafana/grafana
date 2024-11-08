@@ -96,7 +96,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeInf.Id,
 		AuthorizationModelId: storeInf.AuthorizationModelId,
-		Type:                 "folder2",
+		Type:                 common.TypeFolder,
 		Relation:             common.FolderResourceRelation(relation),
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
@@ -113,7 +113,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	direct, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              storeInf.Id,
 		AuthorizationModelId: storeInf.AuthorizationModelId,
-		Type:                 "resource",
+		Type:                 common.TypeResource,
 		Relation:             relation,
 		User:                 r.GetSubject(),
 		Context: &structpb.Struct{
@@ -127,7 +127,7 @@ func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*a
 	}
 
 	return &authzextv1.ListResponse{
-		Folders: folderObject(r.GetGroup(), r.GetResource(), folders.GetObjects()),
+		Folders: folderObject(folders.GetObjects()),
 		Items:   directObjects(r.GetGroup(), r.GetResource(), direct.GetObjects()),
 	}, nil
 }
@@ -148,7 +148,7 @@ func directObjects(group, resource string, objects []string) []string {
 	return objects
 }
 
-func folderObject(group, resource string, objects []string) []string {
+func folderObject(objects []string) []string {
 	for i := range objects {
 		objects[i] = strings.TrimPrefix(objects[i], folderTypePrefix)
 	}

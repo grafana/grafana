@@ -17,7 +17,7 @@ import (
 const (
 	resourceType     = "resource"
 	namespaceType    = "namespace"
-	folderTypePrefix = "folder2:"
+	folderTypePrefix = "folder:"
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)

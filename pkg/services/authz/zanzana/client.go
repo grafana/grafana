@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
@@ -15,9 +14,6 @@ import (
 type Client interface {
 	authz.AccessClient
 	List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error)
-
-	CheckObject(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
-	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 	Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
 	Write(ctx context.Context, req *authzextv1.WriteRequest) error
 }

@@ -108,6 +108,10 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 	return buffer.String()
 }
 
+func (s *cdkBackend) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	// Scope the lock
 	{
@@ -134,7 +138,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *BackendReadResponse {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -162,7 +166,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
-			return &BackendReadResponse{
+			return &ReadResponse{
 				Error: &ErrorResult{
 					Code:    http.StatusGatewayTimeout,
 					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
@@ -191,11 +195,9 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *Backen
 		raw = nil
 	}
 	if raw == nil {
-		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
-	return &BackendReadResponse{
-		Key:             req.Key,
-		Folder:          "", // TODO: implement this
+	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,
 	}
@@ -318,10 +320,6 @@ func (c *cdkListIterator) Name() string {
 // Namespace implements ListIterator.
 func (c *cdkListIterator) Namespace() string {
 	return c.currentKey // TODO (parse namespace from key)
-}
-
-func (c *cdkListIterator) Folder() string {
-	return "" // TODO: implement this
 }
 
 var _ ListIterator = (*cdkListIterator)(nil)

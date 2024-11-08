@@ -3,11 +3,13 @@ import { RuleTester } from 'eslint';
 import noBorderRadiusLiteral from '../rules/no-border-radius-literal.cjs';
 
 RuleTester.setDefaultConfig({
-  parserOptions: {
+  languageOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
-    ecmaFeatures: {
-      jsx: true,
+    parserOptions: {
+      ecmaFeatures: {
+        jsx: true,
+      },
     },
   },
 });
