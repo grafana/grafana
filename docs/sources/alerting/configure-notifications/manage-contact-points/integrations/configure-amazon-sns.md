@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Amazon SNS
 title: Configure Amazon SNS for Alerting
-weight: 0
+weight: 100
 ---
 
 # Configure Amazon SNS for Alerting

@@ -28,7 +28,11 @@ func TestMain(m *testing.M) {
 }
 
 // Service Account should not create an org on its own
-func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
+func TestIntegrationStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	_, store := setupTestDatabase(t)
 	serviceAccountName := "new Service Account"
 	t.Run("create service account", func(t *testing.T) {
@@ -67,7 +71,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -98,7 +105,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -133,7 +143,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, serviceAccountName, saDTO.Name)
 		assert.Equal(t, 0, int(saDTO.Tokens))
 
-		retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+		retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+			OrgID: serviceAccountOrgId,
+			ID:    saDTO.Id,
+		})
 		require.NoError(t, err)
 		assert.Equal(t, serviceAccountName, retrieved.Name)
 		assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -156,7 +169,11 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	})
 }
 
-func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
+func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	_, store := setupTestDatabase(t)
 	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
 	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
@@ -176,7 +193,10 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, serviceAccountName, saDTO.Name)
 	assert.Equal(t, 0, int(saDTO.Tokens))
 
-	retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+	retrieved, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+		OrgID: serviceAccountOrgId,
+		ID:    saDTO.Id,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, serviceAccountName, retrieved.Name)
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
@@ -188,7 +208,10 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, saDTO.Role, string(org.RoleNone))
 }
 
-func TestStore_DeleteServiceAccount(t *testing.T) {
+func TestIntegrationStore_DeleteServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc        string
 		user        tests.TestUser
@@ -237,7 +260,10 @@ func setupTestDatabase(t *testing.T) (db.DB, *ServiceAccountsStoreImpl) {
 	return db, ProvideServiceAccountsStore(cfg, db, apiKeyService, kvStore, userSvc, orgService)
 }
 
-func TestStore_RetrieveServiceAccount(t *testing.T) {
+func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc        string
 		user        tests.TestUser
@@ -259,7 +285,10 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), user.OrgID, user.ID)
+			dto, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+				OrgID: user.OrgID,
+				ID:    user.ID,
+			})
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -271,7 +300,10 @@ func TestStore_RetrieveServiceAccount(t *testing.T) {
 	}
 }
 
-func TestStore_MigrateApiKeys(t *testing.T) {
+func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc        string
 		key         tests.TestApiKey
@@ -331,7 +363,10 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 	}
 }
 
-func TestStore_MigrateAllApiKeys(t *testing.T) {
+func TestIntegrationStore_MigrateAllApiKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
 	cases := []struct {
 		desc                    string
 		keys                    []tests.TestApiKey
@@ -448,7 +483,11 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 		})
 	}
 }
-func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
+func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	initUsers := []tests.TestUser{
 		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-1-satest-1", IsServiceAccount: true},
 		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
@@ -575,7 +614,11 @@ func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
 	}
 }
 
-func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+func TestIntegrationServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping test in short mode")
+	}
+
 	ctx := context.Background()
 
 	initUsers := []tests.TestUser{
@@ -588,9 +631,9 @@ func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
 	orgID := tests.SetupUsersServiceAccounts(t, db, store.cfg, initUsers)
 
 	fetchStates := func() map[int64]bool {
-		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)
+		sa1, err := store.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: 1})
 		require.NoError(t, err)
-		sa2, err := store.RetrieveServiceAccount(ctx, orgID, 2)
+		sa2, err := store.RetrieveServiceAccount(ctx, &serviceaccounts.GetServiceAccountQuery{OrgID: orgID, ID: 2})
 		require.NoError(t, err)
 		user, err := store.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: 3})
 		require.NoError(t, err)

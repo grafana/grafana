@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { createRef } from 'react';
+import { useRef } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -42,16 +42,19 @@ export const ResourcePicker = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const pickerTriggerRef = createRef<HTMLDivElement>();
-  const popoverElement = (
-    <ResourcePickerPopover
-      onChange={onChange}
-      value={value}
-      mediaType={mediaType}
-      folderName={folderName}
-      maxFiles={maxFiles}
-    />
-  );
+  const pickerTriggerRef = useRef<HTMLDivElement>(null);
+  const popoverElement = (props: { hidePopper?: () => void }) => {
+    return (
+      <ResourcePickerPopover
+        onChange={onChange}
+        value={value}
+        mediaType={mediaType}
+        folderName={folderName}
+        maxFiles={maxFiles}
+        hidePopper={props.hidePopper}
+      />
+    );
+  };
 
   let sanitizedSrc = src;
   if (!sanitizedSrc && value) {
@@ -101,6 +104,7 @@ export const ResourcePicker = (props: Props) => {
                 onKeyDown={(event) => {
                   closePopover(event, hidePopper);
                 }}
+                hidePopper={hidePopper}
               />
             )}
 
@@ -138,16 +142,16 @@ function getDisplayName(src?: string, name?: string): string | undefined {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  pointer: css`
-    cursor: pointer;
-    input[readonly] {
-      cursor: pointer;
-    }
-  `,
-  icon: css`
-    vertical-align: middle;
-    display: inline-block;
-    fill: currentColor;
-    width: 25px;
-  `,
+  pointer: css({
+    cursor: 'pointer',
+    'input[readonly]': {
+      cursor: 'pointer',
+    },
+  }),
+  icon: css({
+    verticalAlign: 'middle',
+    display: 'inline-block',
+    fill: 'currentColor',
+    width: '25px',
+  }),
 });

@@ -1,17 +1,23 @@
 import { css } from '@emotion/css';
 import { ComponentType } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
-import { HistoryWrapper, locationService, LocationServiceProvider, useChromeHeaderHeight } from '@grafana/runtime';
+import {
+  HistoryWrapper,
+  locationService,
+  LocationServiceProvider,
+  useChromeHeaderHeight,
+  useSidecar_EXPERIMENTAL,
+} from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
 import { AngularRoot } from '../angular/AngularRoot';
 import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
-import { useSidecar } from '../core/context/SidecarContext';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
 import AppRootPage from '../features/plugins/components/AppRootPage';
 
@@ -58,7 +64,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar();
+  const { activePluginId, closeApp } = useSidecar_EXPERIMENTAL();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
@@ -102,7 +108,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
               <LocationServiceProvider service={memoryLocationService}>
                 <CompatRouter>
                   <GlobalStyles />
-                  <div className={styles.secondAppWrapper}>
+                  <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton
                         size={'lg'}
@@ -112,7 +118,9 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
                         onClick={() => closeApp(activePluginId)}
                       />
                     </div>
-                    <AppRootPage pluginId={activePluginId} />
+                    <div className={styles.secondAppWrapper}>
+                      <AppRootPage pluginId={activePluginId} />
+                    </div>
                   </div>
                 </CompatRouter>
               </LocationServiceProvider>
@@ -126,10 +134,11 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
   return {
-    secondAppWrapper: css({
-      label: 'secondAppWrapper',
+    secondAppChrome: css({
+      label: 'secondAppChrome',
       display: 'flex',
       height: '100%',
+      width: '100%',
       paddingTop: headerHeight || 0,
       flexGrow: 1,
       flexDirection: 'column',
@@ -139,6 +148,12 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
       label: 'secondAppToolbar',
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+
+    secondAppWrapper: css({
+      label: 'secondAppWrapper',
+      overflow: 'auto',
+      flex: '1',
     }),
 
     // This is basically the same as grafana-app class. This means the 2 additional wrapper divs that are in between

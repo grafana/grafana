@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -130,4 +130,17 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
     }
   }
   return levelLikeLabel;
+}
+
+export function isRetriableError(errorResponse: DataQueryResponse) {
+  const message = errorResponse.errors
+    ? (errorResponse.errors[0].message ?? '').toLowerCase()
+    : (errorResponse.error?.message ?? '');
+  if (message.includes('timeout')) {
+    return true;
+  } else if (message.includes('parse error')) {
+    // If the error is a parse error, we want to signal to stop querying.
+    throw new Error(message);
+  }
+  return false;
 }
