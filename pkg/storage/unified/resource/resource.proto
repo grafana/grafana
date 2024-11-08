@@ -338,6 +338,8 @@ message SearchRequest {
   repeated GroupBy groupBy = 8;
   // sorting
   repeated string sortBy = 9;
+  // filters
+  repeated string filters = 10;
 }
 
 message GroupBy {

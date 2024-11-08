@@ -151,13 +151,11 @@ func (s *StandardSearchService) DoQuery(ctx context.Context, user *backend.User,
 		return &backend.DataResponse{Error: err}
 	}
 
-	query := s.doQuery(ctx, signedInUser, orgID, q)
-	return query
+	return s.doQuery(ctx, signedInUser, orgID, q)
 }
 
 func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q Query) *backend.DataResponse {
-	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
-	return response
+	return s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
 }
 
 func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string, orgID int64) *backend.DataResponse {
@@ -169,48 +167,65 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to search resources", "error", err)
-		response.Error = err
-		return response
+		return s.error(err, "Failed to search resources", response)
 	}
 
+	frame, err := loadSearchResponse(res, s)
+	if err != nil {
+		return s.error(err, "Failed to load search response", response)
+	}
+
+	response.Frames = append(response.Frames, frame)
+
+	if len(res.Groups) > 0 {
+		tagsFrame := loadTagsResponse(res)
+		response.Frames = append(response.Frames, tagsFrame)
+	}
+
+	return response
+}
+
+func (s *StandardSearchService) error(err error, message string, response *backend.DataResponse) *backend.DataResponse {
+	s.logger.Error(message, "error", err)
+	response.Error = err
+	return response
+}
+
+func loadSearchResponse(res *resource.SearchResponse, s *StandardSearchService) (*data.Frame, error) {
 	frame := newSearchFrame(res)
 	for _, r := range res.Items {
 		doc, err := getDoc(r.Value)
 		if err != nil {
 			s.logger.Error("Failed to parse doc", "error", err)
-			response.Error = err
-			return response
+			return nil, err
 		}
 		kind := strings.ToLower(doc.Kind)
 		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
-		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, nil, doc.FolderID)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, doc.Spec.Tags, doc.FolderID)
 	}
-	response.Frames = append(response.Frames, frame)
-	return response
+	return frame, nil
+}
+
+func loadTagsResponse(res *resource.SearchResponse) *data.Frame {
+	tagsFrame := newTagsFrame()
+	for _, grp := range res.Groups {
+		tagsFrame.AppendRow(grp.Name, grp.Count)
+	}
+	return tagsFrame
 }
 
 func newSearchFrame(res *resource.SearchResponse) *data.Frame {
-	fScore := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
-	fUID := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fKind := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fURL := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fLocation := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-	fTags := data.NewFieldFromFieldType(data.FieldTypeNullableJSON, 0)
-
-	fScore.Name = "score"
-	fUID.Name = "uid"
-	fKind.Name = "kind"
-	fName.Name = "name"
-	fLocation.Name = "location"
-	fURL.Name = "url"
+	fUID := newField("uid", data.FieldTypeString)
+	fKind := newField("kind", data.FieldTypeString)
+	fName := newField("name", data.FieldTypeString)
+	fLocation := newField("location", data.FieldTypeString)
+	fTags := newField("tags", data.FieldTypeNullableJSON)
+	fURL := newField("url", data.FieldTypeString)
 	fURL.Config = &data.FieldConfig{
 		Links: []data.DataLink{
 			{Title: "link", URL: "${__value.text}"},
 		},
 	}
-	fTags.Name = "tags"
 
 	frame := data.NewFrame("Query results", fKind, fUID, fName, fURL, fTags, fLocation)
 
@@ -221,6 +236,12 @@ func newSearchFrame(res *resource.SearchResponse) *data.Frame {
 		},
 	})
 	return frame
+}
+
+func newTagsFrame() *data.Frame {
+	fTag := newField("tag", data.FieldTypeString)
+	fCount := newField("count", data.FieldTypeInt64)
+	return data.NewFrame("tags", fTag, fCount)
 }
 
 func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
@@ -248,7 +269,8 @@ type DashboardListDoc struct {
 	UpdatedBy string    `json:"UpdatedBy"`
 	FolderID  string    `json:"FolderId"`
 	Spec      struct {
-		Title string `json:"title"`
+		Title string           `json:"title"`
+		Tags  *json.RawMessage `json:"tags"`
 	} `json:"Spec"`
 }
 
@@ -262,13 +284,20 @@ func getDoc(data []byte) (*DashboardListDoc, error) {
 }
 
 func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	groupBy := make([]*resource.GroupBy, len(qry.Facet))
+	for _, g := range qry.Facet {
+		groupBy = append(groupBy, &resource.GroupBy{Name: g.Field, Limit: int64(g.Limit)})
+	}
+
 	return &resource.SearchRequest{
-		Tenant: tenant,
-		Query:  qry.Query,
-		Limit:  int64(qry.Limit),
-		Offset: int64(qry.From),
-		Kind:   qry.Kind,
-		SortBy: []string{sortField(qry.Sort)},
+		Tenant:  tenant,
+		Query:   qry.Query,
+		Limit:   int64(qry.Limit),
+		Offset:  int64(qry.From),
+		Kind:    qry.Kind,
+		SortBy:  []string{sortField(qry.Sort)},
+		GroupBy: groupBy,
+		Filters: qry.Tags,
 	}
 }
 
@@ -290,4 +319,10 @@ func sortField(sort string) string {
 // mapping of dashboard list fields to search doc fields
 var dashboardListFieldMapping = map[string]string{
 	"name": "title",
+}
+
+func newField(name string, typ data.FieldType) *data.Field {
+	f := data.NewFieldFromFieldType(typ, 0)
+	f.Name = name
+	return f
 }
