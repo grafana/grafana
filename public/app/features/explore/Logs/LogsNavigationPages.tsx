@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { dateTimeFormat, systemDateFormats, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { CustomScrollbar, Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
+import { Spinner, useTheme2, clearButtonStyles } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { LogsPage } from './LogsNavigation';
 
@@ -36,7 +37,7 @@ export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, 
   const styles = getStyles(theme, loading);
 
   return (
-    <CustomScrollbar autoHide>
+    <ScrollContainer>
       <div className={styles.pagesWrapper} data-testid="logsNavigationPages">
         <div className={styles.pagesContainer}>
           {pages.map((page: LogsPage, index: number) => (
@@ -58,7 +59,7 @@ export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, 
           ))}
         </div>
       </div>
-    </CustomScrollbar>
+    </ScrollContainer>
   );
 }
 
@@ -69,7 +70,6 @@ const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
       paddingLeft: theme.spacing(0.5),
       display: 'flex',
       flexDirection: 'column',
-      overflowY: 'scroll',
       '&::after': {
         content: "''",
         display: 'block',
