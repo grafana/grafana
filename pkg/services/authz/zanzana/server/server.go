@@ -1,8 +1,8 @@
 package server
 
 import (
-	"context"
 	"errors"
+	"sync"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -34,9 +34,10 @@ type Server struct {
 
 	openfga openfgav1.OpenFGAServiceServer
 
-	logger   log.Logger
-	modules  []transformer.ModuleFile
-	storeMap map[string]storeInfo
+	logger    log.Logger
+	modules   []transformer.ModuleFile
+	storeMap  map[string]storeInfo
+	storeLock *sync.Mutex
 }
 
 type storeInfo struct {
@@ -68,7 +69,11 @@ func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*
 }
 
 func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
-	s := &Server{openfga: openfga}
+	s := &Server{
+		openfga:   openfga,
+		storeLock: &sync.Mutex{},
+		storeMap:  make(map[string]storeInfo),
+	}
 
 	for _, o := range opts {
 		o(s)
@@ -76,12 +81,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 
 	if s.logger == nil {
 		s.logger = log.New("authz-server")
-	}
-
-	ctx := context.Background()
-	err := s.initStores(ctx)
-	if err != nil {
-		return nil, err
 	}
 
 	return s, nil
