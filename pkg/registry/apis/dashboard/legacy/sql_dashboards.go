@@ -131,6 +131,10 @@ type rowsWrapper struct {
 	err error
 }
 
+func (a *dashboardSqlAccess) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (r *rowsWrapper) Close() error {
 	if r.rows == nil {
 		return nil
@@ -194,10 +198,6 @@ func (r *rowsWrapper) Namespace() string {
 // ResourceVersion implements resource.ListIterator.
 func (r *rowsWrapper) ResourceVersion() int64 {
 	return r.row.RV
-}
-
-func (r *rowsWrapper) Folder() string {
-	return r.row.FolderUID
 }
 
 // Value implements resource.ListIterator.

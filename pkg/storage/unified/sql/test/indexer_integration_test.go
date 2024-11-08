@@ -77,7 +77,7 @@ func TestIntegrationIndexerSearch(t *testing.T) {
 	addResource(t, ctx, backend, "playlists", playlist1)
 	addResource(t, ctx, backend, "playlists", playlist2)
 
-	// initialze and build the search index
+	// initialize and build the search index
 	indexer, ok := server.(resource.ResourceIndexer)
 	if !ok {
 		t.Fatal("server does not implement ResourceIndexer")

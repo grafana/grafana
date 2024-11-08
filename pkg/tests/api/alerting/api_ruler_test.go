@@ -895,7 +895,28 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
 		require.Len(t, updatedRuleGroup.Rules, 1)
-		require.False(t, false, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		require.True(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+	})
+
+	t.Run("disable simplified query editor in editor settings", func(t *testing.T) {
+		metadata := &apimodels.AlertRuleMetadata{
+			EditorSettings: apimodels.AlertRuleEditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		createdRuleGroup := createAlertInGrafana(metadata)
+
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+
+		// disabling the editor
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = false
+
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
+		require.Len(t, updatedRuleGroup.Rules, 1)
+		require.False(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 	})
 
 	t.Run("post alert without metadata", func(t *testing.T) {
@@ -903,7 +924,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 		createdRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
 		require.Len(t, createdRuleGroup.Rules, 1)
-		require.False(t, false, createdRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		require.False(t, createdRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 	})
 }
 

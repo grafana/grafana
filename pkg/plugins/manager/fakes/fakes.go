@@ -127,6 +127,10 @@ func (pc *FakePluginClient) IsDecommissioned() bool {
 	return pc.decommissioned
 }
 
+func (pc *FakePluginClient) Target() backendplugin.Target {
+	return "test-target"
+}
+
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if pc.CollectMetricsHandlerFunc != nil {
 		return pc.CollectMetricsHandlerFunc(ctx, req)
@@ -645,4 +649,8 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
 }

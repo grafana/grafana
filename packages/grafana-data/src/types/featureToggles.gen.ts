@@ -199,6 +199,7 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   zanzana?: boolean;
   reloadDashboardsOnParamsChange?: boolean;
+  enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -226,8 +227,11 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
+  zipkinBackendMigration?: boolean;
+  enableSCIM?: boolean;
 }
