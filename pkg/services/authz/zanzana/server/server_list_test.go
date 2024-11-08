@@ -14,12 +14,11 @@ import (
 func testList(t *testing.T, server *Server) {
 	newList := func(subject, group, resource string) *authzextv1.ListRequest {
 		return &authzextv1.ListRequest{
-			// FIXME: namespace should map to store
-			// Namespace: storeID,
-			Verb:     utils.VerbList,
-			Subject:  subject,
-			Group:    group,
-			Resource: resource,
+			Namespace: "default",
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
 		}
 	}
 

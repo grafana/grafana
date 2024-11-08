@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
@@ -30,10 +29,10 @@ func (nc *NoopClient) List(ctx context.Context, id claims.AuthInfo, req authz.Li
 	return nil, nil
 }
 
-func (nc NoopClient) Read(ctx context.Context, in *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
 
-func (nc NoopClient) Write(ctx context.Context, in *openfgav1.WriteRequest) error {
+func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
 }
