@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
+import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -85,28 +85,26 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
         <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={(e) => e.preventDefault()}>
           <div>
-            <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-              <Stack direction="column" gap={3}>
-                {/* Step 1 */}
-                <AlertRuleNameAndMetric />
-                {/* Step 2 */}
-                <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
-                {/* Step 3-4-5 */}
+            <Stack direction="column" gap={3}>
+              {/* Step 1 */}
+              <AlertRuleNameAndMetric />
+              {/* Step 2 */}
+              <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} />
+              {/* Step 3-4-5 */}
 
-                <GrafanaEvaluationBehavior
-                  evaluateEvery={evaluateEvery}
-                  setEvaluateEvery={setEvaluateEvery}
-                  existing={Boolean(existing)}
-                  enableProvisionedGroups={true}
-                />
+              <GrafanaEvaluationBehavior
+                evaluateEvery={evaluateEvery}
+                setEvaluateEvery={setEvaluateEvery}
+                existing={Boolean(existing)}
+                enableProvisionedGroups={true}
+              />
 
-                {/* Step 4 & 5 */}
-                {/* Notifications step*/}
-                <NotificationsStep alertUid={alertUid} />
-                {/* Annotations only for cloud and Grafana */}
-                <AnnotationsStep />
-              </Stack>
-            </CustomScrollbar>
+              {/* Step 4 & 5 */}
+              {/* Notifications step*/}
+              <NotificationsStep alertUid={alertUid} />
+              {/* Annotations only for cloud and Grafana */}
+              <AnnotationsStep />
+            </Stack>
           </div>
         </form>
         {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}

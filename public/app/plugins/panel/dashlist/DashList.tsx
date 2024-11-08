@@ -11,7 +11,8 @@ import {
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
+import { useStyles2, IconButton } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { updateNavIndex } from 'app/core/actions';
 import { getConfig } from 'app/core/config';
 import { appEvents } from 'app/core/core';
@@ -205,7 +206,7 @@ export function DashList(props: PanelProps<Options>) {
   );
 
   return (
-    <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
+    <ScrollContainer minHeight="100%">
       {dashboardGroups.map(
         ({ show, header, dashboards }, i) =>
           show && (
@@ -215,7 +216,7 @@ export function DashList(props: PanelProps<Options>) {
             </div>
           )
       )}
-    </CustomScrollbar>
+    </ScrollContainer>
   );
 }
 
