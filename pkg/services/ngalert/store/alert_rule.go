@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -181,7 +182,6 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 // InsertAlertRules is a handler for creating/updating alert rules.
 // Returns the UID and ID of rules that were created in the same order as the input rules.
 func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRule) ([]ngmodels.AlertRuleKeyWithId, error) {
-	logger := st.Logger.New()
 	ids := make([]ngmodels.AlertRuleKeyWithId, 0, len(rules))
 	keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 	return ids, st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -217,17 +217,8 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						// return the uid of conflicting alert_rule
-						// see: https://github.com/grafana/grafana/issues/89755
-						var fetched_uid string
-						ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rules[i].OrgID, rules[i].Title, rules[i].NamespaceUID).Get(&fetched_uid)
-						if uid_fetch_err != nil {
-							logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
-						}
-						if ok {
-							rules[i].UID = fetched_uid
-						}
-						return ruleConstraintViolationToErr(rules[i], err)
+						err = fmt.Errorf("failed to create rule [%s] %s: %w", rules[i].UID, rules[i].Title, err)
+						return ruleConstraintViolationToErr(sess, rules[i], err, st.Logger)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -284,7 +275,8 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ruleConstraintViolationToErr(r.New, err)
+						err = fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
+						return ruleConstraintViolationToErr(sess, r.New, err, st.Logger)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -1044,9 +1036,19 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 	return result, nil, st.UpdateAlertRules(ctx, updates)
 }
 
-func ruleConstraintViolationToErr(rule ngmodels.AlertRule, err error) error {
+func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err error, logger log.Logger) error {
 	msg := err.Error()
 	if strings.Contains(msg, "UQE_alert_rule_org_id_namespace_uid_title") || strings.Contains(msg, "alert_rule.org_id, alert_rule.namespace_uid, alert_rule.title") {
+		// return the uid of conflicting alert_rule
+		// see: https://github.com/grafana/grafana/issues/89755
+		var fetched_uid string
+		ok, uid_fetch_err := sess.Table("alert_rule").Cols("uid").Where("org_id = ? AND title = ? AND namespace_uid = ?", rule.OrgID, rule.Title, rule.NamespaceUID).Get(&fetched_uid)
+		if uid_fetch_err != nil {
+			logger.Error("Error fetching uid from alert_rule table", "reason", uid_fetch_err.Error())
+		}
+		if ok {
+			rule.UID = fetched_uid
+		}
 		return ngmodels.ErrAlertRuleConflict(rule, ngmodels.ErrAlertRuleUniqueConstraintViolation)
 	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
 		return ngmodels.ErrAlertRuleConflict(rule, errors.New("rule UID under the same organisation should be unique"))
