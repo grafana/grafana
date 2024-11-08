@@ -31,10 +31,9 @@ func New(url string, hc *http.Client, logger log.Logger) (ZipkinClient, error) {
 // https://zipkin.io/zipkin-api/#/default/get_services
 func (z *ZipkinClient) Services() ([]string, error) {
 	services := []string{}
-
 	u, err := url.JoinPath(z.url, "/api/v2/services")
 	if err != nil {
-		return services, backend.DownstreamError(fmt.Errorf("failed to compose url: %w", err))
+		return services, backend.DownstreamError(fmt.Errorf("failed to join url: %w", err))
 	}
 	res, err := z.httpClient.Get(u)
 	if err != nil {
@@ -129,14 +128,12 @@ func createZipkinURL(baseURL string, path string, params map[string]string) (str
 	if err != nil {
 		return "", err
 	}
-
-	// Add the path and query parameters
+	// Add the path
 	urlPath, err := url.JoinPath(finalUrl.Path, path)
 	if err != nil {
 		return "", err
 	}
 	finalUrl.Path = urlPath
-
 	// If there are no query parameters, return the composed URL as a string
 	if len(params) == 0 {
 		return finalUrl.String(), nil

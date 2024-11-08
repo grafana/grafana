@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 func (s *Service) registerResourceRoutes() *http.ServeMux {
@@ -22,7 +23,7 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 	return func(rw http.ResponseWriter, r *http.Request) {
 		client, err := s.getDSInfo(r.Context(), backend.PluginConfigFromContext(r.Context()))
 		if err != nil {
-			writeResponse(nil, errors.New("error getting data source information from context"), rw, http.StatusInternalServerError)
+			writeResponse(nil, errors.New("error getting data source information from context"), rw, client.ZipkinClient.logger)
 			return
 		}
 		h := getHandler(client)
@@ -33,7 +34,7 @@ func (s *Service) withDatasourceHandlerFunc(getHandler func(d *datasourceInfo) h
 func getServicesHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		services, err := ds.ZipkinClient.Services()
-		writeResponse(services, err, rw, http.StatusOK)
+		writeResponse(services, err, rw, ds.ZipkinClient.logger)
 	}
 }
 
@@ -41,7 +42,7 @@ func getSpansHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		serviceName := strings.TrimSpace(r.URL.Query().Get("serviceName"))
 		spans, err := ds.ZipkinClient.Spans(serviceName)
-		writeResponse(spans, err, rw, http.StatusOK)
+		writeResponse(spans, err, rw, ds.ZipkinClient.logger)
 	}
 }
 
@@ -50,7 +51,7 @@ func getTracesHandler(ds *datasourceInfo) http.HandlerFunc {
 		serviceName := strings.TrimSpace(r.URL.Query().Get("serviceName"))
 		spanName := strings.TrimSpace(r.URL.Query().Get("spanName"))
 		traces, err := ds.ZipkinClient.Traces(serviceName, spanName)
-		writeResponse(traces, err, rw, http.StatusOK)
+		writeResponse(traces, err, rw, ds.ZipkinClient.logger)
 	}
 }
 
@@ -58,14 +59,15 @@ func getTraceHandler(ds *datasourceInfo) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		traceId := strings.TrimSpace(r.PathValue("traceId"))
 		trace, err := ds.ZipkinClient.Trace(traceId)
-		writeResponse(trace, err, rw, http.StatusOK)
+		writeResponse(trace, err, rw, ds.ZipkinClient.logger)
 	}
 }
 
-func writeResponse(res interface{}, err error, rw http.ResponseWriter, statusCode int) {
-	rw.WriteHeader(statusCode)
+func writeResponse(res interface{}, err error, rw http.ResponseWriter, logger log.Logger) {
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		// This is used for resource calls, we don't need to add actual error message, but we should log it
+		logger.Warn("An error occurred while doing a resource call", "error", err)
+		http.Error(rw, "An error occurred within the plugin", http.StatusInternalServerError)
 		return
 	}
 	// Response should not be string, but just in case, handle it
@@ -76,7 +78,9 @@ func writeResponse(res interface{}, err error, rw http.ResponseWriter, statusCod
 	}
 	b, err := json.Marshal(res)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		// This is used for resource calls, we don't need to add actual error message, but we should log it
+		logger.Warn("An error occurred while processing response from resource call", "error", err)
+		http.Error(rw, "An error occurred within the plugin", http.StatusInternalServerError)
 		return
 	}
 	rw.Header().Set("Content-Type", "application/json")
