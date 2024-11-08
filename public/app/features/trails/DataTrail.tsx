@@ -50,6 +50,7 @@ import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import { sortResources, getOtelJoinQuery, getOtelResourcesObject, updateOtelJoinWithGroupLeft } from './otel/util';
+import { getOtelExperienceToggleState } from './services/store';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -110,7 +111,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
       createdAt: state.createdAt ?? new Date().getTime(),
-      // default to false but update this to true on checkOtelSandardization()
+      // default to false but update this to true on updateOtelData()
       // or true if the user either turned on the experience
       useOtelExperience: state.useOtelExperience ?? false,
       // preserve the otel join query
@@ -396,18 +397,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     }
   }
+
   /**
    *  This function is used to update state and otel variables.
    *
    *  1. Set the otelResources adhoc tagKey and tagValues filter functions
-      2. Get the otel join query for state and variable
-      3. Update state with the following
-        - otel join query
-        - otelTargets used to filter metrics
-      For initialization we also update the following
-        - has otel resources flag
-        - isStandardOtel flag (for enabliing the otel experience toggle)
-        - and useOtelExperience
+   *  2. Get the otel join query for state and variable
+   *  3. Update state with the following
+   *    - otel join query
+   *    - otelTargets used to filter metrics
+   *  For initialization we also update the following
+   *    - has otel resources flag
+   *    - isStandardOtel flag (for enabliing the otel experience toggle)
+   *    - and useOtelExperience
    *
    * This function is called on start and when variables change.
    * On start will provide the deploymentEnvironments and hasOtelResources parameters.
@@ -526,12 +528,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     // we pass in deploymentEnvironments and hasOtelResources on start
     if (hasOtelResources && deploymentEnvironments) {
+      const isEnabledInLocalStorage = getOtelExperienceToggleState();
       this.setState({
         otelTargets,
         otelJoinQuery,
         hasOtelResources,
         isStandardOtel: deploymentEnvironments.length > 0,
-        useOtelExperience: true,
+        useOtelExperience: isEnabledInLocalStorage,
       });
     } else {
       // we are updating on variable changes
