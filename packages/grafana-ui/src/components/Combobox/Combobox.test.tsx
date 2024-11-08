@@ -101,11 +101,11 @@ describe('Combobox', () => {
       await userEvent.type(input, 'custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Custom value: custom value')).toBeInTheDocument();
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
-    it('should proivde custom string when all options are numbers', async () => {
+    it('should provide custom string when all options are numbers', async () => {
       const options = [
         { label: '1', value: 1 },
         { label: '2', value: 2 },
@@ -120,12 +120,13 @@ describe('Combobox', () => {
       await userEvent.type(input, 'custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Custom value: custom value')).toBeInTheDocument();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'string').toBeTruthy();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'number').toBeFalsy();
 
       await userEvent.click(input);
       await userEvent.keyboard('{Enter}'); // Select 1 as the first option
+      console.log(onChangeHandler.mock.calls[1][0].value);
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
     });
@@ -270,7 +271,7 @@ describe('Combobox', () => {
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
-      const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
+      const customItem = screen.queryByRole('option', { name: 'Custom value: fir' });
 
       expect(customItem).toBeInTheDocument();
     });
