@@ -43,6 +43,13 @@ func (s *Server) getStoreInfo(namespace string) (*storeInfo, error) {
 }
 
 func (s *Server) getStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
+	if len(s.storeMap) == 0 {
+		err := s.initStores(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	storeInf, err := s.getStoreInfo(namespace)
 	if err != nil {
 		return nil, err
@@ -62,6 +69,37 @@ func (s *Server) getStore(ctx context.Context, namespace string) (*openfgav1.Sto
 	}
 
 	return store, nil
+}
+
+func (s *Server) initStores(ctx context.Context) error {
+	var continuationToken string
+
+	for {
+		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
+			PageSize:          &wrapperspb.Int32Value{Value: 100},
+			ContinuationToken: continuationToken,
+		})
+
+		if err != nil {
+			return fmt.Errorf("failed to load zanzana stores: %w", err)
+		}
+
+		for _, store := range res.GetStores() {
+			name := store.GetName()
+			s.storeMap[name] = storeInfo{
+				Id: store.GetId(),
+			}
+		}
+
+		// we have no more stores to check
+		if res.GetContinuationToken() == "" {
+			break
+		}
+
+		continuationToken = res.GetContinuationToken()
+	}
+
+	return nil
 }
 
 func (s *Server) loadModel(ctx context.Context, namespace string, modules []transformer.ModuleFile) (string, error) {
