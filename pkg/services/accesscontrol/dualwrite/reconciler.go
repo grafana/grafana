@@ -68,23 +68,10 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 	}
 }
 
-// Sync runs all collectors and tries to write all collected tuples.
-// It will skip over any "sync group" that has already been written.
-func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
-	r.log.Info("Starting zanzana permissions sync")
-	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
-	defer span.End()
-
-	r.reconcile(ctx)
-
-	return nil
-}
-
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
-	// FIXME: try to reconcile at start whenever we have moved all syncs to reconcilers
-	// r.reconcile(ctx)
+	r.reconcile(ctx)
 
 	// FIXME:
 	// 1. We should be a bit graceful about reconciliations so we are not hammering dbs
