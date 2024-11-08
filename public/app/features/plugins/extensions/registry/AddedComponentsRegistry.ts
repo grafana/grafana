@@ -2,10 +2,13 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
+import * as errors from '../errors';
 import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
 import { isAddedComponentMetaInfoMissing } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+
+const logPrefix = 'Could not register component extension. Reason:';
 
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
@@ -41,12 +44,12 @@ export class AddedComponentsRegistry extends Registry<
       });
 
       if (!config.title) {
-        configLog.error('Could not register component extension. Reason: Title is missing.');
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
       if (!config.description) {
-        configLog.error('Could not register component extension. Reason: Description is missing.');
+        configLog.error(`${logPrefix} ${errors.DESCRIPTION_MISSING}`);
         continue;
       }
 

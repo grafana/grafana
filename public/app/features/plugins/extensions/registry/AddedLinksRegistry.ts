@@ -3,10 +3,13 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
+import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isAddedLinkMetaInfoMissing, isConfigureFnValid, isLinkPathValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+
+const logPrefix = 'Could not register link extension. Reason:';
 
 export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
@@ -47,31 +50,27 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
       });
 
       if (!title) {
-        configLog.error('Could not register link extension. Reason: Title is missing.');
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
       if (!description) {
-        configLog.error('Could not register link extension. Reason: Description is missing.');
+        configLog.error(`${logPrefix} ${errors.DESCRIPTION_MISSING}`);
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        configLog.error(
-          'Could not register link extension. Reason: Invalid "configure" function. It should be a function.'
-        );
+        configLog.error(`${logPrefix} ${errors.INVALID_CONFIGURE_FUNCTION}`);
         continue;
       }
 
       if (!path && !onClick) {
-        configLog.error(`Could not register link extension. Reason: Either "path" or "onClick" is required.`);
+        configLog.error(`${logPrefix} ${errors.INVALID_PATH_OR_ON_CLICK}`);
         continue;
       }
 
       if (path && !isLinkPathValid(pluginId, path)) {
-        configLog.error(
-          `Could not register link extension. Reason: The "path" is required and should start with "/a/${pluginId}/".`
-        );
+        configLog.error(`${logPrefix} ${errors.INVALID_PATH}`);
         continue;
       }
 

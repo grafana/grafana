@@ -307,7 +307,7 @@ describe('Plugin Extension Validators', () => {
 
       expect(returnValue).toBe(true);
       expect(log.error).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch(/.*Couldn't find app plugin with plugin id.*/);
+      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch('The app plugin with plugin id');
     });
 
     it('should return TRUE and log an error if the link has no meta-info in the plugin.json', () => {
@@ -424,7 +424,7 @@ describe('Plugin Extension Validators', () => {
 
       expect(returnValue).toBe(true);
       expect(log.error).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch(/.*Couldn't find app plugin with plugin id.*/);
+      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch('The app plugin with plugin id');
     });
 
     it('should return TRUE and log an error if the Component has no meta-info in the plugin.json', () => {
@@ -540,7 +540,7 @@ describe('Plugin Extension Validators', () => {
 
       expect(returnValue).toBe(true);
       expect(log.error).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch(/.*Couldn't find app plugin with plugin id.*/);
+      expect(jest.mocked(log.error).mock.calls[0][0]).toMatch('The app plugin with plugin id');
     });
 
     it('should return TRUE and log an error if the exposed component has no meta-info in the plugin.json', () => {
@@ -572,7 +572,7 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(true);
       expect(log.error).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.error).mock.calls[0][0]).toMatch(
-        'The "targets" for the registered extension does not match'
+        'The "title" doesn\'t match the title recorded in plugin.json.'
       );
     });
 

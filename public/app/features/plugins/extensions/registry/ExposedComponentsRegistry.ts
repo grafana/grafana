@@ -2,10 +2,13 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
+import * as errors from '../errors';
 import { isGrafanaDevMode } from '../utils';
 import { isExposedComponentMetaInfoMissing } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
+
+const logPrefix = 'Could not register exposed component extension. Reason:';
 
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
@@ -45,26 +48,22 @@ export class ExposedComponentsRegistry extends Registry<
       });
 
       if (!id.startsWith(pluginId)) {
-        pointIdLog.error(
-          `Could not register exposed component extension. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
-        );
+        pointIdLog.error(`${logPrefix} ${errors.INVALID_EXPOSED_COMPONENT_ID}`);
         continue;
       }
 
       if (registry[id]) {
-        pointIdLog.error(
-          `Could not register exposed component extension. Reason: An exposed component with the same id already exists.`
-        );
+        pointIdLog.error(`${logPrefix} ${errors.EXPOSED_COMPONENT_ALREADY_EXISTS}`);
         continue;
       }
 
       if (!title) {
-        pointIdLog.error('Could not register exposed component extension. Reason: Title is missing.');
+        pointIdLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
       if (!description) {
-        pointIdLog.error('Could not register exposed component extension. Reason: Description is missing.');
+        pointIdLog.error(`${logPrefix} ${errors.DESCRIPTION_MISSING}`);
         continue;
       }
 

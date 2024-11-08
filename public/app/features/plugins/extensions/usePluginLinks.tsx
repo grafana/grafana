@@ -9,6 +9,7 @@ import {
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { useAddedLinksRegistry } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { log } from './logs/log';
 import {
   generateExtensionId,
@@ -40,9 +41,7 @@ export function usePluginLinks({
     });
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      pointLog.error(
-        'Invalid extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1".'
-      );
+      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
       return {
         isLoading: false,
         links: [],
@@ -50,9 +49,7 @@ export function usePluginLinks({
     }
 
     if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      pointLog.error(
-        `Invalid extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.`
-      );
+      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,
         links: [],
