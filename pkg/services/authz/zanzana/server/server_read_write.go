@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -13,12 +12,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	ctx, span := tracer.Start(ctx, "authzServer.Read")
 	defer span.End()
 
-	var storeInf *storeInfo
-	var err error
-	storeInf, err = s.getStoreInfo(req.Namespace)
-	if errors.Is(err, errStoreNotFound) || storeInf.AuthorizationModelId == "" {
-		storeInf, err = s.initNamespaceStore(ctx, req.Namespace)
-	}
+	storeInf, err := s.getNamespaceStore(ctx, req.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -59,16 +53,10 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	ctx, span := tracer.Start(ctx, "authzServer.Write")
 	defer span.End()
 
-	var storeInf *storeInfo
-	var err error
-	storeInf, err = s.getStoreInfo(req.Namespace)
-	if errors.Is(err, errStoreNotFound) || storeInf.AuthorizationModelId == "" {
-		storeInf, err = s.initNamespaceStore(ctx, req.Namespace)
-	}
+	storeInf, err := s.getNamespaceStore(ctx, req.Namespace)
 	if err != nil {
 		return nil, err
 	}
-
 	if storeInf.AuthorizationModelId == "" {
 		return nil, errAuthorizationModelNotInitialized
 	}

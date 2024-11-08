@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,10 +36,6 @@ type Server struct {
 
 	logger   log.Logger
 	modules  []transformer.ModuleFile
-	tenantID string
-	storeID  string
-	modelID  string
-
 	storeMap map[string]storeInfo
 }
 
@@ -81,14 +76,6 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 
 	if s.logger == nil {
 		s.logger = log.New("authz-server")
-	}
-
-	if s.tenantID == "" {
-		s.tenantID = "stacks-default"
-	}
-
-	if len(s.modules) == 0 {
-		s.modules = schema.SchemaModules
 	}
 
 	ctx := context.Background()

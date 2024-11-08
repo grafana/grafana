@@ -151,6 +151,21 @@ func (s *Server) loadModel(ctx context.Context, namespace string, modules []tran
 	return writeRes.GetAuthorizationModelId(), nil
 }
 
+func (s *Server) getNamespaceStore(ctx context.Context, namespace string) (*storeInfo, error) {
+	var storeInf *storeInfo
+	var err error
+
+	storeInf, err = s.getStoreInfo(namespace)
+	if errors.Is(err, errStoreNotFound) || storeInf.AuthorizationModelId == "" {
+		storeInf, err = s.initNamespaceStore(ctx, namespace)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return storeInf, nil
+}
+
 func (s *Server) initNamespaceStore(ctx context.Context, namespace string) (*storeInfo, error) {
 	err := s.initStores(ctx)
 	if err != nil {
