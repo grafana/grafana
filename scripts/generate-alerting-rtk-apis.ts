@@ -65,7 +65,11 @@ const config: ConfigFile = {
     '../public/app/features/alerting/unified/openapi/routesApi.gen.ts': {
       apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
       apiImport: 'alertingApi',
-      filterEndpoints: ['listNamespacedRoute', 'createNamespacedRoute', 'deleteCollectionNamespacedRoute'],
+      filterEndpoints: [
+        'listNamespacedRoutingTree',
+        'replaceNamespacedRoutingTree',
+        'deleteCollectionNamespacedRoutingTree',
+      ],
       exportName: 'generatedRoutesApi',
       flattenArg: false,
     },
