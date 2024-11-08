@@ -189,14 +189,7 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	response.Frames = append(response.Frames, frame)
 
 	if len(res.Groups) > 0 {
-		fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
-		fName.Name = "tag"
-
-		fCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
-		fCount.Name = "count"
-
-		tagsFrame := data.NewFrame("tags", fName, fCount)
-
+		tagsFrame := newTagsFrame()
 		for _, grp := range res.Groups {
 			tagsFrame.AppendRow(grp.Name, grp.Count)
 		}
@@ -204,6 +197,17 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	}
 
 	return response
+}
+
+func newTagsFrame() *data.Frame {
+	fName := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	fName.Name = "tag"
+
+	fCount := data.NewFieldFromFieldType(data.FieldTypeInt64, 0)
+	fCount.Name = "count"
+
+	tagsFrame := data.NewFrame("tags", fName, fCount)
+	return tagsFrame
 }
 
 func newSearchFrame(res *resource.SearchResponse) *data.Frame {
