@@ -284,7 +284,7 @@ func getDoc(data []byte) (*DashboardListDoc, error) {
 }
 
 func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
-	var groupBy []*resource.GroupBy
+	groupBy := make([]*resource.GroupBy, len(qry.Facet))
 	for _, g := range qry.Facet {
 		groupBy = append(groupBy, &resource.GroupBy{Name: g.Field, Limit: int64(g.Limit)})
 	}
