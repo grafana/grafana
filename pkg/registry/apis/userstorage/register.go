@@ -101,7 +101,7 @@ func (b *UserStorageAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionNoOpinion, "", nil
 			case "get", "delete", "patch", "update":
 				// Only allow the user to access their own settings
-				if u.GetUID() != attr.GetName() {
+				if !compareResourceNameAndUserUID(attr.GetName(), u) {
 					return authorizer.DecisionDeny, "forbidden", nil
 				}
 				return authorizer.DecisionAllow, "", nil

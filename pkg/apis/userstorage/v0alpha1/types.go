@@ -9,12 +9,7 @@ type UserStorage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec Spec `json:"spec,omitempty"`
-}
-
-type Spec struct {
-	// Map of service and JSON data
-	ServiceMap map[string]string `json:"serviceMap"`
+	Spec map[string]string `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

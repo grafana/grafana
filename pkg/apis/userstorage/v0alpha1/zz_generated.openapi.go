@@ -14,38 +14,8 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.Spec":            schema_pkg_apis_userstorage_v0alpha1_Spec(ref),
 		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage":     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
 		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageList": schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
-	}
-}
-
-func schema_pkg_apis_userstorage_v0alpha1_Spec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"serviceMap": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Map of service and JSON data",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"serviceMap"},
-			},
-		},
 	}
 }
 
@@ -77,15 +47,24 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.Spec"),
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.Spec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 

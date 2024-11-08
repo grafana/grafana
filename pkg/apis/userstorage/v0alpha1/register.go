@@ -24,7 +24,7 @@ var UserStorageResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "ServiceMap", Type: "string"},
+			{Name: "Data", Type: "string"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
@@ -34,7 +34,7 @@ var UserStorageResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.ServiceMap,
+				m.Spec,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
