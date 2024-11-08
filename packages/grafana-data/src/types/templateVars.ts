@@ -70,6 +70,7 @@ export interface AdHocVariableModel extends BaseVariableModel {
    * Static keys that override any dynamic keys from the datasource.
    */
   defaultKeys?: MetricFindValue[];
+  allowCustomValue?: boolean;
 }
 
 export interface GroupByVariableModel extends VariableWithOptions {

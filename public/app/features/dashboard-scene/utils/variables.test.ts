@@ -391,6 +391,7 @@ describe('when creating variables objects', () => {
   it('should migrate adhoc variable', () => {
     const variable: TypedVariableModel = {
       id: 'adhoc',
+      allowCustomValue: false,
       global: false,
       index: 0,
       state: LoadingState.Done,
@@ -429,6 +430,7 @@ describe('when creating variables objects', () => {
     expect(filterVarState).toEqual({
       key: expect.any(String),
       description: 'Adhoc Description',
+      allowCustomValue: false,
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -499,6 +501,7 @@ describe('when creating variables objects', () => {
     expect(filterVarState).toEqual({
       key: expect.any(String),
       description: 'Adhoc Description',
+      allowCustomValue: true,
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
