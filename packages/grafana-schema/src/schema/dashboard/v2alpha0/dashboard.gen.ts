@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-import { VariableRefresh, VariableSort, VariableType } from "../../../index.gen";
+import { VariableOption, VariableRefresh, VariableSort, VariableType } from "../../../index.gen";
 
 export interface DashboardV2 {
   kind: "Dashboard";
@@ -659,6 +659,7 @@ export type QueryVariableSpec = {
   name: string;
   value: VariableValue;
   text: VariableValue;
+  current: VariableOption;
   label?: string;
   hide?: boolean;
   skipUrlSync?: boolean;
@@ -680,6 +681,10 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
   value: "",
   datasource: {},//FIXME: check if this is undefined. null or empty object in provisioning use case when we want to fallback to the default datasource
   text: "",
+  current: {
+    text: "",
+    value: "",
+  },
   query: "",
   regex: "",
   sort: VariableSort.disabled,
@@ -756,6 +761,7 @@ export interface DatasourceVariableSpec {
   text: string;
   pluginId: string;
   regex: string;
+  current: VariableOption;
   defaultOptionEnabled: boolean; // FIXME: is this going to be removed in the future https://github.com/grafana/scenes/blob/main/packages/scenes/src/variables/variants/DataSourceVariable.tsx#L24?
   options: VariableValueOption[];
   isMulti: boolean;
@@ -772,6 +778,10 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
   value: "",
   text: "",
   options: [],
+  current: {
+    text: "",
+    value: "",
+  },
   pluginId: "",
   regex: "",
   defaultOptionEnabled: false,
@@ -789,6 +799,7 @@ export interface IntervalVariableSpec {
   name: string;
   value: string;
   intervals: string[];
+  current: VariableOption;
   autoEnabled: boolean;
   autoMinInterval: string;
   autoStepCount: number;
@@ -803,6 +814,10 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
   name: "",
   value: "",
   intervals: [],
+  current: {
+    text: "",
+    value: "",
+  },
   autoEnabled: false,
   autoMinInterval: "",
   autoStepCount: 0,
@@ -820,6 +835,7 @@ export interface CustomVariableSpec {
   value: VariableValue;
   query: string;
   text: VariableValue;
+  current: VariableOption;
   options: VariableValueOption[];
   isMulti: boolean;
   includeAll: boolean;
@@ -829,6 +845,52 @@ export interface CustomVariableSpec {
   skipUrlSync?: boolean;
   description?: string;
 };
+
+export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
+  name: "",
+  value: "",
+  query: "",
+  text: "",
+  current: {
+    text: "",
+    value: "",
+  },
+  options: [],
+  isMulti: false,
+  includeAll: false,
+});
+
+// group variable
+export interface GroupVariableKind {
+  kind: "GroupBy";
+  spec: GroupVariableSpec;
+}
+
+export interface GroupVariableSpec {
+  name: string;
+  value: string;
+  datasource: DataSourceRef;
+  current?: VariableOption;
+  text: VariableValue;
+  options: VariableValueOption[];
+  isMulti: boolean;
+  includeAll: boolean;
+  allValue?: string;
+  label?: string;
+  hide?: boolean;
+  skipUrlSync?: boolean;
+  description?: string;
+}
+
+export const defaultGroupVariableSpec = (): GroupVariableSpec => ({
+  name: "",
+  value: "",
+  datasource: {},
+  text: "",
+  options: [],
+  isMulti: false,
+  includeAll: false,
+});
 
 
 /***END  FIXME:variables - in CUE PR - this are things that should be added into the cue schema **/
