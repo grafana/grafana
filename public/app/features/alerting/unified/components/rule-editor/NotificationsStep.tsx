@@ -214,21 +214,21 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
  *
  */
 function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
-  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const { watch } = useFormContext<RuleFormValues>();
   // const styles = useStyles2(getStyles);
 
   const [manualRouting] = watch(['manualRouting']);
   // manualRoutingInForm is the value of the manualRouting field in the form, that taking in account precondition it should be the value the advancedMode should have
-  const advancedMode = !manualRouting;
+  // const advancedMode = !manualRouting;
 
-  // const routingOptions = [
-  //   { label: 'Select contact point', value: RoutingOptions.ContactPoint },
-  //   { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
-  // ];
+  // // const routingOptions = [
+  // //   { label: 'Select contact point', value: RoutingOptions.ContactPoint },
+  // //   { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
+  // // ];
 
-  const onRoutingOptionChange = (option: RoutingOptions) => {
-    setValue('manualRouting', option === RoutingOptions.ContactPoint);
-  };
+  // const onRoutingOptionChange = (option: RoutingOptions) => {
+  //   setValue('manualRouting', option === RoutingOptions.ContactPoint);
+  // };
 
   return (
     <Stack direction="column" gap={2}>

@@ -686,7 +686,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setValue('editorSettings', { simplifiedQueryEditor: true });
+          setValue('editorSettings.simplifiedNotificationEditor', true);
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}
