@@ -259,7 +259,7 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
-  if (items.length > 100) {
+  if (items.length > 100_000) {
     const msg = `There are ${items.length} loaded into the component. This exceeds the recommended amount.`;
     console.warn(msg);
   }
