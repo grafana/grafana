@@ -44,11 +44,13 @@ func (s *memoryBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv in
 
 		tree := s.getResourceTree(event.Key)
 		value := &memoryValue{
-			rv:     rv,
-			ns:     event.Key.Namespace,
-			name:   event.Key.Name,
-			folder: event.Object.GetFolder(),
-			value:  event.Value,
+			rv:    rv,
+			ns:    event.Key.Namespace,
+			name:  event.Key.Name,
+			value: event.Value,
+		}
+		if event.Object != nil { // delete does not have an object
+			value.folder = event.Object.GetFolder()
 		}
 
 		switch event.Type {
@@ -72,7 +74,7 @@ func (s *memoryBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv in
 
 		// ignore
 		default:
-			return rv, nil //
+			// return rv, nil //
 		}
 	}
 
@@ -94,29 +96,28 @@ func (s *memoryBackend) ReadResource(ctx context.Context, req *ReadRequest) *Rea
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	tree := s.getResourceTree(req.Key)
-	val := tree.get(req.Key, req.ResourceVersion)
-	if val == nil {
-		return &ReadResponse{Error: NewNotFoundError(req.Key)}
-	}
-	if req.ResourceVersion > 0 {
-		if req.ResourceVersion > s.rv.Load() {
-			return &ReadResponse{
-				Error: &ErrorResult{
-					Code:    http.StatusGatewayTimeout,
-					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
-					Message: "ResourceVersion is larger than max",
-					Details: &ErrorDetails{
-						Causes: []*ErrorCause{
-							{
-								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
-								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
-							},
+	if req.ResourceVersion > s.rv.Load() {
+		return &ReadResponse{
+			Error: &ErrorResult{
+				Code:    http.StatusGatewayTimeout,
+				Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
+				Message: "ResourceVersion is larger than max",
+				Details: &ErrorDetails{
+					Causes: []*ErrorCause{
+						{
+							Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
+							Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
 						},
 					},
 				},
-			}
+			},
 		}
+	}
+
+	tree := s.getResourceTree(req.Key)
+	val := tree.get(req.Key, req.ResourceVersion)
+	if val == nil || val.deleted {
+		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 
 	return &ReadResponse{
@@ -264,7 +265,7 @@ func (v *memoryValues) get(rv int64) *memoryValue {
 
 	for i := len(v.version) - 1; i >= 0; i-- {
 		v := v.version[i]
-		if v.rv > rv {
+		if v.rv >= rv {
 			return v
 		}
 	}
@@ -291,7 +292,7 @@ type memoryListIterator struct {
 func (c *memoryListIterator) add(ns *memoryNamespace) {
 	for _, r := range ns.names {
 		v := r.get(c.rv) // get the closest (but not over)
-		if v != nil {
+		if v != nil && !v.deleted {
 			c.values = append(c.values, v)
 		}
 	}
