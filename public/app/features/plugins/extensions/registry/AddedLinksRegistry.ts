@@ -3,13 +3,8 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { isAddedLinkMetaInfoMissing, isGrafanaDevMode } from '../utils';
-import {
-  extensionPointEndsWithVersion,
-  isConfigureFnValid,
-  isGrafanaCoreExtensionPoint,
-  isLinkPathValid,
-} from '../validators';
+import { isGrafanaDevMode } from '../utils';
+import { isAddedLinkMetaInfoMissing, isConfigureFnValid, isLinkPathValid } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -52,34 +47,35 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
       });
 
       if (!title) {
-        configLog.error(`Could not register added link. Reason: Title is missing.`);
+        configLog.error('Could not register link extension. Reason: Title is missing.');
         continue;
       }
 
       if (!description) {
-        configLog.error(`Could not register added link. Reason: Description is missing.`);
+        configLog.error('Could not register link extension. Reason: Description is missing.');
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        configLog.error(`Could not register added link. Reason: configure is not a function.`);
+        configLog.error(
+          'Could not register link extension. Reason: Invalid "configure" function. It should be a function.'
+        );
         continue;
       }
 
       if (!path && !onClick) {
-        configLog.error(`Could not register added. Reason: Either "path" or "onClick" is required.`);
+        configLog.error(`Could not register link extension. Reason: Either "path" or "onClick" is required.`);
         continue;
       }
 
       if (path && !isLinkPathValid(pluginId, path)) {
         configLog.error(
-          `Could not register added link. Reason: The "path" is required and should start with "/a/${pluginId}/".`
+          `Could not register link extension. Reason: The "path" is required and should start with "/a/${pluginId}/".`
         );
         continue;
       }
 
       if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedLinkMetaInfoMissing(pluginId, config, configLog)) {
-        configLog.warning(`Did not register links from plugin ${pluginId} due to missing meta information.`);
         continue;
       }
 
@@ -87,20 +83,13 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       for (const extensionPointId of extensionPointIds) {
         const pointIdLog = configLog.child({ extensionPointId });
-
-        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          pointIdLog.warning(
-            `Added link "${config.title}: it's recommended to suffix the extension point id ("${extensionPointId}") with a version, e.g 'myorg-basic-app/extension-point/v1'.`
-          );
-        }
-
         const { targets, ...registryItem } = config;
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [];
         }
 
-        pointIdLog.debug(`Added link from '${pluginId}' to '${extensionPointId}'`);
+        pointIdLog.debug('Added link extension successfully registered');
 
         registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }

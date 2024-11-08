@@ -2,8 +2,8 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
-import { isExposedComponentMetaInfoMissing, isGrafanaDevMode } from '../utils';
-import { extensionPointEndsWithVersion } from '../validators';
+import { isGrafanaDevMode } from '../utils';
+import { isExposedComponentMetaInfoMissing } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 
@@ -46,31 +46,25 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (!id.startsWith(pluginId)) {
         pointIdLog.error(
-          `Could not register exposed component with '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
+          `Could not register exposed component extension. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
         );
         continue;
       }
 
-      if (!extensionPointEndsWithVersion(id)) {
-        pointIdLog.error(
-          `Exposed component does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-        );
-      }
-
       if (registry[id]) {
         pointIdLog.error(
-          `Could not register exposed component with '${id}'. Reason: An exposed component with the same id already exists.`
+          `Could not register exposed component extension. Reason: An exposed component with the same id already exists.`
         );
         continue;
       }
 
       if (!title) {
-        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
+        pointIdLog.error('Could not register exposed component extension. Reason: Title is missing.');
         continue;
       }
 
       if (!description) {
-        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
+        pointIdLog.error('Could not register exposed component extension. Reason: Description is missing.');
         continue;
       }
 
@@ -82,7 +76,7 @@ export class ExposedComponentsRegistry extends Registry<
         continue;
       }
 
-      pointIdLog.debug(`Exposed component from '${pluginId}' to '${id}'`);
+      pointIdLog.debug('Exposed component extension successfully registered');
 
       registry[id] = { ...config, pluginId };
     }

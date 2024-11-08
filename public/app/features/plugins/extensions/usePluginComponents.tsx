@@ -9,8 +9,8 @@ import {
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid } from './validators';
+import { isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginComponents<Props extends object = {}>({
@@ -33,8 +33,8 @@ export function usePluginComponents<Props extends object = {}>({
     });
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      pointLog.warning(
-        `Extension point usePluginComponents("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
+      pointLog.error(
+        'Invalid extension point. Reason: Extension point id should be prefixed with your plugin id, e.g "myorg-foo-app/toolbar/v1".'
       );
       return {
         isLoading: false,
@@ -42,9 +42,9 @@ export function usePluginComponents<Props extends object = {}>({
       };
     }
 
-    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
-      pointLog.warning(
-        `usePluginComponents("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+      pointLog.error(
+        `Invalid extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.`
       );
       return {
         isLoading: false,

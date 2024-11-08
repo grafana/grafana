@@ -7,8 +7,8 @@ import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/
 import { getPluginExtensions } from './getPluginExtensions';
 import { log } from './logs/log';
 import { PluginExtensionRegistries } from './registry/types';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid } from './validators';
+import { isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
   const observableAddedComponentsRegistry = registries.addedComponentsRegistry.asObservable();
@@ -43,9 +43,9 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
         };
       }
 
-      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
-        pointLog.warning(
-          `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
+      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+        pointLog.error(
+          `Invalid extension point. Reason: The extension point is not recorded in the "plugin.json" file. Extension points must be listed in the section "extensions.extensionPoints[]". Returning an empty array of extensions.`
         );
         return {
           isLoading: false,
