@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Property } from 'csstype';
 import * as React from 'react';
 
 import {
@@ -43,9 +44,8 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const styles = useStyles2(getStyles);
-
-  const { field, value, theme, timeRange, height, rowIdx } = props;
+  const { field, value, theme, timeRange, height, rowIdx, justifyContent } = props;
+  const styles = useStyles2(getStyles, justifyContent);
   const sparkline = getSparkline(value);
 
   if (!sparkline) {
@@ -150,10 +150,11 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent | undefined) => ({
   cellContainer: css({
     display: 'flex',
     width: '100%',
     alignItems: 'center',
+    justifyContent,
   }),
 });

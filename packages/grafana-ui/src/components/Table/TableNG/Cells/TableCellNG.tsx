@@ -29,6 +29,7 @@ export function TableCellNG(props: any) {
           timeRange={timeRange}
           height={height}
           rowIdx={rowIdx}
+          justifyContent={justifyContent}
         />
       );
       break;
