@@ -12,6 +12,7 @@ import {
   GroupingLabels,
   Identifier,
   LabelName,
+  QuotedLabelName,
   MatchingModifierClause,
   MatchOp,
   NumberDurationLiteral,
@@ -19,6 +20,7 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  QuotedLabelMatcher,
   UnquotedLabelMatcher,
   VectorSelector,
   Without,
@@ -145,9 +147,18 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case QuotedLabelMatcher: {
+      visQuery.labels.push(getLabel(expr, node, QuotedLabelName));
+      const err = node.getChild(ErrorId);
+      if (err) {
+        context.errors.push(makeError(expr, err));
+      }
+      break;
+    }
+
     case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
-      visQuery.labels.push(getLabel(expr, node));
+      visQuery.labels.push(getLabel(expr, node, LabelName));
       const err = node.getChild(ErrorId);
       if (err) {
         context.errors.push(makeError(expr, err));
@@ -202,8 +213,12 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node.prevSibling?.firstChild?.type.id === VectorSelector;
 }
 
-function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
-  const label = getString(expr, node.getChild(LabelName));
+function getLabel(
+  expr: string,
+  node: SyntaxNode,
+  labelType: typeof LabelName | typeof QuotedLabelName
+): QueryBuilderLabelFilter {
+  const label = getString(expr, node.getChild(labelType));
   const op = getString(expr, node.getChild(MatchOp));
   const value = getString(expr, node.getChild(StringLiteral)).replace(/^["'`]|["'`]$/g, '');
   return {

@@ -13,6 +13,28 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('supports uts-8 label names', () => {
+    expect(buildVisualQueryFromString('{"glück:🍀.dot"="luck"} == 11')).toEqual({
+      query: {
+        labels: [
+          {
+            label: '"glück:🍀.dot"',
+            op: '=',
+            value: 'luck',
+          },
+        ],
+        metric: '',
+        operations: [
+          {
+            id: PromOperationId.EqualTo,
+            params: [11, false],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
   it('parses simple binary comparison', () => {
     expect(buildVisualQueryFromString('{app="aggregator"} == 11')).toEqual({
       query: {
