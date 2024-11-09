@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
@@ -64,6 +65,7 @@ type APIGroupOptions struct {
 	OptsGetter       generic.RESTOptionsGetter
 	DualWriteBuilder grafanarest.DualWriteBuilder
 	MetricsRegister  prometheus.Registerer
+	StorageOptions   apistore.StorageOptionsRegister
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly

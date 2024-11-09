@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
+
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -17,10 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -28,16 +30,18 @@ type DTOConnector struct {
 	getter        rest.Getter
 	legacy        legacy.DashboardAccess
 	unified       resource.ResourceClient
+	largeObjects  apistore.LargeObjectSupport
 	accessControl accesscontrol.AccessControl
 	log           log.Logger
 }
 
-func newDTOConnector(dash rest.Storage, builder *DashboardsAPIBuilder) (rest.Storage, error) {
+func newDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, builder *DashboardsAPIBuilder) (rest.Storage, error) {
 	ok := false
 	v := &DTOConnector{
 		legacy:        builder.legacy.access,
 		accessControl: builder.accessControl,
 		unified:       builder.unified,
+		largeObjects:  largeObjects,
 		log:           builder.log,
 	}
 	v.getter, ok = dash.(rest.Getter)
@@ -86,7 +90,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	rawobj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	rawobj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +141,17 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	// Check for blob info
 	blobInfo := obj.GetBlob()
-	if blobInfo != nil {
-		fmt.Printf("TODO, load full blob from storage %+v\n", blobInfo)
+	if blobInfo != nil && r.largeObjects != nil {
+		gr := r.largeObjects.GroupResource()
+		err = r.largeObjects.Reconstruct(ctx, &resource.ResourceKey{
+			Group:     gr.Group,
+			Resource:  gr.Resource,
+			Namespace: obj.GetNamespace(),
+			Name:      obj.GetName(),
+		}, r.unified, obj)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	access.Slug = slugify.Slugify(dash.Spec.GetNestedString("title"))
