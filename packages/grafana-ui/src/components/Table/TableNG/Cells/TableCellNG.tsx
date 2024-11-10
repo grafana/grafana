@@ -21,15 +21,23 @@ export function TableCellNG(props: any) {
   switch (cellType) {
     // case TableCellDisplayMode.
     case TableCellDisplayMode.Sparkline:
-      cell = <SparklineCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
+      cell = (
+        <SparklineCell
+          value={value}
+          field={field}
+          theme={theme}
+          timeRange={timeRange}
+          height={height}
+          rowIdx={rowIdx}
+          justifyContent={justifyContent}
+        />
+      );
       break;
     case TableCellDisplayMode.Gauge:
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = (
-        <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} rowIdx={rowIdx} />
-      );
+      cell = <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
       break;
     case TableCellDisplayMode.Auto:
     default:

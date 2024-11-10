@@ -9,6 +9,7 @@ export interface CellNGProps {
   justifyContent?: Property.JustifyContent;
   rowIdx?: number;
 }
+
 export interface BarGaugeCellProps extends CellNGProps {
   height: number;
   timeRange: TimeRange;

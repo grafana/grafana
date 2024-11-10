@@ -26,7 +26,7 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   rowHeight: number;
-  field: Omit<Field, 'values'>;
+  field: Field;
 }
 
 interface HeaderCellProps {
@@ -151,7 +151,6 @@ export function TableNG(props: TableNGProps) {
     main.fields.map((field, fieldIndex) => {
       filterFields.push({ id: fieldIndex.toString(), field });
       const key = field.name;
-      const { values: _, ...shallowField } = field;
 
       const justifyColumnContent = getTextAlign(field);
 
@@ -159,7 +158,7 @@ export function TableNG(props: TableNGProps) {
       columns.push({
         key,
         name: field.name,
-        field: shallowField,
+        field,
         rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
