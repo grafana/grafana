@@ -55,6 +55,8 @@ const (
 // zoneInfo names environment variable for setting the path to look for the timezone database in go
 const zoneInfo = "ZONEINFO"
 
+const DefaultMainOrgName = "Main Org."
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -219,6 +221,9 @@ type Cfg struct {
 	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
 	MetricsGrafanaEnvironmentInfo    map[string]string
+
+	// Organizations
+	OrgName string
 
 	// Dashboards
 	DashboardVersionsToKeep  int
@@ -1113,6 +1118,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
 		return err
 	}
+
+	// read organization settings
+	organizations := iniFile.Section("organizations")
+	cfg.OrgName = valueAsString(organizations, "org_name", DefaultMainOrgName)
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")

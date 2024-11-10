@@ -86,7 +86,7 @@ func (s *Service) GetIDForNewUser(ctx context.Context, cmd org.GetOrgIDForNewUse
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				s.cfg.AutoAssignOrgId)
 		}
-		orga.Name = MainOrgName
+		orga.Name = s.cfg.OrgName
 		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
 		orga.Name = orgName
@@ -160,7 +160,7 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				s.cfg.AutoAssignOrgId)
 		}
-		orga.Name = MainOrgName
+		orga.Name = s.cfg.OrgName
 		orga.ID = int64(s.cfg.AutoAssignOrgId)
 	} else {
 		orga.Name = orgName

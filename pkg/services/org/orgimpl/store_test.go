@@ -868,7 +868,7 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	}
 	orgSvc, usrSvc := createOrgAndUserSvc(t, store, cfg)
 
-	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: MainOrgName})
+	o, err := orgSvc.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: setting.MainOrgName})
 	require.NoError(t, err)
 
 	// create org and admin
