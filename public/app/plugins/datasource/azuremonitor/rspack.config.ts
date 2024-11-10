@@ -1,7 +1,7 @@
-import type { Configuration } from 'webpack';
+import type { Configuration } from '@rspack/core';
 import { merge } from 'webpack-merge';
 
-import grafanaConfig from '@grafana/plugin-configs/webpack.config';
+import grafanaConfig from '@grafana/plugin-configs/rspack.config';
 
 const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const baseConfig = await grafanaConfig(env);
@@ -11,4 +11,5 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   });
 };
 
+// eslint-disable-next-line no-barrel-files/no-barrel-files
 export default config;
