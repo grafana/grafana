@@ -191,7 +191,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           rules: [
             {
               search: /\%VERSION\%/g,
-              replace: getPackageJson().version,
+              replace: env.commit ? `${getPackageJson().version}-${env.commit}` : getPackageJson().version,
             },
             {
               search: /\%TODAY\%/g,
