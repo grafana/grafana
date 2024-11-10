@@ -1,4 +1,4 @@
-import config from '@grafana/plugin-configs/webpack.config';
+import config from '@grafana/plugin-configs/rspack.config';
 
 const configWithFallback = async (env: Record<string, unknown>) => {
   const response = await config(env);
@@ -11,4 +11,5 @@ const configWithFallback = async (env: Record<string, unknown>) => {
   return response;
 };
 
+// eslint-disable-next-line no-barrel-files/no-barrel-files
 export default configWithFallback;
