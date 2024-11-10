@@ -149,7 +149,7 @@ const replaceVars: InterpolateFunction = (value: string) => value;
 const getCellActions = (
   dataFrame: DataFrame,
   field: Field,
-  valueRowIndex: number,
+  rowIndex: number,
   replaceVariables: InterpolateFunction | undefined
 ) => {
   if (!config.featureToggles?.vizActions) {
@@ -165,7 +165,7 @@ const getCellActions = (
     field.state!.scopedVars!,
     replaceVariables ?? replaceVars,
     field.config.actions ?? [],
-    { valueRowIndex }
+    { valueRowIndex: rowIndex }
   );
 
   actionsModel.forEach((action) => {

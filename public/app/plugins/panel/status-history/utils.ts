@@ -28,7 +28,7 @@ export const getFieldActions = (
   dataFrame: DataFrame,
   field: Field,
   replaceVars: InterpolateFunction,
-  valueRowIndex: number
+  rowIndex: number
 ) => {
   if (!config.featureToggles?.vizActions) {
     return [];
@@ -38,7 +38,7 @@ export const getFieldActions = (
   const actionLookup = new Set<string>();
 
   const actionsModel = getActions(dataFrame, field, field.state!.scopedVars!, replaceVars, field.config.actions ?? [], {
-    valueRowIndex,
+    valueRowIndex: rowIndex,
   });
 
   actionsModel.forEach((action) => {
