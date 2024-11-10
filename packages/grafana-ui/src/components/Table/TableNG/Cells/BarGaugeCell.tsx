@@ -1,12 +1,9 @@
-// import { isFunction } from 'lodash';
-
 import { isFunction } from 'lodash';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-// import { TableCellProps } from '../types';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../../../DataLinks/DataLinksContextMenu';
 import { getAlignmentFactor, getCellOptions } from '../../utils';
 import { BarGaugeCellProps } from '../types';
