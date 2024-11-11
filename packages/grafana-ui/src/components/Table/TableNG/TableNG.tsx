@@ -166,18 +166,6 @@ export function TableNG(props: TableNGProps) {
         key,
         name: field.name,
         field: shallowField,
-        // cellClass: (row) => {
-        //   // eslint-ignore-next-line
-        //   const value = row[key];
-        //   const displayValue = shallowField.display!(value);
-
-        //   // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-        //   let colors = getCellColors(theme, shallowField.config.custom, displayValue);
-        //   // }
-
-        //   // css()
-        //   return 'my-class';
-        // },
         cellClass: styles.cell,
         renderCell: (props: any) => {
           const { row } = props;
@@ -192,6 +180,7 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               // height={rowHeight}
+              // TODO: this is really do nothing
               height={75}
               justifyContent={justifyColumnContent}
             />
@@ -299,7 +288,7 @@ export function TableNG(props: TableNGProps) {
           resizable: true,
         }}
         // rowHeight={rowHeightNumber}
-        rowHeight={rowHeight}
+        rowHeight={(row) => rowHeight({ row, columns, rows })}
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
@@ -345,10 +334,16 @@ export function TableNG(props: TableNGProps) {
   );
 }
 
-function rowHeight(row) {
-  console.log(row);
-  // should be based on the content of the row
-  return 25 + Math.round(Math.random() * 75);
+function rowHeight({ row, columns, rows }) {
+  console.log({ row, columns, rows });
+  /**
+   * 0. loop through all cells in row
+   * 1. find text cell in row
+   * 2. find width of text cell
+   * 3. calculate height based on width and text length
+   * 4. return biggest height
+   */
+  return 100;
 }
 
 function myRowRenderer(key: React.Key, props: RenderRowProps<Row>) {
@@ -413,9 +408,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
-    // whiteSpace: 'nowrap',
-    // overflow: 'clip',
-    // textOverflow: 'ellipsis',
-    // outline: 'none',
   }),
 });
