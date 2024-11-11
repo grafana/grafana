@@ -520,6 +520,27 @@ describe('PanelDataQueriesTab', () => {
           });
           expect(dataObj.state.minInterval).toBe('1s');
         });
+
+        it('should update min interval to undefined if empty input', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          const dataObj = queriesTab.queryRunner;
+
+          expect(dataObj.state.maxDataPoints).toBeUndefined();
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: '1s',
+          });
+          expect(dataObj.state.minInterval).toBe('1s');
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            minInterval: null,
+          });
+          expect(dataObj.state.minInterval).toBe(undefined);
+        });
       });
 
       describe('query caching', () => {
