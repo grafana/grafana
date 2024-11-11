@@ -1,6 +1,6 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
  * A scene object that usually wraps an underlying layout
@@ -100,11 +100,7 @@ export interface DashboardLayoutItem extends SceneObject {
   /**
    * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
    */
-  getOptions?(): OptionsPaneItemDescriptor[];
-  /**
-   * Only implemented by elements that wrap VizPanels
-   */
-  getVizPanel?(): VizPanel;
+  getOptions?(): OptionsPaneCategoryDescriptor;
 }
 
 export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {

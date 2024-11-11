@@ -6,12 +6,12 @@ import { config, locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
   SceneDataTransformer,
+  SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
-  sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
@@ -21,7 +21,8 @@ import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
-import { DashboardGridItem, DashboardGridItemState } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
   activateSceneObjectAndParentTree,
@@ -54,8 +55,8 @@ export interface PanelEditorState extends SceneObjectState {
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
-  private _originalLayoutElementState!: DashboardGridItemState;
-  private _layoutElement!: DashboardGridItem;
+  private _layoutItemClone?: SceneObject;
+  private _layoutItem?: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
 
@@ -103,9 +104,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._originalSaveModel = vizPanelToPanel(panel);
 
-    if (panel.parent instanceof DashboardGridItem) {
-      this._originalLayoutElementState = sceneUtils.cloneSceneObjectState(panel.parent.state);
-      this._layoutElement = panel.parent;
+    if (panel.parent && isDashboardLayoutItem(panel.parent)) {
+      this._layoutItem = panel.parent;
+      this._layoutItemClone = panel.parent.clone();
     }
   }
 
@@ -136,7 +137,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._subs.add(panel.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
     // Repeat options live on the layout element (DashboardGridItem)
-    this._subs.add(this._layoutElement.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
+    this._subs.add(this._layoutItem!.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
   }
 
   public getPanel(): VizPanel {
@@ -255,7 +256,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       getDashboardSceneFor(this).removePanel(panel);
     } else {
       // Revert any layout element changes
-      this._layoutElement.setState(this._originalLayoutElementState!);
+      this._layoutItem!.setState(this._layoutItemClone!.state);
     }
 
     locationService.partial({ editPanel: null });
