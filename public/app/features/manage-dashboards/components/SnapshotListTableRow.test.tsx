@@ -5,6 +5,14 @@ import { Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
+jest.mock('app/core/services/context_srv', () => {
+  return {
+    contextSrv: {
+      hasPermission: () => true,
+    },
+  };
+});
+
 describe('SnapshotListTableRow', () => {
   const mockOnRemove = jest.fn();
   const mockSnapshot = {
