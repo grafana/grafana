@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const LogPrefix = "gcom.service"
