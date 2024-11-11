@@ -322,7 +322,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
   };
 }
 
-function resolveLabelMatcher(node: SyntaxNode, text: string): Situation | null {
+function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we can arrive here in two situation. `node` is either:
   // - a StringNode (like in `{job="^"}`)
   // - or an error node (like in `{job=^}`)
@@ -377,7 +377,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string): Situation | null {
   };
 }
 
-function resolveQuotedLabelMatcher(node: SyntaxNode, text: string): Situation | null {
+function resolveQuotedLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we can arrive here in two situation. `node` is either:
   // - a StringNode (like in `{"job"="^"}`)
   // - or an error node (like in `{"job"=^}`)
