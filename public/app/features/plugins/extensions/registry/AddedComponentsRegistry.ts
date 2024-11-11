@@ -10,7 +10,7 @@ import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -42,13 +42,6 @@ export class AddedComponentsRegistry extends Registry<
 
       if (!config.title) {
         configLog.error(`Could not register added component. Reason: Title is missing.`);
-        continue;
-      }
-
-      if (!config.description) {
-        configLog.error(
-          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
-        );
         continue;
       }
 

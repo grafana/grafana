@@ -10,7 +10,7 @@ import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -39,7 +39,7 @@ export class ExposedComponentsRegistry extends Registry<
       const { id, description, title } = config;
       const pointIdLog = this.logger.child({
         extensionPointId: id,
-        description,
+        description: description ?? '',
         title,
         pluginId,
       });
@@ -66,11 +66,6 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (!title) {
         pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
-        continue;
-      }
-
-      if (!description) {
-        pointIdLog.error(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
         continue;
       }
 

@@ -554,24 +554,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
     });
-
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
-
-      const returnValue = isAddedLinkMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          description: 'Link description UPDATED',
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
-    });
   });
 
   describe('isAddedComponentMetaInfoMissing()', () => {
@@ -667,24 +649,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"targets" don\'t match');
     });
-
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
-
-      const returnValue = isAddedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...extensionConfig,
-          description: 'UPDATED',
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
-    });
   });
 
   describe('isExposedComponentMetaInfoMissing()', () => {
@@ -779,24 +743,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(returnValue).toBe(true);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"title" doesn\'t match');
-    });
-
-    it('should return TRUE and log a warning if the "description" does not match', () => {
-      const log = createLogMock();
-      config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
-
-      const returnValue = isExposedComponentMetaInfoMissing(
-        pluginId,
-        {
-          ...exposedComponentConfig,
-          description: 'UPDATED',
-        },
-        log
-      );
-
-      expect(returnValue).toBe(true);
-      expect(log.warning).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
   });
 
