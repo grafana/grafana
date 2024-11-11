@@ -170,7 +170,8 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
     else \
       adduser --system --uid $GF_UID --ingroup "$GF_GID_NAME" grafana; \
     fi && \
-    mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
+    mkdir -p "$GF_PATHS_PROVISIONING/organizations" \
+             "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
              "$GF_PATHS_PROVISIONING/plugins" \

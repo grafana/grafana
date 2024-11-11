@@ -616,6 +616,8 @@ Content-Type: application/json
 
 ## Reload provisioning configurations
 
+`POST /api/admin/provisioning/orgs/reload`
+
 `POST /api/admin/provisioning/dashboards/reload`
 
 `POST /api/admin/provisioning/datasources/reload`

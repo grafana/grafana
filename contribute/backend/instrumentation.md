@@ -92,10 +92,11 @@ filters = rendering:debug \
           ; oauth.okta:debug \
           ; tsdb.postgres:debug \
           ; tsdb.mssql:debug \
-          ; provisioning.plugins:debug \
           ; provisioning:debug \
           ; provisioning.dashboard:debug \
           ; provisioning.datasources:debug \
+          ; provisioning.organizations:debug \
+          ; provisioning.plugins:debug \
           datasources:debug \
           data-proxy-log:debug
 ```

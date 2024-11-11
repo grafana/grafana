@@ -161,6 +161,7 @@ func setup(t *testing.T) *serviceTestStruct {
 		},
 		nil,
 		nil,
+		nil,
 		searchStub,
 	)
 	serviceTest.service = service

@@ -84,8 +84,14 @@ func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 			return org.ErrOrgNameTaken
 		}
 
-		if _, err = sess.Insert(orga); err != nil {
-			return err
+		if orga.ID != 0 {
+			if err = sess.InsertId(orga, ss.dialect); err != nil {
+				return err
+			}
+		} else {
+			if _, err = sess.Insert(orga); err != nil {
+				return err
+			}
 		}
 
 		orgID = orga.ID

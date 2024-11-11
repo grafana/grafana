@@ -113,9 +113,10 @@ We want to enhance the use of the API to enable provisioning for all Grafana ins
 All new features that require state should be able to configure Grafana using configuration files.
 For example:
 
-- [Data sources](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/datasources)
 - [Alert notifiers](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/notifiers)
+- [Data sources](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/datasources)
 - [Dashboards](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/dashboards)
+- [Organizations](https://github.com/grafana/grafana/tree/main/pkg/services/provisioning/organizations)
 
 Today it's only possible to provision data sources and dashboards, but we want to support it throughout Grafana in the future.
 

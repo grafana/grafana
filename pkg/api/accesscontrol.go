@@ -24,6 +24,7 @@ const (
 // API related scopes
 var (
 	ScopeProvisionersAll           = ac.Scope("provisioners", "*")
+	ScopeProvisionersOrgs          = ac.Scope("provisioners", "orgs")
 	ScopeProvisionersDashboards    = ac.Scope("provisioners", "dashboards")
 	ScopeProvisionersPlugins       = ac.Scope("provisioners", "plugins")
 	ScopeProvisionersDatasources   = ac.Scope("provisioners", "datasources")

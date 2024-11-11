@@ -1172,6 +1172,35 @@
         }
       }
     },
+    "/admin/provisioning/alerting/reload": {
+      "post": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for alerting again. It won’t return until the new provisioned entities are already stored in the database.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:alerting`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload alerting provisioning configurations.",
+        "operationId": "adminProvisioningReloadAlerting",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/admin/provisioning/dashboards/reload": {
       "post": {
         "security": [
@@ -1214,6 +1243,35 @@
         ],
         "summary": "Reload datasource provisioning configurations.",
         "operationId": "adminProvisioningReloadDatasources",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/admin/provisioning/orgs/reload": {
+      "post": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "Reloads the provisioning config files for orgs again. It won’t return until the new provisioned entities are already stored in the database.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:orgs`.",
+        "tags": [
+          "admin_provisioning"
+        ],
+        "summary": "Reload orgs provisioning configurations.",
+        "operationId": "adminProvisioningReloadOrgs",
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"

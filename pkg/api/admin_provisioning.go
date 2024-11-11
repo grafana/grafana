@@ -78,10 +78,48 @@ func (hs *HTTPServer) AdminProvisioningReloadPlugins(c *contextmodel.ReqContext)
 	return response.Success("Plugins config reloaded")
 }
 
+// swagger:route POST /admin/provisioning/alerting/reload admin_provisioning adminProvisioningReloadAlerting
+//
+// Reload alerting provisioning configurations.
+//
+// Reloads the provisioning config files for alerting again. It won’t return until the new provisioned entities are already stored in the database.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:alerting`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
 func (hs *HTTPServer) AdminProvisioningReloadAlerting(c *contextmodel.ReqContext) response.Response {
 	err := hs.ProvisioningService.ProvisionAlerting(c.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "", err)
 	}
 	return response.Success("Alerting config reloaded")
+}
+
+// swagger:route POST /admin/provisioning/orgs/reload admin_provisioning adminProvisioningReloadOrgs
+//
+// Reload orgs provisioning configurations.
+//
+// Reloads the provisioning config files for orgs again. It won’t return until the new provisioned entities are already stored in the database.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `provisioning:reload` and scope `provisioners:orgs`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) adminProvisioningReloadOrgs(c *contextmodel.ReqContext) response.Response {
+	err := hs.ProvisioningService.ProvisionOrgs(c.Req.Context())
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "", err)
+	}
+	return response.Success("Orgs config reloaded")
 }

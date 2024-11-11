@@ -1,0 +1,15 @@
+# # Configuration file version
+apiVersion: 1
+
+# # List of orgs to delete from the database.
+# deleteOrgs:
+#   # <int, required> ID of the organization to delete.
+#   - id: 1
+
+# # List of orgs to insert/update depending on what's
+# # available in the database.
+#orgs:
+#   <int> ID of the organization to create.
+#   - id: 1
+#     # <string, required> Name of the organization.
+#     name: First Org.

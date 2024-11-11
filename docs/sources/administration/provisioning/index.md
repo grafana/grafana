@@ -37,7 +37,7 @@ packages, then your configuration file is located at
 
 ### Environment variables
 
-You can use environment variable interpolation in all three provisioning configuration types.
+You can use environment variable interpolation in all provisioning configuration types.
 The allowed syntax is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}`, and it can be used only for values, not for keys or larger parts
 of the configurations.
 It's not available in the dashboard's definition files, just the dashboard provisioning
@@ -433,6 +433,24 @@ To provision dashboards to the root level, store them in the root of your `path`
 
 You can't create nested folders structures, where you have folders within folders.
 {{< /admonition >}}
+
+## Organizations
+
+You can manage organizations in Grafana by adding one or more YAML configuration files in the [`provisioning/organizations`]({{< relref "../../setup-grafana/configure-grafana#provisioning" >}}) directory.
+Each configuration file can contain a list of `oganizations` that update during start up.
+Grafana updates each app to match the configuration file.
+
+### Example organization configuration file
+
+```yaml
+apiVersion: 1
+
+organizations:
+  # <int> Org ID. Required
+  - id: 1
+    # <string> Org name. Required
+    name: Main Org.
+```
 
 ## Alerting
 

@@ -26,6 +26,52 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 	}
 	tests := []testCase{
 		{
+			desc:         "should work for orgs with specific scope",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"message":"Orgs config reloaded"}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningReload,
+					Scope:  ScopeProvisionersOrgs,
+				},
+			},
+			url: "/api/admin/provisioning/orgs/reload",
+			checkCall: func(mock provisioning.ProvisioningServiceMock) {
+				assert.Len(t, mock.Calls.ProvisionOrgs, 1)
+			},
+		},
+		{
+			desc:         "should work for orgs with broader scope",
+			expectedCode: http.StatusOK,
+			expectedBody: `{"message":"Orgs config reloaded"}`,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningReload,
+					Scope:  ScopeProvisionersAll,
+				},
+			},
+			url: "/api/admin/provisioning/orgs/reload",
+			checkCall: func(mock provisioning.ProvisioningServiceMock) {
+				assert.Len(t, mock.Calls.ProvisionOrgs, 1)
+			},
+		},
+		{
+			desc:         "should fail for orgs with wrong scope",
+			expectedCode: http.StatusForbidden,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: ActionProvisioningReload,
+					Scope:  "services:noservice",
+				},
+			},
+			url: "/api/admin/provisioning/orgs/reload",
+		},
+		{
+			desc:         "should fail for orgs with no permission",
+			expectedCode: http.StatusForbidden,
+			url:          "/api/admin/provisioning/orgs/reload",
+		},
+		{
 			desc:         "should work for dashboards with specific scope",
 			expectedCode: http.StatusOK,
 			expectedBody: `{"message":"Dashboards config reloaded"}`,

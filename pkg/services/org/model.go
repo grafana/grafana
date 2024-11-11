@@ -54,6 +54,7 @@ const (
 )
 
 type CreateOrgCommand struct {
+	ID   int64  `json:"id" xorm:"id"`
 	Name string `json:"name" binding:"Required"`
 
 	// initial admin user for account
