@@ -160,7 +160,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatus(cloudmigration.SnapshotStatusPendingProcessing)), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatus(cloudmigration.SnapshotStatusPendingProcessing)), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 		t.Cleanup(cleanupFunc)
 	})
@@ -174,7 +174,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusProcessing), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 		t.Cleanup(cleanupFunc)
 	})
@@ -188,7 +188,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusFinished), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 
 		t.Cleanup(cleanupFunc)
@@ -203,7 +203,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusCanceled), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 
 		t.Cleanup(cleanupFunc)
@@ -218,7 +218,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusError), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 
 		t.Cleanup(cleanupFunc)
@@ -235,7 +235,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		assert.NoError(t, err)
 		// snapshot status should remain unchanged
 
-		assert.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
@@ -266,7 +266,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == 1 }, time.Second, 10*time.Millisecond)
 
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
@@ -349,7 +349,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		assert.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
 	}
 	assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 }, time.Second, 10*time.Millisecond)
 }
