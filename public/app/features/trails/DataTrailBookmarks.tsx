@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -15,8 +15,15 @@ interface Props extends SceneComponentProps<DataTrailsHome> {
 }
 
 export function DataTrailsBookmarks({ model, onDelete }: Props) {
-  const [toggleBookmark, setToggleBookmark] = useState(false);
+  const [toggleBookmark, setToggleBookmark] = useState(() => {
+    const savedState = localStorage.getItem('toggleBookmark');
+    return savedState ? JSON.parse(savedState) : false;
+  });
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    localStorage.setItem('toggleBookmark', JSON.stringify(toggleBookmark));
+  }, [toggleBookmark]);
 
   if (getTrailStore().bookmarks.length === 0) {
     return null;
