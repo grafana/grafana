@@ -119,6 +119,8 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
+		// FIXME: Implement using new schema / apis
+
 		// FIXME: handle action with no scopes
 		if len(scopes) == 0 {
 			return false, nil
@@ -140,7 +142,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 			return false, errAccessNotImplemented
 		}
 
-		a.log.Debug("evaluating zanzana", "user", user.GetAuthID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
+		a.log.Debug("evaluating zanzana", "user", user.GetUID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
 		res, err := a.zclient.Check(ctx, user, *req)
 
 		if err != nil {
