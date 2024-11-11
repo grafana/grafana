@@ -162,7 +162,7 @@ func ProvideService(
 		s.authApiService = authapi.New(authapi.Config{ApiURL: "", Token: ""}, httpClientAuthApi)
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
+		s.gcomService = &gcomStub{}
 		s.authApiService = &authapiStub{policies: map[string]authapi.AccessPolicy{}, token: nil}
 		s.cfg.StackID = "12345"
 	}
