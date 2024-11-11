@@ -46,7 +46,7 @@ export const InfiniteScroll = ({
   );
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
-  const debouncedSetOnEdge = debounce(setOnEdge, 400);
+  const debouncedSetOnEdge = debounce(setOnEdge, 300);
 
   // Reset messages when range/order/rows change
   useEffect(() => {
@@ -110,8 +110,10 @@ export const InfiniteScroll = ({
 
     function scrollOnEdge(scrollElement: HTMLDivElement) {
       const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
+      const scrollTop = Math.round(scrollElement.scrollTop);
+      const diff = scrollSize - scrollTop;
       debouncedSetOnEdge.cancel();
-      if (scrollElement.scrollTop >= scrollSize || scrollElement.scrollTop <= 0) {
+      if (diff <= 1 || scrollTop <= 0) {
         debouncedSetOnEdge(true);
       } else {
         setOnEdge(false);
