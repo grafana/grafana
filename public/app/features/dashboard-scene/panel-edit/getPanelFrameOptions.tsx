@@ -15,7 +15,7 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
+export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',

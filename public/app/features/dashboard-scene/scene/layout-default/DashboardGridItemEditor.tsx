@@ -18,62 +18,78 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem) {
       title: 'Repeat by variable',
       description:
         'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-      render: function renderRepeatOptions() {
-        const { variableName } = gridItem.useState();
-
-        return (
-          <RepeatRowSelect2
-            id="repeat-by-variable-select"
-            sceneContext={gridItem}
-            repeat={variableName}
-            onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
-          />
-        );
-      },
+      render: () => <RepeatByOption gridItem={gridItem} />,
     })
   );
 
   category.addItem(
     new OptionsPaneItemDescriptor({
       title: 'Repeat direction',
-      showIf: () => Boolean(gridItem.state.variableName),
-      render: function renderRepeatOptions() {
-        const { repeatDirection } = gridItem.useState();
-
-        const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
-          { label: 'Horizontal', value: 'h' },
-          { label: 'Vertical', value: 'v' },
-        ];
-
-        return (
-          <RadioButtonGroup
-            options={directionOptions}
-            value={repeatDirection ?? 'h'}
-            onChange={(value) => gridItem.setState({ repeatDirection: value })}
-          />
-        );
+      useShowIf: () => {
+        const { variableName } = gridItem.useState();
+        return Boolean(variableName);
       },
+      render: () => <RepeatDirectionOption gridItem={gridItem} />,
     })
   );
 
   category.addItem(
     new OptionsPaneItemDescriptor({
       title: 'Max per row',
-      showIf: () => Boolean(gridItem.state.variableName && gridItem.state.repeatDirection === 'h'),
-      render: function renderOption() {
-        const { maxPerRow } = gridItem.useState();
-        const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
-
-        return (
-          <Select
-            options={maxPerRowOptions}
-            value={maxPerRow ?? 4}
-            onChange={(value) => gridItem.setState({ maxPerRow: value.value })}
-          />
-        );
+      useShowIf: () => {
+        const { variableName, repeatDirection } = gridItem.useState();
+        return Boolean(variableName) && repeatDirection === 'h';
       },
+      render: () => <MaxPerRowOption gridItem={gridItem} />,
     })
   );
 
   return category;
+}
+
+interface OptionComponentProps {
+  gridItem: DashboardGridItem;
+}
+
+function RepeatDirectionOption({ gridItem }: OptionComponentProps) {
+  const { repeatDirection } = gridItem.useState();
+
+  const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
+    { label: 'Horizontal', value: 'h' },
+    { label: 'Vertical', value: 'v' },
+  ];
+
+  return (
+    <RadioButtonGroup
+      options={directionOptions}
+      value={repeatDirection ?? 'h'}
+      onChange={(value) => gridItem.setState({ repeatDirection: value })}
+    />
+  );
+}
+
+function MaxPerRowOption({ gridItem }: OptionComponentProps) {
+  const { maxPerRow } = gridItem.useState();
+  const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+
+  return (
+    <Select
+      options={maxPerRowOptions}
+      value={maxPerRow ?? 4}
+      onChange={(value) => gridItem.setState({ maxPerRow: value.value })}
+    />
+  );
+}
+
+function RepeatByOption({ gridItem }: OptionComponentProps) {
+  const { variableName } = gridItem.useState();
+
+  return (
+    <RepeatRowSelect2
+      id="repeat-by-variable-select"
+      sceneContext={gridItem}
+      repeat={variableName}
+      onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
+    />
+  );
 }

@@ -229,7 +229,7 @@ export class DashboardGridItem
    */
   public isDashboardLayoutItem: true = true;
 
-  public getOptions?(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor {
     return getDashboardGridItemOptions(this);
   }
 

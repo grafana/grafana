@@ -94,11 +94,11 @@ export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
  */
 export interface DashboardLayoutItem extends SceneObject {
   /**
-   * Marks this object as a layout element
+   * Marks this object as a layout item
    */
   isDashboardLayoutItem: true;
   /**
-   * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
+   * Return layout item options (like repeat, repeat direction, etc for the default DashboardGridItem)
    */
   getOptions?(): OptionsPaneCategoryDescriptor;
 }
