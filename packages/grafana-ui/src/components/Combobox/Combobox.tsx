@@ -186,7 +186,7 @@ export const Combobox = <T extends string | number>({
       const customValueOption =
         createCustomValue &&
         inputValue &&
-        items.findIndex((opt) => opt.label?.includes(inputValue) || opt.value === inputValue) === -1
+        items.findIndex((opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue) === -1
           ? {
               label: t('combobox.custom-value.label', 'Custom value: ') + inputValue,
               // Type casting needed to make this work when T is a number
