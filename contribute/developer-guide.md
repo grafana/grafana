@@ -379,6 +379,14 @@ cat /proc/sys/fs/inotify/max_user_watches
 
 ### JavaScript heap out of memory while running `yarn start`
 
+Running `yarn start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
+
+```bash
+node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'
+```
+
+Increase the default heap memory to something greater than the currently allocated memory. Make sure the value is a multiple of `1024`.
+
 ```bash
 export NODE_OPTIONS="--max-old-space-size=8192"
 ```
@@ -388,8 +396,6 @@ Or on Windows:
 ```
 Set NODE_OPTIONS="--max-old-space-size=8192"
 ```
-
-Where values of `max-old-space-size` can be: `[2048, 4096, 8192, 16384]` etc.
 
 ### Getting `AggregateError` when building frontend tests
 
