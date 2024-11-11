@@ -352,29 +352,6 @@ describe('ExposedComponentsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(1);
   });
 
-  it('should not register component when description is missing', async () => {
-    const registry = new ExposedComponentsRegistry();
-
-    registry.register({
-      pluginId: 'grafana-basic-app',
-      configs: [
-        {
-          id: 'grafana-basic-app/hello-world/v1',
-          title: 'not important',
-          description: '',
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalledWith(
-      "Could not register exposed component with id 'grafana-basic-app/hello-world/v1'. Reason: Description is missing."
-    );
-
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(0);
-  });
-
   it('should not register component when title is missing', async () => {
     const registry = new ExposedComponentsRegistry();
 

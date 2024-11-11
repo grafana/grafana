@@ -29,7 +29,7 @@ describe('useServices', () => {
   it('returns services from datasource', async () => {
     const ds = {
       async metadataRequest(url) {
-        if (url === '/api/v2/services') {
+        if (url === 'services') {
           return Promise.resolve(['service1', 'service2']);
         }
         return undefined;
@@ -50,11 +50,11 @@ describe('useLoadOptions', () => {
   it('loads spans and traces', async () => {
     const ds = {
       async metadataRequest(url, params) {
-        if (url === '/api/v2/spans' && params?.serviceName === 'service1') {
+        if (url === 'spans' && params?.serviceName === 'service1') {
           return Promise.resolve(['span1', 'span2']);
         }
 
-        if (url === '/api/v2/traces' && params?.serviceName === 'service1' && params?.spanName === 'span1') {
+        if (url === 'traces' && params?.serviceName === 'service1' && params?.spanName === 'span1') {
           return Promise.resolve([[{ name: 'trace1', duration: 10_000, traceId: 'traceId1' }]]);
         }
         return undefined;
