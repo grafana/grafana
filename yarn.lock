@@ -3500,13 +3500,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/azure-sdk@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/azure-sdk@npm:0.0.4"
+"@grafana/azure-sdk@npm:0.0.5":
+  version: 0.0.5
+  resolution: "@grafana/azure-sdk@npm:0.0.5"
   dependencies:
     react-dom: "npm:^18.3.1"
     ts-jest: "npm:29.2.5"
-  checksum: 10/7cc4fe294704d27d223d2563ed71ace718fb6c76e94824d29b61936b5bd6fd27aaa4935234c18e25b1d53f0f514704b06afb7ebad43ba5ae776e5285d171f58b
+  checksum: 10/8080f0216540fdd47bae9a5b83966ae818a4af5222e8a98f9f07d4e2634ee2ec35fcbc5a51ff42e27c8546edf4e5a6b657d714beb59737ac7013b9f861beb3eb
   languageName: node
   linkType: hard
 
@@ -18731,7 +18731,7 @@ __metadata:
     "@formatjs/intl-durationformat": "npm:^0.5.0"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana/aws-sdk": "npm:0.5.0"
-    "@grafana/azure-sdk": "npm:0.0.4"
+    "@grafana/azure-sdk": "npm:0.0.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:8.0.0"
