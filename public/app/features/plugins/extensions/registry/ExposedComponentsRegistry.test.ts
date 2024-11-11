@@ -304,7 +304,7 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     expect(log.error).toHaveBeenCalledWith(
-      'Could not register exposed component extension. Reason: An exposed component with the same id already exists.'
+      'Could not register exposed component. Reason: An exposed component with the same id already exists.'
     );
     const currentState2 = await registry.getState();
     expect(Object.keys(currentState2)).toHaveLength(1);
@@ -325,7 +325,7 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     expect(log.error).toHaveBeenCalledWith(
-      "Could not register exposed component extension. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'."
+      "Could not register exposed component. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'."
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
@@ -346,7 +346,7 @@ describe('ExposedComponentsRegistry', () => {
       ],
     });
 
-    expect(log.error).toHaveBeenCalledWith('Could not register exposed component extension. Reason: Title is missing.');
+    expect(log.error).toHaveBeenCalledWith('Could not register exposed component. Reason: Title is missing.');
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);

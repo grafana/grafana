@@ -552,7 +552,7 @@ describe('Plugin Extension Validators', () => {
       expect(returnValue).toBe(true);
       expect(log.error).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.error).mock.calls[0][0]).toMatch(
-        'The extension was not recorded in the plugin.json. Exposed component extensions must be listed in the section "extensions.exposedComponents[]"'
+        'The exposed component was not recorded in the plugin.json. Exposed component extensions must be listed in the section "extensions.exposedComponents[]"'
       );
     });
 
