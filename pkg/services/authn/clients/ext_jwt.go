@@ -129,21 +129,22 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	// For use in service layer, allow higher privilege
-	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
+	namespace := accessTokenClaims.Rest.Namespace
 	if len(s.cfg.StackID) > 0 {
 		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
+		namespace = idTokenClaims.Rest.Namespace
 	}
 
 	return &authn.Identity{
 		ID:                id,
 		Type:              t,
+		UID:               id,
 		OrgID:             s.cfg.DefaultOrgID(),
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
 		AuthID:            accessTokenClaims.Subject,
-		Namespace:         allowedKubernetesNamespace,
+		Namespace:         namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
