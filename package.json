@@ -256,7 +256,7 @@
     "@formatjs/intl-durationformat": "^0.5.0",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana/aws-sdk": "0.5.0",
-    "@grafana/azure-sdk": "0.0.4",
+    "@grafana/azure-sdk": "0.0.5",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "2.1.2",
