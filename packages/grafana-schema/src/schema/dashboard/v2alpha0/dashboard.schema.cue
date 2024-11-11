@@ -38,7 +38,7 @@ DashboardSpec: {
   timeSettings: TimeSettingsSpec
 
   // Configured template variables.
-  variables: [...QueryVariableKind | TextVariableKind]
+  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupVariableKind | AdhocVariableKind]
 
   elements: [ElementReferenceKind.spec.name]: PanelKind // |* more element types in the future
 
@@ -72,7 +72,8 @@ DashboardLink: {
   // Title to display with the link
   title: string
   // Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
-  type: DashboardLinkType
+  // FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
+  type: DashboardLinkType | *"link"
   // Icon name to be displayed with the link
   icon: string
   // Tooltip to display when the user hovers their mouse over it
@@ -415,18 +416,6 @@ QueryGroupKind: {
   spec: QueryGroupSpec
 }
 
-QueryVariableSpec: {}
-QueryVariableKind: {
-  kind: "QueryVariable"
-  spec: QueryVariableSpec
-}
-
-TextVariableSpec: {}
-TextVariableKind: {
-  kind: "TextVariable"
-  spec: TextVariableSpec
-}
-
 // Time configuration
 // It defines the default time config for the time picker, the refresh picker for the specific dashboard.
 TimeSettingsSpec: {
@@ -497,4 +486,292 @@ ElementReferenceKind: {
 
 ElementReferenceSpec: {
   name: string
+}
+
+
+// Start FIXME: variables - in CUE PR - this are things that should be added into the cue schema
+// TODO: properties such as `hide`, `skipUrlSync`, `multi` are type boolean, and in the old schema they are conditional,
+// should we make them conditional in the new schema as well? or should we make them required but default to false?
+
+// Variable types
+VariableValue: VariableValueSingle | [...VariableValueSingle]
+
+VariableValueSingle: string | bool | number | CustomVariableValue
+
+// Custom formatter variable
+CustomFormatterVariable: {
+  name: string
+  type: VariableType
+  multi: bool
+  includeAll: bool
+}
+
+// Custom variable value
+CustomVariableValue: {
+  // The format name or function used in the expression
+  formatter: *null | string | VariableCustomFormatterFn
+}
+
+// Custom formatter function
+VariableCustomFormatterFn: {
+  value: _
+  legacyVariableModel: {
+    name: string
+    type: VariableType
+    multi: bool
+    includeAll: bool
+  }
+  legacyDefaultFormatter?: VariableCustomFormatterFn
+}
+
+// Dashboard variable type
+		// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+		// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
+		// `constant`: 	Define a hidden constant.
+		// `datasource`: Quickly change the data source for an entire dashboard.
+		// `interval`: Interval variables represent time spans.
+		// `textbox`: Display a free text input field with an optional default value.
+		// `custom`: Define the variable options manually using a comma-separated list.
+		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
+			"system" | "snapshot" @cog(kind="type")
+
+// Sort variable options
+// Accepted values are:
+// `0`: No sorting
+// `1`: Alphabetical ASC
+// `2`: Alphabetical DESC
+// `3`: Numerical ASC
+// `4`: Numerical DESC
+// `5`: Alphabetical Case Insensitive ASC
+// `6`: Alphabetical Case Insensitive DESC
+// `7`: Natural ASC
+// `8`: Natural DESC
+// VariableSort enum with default value
+// FIXME: I can't mark 0 as default
+VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cog(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
+
+// Options to config when to refresh a variable
+// `0`: Never refresh the variable
+// `1`: Queries the data source every time the dashboard loads.
+// `2`: Queries the data source when the dashboard time range changes.
+VariableRefresh: 0 | 1 | 2 @cog(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
+
+// Determine if the variable shows on dashboard
+// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+VariableHide: 0 | 1 | 2 @cog(kind="enum",memberNames="dontHide|hideLabel|hideVariable")
+
+
+// Variable value option
+VariableValueOption: {
+  label: string
+  value: VariableValueSingle
+  group?: string
+}
+
+// Query variable specification
+QueryVariableSpec: {
+  name: string | *""
+  value: VariableValue | *""
+  text: VariableValue | *""
+  current: VariableValueOption | *{
+    label: ""
+    value: ""
+  }
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+  datasource: DataSourceRef | *{}
+  query: string | DataQueryKind | *""
+  regex: string | *""
+  // FIXME: I can't set 0 as default
+  sort: VariableSort 
+  definition?: string
+  options: [...VariableValueOption] | *[]
+  isMulti: bool | *false
+  includeAll: bool | *false
+  allValue?: string
+  placeholder?: string
+}
+
+// Query variable kind
+QueryVariableKind: {
+  kind: "Query"
+  spec: QueryVariableSpec
+}
+
+// Text variable specification
+TextVariableSpec: {
+  name: string | *""
+  value: string | *""
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Text variable kind
+TextVariableKind: {
+  kind: "Text"
+  spec: TextVariableSpec
+}
+
+// Constant variable specification
+ConstantVariableSpec: {
+  name: string | *""
+  value: string | *""
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Constant variable kind
+ConstantVariableKind: {
+  kind: "Constant"
+  spec: ConstantVariableSpec
+}
+
+// Datasource variable specification
+DatasourceVariableSpec: {
+  name: string | *""
+  value: string | *""
+  text: string | *""
+  pluginId: string | *""
+  regex: string | *""
+  current: VariableValueOption | *{
+    label: ""
+    value: ""
+  }
+  defaultOptionEnabled: bool | *false
+  options: [...VariableValueOption] | *[]
+  isMulti: bool | *false
+  includeAll: bool | *false
+  allValue?: string
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Datasource variable kind
+DatasourceVariableKind: {
+  kind: "Datasource"
+  spec: DatasourceVariableSpec
+}
+
+// Interval variable specification
+IntervalVariableSpec: {
+  name: string | *""
+  value: string | *""
+  intervals: [...string] | *[]
+  current: VariableValueOption | *{
+    label: ""
+    value: ""
+  }
+  autoEnabled: bool | *false
+  autoMinInterval: string | *""
+  autoStepCount: int | *0
+  // FIXME: I can't set OnTimeRangeChanged as default
+  refresh: VariableRefresh 
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Interval variable kind
+IntervalVariableKind: {
+  kind: "Interval"
+  spec: IntervalVariableSpec
+}
+
+// Custom variable specification
+CustomVariableSpec: {
+  name: string | *""
+  value: VariableValue | *""
+  query: string | *""
+  text: VariableValue | *""
+  current: VariableValueOption | *{
+    label: ""
+    value: ""
+  }
+  options: [...VariableValueOption] | *[]
+  isMulti: bool | *false
+  includeAll: bool | *false
+  allValue?: string
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Custom variable kind
+CustomVariableKind: {
+  kind: "Custom"
+  spec: CustomVariableSpec
+}
+
+// Group variable specification
+GroupVariableSpec: {
+  name: string | *""
+  value: string | *""
+  datasource: DataSourceRef | *{}
+  current?: VariableValueOption
+  text: VariableValue | *""
+  options: [...VariableValueOption] | *[]
+  isMulti: bool | *false
+  includeAll: bool | *false
+  allValue?: string
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Group variable kind
+GroupVariableKind: {
+  kind: "GroupBy"
+  spec: GroupVariableSpec
+}
+
+// Adhoc variable specification
+AdhocVariableSpec: {
+  name: string | *""
+  datasource: DataSourceRef | *{}
+  baseFilters: [...AdHocFilterWithLabels] | *[]
+  filters: [...AdHocFilterWithLabels] | *[]
+  defaultKeys: [...MetricFindValue] | *[]
+  label?: string
+  hide: bool | *false
+  skipUrlSync: bool | *false
+  description?: string
+}
+
+// Define the MetricFindValue type
+MetricFindValue: {
+  text: string
+  value?: string | number
+  group?: string
+  expandable?: bool
+}
+
+// Define the AdHocFilterWithLabels type
+AdHocFilterWithLabels: {
+  key: string,
+  operator: string,
+  value: string,
+  values?: [...string],
+  keyLabel?: string,
+  valueLabels?: [...string],
+  forceEdit?: bool,
+  // @deprecated
+  condition?: string,
+}
+
+// Adhoc variable kind
+AdhocVariableKind: {
+  kind: "Adhoc"
+  spec: AdhocVariableSpec
 }
