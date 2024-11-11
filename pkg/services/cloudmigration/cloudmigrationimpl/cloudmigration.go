@@ -647,7 +647,7 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 		snapshot = updatedSnapshot
 	}
 
-	tick := time.NewTicker(5 * time.Second)
+	tick := time.NewTicker(10 * time.Second)
 	defer tick.Stop()
 
 	for snapshot.ShouldQueryGMS() {
