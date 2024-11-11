@@ -212,6 +212,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                 path.basename(process.cwd()),
                 '.eslintcache'
               ),
+              configType: 'flat',
             }),
           ]
         : []),
