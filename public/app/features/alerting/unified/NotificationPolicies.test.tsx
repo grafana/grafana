@@ -338,14 +338,6 @@ describe.each([
       `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
     );
   });
-
-  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
-    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
-    setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
-    renderNotificationPolicies(dataSources.mimir.name);
-
-    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
-  });
 });
 
 describe('Grafana alertmanager - config API', () => {
@@ -365,6 +357,14 @@ describe('Grafana alertmanager - config API', () => {
   });
 });
 describe('Non-Grafana alertmanagers', () => {
+  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
+    setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
+    renderNotificationPolicies(dataSources.mimir.name);
+
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
+  });
+
   it('Keeps matchers for non-grafana alertmanager sources', async () => {
     setAlertmanagerConfig(dataSources.am.uid, {
       alertmanager_config: {
