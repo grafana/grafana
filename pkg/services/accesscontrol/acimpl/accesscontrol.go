@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -116,9 +118,36 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		eval = evaluator
 	}
 
-	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		// FIXME: Implement using new schema / apis
-		return false, nil
+	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
+		// FIXME: handle action with no scopes
+		if len(scopes) == 0 {
+			return false, nil
+		}
+
+		resourceScope := scopes[0]
+		kind, _, identifier := accesscontrol.SplitScope(resourceScope)
+
+		// Parent folder always returned by scope resolver as a second value
+		var parentFolder string
+		if len(scopes) > 1 {
+			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
+		}
+
+		namespace := claims.OrgNamespaceFormatter(user.GetOrgID())
+		req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, parentFolder, identifier)
+		if !ok {
+			// unsupported translation
+			return false, errAccessNotImplemented
+		}
+
+		a.log.Debug("evaluating zanzana", "user", user.GetUID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
+		res, err := a.zclient.Check(ctx, user, *req)
+
+		if err != nil {
+			return false, err
+		}
+
+		return res.Allowed, nil
 	})
 }
 
