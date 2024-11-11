@@ -35,7 +35,7 @@ interface QueryVariableEditorFormProps {
   isMulti: boolean;
   onMultiChange: (event: FormEvent<HTMLInputElement>) => void;
   allowCustomValue?: boolean;
-  onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   includeAll: boolean;
   onIncludeAllChange: (event: FormEvent<HTMLInputElement>) => void;
   allValue: string;
