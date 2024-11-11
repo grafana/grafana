@@ -206,7 +206,7 @@ func TestZipkinClient_Traces(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/v2/traces", r.URL.Path)
 				w.WriteHeader(tt.mockStatusCode)
-				w.Write(response)
+				_, _ = w.Write(response)
 			}))
 			defer server.Close()
 
