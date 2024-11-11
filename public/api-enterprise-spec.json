@@ -7823,7 +7823,6 @@
           }
         },
         "teamId": {
-          "description": "Deprecated: Use TeamUID instead.",
           "type": "string"
         },
         "teamUid": {
