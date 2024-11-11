@@ -119,8 +119,6 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
-		// FIXME: Implement using new schema / apis
-
 		// FIXME: handle action with no scopes
 		if len(scopes) == 0 {
 			return false, nil
