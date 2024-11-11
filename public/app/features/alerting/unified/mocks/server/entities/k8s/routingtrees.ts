@@ -72,4 +72,22 @@ export const getUserDefinedRoutingTree: (
   };
 };
 
-export const ROUTING_TREE_MAP = new Map([[ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig)]]);
+const getDefaultRoutingTreeMap = () =>
+  new Map([[ROOT_ROUTE_NAME, getUserDefinedRoutingTree(grafanaAlertmanagerConfig)]]);
+
+let ROUTING_TREE_MAP = getDefaultRoutingTreeMap();
+
+export const getRoutingTree = (treeName: string) => {
+  return ROUTING_TREE_MAP.get(treeName);
+};
+
+export const setRoutingTree = (
+  treeName: string,
+  updatedRoutingTree: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
+) => {
+  return ROUTING_TREE_MAP.set(treeName, updatedRoutingTree);
+};
+
+export const resetRoutingTreeMap = () => {
+  ROUTING_TREE_MAP = getDefaultRoutingTreeMap();
+};

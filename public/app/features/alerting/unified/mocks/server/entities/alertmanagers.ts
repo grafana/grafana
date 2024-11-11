@@ -1,7 +1,7 @@
 import grafanaAlertmanagerConfig from 'app/features/alerting/unified/mocks/server/entities/alertmanager-config/grafana-alertmanager-config';
 import {
   getUserDefinedRoutingTree,
-  ROUTING_TREE_MAP,
+  setRoutingTree,
 } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
@@ -32,7 +32,7 @@ export const setAlertmanagerConfig = (alertmanagerName: string, config: AlertMan
 
   if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
     const routingTree = getUserDefinedRoutingTree(config);
-    ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, routingTree);
+    setRoutingTree(ROOT_ROUTE_NAME, routingTree);
   }
 };
 
