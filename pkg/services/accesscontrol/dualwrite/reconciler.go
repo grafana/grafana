@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -12,7 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
-var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/reconciler")
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
+
+// A TupleCollector is responsible to build and store [openfgav1.TupleKey] into provided tuple map.
+// They key used should be a unique group key for the collector so we can skip over an already synced group.
+type TupleCollector func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
@@ -20,6 +26,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/reconcile
 type ZanzanaReconciler struct {
 	lock   *serverlock.ServerLockService
 	log    log.Logger
+	store  db.DB
 	client zanzana.Client
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
@@ -31,6 +38,7 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 		client: client,
 		lock:   lock,
 		log:    log.New("zanzana.reconciler"),
+		store:  store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
 				"team memberships",
@@ -93,23 +101,47 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 }
 
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
-	run := func(ctx context.Context) {
+	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
 		for _, reconciler := range r.reconcilers {
-			if err := reconciler.reconcile(ctx); err != nil {
+			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
 		}
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
-	if r.lock == nil {
-		run(ctx)
+	orgIds, err := r.getOrgs(ctx)
+	if err != nil {
 		return
 	}
 
-	// We ignore the error for now
-	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-		run(ctx)
+	for _, orgId := range orgIds {
+		ns := claims.OrgNamespaceFormatter(orgId)
+
+		if r.lock == nil {
+			run(ctx, ns)
+			return
+		}
+
+		// We ignore the error for now
+		_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+			run(ctx, ns)
+		})
+	}
+}
+
+func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {
+	orgs := make([]int64, 0)
+	err := r.store.WithDbSession(ctx, func(sess *db.Session) error {
+		q := "SELECT id FROM org"
+		if err := sess.SQL(q).Find(&orgs); err != nil {
+			return err
+		}
+		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return orgs, nil
 }
