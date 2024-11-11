@@ -1,8 +1,8 @@
 import { InitialEntry } from 'history';
 import { last } from 'lodash';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render, screen, userEvent, within } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { render, within, userEvent, screen } from 'test/test-utils';
+import { byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -48,20 +48,15 @@ const dataSources = {
 };
 
 const ui = {
-  form: byTestId('mute-timing-form'),
   nameField: byTestId('mute-timing-name'),
 
   startsAt: byTestId('mute-timing-starts-at'),
   endsAt: byTestId('mute-timing-ends-at'),
-  addTimeRange: byRole('button', { name: /add another time range/i }),
 
   weekdays: byTestId('mute-timing-weekdays'),
   days: byTestId('mute-timing-days'),
   months: byTestId('mute-timing-months'),
   years: byTestId('mute-timing-years'),
-
-  addInterval: byRole('button', { name: /add another time interval/i }),
-  submitButton: byText(/submit/i),
 };
 
 const muteTimeInterval: MuteTimeInterval = {
