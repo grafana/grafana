@@ -66,11 +66,11 @@ func (z *ZipkinClient) Spans(serviceName string) ([]string, error) {
 
 	res, err := z.httpClient.Get(spansUrl)
 	defer func() {
-    	if res != nil {
-		    if err = res.Body.Close(); err != nil {
-			     z.logger.Error("Failed to close response body", "error", err)
-		    }
-    	}
+		if res != nil {
+			if err = res.Body.Close(); err != nil {
+				z.logger.Error("Failed to close response body", "error", err)
+			}
+		}
 	}()
 	if err != nil {
 		return spans, err
@@ -98,11 +98,11 @@ func (z *ZipkinClient) Traces(serviceName string, spanName string) ([][]model.Sp
 
 	res, err := z.httpClient.Get(tracesUrl)
 	defer func() {
-    	if res != nil {
-		    if err = res.Body.Close(); err != nil {
-			     z.logger.Error("Failed to close response body", "error", err)
-		    }
-    	}
+		if res != nil {
+			if err = res.Body.Close(); err != nil {
+				z.logger.Error("Failed to close response body", "error", err)
+			}
+		}
 	}()
 	if err != nil {
 		return traces, err
@@ -128,11 +128,11 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 
 	res, err := z.httpClient.Get(traceUrl)
 	defer func() {
-    	if res != nil {
-		    if err = res.Body.Close(); err != nil {
-			     z.logger.Error("Failed to close response body", "error", err)
-		    }
-    	}
+		if res != nil {
+			if err = res.Body.Close(); err != nil {
+				z.logger.Error("Failed to close response body", "error", err)
+			}
+		}
 	}()
 	if err != nil {
 		return trace, err
