@@ -160,7 +160,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			SessionUID:  sess.UID,
 		})
 		assert.NoError(t, err)
-		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatus(cloudmigration.SnapshotStatusPendingProcessing)), time.Second, 10*time.Millisecond)
+		require.Eventually(t, checkStatusSync(cloudmigration.SnapshotStatusPendingProcessing), time.Second, 10*time.Millisecond)
 		assert.Equal(t, 1, gmsClientMock.GetSnapshotStatusCallCount())
 		t.Cleanup(cleanupFunc)
 	})
@@ -228,7 +228,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		gmsClientMock.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
 			State: cloudmigration.SnapshotStateUnknown,
 		}
-		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
 		})
@@ -261,7 +261,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		}
 
 		// ensure it is persisted
-		snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
+		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: uid,
 			SessionUID:  sess.UID,
 		})
