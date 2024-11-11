@@ -331,6 +331,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [panelState?.logs?.visualisationType]);
 
   useEffect(() => {
+    let displayedFields: string[] = [];
+    if (Array.isArray(panelState?.logs?.displayedFields)) {
+      displayedFields = panelState?.logs?.displayedFields;
+    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
+      displayedFields = Object.values(panelState?.logs?.displayedFields);
+    }
+    setDisplayedFields(displayedFields);
+  }, [panelState?.logs?.displayedFields]);
+
+  useEffect(() => {
     registerLogLevelsWithContentOutline();
   }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
 
@@ -353,6 +363,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           visualisationType: visualisationType,
           labelFieldName: undefined,
           refId: undefined,
+          displayedFields: undefined,
         })
       );
     }
@@ -369,11 +380,19 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
+            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
           })
         );
       }
     },
-    [dispatch, exploreId, panelState?.logs?.columns, panelState?.logs?.refId, visualisationType]
+    [
+      dispatch,
+      exploreId,
+      panelState?.logs?.columns,
+      panelState?.logs?.displayedFields,
+      panelState?.logs?.refId,
+      visualisationType,
+    ]
   );
 
   // actions
@@ -559,20 +578,32 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const index = displayedFields.indexOf(key);
 
       if (index === -1) {
-        setDisplayedFields(displayedFields.concat(key));
+        const updatedDisplayedFields = displayedFields.concat(key);
+        setDisplayedFields(updatedDisplayedFields);
+        const payload = {
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        };
+        updatePanelState(payload);
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields.indexOf(key);
       if (index > -1) {
-        setDisplayedFields(displayedFields.filter((k) => key !== k));
+        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
+        setDisplayedFields(updatedDisplayedFields);
+        const payload = {
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        };
+        updatePanelState(payload);
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const clearDetectedFields = useCallback(() => {
@@ -658,7 +689,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
     urlState.panelsState = {
       ...panelState,
-      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType() },
+      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
     };
     urlState.range = getPermalinkRange(row);
 
