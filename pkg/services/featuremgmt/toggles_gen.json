@@ -1566,12 +1566,15 @@
     {
       "metadata": {
         "name": "groupAttributeSync",
-        "resourceVersion": "1725893018130",
-        "creationTimestamp": "2024-09-09T15:29:43Z"
+        "resourceVersion": "1731087176211",
+        "creationTimestamp": "2024-09-09T15:29:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-08 17:32:56.21158 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
       }
