@@ -10,7 +10,6 @@ import {
   LogRowModel,
   LogsMetaItem,
   DataFrame,
-  DataQuery,
   AbsoluteTimeRange,
   GrafanaTheme2,
   LoadingState,
@@ -37,6 +36,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -79,7 +79,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -221,6 +221,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
+  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -394,6 +395,20 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       visualisationType,
     ]
   );
+
+  useEffect(() => {
+    if (!prevLogsQueries) {
+      // Initial load, ignore
+      return;
+    }
+    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
+      setDisplayedFields([]);
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: [],
+      });
+    }
+  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -580,11 +595,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index === -1) {
         const updatedDisplayedFields = displayedFields.concat(key);
         setDisplayedFields(updatedDisplayedFields);
-        const payload = {
+        updatePanelState({
           ...panelState?.logs,
           displayedFields: updatedDisplayedFields,
-        };
-        updatePanelState(payload);
+        });
       }
     },
     [displayedFields, panelState?.logs, updatePanelState]
@@ -596,11 +610,10 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       if (index > -1) {
         const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
         setDisplayedFields(updatedDisplayedFields);
-        const payload = {
+        updatePanelState({
           ...panelState?.logs,
           displayedFields: updatedDisplayedFields,
-        };
-        updatePanelState(payload);
+        });
       }
     },
     [displayedFields, panelState?.logs, updatePanelState]
