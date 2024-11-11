@@ -1,4 +1,5 @@
 import {
+  cacheFieldDisplayNames,
   DataFrame,
   FALLBACK_COLOR,
   Field,
@@ -6,34 +7,35 @@ import {
   FieldConfig,
   FieldType,
   formattedValueToString,
+  getActiveThreshold,
+  getFieldConfigWithMinMax,
   getFieldDisplayName,
+  getTimeField,
   getValueFormat,
   GrafanaTheme2,
-  getActiveThreshold,
+  outerJoinDataFrames,
   Threshold,
-  getFieldConfigWithMinMax,
+  ThresholdsConfig,
   ThresholdsMode,
   TimeRange,
-  cacheFieldDisplayNames,
-  outerJoinDataFrames,
   ValueMapping,
-  ThresholdsConfig,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
-  VizLegendOptions,
   AxisPlacement,
+  HideableFieldConfig,
+  LegendDurationMode,
+  MappingType,
   ScaleDirection,
   ScaleOrientation,
-  VisibilityMode,
   TimelineValueAlignment,
-  HideableFieldConfig,
-  MappingType,
+  VisibilityMode,
+  VizLegendOptions,
 } from '@grafana/schema';
 import { FIXED_UNIT, UPlotConfigBuilder, UPlotConfigPrepFn, VizLegendItem } from '@grafana/ui';
-import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
+import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
 
@@ -566,16 +568,22 @@ export function prepareTimelineLegendItems(
     return undefined;
   }
 
-  return getFieldLegendItem(allNonTimeFields(frames), options, theme);
+  return getFieldLegendItem(frames, options, theme);
 }
 
-export function getFieldLegendItem(fields: Field[], options: VizLegendOptions, theme: GrafanaTheme2): VizLegendItem[] | undefined {
-  if (!fields.length) {
+export function getFieldLegendItem(
+  frames: DataFrame[],
+  options: VizLegendOptions,
+  theme: GrafanaTheme2
+): VizLegendItem[] | undefined {
+  const valueFields = allNonTimeFields(frames);
+
+  if (!valueFields.length) {
     return undefined;
   }
 
   const items: VizLegendItem[] = [];
-  const fieldConfig = fields[0].config;
+  const fieldConfig = valueFields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
   const thresholds = fieldConfig.thresholds;
 
@@ -592,24 +600,58 @@ export function getFieldLegendItem(fields: Field[], options: VizLegendOptions, t
 
   const stateColors: Map<string, string | undefined> = new Map();
   const stateCounts: Map<string, number> = new Map();
+  const stateDurationRange: Map<string, { from: number; to: number }> = new Map();
 
-  fields.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.legend) {
-      field.values.forEach((v) => {
-        let state = field.display!(v);
-        if (state.color) {
-          stateCounts.set(state.text, (stateCounts.get(state.text) ?? 0) + 1);
-          stateColors.set(state.text, state.color!);
-        }
-      });
-    }
+  frames.forEach((frame) => {
+    const timeField = getTimeField(frame);
+    const valueFields = allNonTimeFields([frame]);
+
+    valueFields.forEach((field) => {
+      if (!field.config.custom?.hideFrom?.legend) {
+        field.values.forEach((v, index) => {
+          let state = field.display!(v);
+          if (state.color) {
+            stateCounts.set(state.text, (stateCounts.get(state.text) ?? 0) + 1);
+            stateColors.set(state.text, state.color!);
+
+            const timeMs = timeField?.timeField?.values[index];
+
+            if (typeof timeMs === 'number') {
+              const durationRange = stateDurationRange.get(state.text);
+              stateDurationRange.set(state.text, {
+                from: durationRange?.from !== undefined ? Math.min(durationRange.from, timeMs) : timeMs,
+                to: durationRange?.to !== undefined ? Math.max(durationRange.to, timeMs) : timeMs,
+              });
+            }
+          }
+        });
+      }
+    });
   });
 
   const allValuesCount = [...stateCounts.values()].reduce((acc, value) => acc + value, 0);
 
   stateColors.forEach((color, label) => {
     if (label.length > 0) {
-      const suffix = options.showStatePercentage ? ` (${Math.floor((stateCounts.get(label) ?? 0) * 100 / allValuesCount)}%)` : ''
+      let suffix = '';
+
+      switch (options.duration) {
+        case LegendDurationMode.Percentage: {
+          suffix = ` (${Math.floor(((stateCounts.get(label) ?? 0) * 100) / allValuesCount)}%)`;
+          break;
+        }
+        case LegendDurationMode.Time: {
+          const stateRange = stateDurationRange.get(label);
+          const duration = stateRange ? fmtDuration(stateRange.to - stateRange.from) : '';
+
+          if (duration) {
+            suffix = ` (${duration})`;
+          }
+
+          break;
+        }
+      }
+
       items.push({
         label: label! + suffix,
         color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),

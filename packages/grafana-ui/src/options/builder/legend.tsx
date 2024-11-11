@@ -1,5 +1,5 @@
 import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
-import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
+import { LegendDisplayMode, LegendDurationMode, OptionsWithLegend } from '@grafana/schema';
 
 /**
  * @alpha
@@ -8,7 +8,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,
   showLegend = true,
-  includeStatePercentage = false,
+  includeDuration = false
 ) {
   builder
     .addBooleanSwitch({
@@ -72,13 +72,29 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     });
   }
 
-  if (includeStatePercentage) {
-    builder.addBooleanSwitch({
-      path: 'legend.showStatePercentage',
-      name: 'State Percentage',
+  if (includeDuration) {
+    builder.addRadio({
+      path: 'legend.duration',
+      name: 'Duration',
       category: ['Legend'],
       description: '',
-      defaultValue: false,
+      defaultValue: LegendDurationMode.Off,
+      settings: {
+        options: [
+          {
+            value: LegendDurationMode.Off,
+            label: 'Off',
+          },
+          {
+            value: LegendDurationMode.Percentage,
+            label: 'Percentage',
+          },
+          {
+            value: LegendDurationMode.Time,
+            label: 'Time',
+          },
+        ],
+      },
     });
   }
 }

@@ -1,15 +1,19 @@
 import {
   createTheme,
+  DataFrame,
+  dateTime,
+  FieldMatcherID,
+  fieldMatchers,
   FieldType,
   ThresholdsMode,
   TimeRange,
   toDataFrame,
-  dateTime,
-  DataFrame,
-  fieldMatchers,
-  FieldMatcherID,
+  Field,
+  getDisplayProcessor,
+  MappingType,
+  ValueMapping,
 } from '@grafana/data';
-import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
+import { LegendDisplayMode, LegendDurationMode, VizLegendOptions } from '@grafana/schema';
 
 import { preparePlotFrame } from '../GraphNG/utils';
 
@@ -405,6 +409,21 @@ describe('getThresholdItems', () => {
 });
 
 describe('prepareTimelineLegendItems', () => {
+  const createFieldWithDisplay = (field: Partial<Field>): Field => {
+    const finalField: Field = {
+      name: 'test',
+      type: FieldType.number,
+      config: {},
+      values: [],
+      display: (v) => getDisplayProcessor({ field: finalField, theme: createTheme() })(v),
+      ...field,
+    };
+    const frame = toDataFrame({
+      fields: [finalField],
+    });
+
+    return frame.fields[0];
+  };
   it('should return legend items without crashing when single (base) threshold', () => {
     const frames = [
       {
@@ -470,6 +489,228 @@ describe('prepareTimelineLegendItems', () => {
     );
 
     expect(result).toHaveLength(1);
+  });
+
+  it('should return legend items based on value mappings with percentage duration', () => {
+    const mappings: ValueMapping[] = [
+      {
+        options: {
+          from: 0,
+          to: 80,
+          result: {
+            color: '#00ff00',
+            index: 0,
+            text: 'Ok',
+          },
+        },
+        type: MappingType.RangeToText,
+      },
+      {
+        options: {
+          from: 80,
+          to: 100,
+          result: {
+            color: '#ff0000',
+            index: 1,
+            text: 'Error',
+          },
+        },
+        type: MappingType.RangeToText,
+      },
+    ];
+
+    const frames = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          createFieldWithDisplay({
+            name: 'time',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.time,
+            values: [
+              1634092733455, 1634092763455, 1634092793455, 1634092823455, 1634092853455, 1634092883455, 1634092913455,
+              1634092943455, 1634092973455, 1634093003455,
+            ],
+          }),
+          createFieldWithDisplay({
+            name: 'A-series',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.number,
+            values: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+          }),
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        duration: LegendDurationMode.Percentage,
+        showLegend: true,
+      } as VizLegendOptions,
+      theme
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result).toEqual([
+      {
+        color: mappings[0].options.result.color,
+        label: 'Ok (80%)',
+        yAxis: 1,
+      },
+      {
+        color: mappings[1].options.result.color,
+        label: 'Error (20%)',
+        yAxis: 1,
+      },
+    ]);
+  });
+
+  it('should return legend items based on value mappings with time duration', () => {
+    const mappings: ValueMapping[] = [
+      {
+        options: {
+          from: 0,
+          to: 80,
+          result: {
+            color: '#00ff00',
+            index: 0,
+            text: 'Ok',
+          },
+        },
+        type: MappingType.RangeToText,
+      },
+      {
+        options: {
+          from: 80,
+          to: 100,
+          result: {
+            color: '#ff0000',
+            index: 1,
+            text: 'Error',
+          },
+        },
+        type: MappingType.RangeToText,
+      },
+    ];
+
+    const fromDate = dateTime();
+    const getTimeWithSecondsOffset = (diffInSeconds: number): number => {
+      return dateTime(fromDate).add(diffInSeconds, 'seconds').valueOf();
+    };
+
+    const frames = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          createFieldWithDisplay({
+            name: 'time',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.time,
+            values: [
+              /**
+               * Ok State
+               */
+              getTimeWithSecondsOffset(0),
+              getTimeWithSecondsOffset(30),
+              getTimeWithSecondsOffset(60),
+              getTimeWithSecondsOffset(90),
+              getTimeWithSecondsOffset(120),
+              getTimeWithSecondsOffset(150),
+              getTimeWithSecondsOffset(180),
+              getTimeWithSecondsOffset(210),
+
+              /**
+               * Error State
+               */
+              getTimeWithSecondsOffset(240),
+              getTimeWithSecondsOffset(270),
+            ],
+          }),
+          createFieldWithDisplay({
+            name: 'A-series',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.number,
+            values: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+          }),
+        ],
+      }),
+      /**
+       * Add another frame with value and time fields to check if time duration is taken from value field's frame
+       */
+      toDataFrame({
+        refId: 'B',
+        fields: [
+          createFieldWithDisplay({
+            name: 'time',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.time,
+            values: [getTimeWithSecondsOffset(215), getTimeWithSecondsOffset(275)],
+          }),
+          createFieldWithDisplay({
+            name: 'A-series',
+            config: {
+              color: {
+                mode: 'shades',
+              },
+              mappings,
+            },
+            type: FieldType.number,
+            values: [10, 90],
+          }),
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      {
+        displayMode: LegendDisplayMode.List,
+        duration: LegendDurationMode.Time,
+        showLegend: true,
+      } as VizLegendOptions,
+      theme
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result).toEqual([
+      {
+        color: mappings[0].options.result.color,
+        label: 'Ok (3m 35s)',
+        yAxis: 1,
+      },
+      {
+        color: mappings[1].options.result.color,
+        label: 'Error (35s)',
+        yAxis: 1,
+      },
+    ]);
   });
 });
 
