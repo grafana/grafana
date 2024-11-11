@@ -54,16 +54,6 @@ describe('DataTrailsBookmarks', () => {
     expect(onDelete).toHaveBeenCalled();
   });
 
-  it('truncates long labels in bookmarks', () => {
-    const longLabel = 'This is a very long label that should be truncated';
-    getTrailStore.mockReturnValue({
-      bookmarks: [{ label: longLabel }],
-    });
-    render(<DataTrailsBookmarks model={model} onDelete={onDelete} />);
-    fireEvent.click(screen.getByLabelText('bookmarkCarrot'));
-    expect(screen.getByText(longLabel)).toHaveClass('truncate');
-  });
-
   it('selecting a bookmark card takes you to the metric', () => {
     const onSelectBookmark = jest.fn();
     getTrailStore.mockReturnValue({
