@@ -7,17 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 func teamMembershipCollector(store db.DB) legacyTupleCollector {
-	return func(ctx context.Context, orgId int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
 			SELECT t.uid as team_uid, u.uid as user_uid, tm.permission
 			FROM team_member tm
 			INNER JOIN team t ON tm.team_id = t.id
 			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON tm.user_id = u.id
+			WHERE org_id = ?
 		`
 
 		type membership struct {
@@ -28,7 +28,7 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 
 		var memberships []membership
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&memberships)
+			return sess.SQL(query, orgID).Find(&memberships)
 		})
 
 		if err != nil {
@@ -63,22 +63,21 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 
 // folderTreeCollector collects folder tree structure and writes it as relation tuples
 func folderTreeCollector(store db.DB) legacyTupleCollector {
-	return func(ctx context.Context, orgId int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		ctx, span := tracer.Start(ctx, "accesscontrol.migrator.folderTreeCollector")
 		defer span.End()
 
 		const query = `
-			SELECT uid, parent_uid, org_id FROM folder
+			SELECT uid, parent_uid, org_id FROM folder WHERE org_id = ?
 		`
 		type folder struct {
-			OrgID     int64  `xorm:"org_id"`
 			FolderUID string `xorm:"uid"`
 			ParentUID string `xorm:"parent_uid"`
 		}
 
 		var folders []folder
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&folders)
+			return sess.SQL(query, orgID).Find(&folders)
 		})
 
 		if err != nil {
@@ -94,9 +93,9 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 			}
 
 			tuple = &openfgav1.TupleKey{
-				Object:   zanzana.NewTupleEntry(common.TypeFolder, f.FolderUID, ""),
+				Object:   zanzana.NewTupleEntry(zanzana.TypeFolder, f.FolderUID, ""),
 				Relation: zanzana.RelationParent,
-				User:     zanzana.NewTupleEntry(common.TypeFolder, f.ParentUID, ""),
+				User:     zanzana.NewTupleEntry(zanzana.TypeFolder, f.ParentUID, ""),
 			}
 
 			if tuples[tuple.Object] == nil {
@@ -114,7 +113,7 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 // It will only store actions that are supported by our schema. Managed permissions can
 // be directly mapped to user/team/role without having to write an intermediate role.
 func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector {
-	return func(ctx context.Context, orgId int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
 			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
 			FROM permission p
@@ -125,11 +124,11 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			LEFT JOIN team t ON tr.team_id = t.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
 			WHERE r.name LIKE 'managed:%'
+			AND r.org_id = ?
 			AND p.kind = ?
 		`
 		type Permission struct {
 			RoleName   string `xorm:"role_name"`
-			OrgID      int64  `xorm:"org_id"`
 			Action     string `xorm:"action"`
 			Kind       string
 			Identifier string
@@ -139,7 +138,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 
 		var permissions []Permission
 		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query, kind).Find(&permissions)
+			return sess.SQL(query, orgID, kind).Find(&permissions)
 		})
 
 		if err != nil {
@@ -230,7 +229,7 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 				first.Tuples = append(first.Tuples, res.Tuples...)
 			}
 
-			return common.ToOpenFGATuples(first.Tuples), nil
+			return zanzana.ToOpenFGATuples(first.Tuples), nil
 		}
 
 		out := make(map[string]*openfgav1.TupleKey)

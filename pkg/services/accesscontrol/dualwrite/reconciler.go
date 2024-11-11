@@ -2,42 +2,42 @@ package dualwrite
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/accesscontrol/migrator")
-
-// A TupleCollector is responsible to build and store [openfgav1.TupleKey] into provided tuple map.
-// They key used should be a unique group key for the collector so we can skip over an already synced group.
-type TupleCollector func(ctx context.Context, namespace string, tuples map[string][]*openfgav1.TupleKey) error
 
 // ZanzanaReconciler is a component to reconcile RBAC permissions to zanzana.
 // We should rewrite the migration after we have "migrated" all possible actions
 // into our schema.
 type ZanzanaReconciler struct {
-	lock   *serverlock.ServerLockService
-	log    log.Logger
+	cfg *setting.Cfg
+	log log.Logger
+
 	store  db.DB
 	client zanzana.Client
+	lock   *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
+func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
 	return &ZanzanaReconciler{
+		cfg:    cfg,
+		log:    log.New("zanzana.reconciler"),
 		client: client,
 		lock:   lock,
-		log:    log.New("zanzana.reconciler"),
 		store:  store,
 		reconcilers: []resourceReconciler{
 			newResourceReconciler(
@@ -68,23 +68,10 @@ func NewZanzanaReconciler(client zanzana.Client, store db.DB, lock *serverlock.S
 	}
 }
 
-// Sync runs all collectors and tries to write all collected tuples.
-// It will skip over any "sync group" that has already been written.
-func (r *ZanzanaReconciler) Sync(ctx context.Context) error {
-	r.log.Info("Starting zanzana permissions sync")
-	ctx, span := tracer.Start(ctx, "accesscontrol.migrator.Sync")
-	defer span.End()
-
-	r.reconcile(ctx)
-
-	return nil
-}
-
 // Reconcile schedules as job that will run and reconcile resources between
 // legacy access control and zanzana.
 func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
-	// FIXME: try to reconcile at start whenever we have moved all syncs to reconcilers
-	// r.reconcile(ctx)
+	r.reconcile(ctx)
 
 	// FIXME:
 	// 1. We should be a bit graceful about reconciliations so we are not hammering dbs
@@ -111,24 +98,40 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 		r.log.Debug("Finished reconciliation", "elapsed", time.Since(now))
 	}
 
-	orgIds, err := r.getOrgs(ctx)
-	if err != nil {
-		return
-	}
-
-	for _, orgId := range orgIds {
-		ns := claims.OrgNamespaceFormatter(orgId)
-
-		if r.lock == nil {
-			run(ctx, ns)
+	var namespaces []string
+	if r.cfg.StackID != "" {
+		id, err := strconv.ParseInt(r.cfg.StackID, 10, 64)
+		if err != nil {
+			r.log.Error("cannot perform reconciliation, malformed stack id", "id", r.cfg.StackID, "err", err)
 			return
 		}
 
-		// We ignore the error for now
-		_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
-			run(ctx, ns)
-		})
+		namespaces = []string{claims.CloudNamespaceFormatter(id)}
+	} else {
+		ids, err := r.getOrgs(ctx)
+		if err != nil {
+			r.log.Error("cannot perform reconciliation, failed to fetch orgs", "err", err)
+			return
+		}
+
+		for _, id := range ids {
+			namespaces = append(namespaces, claims.OrgNamespaceFormatter(id))
+		}
 	}
+
+	if r.lock == nil {
+		for _, ns := range namespaces {
+			run(ctx, ns)
+		}
+		return
+	}
+
+	// We ignore the error for now
+	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+		for _, ns := range namespaces {
+			run(ctx, ns)
+		}
+	})
 }
 
 func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {

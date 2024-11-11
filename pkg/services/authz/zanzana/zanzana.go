@@ -84,6 +84,18 @@ const (
 	GlobalOrgID = 0
 )
 
+var (
+	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
+	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
+	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
+	ToAuthzExtTupleKeysWithoutCondition = common.ToAuthzExtTupleKeysWithoutCondition
+
+	ToOpenFGATuple                    = common.ToOpenFGATuple
+	ToOpenFGATuples                   = common.ToOpenFGATuples
+	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
+	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+)
+
 // NewTupleEntry constructs new openfga entry type:id[#relation].
 // Relation allows to specify group of users (subjects) related to type:id
 // (for example, team:devs#member refers to users which are members of team devs)
@@ -130,15 +142,4 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va := a.Condition.Context.Fields["group_resources"]
 	vb := b.Condition.Context.Fields["group_resources"]
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
-}
-
-func TranslateFixedRole(role string) string {
-	role = strings.ReplaceAll(role, ":", "_")
-	role = strings.ReplaceAll(role, ".", "_")
-	return role
-}
-
-// Translate "read" for the dashboard into "dashboard_read" for folder
-func TranslateToFolderRelation(relation, objectType string) string {
-	return fmt.Sprintf("%s_%s", objectType, relation)
 }
