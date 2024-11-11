@@ -21,7 +21,6 @@ import {
   Button,
 } from '@grafana/ui';
 
-import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
 import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
 
@@ -147,11 +146,9 @@ export function useServices(
   datasource: ZipkinDatasource,
   setErrorText: (text: string) => void
 ): AsyncState<CascaderOption[]> {
-  const url = `${apiPrefix}/services`;
-
   const [servicesOptions, fetch] = useAsyncFn(async (): Promise<CascaderOption[]> => {
     try {
-      const services: string[] | null = await datasource.metadataRequest(url);
+      const services: string[] | null = await datasource.metadataRequest('services');
       if (services) {
         return services.sort().map((service) => ({
           label: service,
@@ -191,12 +188,11 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
 
   const [, fetchSpans] = useAsyncFn(
     async function findSpans(service: string): Promise<void> {
-      const url = `${apiPrefix}/spans`;
       try {
         // The response of this should have been full ZipkinSpan objects based on API docs but is just list
         // of span names.
         // TODO: check if this is some issue of version used or something else
-        const response: string[] = await datasource.metadataRequest(url, { serviceName: service });
+        const response: string[] = await datasource.metadataRequest('spans', { serviceName: service });
         if (isMounted()) {
           setAllOptions((state) => {
             const spanOptions = fromPairs(response.map((span: string) => [span, undefined]));
@@ -218,7 +214,6 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
 
   const [, fetchTraces] = useAsyncFn(
     async function findTraces(serviceName: string, spanName: string): Promise<void> {
-      const url = `${apiPrefix}/traces`;
       const search = {
         serviceName,
         spanName,
@@ -226,7 +221,7 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
       };
       try {
         // This should return just root traces as there isn't any nesting
-        const traces: ZipkinSpan[][] = await datasource.metadataRequest(url, search);
+        const traces: ZipkinSpan[][] = await datasource.metadataRequest('traces', search);
         if (isMounted()) {
           const newTraces = traces.length
             ? fromPairs(

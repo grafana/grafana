@@ -76,7 +76,7 @@ describe('ZipkinDatasource', () => {
     it('runs query', async () => {
       setupBackendSrv(['service 1', 'service 2'] as unknown as ZipkinSpan[]);
       const ds = new ZipkinDatasource(defaultSettings);
-      const response = await ds.metadataRequest('/api/v2/services');
+      const response = await ds.metadataRequest('services');
       expect(response).toEqual(['service 1', 'service 2']);
     });
   });

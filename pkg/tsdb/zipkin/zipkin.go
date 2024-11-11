@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
@@ -80,4 +81,9 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
 	}, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	handler := httpadapter.New(s.registerResourceRoutes())
+	return handler.CallResource(ctx, req, sender)
 }
