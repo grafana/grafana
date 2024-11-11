@@ -177,14 +177,14 @@ disable_login_form = true
 
 ### Enable email lookup
 
-By default, Grafana identifies users based on the unique ID provided by the identity provider (IdP). 
+By default, Grafana identifies users based on the unique ID provided by the identity provider (IdP).
 In certain cases, however, enabling user lookups by email can be a feasible option, such as when:
 
 - The identity provider is a single-tenant setup.
 - Unique, validated, and non-editable emails are provided by the IdP.
 - The infrastructure allows email-based identification without compromising security.
 
-**Important note**: While it is possible to configure Grafana to allow email-based user lookups, we strongly recommend against this approach in most cases due to potential security risks. 
+**Important note**: While it is possible to configure Grafana to allow email-based user lookups, we strongly recommend against this approach in most cases due to potential security risks.
 If you still choose to proceed, the following configuration can be applied to enable email lookup.
 
 ```bash
