@@ -6,6 +6,8 @@ import {
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertManagerCortexConfig, AlertmanagerStatus } from 'app/plugins/datasource/alertmanager/types';
 
+import { ROOT_ROUTE_NAME } from '../../../utils/k8s/constants';
+
 //////////////////////////
 // Alertmanager configs //
 //////////////////////////
@@ -30,7 +32,7 @@ export const setAlertmanagerConfig = (alertmanagerName: string, config: AlertMan
 
   if (alertmanagerName === GRAFANA_RULES_SOURCE_NAME) {
     const routingTree = getUserDefinedRoutingTree(config);
-    ROUTING_TREE_MAP.set('user-defined', routingTree);
+    ROUTING_TREE_MAP.set(ROOT_ROUTE_NAME, routingTree);
   }
 };
 

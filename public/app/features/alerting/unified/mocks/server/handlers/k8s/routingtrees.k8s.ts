@@ -1,5 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
+import { ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
 import { ROUTING_TREE_MAP } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import {
@@ -17,7 +18,7 @@ const wrapRoutingTreeResponse: (
 
 const listNamespacedRoutingTreesHandler = () =>
   http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees`, () => {
-    const userDefinedTree = ROUTING_TREE_MAP.get('user-defined')!;
+    const userDefinedTree = ROUTING_TREE_MAP.get(ROOT_ROUTE_NAME)!;
     return HttpResponse.json(wrapRoutingTreeResponse(userDefinedTree));
   });
 

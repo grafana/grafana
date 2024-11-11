@@ -10,7 +10,7 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
   generatedRoutesApi,
 } from '../../openapi/routesApi.gen';
-import { K8sAnnotations, PROVENANCE_NONE } from '../../utils/k8s/constants';
+import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
@@ -63,23 +63,27 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
 
   const k8sApiSupported = shouldUseK8sApi(selectedAlertmanager);
 
-  async function updateUsingK8sApi({ newRoute, oldRoute }: { newRoute: Route; oldRoute: Route }) {
+  async function updateUsingK8sApi({ newRoute }: { newRoute: Route }) {
     const namespace = getK8sNamespace();
     const { routes, ...rest } = newRoute;
     const { provenance, ...defaults } = rest;
     // Convert Route to K8s compatible format
     const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
-      defaults, // TODO Types are incorrect. Undefined should be allowed.
-      routes: newRoute.routes?.map(routeToK8sSubRoute),
+      defaults: {
+        ...defaults,
+        // TODO: Fix types in k8s API? Fix our types to not allow empty receiver? TBC
+        receiver: defaults.receiver || '',
+      },
+      routes: newRoute.routes?.map(routeToK8sSubRoute) || [],
     };
 
     // TODO Add a check to see if not updated in the meantime
 
     // Create the K8s route object
-    const routeObject = { spec: k8sRoute, metadata: { name: 'user-defined' } };
+    const routeObject = { spec: k8sRoute, metadata: { name: ROOT_ROUTE_NAME } };
 
     return updatedNamespacedRoute({
-      name: 'user-defined',
+      name: ROOT_ROUTE_NAME,
       namespace,
       comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree: routeObject,
     }).unwrap();
@@ -126,8 +130,8 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
 }
 
 /** Helper to provide type safety for matcher operators from API */
-function isValidMatcherOperator(type: string): type is MatcherOperator {
-  return type in MatcherOperator;
+function isValidMatcherOperator(type: unknown): type is MatcherOperator {
+  return Object.values(MatcherOperator).includes(type as MatcherOperator);
 }
 
 function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
@@ -137,7 +141,7 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
     matchers: undefined,
     object_matchers: route.matchers?.map(({ label, type, value }) => {
       if (!isValidMatcherOperator(type)) {
-        // throw new Error(`Invalid matcher operator from API: ${type}`);
+        throw new Error(`Invalid matcher operator from API: ${type}`);
       }
       return [label, type, value];
     }),
