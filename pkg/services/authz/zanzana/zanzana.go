@@ -6,6 +6,8 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
+	"github.com/grafana/authlib/authz"
+
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -84,6 +86,18 @@ const (
 	GlobalOrgID = 0
 )
 
+var (
+	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
+	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
+	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
+	ToAuthzExtTupleKeysWithoutCondition = common.ToAuthzExtTupleKeysWithoutCondition
+
+	ToOpenFGATuple                    = common.ToOpenFGATuple
+	ToOpenFGATuples                   = common.ToOpenFGATuples
+	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
+	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+)
+
 // NewTupleEntry constructs new openfga entry type:id[#relation].
 // Relation allows to specify group of users (subjects) related to type:id
 // (for example, team:devs#member refers to users which are members of team devs)
@@ -132,13 +146,31 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
-func TranslateFixedRole(role string) string {
-	role = strings.ReplaceAll(role, ":", "_")
-	role = strings.ReplaceAll(role, ".", "_")
-	return role
-}
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authz.CheckRequest, bool) {
+	translation, ok := resourceTranslations[kind]
 
-// Translate "read" for the dashboard into "dashboard_read" for folder
-func TranslateToFolderRelation(relation, objectType string) string {
-	return fmt.Sprintf("%s_%s", objectType, relation)
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := common.RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authz.CheckRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
+		Name:      name,
+		Folder:    folder,
+	}
+
+	return req, true
 }

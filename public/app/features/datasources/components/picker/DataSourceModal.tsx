@@ -5,15 +5,8 @@ import { useMemo, useState } from 'react';
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import {
-  Modal,
-  FileDropzone,
-  FileDropzoneDefaultChildren,
-  CustomScrollbar,
-  useStyles2,
-  Input,
-  Icon,
-} from '@grafana/ui';
+import { Modal, FileDropzone, FileDropzoneDefaultChildren, useStyles2, Input, Icon } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { t, Trans } from 'app/core/internationalization';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
@@ -166,7 +159,7 @@ export function DataSourceModal({
             reportSearchUsageOnce();
           }}
         />
-        <CustomScrollbar>
+        <ScrollContainer>
           <DataSourceList
             onChange={onChangeDataSource}
             current={current}
@@ -189,13 +182,15 @@ export function DataSourceModal({
             mixed={mixed}
           />
           <BuiltInList className={styles.appendBuiltInDataSourcesList} />
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInList />
-          </CustomScrollbar>
+          <div className={styles.builtInDataSourcesList}>
+            <ScrollContainer>
+              <BuiltInList />
+            </ScrollContainer>
+          </div>
           {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"

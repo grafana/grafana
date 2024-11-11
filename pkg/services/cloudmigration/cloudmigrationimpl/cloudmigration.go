@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,6 +53,8 @@ type Service struct {
 
 	cancelMutex sync.Mutex
 	cancelFunc  context.CancelFunc
+
+	isSyncSnapshotStatusFromGMSRunning int32
 
 	features      featuremgmt.FeatureToggles
 	gmsClient     gmsclient.Client
@@ -546,8 +549,8 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
 	}
 
-	// Ask GMS for snapshot status while the source of truth is in the cloud
-	if snapshot.ShouldQueryGMS() {
+	// FIXME: this function should be a method
+	syncStatus := func(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
 		// Calculate offset based on how many results we currently have responses for
 		pending := snapshot.StatsRollup.CountsByStatus[cloudmigration.ItemStatusPending]
 		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot, snapshot.StatsRollup.Total-pending)
@@ -595,9 +598,72 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		if err != nil {
 			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 		}
+		return snapshot, nil
 	}
 
+	// Create a context out the span context to ensure the trace is propagated
+	asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+	// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
+	// and anybody is interested in the status.
+	go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+
 	return snapshot, nil
+}
+
+// FIXME: this definition should not exist once the function is GetSnapshot is converted to a method
+type syncStatusFunc func(context.Context, *cloudmigration.CloudMigrationSession, *cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error)
+
+func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot, syncStatus syncStatusFunc) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.syncSnapshotStatusFromGMSUntilDone")
+	span.SetAttributes(
+		attribute.String("sessionUID", session.UID),
+		attribute.String("snapshotUID", snapshot.UID),
+	)
+	defer span.End()
+
+	// Ensure only one in-flight sync running
+	if !atomic.CompareAndSwapInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0, 1) {
+		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+		return
+	}
+	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
+
+	if !snapshot.ShouldQueryGMS() {
+		return
+	}
+
+	s.cancelMutex.Lock()
+	defer func() {
+		s.cancelFunc = nil
+		s.cancelMutex.Unlock()
+	}()
+
+	ctx, s.cancelFunc = context.WithCancel(ctx)
+
+	updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+	if err != nil {
+		s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+	} else {
+		snapshot = updatedSnapshot
+	}
+
+	tick := time.NewTicker(10 * time.Second)
+	defer tick.Stop()
+
+	for snapshot.ShouldQueryGMS() {
+		select {
+		case <-ctx.Done():
+			s.log.Info("cancelling snapshot status polling", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+			return
+		case <-tick.C:
+			updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+			if err != nil {
+				s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+				continue
+			}
+			snapshot = updatedSnapshot
+		}
+	}
 }
 
 var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
