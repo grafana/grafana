@@ -296,19 +296,16 @@ func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPa
 	dsConfigs := make([]*DatasourceCachingConfig, 0)
 	for _, config := range configs {
 		for _, ds := range config.Datasources {
-			dsConfig := &DatasourceCachingConfig{
-				DataSourceUID: ds.UID,
-				Enabled:       ds.Caching.Enabled,
-				QueriesTTL:    ds.Caching.QueriesTTL,
-				ResourcesTTL:  ds.Caching.ResourcesTTL,
-				UseDefaultTTL: ds.Caching.UseDefaultTTL,
+			if ds.Caching != nil {
+				dsConfig := &DatasourceCachingConfig{
+					DataSourceUID: ds.UID, // TODO: sometimes UID is missing - how to get it
+					Enabled:       ds.Caching.Enabled,
+					QueriesTTL:    ds.Caching.QueriesTTL,
+					ResourcesTTL:  ds.Caching.ResourcesTTL,
+					UseDefaultTTL: ds.Caching.UseDefaultTTL,
+				}
+				dsConfigs = append(dsConfigs, dsConfig)
 			}
-			// TODO: UID is missing - how to get it
-			fmt.Println(ds.Name, ds.Type)
-			fmt.Println(dsConfig.Enabled)
-			fmt.Println(dsConfig.QueriesTTL)
-
-			dsConfigs = append(dsConfigs, dsConfig)
 		}
 	}
 

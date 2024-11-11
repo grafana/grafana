@@ -328,11 +328,10 @@ func (ps *ProvisioningServiceImpl) GetCachingConfigs(ctx context.Context) ([]*da
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
 	dsConfigs, err := ps.getCachingConfigs(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService)
 	if err != nil {
-		err = fmt.Errorf("%v: %w", "Get Caching config error", err)
+		err = fmt.Errorf("%v: %w", "get caching config error", err)
 		ps.log.Error("Failed to get datasources caching config", "error", err)
 		return nil, err
 	}
-	fmt.Println("Provisioning cache configs")
 	return dsConfigs, err
 }
 
