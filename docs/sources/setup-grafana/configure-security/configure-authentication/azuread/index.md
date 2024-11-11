@@ -67,7 +67,7 @@ Make sure that you copy the string in the **Value** field, rather than the one i
 1. Click **Add user/group** to add a user or group to the Grafana roles.
 
 {{% admonition type="note" %}}
-If you assign a group to a Grafana role, ensure that users are direct members of the group. Users in nested groups will not have access to Grafana due to a limitation on the Azure AD/Entra ID side. For more information, see [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/en-us/entra/identity/users/directory-service-limits-restrictions).
+When assigning a group to a Grafana role, ensure that users are direct members of the group. Users in nested groups will not have access to Grafana due to limitations within Azure AD/Entra ID side. For more information, see [Microsoft Entra service limits and restrictions](https://learn.microsoft.com/en-us/entra/identity/users/directory-service-limits-restrictions).
 {{% /admonition %}}
 
 ### Configure application roles for Grafana in the Azure Portal
