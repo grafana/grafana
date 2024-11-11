@@ -1,6 +1,9 @@
-package gcom
+// Package authapi contains the connector for Grafana internal auth service. This can be used instead of the GCOM service
+// to create access policies and access tokens
+package authapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,29 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const LogPrefix = "gcom.service"
+const LogPrefix = "auth-api.service"
 
-var ErrTokenNotFound = errors.New("gcom: token not found")
+var ErrTokenNotFound = errors.New("auth-api: token not found")
 
 type Service interface {
-	GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error)
-	// TODO LND remove these services when not longer used
-
-	/**
 	CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error)
 	ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error)
 	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
 	ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error)
 	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
 	DeleteToken(ctx context.Context, params DeleteTokenParams) error
-	*/
-}
-
-type Instance struct {
-	ID          int    `json:"id"`
-	Slug        string `json:"slug"`
-	RegionSlug  string `json:"regionSlug"`
-	ClusterSlug string `json:"clusterSlug"`
 }
 
 type CreateAccessPolicyParams struct {
@@ -100,7 +91,7 @@ type CreateTokenPayload struct {
 	ExpiresAt      time.Time `json:"expiresAt"`
 }
 
-// The token returned by gcom api when a token gets created.
+// Token returned by gcom api when a token gets created.
 type Token struct {
 	ID             string `json:"id"`
 	AccessPolicyID string `json:"accessPolicyId"`
@@ -114,7 +105,7 @@ type DeleteTokenParams struct {
 	TokenID   string
 }
 
-// The token returned by gcom api for a GET token request.
+// TokenView returned by gcom api for a GET token request.
 type TokenView struct {
 	ID             string `json:"id"`
 	AccessPolicyID string `json:"accessPolicyId"`
@@ -130,7 +121,7 @@ type listTokensResponse struct {
 	Items []TokenView `json:"items"`
 }
 
-type GcomClient struct {
+type AuthApiClient struct {
 	log        log.Logger
 	cfg        Config
 	httpClient *http.Client
@@ -142,55 +133,14 @@ type Config struct {
 }
 
 func New(cfg Config, httpClient *http.Client) Service {
-	return &GcomClient{
+	return &AuthApiClient{
 		log:        log.New(LogPrefix),
 		cfg:        cfg,
 		httpClient: httpClient,
 	}
 }
 
-func (client *GcomClient) GetInstanceByID(ctx context.Context, requestID string, instanceID string) (Instance, error) {
-	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/instances/", instanceID)
-	if err != nil {
-		return Instance{}, fmt.Errorf("building gcom instance url: %w", err)
-	}
-
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return Instance{}, fmt.Errorf("creating http request: %w", err)
-	}
-
-	request.Header.Set("x-request-id", requestID)
-	request.Header.Set("Content-Type", "application/json")
-
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
-
-	response, err := client.httpClient.Do(request)
-	if err != nil {
-		return Instance{}, fmt.Errorf("sending http request to create fetch instance by id: %w", err)
-	}
-	defer func() {
-		if err := response.Body.Close(); err != nil {
-			client.log.Error("closing http response body", "err", err.Error())
-		}
-	}()
-
-	if response.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(response.Body)
-		return Instance{}, fmt.Errorf("unexpected response when fetching instance by id: code=%d body=%s", response.StatusCode, body)
-	}
-
-	var instance Instance
-	if err := json.NewDecoder(response.Body).Decode(&instance); err != nil {
-		return instance, fmt.Errorf("unmarshaling response body: %w", err)
-	}
-
-	return instance, nil
-}
-
-/**
-
-func (client *GcomClient) CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error) {
+func (client *AuthApiClient) CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies")
 	if err != nil {
 		return AccessPolicy{}, fmt.Errorf("building gcom access policy url: %w", err)
@@ -238,7 +188,7 @@ func (client *GcomClient) CreateAccessPolicy(ctx context.Context, params CreateA
 	return accessPolicy, nil
 }
 
-func (client *GcomClient) DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error) {
+func (client *AuthApiClient) DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies/", params.AccessPolicyID)
 	if err != nil {
 		return false, fmt.Errorf("building gcom access policy url: %w", err)
@@ -278,7 +228,7 @@ func (client *GcomClient) DeleteAccessPolicy(ctx context.Context, params DeleteA
 	return false, fmt.Errorf("unexpected response when deleting access policy: code=%d body=%s", response.StatusCode, body)
 }
 
-func (client *GcomClient) ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error) {
+func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies")
 	if err != nil {
 		return nil, fmt.Errorf("building gcom access policy url: %w", err)
@@ -321,7 +271,7 @@ func (client *GcomClient) ListAccessPolicies(ctx context.Context, params ListAcc
 	return responseBody.Items, nil
 }
 
-func (client *GcomClient) ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error) {
+func (client *AuthApiClient) ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {
 		return nil, fmt.Errorf("building gcom tokens url: %w", err)
@@ -366,7 +316,7 @@ func (client *GcomClient) ListTokens(ctx context.Context, params ListTokenParams
 	return body.Items, nil
 }
 
-func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error) {
+func (client *AuthApiClient) CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {
 		return Token{}, fmt.Errorf("building gcom tokens url: %w", err)
@@ -414,7 +364,7 @@ func (client *GcomClient) CreateToken(ctx context.Context, params CreateTokenPar
 	return token, nil
 }
 
-func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenParams) error {
+func (client *AuthApiClient) DeleteToken(ctx context.Context, params DeleteTokenParams) error {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens", params.TokenID)
 	if err != nil {
 		return fmt.Errorf("building gcom tokens url: %w", err)
@@ -453,4 +403,3 @@ func (client *GcomClient) DeleteToken(ctx context.Context, params DeleteTokenPar
 
 	return nil
 }
-*/

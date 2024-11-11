@@ -3,8 +3,8 @@ package cloudmigrationimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/authapi"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
-	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -13,8 +13,8 @@ type NoopServiceImpl struct{}
 
 var _ cloudmigration.Service = (*NoopServiceImpl)(nil)
 
-func (s *NoopServiceImpl) GetToken(ctx context.Context) (gcom.TokenView, error) {
-	return gcom.TokenView{}, cloudmigration.ErrFeatureDisabledError
+func (s *NoopServiceImpl) GetToken(ctx context.Context) (authapi.TokenView, error) {
+	return authapi.TokenView{}, cloudmigration.ErrFeatureDisabledError
 }
 
 func (s *NoopServiceImpl) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {

@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/services/gcom"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type gcomStub struct {
@@ -15,7 +14,7 @@ type gcomStub struct {
 	policies map[string]gcom.AccessPolicy
 }
 
-func (client *gcomStub) GetInstanceByID(ctx context.Context, requestID string, instanceID string) (gcom.Instance, error) {
+func (client *gcomStub) GetInstanceByID(_ context.Context, _ string, instanceID string) (gcom.Instance, error) {
 	id, err := strconv.Atoi(instanceID)
 	if err != nil {
 		return gcom.Instance{}, fmt.Errorf("parsing instanceID: %w", err)
@@ -28,6 +27,8 @@ func (client *gcomStub) GetInstanceByID(ctx context.Context, requestID string, i
 	}, nil
 }
 
+// TODO LND remove this
+/**
 func (client *gcomStub) CreateAccessPolicy(ctx context.Context, params gcom.CreateAccessPolicyParams, payload gcom.CreateAccessPolicyPayload) (gcom.AccessPolicy, error) {
 	randStr := fmt.Sprintf("random-policy-%s", util.GenerateShortUID())
 	policy := gcom.AccessPolicy{
@@ -79,3 +80,4 @@ func (client *gcomStub) DeleteToken(ctx context.Context, params gcom.DeleteToken
 	client.token = nil
 	return nil
 }
+*/
