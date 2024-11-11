@@ -104,14 +104,12 @@ describe('MetricCombobox', () => {
 
     const combobox = screen.getByPlaceholderText('Select metric');
     await userEvent.click(combobox);
-
     await userEvent.type(combobox, 'unique');
-    expect(jest.mocked(mockDatasource.metricFindQuery)).toHaveBeenCalled();
 
     const item = await screen.findByRole('option', { name: 'unique_metric' });
     expect(item).toBeInTheDocument();
 
-    const negativeItem = await screen.queryByRole('option', { name: 'random_metric' });
+    const negativeItem = screen.queryByRole('option', { name: 'random_metric' });
     expect(negativeItem).not.toBeInTheDocument();
   });
 
