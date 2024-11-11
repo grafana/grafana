@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.4",
-    "@floating-ui/react": "0.26.25",
+    "@floating-ui/react": "0.26.27",
     "@grafana/data": "11.4.0-pre",
     "@grafana/experimental": "2.1.2",
     "@grafana/faro-web-sdk": "1.11.0",
@@ -49,7 +49,7 @@
     "@lezer/common": "1.2.3",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",
-    "@prometheus-io/lezer-promql": "0.54.1",
+    "@prometheus-io/lezer-promql": "0.55.1",
     "@reduxjs/toolkit": "2.2.8",
     "d3": "7.9.0",
     "date-fns": "3.6.0",
