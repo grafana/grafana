@@ -115,7 +115,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref common.ReferenceCa
 				Properties: map[string]spec.Schema{
 					"data": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Map of service and JSON data",
+							Description: "Data is the key:value stored in the user storage for a service.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
