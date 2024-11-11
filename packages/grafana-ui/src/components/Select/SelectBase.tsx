@@ -152,7 +152,7 @@ export function SelectBase<T, Rest = {}>({
   width,
   isValidNewOption,
   formatOptionLabel,
-  hideSelectedOptions,
+  hideSelectedOptions = false,
   ...rest
 }: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
