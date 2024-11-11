@@ -46,7 +46,6 @@ export function DataTrailCard(props: Props) {
     const createdAt = bookmark?.createdAt || trail.state.createdAt;
 
     return {
-      dsValue: getDataSource(trail),
       filters: filtersVariable.state.filters,
       metric: trail.state.metric,
       createdAt,
@@ -57,7 +56,7 @@ export function DataTrailCard(props: Props) {
     return null;
   }
 
-  const { dsValue, filters, metric, createdAt } = values;
+  const { filters, metric, createdAt } = values;
 
   return (
     <div>
@@ -76,12 +75,6 @@ export function DataTrailCard(props: Props) {
             </span>
           ))}
         </Card.Meta>
-        <div className={styles.datasource}>
-          <div className={styles.secondaryFont}>
-            <Trans i18nKey="trails.card.data-source">Data source: </Trans>
-          </div>
-          <div className={styles.primaryFont}>{dsValue && getDataSourceName(dsValue)}</div>
-        </div>
         <div className={styles.deleteButton}>
           {onDelete && (
             <Card.SecondaryActions>
