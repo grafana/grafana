@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   Alert,
@@ -164,34 +164,35 @@ const NotificationTemplatesTab = () => {
   );
 };
 
-const useTabQueryParam = (initialTab: ActiveTab) => {
+const useTabQueryParam = (defaultTab: ActiveTab) => {
   const [queryParams, setQueryParams] = useURLSearchParams();
-  const setParam = useCallback((tab: ActiveTab) => setQueryParams({ tab }), [setQueryParams]);
   const param = useMemo(() => {
     const queryParam = queryParams.get('tab');
 
     if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
-      setParam(initialTab);
-      return;
+      return defaultTab;
     }
 
-    return queryParam;
-  }, [queryParams, setParam, initialTab]);
+    return queryParam || defaultTab;
+  }, [defaultTab, queryParams]);
 
+  const setParam = (tab: ActiveTab) => setQueryParams({ tab });
   return [param, setParam] as const;
 };
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
   const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
 
-  const availableTabs = [
+  // Depending on permissions, user may not have access to all tabs,
+  // but we can default to picking the first one that they definitely _do_ have access to
+  const defaultTab = [
     showContactPointsTab && ActiveTab.ContactPoints,
     showTemplatesTab && ActiveTab.NotificationTemplates,
-  ].filter((tab) => !!tab);
+  ].filter((tab) => !!tab)[0];
 
-  const [activeTab, setActiveTab] = useTabQueryParam(availableTabs[0]);
+  const [activeTab, setActiveTab] = useTabQueryParam(defaultTab);
 
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
