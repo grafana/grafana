@@ -369,6 +369,12 @@ Payload:
 
 The following table outlines the various generic OAuth2 configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
 
+Note: If the configuration option requires a [JMESPath](http://jmespath.org/examples.html) expression that includes a colon (:), enclose the entire expression in quotes to prevent parsing errors. For example:
+
+```
+role_attribute_path: "role:view"
+```
+
 | Setting                      | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Default         |
 | ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `enabled`                    | No       | Enables generic OAuth2 authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`         |
