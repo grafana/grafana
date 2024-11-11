@@ -145,7 +145,7 @@ func TranslateToFolderRelation(relation, objectType string) string {
 	return fmt.Sprintf("%s_%s", objectType, relation)
 }
 
-func TranslateToCheckRequest(namespace, action, kind, name string) (*authz.CheckRequest, bool) {
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authz.CheckRequest, bool) {
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
@@ -168,6 +168,7 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authz.Check
 		Group:     translation.group,
 		Resource:  translation.resource,
 		Name:      name,
+		Folder:    folder,
 	}
 
 	return req, true

@@ -118,10 +118,23 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		eval = evaluator
 	}
 
-	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		kind, _, identifier := accesscontrol.SplitScope(scope)
+	return eval.EvaluateCustom(func(action string, scopes ...string) (bool, error) {
+		// FIXME: handle action with no scopes
+		if len(scopes) == 0 {
+			return false, nil
+		}
+
+		resourceScope := scopes[0]
+		kind, _, identifier := accesscontrol.SplitScope(resourceScope)
+
+		// Parent folder always returned by scope resolver as a second value
+		var parentFolder string
+		if len(scopes) > 1 {
+			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
+		}
+
 		namespace := claims.OrgNamespaceFormatter(user.GetOrgID())
-		req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, identifier)
+		req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, parentFolder, identifier)
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
@@ -133,8 +146,6 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 		if err != nil {
 			return false, err
 		}
-
-		a.log.Debug("evaluating zanzana", "allowed", res.Allowed, "name", req.Name)
 
 		return res.Allowed, nil
 	})
