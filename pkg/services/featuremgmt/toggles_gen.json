@@ -1867,6 +1867,19 @@
     },
     {
       "metadata": {
+        "name": "logQLScope",
+        "resourceVersion": "1730842404843",
+        "creationTimestamp": "2024-11-05T21:33:24Z"
+      },
+      "spec": {
+        "description": "In-development feature that will allow injection of labels into loki queries.",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-06-10T08:56:55Z"

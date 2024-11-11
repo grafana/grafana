@@ -1087,6 +1087,13 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "logQLScope",
+			Description: "In-development feature that will allow injection of labels into loki queries.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "sqlExpressions",
 			Description:  "Enables using SQL and DuckDB functions as Expressions.",
 			Stage:        FeatureStageExperimental,
