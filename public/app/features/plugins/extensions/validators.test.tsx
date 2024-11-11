@@ -343,7 +343,7 @@ describe('Plugin Extension Validators', () => {
       );
     });
 
-    it('should return TRUE and log a warning if the "description" does not match', () => {
+    it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
       config.apps[pluginId].extensions.addedLinks.push(extensionConfig);
 
@@ -356,7 +356,7 @@ describe('Plugin Extension Validators', () => {
         log
       );
 
-      expect(returnValue).toBe(true);
+      expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
@@ -459,7 +459,7 @@ describe('Plugin Extension Validators', () => {
       );
     });
 
-    it('should return TRUE and log a warning if the "description" does not match', () => {
+    it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
       config.apps[pluginId].extensions.addedComponents.push(extensionConfig);
 
@@ -472,7 +472,7 @@ describe('Plugin Extension Validators', () => {
         log
       );
 
-      expect(returnValue).toBe(true);
+      expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });
@@ -576,7 +576,7 @@ describe('Plugin Extension Validators', () => {
       );
     });
 
-    it('should return TRUE and log a warning if the "description" does not match', () => {
+    it('should return FALSE and log a warning if the "description" does not match', () => {
       const log = createLogMock();
       config.apps[pluginId].extensions.exposedComponents.push(exposedComponentConfig);
 
@@ -589,7 +589,7 @@ describe('Plugin Extension Validators', () => {
         log
       );
 
-      expect(returnValue).toBe(true);
+      expect(returnValue).toBe(false);
       expect(log.warning).toHaveBeenCalledTimes(1);
       expect(jest.mocked(log.warning).mock.calls[0][0]).toMatch('"description" doesn\'t match');
     });

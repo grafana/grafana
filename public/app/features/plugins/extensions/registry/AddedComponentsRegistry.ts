@@ -13,7 +13,7 @@ const logPrefix = 'Could not register component extension. Reason:';
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -45,11 +45,6 @@ export class AddedComponentsRegistry extends Registry<
 
       if (!config.title) {
         configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
-        continue;
-      }
-
-      if (!config.description) {
-        configLog.error(`${logPrefix} ${errors.DESCRIPTION_MISSING}`);
         continue;
       }
 

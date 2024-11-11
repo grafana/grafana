@@ -176,7 +176,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc, 0),
 		nil,
-		LargeObjectSupportDisabled,
+		StorageOptions{},
 	)
 	if err != nil {
 		return nil, nil, nil, err

@@ -155,8 +155,6 @@ export const isAddedLinkMetaInfoMissing = (
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
-
-    return true;
   }
 
   return false;
@@ -189,7 +187,6 @@ export const isAddedComponentMetaInfoMissing = (
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
-    return true;
   }
 
   return false;
@@ -221,7 +218,6 @@ export const isExposedComponentMetaInfoMissing = (
 
   if (pluginJsonMetaInfo.description !== metaInfo.description) {
     log.warning(errors.DESCRIPTION_NOT_MATCHING_META_INFO);
-    return true;
   }
 
   return false;

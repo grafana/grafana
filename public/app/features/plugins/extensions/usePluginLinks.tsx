@@ -72,7 +72,7 @@ export function usePluginLinks({
       const linkLog = pointLog.child({
         path: addedLink.path ?? '',
         title: addedLink.title,
-        description: addedLink.description,
+        description: addedLink.description ?? '',
         onClick: typeof addedLink.onClick,
       });
 
@@ -104,7 +104,7 @@ export function usePluginLinks({
         // Configurable properties
         icon: overrides?.icon || addedLink.icon,
         title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description,
+        description: overrides?.description || addedLink.description || '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
       };

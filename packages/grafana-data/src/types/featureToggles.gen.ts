@@ -227,8 +227,11 @@ export interface FeatureToggles {
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
+  zipkinBackendMigration?: boolean;
+  enableSCIM?: boolean;
 }

@@ -13,7 +13,7 @@ const logPrefix = 'Could not register exposed component extension. Reason:';
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -42,7 +42,7 @@ export class ExposedComponentsRegistry extends Registry<
       const { id, description, title } = config;
       const pointIdLog = this.logger.child({
         extensionPointId: id,
-        description,
+        description: description ?? '',
         title,
         pluginId,
       });
@@ -59,11 +59,6 @@ export class ExposedComponentsRegistry extends Registry<
 
       if (!title) {
         pointIdLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
-        continue;
-      }
-
-      if (!description) {
-        pointIdLog.error(`${logPrefix} ${errors.DESCRIPTION_MISSING}`);
         continue;
       }
 
