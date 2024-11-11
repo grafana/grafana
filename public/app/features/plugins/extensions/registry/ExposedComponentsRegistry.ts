@@ -8,7 +8,7 @@ import { isExposedComponentMetaInfoMissing } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
 
-const logPrefix = 'Could not register exposed component extension. Reason:';
+const logPrefix = 'Could not register exposed component. Reason:';
 
 export type ExposedComponentRegistryItem<Props = {}> = {
   pluginId: string;
