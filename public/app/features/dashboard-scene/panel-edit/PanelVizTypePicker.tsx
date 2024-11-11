@@ -7,7 +7,8 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { Button, CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -100,7 +101,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
       <Field className={styles.customFieldMargin}>
         <RadioButtonGroup options={radioOptions} value={listMode} onChange={handleListModeChange} fullWidth />
       </Field>
-      <CustomScrollbar>
+      <ScrollContainer>
         {listMode === VisualizationSelectPaneTab.Visualizations && (
           <VizTypePicker
             pluginId={panel.state.pluginId}
@@ -118,7 +119,7 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
             data={data}
           />
         )}
-      </CustomScrollbar>
+      </ScrollContainer>
     </div>
   );
 }

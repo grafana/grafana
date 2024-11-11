@@ -4,7 +4,8 @@ import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
@@ -248,13 +249,13 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           data-testid="scopes-dashboards-loading"
         />
       ) : filteredFolders[''] ? (
-        <CustomScrollbar>
+        <ScrollContainer>
           <ScopesDashboardsTree
             folders={filteredFolders}
             folderPath={['']}
             onFolderUpdate={(path, isExpanded) => model.updateFolder(path, isExpanded)}
           />
-        </CustomScrollbar>
+        </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
           <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>

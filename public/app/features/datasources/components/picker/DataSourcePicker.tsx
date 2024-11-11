@@ -12,7 +12,8 @@ import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import config from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
@@ -347,7 +348,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <CustomScrollbar>
+      <ScrollContainer showScrollIndicators>
         <DataSourceList
           {...props}
           enableKeyboardNavigation
@@ -361,7 +362,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             })
           }
         ></DataSourceList>
-      </CustomScrollbar>
+      </ScrollContainer>
       <FocusScope>
         <Footer
           {...props}
