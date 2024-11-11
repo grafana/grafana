@@ -1,11 +1,8 @@
 import {
-  AadCurrentUserCredentials,
   AzureCredentials,
   getDatasourceCredentials,
   getDefaultAzureCloud,
   getClientSecret,
-  instanceOfAzureCredential,
-  updateDatasourceCredentials,
   resolveLegacyCloudName,
 } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
@@ -23,24 +20,6 @@ export function getCredentials(
   }
 
   return getLegacyCredentials(options) || getDefaultCredentials();
-}
-
-export function updateCredentials(
-  options: AzureMonitorDataSourceSettings,
-  credentials: AzureCredentials
-): AzureMonitorDataSourceSettings {
-  options = updateDatasourceCredentials(options, credentials);
-  if (instanceOfAzureCredential<AadCurrentUserCredentials>('currentuser', credentials)) {
-    options = {
-      ...options,
-      jsonData: {
-        ...options.jsonData,
-        disableGrafanaCache: true,
-      },
-    };
-  }
-
-  return options;
 }
 
 function getLegacyCredentials(

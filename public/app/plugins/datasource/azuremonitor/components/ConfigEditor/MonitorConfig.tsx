@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { AzureCredentials } from '@grafana/azure-sdk';
+import { AzureCredentials, updateDatasourceCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getCredentials, updateCredentials } from '../../credentials';
+import { getCredentials } from '../../credentials';
 import { AzureMonitorDataSourceSettings } from '../../types';
 
 import { AzureCredentialsForm, getAzureCloudOptions } from './AzureCredentialsForm';
@@ -28,7 +28,10 @@ export const MonitorConfig = (props: Props) => {
       setSubscriptions([]);
     }
     updateOptions((options) =>
-      updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
+      updateDatasourceCredentials(
+        { ...options, jsonData: { ...options.jsonData, subscriptionId } } as AzureMonitorDataSourceSettings,
+        credentials
+      )
     );
   };
 
