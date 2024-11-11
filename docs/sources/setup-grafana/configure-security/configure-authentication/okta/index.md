@@ -83,7 +83,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
    For Terraform or in the Grafana configuration file, include the `groups` scope in `scopes` field.
 
 {{% admonition type="note" %}}
-If you configured the `groups` claim differently, ensure that the `groups` claim is a string array.
+If you configure the `groups` claim differently, ensure that the `groups` claim is a string array.
 {{% /admonition %}}
 
 #### Optional: Add the role attribute to the User (default) Okta profile
