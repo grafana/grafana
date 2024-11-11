@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
@@ -10,16 +10,14 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function getPanelFrameCategory2(
-  panel: VizPanel,
-  layoutElementState: SceneObjectState
-): OptionsPaneCategoryDescriptor {
+export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -209,5 +207,19 @@ function DescriptionTextArea({ panel }: { panel: VizPanel }) {
 }
 
 function setPanelTitle(panel: VizPanel, title: string) {
-  panel.setState({ title: title, hoverHeader: title === '' });
+  panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+}
+
+export function getUpdatedHoverHeader(title: string, timeRange: SceneTimeRangeLike | undefined): boolean {
+  if (title !== '') {
+    return false;
+  }
+
+  if (timeRange instanceof PanelTimeRange && !timeRange.state.hideTimeOverride) {
+    if (timeRange.state.timeFrom || timeRange.state.timeShift) {
+      return false;
+    }
+  }
+
+  return true;
 }

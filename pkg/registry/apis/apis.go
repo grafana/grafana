@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
-	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
@@ -21,7 +20,6 @@ type Service struct{}
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
 	_ *dashboard.DashboardsAPIBuilder,
-	_ *playlist.PlaylistAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,

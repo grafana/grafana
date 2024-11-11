@@ -17,7 +17,7 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
   pluginId: string;
   extensionPointId: string;
   title: string;
-  description: string;
+  description?: string;
   path?: string;
   onClick?: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
   configure?: PluginAddedLinksConfigureFunc<Context>;
@@ -45,7 +45,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
       const { path, title, description, configure, onClick, targets } = config;
       const configLog = this.logger.child({
         path: path ?? '',
-        description,
+        description: description ?? '',
         title,
         pluginId,
         onClick: typeof onClick,
@@ -53,11 +53,6 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       if (!title) {
         configLog.error(`Could not register added link. Reason: Title is missing.`);
-        continue;
-      }
-
-      if (!description) {
-        configLog.error(`Could not register added link. Reason: Description is missing.`);
         continue;
       }
 
