@@ -9,7 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { DataTrail } from './DataTrail';
 import { getTrailStore, DataTrailBookmark } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
-import { getDataSource, getDataSourceName, getMetricName } from './utils';
+import { getMetricName } from './utils';
 
 export type Props = {
   trail?: DataTrail;
