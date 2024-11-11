@@ -1,6 +1,6 @@
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent } from 'test/test-utils';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { render, screen, userEvent, within } from 'test/test-utils';
+import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
@@ -282,12 +282,13 @@ describe.each([
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
-    makeAllAlertmanagerConfigFetchFail(getErrorResponse("Alertmanager has exploded. it's gone. Forget about it."));
-    makeAllK8sGetEndpointsFail("Alertmanager has exploded. it's gone. Forget about it.");
+    const errMessage = "Alertmanager has exploded. it's gone. Forget about it.";
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse(errMessage));
+    makeAllK8sGetEndpointsFail(errMessage);
 
     renderNotificationPolicies();
-    await screen.findByText(/error loading alertmanager config/i);
-    expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
+    const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
+    expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 
