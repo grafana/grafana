@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -21,23 +22,38 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
+func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContext, backendQuery backend.DataQuery) (*backend.DataResponse, error) {
 	ctxLogger := s.logger.FromContext(ctx)
 	ctxLogger.Debug("Running TraceQL query", "function", logEntrypoint())
 
+	tempoQuery := &dataquery.TempoQuery{}
+	err := json.Unmarshal(backendQuery.JSON, tempoQuery)
+	if err != nil {
+		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
+		return nil, err
+	}
+
+	if isMetricsQuery(*tempoQuery.Query) {
+		return s.runTraceQlQueryMetrics(ctx, pCtx, backendQuery, tempoQuery)
+	}
+
+	return s.runTraceQlQuerySearch()
+}
+
+func (s *Service) runTraceQlQuerySearch() (*backend.DataResponse, error) {
+	return nil, fmt.Errorf("backend TraceQL search queries are not supported")
+}
+
+func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.PluginContext, backendQuery backend.DataQuery, tempoQuery *dataquery.TempoQuery) (*backend.DataResponse, error) {
+	ctxLogger := s.logger.FromContext(ctx)
+	ctxLogger.Debug("Running TraceQL Metrics query", "function", logEntrypoint())
+
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runTraceQLQuery", trace.WithAttributes(
-		attribute.String("queryType", query.QueryType),
+		attribute.String("queryType", backendQuery.QueryType),
 	))
 	defer span.End()
 
 	result := &backend.DataResponse{}
-
-	model := &dataquery.TempoQuery{}
-	err := json.Unmarshal(query.JSON, model)
-	if err != nil {
-		ctxLogger.Error("Failed to unmarshall Tempo query model", "error", err, "function", logEntrypoint())
-		return result, err
-	}
 
 	dsInfo, err := s.getDSInfo(ctx, pCtx)
 	if err != nil {
@@ -45,20 +61,20 @@ func (s *Service) runTraceQlQuery(ctx context.Context, pCtx backend.PluginContex
 		return nil, err
 	}
 
-	if model.Query == nil || *model.Query == "" {
+	if tempoQuery.Query == nil || *tempoQuery.Query == "" {
 		err := fmt.Errorf("query is required")
 		ctxLogger.Error("Failed to validate model query", "error", err, "function", logEntrypoint())
 		return result, err
 	}
 
-	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, model, query, span)
+	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
 	if err != nil {
 		return result, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to execute TraceQL query", "error", err, "function", logEntrypoint())
-		result.Error = fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *model.Query, resp.Status, string(responseBody))
+		result.Error = fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
 		span.RecordError(result.Error)
 		span.SetStatus(codes.Error, result.Error.Error())
 		return result, nil
@@ -141,4 +157,9 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 
 	req.Header.Set("Accept", "application/json")
 	return req, nil
+}
+
+func isMetricsQuery(query string) bool {
+	match, _ := regexp.MatchString("\\|\\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time|histogram_over_time|compare)\\s*\\(", query)
+	return match
 }
