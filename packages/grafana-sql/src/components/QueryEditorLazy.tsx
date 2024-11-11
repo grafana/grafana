@@ -5,14 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import type { SqlQueryEditorProps } from './QueryEditor';
+const QueryEditor = lazy(() => import(/* webpackChunkName: "sql-query-editor" */ './QueryEditor'));
 
 export function SqlQueryEditorLazy(props: SqlQueryEditorProps) {
   const styles = useStyles2(getStyles);
-  const LazyComponent = lazy(() => import(/* webpackChunkName: "sql-query-editor" */ './QueryEditor'));
 
   return (
     <Suspense fallback={<LoadingPlaceholder text={'Loading editor'} className={styles.container} />}>
-      <LazyComponent {...props} />
+      <QueryEditor {...props} />
     </Suspense>
   );
 }
