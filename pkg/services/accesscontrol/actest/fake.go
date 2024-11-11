@@ -75,14 +75,6 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 }
 
-func (f FakeAccessControl) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
-	return false, nil
-}
-
-func (f FakeAccessControl) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
-	return nil, nil
-}
-
 func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return f
 }

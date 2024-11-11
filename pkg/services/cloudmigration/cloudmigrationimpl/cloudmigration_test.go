@@ -676,9 +676,9 @@ func TestGetParentNames(t *testing.T) {
 				{UID: "libraryElementUID-1"},
 			},
 			expectedParentNames: map[cloudmigration.MigrateDataType][]string{
-				cloudmigration.DashboardDataType:      []string{"", "Folder A", "Folder B"},
-				cloudmigration.FolderDataType:         []string{"Folder A"},
-				cloudmigration.LibraryElementDataType: []string{"Folder A"},
+				cloudmigration.DashboardDataType:      {"", "Folder A", "Folder B"},
+				cloudmigration.FolderDataType:         {"Folder A"},
+				cloudmigration.LibraryElementDataType: {"Folder A"},
 			},
 		},
 	}
@@ -790,6 +790,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
+	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, fakeAccessControl, bus)
 	require.NoError(t, err)
 

@@ -2,13 +2,16 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { useCallback, useId, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
-import { t } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
+import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
@@ -94,6 +97,7 @@ export const Combobox = <T extends string | number>({
   const isAsync = typeof options === 'function';
   const loadOptions = useLatestAsyncCall(isAsync ? options : asyncNoop); // loadOptions isn't called at all if not async
   const [asyncLoading, setAsyncLoading] = useState(false);
+  const [asyncError, setAsyncError] = useState(false);
 
   const [items, setItems] = useState(isAsync ? [] : options);
 
@@ -129,7 +133,7 @@ export const Combobox = <T extends string | number>({
 
   const virtualizerOptions = {
     count: items.length,
-    getScrollElement: () => floatingRef.current,
+    getScrollElement: () => scrollRef.current,
     estimateSize: () => OPTION_HEIGHT,
     overscan: 4,
   };
@@ -143,10 +147,11 @@ export const Combobox = <T extends string | number>({
           .then((opts) => {
             setItems(customValueOption ? [customValueOption, ...opts] : opts);
             setAsyncLoading(false);
+            setAsyncError(false);
           })
           .catch((err) => {
             if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
+              setAsyncError(true);
               setAsyncLoading(false);
             }
           });
@@ -217,12 +222,12 @@ export const Combobox = <T extends string | number>({
           .then((options) => {
             setItems(options);
             setAsyncLoading(false);
+            setAsyncError(false);
           })
           .catch((err) => {
             if (!(err instanceof StaleResultError)) {
-              // TODO: handle error
+              setAsyncError(true);
               setAsyncLoading(false);
-              throw err;
             }
           });
         return;
@@ -235,7 +240,7 @@ export const Combobox = <T extends string | number>({
     },
   });
 
-  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
@@ -307,41 +312,66 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              return (
-                <li
-                  key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                  data-index={virtualRow.index}
-                  className={cx(
-                    styles.option,
-                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                    highlightedIndex === virtualRow.index && styles.optionFocused
-                  )}
-                  style={{
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  {...getItemProps({
-                    item: items[virtualRow.index],
-                    index: virtualRow.index,
-                  })}
-                >
-                  <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>
-                      {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                    </span>
-                    {items[virtualRow.index].description && (
-                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+        <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+          {isOpen && !asyncError && (
+            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                return (
+                  <li
+                    key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                    data-index={virtualRow.index}
+                    className={cx(
+                      styles.option,
+                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                      highlightedIndex === virtualRow.index && styles.optionFocused
                     )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+                    style={{
+                      height: virtualRow.size,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    {...getItemProps({
+                      item: items[virtualRow.index],
+                      index: virtualRow.index,
+                    })}
+                  >
+                    <div className={styles.optionBody}>
+                      <span className={styles.optionLabel}>
+                        {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                      </span>
+                      {items[virtualRow.index].description && (
+                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <div aria-live="polite">
+            {asyncError && (
+              <MessageRow>
+                <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+                <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
+              </MessageRow>
+            )}
+            {items.length === 0 && !asyncError && (
+              <MessageRow>
+                <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
+              </MessageRow>
+            )}
+          </div>
+        </ScrollContainer>
       </div>
     </div>
+  );
+};
+
+const MessageRow = ({ children }: { children: ReactNode }) => {
+  return (
+    <Box padding={2} color="secondary">
+      <Stack justifyContent="center" alignItems="center">
+        {children}
+      </Stack>
+    </Box>
   );
 };

@@ -672,6 +672,7 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(DataSourceVariable);
     expect(rest).toEqual({
       allValue: 'Custom all',
+      allowCustomValue: true,
       defaultToAll: true,
       includeAll: true,
       label: undefined,
@@ -714,6 +715,7 @@ describe('when creating variables objects', () => {
     expect(migrated).toBeInstanceOf(DataSourceVariable);
     expect(rest).toEqual({
       allValue: 'Custom all',
+      allowCustomValue: true,
       defaultToAll: true,
       includeAll: true,
       label: undefined,
