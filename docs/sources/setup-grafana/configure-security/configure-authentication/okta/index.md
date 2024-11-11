@@ -82,6 +82,10 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 1. Include the `groups` scope in the **Scopes** field in Grafana of the Okta integration.
    For Terraform or in the Grafana configuration file, include the `groups` scope in `scopes` field.
 
+{{% admonition type="note" %}}
+If you configure the `groups` claim differently, ensure that the `groups` claim is a string array.
+{{% /admonition %}}
+
 #### Optional: Add the role attribute to the User (default) Okta profile
 
 If you want to configure the role for all users in the Okta directory, you can add the role attribute to the User (default) Okta profile.
@@ -204,7 +208,9 @@ At the configuration file, extend the `scopes` in `[auth.okta]` section with `of
 
 ### Configure role mapping
 
-> **Note:** Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
+{{% admonition type="note" %}}
+Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from the auth provider upon user login.
+{{% /admonition %}}
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` (`/userinfo` OIDC endpoint) endpoint payload.
 
@@ -224,6 +230,10 @@ To learn about adding custom claims to the user info in Okta, refer to [add cust
 
 #### Org roles mapping example
 
+{{% admonition type="note" %}}
+Available in on-premise Grafana installations.
+{{% /admonition %}}
+
 In this example, the `org_mapping` uses the `groups` attribute as the source (`org_attribute_path`) to map the current user to different organizations and roles. The user has been granted the role of a `Viewer` in the `org_foo` org if they are a member of the `Group 1` group, the role of an `Editor` in the `org_bar` org if they are a member of the `Group 2` group, and the role of an `Editor` in the `org_baz`(OrgID=3) org.
 
 Config:
@@ -235,7 +245,9 @@ org_mapping = ["Group 1:org_foo:Viewer", "Group 2:org_bar:Editor", "*:3:Editor"]
 
 ### Configure team synchronization (Enterprise only)
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../../introduction/grafana-cloud" >}}).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../../introduction/grafana-cloud" >}}).
+{{% /admonition %}}
 
 By using Team Sync, you can link your Okta groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 
