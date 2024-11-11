@@ -1,5 +1,4 @@
 import { screen, render, fireEvent, waitFor } from '@testing-library/react';
-import { useEffect, useState } from 'react';
 
 import { measureText } from '../../utils/measureText';
 
@@ -130,28 +129,58 @@ describe('AutoSizeInput', () => {
   });
 
   it('should update the input value if the value prop changes', () => {
-    // Wrapper component to control the `value` prop
-    const Wrapper = () => {
-      const [value, setValue] = useState('Initial');
+    const { rerender } = render(<AutoSizeInput value="Initial" />);
 
-      // Simulate prop change after render
-      useEffect(() => {
-        setTimeout(() => setValue('Updated'), 100); // Update `value` after 100ms
-      }, []);
-
-      return <AutoSizeInput value={value} />;
-    };
-
-    render(<Wrapper />);
-
+    // Get a handle on the original input element (to catch if it's unmounted)
+    // And check the initial value
     const input: HTMLInputElement = screen.getByTestId('autosize-input');
-
-    // Check initial value
     expect(input.value).toBe('Initial');
 
-    // Wait for the value to update
-    return waitFor(() => {
-      expect(input.value).toBe('Updated');
-    });
+    // Rerender and make sure it clears the input
+    rerender(<AutoSizeInput value="Updated" />);
+    expect(input.value).toBe('Updated');
+  });
+
+  it('should clear the input when the value is changed to an empty string', () => {
+    const { rerender } = render(<AutoSizeInput value="Initial" />);
+
+    // Get a handle on the original input element (to catch if it's unmounted)
+    // And check the initial value
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    expect(input.value).toBe('Initial');
+
+    // Rerender and make sure it clears the input
+    rerender(<AutoSizeInput value="" />);
+    expect(input.value).toBe('');
+  });
+
+  it('should render string values as expected', () => {
+    render(<AutoSizeInput value="foo" />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    expect(input.value).toBe('foo');
+  });
+
+  it('should render undefined values as expected', () => {
+    render(<AutoSizeInput value={undefined} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    expect(input.value).toBe('');
+  });
+
+  it('should render null values as expected', () => {
+    // @ts-expect-error - look - the types forbid this, but we previously fixed an issue if the value is null
+    // so lets test it just in case https://github.com/grafana/grafana/pull/94078
+    render(<AutoSizeInput value={null} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    expect(input.value).toBe('');
+  });
+
+  it('should render array values as expected', () => {
+    render(<AutoSizeInput value={['hello', 'world']} />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    expect(input.value).toBe('hello,world');
   });
 });
