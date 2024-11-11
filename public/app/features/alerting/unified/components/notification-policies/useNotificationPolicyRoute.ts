@@ -130,8 +130,8 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
 }
 
 /** Helper to provide type safety for matcher operators from API */
-function isValidMatcherOperator(type: unknown): type is MatcherOperator {
-  return Object.values(MatcherOperator).includes(type as MatcherOperator);
+function isValidMatcherOperator(type: string): type is MatcherOperator {
+  return Object.values<string>(MatcherOperator).includes(type);
 }
 
 function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route): Route {
