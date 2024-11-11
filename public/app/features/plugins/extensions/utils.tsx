@@ -490,14 +490,6 @@ export const isAddedLinkMetaInfoMissing = (
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    log.warning(
-      `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.addedLinks[]".`
-    );
-
-    return true;
-  }
-
   return false;
 };
 
@@ -530,14 +522,6 @@ export const isAddedComponentMetaInfoMissing = (
     return true;
   }
 
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    log.warning(
-      `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.addedComponents[]".`
-    );
-
-    return true;
-  }
-
   return false;
 };
 
@@ -564,14 +548,6 @@ export const isExposedComponentMetaInfoMissing = (
   if (pluginJsonMetaInfo.title !== metaInfo.title) {
     log.warning(
       `${logPrefix} the "title" doesn't match with one in the plugin.json under "extensions.exposedComponents[]".`
-    );
-
-    return true;
-  }
-
-  if (pluginJsonMetaInfo.description !== metaInfo.description) {
-    log.warning(
-      `${logPrefix} the "description" doesn't match with one in the plugin.json under "extensions.exposedComponents[]".`
     );
 
     return true;
