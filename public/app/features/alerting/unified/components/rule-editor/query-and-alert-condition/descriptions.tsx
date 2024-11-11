@@ -13,14 +13,14 @@ export const DESCRIPTIONS: Record<RuleFormType, FormDescriptions> = {
     helpLabel: 'Define your recording rule',
     helpContent:
       'Pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series.',
-    helpLink: '',
+    helpLink: 'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/',
   },
   [RuleFormType.grafanaRecording]: {
     sectionTitle: 'Define recording rule',
     helpLabel: 'Define your recording rule',
     helpContent:
       'Pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series.',
-    helpLink: '',
+    helpLink: 'https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/',
   },
   [RuleFormType.grafana]: {
     sectionTitle: 'Define query and alert condition',
