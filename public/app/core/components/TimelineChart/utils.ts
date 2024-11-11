@@ -600,7 +600,9 @@ export function getFieldLegendItem(
 
   const stateColors: Map<string, string | undefined> = new Map();
   const stateCounts: Map<string, number> = new Map();
-  const stateDurationRange: Map<string, { from: number; to: number }> = new Map();
+  const stateDurationMs: Map<string, number> = new Map();
+
+  let lastTime: number;
 
   frames.forEach((frame) => {
     const timeField = getTimeField(frame);
@@ -617,11 +619,10 @@ export function getFieldLegendItem(
             const timeMs = timeField?.timeField?.values[index];
 
             if (typeof timeMs === 'number') {
-              const durationRange = stateDurationRange.get(state.text);
-              stateDurationRange.set(state.text, {
-                from: durationRange?.from !== undefined ? Math.min(durationRange.from, timeMs) : timeMs,
-                to: durationRange?.to !== undefined ? Math.max(durationRange.to, timeMs) : timeMs,
-              });
+              const diffMs = Math.max(timeMs - (lastTime ?? timeMs), 0);
+              lastTime = timeMs;
+
+              stateDurationMs.set(state.text, (stateDurationMs.get(state.text) ?? 0) + diffMs);
             }
           }
         });
@@ -641,8 +642,8 @@ export function getFieldLegendItem(
           break;
         }
         case LegendDurationMode.Time: {
-          const stateRange = stateDurationRange.get(label);
-          const duration = stateRange ? fmtDuration(stateRange.to - stateRange.from) : '';
+          const durationMs = stateDurationMs.get(label);
+          const duration = durationMs ? fmtDuration(durationMs) : '';
 
           if (duration) {
             suffix = ` (${duration})`;

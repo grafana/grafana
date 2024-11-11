@@ -609,6 +609,14 @@ describe('prepareTimelineLegendItems', () => {
     const getTimeWithSecondsOffset = (diffInSeconds: number): number => {
       return dateTime(fromDate).add(diffInSeconds, 'seconds').valueOf();
     };
+    const rowsA = [10, 20, 30, 40, 50, 85, 50, 90, 10].map((value, index) => ({
+      value,
+      time: getTimeWithSecondsOffset(index * 30),
+    }));
+    const rowsB = [10, 20, 85, 90].map((value, index) => ({
+      value,
+      time: getTimeWithSecondsOffset(index * 30),
+    }));
 
     const frames = [
       toDataFrame({
@@ -623,25 +631,7 @@ describe('prepareTimelineLegendItems', () => {
               mappings,
             },
             type: FieldType.time,
-            values: [
-              /**
-               * Ok State
-               */
-              getTimeWithSecondsOffset(0),
-              getTimeWithSecondsOffset(30),
-              getTimeWithSecondsOffset(60),
-              getTimeWithSecondsOffset(90),
-              getTimeWithSecondsOffset(120),
-              getTimeWithSecondsOffset(150),
-              getTimeWithSecondsOffset(180),
-              getTimeWithSecondsOffset(210),
-
-              /**
-               * Error State
-               */
-              getTimeWithSecondsOffset(240),
-              getTimeWithSecondsOffset(270),
-            ],
+            values: rowsA.map(({ time }) => time),
           }),
           createFieldWithDisplay({
             name: 'A-series',
@@ -652,7 +642,7 @@ describe('prepareTimelineLegendItems', () => {
               mappings,
             },
             type: FieldType.number,
-            values: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+            values: rowsA.map(({ value }) => value),
           }),
         ],
       }),
@@ -671,7 +661,7 @@ describe('prepareTimelineLegendItems', () => {
               mappings,
             },
             type: FieldType.time,
-            values: [getTimeWithSecondsOffset(215), getTimeWithSecondsOffset(275)],
+            values: rowsB.map(({ time }) => time),
           }),
           createFieldWithDisplay({
             name: 'A-series',
@@ -682,7 +672,7 @@ describe('prepareTimelineLegendItems', () => {
               mappings,
             },
             type: FieldType.number,
-            values: [10, 90],
+            values: rowsB.map(({ value }) => value),
           }),
         ],
       }),
@@ -702,12 +692,12 @@ describe('prepareTimelineLegendItems', () => {
     expect(result).toEqual([
       {
         color: mappings[0].options.result.color,
-        label: 'Ok (3m 35s)',
+        label: 'Ok (3m 30s)',
         yAxis: 1,
       },
       {
         color: mappings[1].options.result.color,
-        label: 'Error (35s)',
+        label: 'Error (2m)',
         yAxis: 1,
       },
     ]);
