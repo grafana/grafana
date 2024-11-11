@@ -123,7 +123,10 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         optionBuilder.addBorder(builder, ctx);
       }
 
-      const oneClickModeOptions = [
+      const oneClickModeOptions: Array<{
+        value: OneClickMode;
+        label: string;
+      }> = [
         { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
         { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
       ];

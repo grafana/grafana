@@ -65,7 +65,7 @@
     "@react-aria/utils": "3.25.3",
     "@tanstack/react-virtual": "^3.5.1",
     "@types/jquery": "3.5.32",
-    "@types/lodash": "4.17.12",
+    "@types/lodash": "4.17.13",
     "@types/react-table": "7.7.20",
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
