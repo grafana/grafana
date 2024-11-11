@@ -60,7 +60,7 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     }
 
     if (target.query) {
-      const query = this.applyVariables(target, options.scopedVars);
+      const query = this.applyTemplateVariables(target, options.scopedVars);
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
         map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
       );
@@ -99,12 +99,12 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
     return {
