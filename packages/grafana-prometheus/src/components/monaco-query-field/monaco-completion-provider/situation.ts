@@ -18,6 +18,8 @@ import {
   NumberDurationLiteralInDurationContext,
   parser,
   PromQL,
+  QuotedLabelMatcher,
+  QuotedLabelName,
   StringLiteral,
   UnquotedLabelMatcher,
   VectorSelector,
@@ -183,12 +185,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLabelMatcher,
   },
   {
+    path: [StringLiteral, QuotedLabelMatcher],
+    fun: resolveQuotedLabelMatcher,
+  },
+  {
     path: [ERROR_NODE_NAME, BinaryExpr, PromQL],
     fun: resolveTopLevel,
   },
   {
     path: [ERROR_NODE_NAME, UnquotedLabelMatcher],
     fun: resolveLabelMatcher,
+  },
+  {
+    path: [ERROR_NODE_NAME, QuotedLabelMatcher],
+    fun: resolveQuotedLabelMatcher,
   },
   {
     path: [ERROR_NODE_NAME, NumberDurationLiteralInDurationContext, MatrixSelector],
@@ -312,7 +322,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
   };
 }
 
-function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situation | null {
+function resolveLabelMatcher(node: SyntaxNode, text: string): Situation | null {
   // we can arrive here in two situation. `node` is either:
   // - a StringNode (like in `{job="^"}`)
   // - or an error node (like in `{job=^}`)
@@ -324,6 +334,61 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   }
 
   const labelNameNode = walk(parent, [['firstChild', LabelName]]);
+  if (labelNameNode === null) {
+    return null;
+  }
+
+  const labelName = getNodeText(labelNameNode, text);
+
+  const labelMatchersNode = walk(parent, [['parent', LabelMatchers]]);
+  if (labelMatchersNode === null) {
+    return null;
+  }
+
+  // now we need to find the other names
+  const allLabels = getLabels(labelMatchersNode, text);
+
+  // we need to remove "our" label from all-labels, if it is in there
+  const otherLabels = allLabels.filter((label) => label.name !== labelName);
+
+  const metricNameNode = walk(labelMatchersNode, [
+    ['parent', VectorSelector],
+    ['firstChild', Identifier],
+  ]);
+
+  if (metricNameNode === null) {
+    // we are probably in a situation without a metric name
+    return {
+      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+      labelName,
+      betweenQuotes: inStringNode,
+      otherLabels,
+    };
+  }
+
+  const metricName = getNodeText(metricNameNode, text);
+
+  return {
+    type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
+    metricName,
+    labelName,
+    betweenQuotes: inStringNode,
+    otherLabels,
+  };
+}
+
+function resolveQuotedLabelMatcher(node: SyntaxNode, text: string): Situation | null {
+  // we can arrive here in two situation. `node` is either:
+  // - a StringNode (like in `{"job"="^"}`)
+  // - or an error node (like in `{"job"=^}`)
+  const inStringNode = !node.type.isError;
+
+  const parent = walk(node, [['parent', QuotedLabelMatcher]]);
+  if (parent === null) {
+    return null;
+  }
+
+  const labelNameNode = walk(parent, [['firstChild', QuotedLabelName]]);
   if (labelNameNode === null) {
     return null;
   }
