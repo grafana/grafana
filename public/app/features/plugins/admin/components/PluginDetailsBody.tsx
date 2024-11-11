@@ -56,7 +56,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   if (pageId === PluginTabIds.VERSIONS) {
     return (
       <div>
-        <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
+        <VersionList
+          pluginId={plugin.id}
+          versions={plugin.details?.versions}
+          installedVersion={plugin.installedVersion}
+        />
       </div>
     );
   }
@@ -151,6 +155,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
       marginLeft: theme.spacing(2),
       '& > p': {
         margin: theme.spacing(1, 0),
+      },
+      code: {
+        whiteSpace: 'pre-wrap',
       },
     },
     a: {

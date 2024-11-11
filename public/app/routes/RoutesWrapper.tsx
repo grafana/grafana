@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { ComponentType } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
@@ -107,7 +108,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
               <LocationServiceProvider service={memoryLocationService}>
                 <CompatRouter>
                   <GlobalStyles />
-                  <div className={styles.secondAppWrapper}>
+                  <div className={styles.secondAppChrome}>
                     <div className={styles.secondAppToolbar}>
                       <IconButton
                         size={'lg'}
@@ -117,7 +118,9 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
                         onClick={() => closeApp(activePluginId)}
                       />
                     </div>
-                    <AppRootPage pluginId={activePluginId} />
+                    <div className={styles.secondAppWrapper}>
+                      <AppRootPage pluginId={activePluginId} />
+                    </div>
                   </div>
                 </CompatRouter>
               </LocationServiceProvider>
@@ -131,10 +134,11 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
   return {
-    secondAppWrapper: css({
-      label: 'secondAppWrapper',
+    secondAppChrome: css({
+      label: 'secondAppChrome',
       display: 'flex',
       height: '100%',
+      width: '100%',
       paddingTop: headerHeight || 0,
       flexGrow: 1,
       flexDirection: 'column',
@@ -144,6 +148,12 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
       label: 'secondAppToolbar',
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+
+    secondAppWrapper: css({
+      label: 'secondAppWrapper',
+      overflow: 'auto',
+      flex: '1',
     }),
 
     // This is basically the same as grafana-app class. This means the 2 additional wrapper divs that are in between

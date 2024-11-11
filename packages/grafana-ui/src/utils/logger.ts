@@ -1,9 +1,11 @@
 import { throttle } from 'lodash';
 
+type Args = Parameters<typeof console.log>;
+
 /**
  * @internal
  * */
-const throttledLog = throttle((...t: any[]) => {
+const throttledLog = throttle((...t: Args) => {
   console.log(...t);
 }, 500);
 
@@ -11,7 +13,7 @@ const throttledLog = throttle((...t: any[]) => {
  * @internal
  */
 export interface Logger {
-  logger: (...t: any[]) => void;
+  logger: (...t: Args) => void;
   enable: () => void;
   disable: () => void;
   isEnabled: () => boolean;
@@ -26,7 +28,7 @@ export const createLogger = (name: string): Logger => {
   }
 
   return {
-    logger: (id: string, throttle = false, ...t: any[]) => {
+    logger: (id: string, throttle = false, ...t: Args) => {
       if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test' || !loggingEnabled) {
         return;
       }

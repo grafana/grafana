@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -16,11 +17,11 @@ import { createWorker } from 'app/features/dashboard-scene/saving/createDetectCh
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 
@@ -120,12 +121,6 @@ export class DashboardSceneChangeTracker {
     return false;
   }
 
-  private onStateChanged(event: SceneObjectStateChangedEvent) {
-    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-      this.detectSaveModelChanges();
-    }
-  }
-
   private detectSaveModelChanges() {
     const changedDashboard = transformSceneToSaveModel(this._dashboard);
     const initialDashboard = this._dashboard.getInitialSaveModel();
@@ -165,13 +160,20 @@ export class DashboardSceneChangeTracker {
     if (!this._changesWorker) {
       this.init();
     }
+
     this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.updateIsDirty(e.data);
     };
 
+    const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
+
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
       SceneObjectStateChangedEvent,
-      this.onStateChanged.bind(this)
+      (event: SceneObjectStateChangedEvent) => {
+        if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+          performSaveModelDiff();
+        }
+      }
     );
   }
 
@@ -184,4 +186,15 @@ export class DashboardSceneChangeTracker {
     this._changesWorker?.terminate();
     this._changesWorker = undefined;
   }
+}
+
+/**
+ * The debouncer makes unit tests slower and more complex so turning it off for unit tests
+ */
+function getChangeTrackerDebouncer(fn: () => void) {
+  if (process.env.NODE_ENV === 'test') {
+    return fn;
+  }
+
+  return debounce(fn, 250);
 }

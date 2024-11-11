@@ -12,8 +12,10 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -27,11 +29,13 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
+func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceServer) {
 	t.Helper()
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
 
 	dbstore := infraDB.InitTestDB(t)
-	cfg := setting.NewCfg()
 
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, nil)
 	require.NoError(t, err)
@@ -50,6 +54,7 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 		Backend:     ret,
 		Diagnostics: ret,
 		Lifecycle:   ret,
+		Index:       resource.NewResourceIndexServer(cfg, tracing.NewNoopTracerService()),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)
@@ -74,7 +79,7 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		IsGrafanaAdmin: true, // can do anything
 	}
 	ctx := identity.WithRequester(context.Background(), testUserA)
-	backend, server := newServer(t)
+	backend, server := newServer(t, nil)
 
 	stream, err := backend.WatchWriteEvents(context.Background()) // Using a different context to avoid canceling the stream after the DefaultContextTimeout
 	require.NoError(t, err)
@@ -177,7 +182,7 @@ func TestIntegrationBackendWatchWriteEventsFromLastest(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, _ := newServer(t)
+	backend, _ := newServer(t, nil)
 
 	// Create a few resources before initing the watch
 	_, err := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -202,7 +207,7 @@ func TestIntegrationBackendList(t *testing.T) {
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	backend, server := newServer(t)
+	backend, server := newServer(t, nil)
 
 	// Create a few resources before starting the watch
 	rv1, _ := writeEvent(ctx, backend, "item1", resource.WatchEvent_ADDED)
@@ -374,7 +379,8 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client = resource.NewResourceClient(conn)
+		client, err = resource.NewGRPCResourceClient(tracing.NewNoopTracerService(), conn)
+		require.NoError(t, err)
 	})
 
 	t.Run("Create a resource", func(t *testing.T) {

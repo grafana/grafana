@@ -41,6 +41,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "15.3.0",
     "@types/node": "20.16.15",
+    "@types/semver": "7.5.8",
     "esbuild": "0.24.0",
     "rimraf": "6.0.1",
     "rollup": "^4.22.4",
@@ -50,6 +51,7 @@
   },
   "dependencies": {
     "@grafana/tsconfig": "^2.0.0",
+    "semver": "7.6.3",
     "tslib": "2.7.0",
     "typescript": "5.5.4"
   }

@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"errors"
 	"os"
 	"strings"
 
@@ -49,21 +48,6 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
-	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg)
-		server, err := resource.NewResourceServer(opts)
-		if err != nil {
-			return nil, err
-		}
-		// initialze the search index
-		indexer, ok := server.(resource.ResourceIndexer)
-		if !ok {
-			return nil, errors.New("index server does not implement ResourceIndexer")
-		}
-		_, err = indexer.Index(ctx)
-		return server, err
-	}
-
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
 		opts.WriteAccess = resource.WriteAccessHooks{
 			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
@@ -75,5 +59,22 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		}
 	}
 
-	return resource.NewResourceServer(opts)
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
+	}
+
+	rs, err := resource.NewResourceServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize the indexer if one is configured
+	if opts.Index != nil {
+		_, err = rs.(resource.ResourceIndexer).Index(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return rs, nil
 }

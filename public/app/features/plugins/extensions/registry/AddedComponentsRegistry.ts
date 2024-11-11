@@ -3,14 +3,14 @@ import { ReplaySubject } from 'rxjs';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { isAddedComponentMetaInfoMissing, isGrafanaDevMode, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint, isReactComponent } from '../validators';
+import { extensionPointEndsWithVersion, isGrafanaCoreExtensionPoint } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -40,22 +40,8 @@ export class AddedComponentsRegistry extends Registry<
         pluginId,
       });
 
-      if (!isReactComponent(config.component)) {
-        configLog.error(
-          `Could not register added component. Reason: The provided component is not a valid React component.`
-        );
-        continue;
-      }
-
       if (!config.title) {
         configLog.error(`Could not register added component. Reason: Title is missing.`);
-        continue;
-      }
-
-      if (!config.description) {
-        configLog.error(
-          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
-        );
         continue;
       }
 

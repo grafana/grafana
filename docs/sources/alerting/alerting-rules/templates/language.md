@@ -78,4 +78,4 @@ Dot (`.`) might refer to something else when used in a [range](#range), a [with]
 
 [//]: <> (The above section is not included in the shared file because `refs` links are not supported in shared files.)
 
-{{< docs/shared lookup="alerts/template-language.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="alerts/template-language.md" source="grafana" version="<GRAFANA_VERSION>" >}}

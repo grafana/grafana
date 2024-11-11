@@ -28,7 +28,7 @@ describe('DataLinks tests', () => {
     setup({ value: testValue });
 
     expect(await screen.findAllByRole('button', { name: 'Remove field' })).toHaveLength(2);
-    expect(await screen.findAllByRole('checkbox', { name: 'Internal link' })).toHaveLength(2);
+    expect(await screen.findAllByLabelText('Internal link')).toHaveLength(2);
   });
 
   it('should call onChange to add a new field when the add button is clicked', async () => {
