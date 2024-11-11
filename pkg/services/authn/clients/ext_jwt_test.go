@@ -232,7 +232,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaims,
-				AllowedKubernetesNamespace: "default",
+				Namespace: "default",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -251,7 +251,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
-				AllowedKubernetesNamespace: "*",
+				Namespace: "*",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -270,7 +270,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaims,
 				IDTokenClaims:              &validIDTokenClaims,
-				AllowedKubernetesNamespace: "default",
+				Namespace: "default",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -293,7 +293,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
 				IDTokenClaims:              &validIDTokenClaims,
-				AllowedKubernetesNamespace: "*",
+				Namespace: "*",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -321,7 +321,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
 				IDTokenClaims:              &validIDTokenClaimsWithStackSet,
-				AllowedKubernetesNamespace: "stacks-1234",
+				Namespace: "stacks-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -349,7 +349,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithStackSet,
-				AllowedKubernetesNamespace: "stacks-1234",
+				Namespace: "stacks-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -376,7 +376,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				Type:                       claims.TypeAccessPolicy,
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithDeprecatedStackClaimSet,
-				AllowedKubernetesNamespace: "stack-1234",
+				Namespace: "stack-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -403,7 +403,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWithDeprecatedStackClaimSet,
 				IDTokenClaims:              &validIDTokenClaimsWithDeprecatedStackClaimSet,
-				AllowedKubernetesNamespace: "stack-1234",
+				Namespace: "stack-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{
@@ -431,7 +431,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				OrgID:                      1,
 				AccessTokenClaims:          &validAccessTokenClaimsWildcard,
 				IDTokenClaims:              &validIDTokenClaimsWithStackSet,
-				AllowedKubernetesNamespace: "stacks-1234",
+				Namespace: "stacks-1234",
 				AuthenticatedBy:            "extendedjwt",
 				AuthID:                     "access-policy:this-uid",
 				ClientParams: authn.ClientParams{

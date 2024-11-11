@@ -136,14 +136,14 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		Type:                       t,
-		OrgID:                      s.cfg.DefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              &idTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: allowedKubernetesNamespace,
+		ID:                id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		IDTokenClaims:     &idTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         allowedKubernetesNamespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -184,15 +184,15 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		UID:                        id,
-		Name:                       id,
-		Type:                       t,
-		OrgID:                      s.cfg.DefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
+		ID:                id,
+		UID:               id,
+		Name:              id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions:        true,
 			FetchPermissionsParams: fetchPermissionsParams,
