@@ -664,6 +664,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
 /pkg/services/cloudmigration/ @grafana/grafana-operator-experience-squad
 /pkg/services/gcom/ @grafana/grafana-operator-experience-squad
+/pkg/services/authapi/ @grafana/grafana-operator-experience-squad
 
 # Feature toggles
 /pkg/services/featuremgmt/ @grafana/grafana-backend-services-squad

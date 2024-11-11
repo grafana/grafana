@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authapi"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/api"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/gmsclient"
@@ -62,6 +63,7 @@ type Service struct {
 
 	dsService              datasources.DataSourceService
 	gcomService            gcom.Service
+	authApiService         authapi.Service
 	dashboardService       dashboards.DashboardService
 	folderService          folder.Service
 	pluginStore            pluginstore.Store
@@ -151,9 +153,17 @@ func ProvideService(
 			return nil, fmt.Errorf("creating http client for GCOM: %w", err)
 		}
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom)
+
+		httpClientAuthApi, err := httpClientProvider.New()
+		if err != nil {
+			return nil, fmt.Errorf("creating http client for AuthApi: %w", err)
+		}
+		// the api token is the same as for gcom
+		s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
-		s.gcomService = &gcomStub{policies: map[string]gcom.AccessPolicy{}, token: nil}
+		s.gcomService = &gcomStub{}
+		s.authApiService = &authapiStub{policies: map[string]authapi.AccessPolicy{}, token: nil}
 		s.cfg.StackID = "12345"
 	}
 
@@ -169,7 +179,7 @@ func ProvideService(
 	return s, nil
 }
 
-func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
+func (s *Service) GetToken(ctx context.Context) (authapi.TokenView, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetToken")
 	defer span.End()
 	logger := s.log.FromContext(ctx)
@@ -179,7 +189,7 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	defer cancel()
 	instance, err := s.gcomService.GetInstanceByID(timeoutCtx, requestID, s.cfg.StackID)
 	if err != nil {
-		return gcom.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
+		return authapi.TokenView{}, fmt.Errorf("fetching instance by id: id=%s %w", s.cfg.StackID, err)
 	}
 
 	logger.Info("instance found", "slug", instance.Slug)
@@ -189,14 +199,13 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.ListTokensTimeout)
 	defer cancel()
-	tokens, err := s.gcomService.ListTokens(timeoutCtx, gcom.ListTokenParams{
+	tokens, err := s.authApiService.ListTokens(timeoutCtx, authapi.ListTokenParams{
 		RequestID:        requestID,
-		Region:           instance.RegionSlug,
 		AccessPolicyName: accessPolicyName,
 		TokenName:        accessTokenName,
 	})
 	if err != nil {
-		return gcom.TokenView{}, fmt.Errorf("listing tokens: %w", err)
+		return authapi.TokenView{}, fmt.Errorf("listing tokens: %w", err)
 	}
 	logger.Info("found access tokens", "num_tokens", len(tokens))
 
@@ -208,7 +217,7 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	}
 
 	logger.Info("cloud migration token not found")
-	return gcom.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
+	return authapi.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
 		instance, accessPolicyName, accessTokenName, cloudmigration.ErrTokenNotFound)
 }
 
@@ -231,7 +240,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.FetchAccessPolicyTimeout)
 	defer cancel()
-	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, instance.RegionSlug, accessPolicyName)
+	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, accessPolicyName)
 	if err != nil {
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("fetching access policy by name: name=%s %w", accessPolicyName, err)
 	}
@@ -239,10 +248,9 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	if existingAccessPolicy != nil {
 		timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteAccessPolicyTimeout)
 		defer cancel()
-		if _, err := s.gcomService.DeleteAccessPolicy(timeoutCtx, gcom.DeleteAccessPolicyParams{
+		if _, err := s.authApiService.DeleteAccessPolicy(timeoutCtx, authapi.DeleteAccessPolicyParams{
 			RequestID:      requestID,
 			AccessPolicyID: existingAccessPolicy.ID,
-			Region:         instance.RegionSlug,
 		}); err != nil {
 			return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("deleting access policy: id=%s region=%s %w", existingAccessPolicy.ID, instance.RegionSlug, err)
 		}
@@ -251,15 +259,14 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.CreateAccessPolicyTimeout)
 	defer cancel()
-	accessPolicy, err := s.gcomService.CreateAccessPolicy(timeoutCtx,
-		gcom.CreateAccessPolicyParams{
+	accessPolicy, err := s.authApiService.CreateAccessPolicy(timeoutCtx,
+		authapi.CreateAccessPolicyParams{
 			RequestID: requestID,
-			Region:    instance.RegionSlug,
 		},
-		gcom.CreateAccessPolicyPayload{
+		authapi.CreateAccessPolicyPayload{
 			Name:        accessPolicyName,
 			DisplayName: accessPolicyDisplayName,
-			Realms:      []gcom.Realm{{Type: "stack", Identifier: s.cfg.StackID, LabelPolicies: []gcom.LabelPolicy{}}},
+			Realms:      []authapi.Realm{{Type: "stack", Identifier: s.cfg.StackID, LabelPolicies: []authapi.LabelPolicy{}}},
 			Scopes:      []string{"cloud-migrations:read", "cloud-migrations:write"},
 		})
 	if err != nil {
@@ -273,9 +280,9 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.CreateTokenTimeout)
 	defer cancel()
 
-	token, err := s.gcomService.CreateToken(timeoutCtx,
-		gcom.CreateTokenParams{RequestID: requestID, Region: instance.RegionSlug},
-		gcom.CreateTokenPayload{
+	token, err := s.authApiService.CreateToken(timeoutCtx,
+		authapi.CreateTokenParams{RequestID: requestID},
+		authapi.CreateTokenPayload{
 			AccessPolicyID: accessPolicy.ID,
 			Name:           accessTokenName,
 			DisplayName:    accessTokenDisplayName,
@@ -303,14 +310,13 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	return cloudmigration.CreateAccessTokenResponse{Token: base64.StdEncoding.EncodeToString(bytes)}, nil
 }
 
-func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, accessPolicyName string) (*gcom.AccessPolicy, error) {
-	accessPolicies, err := s.gcomService.ListAccessPolicies(ctx, gcom.ListAccessPoliciesParams{
+func (s *Service) findAccessPolicyByName(ctx context.Context, accessPolicyName string) (*authapi.AccessPolicy, error) {
+	accessPolicies, err := s.authApiService.ListAccessPolicies(ctx, authapi.ListAccessPoliciesParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
-		Region:    regionSlug,
 		Name:      accessPolicyName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("listing access policies: name=%s region=%s :%w", accessPolicyName, regionSlug, err)
+		return nil, fmt.Errorf("listing access policies: name=%s :%w", accessPolicyName, err)
 	}
 
 	for _, accessPolicy := range accessPolicies {
@@ -349,9 +355,8 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteTokenTimeout)
 	defer cancel()
-	if err := s.gcomService.DeleteToken(timeoutCtx, gcom.DeleteTokenParams{
+	if err := s.authApiService.DeleteToken(timeoutCtx, authapi.DeleteTokenParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
-		Region:    instance.RegionSlug,
 		TokenID:   tokenID,
 	}); err != nil && !errors.Is(err, gcom.ErrTokenNotFound) {
 		return fmt.Errorf("deleting cloud migration token: tokenID=%s %w", tokenID, err)
