@@ -14,7 +14,9 @@ interface RequestOptions extends BackendSrvRequest {
   body?: BackendSrvRequest['data'];
 }
 
-export type UserStorageSpec = { [key: string]: string };
+export type UserStorageSpec = {
+  data: { [key: string]: string };
+};
 
 async function apiRequest<T>(requestOptions: RequestOptions) {
   try {
@@ -76,7 +78,7 @@ export async function getItem(service: string, key: string): Promise<string | nu
     // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
     return localStorage.getItem(resourceName);
   }
-  return userStorage.spec[key];
+  return userStorage.spec.data[key];
 }
 
 /**
@@ -101,13 +103,16 @@ export async function setItem(service: string, key: string, value: string): Prom
     await apiRequest<UserStorageSpec>({
       url: `/`,
       method: 'POST',
-      body: { metadata: { name: resourceName, labels: { user: getUserUID(), service } }, spec: userStorageData },
+      body: {
+        metadata: { name: resourceName, labels: { user: getUserUID(), service } },
+        spec: { data: userStorageData },
+      },
     });
     return;
   }
 
   // Update existing user storage
-  userStorage.spec[key] = value;
+  userStorage.spec.data[key] = value;
   await apiRequest<UserStorageSpec>({
     url: `/${resourceName}`,
     method: 'PUT',
