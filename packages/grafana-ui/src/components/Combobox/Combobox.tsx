@@ -317,6 +317,8 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
+  const placeholder = isOpen ? itemToString(selectedItem) : restProps.placeholder;
+
   return (
     <div>
       <InputComponent
@@ -357,6 +359,7 @@ export const Combobox = <T extends string | number>({
            */
           onChange: noop,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+          placeholder,
         })}
       />
       <div

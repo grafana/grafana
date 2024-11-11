@@ -121,6 +121,17 @@ describe('Combobox', () => {
       expect(optionsEls).toHaveLength(options.length);
     });
 
+    it('shows the current selected value as the placeholder of the input', async () => {
+      const selectedValue = options[0].value;
+      render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(input).toHaveAttribute('placeholder', options[0].label);
+    });
+
     it('exiting the menu without selecting an item restores the value to the text input', async () => {
       const selectedValue = options[0].value;
       render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
