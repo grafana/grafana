@@ -628,6 +628,10 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 	}
 	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
 
+	if !snapshot.ShouldQueryGMS() {
+		return
+	}
+
 	s.cancelMutex.Lock()
 	defer func() {
 		s.cancelFunc = nil
@@ -636,7 +640,15 @@ func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, sessio
 
 	ctx, s.cancelFunc = context.WithCancel(ctx)
 
+	updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+	if err != nil {
+		s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+	} else {
+		snapshot = updatedSnapshot
+	}
+
 	tick := time.NewTicker(5 * time.Second)
+	defer tick.Stop()
 
 	for snapshot.ShouldQueryGMS() {
 		select {
