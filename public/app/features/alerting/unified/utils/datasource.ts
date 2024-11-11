@@ -1,7 +1,6 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
   AlertManagerDataSourceJsonData,
@@ -153,7 +152,6 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
   const builtinAlertmanagerPermissions = [
     ...Object.values(permissions).flatMap((permissions) => permissions.grafana),
     ...PERMISSIONS_CONTACT_POINTS,
-    ...PERMISSIONS_TIME_INTERVALS,
     ...PERMISSIONS_NOTIFICATION_POLICIES,
   ];
 
