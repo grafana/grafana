@@ -16,6 +16,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage":     schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref),
 		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageList": schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref),
+		"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec": schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref),
 	}
 }
 
@@ -47,24 +48,15 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorage(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorageSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -112,5 +104,34 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1.UserStorage", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"data": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Map of service and JSON data",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"data"},
+			},
+		},
 	}
 }

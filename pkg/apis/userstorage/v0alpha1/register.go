@@ -34,7 +34,7 @@ var UserStorageResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec,
+				m.Spec.Data,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
