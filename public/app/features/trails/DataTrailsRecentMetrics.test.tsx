@@ -1,68 +1,36 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { DataTrailsRecentMetrics } from './DataTrailsRecentMetrics';
-import { getTrailStore } from './trailStore';
+import { AdHocFiltersVariable, SceneVariableSet } from '@grafana/scenes';
 
-jest.mock('./trailStore', () => ({
+import { DataTrailsRecentMetrics } from './DataTrailsRecentMetrics';
+import { getTrailStore } from './TrailStore/TrailStore';
+import { VAR_FILTERS } from './shared';
+
+jest.mock('./TrailStore/TrailStore', () => ({
   getTrailStore: jest.fn(),
 }));
 
 describe('DataTrailsRecentMetrics', () => {
+  let scene: DataTrailsRecentMetricsProps;
   beforeEach(() => {
-    getTrailStore.mockReturnValue({
-      recentMetrics: [],
-    });
+    const filtersVariable = new AdHocFiltersVariable({ name: VAR_FILTERS });
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [],
+      recent: [],
+    }));
+    scene = {
+      variables: new SceneVariableSet({
+        variables: [filtersVariable],
+      }),
+    } as DataTrailsRecentMetricsProps;
   });
 
-  it('renders the recent metrics header', () => {
-    render(<DataTrailsRecentMetrics />);
-    expect(screen.getByText('Recent Metrics')).toBeInTheDocument();
-  });
-
-  it('does not show the "Show more" button if there are 3 or fewer recent metrics', () => {
-    getTrailStore.mockReturnValue({
-      recentMetrics: [{}, {}, {}],
-    });
-    render(<DataTrailsRecentMetrics />);
-    expect(screen.queryByText('Show more')).not.toBeInTheDocument();
-  });
-
-  it('shows the "Show more" button if there are more than 3 recent metrics', () => {
-    getTrailStore.mockReturnValue({
-      recentMetrics: [{}, {}, {}, {}],
-    });
-    render(<DataTrailsRecentMetrics />);
-    expect(screen.getByText('Show more')).toBeInTheDocument();
-  });
-
-  it('toggles between "Show more" and "Show less" when the button is clicked', () => {
-    getTrailStore.mockReturnValue({
-      recentMetrics: [{}, {}, {}, {}],
-    });
-    render(<DataTrailsRecentMetrics />);
-    const button = screen.getByText('Show more');
-    fireEvent.click(button);
-    expect(screen.getByText('Show less')).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(screen.getByText('Show more')).toBeInTheDocument();
-  });
-
-  it('truncates long labels in recent metrics', () => {
-    const longLabel = 'This is a very long label that should be truncated';
-    getTrailStore.mockReturnValue({
-      recentMetrics: [{ label: longLabel }],
-    });
-    render(<DataTrailsRecentMetrics />);
-    expect(screen.getByText(longLabel)).toHaveClass('truncate');
-  });
-
-  it('selecting a recent metric card takes you to the metric', () => {
-    const onSelectRecentMetric = jest.fn();
-    getTrailStore.mockReturnValue({
-      recentMetrics: [{ resolve: () => ({ state: { key: '1' }, onSelectRecentMetric }) }],
-    });
-    render(<DataTrailsRecentMetrics />);
-    fireEvent.click(screen.getByText('1'));
-    expect(onSelectRecentMetric).toHaveBeenCalled();
-  });
+  // TODO: test that..
+  // renders the recent metrics header if there is at least one recent metric
+  // does not show the "Show more" button if there are 3 or fewer recent metrics
+  // shows the "Show more" button if there are more than 3 recent metrics
+  // toggles between "Show more" and "Show less" when the button is clicked
+  // truncates singular long label in recent explorations
+  // truncates multiple labels, max of 3 lines
+  // selecting a recent exploration card takes you to the metric
 });

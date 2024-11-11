@@ -47,6 +47,40 @@ describe('DataTrailsHome', () => {
     expect(screen.queryByText('Or view bookmarks')).not.toBeInTheDocument();
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
+
+  // this test should likely be in the /DataTrailsRecentMetrics.test.tsx but atm, i'm unsure how to properly mock the trailStore in that file
+  it('renders the recent metrics header if there is at least one recent metric', () => {
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [],
+      recent: [
+        {
+          resolve: () => ({ state: { key: '1' } }),
+        },
+      ],
+    }));
+    render(<scene.Component model={scene} />);
+    expect(screen.getByText('Or view a recent exploration')).toBeInTheDocument();
+  });
+
+  // this test should likely be in the /DataTrailsRecentMetrics.test.tsx
+  it('does not show the "Show more" button if there are 3 or fewer recent metrics', () => {
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [],
+      recent: [
+        {
+          resolve: () => ({ state: { key: '1' } }),
+        },
+        {
+          resolve: () => ({ state: { key: '2' } }),
+        },
+        {
+          resolve: () => ({ state: { key: '3' } }),
+        },
+      ],
+    }));
+    render(<scene.Component model={scene} />);
+    expect(screen.queryByText('Show more')).not.toBeInTheDocument();
+  });
   // have to create scenario where there are more than 3 cards. in the UI i know how to do this. but to write it in a test, i need to know what's happening in the code.
   // we know there's a collection of recent explorations. we've set them up as an empty obj. when we pass empty obj as recent thing to component, the component is breaking.
   // TypeError: trail.resolve is not a functionJest - we need to know what DataTrailsHome requries all the way thru.
@@ -72,6 +106,7 @@ describe('DataTrailsHome', () => {
     expect(screen.getByText('Show more')).toBeInTheDocument();
   });
 
+  // this test should likely be in the /DataTrailsRecentMetrics.test.tsx
   it('toggles between "Show more" and "Show less" when the button is clicked', () => {
     (getTrailStore as jest.Mock).mockImplementation(() => ({
       bookmarks: [],
@@ -103,6 +138,8 @@ describe('DataTrailsHome', () => {
   // when debugging, if i find there is no way to access that info (i.e., i'm running into a full data trail issue), just skip it for now. (like what's happening below).
   // const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, trail)!; - we're passing in the actual trail
   // the collection of recents are full trails. read errors, know that a full trail may need a full trail
+
+  // // this test should likely be in the /DataTrailsRecentMetrics.test.tsx
   // it('truncates singular long label in recent explorations', () => {
   //   const longLabel = 'This is a very long label that should be truncated';
   //   (getTrailStore as jest.Mock).mockImplementation(() => ({
@@ -117,6 +154,7 @@ describe('DataTrailsHome', () => {
   //   expect(screen.getByText(longLabel)).toHaveClass('truncate');
   // });
 
+  // // this test should likely be in the /DataTrailsRecentMetrics.test.tsx
   // it('selecting a recent exploration card takes you to the metric', () => {
   //   const onSelectRecentTrail = jest.fn();
   //   (getTrailStore as jest.Mock).mockImplementation(() => ({
