@@ -3853,16 +3853,16 @@ __metadata:
   linkType: soft
 
 "@grafana/plugin-e2e@npm:^1.11.0":
-  version: 1.11.0
-  resolution: "@grafana/plugin-e2e@npm:1.11.0"
+  version: 1.11.3
+  resolution: "@grafana/plugin-e2e@npm:1.11.3"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^11.4.0-204289"
+    "@grafana/e2e-selectors": "npm:^11.4.0-205692"
     semver: "npm:^7.5.4"
-    uuid: "npm:^10.0.0"
+    uuid: "npm:^11.0.0"
     yaml: "npm:^2.3.4"
   peerDependencies:
     "@playwright/test": ^1.41.2
-  checksum: 10/87726ecfd9c9895e075f8c9d3bd20b49ba458e43bbf8f41e46e635b2157597f36fd6ccb3f35dcea9df04c2dd65d63e9893318cbcf1903340e6668b3b122a9c83
+  checksum: 10/a0e127bae12507c8c0a4e93d5f08d7c08ca369c0b8da3737d580c0f0ce843d7a50c1f1e6e7fa6b36546ca6f5acecf2472598f2aa44666fbab40d65712472b4f1
   languageName: node
   linkType: hard
 
@@ -32142,6 +32142,15 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: 10/35aa60614811a201ff90f8ca5e9ecb7076a75c3821e17f0f5ff72d44e36c2d35fcbc2ceee9c4ac7317f4cc41895da30e74f3885e30313bee48fda6338f250538
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.0":
+  version: 11.0.3
+  resolution: "uuid@npm:11.0.3"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10/251385563195709eb0697c74a834764eef28e1656d61174e35edbd129288acb4d95a43f4ce8a77b8c2fc128e2b55924296a0945f964b05b9173469d045625ff2
   languageName: node
   linkType: hard
 
