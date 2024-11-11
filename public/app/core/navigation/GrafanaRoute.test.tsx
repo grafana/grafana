@@ -7,14 +7,11 @@ import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, Props } from './GrafanaRoute';
+import { getRouteComponentProps } from './__mocks__/routeProps';
 import { GrafanaRouteComponentProps } from './types';
 
-const mockLocation = {
-  search: '?query=hello&test=asd',
-  pathname: '',
-  state: undefined,
-  hash: '',
-};
+const mockLocation = getRouteComponentProps().location;
+
 function setup(overrides: Partial<Props>) {
   const props: Props = {
     location: mockLocation,

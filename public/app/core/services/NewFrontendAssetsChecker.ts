@@ -1,4 +1,4 @@
-import { Location } from 'history';
+import { Update } from 'history';
 import { isEqual } from 'lodash';
 
 import { getBackendSrv, getGrafanaLiveSrv, locationService, reportInteraction } from '@grafana/runtime';
@@ -36,7 +36,7 @@ export class NewFrontendAssetsChecker {
   /**
    * Tries to detect some navigation events where it's safe to trigger a reload
    */
-  protected locationUpdated(location: Location) {
+  protected locationUpdated({ location }: Update) {
     if (this.prevLocationPath === location.pathname) {
       return;
     }

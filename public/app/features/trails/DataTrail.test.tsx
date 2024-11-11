@@ -110,7 +110,7 @@ describe('DataTrail', () => {
       });
 
       describe('And browser back button is pressed', () => {
-        locationService.getHistory().goBack();
+        locationService.getHistory().back();
 
         it('Should return to original URL', () => {
           const { pathname } = locationService.getLocation();
@@ -388,7 +388,7 @@ describe('DataTrail', () => {
         });
 
         describe('And browser back button is pressed', () => {
-          locationService.getHistory().goBack();
+          locationService.getHistory().back();
 
           it('Should return to original URL', () => {
             const { pathname } = locationService.getLocation();

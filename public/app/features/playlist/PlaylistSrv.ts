@@ -1,4 +1,4 @@
-import { Location } from 'history';
+import { Update } from 'history';
 import { pickBy } from 'lodash';
 
 import { locationUtil, urlUtil, rangeUtil } from '@grafana/data';
@@ -73,7 +73,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   // Detect url changes not caused by playlist srv and stop playlist
-  locationUpdated(location: Location) {
+  locationUpdated({ location }: Update) {
     if (location.pathname !== this.validPlaylistUrl) {
       this.stop();
     }
@@ -81,6 +81,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
 
   async start(playlistUid: string) {
     this.stop();
+    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     this.startUrl = window.location.href;
     this.index = 0;
@@ -88,7 +89,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.setState({ isPlaying: true });
 
     // setup location tracking
-    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
     const urls: string[] = [];
 
     let playlist = await this.api.getPlaylist(playlistUid);

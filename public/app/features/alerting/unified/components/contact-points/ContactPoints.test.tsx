@@ -1,4 +1,4 @@
-import { MemoryHistoryBuildOptions } from 'history';
+import { MemoryHistoryOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
@@ -43,7 +43,7 @@ const server = setupMswServer();
 
 export const renderWithProvider = (
   children: ReactNode,
-  historyOptions?: MemoryHistoryBuildOptions,
+  historyOptions?: MemoryHistoryOptions,
   providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
 ) =>
   render(

@@ -221,7 +221,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       // new Grafana-managed rule
       trackNewGrafanaAlertRuleFormCancelled();
     }
-    locationService.getHistory().goBack();
+    locationService.getHistory().back();
   };
 
   const evaluateEveryInForm = watch('evaluateEvery');

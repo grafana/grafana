@@ -64,7 +64,7 @@ export function ModalsContextProvider(props: Props) {
 
     // Dismiss the modal when the route changes (if there's a link in the modal)
     let prevPath = '';
-    locationService.getHistory().listen((location) => {
+    locationService.getHistory().listen(({ location }) => {
       if (location.pathname !== prevPath) {
         setState({ component: null, props: {} });
       }

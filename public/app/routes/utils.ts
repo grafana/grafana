@@ -46,19 +46,10 @@ export function createLocationStorageHistory(options: LocalStorageHistoryOptions
 
   // This creates a sort of proxy over the memory location just to add the localStorage persistence. We could achieve
   // the same effect by a listener but that would create a memory leak as there would be no reasonable way to
-  // unsubcribe the listener later on.
+  // unsubscribe the listener later on.
   return {
     get index() {
       return memoryHistory.index;
-    },
-    get entries() {
-      return memoryHistory.entries;
-    },
-    canGo(n: number) {
-      return memoryHistory.canGo(n);
-    },
-    get length() {
-      return memoryHistory.length;
     },
     get action() {
       return memoryHistory.action;
@@ -66,11 +57,11 @@ export function createLocationStorageHistory(options: LocalStorageHistoryOptions
     get location() {
       return memoryHistory.location;
     },
-    push(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
+    push(location: H.To, state?: H.State) {
       memoryHistory.push(location, state);
       maybeUpdateLocation();
     },
-    replace(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
+    replace(location: H.To, state?: H.State) {
       memoryHistory.replace(location, state);
       maybeUpdateLocation();
     },
@@ -78,22 +69,22 @@ export function createLocationStorageHistory(options: LocalStorageHistoryOptions
       memoryHistory.go(n);
       maybeUpdateLocation();
     },
-    goBack() {
-      memoryHistory.goBack();
+    back() {
+      memoryHistory.back();
       maybeUpdateLocation();
     },
-    goForward() {
-      memoryHistory.goForward();
+    forward() {
+      memoryHistory.forward();
       maybeUpdateLocation();
     },
-    block(prompt?: boolean | string | H.TransitionPromptHook<H.LocationState>) {
-      return memoryHistory.block(prompt);
+    block(blocker: H.Blocker) {
+      return memoryHistory.block(blocker);
     },
-    listen(listener: H.LocationListener<H.LocationState>) {
+    listen(listener: H.Listener) {
       return memoryHistory.listen(listener);
     },
-    createHref(location: H.LocationDescriptorObject<H.LocationState>) {
-      return memoryHistory.createHref(location);
+    createHref(to: H.To) {
+      return memoryHistory.createHref(to);
     },
   };
 }
