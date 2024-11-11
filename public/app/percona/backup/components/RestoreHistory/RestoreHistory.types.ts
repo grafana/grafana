@@ -14,6 +14,7 @@ export interface RestoreResponse {
 }
 
 export interface Restore extends Omit<Backup, 'created' | 'status' | 'mode' | 'folder'> {
+  id: string;
   artifactId: string;
   started: number;
   finished: number | null;
