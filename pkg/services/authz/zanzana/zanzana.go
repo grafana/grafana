@@ -6,6 +6,8 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
+	"github.com/grafana/authlib/authz"
+
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -141,4 +143,32 @@ func TranslateFixedRole(role string) string {
 // Translate "read" for the dashboard into "dashboard_read" for folder
 func TranslateToFolderRelation(relation, objectType string) string {
 	return fmt.Sprintf("%s_%s", objectType, relation)
+}
+
+func TranslateToCheckRequest(namespace, action, kind, name string) (*authz.CheckRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := common.RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authz.CheckRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
+		Name:      name,
+	}
+
+	return req, true
 }

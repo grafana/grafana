@@ -32,3 +32,10 @@ var VerbMapping = map[string]string{
 	utils.VerbDelete:           "delete",
 	utils.VerbDeleteCollection: "delete",
 }
+
+var RelationToVerbMapping = map[string]string{
+	"read":   utils.VerbGet,
+	"create": utils.VerbCreate,
+	"write":  utils.VerbUpdate,
+	"delete": utils.VerbDelete,
+}

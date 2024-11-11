@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -117,8 +119,24 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 	}
 
 	return eval.EvaluateCustom(func(action, scope string) (bool, error) {
-		// FIXME: Implement using new schema / apis
-		return false, nil
+		kind, _, identifier := accesscontrol.SplitScope(scope)
+		namespace := claims.OrgNamespaceFormatter(user.GetOrgID())
+		req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, identifier)
+		if !ok {
+			// unsupported translation
+			return false, errAccessNotImplemented
+		}
+
+		a.log.Debug("evaluating zanzana", "user", user.GetAuthID(), "namespace", req.Namespace, "verb", req.Verb, "resource", req.Resource, "name", req.Name)
+		res, err := a.zclient.Check(ctx, user, *req)
+
+		if err != nil {
+			return false, err
+		}
+
+		a.log.Debug("evaluating zanzana", "allowed", res.Allowed, "name", req.Name)
+
+		return res.Allowed, nil
 	})
 }
 
