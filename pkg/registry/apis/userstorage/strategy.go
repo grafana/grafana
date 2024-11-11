@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,12 +38,16 @@ type userstorageStrategy struct {
 	registerer prometheus.Registerer
 }
 
+var once sync.Once
+
 func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, registerer prometheus.Registerer) *userstorageStrategy {
-	if registerer != nil {
-		registerer.MustRegister(
-			userstorageSize,
-		)
-	}
+	once.Do(func() {
+		if registerer != nil {
+			registerer.MustRegister(
+				userstorageSize,
+			)
+		}
+	})
 	genericStrategy := grafanaregistry.NewStrategy(typer, gv)
 	return &userstorageStrategy{genericStrategy, registerer}
 }

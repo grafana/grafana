@@ -22,13 +22,13 @@ func TestValidate(t *testing.T) {
 		{
 			name:        "valid userstorage object",
 			requesterID: "123",
-			objectName:  "user:123",
+			objectName:  "basic-panel:123",
 			expectError: false,
 		},
 		{
 			name:        "invalid userstorage object",
 			requesterID: "123",
-			objectName:  "user:456",
+			objectName:  "basic-panel:456",
 			expectError: true,
 		},
 	}
