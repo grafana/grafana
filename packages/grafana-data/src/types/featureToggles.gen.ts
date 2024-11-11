@@ -233,4 +233,5 @@ export interface FeatureToggles {
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
+  enableSCIM?: boolean;
 }
