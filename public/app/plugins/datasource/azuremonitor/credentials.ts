@@ -4,6 +4,7 @@ import {
   getDefaultAzureCloud,
   getClientSecret,
   resolveLegacyCloudName,
+  updateDatasourceCredentials,
 } from '@grafana/azure-sdk';
 import { config } from '@grafana/runtime';
 
@@ -20,6 +21,13 @@ export function getCredentials(
   }
 
   return getLegacyCredentials(options) || getDefaultCredentials();
+}
+
+export function updateCredentials(
+  options: AzureMonitorDataSourceSettings,
+  credentials: AzureCredentials
+): AzureMonitorDataSourceSettings {
+  return updateDatasourceCredentials(options, credentials);
 }
 
 function getLegacyCredentials(
