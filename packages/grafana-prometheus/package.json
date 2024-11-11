@@ -91,7 +91,7 @@
     "@types/eslint": "9.6.1",
     "@types/jest": "29.5.14",
     "@types/jquery": "3.5.32",
-    "@types/lodash": "4.17.12",
+    "@types/lodash": "4.17.13",
     "@types/node": "20.16.15",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.5",
