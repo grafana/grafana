@@ -12,11 +12,11 @@ import { PromApplication, RulesSourceApplication } from 'app/types/unified-alert
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
+import { PERMISSIONS_TEMPLATES } from '../components/templates/permissions';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
-import { PERMISSIONS_TEMPLATES } from '../components/templates/permissions';
 import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
