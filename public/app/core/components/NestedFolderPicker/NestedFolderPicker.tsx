@@ -97,6 +97,11 @@ export function NestedFolderPicker({
     requestNextPage: fetchFolderPage,
   } = useFoldersQuery(isBrowsing, foldersOpenState, permission);
 
+  const optionsToPickFolder = [
+    { label: 'Existing Folder', value: true },
+    { label: 'New Folder', value: false },
+  ];
+
   useEffect(() => {
     if (!search) {
       setSearchResults(null);
@@ -372,11 +377,6 @@ export function NestedFolderPicker({
       </>
     );
   };
-
-  const optionsToPickFolder = [
-    { label: 'Existing Folder', value: true },
-    { label: 'New Folder', value: false },
-  ];
 
   return (
     <>
