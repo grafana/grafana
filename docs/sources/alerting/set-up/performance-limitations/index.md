@@ -15,7 +15,7 @@ labels:
     - enterprise
     - oss
 title: Performance considerations and limitations
-weight: 600
+weight: 800
 ---
 
 # Performance considerations and limitations
