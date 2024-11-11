@@ -113,6 +113,13 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 	}
 
 	res, err := z.httpClient.Get(traceUrl)
+	defer func() {
+    	if res != nil {
+		    if err = res.Body.Close(); err != nil {
+			     z.logger.Error("Failed to close response body", "error", err)
+		    }
+    	}
+	}()
 	if err != nil {
 		return trace, err
 	}
