@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, Space, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Input, LoadingBar, RadioButtonGroup, Space, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import {
   skipToken,
@@ -200,9 +200,8 @@ export function NestedFolderPicker({
         title: folderName,
       });
     } finally {
-      // setIsCreatingFolder(false);
+      // TODO: clean up! catch error?
     }
-    // TODO: clean up! catch error?
   };
 
   const flatTree = useMemo(() => {
@@ -274,114 +273,122 @@ export function NestedFolderPicker({
     label = 'Dashboards';
   }
 
+  const pickExistingFolder = () => {
+    return overlayOpen ? (
+      <>
+        <Input
+          ref={refs.setReference}
+          autoFocus
+          prefix={label ? <Icon name="folder" /> : null}
+          placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
+          value={search}
+          invalid={invalid}
+          className={styles.search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          aria-autocomplete="list"
+          aria-expanded
+          aria-haspopup
+          aria-controls={overlayId}
+          aria-owns={overlayId}
+          aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
+          role="combobox"
+          suffix={<Icon name="search" />}
+          {...getReferenceProps()}
+          onKeyDown={handleKeyDown}
+        />
+        <fieldset
+          ref={refs.setFloating}
+          id={overlayId}
+          className={styles.tableWrapper}
+          style={{
+            ...floatingStyles,
+            width: elements.domReference?.clientWidth,
+          }}
+          {...getFloatingProps()}
+        >
+          {error ? (
+            <Alert
+              className={styles.error}
+              severity="warning"
+              title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+            >
+              {error.message ||
+                error.toString?.() ||
+                t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+            </Alert>
+          ) : (
+            <div>
+              {isLoading && (
+                <div className={styles.loader}>
+                  <LoadingBar width={600} />
+                </div>
+              )}
+
+              <NestedFolderList
+                items={flatTree}
+                selectedFolder={value}
+                focusedItemIndex={focusedItemIndex}
+                onFolderExpand={handleFolderExpand}
+                onFolderSelect={handleFolderSelect}
+                idPrefix={overlayId}
+                foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
+                isItemLoaded={isItemLoaded}
+                requestLoadMore={handleLoadMore}
+              />
+            </div>
+          )}
+        </fieldset>
+      </>
+    ) : (
+      <Trigger
+        label={label}
+        handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
+        invalid={invalid}
+        isLoading={selectedFolder.isLoading}
+        autoFocus={autoFocusButton}
+        ref={refs.setReference}
+        aria-label={
+          label
+            ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
+                label,
+              })
+            : undefined
+        }
+        {...getReferenceProps()}
+      />
+    );
+  };
+
+  const pickNewFolder = () => {
+    return (
+      <>
+        <NewFolderForm
+          onConfirm={onCreateNewFolder}
+          onCancel={() => {
+            // setIsCreatingFolder(false);
+          }}
+          preventDefault={true}
+        />
+      </>
+    );
+  };
+
+  const optionsToPickFolder = [
+    { label: 'Existing Folder', value: true },
+    { label: 'New Folder', value: false },
+  ];
+
   return (
     <>
-      <TabsBar>
-        <Tab label="Existing Folder" active={chooseExistingFolder} onChangeTab={() => setChooseExistingFolder(true)} />
-        <Tab label="New Folder" active={!chooseExistingFolder} onChangeTab={() => setChooseExistingFolder(false)} />
-      </TabsBar>
+      <RadioButtonGroup
+        options={optionsToPickFolder}
+        value={chooseExistingFolder}
+        onChange={(value) => setChooseExistingFolder(value!)}
+        fullWidth={true}
+      />
       <Space v={1} />
-      <TabContent>
-        {chooseExistingFolder &&
-          (overlayOpen ? (
-            <>
-              <Input
-                ref={refs.setReference}
-                autoFocus
-                prefix={label ? <Icon name="folder" /> : null}
-                placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
-                value={search}
-                invalid={invalid}
-                className={styles.search}
-                onChange={(e) => setSearch(e.currentTarget.value)}
-                aria-autocomplete="list"
-                aria-expanded
-                aria-haspopup
-                aria-controls={overlayId}
-                aria-owns={overlayId}
-                aria-activedescendant={getDOMId(overlayId, flatTree[focusedItemIndex]?.item.uid)}
-                role="combobox"
-                suffix={<Icon name="search" />}
-                {...getReferenceProps()}
-                onKeyDown={handleKeyDown}
-              />
-              <fieldset
-                ref={refs.setFloating}
-                id={overlayId}
-                className={styles.tableWrapper}
-                style={{
-                  ...floatingStyles,
-                  width: elements.domReference?.clientWidth,
-                }}
-                {...getFloatingProps()}
-              >
-                {error ? (
-                  <Alert
-                    className={styles.error}
-                    severity="warning"
-                    title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
-                  >
-                    {error.message ||
-                      error.toString?.() ||
-                      t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
-                  </Alert>
-                ) : (
-                  <div>
-                    {isLoading && (
-                      <div className={styles.loader}>
-                        <LoadingBar width={600} />
-                      </div>
-                    )}
-
-                    <NestedFolderList
-                      items={flatTree}
-                      selectedFolder={value}
-                      focusedItemIndex={focusedItemIndex}
-                      onFolderExpand={handleFolderExpand}
-                      onFolderSelect={handleFolderSelect}
-                      idPrefix={overlayId}
-                      foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
-                      isItemLoaded={isItemLoaded}
-                      requestLoadMore={handleLoadMore}
-                    />
-                  </div>
-                )}
-              </fieldset>
-            </>
-          ) : (
-            <Trigger
-              label={label}
-              handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
-              invalid={invalid}
-              isLoading={selectedFolder.isLoading}
-              autoFocus={autoFocusButton}
-              ref={refs.setReference}
-              aria-label={
-                label
-                  ? t(
-                      'browse-dashboards.folder-picker.accessible-label',
-                      'Select folder: {{ label }} currently selected',
-                      {
-                        label,
-                      }
-                    )
-                  : undefined
-              }
-              {...getReferenceProps()}
-            />
-          ))}
-        {!chooseExistingFolder && (
-          <>
-            <NewFolderForm
-              onConfirm={onCreateNewFolder}
-              onCancel={() => {
-                // setIsCreatingFolder(false);
-              }}
-              preventDefault={true}
-            />
-          </>
-        )}
-      </TabContent>
+      {chooseExistingFolder && pickExistingFolder()}
+      {!chooseExistingFolder && pickNewFolder()}
     </>
   );
 }
