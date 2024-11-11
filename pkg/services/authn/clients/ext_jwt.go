@@ -138,7 +138,6 @@ func (s *ExtendedJWT) authenticateAsUser(
 	return &authn.Identity{
 		ID:                id,
 		Type:              t,
-		UID:               id,
 		OrgID:             s.cfg.DefaultOrgID(),
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
