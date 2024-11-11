@@ -62,10 +62,7 @@ export function DataTrailCard(props: Props) {
     <div>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
-          <div className={styles.metricLabel}>
-            <Trans i18nKey="trails.card.metric">Metric:</Trans>
-          </div>
-          <div className={styles.metricValue}>{getMetricName(metric)}</div>
+          <div className={styles.metricValue}>{truncateValue('', getMetricName(metric), 39)}</div>
         </Card.Heading>
         <Card.Meta className={styles.meta}>
           {filters.map((f) => (
@@ -116,7 +113,6 @@ export function getStyles(theme: GrafanaTheme2) {
       fontSize: '14px',
       fontStyle: 'normal',
       fontWeight: 500,
-      marginLeft: '8px', // Add space between the label and the value
       wordBreak: 'break-all',
     }),
     tag: css({
@@ -142,9 +138,6 @@ export function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
       fontSize: '12px',
     }),
-    datasource: css({
-      gridArea: 'Description',
-    }),
     date: css({
       border: `1px solid ${theme.colors.border.weak}`,
       // eslint-disable-next-line @grafana/no-border-radius-literal
@@ -156,8 +149,7 @@ export function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxHeight: '54px',
-      width: '100%',
+      maxHeight: '36px', // 2 lines * 18px line-height
       margin: 0,
       gridArea: 'Meta',
       color: theme.colors.text.secondary,
