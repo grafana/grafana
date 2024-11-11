@@ -134,16 +134,14 @@ func createZipkinURL(baseURL string, path string, params map[string]string) (str
 		return "", err
 	}
 	finalUrl.Path = urlPath
-	// If there are no query parameters, return the composed URL as a string
-	if len(params) == 0 {
-		return finalUrl.String(), nil
+	// If there are query parameters, add them
+	if len(params) > 0 {
+		queryParams := finalUrl.Query()
+		for k, v := range params {
+			queryParams.Set(k, v)
+		}
+		finalUrl.RawQuery = queryParams.Encode()
 	}
-	// Otherwise add the query parameters
-	queryParams := finalUrl.Query()
-	for k, v := range params {
-		queryParams.Set(k, v)
-	}
-	finalUrl.RawQuery = queryParams.Encode()
 	// Return the composed URL as a string
 	return finalUrl.String(), nil
 }

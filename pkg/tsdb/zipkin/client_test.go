@@ -287,3 +287,71 @@ func TestZipkinClient_Trace(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateZipkinURL(t *testing.T) {
+	tests := []struct {
+		name      string
+		baseURL   string
+		path      string
+		params    map[string]string
+		expected  string
+		shouldErr bool
+	}{
+		{
+			name:     "WithPathAndParams",
+			baseURL:  "http://example.com",
+			path:     "api/v1/trace",
+			params:   map[string]string{"key1": "value1", "key2": "value2"},
+			expected: "http://example.com/api/v1/trace?key1=value1&key2=value2",
+		},
+		{
+			name:     "OnlyParams",
+			baseURL:  "http://example.com",
+			path:     "",
+			params:   map[string]string{"key1": "value1"},
+			expected: "http://example.com?key1=value1",
+		},
+		{
+			name:     "NoParams",
+			baseURL:  "http://example.com",
+			path:     "api/v1/trace",
+			params:   map[string]string{},
+			expected: "http://example.com/api/v1/trace",
+		},
+		{
+			name:      "InvalidBaseURL",
+			baseURL:   "http://example .com",
+			path:      "api/v1/trace",
+			params:    map[string]string{},
+			shouldErr: true,
+		},
+		{
+			name:     "BaseURLWithPath",
+			baseURL:  "http://example.com/base",
+			path:     "api/v1/trace",
+			params:   map[string]string{"key1": "value1"},
+			expected: "http://example.com/base/api/v1/trace?key1=value1",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := createZipkinURL(tc.baseURL, tc.path, tc.params)
+
+			if tc.shouldErr {
+				if err == nil {
+					t.Fatalf("Expected error, but got nil")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			if result != tc.expected {
+				t.Errorf("Expected %s, got %s", tc.expected, result)
+			}
+		})
+	}
+}
