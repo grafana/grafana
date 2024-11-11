@@ -47,7 +47,7 @@ func TestZipkinClient_Services(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "/api/v2/services", r.URL.Path)
 				w.WriteHeader(tt.mockStatusCode)
-				w.Write([]byte(tt.mockResponse))
+				_, _ = w.Write([]byte(tt.mockResponse))
 			}))
 			defer server.Close()
 
