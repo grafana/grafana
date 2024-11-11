@@ -118,6 +118,14 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		UID:       uid,
 		SessionID: sess.UID,
 		Status:    cloudmigration.SnapshotStatusPendingProcessing,
+		LocalResources: []cloudmigration.CloudMigrationResource{
+			{
+				Name:   "A name",
+				Type:   cloudmigration.DatasourceDataType,
+				RefID:  "A",
+				Status: cloudmigration.ItemStatusPending,
+			},
+		},
 	})
 	assert.NoError(t, err)
 
@@ -227,8 +235,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
-					Name:   "A name",
-					Type:   cloudmigration.DatasourceDataType,
 					RefID:  "A",
 					Status: cloudmigration.ItemStatusError,
 					Error:  "fake",
@@ -245,6 +251,7 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		assert.Equal(t, cloudmigration.SnapshotStatusFinished, snapshot.Status)
 		assert.Equal(t, 1, gmsClientMock.getStatusCalled) // shouldn't have queried GMS again now that it is finished
 		assert.Len(t, snapshot.Resources, 1)
+		assert.Equal(t, cloudmigration.ItemStatusError, snapshot.Resources[0].Status)
 		assert.Equal(t, "A", snapshot.Resources[0].RefID)
 		assert.Equal(t, "fake", snapshot.Resources[0].Error)
 
@@ -396,43 +403,72 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
+		UID:       snapshotUid,
+		SessionID: sess.UID,
+		LocalResources: []cloudmigration.CloudMigrationResource{
+			{
+				Name:        "1 name",
+				ParentName:  "1 parent name",
+				Type:        cloudmigration.DatasourceDataType,
+				RefID:       "1", // this will be core
+				Status:      cloudmigration.ItemStatusPending,
+				SnapshotUID: snapshotUid,
+			},
+			{
+				Name:        "2 name",
+				ParentName:  "",
+				Type:        cloudmigration.DatasourceDataType,
+				RefID:       "2", // this will be non-core
+				Status:      cloudmigration.ItemStatusPending,
+				SnapshotUID: snapshotUid,
+			},
+			{
+				Name:        "3 name",
+				ParentName:  "3 parent name",
+				Type:        cloudmigration.DatasourceDataType,
+				RefID:       "3", // this will be non-core with an error
+				Status:      cloudmigration.ItemStatusPending,
+				Error:       "please don't overwrite me",
+				SnapshotUID: snapshotUid,
+			},
+			{
+				Name:        "4 name",
+				ParentName:  "4 folder name",
+				Type:        cloudmigration.DatasourceDataType,
+				RefID:       "4", // this will be deleted
+				Status:      cloudmigration.ItemStatusPending,
+				SnapshotUID: snapshotUid,
+			},
+		},
+	})
+	require.NoError(t, err)
+
 	// GMS should return: a core ds, a non-core ds, a non-core ds with an error, and a ds that has been uninstalled
 	gmsClientMock := &gmsClientMock{
 		getSnapshotResponse: &cloudmigration.GetSnapshotStatusResponse{
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
-					Name:        "1 name",
-					ParentName:  "1 parent name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "1", // this will be core
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "1",
+					Status: cloudmigration.ItemStatusOK,
 				},
 				{
-					Name:        "2 name",
-					ParentName:  "",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "2", // this will be non-core
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "2",
+					Status: cloudmigration.ItemStatusOK,
 				},
 				{
-					Name:        "3 name",
-					ParentName:  "3 parent name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "3", // this will be non-core with an error
-					Status:      cloudmigration.ItemStatusError,
-					Error:       "please don't overwrite me",
-					SnapshotUID: snapshotUid,
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "3",
+					Status: cloudmigration.ItemStatusError,
+					Error:  "please don't overwrite me",
 				},
 				{
-					Name:        "4 name",
-					ParentName:  "4 folder name",
-					Type:        cloudmigration.DatasourceDataType,
-					RefID:       "4", // this will be deleted
-					Status:      cloudmigration.ItemStatusOK,
-					SnapshotUID: snapshotUid,
+					Type:   cloudmigration.DatasourceDataType,
+					RefID:  "4", // this will be deleted
+					Status: cloudmigration.ItemStatusOK,
 				},
 			},
 		},
