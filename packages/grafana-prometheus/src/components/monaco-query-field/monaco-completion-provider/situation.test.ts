@@ -111,15 +111,15 @@ describe('situation', () => {
   });
 
   it('utf-8 label support', () => {
-    // assertSituation(`metric{"label": "^"}`, null);
-    //
-    // assertSituation(`metric{"label with space": "^"}`, null);
-    //
-    // assertSituation(`metric{"label_🤖": "^"}`, null);
-    //
-    // assertSituation(`metric{"Spaß": "^"}`, null);
-    //
-    // assertSituation(`{"metric", "Spaß": "^"}`, null);
+    assertSituation(`metric{"label": "^"}`, null);
+
+    assertSituation(`metric{"label with space": "^"}`, null);
+
+    assertSituation(`metric{"label_🤖": "^"}`, null);
+
+    assertSituation(`metric{"Spaß": "^"}`, null);
+
+    assertSituation(`{"metric", "Spaß": "^"}`, null);
 
     assertSituation('something{"job"=^}', {
       type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
