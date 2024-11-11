@@ -133,7 +133,7 @@ export const isAddedLinkMetaInfoMissing = (
   metaInfo: PluginExtensionAddedLinkConfig,
   log: ExtensionsLog
 ) => {
-  const logPrefix = 'Could not register link extension. Reason: ';
+  const logPrefix = 'Could not register link extension. Reason:';
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.addedLinks.find(({ title }) => title === metaInfo.title) : null;
 
@@ -165,7 +165,7 @@ export const isAddedComponentMetaInfoMissing = (
   metaInfo: PluginExtensionAddedComponentConfig,
   log: ExtensionsLog
 ) => {
-  const logPrefix = 'Could not register component extension. Reason: ';
+  const logPrefix = 'Could not register component extension. Reason:';
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.addedComponents.find(({ title }) => title === metaInfo.title) : null;
 
@@ -197,7 +197,7 @@ export const isExposedComponentMetaInfoMissing = (
   metaInfo: PluginExtensionExposedComponentConfig,
   log: ExtensionsLog
 ) => {
-  const logPrefix = 'Could not register exposed component extension. Reason: ';
+  const logPrefix = 'Could not register exposed component extension. Reason:';
   const app = config.apps[pluginId];
   const pluginJsonMetaInfo = app ? app.extensions.exposedComponents.find(({ id }) => id === metaInfo.id) : null;
 
