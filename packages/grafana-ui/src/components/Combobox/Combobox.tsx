@@ -80,17 +80,20 @@ const asyncNoop = () => Promise.resolve([]);
  *
  * @alpha
  */
-export const Combobox = <T extends string | number>({
-  options,
-  onChange,
-  value: valueProp,
-  isClearable = false,
-  createCustomValue = false,
-  id,
-  width,
-  'aria-labelledby': ariaLabelledBy,
-  ...restProps
-}: ComboboxProps<T>) => {
+export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+  const {
+    options,
+    onChange,
+    value: valueProp,
+    placeholder: placeholderProp,
+    isClearable = false,
+    createCustomValue = false,
+    id,
+    width,
+    'aria-labelledby': ariaLabelledBy,
+    ...restProps
+  } = props;
+
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
@@ -317,7 +320,7 @@ export const Combobox = <T extends string | number>({
       ? 'search'
       : 'angle-down';
 
-  const placeholder = isOpen ? itemToString(selectedItem) : restProps.placeholder;
+  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   return (
     <div>
