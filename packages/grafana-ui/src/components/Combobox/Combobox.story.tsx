@@ -8,7 +8,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
-import { Select, AsyncSelect } from '../Select/Select';
+import { AsyncSelect, Select } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -55,6 +55,7 @@ const meta: Meta<PropsAndCustomArgs> = {
 
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
+
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
@@ -259,6 +260,7 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const loadOptionsAction = action('loadOptions called');
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
   // Combobox
   const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
@@ -268,7 +270,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
   // This simulates a kind of search API call
   const loadOptionsWithLabels = useCallback((inputValue: string) => {
-    console.info(`Load options called with value '${inputValue}' `);
+    loadOptionsAction(inputValue);
     return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
   }, []);
 
@@ -326,7 +328,6 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
       <Field label="Async with error" description="An odd number of characters throws an error">
         <Combobox
-          {...args}
           id="test-combobox-error"
           placeholder="Select an option"
           options={loadOptionsWithErrors}
@@ -337,6 +338,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           }}
         />
       </Field>
+
       <Field label="Compared to AsyncSelect">
         <AsyncSelect
           id="test-async-select"
@@ -347,6 +349,20 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           onChange={(val) => {
             action('onChange')(val);
             setAsyncSelectValue(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          {...args}
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
           }}
         />
       </Field>
