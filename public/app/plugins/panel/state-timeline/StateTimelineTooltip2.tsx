@@ -71,7 +71,7 @@ export const StateTimelineTooltip2 = ({
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
-    const actions = getFieldActions(series, field, replaceVariables!);
+    const actions = getFieldActions(series, field, replaceVariables!, dataIdx);
 
     footer = <VizTooltipFooter dataLinks={links} annotate={annotate} actions={actions} />;
   }

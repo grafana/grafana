@@ -96,7 +96,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   if (isPinned && seriesIdx != null) {
     const links = getDataLinks(yField, rowIndex);
     const yFieldFrame = data.find((frame) => frame.fields.includes(yField))!;
-    const actions = getFieldActions(yFieldFrame, yField, replaceVariables);
+    const actions = getFieldActions(yFieldFrame, yField, replaceVariables, rowIndex);
 
     footer = <VizTooltipFooter dataLinks={links} actions={actions} />;
   }

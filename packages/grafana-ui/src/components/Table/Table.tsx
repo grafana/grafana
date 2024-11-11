@@ -61,6 +61,7 @@ export const Table = memo((props: Props) => {
     initialRowIndex = undefined,
     fieldConfig,
     getActions,
+    replaceVariables,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -362,6 +363,7 @@ export const Table = memo((props: Props) => {
                 longestField={longestField}
                 textWrapField={textWrapField}
                 getActions={getActions}
+                replaceVariables={replaceVariables}
               />
             </div>
           ) : (
