@@ -41,7 +41,7 @@ cards:
       height: 24
     - title: Additional configuration
       href: ./set-up/
-      description: Use advanced configuration options to further tailor your alerting setup. While not essential for basic alerting, these options can enhance security, scalability, and automation in complex environments.
+      description: Use advanced configuration options to further tailor your alerting setup. These options can enhance security, scalability, and automation in complex environments.
       height: 24
 ---
 
