@@ -40,6 +40,13 @@ func Provision(ctx context.Context, configDirectory string, dsService BaseDataSo
 	return dc.applyChanges(ctx, configDirectory)
 }
 
+// GetCacheConfigs scans a directory for provisioning config files
+// and returns cache configs of the the datasources in those files.
+func GetCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]*DatasourceCachingConfig, error) {
+	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
+	return dc.getCachingConfigs(ctx, configDirectory)
+}
+
 // DatasourceProvisioner is responsible for provisioning datasources based on
 // configuration read by the `configReader`
 type DatasourceProvisioner struct {
@@ -270,4 +277,40 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 	}
 
 	return nil
+}
+
+type DatasourceCachingConfig struct {
+	DataSourceUID string
+	Enabled       bool
+	QueriesTTL    int64
+	ResourcesTTL  int64
+	UseDefaultTTL bool
+}
+
+func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPath string) ([]*DatasourceCachingConfig, error) {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	dsConfigs := make([]*DatasourceCachingConfig, 0)
+	for _, config := range configs {
+		for _, ds := range config.Datasources {
+			dsConfig := &DatasourceCachingConfig{
+				DataSourceUID: ds.UID,
+				Enabled:       ds.Caching.Enabled,
+				QueriesTTL:    ds.Caching.QueriesTTL,
+				ResourcesTTL:  ds.Caching.ResourcesTTL,
+				UseDefaultTTL: ds.Caching.UseDefaultTTL,
+			}
+			// TODO: UID is missing - how to get it
+			fmt.Println(ds.Name, ds.Type)
+			fmt.Println(dsConfig.Enabled)
+			fmt.Println(dsConfig.QueriesTTL)
+
+			dsConfigs = append(dsConfigs, dsConfig)
+		}
+	}
+
+	return dsConfigs, nil
 }

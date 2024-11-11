@@ -67,6 +67,7 @@ func ProvideService(
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
 		newDashboardProvisioner:      dashboards.New,
+		getCachingConfigs:            datasources.GetCacheConfigs,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
 		provisionAlerting:            prov_alerting.Provision,
@@ -111,6 +112,8 @@ type ProvisioningService interface {
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
+
+	GetCachingConfigs(ctx context.Context) ([]*datasources.DatasourceCachingConfig, error)
 }
 
 // Used for testing purposes
@@ -149,6 +152,7 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
+	getCachingConfigs            func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) ([]*datasources.DatasourceCachingConfig, error)
 	provisionDatasources         func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error
 	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
@@ -318,6 +322,18 @@ func (ps *ProvisioningServiceImpl) GetDashboardProvisionerResolvedPath(name stri
 
 func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool {
 	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
+}
+
+func (ps *ProvisioningServiceImpl) GetCachingConfigs(ctx context.Context) ([]*datasources.DatasourceCachingConfig, error) {
+	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
+	dsConfigs, err := ps.getCachingConfigs(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService)
+	if err != nil {
+		err = fmt.Errorf("%v: %w", "Get Caching config error", err)
+		ps.log.Error("Failed to get datasources caching config", "error", err)
+		return nil, err
+	}
+	fmt.Println("Provisioning cache configs")
+	return dsConfigs, err
 }
 
 func (ps *ProvisioningServiceImpl) cancelPolling() {
