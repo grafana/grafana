@@ -380,29 +380,6 @@ describe('AddedComponentsRegistry', () => {
     expect(Object.keys(currentState)).toHaveLength(1);
   });
 
-  it('should not register component when description is missing', async () => {
-    const registry = new AddedComponentsRegistry();
-    const extensionPointId = 'grafana/alerting/home';
-
-    registry.register({
-      pluginId,
-      configs: [
-        {
-          title: 'Component 1 title',
-          description: '',
-          targets: [extensionPointId],
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalledWith(
-      "Could not register added component with title 'Component 1 title'. Reason: Description is missing."
-    );
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(0);
-  });
-
   it('should not register component when title is missing', async () => {
     const registry = new AddedComponentsRegistry();
     const extensionPointId = 'grafana/alerting/home';

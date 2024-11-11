@@ -29,7 +29,7 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
     const registryItem = registryState[id];
     const componentLog = log.child({
       title: registryItem.title,
-      description: registryItem.description,
+      description: registryItem.description ?? '',
       pluginId: registryItem.pluginId,
     });
 
