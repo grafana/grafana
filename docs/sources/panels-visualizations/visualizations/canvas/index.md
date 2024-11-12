@@ -87,7 +87,7 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
-### Add a custom icon
+#### Add a custom icon
 
 You can add a custom icon by referencing an SVG file. To add a custom icon, follow these steps:
 
