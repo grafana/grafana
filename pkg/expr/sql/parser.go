@@ -1,89 +1,49 @@
 package sql
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/jeremywohl/flatten"
-)
-
-const (
-	TABLE_NAME    = "table_name"
-	ERROR         = ".error"
-	ERROR_MESSAGE = ".error_message"
+	"github.com/xwb1989/sqlparser"
 )
 
 var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
-	duckDB := NewInMemoryDB()
-	rawSQL = strings.Replace(rawSQL, "'", "''", -1)
-	cmd := fmt.Sprintf("SELECT json_serialize_sql('%s')", rawSQL)
-	ret, err := duckDB.RunCommands([]string{cmd})
-	if err != nil {
-		logger.Error("error serializing sql", "error", err.Error(), "sql", rawSQL, "cmd", cmd)
-		return nil, fmt.Errorf("error serializing sql: %s", err.Error())
-	}
 
-	ast := []map[string]any{}
-	err = json.Unmarshal([]byte(ret), &ast)
+	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
-		logger.Error("error converting json sql to ast", "error", err.Error(), "ret", ret)
-		return nil, fmt.Errorf("error converting json to ast: %s", err.Error())
-	}
-
-	return tablesFromAST(ast)
-}
-
-// tablesFromAST returns a list of tables from the ast
-func tablesFromAST(ast []map[string]any) ([]string, error) {
-	flat, err := flatten.Flatten(ast[0], "", flatten.DotStyle)
-	if err != nil {
-		logger.Error("error flattening ast", "error", err.Error(), "ast", ast)
-		return nil, fmt.Errorf("error flattening ast: %s", err.Error())
+		logger.Error("error parsing sql", "error", err.Error(), "sql", rawSQL)
+		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
 
 	tables := []string{}
-	for k, v := range flat {
-		if strings.HasSuffix(k, ERROR) {
-			v, ok := v.(bool)
-			if ok && v {
-				logger.Error("error in sql", "error", k)
-				return nil, astError(k, flat)
-			}
+	sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
+		switch n := node.(type) {
+		case *sqlparser.AliasedTableExpr:
+			// Use type assertion to get the underlying TableName
+			tables = append(tables, n.Expr.(sqlparser.TableName).Name.String())
+		case *sqlparser.TableName:
+			tables = append(tables, n.Name.String())
 		}
-		if strings.Contains(k, TABLE_NAME) {
-			table, ok := v.(string)
-			if ok && !existsInList(table, tables) {
-				tables = append(tables, v.(string))
-			}
+		return true, nil
+	}, stmt)
+
+	sort.Strings(tables)
+
+	// Remove 'dual' table if it exists
+	// This is a special table in MySQL that always returns a single row with a single column
+	// See: https://dev.mysql.com/doc/refman/5.7/en/select.html#:~:text=You%20are%20permitted%20to%20specify%20DUAL%20as%20a%20dummy%20table%20name%20in%20situations%20where%20no%20tables%20are%20referenced
+	for i, table := range tables {
+		if table == "dual" {
+			tables = append(tables[:i], tables[i+1:]...)
+			break
 		}
 	}
-	sort.Strings(tables)
 
 	logger.Debug("tables found in sql", "tables", tables)
 
 	return tables, nil
-}
-
-func astError(k string, flat map[string]any) error {
-	key := strings.Replace(k, ERROR, "", 1)
-	message, ok := flat[key+ERROR_MESSAGE]
-	if !ok {
-		message = "unknown error in sql"
-	}
-	return fmt.Errorf("error in sql: %s", message)
-}
-
-func existsInList(table string, list []string) bool {
-	for _, t := range list {
-		if t == table {
-			return true
-		}
-	}
-	return false
 }
