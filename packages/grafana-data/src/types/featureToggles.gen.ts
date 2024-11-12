@@ -236,4 +236,5 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
+  crashDetection?: boolean;
 }
