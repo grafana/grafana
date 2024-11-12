@@ -7,7 +7,9 @@ import (
 	"math"
 	"time"
 
+	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
@@ -49,6 +51,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	}
 	if obj.GetResourceVersion() != "" {
 		return nil, storage.ErrResourceVersionSetOnCreate
+	}
+	if obj.GetUID() == "" {
+		obj.SetUID(types.UID(uuid.NewString()))
 	}
 
 	obj.SetGenerateName("") // Clear the random name field
@@ -95,7 +100,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if previous.GetUID() == "" {
 		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
-		klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		if obj.GetUID() != "" {
+			klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		}
 		obj.SetUID(previous.GetUID())
 	}
 
