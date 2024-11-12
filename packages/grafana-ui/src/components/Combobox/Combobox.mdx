@@ -15,6 +15,17 @@ import { Combobox } from './Combobox';
 
 - Use the async functionality, when all items are only loaded on the initial load
 - Use when fewer than 4 items are needed, as a `RadioButtonGroup` may be more suitable (not for inline use cases)
+- Use this component if you need custom components as options
+
+## ComboboxOption
+
+The `ComboboxOption` currently supports 3 properties:
+
+- `label` - The text that is visible in the menu.
+- `value` (required) - The value that is selected.
+- `description` - A longer description that describes the choice.
+
+If no `label` is given, `value` will be used as a display value.
 
 ## Sizing
 

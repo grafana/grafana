@@ -28,7 +28,7 @@ export type ComboboxOption<T extends string | number = string> = {
 interface ComboboxBaseProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
   /**
-   * An `X` appears in the UI, which clears the input and sets the value to `null`.
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
    */
   isClearable?: boolean;
   /**
