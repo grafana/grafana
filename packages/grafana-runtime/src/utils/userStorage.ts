@@ -69,7 +69,6 @@ export class UserStorage {
 
   constructor(service: string) {
     this.service = service;
-    console.log('stored service ', service);
   }
 
   /**
@@ -78,7 +77,6 @@ export class UserStorage {
    * @returns A promise that resolves to the item value or null if not found.
    */
   async getItem(key: string): Promise<string | null> {
-    console.log('this service? ', this.service);
     const resourceName = getResourceName(this.service);
     if (!canUseUserStorage()) {
       // Fallback to localStorage
