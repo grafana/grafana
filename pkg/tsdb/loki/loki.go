@@ -136,7 +136,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	// suggestions is a resource endpoint that will return label and label value suggestions based
 	// on queries and the existing scope. By moving this to the backend we can use the logql parser to
 	// rewrite queries safely.
-	if strings.EqualFold(req.Path, "suggestions") {
+	if req.Method == http.MethodPost && strings.EqualFold(req.Path, "suggestions") {
 		rawLokiResponse, err = GetSuggestions(ctx, api, req)
 		if err != nil {
 			span.RecordError(err)
