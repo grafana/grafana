@@ -63,17 +63,6 @@ For additional information using variables and templates, refer to the following
 - [Add and manage variables](ref:add-template-variables)
 - [Variable best practices](ref:variable-best-practices)
 
-
-
-<!-- - [template variables documentation]({{< relref "./template-variables" >}}). -->
-
-
-<!-- Instead of hard-coding details such as server, application, and sensor names in metric queries, 
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables. -->
-
-<!-- For an introduction to templating and template variables, refer to the and [Add and manage variables](ref:add-template-variables) documentation. -->
-
 ## Use query variables
 
 By adding a query template variable, you can write an InfluxDB metadata exploration query. These queries return results such as measurement names, key names, and key values.
@@ -102,7 +91,7 @@ You can also fetch key names for a given measurement:
 SHOW TAG KEYS [FROM <measurement_name>]
 ```
 
-If you have a variable containing key names, you can use it in a GROUP BY clause. This allows you to adjust the grouping by selecting from the variable list at the top of the dashboard
+If you have a variable containing key names, you can use it in a **GROUP BY** clause. This allows you to adjust the grouping by selecting from the variable list at the top of the dashboard
 
 ## Use ad hoc filters
 
