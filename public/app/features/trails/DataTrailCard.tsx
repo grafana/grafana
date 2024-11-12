@@ -91,6 +91,7 @@ export function DataTrailCard(props: Props) {
                 className={styles.secondary}
                 tooltip="Remove bookmark"
                 onClick={onDelete}
+                data-testid="deleteButton"
               />
             </Card.SecondaryActions>
           )}

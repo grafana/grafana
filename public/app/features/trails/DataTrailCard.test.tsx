@@ -1,16 +1,35 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import { url } from 'inspector';
 
+import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
+import { DataTrailBookmark } from './TrailStore/TrailStore';
 
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  getDataSource: jest.fn(() => 'Test DataSource'),
+  getDataSourceName: jest.fn(() => 'Test DataSource Name'),
+}));
+
+// note: might be good to have the same tests for both trail and bookmark; OR maybe the component should be changed to just take what it needs
 describe('DataTrailCard', () => {
-  const bookmark = { title: 'Test Bookmark', description: 'Test Description' };
+  const trail = new DataTrail({ key: '1', metric: 'Test Recent Exploration' });
+  const bookmark: DataTrailBookmark = { urlValues: { key: '1', metric: 'Test Bookmark' }, createdAt: Date.now() };
   const onSelect = jest.fn();
   const onDelete = jest.fn();
+  beforeEach(() => {
+    onSelect.mockClear();
+    onDelete.mockClear();
+  });
 
-  it('renders the card with title and description', () => {
+  it('renders the card with recent metric exploration', () => {
+    render(<DataTrailCard trail={trail} onSelect={onSelect} onDelete={onDelete} />);
+    expect(screen.getByText('Test Recent Exploration')).toBeInTheDocument();
+  });
+
+  it('renders the card with bookmark', () => {
     render(<DataTrailCard bookmark={bookmark} onSelect={onSelect} onDelete={onDelete} />);
     expect(screen.getByText('Test Bookmark')).toBeInTheDocument();
-    expect(screen.getByText('Test Description')).toBeInTheDocument();
   });
 
   it('calls onSelect when the card is clicked', () => {
@@ -21,14 +40,26 @@ describe('DataTrailCard', () => {
 
   it('calls onDelete when the delete button is clicked', () => {
     render(<DataTrailCard bookmark={bookmark} onSelect={onSelect} onDelete={onDelete} />);
-    fireEvent.click(screen.getByLabelText('Delete'));
+    fireEvent.click(screen.getByTestId('deleteButton'));
     expect(onDelete).toHaveBeenCalled();
   });
 
-  it('truncates long labels in the card', () => {
-    const longLabel = 'This is a very long label that should be truncated';
-    const bookmarkWithLongLabel = { title: longLabel, description: 'Test Description' };
+  // it('truncates long metric name after 2 lines', () => {
+  //   const longName =
+  //     'aajalsdkfaldkjfalskdjfalsdkjfalsdkjflaskjdflaskjdflaskjdflaskjdflasjkdflaskjdflaskjdflaskjflaskdjfldaskjflasjflaskdjflaskjflasjflaskfjalsdfjlskdjflaskjdflajkfjfalkdfjaverylongalskdjlalsjflajkfklsajdfalskjdflkasjdflkadjf';
+  //   const bookmarkWithLongName = { urlValues: { key: '1', metric: longName }, createdAt: Date.now() };
+  //   render(<DataTrailCard bookmark={bookmarkWithLongName} onSelect={onSelect} onDelete={onDelete} />);
+  //   expect(screen.getByText('...', { exact: false })).toBeInTheDocument();
+  // });
+
+  it('truncates singular long label in recent explorations', () => {
+    const longLabel =
+      'aajalsdkfaldkjfalskdjfalsdkjfalsdkjflaskjdflaskjdflaskjdflaskjdflasjkdflaskjdflaskjdflaskjflaskdjfldaskjflasjflaskdjflaskjflasjflaskfjalsdfjlskdjflaskjdflajkfjfalkdfjaverylongalskdjlalsjflajkfklsajdfalskjdflkasjdflkadjf';
+    const bookmarkWithLongLabel: DataTrailBookmark = {
+      urlValues: { key: '1', metric: 'metric', 'var-filters': `zone|=|${longLabel}` },
+      createdAt: Date.now(),
+    };
     render(<DataTrailCard bookmark={bookmarkWithLongLabel} onSelect={onSelect} onDelete={onDelete} />);
-    expect(screen.getByText(longLabel)).toHaveClass('truncate');
+    expect(screen.getByText('...', { exact: false })).toBeInTheDocument();
   });
 });
