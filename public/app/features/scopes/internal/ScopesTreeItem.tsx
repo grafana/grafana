@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { Dictionary } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, CustomScrollbar, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
@@ -129,12 +130,12 @@ export function ScopesTreeItem({
 
   if (isLastExpandedNode) {
     return (
-      <CustomScrollbar
-        autoHeightMin={`${Math.min(5, nodes.length) * 30}px`}
-        autoHeightMax={nodeReason === NodeReason.Persisted ? `${Math.min(5, nodes.length) * 30}px` : '100%'}
+      <ScrollContainer
+        minHeight={`${Math.min(5, nodes.length) * 30}px`}
+        maxHeight={nodeReason === NodeReason.Persisted ? `${Math.min(5, nodes.length) * 30}px` : '100%'}
       >
         {children}
-      </CustomScrollbar>
+      </ScrollContainer>
     );
   }
 
