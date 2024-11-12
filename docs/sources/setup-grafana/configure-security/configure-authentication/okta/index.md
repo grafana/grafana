@@ -49,7 +49,7 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
    - **API URL**
      For example: https://<TENANT_ID>.okta.com/oauth2/v1/userinfo
 
-### Configure Okta to Grafana Cloud role mapping
+### Configure Okta to Grafana role mapping
 
 1. In the **Okta Admin Console**, select **Directory > Profile Editor**.
 1. Select the Okta Application Profile you created previously (the default name for this is `<App name> User`).

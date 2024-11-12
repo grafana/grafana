@@ -158,7 +158,7 @@ ssoSettingsSAML,preview,@grafana/identity-access-team,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
-accessActionSets,preview,@grafana/identity-access-team,false,false,false
+accessActionSets,GA,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
@@ -208,6 +208,7 @@ pluginsSriChecks,experimental,@grafana/plugins-platform-backend,false,false,fals
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
 prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,false
+userStorageAPI,experimental,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
@@ -216,3 +217,4 @@ exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,fals
 enableExtensionsAdminPage,experimental,@grafana/plugins-platform-backend,false,true,false
 zipkinBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
 enableSCIM,experimental,@grafana/identity-access-team,false,false,false
+crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
