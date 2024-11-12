@@ -7,8 +7,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -168,7 +166,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 					action = dashboards.ActionFoldersRead
 				}
 
-				namespace := claims.OrgNamespaceFormatter(query.SignedInUser.GetOrgID())
+				namespace := query.SignedInUser.GetNamespace()
 				req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, d.FolderUID, d.UID)
 				if !ok {
 					continue
