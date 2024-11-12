@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 
@@ -37,7 +36,6 @@ func WithLogger(logger log.Logger) ClientOption {
 
 type Client struct {
 	logger   log.Logger
-	openfga  openfgav1.OpenFGAServiceClient
 	authz    authzv1.AuthzServiceClient
 	authzext authzextv1.AuthzExtentionServiceClient
 	tenantID string
@@ -59,7 +57,6 @@ func NewClient(ctx context.Context, cc grpc.ClientConnInterface, cfg *setting.Cf
 
 func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption) (*Client, error) {
 	c := &Client{
-		openfga:  openfgav1.NewOpenFGAServiceClient(cc),
 		authz:    authzv1.NewAuthzServiceClient(cc),
 		authzext: authzextv1.NewAuthzExtentionServiceClient(cc),
 	}
@@ -103,7 +100,7 @@ func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.List
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Compile")
 	defer span.End()
 
-	_, err := c.authzext.List(ctx, &authzextv1.ListRequest{
+	res, err := c.authzext.List(ctx, &authzextv1.ListRequest{
 		Subject:   id.GetUID(),
 		Group:     req.Group,
 		Verb:      utils.VerbList,
@@ -115,8 +112,34 @@ func (c *Client) Compile(ctx context.Context, id claims.AuthInfo, req authz.List
 		return nil, err
 	}
 
-	// FIXME: implement checker
-	return func(namespace, name, folder string) bool { return false }, nil
+	return newItemChecker(res), nil
+}
+
+func newItemChecker(res *authzextv1.ListResponse) authz.ItemChecker {
+	// if we can see all resource of this type we can just return a function that always return true
+	if res.GetAll() {
+		return func(_, _, _ string) bool { return true }
+	}
+
+	folders := make(map[string]struct{}, len(res.Folders))
+	for _, f := range res.Folders {
+		folders[f] = struct{}{}
+	}
+
+	items := make(map[string]struct{}, len(res.Items))
+	for _, i := range res.Items {
+		items[i] = struct{}{}
+	}
+
+	return func(_, name, folder string) bool {
+		if _, ok := items[name]; ok {
+			return true
+		}
+		if _, ok := folders[folder]; ok {
+			return true
+		}
+		return false
+	}
 }
 
 func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
