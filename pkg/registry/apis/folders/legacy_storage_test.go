@@ -21,10 +21,10 @@ func TestLegacyStorageList(t *testing.T) {
 
 	folderService := &foldertest.FakeService{}
 	folderService.ExpectedFolders = []*folder.Folder{
-		&folder.Folder{UID: "parent", Title: "Folder Parent", ParentUID: ""},
-		&folder.Folder{UID: "child", Title: "Folder Child", ParentUID: "parent"},
-		&folder.Folder{UID: "anotherparent1", Title: "Folder Another Parent 1", ParentUID: ""},
-		&folder.Folder{UID: "anotherparent1", Title: "Folder Another Parent 2", ParentUID: ""},
+		{UID: "parent", Title: "Folder Parent", ParentUID: ""},
+		{UID: "child", Title: "Folder Child", ParentUID: "parent"},
+		{UID: "anotherparent1", Title: "Folder Another Parent 1", ParentUID: ""},
+		{UID: "anotherparent1", Title: "Folder Another Parent 2", ParentUID: ""},
 	}
 
 	usr := &user.SignedInUser{UserID: 1}
