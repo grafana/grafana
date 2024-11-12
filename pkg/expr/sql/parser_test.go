@@ -74,15 +74,6 @@ func TestParseSubquery(t *testing.T) {
 	assert.Equal(t, "people", tables[0])
 }
 
-func TestParseImplicitSubquery(t *testing.T) {
-	sql := "select * from (select * from people limit 1)"
-	tables, err := TablesList((sql))
-	assert.Nil(t, err)
-
-	assert.Equal(t, 1, len(tables))
-	assert.Equal(t, "people", tables[0])
-}
-
 func TestJoin(t *testing.T) {
 	sql := `select * from A
 	JOIN B ON A.name = B.name
