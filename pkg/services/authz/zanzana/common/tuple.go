@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 const (

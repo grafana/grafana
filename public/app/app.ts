@@ -56,6 +56,7 @@ import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useChromeHeaderHeight, useReturnToPreviousInternal } from './core/context/GrafanaContext';
+import { initializeCrashDetection } from './core/crash';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { setMonacoEnv } from './core/monacoEnv';
@@ -266,6 +267,10 @@ export class GrafanaApp {
       setChromeHeaderHeightHook(useChromeHeaderHeight);
 
       initializeScopes();
+
+      if (config.featureToggles.crashDetection) {
+        initializeCrashDetection();
+      }
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(
