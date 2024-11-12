@@ -4,13 +4,15 @@ import { Dispatch, FormEvent } from 'react';
 import { UnknownAction } from 'redux';
 
 import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/data';
-import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
+import { ThresholdSelect } from 'app/features/expressions/components/ThresholdSelect';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { ToLabel } from '../../../../../expressions/components/ToLabel';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
@@ -114,12 +116,7 @@ export const SimpleConditionEditor = ({
           </InlineField>
           <InlineField label="OF QUERY">
             <Stack direction="row" gap={1} alignItems="center">
-              <ButtonSelect
-                className={styles.buttonSelectText}
-                options={thresholdFunctions}
-                onChange={onEvalFunctionChange}
-                value={thresholdFunction}
-              />
+              <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (
                 <>
                   <Input
@@ -128,9 +125,7 @@ export const SimpleConditionEditor = ({
                     value={simpleCondition.evaluator.params[0]}
                     onChange={(event) => onEvaluateValueChange(event, 0)}
                   />
-                  <div className={styles.condition.button}>
-                    <Trans i18nKey="alerting.simpleCondition.ofQuery.To">TO</Trans>
-                  </div>
+                  <ToLabel />
                   <Input
                     type="number"
                     width={10}
@@ -260,20 +255,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
       borderBottom: `solid 1px ${theme.colors.border.weak}`,
       flex: 1,
-    }),
-    button: css({
-      height: '32px',
-      color: theme.colors.primary.text,
-      fontSize: theme.typography.bodySmall.fontSize,
-      textTransform: 'uppercase',
-      display: 'flex',
-      alignItems: 'center',
-      borderRadius: theme.shape.radius.default,
-      fontWeight: theme.typography.fontWeightBold,
-      border: `1px solid ${theme.colors.border.medium}`,
-      whiteSpace: 'nowrap',
-      padding: `0 ${theme.spacing(1)}`,
-      backgroundColor: theme.colors.background.primary,
     }),
   },
 });
