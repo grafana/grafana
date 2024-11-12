@@ -40,12 +40,6 @@ const (
 
 type DsAccess string
 
-type DataSourceInfo interface {
-	GetURL() string
-	GetName() string
-	IsSecureSocksDSProxyEnabled() bool
-}
-
 type DataSource struct {
 	ID      int64 `json:"id,omitempty" xorm:"pk autoincr 'id'"`
 	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
