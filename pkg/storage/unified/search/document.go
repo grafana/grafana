@@ -63,7 +63,7 @@ func (p *standardDocumentProvider) GetDocumentBuilders(ctx context.Context) ([]r
 	}, nil
 }
 
-func (_ *defaultDocumentBuilder) BuildDocument(_ context.Context, key *resource.ResourceKey, rv int64, value []byte) (resource.IndexableDocument, error) {
+func (*defaultDocumentBuilder) BuildDocument(_ context.Context, key *resource.ResourceKey, rv int64, value []byte) (resource.IndexableDocument, error) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
