@@ -357,22 +357,19 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 
 func Test_DeletedDashboardsNotMigrated(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
+
+	/** NOTE: this is not used at the moment since we changed the service
+
 	// modify what the mock returns for just this test case
 	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
 	dashMock.On("GetAllDashboards", mock.Anything).Return(
 		[]*dashboards.Dashboard{
-			{
-				UID:  "1",
-				Data: simplejson.New(),
-			},
-			{
-				UID:     "2",
-				Data:    simplejson.New(),
-				Deleted: time.Now(),
-			},
+			{UID: "1", OrgID: 1, Data: simplejson.New()},
+			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
 		},
 		nil,
 	)
+	*/
 
 	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
 	assert.NoError(t, err)
@@ -555,7 +552,7 @@ func TestDeleteSession(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		session, err := s.DeleteSession(ctx, "invalid-session-uid")
+		session, err := s.DeleteSession(ctx, 2, "invalid-session-uid")
 		require.Nil(t, session)
 		require.Error(t, err)
 	})
@@ -570,6 +567,7 @@ func TestDeleteSession(t *testing.T) {
 
 		cmd := cloudmigration.CloudMigrationSessionRequest{
 			AuthToken: createTokenResp.Token,
+			OrgID:     3,
 		}
 
 		createResp, err := s.CreateSession(ctx, cmd)
@@ -577,12 +575,12 @@ func TestDeleteSession(t *testing.T) {
 		require.NotEmpty(t, createResp.UID)
 		require.NotEmpty(t, createResp.Slug)
 
-		deletedSession, err := s.DeleteSession(ctx, createResp.UID)
+		deletedSession, err := s.DeleteSession(ctx, cmd.OrgID, createResp.UID)
 		require.NoError(t, err)
 		require.NotNil(t, deletedSession)
 		require.Equal(t, deletedSession.UID, createResp.UID)
 
-		notFoundSession, err := s.GetSession(ctx, deletedSession.UID)
+		notFoundSession, err := s.GetSession(ctx, cmd.OrgID, deletedSession.UID)
 		require.ErrorIs(t, err, cloudmigration.ErrMigrationNotFound)
 		require.Nil(t, notFoundSession)
 	})
@@ -867,6 +865,21 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 		OrgID:                     1,
 		LastApplied:               time.Now().Unix(),
 	}))
+
+	// Insert test data for dashboard test, should be removed later when we move GetAllDashboardsByOrgId() to the dashboard service
+	_, err = sqlStore.GetSqlxSession().Exec(context.Background(), `
+		INSERT INTO
+			dashboard (id, org_id, data, deleted, slug, title, created, version, updated )
+		VALUES
+			(1, 1, '{}', null, 'asdf', 'ghjk', '2024-03-27 15:30:43.000' , '1','2024-03-27 15:30:43.000' ),
+			(2, 1, '{}', '2024-03-27 15:30:43.000','qwert', 'yuio', '2024-03-27 15:30:43.000' , '2','2024-03-27 15:30:43.000'),
+			(3, 2, '{}', null, 'asdf', 'ghjk', '2024-03-27 15:30:43.000' , '1','2024-03-27 15:30:43.000' ),
+			(4, 2, '{}', '2024-03-27 15:30:43.000','qwert', 'yuio', '2024-03-27 15:30:43.000' , '2','2024-03-27 15:30:43.000');
+		`,
+	)
+	if err != nil {
+		require.NoError(t, err)
+	}
 
 	s, err := ProvideService(
 		cfg,

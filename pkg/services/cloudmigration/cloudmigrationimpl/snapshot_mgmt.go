@@ -44,7 +44,7 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	defer span.End()
 
 	// Data sources
-	dataSources, err := s.getDataSourceCommands(ctx)
+	dataSources, err := s.getDataSourceCommands(ctx, signedInUser)
 	if err != nil {
 		s.log.Error("Failed to get datasources", "err", err)
 		return nil, err
@@ -208,17 +208,17 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 	return migrationData, nil
 }
 
-func (s *Service) getDataSourceCommands(ctx context.Context) ([]datasources.AddDataSourceCommand, error) {
+func (s *Service) getDataSourceCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]datasources.AddDataSourceCommand, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDataSourceCommands")
 	defer span.End()
 
-	dataSources, err := s.dsService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	dataSources, err := s.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{OrgID: signedInUser.GetOrgID()})
 	if err != nil {
 		s.log.Error("Failed to get all datasources", "err", err)
 		return nil, err
 	}
 
-	result := []datasources.AddDataSourceCommand{}
+	result := make([]datasources.AddDataSourceCommand, 0, len(dataSources))
 	for _, dataSource := range dataSources {
 		// Decrypt secure json to send raw credentials
 		decryptedData, err := s.secretsService.DecryptJsonData(ctx, dataSource.SecureJsonData)
@@ -253,7 +253,7 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.getDashboardAndFolderCommands")
 	defer span.End()
 
-	dashs, err := s.dashboardService.GetAllDashboards(ctx)
+	dashs, err := s.store.GetAllDashboardsByOrgId(ctx, signedInUser.GetOrgID())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -279,20 +279,21 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUids,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	folderCmds := make([]folder.CreateFolderCommand, len(folders))
-	for i, f := range folders {
-		folderCmds[i] = folder.CreateFolderCommand{
+	folderCmds := make([]folder.CreateFolderCommand, 0, len(folders))
+	for _, f := range folders {
+		folderCmds = append(folderCmds, folder.CreateFolderCommand{
 			UID:         f.UID,
 			Title:       f.Title,
 			Description: f.Description,
 			ParentUID:   f.ParentUID,
-		}
+		})
 	}
 
 	return dashboardCmds, folderCmds, nil
@@ -641,6 +642,7 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
 		UIDs:             folderUIDs,
 		SignedInUser:     signedInUser,
+		OrgID:            signedInUser.GetOrgID(),
 		WithFullpathUIDs: true,
 	})
 	if err != nil {
@@ -661,15 +663,18 @@ func (s *Service) getFolderNamesForFolderUIDs(ctx context.Context, signedInUser 
 // getParentNames finds the parent names for resources and returns a map of data type: {data UID : parentName}
 // for dashboards, folders and library elements - the parent is the parent folder
 func (s *Service) getParentNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand, libraryElements []libraryElement) (map[cloudmigration.MigrateDataType]map[string](string), error) {
-	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+	parentNamesByType := make(map[cloudmigration.MigrateDataType]map[string]string)
 	for _, dataType := range currentMigrationTypes {
 		parentNamesByType[dataType] = make(map[string]string)
 	}
 
 	// Obtain list of unique folderUIDs
-	parentFolderUIDsSet := make(map[string]struct{}, len(dashboards)+len(folders)+len(libraryElements))
+	parentFolderUIDsSet := make(map[string]struct{})
 	for _, dashboard := range dashboards {
-		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		// we dont need the root folder
+		if dashboard.FolderUID != "" {
+			parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+		}
 	}
 	for _, f := range folders {
 		parentFolderUIDsSet[f.ParentUID] = struct{}{}

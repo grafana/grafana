@@ -29,11 +29,11 @@ func (s *NoopServiceImpl) ValidateToken(ctx context.Context, cm cloudmigration.C
 	return cloudmigration.ErrMigrationDisabled
 }
 
-func (s *NoopServiceImpl) GetSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *NoopServiceImpl) GetSession(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (s *NoopServiceImpl) GetSessionList(ctx context.Context, orgID int64) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -41,7 +41,7 @@ func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.C
 	return nil, cloudmigration.ErrMigrationDisabled
 }
 
-func (s *NoopServiceImpl) DeleteSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *NoopServiceImpl) DeleteSession(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -57,7 +57,7 @@ func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrat
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
 
