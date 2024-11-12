@@ -4,9 +4,10 @@ import (
 	"context"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
@@ -20,12 +21,17 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 }
 
 func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
+	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -42,8 +48,8 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 
 	// 2. check if subject has access through namespace
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -58,11 +64,16 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 }
 
 func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	relation := common.VerbMapping[r.GetVerb()]
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -86,8 +97,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 2. check if subject has access through namespace
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -109,8 +120,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 
 	// 3. check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              s.storeID,
-		AuthorizationModelId: s.modelID,
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: common.FolderResourceRelation(relation),

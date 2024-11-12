@@ -14,6 +14,7 @@ jest.mock('uuid', () => ({
 
 const originalLog = console.log;
 const originalWarn = console.warn;
+const originalErr = console.error;
 beforeEach(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -22,6 +23,7 @@ beforeEach(() => {
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
+  console.error = originalErr;
 });
 
 describe('runShardSplitQuery()', () => {
@@ -203,7 +205,7 @@ describe('runShardSplitQuery()', () => {
       callback();
     });
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -10,15 +10,16 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ResourceServer implements all gRPC services
@@ -92,6 +93,8 @@ type StorageBackend interface {
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
+
+	Namespaces(ctx context.Context) ([]string, error)
 }
 
 // This interface is not exposed to end users directly
@@ -199,7 +202,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 			UserID:         1,
 			IsGrafanaAdmin: true,
 		}))
-	return &server{
+	s := &server{
 		tracer:      opts.Tracer,
 		log:         logger,
 		backend:     opts.Backend,
@@ -211,7 +214,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
-	}, nil
+	}
+
+	return s, nil
 }
 
 var _ ResourceServer = &server{}
@@ -298,6 +303,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	if obj.GetUID() == "" {
+		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
+		// return nil, NewBadRequestError("object is missing UID")
 		s.log.Error("object is missing UID", "key", key)
 	}
 
@@ -786,6 +793,10 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 
 // Index returns the search index. If the index is not initialized, it will be initialized.
 func (s *server) Index(ctx context.Context) (*Index, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+
 	index := s.index.(*IndexServer)
 	if index.index == nil {
 		err := index.Init(ctx, s)
@@ -834,6 +845,10 @@ func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResp
 }
 
 func (s *server) getPartialObject(ctx context.Context, key *ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *ErrorResult) {
+	if r := verifyRequestKey(key); r != nil {
+		return nil, r
+	}
+
 	rsp := s.backend.ReadResource(ctx, &ReadRequest{
 		Key:             key,
 		ResourceVersion: rv,

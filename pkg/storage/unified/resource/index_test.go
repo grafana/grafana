@@ -29,7 +29,8 @@ func TestIndexDashboard(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
-	assertSearchCountEquals(t, index, "*", nil, 1)
+	require.Equal(t, 1, len(index.allTenants()))
+	assertSearchCountEquals(t, index, "*", nil, nil, 1)
 }
 
 func TestIndexFolder(t *testing.T) {
@@ -41,7 +42,7 @@ func TestIndexFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 1)
-	assertSearchCountEquals(t, index, "*", nil, 1)
+	assertSearchCountEquals(t, index, "*", nil, nil, 1)
 }
 
 func TestSearchFolder(t *testing.T) {
@@ -54,7 +55,7 @@ func TestSearchFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 2)
-	assertSearchCountEquals(t, index, "*", []string{"folder"}, 1)
+	assertSearchCountEquals(t, index, "*", []string{"folder"}, nil, 1)
 }
 
 func TestSearchDashboardsAndFoldersOnly(t *testing.T) {
@@ -68,7 +69,7 @@ func TestSearchDashboardsAndFoldersOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	assertCountEquals(t, index, 3)
-	assertSearchCountEquals(t, index, "*", []string{"dashboard", "folder"}, 2)
+	assertSearchCountEquals(t, index, "*", []string{"dashboard", "folder"}, nil, 2)
 }
 
 func TestLookupNames(t *testing.T) {
@@ -83,29 +84,57 @@ func TestLookupNames(t *testing.T) {
 	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	assertCountEquals(t, index, uint64(records))
+	assertCountEquals(t, index, records)
 	query := ""
 	chunk := ids[:100] // query for n folders by id
 	for _, id := range chunk {
 		query += `"` + id + `" `
 	}
-	assertSearchCountEquals(t, index, query, nil, int64(len(chunk)))
+	assertSearchCountEquals(t, index, query, nil, nil, int64(len(chunk)))
 }
 
 func TestIndexDashboardWithTags(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
 	data := readTestData(t, "dashboard-tagged-resource.json")
 	data2 := readTestData(t, "dashboard-tagged-resource2.json")
-	list := &ListResponse{Items: []*ResourceWrapper{{Value: data}, {Value: data2}}}
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: data}, {Value: data2}}}
 	index := newTestIndex(t, 2)
 
 	err := index.writeBatch(testContext, list)
 	require.NoError(t, err)
 
-	assertCountEquals(t, index, 2)
-	assertSearchCountEquals(t, index, "tag1", nil, 2)
-	assertSearchCountEquals(t, index, "tag4", nil, 1)
-	assertSearchGroupCountEquals(t, index, "*", "tags", 4)
-	assertSearchGroupCountEquals(t, index, "tag4", "tags", 3)
+	assertCountEquals(t, index, 3)
+	assertSearchCountEquals(t, index, "*", nil, []string{"tag1"}, 2)
+	assertSearchCountEquals(t, index, "*", nil, []string{"tag4"}, 1)
+	assertSearchGroupCountEquals(t, index, "*", "tags", nil, 4)
+	assertSearchGroupCountEquals(t, index, "*", "tags", []string{"tag4"}, 3)
+}
+
+func TestSort(t *testing.T) {
+	dashboard := readTestData(t, "dashboard-resource.json")
+	folder := readTestData(t, "folder-resource.json")
+	playlist := readTestData(t, "playlist-resource.json")
+	list := &ListResponse{Items: []*ResourceWrapper{{Value: dashboard}, {Value: folder}, {Value: playlist}}}
+	index := newTestIndex(t, 1)
+
+	err := index.writeBatch(testContext, list)
+	require.NoError(t, err)
+
+	assertCountEquals(t, index, 3)
+
+	req := &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"title"}}
+	results, err := index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val := results.Values[0]
+	assert.Equal(t, "dashboard-a", val.Spec["title"])
+
+	req = &SearchRequest{Query: "*", Tenant: testTenant, Limit: 4, Offset: 0, Kind: []string{"dashboard", "folder"}, SortBy: []string{"-title"}}
+	results, err = index.Search(testContext, req)
+	require.NoError(t, err)
+
+	val = results.Values[0]
+	assert.NotEqual(t, "dashboard-a", val.Spec["title"])
 }
 
 func TestIndexBatch(t *testing.T) {
@@ -185,7 +214,7 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 
 	return &Index{
 		tracer: trace,
-		shards: make(map[string]Shard),
+		shards: make(map[string]*Shard),
 		log:    log.New("unifiedstorage.search.index"),
 		opts: Opts{
 			ListLimit: 5000,
@@ -195,14 +224,14 @@ func newTestIndex(t *testing.T, batchSize int) *Index {
 	}
 }
 
-func assertCountEquals(t *testing.T, index *Index, expected uint64) {
+func assertCountEquals(t *testing.T, index *Index, expected int) {
 	total, err := index.Count()
 	require.NoError(t, err)
 	assert.Equal(t, expected, total)
 }
 
-func assertSearchCountEquals(t *testing.T, index *Index, search string, kind []string, expected int64) {
-	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Kind: kind}
+func assertSearchCountEquals(t *testing.T, index *Index, search string, kind []string, filters []string, expected int64) {
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, Kind: kind, Filters: filters}
 	start := time.Now()
 	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
@@ -211,9 +240,9 @@ func assertSearchCountEquals(t *testing.T, index *Index, search string, kind []s
 	assert.Equal(t, expected, int64(len(results.Values)))
 }
 
-func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, group string, expected int64) {
+func assertSearchGroupCountEquals(t *testing.T, index *Index, search string, group string, filters []string, expected int64) {
 	groupBy := []*GroupBy{{Name: group, Limit: 100}}
-	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: expected + 1, Offset: 0, GroupBy: groupBy}
+	req := &SearchRequest{Query: search, Tenant: testTenant, Limit: 1, Offset: 0, GroupBy: groupBy, Filters: filters}
 	results, err := index.Search(testContext, req)
 	require.NoError(t, err)
 	assert.Equal(t, expected, int64(len(results.Groups)))

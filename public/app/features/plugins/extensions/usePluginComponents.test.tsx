@@ -262,7 +262,7 @@ describe('usePluginComponents()', () => {
     // (No restrictions due to isGrafanaDevMode() = false)
     let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point id in production mode', () => {
@@ -287,7 +287,7 @@ describe('usePluginComponents()', () => {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point meta-info if used in Grafana core (no plugin context)', () => {
@@ -316,7 +316,7 @@ describe('usePluginComponents()', () => {
       wrapper,
     });
     expect(result.current.components.length).toBe(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should not validate the extension point id if used in Grafana core (no plugin context)', () => {
@@ -332,7 +332,7 @@ describe('usePluginComponents()', () => {
       wrapper,
     });
     expect(result.current.components.length).toBe(0);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should validate if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
@@ -370,10 +370,10 @@ describe('usePluginComponents()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
-  it('should not log a warning if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
+  it('should not log an error if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
     // Imitate running in dev mode
     jest.mocked(isGrafanaDevMode).mockReturnValue(true);
 
@@ -414,6 +414,6 @@ describe('usePluginComponents()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
     expect(result.current.components.length).toBe(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 });

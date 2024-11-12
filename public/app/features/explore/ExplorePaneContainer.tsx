@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 
 import { EventBusSrv, getTimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { StoreState, useSelector } from 'app/types';
 
@@ -45,23 +44,21 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <CustomScrollbar hideVerticalTrack>
-      <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
-        <Explore
+    <div className={containerStyles} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+      <Explore
+        exploreId={exploreId}
+        eventBus={eventBus.current}
+        showQueryInspector={showQueryInspector}
+        setShowQueryInspector={setShowQueryInspector}
+      />
+      {showQueryInspector && (
+        <ExploreQueryInspector
           exploreId={exploreId}
-          eventBus={eventBus.current}
-          showQueryInspector={showQueryInspector}
-          setShowQueryInspector={setShowQueryInspector}
+          onClose={() => setShowQueryInspector(false)}
+          timeZone={getTimeZone()}
         />
-        {showQueryInspector && (
-          <ExploreQueryInspector
-            exploreId={exploreId}
-            onClose={() => setShowQueryInspector(false)}
-            timeZone={getTimeZone()}
-          />
-        )}
-      </div>
-    </CustomScrollbar>
+      )}
+    </div>
   );
 }
 

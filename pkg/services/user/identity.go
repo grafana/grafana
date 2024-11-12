@@ -30,8 +30,8 @@ type SignedInUser struct {
 	// AuthID will be set if user signed in using external method
 	AuthID string
 	// AuthenticatedBy be set if user signed in using external method
-	AuthenticatedBy            string
-	AllowedKubernetesNamespace string
+	AuthenticatedBy string
+	Namespace       string
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -173,8 +173,8 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
-func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
-	return u.AllowedKubernetesNamespace
+func (u *SignedInUser) GetNamespace() string {
+	return u.Namespace
 }
 
 // GetCacheKey returns a unique key for the entity.
