@@ -1,4 +1,4 @@
-import { OutlierDetector, OutlierOutput } from '@bsull/augurs';
+import { OutlierDetector, OutlierOutput } from '@bsull/augurs/outlier';
 import { memoize } from 'lodash';
 
 import { DataFrame, doStandardCalcs, fieldReducers, FieldType, outerJoinDataFrames, ReducerID } from '@grafana/data';
@@ -81,11 +81,10 @@ const initOutlierDetector = (series: DataFrame[]) => {
 
   // Get number fields: these are our series.
   const joinedSeries = joined.fields.filter((f) => f.type === FieldType.number);
-  const nTimestamps = joinedSeries[0].values.length;
-  const points = new Float64Array(joinedSeries.flatMap((series) => series.values as number[]));
+  const points = joinedSeries.map((series) => new Float64Array(series.values));
 
   try {
-    const detector = OutlierDetector.dbscan({ sensitivity: 0.4 }).preprocess(points, nTimestamps);
+    const detector = OutlierDetector.dbscan({ sensitivity: 0.4 }).preprocess(points);
     outliers = detector.detect();
   } catch (e) {
     console.error(e);
@@ -105,7 +104,7 @@ export const calculateOutlierValue = (series: DataFrame[], data: DataFrame): num
 
   const index = series.indexOf(data);
   if (outliers.seriesResults[index].isOutlier) {
-    return outliers.seriesResults[index].outlierIntervals.length;
+    return -outliers.seriesResults[index].outlierIntervals.length;
   }
 
   return 0;

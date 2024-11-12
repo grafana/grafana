@@ -1,8 +1,9 @@
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'logs' | 'related';
+export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'related-logs' | 'related';
+
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
@@ -44,6 +45,7 @@ export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
 export const TRAIL_BREAKDOWN_SORT_KEY = 'grafana.trails.breakdown.sort';
+export const OTEL_EXPERIENCE_ENABLED_KEY = 'grafana.trails.otel.experience.enabled';
 
 export const MDP_METRIC_PREVIEW = 250;
 export const MDP_METRIC_OVERVIEW = 500;
@@ -72,4 +74,8 @@ export function getVariablesWithOtelJoinQueryConstant(otelJoinQuery: string) {
 
 export class MetricSelectedEvent extends BusEventWithPayload<string | undefined> {
   public static type = 'metric-selected-event';
+}
+
+export class RefreshMetricsEvent extends BusEventBase {
+  public static type = 'refresh-metrics-event';
 }
