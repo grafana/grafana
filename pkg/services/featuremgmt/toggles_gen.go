@@ -583,6 +583,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
+	// FlagLogQLScope
+	// In-development feature that will allow injection of labels into loki queries.
+	FlagLogQLScope = "logQLScope"
+
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
 	FlagSqlExpressions = "sqlExpressions"
@@ -839,9 +843,17 @@ const (
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
+	// FlagUserStorageAPI
+	// Enables the user storage API
+	FlagUserStorageAPI = "userStorageAPI"
+
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagPreinstallAutoUpdate
+	// Enables automatic updates for pre-installed plugins
+	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
 	// FlagDashboardSchemaV2
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
@@ -858,4 +870,16 @@ const (
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
+
+	// FlagZipkinBackendMigration
+	// Enables querying Zipkin data source without the proxy
+	FlagZipkinBackendMigration = "zipkinBackendMigration"
+
+	// FlagEnableSCIM
+	// Enables SCIM support for user and group management
+	FlagEnableSCIM = "enableSCIM"
+
+	// FlagCrashDetection
+	// Enables browser crash detection reporting to Faro.
+	FlagCrashDetection = "crashDetection"
 )
