@@ -17,10 +17,11 @@ import { fetchTestRulerRulesGroup } from './ruler';
 export async function discoverFeaturesByUid(dataSourceUid: string): Promise<PromApiFeatures> {
   if (dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
     return {
+      application: 'grafana',
       features: {
         rulerApiEnabled: true,
       },
-    };
+    } satisfies PromApiFeatures;
   }
 
   const dsConfig = getRulesDataSourceByUID(dataSourceUid);
@@ -75,7 +76,8 @@ export async function discoverDataSourceFeatures(dsSettings: {
     const rulerSupported = await hasRulerSupport(name);
 
     return {
-      application: PromApplication.Cortex,
+      // if we were not trying to discover ruler support for a "loki" type data source then assume it's Cortex.
+      application: type === 'loki' ? 'Loki' : PromApplication.Cortex,
       features: {
         rulerApiEnabled: rulerSupported,
       },

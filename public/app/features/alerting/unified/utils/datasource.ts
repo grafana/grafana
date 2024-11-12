@@ -20,6 +20,8 @@ import { getAllDataSources } from './config';
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
+export type RulesSourceIdentifier = { rulesSourceName: string } | { uid: string };
+
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
   Loki = 'loki',
@@ -281,6 +283,22 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   const ds = getDataSourceByName(dataSourceName);
   if (!ds) {
     throw new Error(`Datasource "${dataSourceName}" not found`);
+  }
+  return ds.uid;
+}
+
+export function getDataSourceUID(rulesSourceIdentifier: RulesSourceIdentifier) {
+  if ('uid' in rulesSourceIdentifier) {
+    return rulesSourceIdentifier.uid;
+  }
+
+  if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+
+  const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
+  if (!ds) {
+    return undefined;
   }
   return ds.uid;
 }

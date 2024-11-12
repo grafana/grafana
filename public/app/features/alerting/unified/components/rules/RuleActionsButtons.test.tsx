@@ -76,7 +76,7 @@ describe('RuleActionsButtons', () => {
     grantAllPermissions();
     const mockRule = getGrafanaRule();
 
-    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" showCopyLinkButton />);
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
 
     await user.click(await ui.moreButton.find());
 

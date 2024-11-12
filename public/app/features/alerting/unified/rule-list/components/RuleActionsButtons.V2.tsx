@@ -21,8 +21,6 @@ import * as ruleId from '../../utils/rule-id';
 import { isGrafanaAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 
-export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
-
 interface Props {
   rule: RulerRuleDTO;
   promRule: Rule;
@@ -83,7 +81,6 @@ export const RuleActionsButtons = ({ compact, rule, promRule, groupIdentifier }:
         promRule={promRule}
         groupIdentifier={groupIdentifier}
         identifier={identifier}
-        // showCopyLinkButton={showCopyLinkButton}
         handleDelete={() => showDeleteModal(rule, groupIdentifier)}
         handleSilence={() => setShowSilenceDrawer(true)}
         handleDuplicateRule={() => setRedirectToClone({ identifier, isProvisioned })}

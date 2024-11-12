@@ -32,13 +32,12 @@ interface Props {
    */
   compact?: boolean;
   showViewButton?: boolean;
-  showCopyLinkButton?: boolean;
 }
 
 /**
  * **Action** buttons to show for an alert rule - e.g. "View", "Edit", "More..."
  */
-export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
+export const RuleActionsButtons = ({ compact, showViewButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
 
   const redirectToListView = compact ? false : true;

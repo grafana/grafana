@@ -96,7 +96,7 @@ export interface PromBuildInfoResponse {
 }
 
 export interface PromApiFeatures {
-  application?: PromApplication;
+  application: RulesSourceApplication;
   features: {
     rulerApiEnabled: boolean;
   };

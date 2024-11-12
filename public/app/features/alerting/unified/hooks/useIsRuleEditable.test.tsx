@@ -18,7 +18,6 @@ jest.mock('./useFolder');
 
 const mocks = {
   useFolder: jest.mocked(useFolder),
-  // useUnifiedAlertingSelector: jest.mocked(useUnifiedAlertingSelector),
 };
 
 const server = setupMswServer();

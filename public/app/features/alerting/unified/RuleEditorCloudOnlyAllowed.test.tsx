@@ -183,8 +183,6 @@ describe('RuleEditor cloud: checking editable data sources', () => {
       return null;
     });
 
-    // setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    // mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 
     // render rule editor, select mimir/loki managed alerts

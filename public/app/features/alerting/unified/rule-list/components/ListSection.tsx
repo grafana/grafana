@@ -66,17 +66,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: 'none',
 
     marginLeft: theme.spacing(1.5),
-
-    // '&:before': {
-    //   content: "''",
-    //   position: 'absolute',
-    //   height: '100%',
-
-    //   borderLeft: `solid 1px ${theme.colors.border.weak}`,
-
-    //   marginTop: 0,
-    //   marginLeft: `-${theme.spacing(1.5)}`,
-    // },
   }),
   wrapper: css({
     display: 'flex',

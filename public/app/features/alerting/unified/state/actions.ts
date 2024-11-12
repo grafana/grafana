@@ -118,10 +118,10 @@ export function fetchPromAndRulerRulesAction({
       featureDiscoveryApi.endpoints.discoverDsFeatures.initiate({ rulesSourceName })
     );
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
-    if (dsFeatures?.rulerConfig) {
-      await dispatch(fetchRulerRulesAction({ rulesSourceName }));
-    }
+    await Promise.all([
+      dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state })),
+      dsFeatures?.rulerConfig ? dispatch(fetchRulerRulesAction({ rulesSourceName })) : Promise.resolve(),
+    ]);
   };
 }
 

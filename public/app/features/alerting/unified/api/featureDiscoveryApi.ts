@@ -6,7 +6,7 @@ import {
   RulesSourceApplication,
 } from '../../../../types/unified-alerting-dto';
 import {
-  getRulesDataSource,
+  getDataSourceUID,
   getRulesDataSourceByUID,
   GRAFANA_RULES_SOURCE_NAME,
   isGrafanaRulesSource,
@@ -68,7 +68,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
         const rulerConfig = features.features.rulerApiEnabled
           ? ({
               dataSourceName: dataSourceSettings.name,
-              apiVersion: features.application === PromApplication.Mimir ? 'config' : 'legacy',
+              apiVersion: features.application === PromApplication.Cortex ? 'legacy' : 'config',
             } satisfies RulerDataSourceConfig)
           : undefined;
 
@@ -76,7 +76,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
           data: {
             name: dataSourceSettings.name,
             uid: dataSourceSettings.uid,
-            application: features.application ?? 'Loki',
+            application: features.application,
             rulerConfig,
           } satisfies RulesSourceFeatures,
         };
@@ -84,19 +84,3 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
     }),
   }),
 });
-
-function getDataSourceUID(rulesSourceIdentifier: { rulesSourceName: string } | { uid: string }) {
-  if ('uid' in rulesSourceIdentifier) {
-    return rulesSourceIdentifier.uid;
-  }
-
-  if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
-  }
-
-  const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
-  if (!ds) {
-    return undefined;
-  }
-  return ds.uid;
-}
