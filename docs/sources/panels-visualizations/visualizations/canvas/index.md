@@ -85,7 +85,7 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 ### Icon
 
-The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
+The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds or value mappings.
 
 #### Add a custom icon
 
