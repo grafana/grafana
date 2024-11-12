@@ -136,13 +136,6 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashb
 		return nil, nil
 	}
 
-	orgId := query.OrgId
-	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
-		orgId = query.SignedInUser.GetOrgID()
-	} else {
-		return nil, dashboards.ErrUserIsNotSignedInToOrg
-	}
-
 	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
 	var wg sync.WaitGroup
 	res := make([]dashboards.DashboardSearchProjection, 0)
