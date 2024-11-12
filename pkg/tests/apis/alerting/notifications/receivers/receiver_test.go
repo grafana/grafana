@@ -1531,7 +1531,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient *apis.GenericClient[v0alpha1.Receiver, v0alpha1.ReceiverList], legacyCli alerting.LegacyApiClient) {
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList], legacyCli alerting.LegacyApiClient) {
 	ctx := context.Background()
 
 	var defaultReceiver *definitions.PostableApiReceiver
@@ -1608,13 +1608,13 @@ func createWildcardPermission(actions ...string) resourcepermissions.SetResource
 	}
 }
 
-func newClient(t *testing.T, user apis.User) *apis.GenericClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
+func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.GenericClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
+	return &apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
 				Group:    v0alpha1.Kind().Group(),

@@ -615,13 +615,13 @@ func TestIntegrationListSelector(t *testing.T) {
 	})
 }
 
-func newClient(t *testing.T, user apis.User) *apis.GenericClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
+func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.GenericClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
+	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
 				Group:    v0alpha1.Kind().Group(),

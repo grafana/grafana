@@ -645,12 +645,12 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	return team
 }
 
-// GenericClient is the struct that implements a generic interface for resource operations
-type GenericClient[T any, L any] struct {
+// TypedClient is the struct that implements a typed interface for resource operations
+type TypedClient[T any, L any] struct {
 	Client dynamic.ResourceInterface
 }
 
-func (c *GenericClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
+func (c *TypedClient[T, L]) Create(ctx context.Context, resource *T, opts metav1.CreateOptions) (*T, error) {
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
 	if err != nil {
 		return nil, err
@@ -668,7 +668,7 @@ func (c *GenericClient[T, L]) Create(ctx context.Context, resource *T, opts meta
 	return createdObj, nil
 }
 
-func (c *GenericClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
+func (c *TypedClient[T, L]) Update(ctx context.Context, resource *T, opts metav1.UpdateOptions) (*T, error) {
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(resource)
 	if err != nil {
 		return nil, err
@@ -686,11 +686,11 @@ func (c *GenericClient[T, L]) Update(ctx context.Context, resource *T, opts meta
 	return updatedObj, nil
 }
 
-func (c *GenericClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
+func (c *TypedClient[T, L]) Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error {
 	return c.Client.Delete(ctx, name, opts)
 }
 
-func (c *GenericClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
+func (c *TypedClient[T, L]) Get(ctx context.Context, name string, opts metav1.GetOptions) (*T, error) {
 	result, err := c.Client.Get(ctx, name, opts)
 	if err != nil {
 		return nil, err
@@ -703,7 +703,7 @@ func (c *GenericClient[T, L]) Get(ctx context.Context, name string, opts metav1.
 	return retrievedObj, nil
 }
 
-func (c *GenericClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
+func (c *TypedClient[T, L]) List(ctx context.Context, opts metav1.ListOptions) (*L, error) {
 	result, err := c.Client.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -716,7 +716,7 @@ func (c *GenericClient[T, L]) List(ctx context.Context, opts metav1.ListOptions)
 	return listObj, nil
 }
 
-func (c *GenericClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
+func (c *TypedClient[T, L]) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*T, error) {
 	result, err := c.Client.Patch(ctx, name, pt, data, opts, subresources...)
 	if err != nil {
 		return nil, err

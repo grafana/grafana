@@ -814,13 +814,13 @@ func TestIntegrationTimeIntervalValidation(t *testing.T) {
 	}
 }
 
-func newClient(t *testing.T, user apis.User) *apis.GenericClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList] {
+func newClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.GenericClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList]{
+	return &apis.TypedClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
 				Group:    v0alpha1.Kind().Group(),
