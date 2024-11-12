@@ -206,7 +206,7 @@
     "jest-watch-typeahead": "^2.2.2",
     "knip": "^5.10.0",
     "lerna": "8.1.9",
-    "mini-css-extract-plugin": "2.9.1",
+    "mini-css-extract-plugin": "2.9.2",
     "msw": "2.4.13",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
