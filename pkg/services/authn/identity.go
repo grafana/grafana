@@ -49,8 +49,8 @@ type Identity struct {
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
-	// AllowedKubernetesNamespace
-	AllowedKubernetesNamespace string
+	// Namespace
+	Namespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -189,8 +189,8 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetAllowedKubernetesNamespace() string {
-	return i.AllowedKubernetesNamespace
+func (i *Identity) GetNamespace() string {
+	return i.Namespace
 }
 
 func (i *Identity) GetOrgID() int64 {
@@ -287,6 +287,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
 		FallbackType:    i.Type,
+		Namespace:       i.Namespace,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {

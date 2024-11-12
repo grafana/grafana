@@ -85,7 +85,7 @@ func (i *IDClaimsWrapper) JTI() string {
 
 // GetNamespace implements claims.AccessClaims.
 func (i *IDClaimsWrapper) Namespace() string {
-	return i.Source.GetAllowedKubernetesNamespace()
+	return i.Source.GetNamespace()
 }
 
 // GetNotBefore implements claims.AccessClaims.
