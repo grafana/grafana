@@ -103,6 +103,7 @@ func (f *fakeAlertInstanceManager) GenerateAlertInstances(orgID int64, alertRule
 }
 
 type recordingAccessControlFake struct {
+	ac.AccessControl
 	Disabled           bool
 	EvaluateRecordings []struct {
 		User      *user.SignedInUser
@@ -121,28 +122,6 @@ func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.R
 		return false, nil
 	}
 	return a.Callback(u, evaluator)
-}
-
-func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix string, resolver ac.ScopeAttributeResolver) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) WithoutResolvers() ac.AccessControl {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (a *recordingAccessControlFake) IsDisabled() bool {
-	return a.Disabled
-}
-
-func (a *recordingAccessControlFake) Check(ctx context.Context, in ac.CheckRequest) (bool, error) {
-	return false, nil
-}
-
-func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in ac.ListObjectsRequest) ([]string, error) {
-	return nil, nil
 }
 
 var _ ac.AccessControl = &recordingAccessControlFake{}

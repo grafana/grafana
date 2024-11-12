@@ -4,11 +4,13 @@ import (
 	"context"
 	golog "log"
 	"path/filepath"
+	reflect "reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/search"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -205,6 +207,9 @@ func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error
 				return totalObjectsFetched, err
 			}
 
+			// Record the number of objects indexed for the kind
+			IndexServerMetrics.IndexedKinds.WithLabelValues(rt.Key.Resource).Add(float64(len(list.Items)))
+
 			totalObjectsFetched += len(list.Items)
 
 			logger.Debug("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
@@ -277,6 +282,9 @@ func (i *Index) Index(ctx context.Context, data *Data) error {
 		return err
 	}
 
+	//record the kind of resource that was indexed
+	IndexServerMetrics.IndexedKinds.WithLabelValues(res.Kind).Inc()
+
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-data.Value.ResourceVersion) / 1e6
 	if latencySeconds > 5 {
@@ -343,6 +351,15 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 		query.AddQuery(orQuery)
 	}
 
+	if len(request.Filters) > 0 {
+		orQuery := bleve.NewDisjunctionQuery()
+		for _, filter := range request.Filters {
+			matchQuery := bleve.NewMatchQuery(filter)
+			orQuery.AddQuery(matchQuery)
+		}
+		query.AddQuery(orQuery)
+	}
+
 	req := bleve.NewSearchRequest(query)
 	if len(request.SortBy) > 0 {
 		sorting := getSortFields(request)
@@ -377,7 +394,8 @@ func (i *Index) Search(ctx context.Context, request *SearchRequest) (*IndexResul
 	groups := []*Group{}
 	for _, group := range request.GroupBy {
 		groupByFacet := res.Facets[group.Name+"_facet"]
-		for _, term := range groupByFacet.Terms.Terms() {
+		terms := getTermFacets(groupByFacet.Terms)
+		for _, term := range terms {
 			groups = append(groups, &Group{Name: term.Term, Count: int64(term.Count)})
 		}
 	}
@@ -497,4 +515,47 @@ func getSortFields(request *SearchRequest) []string {
 		sorting = append(sorting, sort)
 	}
 	return sorting
+}
+
+func getTermFacets(f *search.TermFacets) []*search.TermFacet {
+	e := reflect.ValueOf(f).Elem()
+	if e.Kind() != reflect.Struct {
+		return []*search.TermFacet{}
+	}
+	// workaround - this field is private, so we need to use reflection to access it
+	// TODO - fork bleve and create a pr to make this field accessible
+	v := e.FieldByName("termLookup")
+	if v.Kind() != reflect.Map {
+		return []*search.TermFacet{}
+	}
+
+	terms := []*search.TermFacet{}
+	termsRange := v.MapRange()
+	for termsRange.Next() {
+		value := termsRange.Value()
+		// facet value is *search.TermFacet
+		if value.Kind() == reflect.Pointer {
+			val := value.Elem()
+			if val.Kind() == reflect.Struct {
+				group := newTerm(val)
+				terms = append(terms, group)
+			}
+		}
+	}
+	return terms
+}
+
+func newTerm(val reflect.Value) *search.TermFacet {
+	term := &search.TermFacet{}
+
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		if field.Kind() == reflect.String {
+			term.Term = field.String()
+		}
+		if field.Kind() == reflect.Int {
+			term.Count = int(field.Int())
+		}
+	}
+	return term
 }

@@ -65,7 +65,7 @@
     "@rollup/plugin-node-resolve": "15.3.0",
     "@types/dompurify": "^3.0.0",
     "@types/history": "4.7.11",
-    "@types/lodash": "4.17.12",
+    "@types/lodash": "4.17.13",
     "@types/node": "20.16.15",
     "@types/papaparse": "5.3.15",
     "@types/react": "18.3.3",
