@@ -840,12 +840,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	var dsInfo datasources.DataSourceInfo = ds
-	if req.PluginContext.DataSourceInstanceSettings != nil {
-		dsInfo = req.PluginContext.DataSourceInstanceSettings
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsInfo, c.Req)
+	err = hs.PluginRequestValidator.Validate(ds, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}

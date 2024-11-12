@@ -8,7 +8,7 @@ import (
 
 type OSSPluginRequestValidator struct{}
 
-func (*OSSPluginRequestValidator) Validate(datasources.DataSourceInfo, *http.Request) error {
+func (*OSSPluginRequestValidator) Validate(*datasources.DataSource, *http.Request) error {
 	return nil
 }
 

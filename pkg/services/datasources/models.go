@@ -76,18 +76,16 @@ type DataSource struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
-}
 
-func (ds *DataSource) GetURL() string {
-	return ds.URL
-}
-
-func (ds *DataSource) GetName() string {
-	return ds.Name
+	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
-	return ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+	if ds.isSecureSocksDSProxyEnabled == nil {
+		enabled := ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false)
+		ds.isSecureSocksDSProxyEnabled = &enabled
+	}
+	return *ds.isSecureSocksDSProxyEnabled
 }
 
 type TeamHTTPHeadersJSONData struct {

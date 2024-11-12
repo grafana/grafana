@@ -10,5 +10,5 @@ type PluginRequestValidator interface {
 	// Validate performs a request validation based
 	// on the data source URL and some of the request
 	// attributes (headers, cookies, etc).
-	Validate(ds datasources.DataSourceInfo, req *http.Request) error
+	Validate(ds *datasources.DataSource, req *http.Request) error
 }

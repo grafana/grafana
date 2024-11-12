@@ -62,12 +62,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	var dsInfo datasources.DataSourceInfo = ds
-	if pCtx.DataSourceInstanceSettings != nil {
-		dsInfo = pCtx.DataSourceInstanceSettings
-	}
-
-	err = hs.PluginRequestValidator.Validate(dsInfo, c.Req)
+	err = hs.PluginRequestValidator.Validate(ds, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return

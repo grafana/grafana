@@ -522,7 +522,7 @@ type fakePluginRequestValidator struct {
 	err error
 }
 
-func (rv *fakePluginRequestValidator) Validate(ds datasources.DataSourceInfo, req *http.Request) error {
+func (rv *fakePluginRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 
