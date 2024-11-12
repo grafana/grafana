@@ -1,4 +1,4 @@
-import { behaviors, SceneDataQuery, SceneDataTransformer, VizPanel } from '@grafana/scenes';
+import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
 import {
@@ -15,6 +15,14 @@ import {
   PanelQuerySpec,
   DataQueryKind,
   defaultDataSourceRef,
+  QueryVariableKind,
+  TextVariableKind,
+  IntervalVariableKind,
+  DatasourceVariableKind,
+  CustomVariableKind,
+  ConstantVariableKind,
+  GroupVariableKind,
+  AdhocVariableKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -22,6 +30,8 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
+
+import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -257,7 +267,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
   return queries;
 }
 
-function getDataQueryKind(query: SceneDataQuery): string {
+export function getDataQueryKind(query: SceneDataQuery): string {
   // FIXME kind in the query object is the datasource type?
   // what if the datasource is not set?
   // should we use default datasource type?
@@ -334,7 +344,16 @@ function createElements(
 }
 
 function getVariables(oldDash: DashboardSceneState) {
-  return [];
+  const variablesSet = oldDash.$variables;
+
+  // variables is an array of all variables kind (union)
+  let variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind> = [];
+
+  if (variablesSet instanceof SceneVariableSet) {
+    variables = sceneVariablesSetToSchemaV2Variables(variablesSet);
+  }
+
+  return variables;
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2

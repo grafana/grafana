@@ -37,7 +37,7 @@ export interface DashboardSpec {
   tags?: string[];
   timeSettings: TimeSettingsSpec;
   // Configured template variables.
-  variables: Array<QueryVariableKind | TextVariableKind>;
+  variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind>;
   // |* more element types in the future
   elements: Record<string, PanelKind>;
   annotations: AnnotationQueryKind[];
@@ -659,14 +659,19 @@ export interface VariableValueOption {
   group?: string;
 }
 
+export enum VariableHide {
+  dontHide,
+  hideLabel,
+  hideVariable,
+}
+
 // query variable
 export type QueryVariableSpec = {
   name: string;
-  value: VariableValue;
-  text: VariableValue;
-  current: VariableOption;
+  current?: VariableOption;
+  refresh: VariableRefresh;
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
   datasource: DataSourceRef;
@@ -683,9 +688,8 @@ export type QueryVariableSpec = {
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
   name: "",
-  value: "",
   datasource: {},//FIXME: check if this is undefined. null or empty object in provisioning use case when we want to fallback to the default datasource
-  text: "",
+  refresh: VariableRefresh.onDashboardLoad,
   current: {
     text: "",
     value: "",
@@ -696,7 +700,7 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
-  hide: false,
+  hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
 
@@ -747,7 +751,7 @@ export interface ConstantVariableSpec {
   name: string;
   value: string;
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
 }
@@ -755,7 +759,7 @@ export interface ConstantVariableSpec {
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
   name: "",
   value: "",
-  hide: false,
+  hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
 
@@ -773,6 +777,7 @@ export interface DatasourceVariableSpec {
   pluginId: string;
   regex: string;
   current: VariableOption;
+  refresh: VariableRefresh;
   defaultOptionEnabled: boolean; // FIXME: is this going to be removed in the future https://github.com/grafana/scenes/blob/main/packages/scenes/src/variables/variants/DataSourceVariable.tsx#L24?
   options: VariableValueOption[];
   isMulti: boolean;
@@ -788,6 +793,7 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
   name: "",
   value: "",
   text: "",
+  refresh: VariableRefresh.onDashboardLoad,
   options: [],
   current: {
     text: "",
@@ -811,14 +817,15 @@ export interface IntervalVariableKind {
 export interface IntervalVariableSpec {
   name: string;
   value: string;
-  intervals: string[];
+  query: string;
   current: VariableOption;
-  autoEnabled: boolean;
-  autoMinInterval: string;
-  autoStepCount: number;
+  options: VariableOption[];
+  auto: boolean;
+  auto_min: string;
+  auto_count: number;
   refresh: VariableRefresh;
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
 }
@@ -826,11 +833,12 @@ export interface IntervalVariableSpec {
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
   name: "",
   value: "",
-  intervals: [],
+  query: "",
   current: {
     text: "",
     value: "",
   },
+  options: [],
   autoEnabled: false,
   autoMinInterval: "",
   autoStepCount: 0,
@@ -856,7 +864,7 @@ export interface CustomVariableSpec {
   includeAll: boolean;
   allValue?: string;
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
 };
@@ -873,7 +881,7 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
-  hide: false,
+  hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
 
@@ -894,7 +902,7 @@ export interface GroupVariableSpec {
   includeAll: boolean;
   allValue?: string;
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
 }
@@ -907,7 +915,7 @@ export const defaultGroupVariableSpec = (): GroupVariableSpec => ({
   options: [],
   isMulti: false,
   includeAll: false,
-  hide: false,
+  hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
 
@@ -950,7 +958,7 @@ export interface AdhocVariableSpec {
   filters: AdHocFilterWithLabels[];
   defaultKeys: MetricFindValue[];
   label?: string;
-  hide: boolean;
+  hide: VariableHide;
   skipUrlSync: boolean;
   description?: string;
 }
@@ -961,7 +969,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
   baseFilters: [],
   filters: [],
   defaultKeys: [],
-  hide: false,
+  hide: VariableHide.dontHide,
   skipUrlSync: false,
 });
 
