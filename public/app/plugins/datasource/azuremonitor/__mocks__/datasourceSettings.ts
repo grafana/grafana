@@ -1,13 +1,13 @@
 import { KeyValue } from '@grafana/data';
 
-import { AzureDataSourceSettings } from '../types';
+import { AzureMonitorDataSourceSettings } from '../types';
 
 import { DeepPartial } from './utils';
 
 export const createMockDatasourceSettings = (
-  overrides?: DeepPartial<AzureDataSourceSettings>,
+  overrides?: DeepPartial<AzureMonitorDataSourceSettings>,
   secureJsonFieldsOverrides?: KeyValue<boolean>
-): AzureDataSourceSettings => {
+): AzureMonitorDataSourceSettings => {
   return {
     id: 1,
     uid: 'uid',
