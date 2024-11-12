@@ -36,6 +36,8 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   },
 ];
 
+const X_BINS_MAX = 3840; // 4k display width
+
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
   const [isBucketQtyInvalid, setBucketQtyInvalid] = useState<boolean>(false);
@@ -53,12 +55,13 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
       const isInvalid = !isValidBucketDuration && !isValidNumberOrVariable;
       setInvalid(isInvalid);
 
-      if (item.settings.timeRange && mode === HeatmapCalculationMode.Size && !isInvalid) {
+      if (item.settings.timeRange && mode === HeatmapCalculationMode.Size && !isInvalid && bucketValue !== '') {
         const xBinIncr = durationToMilliseconds(parseDuration(bucketValue));
         const xMin = item.settings.timeRange.from.valueOf();
         const xMax = item.settings.timeRange.to.valueOf();
         const numBins = Math.round((xMax - xMin) / xBinIncr);
-        if (numBins > 10000) {
+
+        if (numBins > X_BINS_MAX) {
           setBucketQtyInvalid(true);
         } else {
           setBucketQtyInvalid(false);
