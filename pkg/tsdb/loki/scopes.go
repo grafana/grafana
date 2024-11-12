@@ -70,7 +70,7 @@ func GetSuggestions(ctx context.Context, lokiAPI *LokiAPI, req *backend.CallReso
 
 	var path string
 	if sugReq.LabelName != "" {
-		path = "/loki/api/v1/label/" + sugReq.LabelName + "/values?" + values.Encode()
+		path = "/loki/api/v1/label/" + url.QueryEscape(sugReq.LabelName) + "/values?" + values.Encode()
 	} else {
 		path = "/loki/api/v1/labels?" + values.Encode()
 	}
