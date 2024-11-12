@@ -336,15 +336,15 @@
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
     },
     "simpleCondition": {
-      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ",
-      "ofQuery": {
-        "To": "ŦØ"
-      }
+      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ"
     },
     "templates": {
       "misconfigured-badge-text": "Mįşčőŉƒįģūřęđ",
       "misconfigured-warning": "Ŧĥįş ŧęmpľäŧę įş mįşčőŉƒįģūřęđ.",
       "misconfigured-warning-details": "Ŧęmpľäŧęş mūşŧ þę đęƒįŉęđ įŉ þőŧĥ ŧĥę <1></1> äŉđ <4></4> şęčŧįőŉş őƒ yőūř äľęřŧmäŉäģęř čőŉƒįģūřäŧįőŉ."
+    },
+    "threshold": {
+      "to": "ŦØ"
     }
   },
   "annotations": {

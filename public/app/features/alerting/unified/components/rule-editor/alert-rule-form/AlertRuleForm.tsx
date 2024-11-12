@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -288,39 +288,37 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
-          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {/* Step 3-4-5 */}
-              {showDataSourceDependantStep && (
-                <>
-                  {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
+          <Stack direction="column" gap={3}>
+            {/* Step 1 */}
+            <AlertRuleNameAndMetric />
+            {/* Step 2 */}
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            {/* Step 3-4-5 */}
+            {showDataSourceDependantStep && (
+              <>
+                {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
 
-                  {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
+                {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
 
-                  {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
+                {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
 
-                  {/* Step 4 & 5 & 6*/}
-                  {isGrafanaManagedRuleByType(type) && (
-                    <GrafanaEvaluationBehaviorStep
-                      evaluateEvery={evaluateEvery}
-                      setEvaluateEvery={setEvaluateEvery}
-                      existing={Boolean(existing)}
-                      enableProvisionedGroups={false}
-                    />
-                  )}
-                  {/* Notifications step*/}
-                  <NotificationsStep alertUid={uidFromParams} />
-                  {/* Annotations only for alerting rules */}
-                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
-                </>
-              )}
-            </Stack>
-          </CustomScrollbar>
+                {/* Step 4 & 5 & 6*/}
+                {isGrafanaManagedRuleByType(type) && (
+                  <GrafanaEvaluationBehaviorStep
+                    evaluateEvery={evaluateEvery}
+                    setEvaluateEvery={setEvaluateEvery}
+                    existing={Boolean(existing)}
+                    enableProvisionedGroups={false}
+                  />
+                )}
+                {/* Notifications step*/}
+                <NotificationsStep alertUid={uidFromParams} />
+                {/* Annotations only for alerting rules */}
+                {!isRecordingRuleByType(type) && <AnnotationsStep />}
+              </>
+            )}
+          </Stack>
         </div>
       </form>
       {showDeleteModal ? (
