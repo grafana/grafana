@@ -8,8 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
-	"github.com/grafana/authlib/claims"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -133,8 +131,7 @@ func (a *AccessControl) evaluateZanzana(ctx context.Context, user identity.Reque
 			_, _, parentFolder = accesscontrol.SplitScope(scopes[1])
 		}
 
-		namespace := claims.OrgNamespaceFormatter(user.GetOrgID())
-		req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, parentFolder, identifier)
+		req, ok := zanzana.TranslateToCheckRequest(user.GetNamespace(), action, kind, parentFolder, identifier)
 		if !ok {
 			// unsupported translation
 			return false, errAccessNotImplemented
