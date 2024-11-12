@@ -428,9 +428,7 @@ SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 
 ### Using Variables in Queries
 
-From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically. If your template variables are strings, do not wrap them in quotes in where clauses.
-
-From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+Template variable values are only quoted when the template variable is a `multi-value`.
 
 If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
