@@ -270,7 +270,7 @@ describe('ExposedComponentsRegistry', () => {
     });
   });
 
-  it('should log a warning if another component with the same id already exists in the registry', async () => {
+  it('should log an error if another component with the same id already exists in the registry', async () => {
     const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
@@ -304,13 +304,13 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     expect(log.error).toHaveBeenCalledWith(
-      "Could not register exposed component with 'grafana-basic-app1/hello-world/v1'. Reason: An exposed component with the same id already exists."
+      'Could not register exposed component. Reason: An exposed component with the same id already exists.'
     );
     const currentState2 = await registry.getState();
     expect(Object.keys(currentState2)).toHaveLength(1);
   });
 
-  it('should skip registering component and log a warning when id is not prefixed with plugin id', async () => {
+  it('should skip registering component and log an error when id is not prefixed with plugin id', async () => {
     const registry = new ExposedComponentsRegistry();
     registry.register({
       pluginId: 'grafana-basic-app1',
@@ -325,31 +325,10 @@ describe('ExposedComponentsRegistry', () => {
     });
 
     expect(log.error).toHaveBeenCalledWith(
-      "Could not register exposed component with 'hello-world/v1'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'."
+      "Could not register exposed component. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'."
     );
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
-  });
-
-  it('should log a error when exposed component id is not suffixed with component version', async () => {
-    const registry = new ExposedComponentsRegistry();
-    registry.register({
-      pluginId: 'grafana-basic-app1',
-      configs: [
-        {
-          id: 'grafana-basic-app1/hello-world',
-          title: 'not important',
-          description: 'not important',
-          component: () => React.createElement('div', null, 'Hello World1'),
-        },
-      ],
-    });
-
-    expect(log.error).toHaveBeenCalledWith(
-      "Exposed component does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'."
-    );
-    const currentState = await registry.getState();
-    expect(Object.keys(currentState)).toHaveLength(1);
   });
 
   it('should not register component when title is missing', async () => {
@@ -367,9 +346,7 @@ describe('ExposedComponentsRegistry', () => {
       ],
     });
 
-    expect(log.error).toHaveBeenCalledWith(
-      "Could not register exposed component with id 'grafana-basic-app/hello-world/v1'. Reason: Title is missing."
-    );
+    expect(log.error).toHaveBeenCalledWith('Could not register exposed component. Reason: Title is missing.');
 
     const currentState = await registry.getState();
     expect(Object.keys(currentState)).toHaveLength(0);
@@ -455,7 +432,7 @@ describe('ExposedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should register an exposed component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
@@ -478,7 +455,7 @@ describe('ExposedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register an exposed component added by a plugin in production mode even if the meta-info is missing', async () => {
@@ -504,7 +481,7 @@ describe('ExposedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 
   it('should register an exposed component added by a plugin in dev-mode if the meta-info is present', async () => {
@@ -530,6 +507,6 @@ describe('ExposedComponentsRegistry', () => {
     const currentState = await registry.getState();
 
     expect(Object.keys(currentState)).toHaveLength(1);
-    expect(log.warning).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
   });
 });
