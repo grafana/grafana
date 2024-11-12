@@ -293,21 +293,33 @@ func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPa
 		return nil, err
 	}
 
-	dsConfigs := make([]*DatasourceCachingConfig, 0)
+	dsCachingConfigs := make([]*DatasourceCachingConfig, 0)
 	for _, config := range configs {
 		for _, ds := range config.Datasources {
-			if ds.Caching != nil {
-				dsConfig := &DatasourceCachingConfig{
-					DataSourceUID: ds.UID, // TODO: sometimes UID is missing - how to get it
-					Enabled:       ds.Caching.Enabled,
-					QueriesTTL:    ds.Caching.QueriesTTL,
-					ResourcesTTL:  ds.Caching.ResourcesTTL,
-					UseDefaultTTL: ds.Caching.UseDefaultTTL,
-				}
-				dsConfigs = append(dsConfigs, dsConfig)
+			if ds.Caching == nil {
+				continue
 			}
+
+			dsUID := ds.UID
+			if dsUID == "" {
+				// Caching config must contain datasource uid
+				cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+				dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
+				if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+					continue
+				}
+				dsUID = dataSource.UID
+			}
+			dsCachingConfig := &DatasourceCachingConfig{
+				DataSourceUID: dsUID,
+				Enabled:       ds.Caching.Enabled,
+				QueriesTTL:    ds.Caching.QueriesTTL,
+				ResourcesTTL:  ds.Caching.ResourcesTTL,
+				UseDefaultTTL: ds.Caching.UseDefaultTTL,
+			}
+			dsCachingConfigs = append(dsCachingConfigs, dsCachingConfig)
 		}
 	}
 
-	return dsConfigs, nil
+	return dsCachingConfigs, nil
 }
