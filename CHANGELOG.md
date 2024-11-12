@@ -11,6 +11,7 @@
 - **OrgSync:** Do not set default Organization for a user to a non-existent Organization [#94549](https://github.com/grafana/grafana/pull/94549), [@mgyongyosi](https://github.com/mgyongyosi)
 - **Plugins:** Skip install errors if dependency plugin already exists [#94717](https://github.com/grafana/grafana/pull/94717), [@wbrowne](https://github.com/wbrowne)
 - **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94959](https://github.com/grafana/grafana/pull/94959), [@samjewell](https://github.com/samjewell)
+- **MigrationAssistant:** Fix Migration Assistant issue [CVE-2024-9476]
 
 <!-- 11.2.3+security-01 END -->
 <!-- 11.2.3 START -->
