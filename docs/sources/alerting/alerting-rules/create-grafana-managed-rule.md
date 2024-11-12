@@ -69,6 +69,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
+  data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  compatible-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
 ---
 
 # Configure Grafana-managed alert rules
@@ -87,6 +93,13 @@ If you delete an alert resource created in the UI, you can no longer retrieve it
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 ## Before you begin
+
+If you are using Grafana OSS:
+
+1. Configure your [data sources](ref:data-sources).
+1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+
+If you are using Grafana OSS, Enterprise, or Cloud:
 
 You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
 
