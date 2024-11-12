@@ -57,4 +57,4 @@ Once you have configured the data source you can:
 
 - Add [annotations](ref:annotations)
 - Set up [alerting](ref:alerting)
-- Add [transformations](/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/)
+- Add [transformations](ref:transformations)
