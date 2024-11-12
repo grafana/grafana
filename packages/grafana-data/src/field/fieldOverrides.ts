@@ -167,6 +167,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       field.state!.seriesIndex = seriesIndex;
       field.state!.range = range;
       field.type = type;
+      if (field.type === FieldType.number && !field.state?.calcs) {
+        reduceField({ field, reducers: [ReducerID.min, ReducerID.max, ReducerID.last] });
+      }
 
       // Some color modes needs series index to assign field color so we count
       // up series index here but ignore time fields
