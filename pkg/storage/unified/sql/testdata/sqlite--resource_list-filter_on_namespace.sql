@@ -2,6 +2,7 @@ SELECT
     "resource_version",
     "namespace",
     "name",
+    "folder",
     "value"
     FROM "resource"
     WHERE 1 = 1

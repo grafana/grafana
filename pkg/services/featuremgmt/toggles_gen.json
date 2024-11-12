@@ -6,16 +6,17 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1723737724157",
+        "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
       },
       "spec": {
         "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-        "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
       }
     },
     {
@@ -852,6 +853,19 @@
         "codeowner": "@grafana/explore-squad",
         "allowSelfServe": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "crashDetection",
+        "resourceVersion": "1730381712885",
+        "creationTimestamp": "2024-10-31T13:35:12Z"
+      },
+      "spec": {
+        "description": "Enables browser crash detection reporting to Faro.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
       }
     },
     {
@@ -3388,6 +3402,18 @@
         "description": "Use session storage for handling the redirection after login",
         "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "userStorageAPI",
+        "resourceVersion": "1730204321785",
+        "creationTimestamp": "2024-10-29T12:18:41Z"
+      },
+      "spec": {
+        "description": "Enables the user storage API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {

@@ -227,6 +227,7 @@ export interface FeatureToggles {
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
+  userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
   preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
@@ -235,4 +236,5 @@ export interface FeatureToggles {
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
+  crashDetection?: boolean;
 }
