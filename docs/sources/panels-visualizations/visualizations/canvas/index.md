@@ -87,7 +87,20 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
-You can add custom icons by setting both the **Icon** and **Background (icon)** image options.
+### Add a custom icon
+
+You can add a custom icon by referencing an SVG file. To add a custom icon, follow these steps:
+
+1. Under **Icon > SVG Path**, if it's not already selected, select **Fixed** as your file source.
+1. Click **Select a value** in the field below.
+1. In the dialog box that opens, click the **URL** tab.
+1. Enter the URL in the field below the **URL** tab.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+
+1. Click **Select**.
+
+To add a custom icon using another image file type, you must set both the **Icon** and **Background (icon)** image options.
 For steps on how to add your own images, refer to [Add custom images to elements](#add-custom-images-to-elements).
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-icon-images-11.2.png" max-width="350px" alt="Canvas visualization icon image options" >}}
