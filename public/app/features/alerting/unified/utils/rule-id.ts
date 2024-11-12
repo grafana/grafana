@@ -7,6 +7,7 @@ import {
   EditableRuleIdentifier,
   Rule,
   RuleGroupIdentifier,
+  RuleGroupIdentifierV2,
   RuleIdentifier,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
@@ -42,6 +43,20 @@ export function fromRulerRule(
     ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
     rulerRuleHash: hashRulerRule(rule),
   } satisfies CloudRuleIdentifier;
+}
+
+export function fromRulerRuleAndGroupIdentifierV2(
+  ruleGroup: RuleGroupIdentifierV2,
+  rule: RulerRuleDTO
+): EditableRuleIdentifier {
+  if (ruleGroup.groupOrigin === 'grafana') {
+    if (isGrafanaRulerRule(rule)) {
+      return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
+    }
+    throw new Error('Rule is not a Grafana Ruler rule');
+  }
+
+  return fromRulerRule(ruleGroup.rulesSource.name, ruleGroup.namespace.name, ruleGroup.groupName, rule);
 }
 
 export function fromRulerRuleAndRuleGroupIdentifier(

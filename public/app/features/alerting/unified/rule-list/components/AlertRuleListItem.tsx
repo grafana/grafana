@@ -5,7 +5,7 @@ import { ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { Rule, RuleGroupIdentifier, RuleHealth } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, Rule, RuleGroupIdentifierV2, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
@@ -142,13 +142,25 @@ type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'stat
 
 export function RecordingRuleListItem({
   name,
+  namespace,
+  group,
   href,
   health,
   isProvisioned,
   error,
   isPaused,
   origin,
+  actions,
 }: RecordingRuleListItemProps) {
+  const metadata: ReactNode[] = [];
+  if (namespace && group) {
+    metadata.push(
+      <Text color="secondary" variant="bodySmall">
+        <RuleLocation namespace={namespace} group={group} />
+      </Text>
+    );
+  }
+
   return (
     <ListItem
       title={
@@ -165,8 +177,8 @@ export function RecordingRuleListItem({
       }
       description={<Summary error={error} />}
       icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
-      actions={null}
-      meta={[]}
+      actions={actions}
+      meta={metadata}
     />
   );
 }
@@ -236,13 +248,19 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 
 interface UnknownRuleListItemProps {
   rule: Rule;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: RuleGroupIdentifierV2;
 }
 
 export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
+  const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  const ruleContext = { ...groupIdentifier, name: rule.name };
+  const ruleContext = {
+    name: rule.name,
+    groupName,
+    namespace: JSON.stringify(namespace),
+    rulesSource: rulesSource.uid === GrafanaRulesSourceSymbol ? GRAFANA_RULES_SOURCE_NAME : rulesSource.uid,
+  };
   logError(new Error('unknown rule type'), ruleContext);
 
   return (

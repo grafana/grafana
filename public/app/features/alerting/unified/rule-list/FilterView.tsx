@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { Button, Card, Stack } from '@grafana/ui';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { DataSourceNamespaceIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../api/prometheusApi';
@@ -55,8 +55,6 @@ export function FilterView({ filterState }: FilterViewProps) {
 
       fetchedRulesCount++;
     }
-
-    // setRules((currentRules) => currentRules.concat(fetchedRules));
   });
 
   if (filterChanged) {
@@ -75,21 +73,9 @@ export function FilterView({ filterState }: FilterViewProps) {
 
   return (
     <Stack direction="column" gap={0}>
-      {rules.map(({ ruleKey, rule, groupIdentifier }) => {
-        const { rulesSource, namespace, groupName } = groupIdentifier;
-
-        return (
-          <AlertRuleLoader
-            key={ruleKey}
-            rule={rule}
-            groupIdentifier={{
-              dataSourceName: rulesSource.name,
-              namespaceName: namespace.name,
-              groupName,
-            }}
-          />
-        );
-      })}
+      {rules.map(({ ruleKey, rule, groupIdentifier }) => (
+        <AlertRuleLoader key={ruleKey} rule={rule} groupIdentifier={groupIdentifier} />
+      ))}
       {loading ? (
         <>
           <AlertRuleListItemLoader />
@@ -123,11 +109,11 @@ interface RuleWithOrigin {
    */
   ruleKey: string;
   rule: PromRuleDTO;
-  groupIdentifier: RuleGroupIdentifierV2<DataSourceNamespaceIdentifier>;
+  groupIdentifier: DataSourceRuleGroupIdentifier;
 }
 
 interface GroupWithIdentifier extends PromRuleGroupDTO {
-  identifier: RuleGroupIdentifierV2<DataSourceNamespaceIdentifier>;
+  identifier: DataSourceRuleGroupIdentifier;
 }
 
 function useFilteredRulesIteratorProvider() {
@@ -234,6 +220,7 @@ function mapGroupToGroupWithIdentifier(group: PromRuleGroupDTO, ruleSourceName: 
       rulesSource: { name: ruleSourceName, uid: getDatasourceAPIUid(ruleSourceName) },
       namespace: { name: group.file },
       groupName: group.name,
+      groupOrigin: 'datasource',
     },
   };
 }

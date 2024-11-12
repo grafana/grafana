@@ -188,11 +188,27 @@ export interface DataSourceNamespaceIdentifier {
   name: string;
 }
 
-export interface RuleGroupIdentifierV2<T extends GrafanaNamespaceIdentifier | DataSourceNamespaceIdentifier> {
-  rulesSource: RulesSourceIdentifier;
-  namespace: T;
+// export interface RuleGroupIdentifierV2<T extends GrafanaNamespaceIdentifier | DataSourceNamespaceIdentifier> {
+//   rulesSource: RulesSourceIdentifier;
+//   namespace: T;
+//   groupName: string;
+// }
+
+export interface GrafanaRuleGroupIdentifier {
+  rulesSource: { uid: typeof GrafanaRulesSourceSymbol; name: typeof GRAFANA_RULES_SOURCE_NAME };
   groupName: string;
+  namespace: GrafanaNamespaceIdentifier;
+  groupOrigin: 'grafana';
 }
+
+export interface DataSourceRuleGroupIdentifier {
+  rulesSource: { uid: string; name: string };
+  groupName: string;
+  namespace: DataSourceNamespaceIdentifier;
+  groupOrigin: 'datasource';
+}
+
+export type RuleGroupIdentifierV2 = GrafanaRuleGroupIdentifier | DataSourceRuleGroupIdentifier;
 
 export type CombinedRuleWithLocation = CombinedRule & RuleGroupIdentifier;
 

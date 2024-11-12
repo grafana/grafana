@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import { memo, PropsWithChildren, ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,7 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -164,10 +164,11 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
                 }
               >
                 {group.rules.map((rule) => {
-                  const groupIdentifier: RuleGroupIdentifier = {
-                    dataSourceName: ruleSourceName,
+                  const groupIdentifier: DataSourceRuleGroupIdentifier = {
+                    rulesSource: { uid: getDatasourceAPIUid(ruleSourceName), name: ruleSourceName },
+                    namespace: { name: namespace.name },
                     groupName: group.name,
-                    namespaceName: namespace.name,
+                    groupOrigin: 'datasource',
                   };
 
                   return <AlertRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />;
@@ -217,19 +218,19 @@ function LazyPagination({ canMoveForward, canMoveBackward, nextPage, previousPag
 
 interface AlertRuleLoaderProps {
   rule: Rule;
-  groupIdentifier: RuleGroupIdentifier;
+  groupIdentifier: DataSourceRuleGroupIdentifier;
   // rulerEnabled?: boolean;
 }
 
-export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps) {
-  const { dataSourceName, namespaceName, groupName } = groupIdentifier;
+export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps) {
+  const { rulesSource, namespace, groupName } = groupIdentifier;
 
-  const ruleIdentifier = fromRule(dataSourceName, namespaceName, groupName, rule);
+  const ruleIdentifier = fromRule(rulesSource.name, namespace.name, groupName, rule);
   const href = createViewLinkFromIdentifier(ruleIdentifier);
   const originMeta = getRulePluginOrigin(rule);
 
   // @TODO work with context API to propagate rulerConfig and such
-  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: getDatasourceAPIUid(dataSourceName) });
+  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ uid: rulesSource.uid });
 
   // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
   const {
@@ -238,7 +239,7 @@ export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps)
     // error,
   } = useGetRuleGroupForNamespaceQuery(
     {
-      namespace: namespaceName,
+      namespace: namespace.name,
       group: groupName,
       rulerConfig: dataSourceInfo?.rulerConfig!,
     },
@@ -251,9 +252,9 @@ export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps)
     }
 
     return rulerRuleGroup.rules.find((rule) =>
-      equal(fromRulerRule(dataSourceName, namespaceName, groupName, rule), ruleIdentifier)
+      equal(fromRulerRule(rulesSource.name, namespace.name, groupName, rule), ruleIdentifier)
     );
-  }, [dataSourceName, groupName, namespaceName, ruleIdentifier, rulerRuleGroup]);
+  }, [rulesSource, namespace, groupName, ruleIdentifier, rulerRuleGroup]);
 
   // 1. get the rule from the ruler API with "ruleWithLocation"
   // 1.1 skip this if this datasource does not have a ruler
@@ -278,7 +279,7 @@ export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps)
       <AlertRuleListItem
         name={rule.name}
         group={groupName}
-        namespace={namespaceName}
+        namespace={namespace.name}
         href={href}
         summary={rule.annotations?.summary}
         state={rule.state}
@@ -297,19 +298,21 @@ export function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps)
     return (
       <RecordingRuleListItem
         name={rule.name}
+        group={groupName}
+        namespace={namespace.name}
         href={href}
         health={rule.health}
         error={rule.lastError}
         labels={rule.labels}
         isProvisioned={undefined}
-        actions={null}
+        actions={actions}
         origin={originMeta}
       />
     );
   }
 
   return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
-}
+});
 
 function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
   const paramId = encodeURIComponent(stringifyIdentifier(identifier));

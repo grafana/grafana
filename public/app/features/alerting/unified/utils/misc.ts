@@ -16,9 +16,8 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import {
   Alert,
   CombinedRule,
-  DataSourceNamespaceIdentifier,
+  DataSourceRuleGroupIdentifier,
   FilterState,
-  RuleGroupIdentifierV2,
   RuleIdentifier,
   RulesSource,
   SilenceFilterState,
@@ -46,7 +45,7 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
 }
 
 export function createViewLinkV2(
-  groupIdentifier: RuleGroupIdentifierV2<DataSourceNamespaceIdentifier>,
+  groupIdentifier: DataSourceRuleGroupIdentifier,
   rule: PromRuleDTO,
   returnTo?: string
 ): string {

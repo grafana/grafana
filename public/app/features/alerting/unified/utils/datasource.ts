@@ -7,7 +7,7 @@ import {
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { RulesSource } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RulesSource } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -289,13 +289,15 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
-export function getDataSourceUID(rulesSourceIdentifier: RulesSourceIdentifier) {
+export function getDataSourceUID(
+  rulesSourceIdentifier: { rulesSourceName: string } | { uid: string | typeof GrafanaRulesSourceSymbol }
+) {
   if ('uid' in rulesSourceIdentifier) {
     return rulesSourceIdentifier.uid;
   }
 
   if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
+    return GrafanaRulesSourceSymbol;
   }
 
   const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
