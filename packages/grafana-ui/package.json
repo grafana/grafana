@@ -114,7 +114,7 @@
     "uuid": "9.0.1"
   },
   "devDependencies": {
-    "@babel/core": "7.25.9",
+    "@babel/core": "7.26.0",
     "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.3.0",
