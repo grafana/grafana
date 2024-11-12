@@ -18,7 +18,7 @@ export interface AddToExplorationButtonState extends SceneObjectState {
   queries: DataQuery[];
 }
 
-type ExtensionContext = {
+interface ExtensionContext {
   timeRange: TimeRange;
   queries: DataQuery[];
   datasource: DataSourceRef;
@@ -30,15 +30,15 @@ type ExtensionContext = {
   logoPath: string;
   note?: string;
   drillDownLabel?: string;
-};
+}
 
 export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButtonState> {
   constructor(state: Omit<AddToExplorationButtonState, 'disabledLinks' | 'queries'>) {
     super({ ...state, disabledLinks: [], queries: [] });
-    this.addActivationHandler(this.onActivate);
+    this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  private onActivate = () => {
+  private _onActivate = () => {
     const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
 
     this._subs.add(
@@ -50,26 +50,25 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
     this.setState({ dsUid: datasourceUid });
   };
 
-  private getQueries = () => {
+  private readonly getQueries = () => {
     const data = sceneGraph.getData(this);
-    const queryRunner = sceneGraph.findObject(
-      data,
-      (o) => o instanceof SceneQueryRunner
-    ) as unknown as SceneQueryRunner;
-    if (queryRunner) {
+    const queryRunner = sceneGraph.findObject(data, isQueryRunner);
+
+    if (isQueryRunner(queryRunner)) {
       const filter = this.state.frame ? getFilter(this.state.frame) : null;
       const queries = queryRunner.state.queries.map((q) => ({
         ...q,
         expr: sceneGraph.interpolate(queryRunner, q.expr),
         legendFormat: filter?.name ? `{{ ${filter.name} }}` : sceneGraph.interpolate(queryRunner, q.legendFormat),
       }));
+
       if (JSON.stringify(queries) !== JSON.stringify(this.state.queries)) {
         this.setState({ queries });
       }
     }
   };
 
-  private getContext = () => {
+  private readonly getContext = () => {
     const { queries, dsUid, labelName, fieldName } = this.state;
     const timeRange = sceneGraph.getTimeRange(this);
 
@@ -129,3 +128,7 @@ const getFilter = (frame: DataFrame) => {
   const name = Object.keys(filterNameAndValueObj)[0];
   return { name, value: filterNameAndValueObj[name] };
 };
+
+function isQueryRunner(o: unknown): o is SceneQueryRunner {
+  return o instanceof SceneQueryRunner;
+}
