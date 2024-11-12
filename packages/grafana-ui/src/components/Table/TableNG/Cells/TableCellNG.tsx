@@ -12,8 +12,8 @@ import { SparklineCell } from './SparklineCell';
 // }
 
 export function TableCellNG(props: any) {
-  const { field: shallowField, value, theme, timeRange, height, justifyContent } = props;
-  const { config: fieldConfig } = shallowField;
+  const { field, value, theme, timeRange, height, rowIdx, justifyContent } = props;
+  const { config: fieldConfig } = field;
   const { type: cellType } = fieldConfig.custom.cellOptions;
 
   // Get the correct cell type
@@ -21,19 +21,27 @@ export function TableCellNG(props: any) {
   switch (cellType) {
     // case TableCellDisplayMode.
     case TableCellDisplayMode.Sparkline:
-      cell = <SparklineCell value={value} field={shallowField} theme={theme} timeRange={timeRange} height={height} />;
+      cell = (
+        <SparklineCell
+          value={value}
+          field={field}
+          theme={theme}
+          timeRange={timeRange}
+          height={height}
+          rowIdx={rowIdx}
+          justifyContent={justifyContent}
+        />
+      );
       break;
     case TableCellDisplayMode.Gauge:
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
     case TableCellDisplayMode.LcdGauge:
-      cell = <BarGaugeCell value={value} field={shallowField} theme={theme} timeRange={timeRange} height={height} />;
+      cell = <BarGaugeCell value={value} field={field} theme={theme} timeRange={timeRange} height={height} />;
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = (
-        <AutoCell value={value} field={shallowField} theme={theme} height={height} justifyContent={justifyContent} />
-      );
+      cell = <AutoCell value={value} field={field} theme={theme} height={height} justifyContent={justifyContent} />;
   }
 
   return cell;
