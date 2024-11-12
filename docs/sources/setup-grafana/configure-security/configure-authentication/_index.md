@@ -19,21 +19,21 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-| Authentication method                                  | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
-| :----------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
-| [Anonymouse access]({{< relref "./anonymous-auth" >}}) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Auth Proxy]({{< relref "./auth-proxy" >}})            | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
-| [Azure AD OAuth]({{< relref "./azuread" >}})           | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Basic auth]({{< relref "./grafana" >}})               | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
-| [Generic OAuth]({{< relref "./generic-oauth" >}})      | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
-| [GitHub OAuth]({{< relref "./github" >}})              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [GitLab OAuth]({{< relref "./gitlab" >}})              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Google OAuth]({{< relref "./google" >}})              | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
-| [Grafana.com OAuth]({{< relref "./grafana-cloud" >}})  | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
-| [Okta OAuth]({{< relref "./okta" >}})                  | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [SAML]({{< relref "./saml" >}}) (Enterprise only)      | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [LDAP]({{< relref "./ldap" >}})                        | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
-| [JWT Proxy]({{< relref "./jwt" >}})                    | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+| Authentication method                                 | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
+|:------------------------------------------------------| :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
+| [Anonymous access]({{< relref "./anonymous-auth" >}}) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
+| [Auth Proxy]({{< relref "./auth-proxy" >}})           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
+| [Azure AD OAuth]({{< relref "./azuread" >}})          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Basic auth]({{< relref "./grafana" >}})              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
+| [Generic OAuth]({{< relref "./generic-oauth" >}})     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
+| [GitHub OAuth]({{< relref "./github" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [GitLab OAuth]({{< relref "./gitlab" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Google OAuth]({{< relref "./google" >}})             | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
+| [Grafana.com OAuth]({{< relref "./grafana-cloud" >}}) | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           |
+| [Okta OAuth]({{< relref "./okta" >}})                 | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [SAML]({{< relref "./saml" >}}) (Enterprise only)     | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [LDAP]({{< relref "./ldap" >}})                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
+| [JWT Proxy]({{< relref "./jwt" >}})                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
 
 Fields explanation:
 
