@@ -4,11 +4,12 @@ import { useObservable } from 'react-use';
 import { PluginExtension, usePluginContext } from '@grafana/data';
 import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
 
+import * as errors from './errors';
 import { getPluginExtensions } from './getPluginExtensions';
 import { log } from './logs/log';
 import { PluginExtensionRegistries } from './registry/types';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode } from './utils';
-import { isExtensionPointIdValid } from './validators';
+import { isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
   const observableAddedComponentsRegistry = registries.addedComponentsRegistry.asObservable();
@@ -34,19 +35,15 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
       }
 
       if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-        pointLog.warning(
-          `Extension point usePluginExtensions("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
-        );
+        pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
         return {
           isLoading: false,
           extensions: [],
         };
       }
 
-      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext, pointLog)) {
-        pointLog.warning(
-          `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
-        );
+      if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+        pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
         return {
           isLoading: false,
           extensions: [],

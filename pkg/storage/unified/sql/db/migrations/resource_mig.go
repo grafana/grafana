@@ -113,5 +113,13 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Cols: []string{"group", "resource"}, Type: migrator.IndexType,
 	}))
 
+	mg.AddMigration("Add column folder in resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "",
+	}))
+
+	mg.AddMigration("Add column folder in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
+		Name: "folder", Type: migrator.DB_NVarchar, Length: 253, Nullable: false, Default: "",
+	}))
+
 	return marker
 }
