@@ -631,6 +631,9 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
 
+# SQL Expressions
+/pkg/expr/sql/ @grafana/grafana-datasources-core-services
+
 # Cloud middleware
 /grafana-mixin/ @grafana/grafana-backend-services-squad
 
