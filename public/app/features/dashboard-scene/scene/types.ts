@@ -101,6 +101,14 @@ export interface DashboardLayoutItem extends SceneObject {
    * Return layout item options (like repeat, repeat direction, etc for the default DashboardGridItem)
    */
   getOptions?(): OptionsPaneCategoryDescriptor;
+  /**
+   * When going into panel edit
+   **/
+  editingStarted?(): void;
+  /**
+   * When coming out of panel edit
+   */
+  editingCompleted?(withChanges: boolean): void;
 }
 
 export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {

@@ -195,6 +195,18 @@ export class DashboardGridItem
   }
 
   /**
+   * DashboardLayoutItem interface start
+   */
+  public isDashboardLayoutItem: true = true;
+
+  /**
+   * Returns options for panel edit
+   */
+  public getOptions(): OptionsPaneCategoryDescriptor {
+    return getDashboardGridItemOptions(this);
+  }
+
+  /**
    * Logic to prep panel for panel edit
    */
   public editingStarted() {
@@ -222,15 +234,6 @@ export class DashboardGridItem
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }
-  }
-
-  /**
-   * DashboardLayoutItem interface
-   */
-  public isDashboardLayoutItem: true = true;
-
-  public getOptions(): OptionsPaneCategoryDescriptor {
-    return getDashboardGridItemOptions(this);
   }
 
   public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {

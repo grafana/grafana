@@ -267,6 +267,7 @@ describe('PanelEditor', () => {
       // Just adding an extra stateless behavior to verify unlinking does not remvoe it
       const otherBehavior = jest.fn();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [libPanelBehavior, otherBehavior] });
+      const gridItem = new DashboardGridItem({ body: panel });
       const editScene = buildPanelEditScene(panel);
       editScene.onConfirmUnlinkLibraryPanel();
 

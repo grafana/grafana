@@ -6,7 +6,6 @@ import { config, locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
   SceneDataTransformer,
-  SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -22,7 +21,6 @@ import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import {
@@ -57,12 +55,20 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
   private _layoutItemState?: SceneObjectState;
-  private _layoutItem?: DashboardLayoutItem;
+  private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
+
+    const panmel = this.state.panelRef.resolve();
+    const layoutItem = panmel.parent;
+    if (!layoutItem || !isDashboardLayoutItem(layoutItem)) {
+      throw new Error('Panel must have a parent of type DashboardLayoutItem');
+    }
+
+    this._layoutItem = layoutItem;
 
     this.setOriginalState(this.state.panelRef);
     this.addActivationHandler(this._activationHandler.bind(this));
@@ -71,14 +77,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
     const deactivateParents = activateSceneObjectAndParentTree(panel);
-    const layoutElement = panel.parent;
 
     this.waitForPlugin();
 
     return () => {
-      if (layoutElement instanceof DashboardGridItem) {
-        layoutElement.editingCompleted(this.state.isDirty || this._changesHaveBeenMade);
-      }
+      this._layoutItem.editingCompleted?.(this.state.isDirty || this._changesHaveBeenMade);
+
       if (deactivateParents) {
         deactivateParents();
       }
@@ -104,11 +108,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = panelRef.resolve();
 
     this._originalSaveModel = vizPanelToPanel(panel);
-
-    if (panel.parent && isDashboardLayoutItem(panel.parent)) {
-      this._layoutItem = panel.parent;
-      this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
-    }
+    this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
   }
 
   /**
@@ -137,7 +137,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     };
 
     // Subscribe to state changes on the parent (layout item) so we do not miss state changes on the layout item
-    this._subs.add(this._layoutItem!.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
+    this._subs.add(this._layoutItem.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
   }
 
   public getPanel(): VizPanel {
@@ -146,15 +146,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private gotPanelPlugin(plugin: PanelPlugin) {
     const panel = this.getPanel();
-    const layoutElement = panel.parent;
 
     // First time initialization
     if (this.state.isInitializing) {
       this.setOriginalState(this.state.panelRef);
 
-      if (layoutElement instanceof DashboardGridItem) {
-        layoutElement.editingStarted();
-      }
+      this._layoutItem.editingStarted?.();
 
       this._setupChangeDetection();
       this._updateDataPane(plugin);
