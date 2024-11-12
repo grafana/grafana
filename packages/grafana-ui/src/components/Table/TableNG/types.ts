@@ -6,8 +6,8 @@ export interface CellNGProps {
   value: any;
   field: Field;
   theme: GrafanaTheme2;
-  rowIdx?: number;
   justifyContent?: Property.JustifyContent;
+  rowIdx?: number;
 }
 
 export interface BarGaugeCellProps extends CellNGProps {
