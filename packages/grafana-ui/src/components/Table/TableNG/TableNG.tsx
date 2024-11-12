@@ -25,7 +25,7 @@ type TableRow = Record<string, unknown>;
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
-  rowHeight: number;
+  // rowHeight: number;
   field: Field;
 }
 
@@ -159,7 +159,7 @@ export function TableNG(props: TableNGProps) {
         key,
         name: field.name,
         field,
-        rowHeight: rowHeightNumber,
+        // rowHeight: rowHeightNumber,
         cellClass: (row) => {
           // eslint-ignore-next-line
           // const value = row[key];
