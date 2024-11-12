@@ -8,7 +8,7 @@ import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
-import { Select, AsyncSelect } from '../Select/Select';
+import { AsyncSelect, Select } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -42,6 +42,9 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: '1', value: 1 },
       { label: '2', value: 2 },
       { label: '3', value: 3 },
+      { label: '4', value: 4 },
+      { label: '5', value: 5 },
+      { label: '6', value: 6 },
     ],
     value: 'banana',
   },
@@ -52,6 +55,7 @@ const meta: Meta<PropsAndCustomArgs> = {
 
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
+
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
@@ -119,6 +123,7 @@ const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
     <div style={{ border: '1px solid ' + theme.colors.border.weak, padding: 16 }}>
       <Field label="Combobox with default size">
         <Combobox
+          {...args}
           id="combobox-default-size"
           value={comboboxValue}
           options={args.options}
@@ -144,7 +149,9 @@ const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
       <Divider />
 
       <Field label="Combobox with explicit size (25)">
+        {/*@ts-ignore minWidth and maxWidth has never, which is incompatible with args. It lacks the context that width=25 on the component*/}
         <Combobox
+          {...args}
           id="combobox-explicit-size"
           width={25}
           value={comboboxValue}
@@ -173,6 +180,7 @@ const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
 
       <Field label="Combobox with auto width, minWidth 15">
         <Combobox
+          {...args}
           id="combobox-auto-size"
           width="auto"
           minWidth={15}
@@ -200,6 +208,7 @@ const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
 
       <Field label="Combobox with auto width, minWidth 15, empty value">
         <Combobox
+          {...args}
           id="combobox-auto-size-empty"
           width="auto"
           minWidth={15}
@@ -251,6 +260,7 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const loadOptionsAction = action('loadOptions called');
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
   // Combobox
   const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
@@ -260,7 +270,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
   // This simulates a kind of search API call
   const loadOptionsWithLabels = useCallback((inputValue: string) => {
-    console.info(`Load options called with value '${inputValue}' `);
+    loadOptionsAction(inputValue);
     return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
   }, []);
 
@@ -285,6 +295,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
       >
         <Combobox
+          {...args}
           id="test-combobox-one"
           placeholder="Select an option"
           options={loadOptionsWithLabels}
@@ -302,6 +313,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="Or without labels, where consumer can just pass in a raw scalar value Value"
       >
         <Combobox
+          {...args}
           id="test-combobox-two"
           placeholder="Select an option"
           options={loadOptionsOnlyValues}
@@ -326,6 +338,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           }}
         />
       </Field>
+
       <Field label="Compared to AsyncSelect">
         <AsyncSelect
           id="test-async-select"
@@ -336,6 +349,20 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           onChange={(val) => {
             action('onChange')(val);
             setAsyncSelectValue(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          {...args}
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
           }}
         />
       </Field>
@@ -363,9 +390,9 @@ const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
           flex: 1,
         }}
       >
-        <Combobox placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
-        <Combobox placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
-        <Combobox placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
       </div>
     );
   }
