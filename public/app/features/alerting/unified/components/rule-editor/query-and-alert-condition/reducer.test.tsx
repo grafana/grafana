@@ -14,12 +14,11 @@ import { SimpleConditionIdentifier } from './SimpleCondition';
 import {
   addNewDataQuery,
   addNewExpression,
-  addReducerAtFirstPosition,
   duplicateQuery,
+  optimizeReducer,
   queriesAndExpressionsReducer,
   QueriesAndExpressionsState,
   removeExpression,
-  removeFirstReducer,
   rewireExpressions,
   setDataQueries,
   updateExpression,
@@ -391,7 +390,10 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery, reduceExpression, thresholdExpression],
     };
 
-    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    const newState = queriesAndExpressionsReducer(
+      initialState,
+      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [reduceExpression, thresholdExpression] })
+    );
     expect(newState).toMatchSnapshot();
   });
 
@@ -400,7 +402,10 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery, thresholdExpression, reduceExpression],
     };
 
-    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    const newState = queriesAndExpressionsReducer(
+      initialState,
+      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression, reduceExpression] })
+    );
     expect(newState).toEqual(initialState);
   });
 
@@ -409,16 +414,35 @@ describe('Query and expressions reducer', () => {
       queries: [alertQuery, alertQuery, reduceExpression, thresholdExpression],
     };
 
-    const newState = queriesAndExpressionsReducer(initialState, removeFirstReducer());
+    const newState = queriesAndExpressionsReducer(
+      initialState,
+      optimizeReducer({
+        updatedQueries: [alertQuery, alertQuery],
+        expressionQueries: [reduceExpression, thresholdExpression],
+      })
+    );
     expect(newState).toEqual(initialState);
   });
 
-  it('should add reduce expression if there is no reduce expression', () => {
+  it('should add reduce expression if there is no reduce expression and the query is not instant', () => {
+    const alertQuery: AlertQuery = {
+      refId: 'A',
+      queryType: 'query',
+      datasourceUid: 'abc123',
+      model: {
+        refId: 'A',
+        instant: false,
+      },
+    };
+
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, thresholdExpression],
     };
 
-    const newState = queriesAndExpressionsReducer(initialState, addReducerAtFirstPosition());
+    const newState = queriesAndExpressionsReducer(
+      initialState,
+      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
+    );
     expect(newState).toMatchSnapshot();
   });
 });
