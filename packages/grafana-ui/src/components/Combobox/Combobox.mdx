@@ -1,0 +1,38 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+
+import { Combobox } from './Combobox';
+
+<Meta title="MDX|Combobox" component={Combobox} />
+
+## Usage
+
+**Do**
+
+- Use in inline query editors
+- Use when you require async calls from a select input
+
+**Don't**
+
+- Use the async functionality, when all items are only loaded on the initial load
+- Use when fewer than 4 items are needed, as a `RadioButtonGroup` may be more suitable (not for inline use cases)
+
+## Sizing
+
+The recommended way to set the width is by sizing the container element. This is so it may reflect a similar size as other inputs in the context.
+
+If that is not possible, the width can be set directly on the component, by setting a number, which is a multiple of `8px`.
+
+For inline usage, such as in query editors, it may be useful to size the input based on the content. Set `width="auto"` to achieve this. In this case, it is also recommended to set `maxWidth` and `minWidth`.
+
+## Async Usage
+
+The `options` prop can accept and async function:
+
+- When the menu opens, the `options` function is called with `''`, to load all options.
+- When the user types, the `options` function is called with the current input value.
+
+Note: The calls are debounced. Old calls are invalidated when a new call is made.
+
+## Props
+
+<ArgTypes of={Combobox} />
