@@ -134,7 +134,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	var err error
 
 	// suggestions is a resource endpoint that will return label and label value suggestions based
-	// on queries and the existing scope. But moving this to the backend we can use the logql parser to
+	// on queries and the existing scope. By moving this to the backend we can use the logql parser to
 	// rewrite queries safely.
 	if strings.EqualFold(req.Path, "suggestions") {
 		rawLokiResponse, err = GetSuggestions(ctx, api, req)
