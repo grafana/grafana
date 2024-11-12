@@ -1609,8 +1609,19 @@ func TestBuildTimeSettings(t *testing.T) {
 		},
 		"timezone": "America/Argentina/Mendoza",
 	})
-
 	defaultFromMs, defaultToMs := internal.GetTimeRangeFromDashboard(t, defaultDashboardData)
+
+	dashboardDataWithPanelRelativeTime, err := simplejson.NewJson([]byte(`
+	{
+		"panels": [
+			{"id": 1, "timeFrom": "now-1d/d"}
+		],
+		"time": {
+			"from": "now-6h", "to": "now"
+		},
+		"timezone": "Europe/Madrid"
+	}`))
+	require.NoError(t, err)
 
 	fakeTimezone, _ := time.LoadLocation("Europe/Madrid")
 	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
@@ -1638,6 +1649,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		dashboard *dashboards.Dashboard
 		pubdash   *PublicDashboard
 		reqDTO    PublicDashboardQueryDTO
+		panelID   int64
 		want      TimeSettings
 	}{
 		{
@@ -1745,11 +1757,43 @@ func TestBuildTimeSettings(t *testing.T) {
 				To:   defaultToMs,
 			},
 		},
+		{
+			name:      "should use panel relative time when time selection is disabled",
+			dashboard: &dashboards.Dashboard{Data: dashboardDataWithPanelRelativeTime},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			panelID: 1,
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayMadrid.UnixMilli(), 10),
+				To:   strconv.FormatInt(fakeNow.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should use selected values if time selection is enabled for panels with relative time set",
+			dashboard: &dashboards.Dashboard{Data: dashboardDataWithPanelRelativeTime},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			panelID: 1,
+			want: TimeSettings{
+				From: selectionFromMs,
+				To:   selectionToMs,
+			},
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			assert.Equal(t, test.want, buildTimeSettings(test.dashboard, test.reqDTO, test.pubdash))
+			assert.Equal(t, test.want, buildTimeSettings(test.dashboard, test.reqDTO, test.pubdash, test.panelID))
 		})
 	}
 }
