@@ -6,7 +6,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Input, LoadingBar, RadioButtonGroup, Space, useStyles2 } from '@grafana/ui';
+import { Alert, Field, Icon, Input, LoadingBar, RadioButtonGroup, Space, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import {
   skipToken,
@@ -19,12 +19,11 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
 
-import { NewFolderForm } from '../../../features/browse-dashboards/components/NewFolderForm';
-
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
+import { NewFolderForm } from '../../../features/browse-dashboards/components/NewFolderForm';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -366,15 +365,12 @@ export function NestedFolderPicker({
 
   const pickNewFolder = () => {
     return (
-      <>
-        <NewFolderForm
-          onConfirm={onCreateNewFolder}
-          onCancel={() => {
-            // setIsCreatingFolder(false);
-          }}
-          preventDefault={true}
-        />
-      </>
+      <NewFolderForm
+        onConfirm={onCreateNewFolder}
+        onCancel={() => {
+          setChooseExistingFolder(true);
+        }}
+      />
     );
   };
 
