@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../services';
 
-import { getItem, setItem } from './userStorage';
+import { UserStorage } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -40,22 +40,25 @@ describe('userStorage', () => {
     config.bootData = originalConfig.bootData;
   });
 
-  describe('getItem', () => {
+  describe('UserStorageAPI.getItem', () => {
     it('use localStorage if the feature flag is disabled', async () => {
       config.featureToggles.userStorageAPI = false;
-      getItem('service', 'key');
+      const storage = new UserStorage('service');
+      storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      getItem('service', 'key');
+      const storage = new UserStorage('service');
+      storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user storage is not found', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      await getItem('service', 'key');
+      const storage = new UserStorage('service');
+      await storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
 
@@ -63,7 +66,8 @@ describe('userStorage', () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const value = await getItem('service', 'key');
+      const storage = new UserStorage('service');
+      const value = await storage.getItem('key');
       expect(value).toBe('value');
     });
   });
@@ -71,19 +75,22 @@ describe('userStorage', () => {
   describe('setItem', () => {
     it('use localStorage if the feature flag is disabled', async () => {
       config.featureToggles.userStorageAPI = false;
-      setItem('service', 'key', 'value');
+      const storage = new UserStorage('service');
+      storage.setItem('key', 'value');
       expect(localStorage.setItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      setItem('service', 'key', 'value');
+      const storage = new UserStorage('service');
+      storage.setItem('key', 'value');
       expect(localStorage.setItem).toHaveBeenCalled();
     });
 
     it('creates a new user storage if it does not exist', async () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
-      await setItem('service', 'key', 'value');
+      const storage = new UserStorage('service');
+      await storage.setItem('key', 'value');
       expect(request).toHaveBeenCalledWith({
         url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
         method: 'GET',
@@ -110,7 +117,8 @@ describe('userStorage', () => {
           data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
         } as FetchResponse)
       );
-      await setItem('service', 'key', 'new-value');
+      const storage = new UserStorage('service');
+      await storage.setItem('key', 'new-value');
       expect(request).toHaveBeenCalledWith({
         url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
         method: 'GET',

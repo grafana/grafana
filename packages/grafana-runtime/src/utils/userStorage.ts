@@ -62,60 +62,71 @@ async function getUserStorage(resourceName: string): Promise<{ spec: UserStorage
 }
 
 /**
- * Retrieves an item from the backend user storage or local storage if not enabled.
- * @param service - The name of the service, like the plugin ID or the internal service name.
- * @param key - The key of the item to retrieve.
- * @returns A promise that resolves to the item value or null if not found.
+ * A class for interacting with the backend user storage.
  */
-export async function getItem(service: string, key: string): Promise<string | null> {
-  const resourceName = getResourceName(service);
-  if (!canUseUserStorage()) {
-    // Fallback to localStorage
-    return localStorage.getItem(resourceName);
-  }
-  const userStorage = await getUserStorage(resourceName);
-  if (!userStorage) {
-    // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
-    return localStorage.getItem(resourceName);
-  }
-  return userStorage.spec.data[key];
-}
+export class UserStorage {
+  service: string;
 
-/**
- * Sets an item in the backend user storage or local storage if not enabled.
- * @param service - The name of the service, like the plugin ID or the internal service name.
- * @param key - The key of the item to set.
- * @param value - The value of the item to set.
- * @returns A promise that resolves when the item is set.
- */
-export async function setItem(service: string, key: string, value: string): Promise<void> {
-  const resourceName = getResourceName(service);
-  if (!canUseUserStorage()) {
-    // Fallback to localStorage
-    localStorage.setItem(key, value);
-    return;
+  constructor(service: string) {
+    this.service = service;
+    console.log('stored service ', service);
   }
 
-  const userStorage = await getUserStorage(resourceName);
-  if (!userStorage) {
-    // No user storage found, create a new one
-    const userStorageData = { [key]: value };
+  /**
+   * Retrieves an item from the backend user storage or local storage if not enabled.
+   * @param key - The key of the item to retrieve.
+   * @returns A promise that resolves to the item value or null if not found.
+   */
+  async getItem(key: string): Promise<string | null> {
+    console.log('this service? ', this.service);
+    const resourceName = getResourceName(this.service);
+    if (!canUseUserStorage()) {
+      // Fallback to localStorage
+      return localStorage.getItem(resourceName);
+    }
+    const userStorage = await getUserStorage(resourceName);
+    if (!userStorage) {
+      // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
+      return localStorage.getItem(resourceName);
+    }
+    return userStorage.spec.data[key];
+  }
+
+  /**
+   * Sets an item in the backend user storage or local storage if not enabled.
+   * @param key - The key of the item to set.
+   * @param value - The value of the item to set.
+   * @returns A promise that resolves when the item is set.
+   */
+  async setItem(key: string, value: string): Promise<void> {
+    const resourceName = getResourceName(this.service);
+    if (!canUseUserStorage()) {
+      // Fallback to localStorage
+      localStorage.setItem(key, value);
+      return;
+    }
+
+    const userStorage = await getUserStorage(resourceName);
+    if (!userStorage) {
+      // No user storage found, create a new one
+      const userStorageData = { [key]: value };
+      await apiRequest<UserStorageSpec>({
+        url: `/`,
+        method: 'POST',
+        body: {
+          metadata: { name: resourceName, labels: { user: getUserUID(), service: this.service } },
+          spec: { data: userStorageData },
+        },
+      });
+      return;
+    }
+
+    // Update existing user storage
+    userStorage.spec.data[key] = value;
     await apiRequest<UserStorageSpec>({
-      url: `/`,
-      method: 'POST',
-      body: {
-        metadata: { name: resourceName, labels: { user: getUserUID(), service } },
-        spec: { data: userStorageData },
-      },
+      url: `/${resourceName}`,
+      method: 'PUT',
+      body: userStorage,
     });
-    return;
   }
-
-  // Update existing user storage
-  userStorage.spec.data[key] = value;
-  await apiRequest<UserStorageSpec>({
-    url: `/${resourceName}`,
-    method: 'PUT',
-    body: userStorage,
-  });
 }
