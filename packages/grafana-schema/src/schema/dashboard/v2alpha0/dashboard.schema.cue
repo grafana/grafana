@@ -1,3 +1,5 @@
+package dashboard
+
 DashboardV2: {
   kind: "Dashboard"
   spec: DashboardSpec
@@ -9,14 +11,16 @@ DashboardSpec: {
   id?: int64
 
   // Title of dashboard.
-  title?: string
+  title: string
 
   // Description of dashboard.
   description?: string
 
   // Configuration of dashboard cursor sync behavior.
-  // Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
-  cursorSync?: DashboardCursorSync
+  // "Off" for no shared crosshair or tooltip (default).
+  // "Crosshair" for shared crosshair.
+  // "Tooltip" for shared crosshair AND shared tooltip.
+  cursorSync: DashboardCursorSync
 
   // When set to true, the dashboard will redraw panels at an interval matching the pixel width.
   // This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -38,7 +42,7 @@ DashboardSpec: {
   timeSettings: TimeSettingsSpec
 
   // Configured template variables.
-  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupVariableKind | AdhocVariableKind]
+  variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind]
 
   elements: [ElementReferenceKind.spec.name]: PanelKind // |* more element types in the future
 
@@ -61,11 +65,10 @@ AnnotationPanelFilter: {
   ids: [...uint8]
 }
 
-// 0 for no shared crosshair or tooltip (default).
-// 1 for shared crosshair.
-// 2 for shared crosshair AND shared tooltip.
-// memberNames="Off|Crosshair|Tooltip"
-DashboardCursorSync: *0 | 1 | 2 @cog(kind="enum",memberNames="Off|Crosshair|Tooltip")
+// "Off" for no shared crosshair or tooltip (default).
+// "Crosshair" for shared crosshair.
+// "Tooltip" for shared crosshair AND shared tooltip.
+DashboardCursorSync: "Off" | "Crosshair" | "Tooltip"
 
 // Links with references to other dashboards or external resources
 DashboardLink: {
@@ -73,7 +76,7 @@ DashboardLink: {
   title: string
   // Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
   // FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
-  type: DashboardLinkType | *"link"
+  type: DashboardLinkType
   // Icon name to be displayed with the link
   icon: string
   // Tooltip to display when the user hovers their mouse over it
@@ -317,7 +320,7 @@ ValueMappingResult: {
 // `continuous-purples`: Continuous Purple palette mode
 // `shades`: Shades of a single color. Specify a single color, useful in an override rule.
 // `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
-FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades" @cuetsy(kind="enum",memberNames="Thresholds|PaletteClassic|PaletteClassicByName|ContinuousGrYlRd|ContinuousRdYlGr|ContinuousBlYlRd|ContinuousYlRd|ContinuousBlPu|ContinuousYlBl|ContinuousBlues|ContinuousReds|ContinuousGreens|ContinuousPurples|Fixed|Shades")
+FieldColorModeId: "thresholds" | "palette-classic" | "palette-classic-by-name" | "continuous-GrYlRd" | "continuous-RdYlGr" | "continuous-BlYlRd" | "continuous-YlRd" | "continuous-BlPu" | "continuous-YlBl" | "continuous-blues" | "continuous-reds" | "continuous-greens" | "continuous-purples" | "fixed" | "shades"
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 FieldColorSeriesByMode: "min" | "max" | "last"
@@ -350,7 +353,7 @@ VizConfigSpec: {
 }
 
 VizConfigKind: {
-  kind: string
+  kind: "VizConfig"
   spec: VizConfigSpec
 }
 
@@ -383,7 +386,7 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-  kind: string
+  kind: "DataQuery"
   spec: [string]: _
 }
 
@@ -401,7 +404,7 @@ PanelQueryKind: {
 }
 
 TransformationKind: {
-  kind: string
+  kind: "Transformation"
   spec: DataTransformerConfig
 }
 
@@ -422,10 +425,10 @@ TimeSettingsSpec: {
   // Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
   timezone?: string | *"browser"
   // Start time range for dashboard.
-  // Accepted values are relative time strings like 'now-6h' or absolute time strings like '2020-07-10T08:00:00.000Z'.
+  // Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
   from: string | *"now-6h"
   // End time range for dashboard.
-  // Accepted values are relative time strings like 'now-6h' or absolute time strings like '2020-07-10T08:00:00.000Z'.
+  // Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
   to: string | *"now"
   // Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
   autoRefresh: string // v1: refresh
@@ -534,32 +537,31 @@ VariableCustomFormatterFn: {
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" @cog(kind="type")
+			"system" | "snapshot" 
 
 // Sort variable options
 // Accepted values are:
-// `0`: No sorting
-// `1`: Alphabetical ASC
-// `2`: Alphabetical DESC
-// `3`: Numerical ASC
-// `4`: Numerical DESC
-// `5`: Alphabetical Case Insensitive ASC
-// `6`: Alphabetical Case Insensitive DESC
-// `7`: Natural ASC
-// `8`: Natural DESC
+// `disabled`: No sorting
+// `alphabeticalAsc`: Alphabetical ASC
+// `alphabeticalDesc`: Alphabetical DESC
+// `numericalAsc`: Numerical ASC
+// `numericalDesc`: Numerical DESC
+// `alphabeticalCaseInsensitiveAsc`: Alphabetical Case Insensitive ASC
+// `alphabeticalCaseInsensitiveDesc`: Alphabetical Case Insensitive DESC
+// `naturalAsc`: Natural ASC
+// `naturalDesc`: Natural DESC
 // VariableSort enum with default value
-// FIXME: I can't mark 0 as default
-VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 @cog(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc|naturalAsc|naturalDesc")
+VariableSort: "disabled" | "alphabeticalAsc" | "alphabeticalDesc" | "numericalAsc" | "numericalDesc" | "alphabeticalCaseInsensitiveAsc" | "alphabeticalCaseInsensitiveDesc" | "naturalAsc" | "naturalDesc"
 
 // Options to config when to refresh a variable
-// `0`: Never refresh the variable
-// `1`: Queries the data source every time the dashboard loads.
-// `2`: Queries the data source when the dashboard time range changes.
-VariableRefresh: 0 | 1 | 2 @cog(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
+// `never`: Never refresh the variable
+// `onDashboardLoad`: Queries the data source every time the dashboard loads.
+// `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
+VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
-// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
-VariableHide: 0 | 1 | 2 @cog(kind="enum",memberNames="dontHide|hideLabel|hideVariable")
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
+VariableHide: "dontHide" | "hideLabel" | "hideVariable"
 
 
 // Variable value option
@@ -585,7 +587,6 @@ QueryVariableSpec: {
   datasource: DataSourceRef | *{}
   query: string | DataQueryKind | *""
   regex: string | *""
-  // FIXME: I can't set 0 as default
   sort: VariableSort 
   definition?: string
   options: [...VariableValueOption] | *[]
@@ -597,7 +598,7 @@ QueryVariableSpec: {
 
 // Query variable kind
 QueryVariableKind: {
-  kind: "Query"
+  kind: "QueryVariable"
   spec: QueryVariableSpec
 }
 
@@ -613,7 +614,7 @@ TextVariableSpec: {
 
 // Text variable kind
 TextVariableKind: {
-  kind: "Text"
+  kind: "TextVariable"
   spec: TextVariableSpec
 }
 
@@ -629,7 +630,7 @@ ConstantVariableSpec: {
 
 // Constant variable kind
 ConstantVariableKind: {
-  kind: "Constant"
+  kind: "ConstantVariable"
   spec: ConstantVariableSpec
 }
 
@@ -657,7 +658,7 @@ DatasourceVariableSpec: {
 
 // Datasource variable kind
 DatasourceVariableKind: {
-  kind: "Datasource"
+  kind: "DatasourceVariable"
   spec: DatasourceVariableSpec
 }
 
@@ -673,7 +674,6 @@ IntervalVariableSpec: {
   autoEnabled: bool | *false
   autoMinInterval: string | *""
   autoStepCount: int | *0
-  // FIXME: I can't set OnTimeRangeChanged as default
   refresh: VariableRefresh 
   label?: string
   hide: bool | *false
@@ -683,7 +683,7 @@ IntervalVariableSpec: {
 
 // Interval variable kind
 IntervalVariableKind: {
-  kind: "Interval"
+  kind: "IntervalVariable"
   spec: IntervalVariableSpec
 }
 
@@ -709,12 +709,12 @@ CustomVariableSpec: {
 
 // Custom variable kind
 CustomVariableKind: {
-  kind: "Custom"
+  kind: "CustomVariable"
   spec: CustomVariableSpec
 }
 
-// Group variable specification
-GroupVariableSpec: {
+// GroupBy variable specification
+GroupByVariableSpec: {
   name: string | *""
   value: string | *""
   datasource: DataSourceRef | *{}
@@ -731,9 +731,9 @@ GroupVariableSpec: {
 }
 
 // Group variable kind
-GroupVariableKind: {
-  kind: "GroupBy"
-  spec: GroupVariableSpec
+GroupByVariableKind: {
+  kind: "GroupByVariable"
+  spec: GroupByVariableSpec
 }
 
 // Adhoc variable specification
@@ -772,6 +772,6 @@ AdHocFilterWithLabels: {
 
 // Adhoc variable kind
 AdhocVariableKind: {
-  kind: "Adhoc"
+  kind: "AdhocVariable"
   spec: AdhocVariableSpec
 }

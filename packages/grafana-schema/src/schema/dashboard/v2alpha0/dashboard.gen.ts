@@ -15,12 +15,14 @@ export interface DashboardSpec {
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
 	id?: number;
 	// Title of dashboard.
-	title?: string;
+	title: string;
 	// Description of dashboard.
 	description?: string;
 	// Configuration of dashboard cursor sync behavior.
-	// Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
-	cursorSync?: DashboardCursorSync;
+	// "Off" for no shared crosshair or tooltip (default).
+	// "Crosshair" for shared crosshair.
+	// "Tooltip" for shared crosshair AND shared tooltip.
+	cursorSync: DashboardCursorSync;
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data.
@@ -35,7 +37,7 @@ export interface DashboardSpec {
 	tags?: string[];
 	timeSettings: TimeSettingsSpec;
 	// Configured template variables.
-	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupVariableKind | AdhocVariableKind)[];
+	variables: (QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind)[];
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
@@ -45,6 +47,7 @@ export interface DashboardSpec {
 }
 
 export const defaultDashboardSpec = (): DashboardSpec => ({
+	title: "",
 	cursorSync: DashboardCursorSync.Off,
 	preload: false,
 	editable: true,
@@ -68,14 +71,13 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 	ids: [],
 });
 
-// 0 for no shared crosshair or tooltip (default).
-// 1 for shared crosshair.
-// 2 for shared crosshair AND shared tooltip.
-// memberNames="Off|Crosshair|Tooltip"
+// "Off" for no shared crosshair or tooltip (default).
+// "Crosshair" for shared crosshair.
+// "Tooltip" for shared crosshair AND shared tooltip.
 export enum DashboardCursorSync {
-	Off = 0,
-	Crosshair = 1,
-	Tooltip = 2,
+	Off = "Off",
+	Crosshair = "Crosshair",
+	Tooltip = "Tooltip",
 }
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => (DashboardCursorSync.Off);
@@ -86,7 +88,7 @@ export interface DashboardLink {
 	title: string;
 	// Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 	// FIXME: The type is generated as `type: DashboardLinkType | dashboardLinkType.Link;` but it should be `type: DashboardLinkType`
-	type: string;
+	type: DashboardLinkType;
 	// Icon name to be displayed with the link
 	icon: string;
 	// Tooltip to display when the user hovers their mouse over it
@@ -107,7 +109,7 @@ export interface DashboardLink {
 
 export const defaultDashboardLink = (): DashboardLink => ({
 	title: "",
-	type: "link",
+	type: DashboardLinkType.Link,
 	icon: "",
 	tooltip: "",
 	tags: [],
@@ -495,12 +497,12 @@ export const defaultVizConfigSpec = (): VizConfigSpec => ({
 });
 
 export interface VizConfigKind {
-	kind: string;
+	kind: "VizConfig";
 	spec: VizConfigSpec;
 }
 
 export const defaultVizConfigKind = (): VizConfigKind => ({
-	kind: "",
+	kind: "VizConfig",
 	spec: defaultVizConfigSpec(),
 });
 
@@ -550,12 +552,12 @@ export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
 });
 
 export interface DataQueryKind {
-	kind: string;
+	kind: "DataQuery";
 	spec: Record<string, any>;
 }
 
 export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "",
+	kind: "DataQuery",
 	spec: {},
 });
 
@@ -584,12 +586,12 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 });
 
 export interface TransformationKind {
-	kind: string;
+	kind: "Transformation";
 	spec: DataTransformerConfig;
 }
 
 export const defaultTransformationKind = (): TransformationKind => ({
-	kind: "",
+	kind: "Transformation",
 	spec: defaultDataTransformerConfig(),
 });
 
@@ -621,10 +623,10 @@ export interface TimeSettingsSpec {
 	// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 	timezone?: string;
 	// Start time range for dashboard.
-	// Accepted values are relative time strings like 'now-6h' or absolute time strings like '2020-07-10T08:00:00.000Z'.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
 	from: string;
 	// End time range for dashboard.
-	// Accepted values are relative time strings like 'now-6h' or absolute time strings like '2020-07-10T08:00:00.000Z'.
+	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
 	to: string;
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	// v1: refresh
@@ -853,49 +855,48 @@ export const defaultVariableType = (): VariableType => (VariableType.Query);
 
 // Sort variable options
 // Accepted values are:
-// `0`: No sorting
-// `1`: Alphabetical ASC
-// `2`: Alphabetical DESC
-// `3`: Numerical ASC
-// `4`: Numerical DESC
-// `5`: Alphabetical Case Insensitive ASC
-// `6`: Alphabetical Case Insensitive DESC
-// `7`: Natural ASC
-// `8`: Natural DESC
+// `disabled`: No sorting
+// `alphabeticalAsc`: Alphabetical ASC
+// `alphabeticalDesc`: Alphabetical DESC
+// `numericalAsc`: Numerical ASC
+// `numericalDesc`: Numerical DESC
+// `alphabeticalCaseInsensitiveAsc`: Alphabetical Case Insensitive ASC
+// `alphabeticalCaseInsensitiveDesc`: Alphabetical Case Insensitive DESC
+// `naturalAsc`: Natural ASC
+// `naturalDesc`: Natural DESC
 // VariableSort enum with default value
-// FIXME: I can't mark 0 as default
 export enum VariableSort {
-	Disabled = 0,
-	AlphabeticalAsc = 1,
-	AlphabeticalDesc = 2,
-	NumericalAsc = 3,
-	NumericalDesc = 4,
-	AlphabeticalCaseInsensitiveAsc = 5,
-	AlphabeticalCaseInsensitiveDesc = 6,
-	NaturalAsc = 7,
-	NaturalDesc = 8,
+	Disabled = "disabled",
+	AlphabeticalAsc = "alphabeticalAsc",
+	AlphabeticalDesc = "alphabeticalDesc",
+	NumericalAsc = "numericalAsc",
+	NumericalDesc = "numericalDesc",
+	AlphabeticalCaseInsensitiveAsc = "alphabeticalCaseInsensitiveAsc",
+	AlphabeticalCaseInsensitiveDesc = "alphabeticalCaseInsensitiveDesc",
+	NaturalAsc = "naturalAsc",
+	NaturalDesc = "naturalDesc",
 }
 
 export const defaultVariableSort = (): VariableSort => (VariableSort.Disabled);
 
 // Options to config when to refresh a variable
-// `0`: Never refresh the variable
-// `1`: Queries the data source every time the dashboard loads.
-// `2`: Queries the data source when the dashboard time range changes.
+// `never`: Never refresh the variable
+// `onDashboardLoad`: Queries the data source every time the dashboard loads.
+// `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
 export enum VariableRefresh {
-	Never = 0,
-	OnDashboardLoad = 1,
-	OnTimeRangeChanged = 2,
+	Never = "never",
+	OnDashboardLoad = "onDashboardLoad",
+	OnTimeRangeChanged = "onTimeRangeChanged",
 }
 
 export const defaultVariableRefresh = (): VariableRefresh => (VariableRefresh.Never);
 
 // Determine if the variable shows on dashboard
-// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+// Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 export enum VariableHide {
-	DontHide = 0,
-	HideLabel = 1,
-	HideVariable = 2,
+	DontHide = "dontHide",
+	HideLabel = "hideLabel",
+	HideVariable = "hideVariable",
 }
 
 export const defaultVariableHide = (): VariableHide => (VariableHide.DontHide);
@@ -925,7 +926,6 @@ export interface QueryVariableSpec {
 	datasource: DataSourceRef;
 	query: string | DataQueryKind;
 	regex: string;
-	// FIXME: I can't set 0 as default
 	sort: VariableSort;
 	definition?: string;
 	options: VariableValueOption[];
@@ -953,22 +953,11 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 
 // Query variable kind
 export interface QueryVariableKind {
-	kind: "Query" | "QueryVariable";
+	kind: "QueryVariable";
 	spec: QueryVariableSpec;
 }
 
 export const defaultQueryVariableKind = (): QueryVariableKind => ({
-	kind: "Query",
-	spec: defaultQueryVariableSpec(),
-});
-
-// Default query variable kind
-export interface defaultQueryVariableKind {
-	kind: "Query" | "QueryVariable";
-	spec: QueryVariableSpec;
-}
-
-export const defaultDefaultQueryVariableKind = (): defaultQueryVariableKind => ({
 	kind: "QueryVariable",
 	spec: defaultQueryVariableSpec(),
 });
@@ -992,22 +981,11 @@ export const defaultTextVariableSpec = (): TextVariableSpec => ({
 
 // Text variable kind
 export interface TextVariableKind {
-	kind: "Text" | "TextVariable";
+	kind: "TextVariable";
 	spec: TextVariableSpec;
 }
 
 export const defaultTextVariableKind = (): TextVariableKind => ({
-	kind: "Text",
-	spec: defaultTextVariableSpec(),
-});
-
-// Default text variable kind
-export interface defaultTextVariableKind {
-	kind: "Text" | "TextVariable";
-	spec: TextVariableSpec;
-}
-
-export const defaultDefaultTextVariableKind = (): defaultTextVariableKind => ({
 	kind: "TextVariable",
 	spec: defaultTextVariableSpec(),
 });
@@ -1031,12 +1009,12 @@ export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
 
 // Constant variable kind
 export interface ConstantVariableKind {
-	kind: "Constant";
+	kind: "ConstantVariable";
 	spec: ConstantVariableSpec;
 }
 
 export const defaultConstantVariableKind = (): ConstantVariableKind => ({
-	kind: "Constant",
+	kind: "ConstantVariable",
 	spec: defaultConstantVariableSpec(),
 });
 
@@ -1076,12 +1054,12 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 
 // Datasource variable kind
 export interface DatasourceVariableKind {
-	kind: "Datasource";
+	kind: "DatasourceVariable";
 	spec: DatasourceVariableSpec;
 }
 
 export const defaultDatasourceVariableKind = (): DatasourceVariableKind => ({
-	kind: "Datasource",
+	kind: "DatasourceVariable",
 	spec: defaultDatasourceVariableSpec(),
 });
 
@@ -1094,7 +1072,6 @@ export interface IntervalVariableSpec {
 	autoEnabled: boolean;
 	autoMinInterval: string;
 	autoStepCount: number;
-	// FIXME: I can't set OnTimeRangeChanged as default
 	refresh: VariableRefresh;
 	label?: string;
 	hide: boolean;
@@ -1117,12 +1094,12 @@ export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 
 // Interval variable kind
 export interface IntervalVariableKind {
-	kind: "Interval";
+	kind: "IntervalVariable";
 	spec: IntervalVariableSpec;
 }
 
 export const defaultIntervalVariableKind = (): IntervalVariableKind => ({
-	kind: "Interval",
+	kind: "IntervalVariable",
 	spec: defaultIntervalVariableSpec(),
 });
 
@@ -1158,17 +1135,17 @@ export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 
 // Custom variable kind
 export interface CustomVariableKind {
-	kind: "Custom";
+	kind: "CustomVariable";
 	spec: CustomVariableSpec;
 }
 
 export const defaultCustomVariableKind = (): CustomVariableKind => ({
-	kind: "Custom",
+	kind: "CustomVariable",
 	spec: defaultCustomVariableSpec(),
 });
 
-// Group variable specification
-export interface GroupVariableSpec {
+// GroupBy variable specification
+export interface GroupByVariableSpec {
 	name: string;
 	value: string;
 	datasource: DataSourceRef;
@@ -1184,7 +1161,7 @@ export interface GroupVariableSpec {
 	description?: string;
 }
 
-export const defaultGroupVariableSpec = (): GroupVariableSpec => ({
+export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	name: "",
 	value: "",
 	datasource: defaultDataSourceRef(),
@@ -1197,14 +1174,14 @@ export const defaultGroupVariableSpec = (): GroupVariableSpec => ({
 });
 
 // Group variable kind
-export interface GroupVariableKind {
-	kind: "GroupBy";
-	spec: GroupVariableSpec;
+export interface GroupByVariableKind {
+	kind: "GroupByVariable";
+	spec: GroupByVariableSpec;
 }
 
-export const defaultGroupVariableKind = (): GroupVariableKind => ({
-	kind: "GroupBy",
-	spec: defaultGroupVariableSpec(),
+export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
+	kind: "GroupByVariable",
+	spec: defaultGroupByVariableSpec(),
 });
 
 // Adhoc variable specification
@@ -1263,12 +1240,12 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 
 // Adhoc variable kind
 export interface AdhocVariableKind {
-	kind: "Adhoc";
+	kind: "AdhocVariable";
 	spec: AdhocVariableSpec;
 }
 
 export const defaultAdhocVariableKind = (): AdhocVariableKind => ({
-	kind: "Adhoc",
+	kind: "AdhocVariable",
 	spec: defaultAdhocVariableSpec(),
 });
 
