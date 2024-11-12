@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/cloudmigration/orgcalculator"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
@@ -106,6 +107,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.IDSigner), new(*idimpl.LocalSigner)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
+	orgcalculator.ProvideOssService,
+	wire.Bind(new(orgcalculator.OrgCalculator), new(*orgcalculator.OssOrgCalculator)),
 )
 
 var wireExtsSet = wire.NewSet(
