@@ -1,0 +1,13 @@
+{
+  "id": "WFn/UjAYEXejYb1NkiFnxCSpXevSmu5rwhnvPe6Vemg=",
+  "rv": 1234,
+  "group": "folder.grafana.app",
+  "resource": "folders",
+  "namespace": "default",
+  "name": "aaa",
+  "title": "aaa",
+  "byte_size": 384,
+  "created": "2024-11-01T22:42:22+03:00",
+  "created_by": "user:1",
+  "origin_name": "SQL"
+}

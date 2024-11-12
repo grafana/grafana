@@ -135,6 +135,15 @@ type ResourceServerOptions struct {
 	Reg prometheus.Registerer
 }
 
+// Passed as input to the constructor
+type SearchOptions struct {
+	// The raw index backend (eg, bleve, frames, parquet, etc)
+	Backend SearchBackend
+
+	// The supported resource types
+	Resources []DocumentBuilderInfo
+}
+
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")

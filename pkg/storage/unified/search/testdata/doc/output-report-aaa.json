@@ -1,0 +1,13 @@
+{
+  "id": "kLipWW9HmX4RAdZbeYNN+4saGiPerwPzTqsO7pbO2mo=",
+  "rv": 1234,
+  "group": "report.grafana.app",
+  "resource": "reports",
+  "namespace": "default",
+  "name": "aaa",
+  "title": "aaa",
+  "byte_size": 1343,
+  "created": "2024-01-31T11:44:15+03:00",
+  "created_by": "user:abc",
+  "origin_name": "SQL"
+}

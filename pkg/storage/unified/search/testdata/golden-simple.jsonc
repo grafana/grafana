@@ -1,0 +1,156 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 10 Fields by 3 Rows
+//  +----------------+-----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+------------------+
+//  | Name: id       | Name: rv        | Name: name     | Name: folder   | Name: tags              | Name: byte_size | Name:                | Name: origin_name | Name: origin_time | Name: labels.key |
+//  | Labels:        | Labels:         | Labels:        | Labels:        | Labels:                 | Labels:         | Labels:              | Labels:           | Labels:           | Labels:          |
+//  | Type: []string | Type: []float64 | Type: []string | Type: []string | Type: []json.RawMessage | Type: []float64 | Type: []*string      | Type: []string    | Type: []float64   | Type: []*string  |
+//  +----------------+-----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+------------------+
+//  | aaa            | 1               | aaa            | folder-1       | ["aa","bb"]             | 0               | 1970-01-01T02:46:40Z | SQL               | 0                 | null             |
+//  | bbb            | 2               | bbb            | folder-2       | "aa"                    | 0               | null                 | SQL               | 0                 | value            |
+//  | ccc            | 3               | ccc            | folder-1       | "aa"                    | 0               | null                 | SQL               | 0                 | value            |
+//  +----------------+-----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "rv",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "folder",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "byte_size",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "origin_name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "origin_time",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "labels.key",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "aaa",
+            "bbb",
+            "ccc"
+          ],
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            "aaa",
+            "bbb",
+            "ccc"
+          ],
+          [
+            "folder-1",
+            "folder-2",
+            "folder-1"
+          ],
+          [
+            [
+              "aa",
+              "bb"
+            ],
+            "aa",
+            "aa"
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            "1970-01-01T02:46:40Z",
+            null,
+            null
+          ],
+          [
+            "SQL",
+            "SQL",
+            "SQL"
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            null,
+            "value",
+            "value"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "TcoqShxE6TgwKgTpt6VAYg8CaZqo3VcqEpM/TGBrSfE=",
+  "rv": 1234,
+  "group": "dashboard.grafana.app",
+  "resource": "dashboards",
+  "namespace": "default",
+  "name": "aaa",
+  "folder": "the-folder-uid",
+  "title": "Test title",
+  "description": "test description",
+  "tags": [
+    "a",
+    "b",
+    "c"
+  ],
+  "byte_size": 2770,
+  "labels": {
+    "host": "abc",
+    "region": "xyz"
+  },
+  "created": "2024-10-30T21:30:54+03:00",
+  "created_by": "user:be2g71ke8yoe8b",
+  "origin_name": "UI",
+  "origin_path": "/dashboard/new",
+  "origin_hash": "Grafana v9.2.0",
+  "schema_version": 38,
+  "panel_type": [
+    "barchart",
+    "graph",
+    "row"
+  ],
+  "ds": [
+    "datasource/grafana"
+  ],
+  "ds_type": [
+    "datasource"
+  ]
+}
