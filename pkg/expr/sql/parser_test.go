@@ -66,6 +66,15 @@ func TestXxx(t *testing.T) {
 }
 
 func TestParseSubquery(t *testing.T) {
+	sql := "select * from (select * from people limit 1) AS subquery"
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(tables))
+	assert.Equal(t, "people", tables[0])
+}
+
+func TestParseImplicitSubquery(t *testing.T) {
 	sql := "select * from (select * from people limit 1)"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
