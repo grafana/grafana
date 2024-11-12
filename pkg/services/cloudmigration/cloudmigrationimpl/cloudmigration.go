@@ -154,12 +154,12 @@ func ProvideService(
 		}
 		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom)
 
-		// TODO LND complete this with the appropriate config
 		httpClientAuthApi, err := httpClientProvider.New()
 		if err != nil {
 			return nil, fmt.Errorf("creating http client for AuthApi: %w", err)
 		}
-		s.authApiService = authapi.New(authapi.Config{ApiURL: "", Token: ""}, httpClientAuthApi)
+		// the api token is the same as for gcom
+		s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{}
