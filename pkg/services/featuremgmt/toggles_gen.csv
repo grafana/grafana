@@ -158,7 +158,7 @@ ssoSettingsSAML,preview,@grafana/identity-access-team,false,false,false
 oauthRequireSubClaim,experimental,@grafana/identity-access-team,false,false,false
 newDashboardWithFiltersAndGroupBy,experimental,@grafana/dashboards-squad,false,false,false
 cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
-accessActionSets,preview,@grafana/identity-access-team,false,false,false
+accessActionSets,GA,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
