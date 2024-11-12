@@ -57,24 +57,14 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
-          />
-        </InlineField>
-        {options.jsonData.tracesToMetrics?.datasourceUid ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            fill="text"
-            onClick={() => {
+            onClear={() =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 datasourceUid: undefined,
-              });
-            }}
-          >
-            Clear
-          </Button>
-        ) : null}
+              })
+            }
+          />
+        </InlineField>
       </InlineFieldRow>
 
       <InlineFieldRow>
