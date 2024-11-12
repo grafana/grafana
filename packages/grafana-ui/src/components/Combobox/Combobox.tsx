@@ -79,6 +79,26 @@ function itemFilter<T extends string | number>(inputValue: string) {
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
 
+function logOptions(
+  items: Array<ComboboxOption<string | number>>,
+  id: string | undefined,
+  ariaLabelledBy: string | undefined
+): void {
+  if (items.length > RECOMMENDED_ITEMS_AMOUNT) {
+    const msg = `[Combobox] Items exceed the recommended amount ${RECOMMENDED_ITEMS_AMOUNT}.`;
+    console.warn(msg);
+    try {
+      logInfo(msg, {
+        itemsCount: '' + items.length,
+        'aria-labelledby': ariaLabelledBy ?? '',
+        id: id ?? '',
+      });
+    } catch (e) {
+      console.warn('Failed to log faro event!');
+    }
+  }
+}
+
 /**
  * A performant Select replacement.
  *
@@ -112,7 +132,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const setItems = useCallback(
     (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
       let itemsToSet = items;
-
+      logOptions(itemsToSet, id, ariaLabelledBy);
       if (inputValue && createCustomValue) {
         const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
 
@@ -130,7 +150,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       baseSetItems(itemsToSet);
     },
-    [createCustomValue]
+    [createCustomValue, id, ariaLabelledBy]
   );
 
   const selectedItemIndex = useMemo(() => {
@@ -323,23 +343,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       isOpen
       ? 'search'
       : 'angle-down';
-
-  const warningLogRef = useRef<boolean>(false);
-  if (items.length > RECOMMENDED_ITEMS_AMOUNT) {
-    const msg = `[Combobox] Items exceed the recommended amount ${RECOMMENDED_ITEMS_AMOUNT}.`;
-    console.warn(msg);
-    try {
-      logInfo(msg, {
-        itemsCount: '' + items.length,
-        'aria-labelledby': ariaLabelledBy ?? '',
-        id: id ?? '',
-      });
-    } catch (e) {
-      console.warn('Failed to log faro event!');
-    }
-    // Log only once to prevent noise
-    warningLogRef.current = true;
-  }
 
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
