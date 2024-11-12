@@ -6,16 +6,17 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1723737724157",
+        "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
       },
       "spec": {
         "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-        "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
       }
     },
     {
