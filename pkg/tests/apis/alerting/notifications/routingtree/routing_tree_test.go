@@ -16,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
@@ -627,4 +629,20 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.Equalf(t, http.StatusOK, status, body)
 		require.Equal(t, before, after)
 	})
+}
+
+func newClient(t *testing.T, user apis.User) *apis.GenericClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList] {
+	t.Helper()
+
+	client, err := dynamic.NewForConfig(user.NewRestConfig())
+	require.NoError(t, err)
+
+	return &apis.GenericClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList]{
+		Client: client.Resource(
+			schema.GroupVersionResource{
+				Group:    v0alpha1.Kind().Group(),
+				Version:  v0alpha1.Kind().Version(),
+				Resource: v0alpha1.Kind().Plural(),
+			}).Namespace("default"),
+	}
 }

@@ -20,7 +20,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -1603,5 +1605,21 @@ func createWildcardPermission(actions ...string) resourcepermissions.SetResource
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
 		ResourceID:        "*",
+	}
+}
+
+func newClient(t *testing.T, user apis.User) *apis.GenericClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
+	t.Helper()
+
+	client, err := dynamic.NewForConfig(user.NewRestConfig())
+	require.NoError(t, err)
+
+	return &apis.GenericClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
+		Client: client.Resource(
+			schema.GroupVersionResource{
+				Group:    v0alpha1.Kind().Group(),
+				Version:  v0alpha1.Kind().Version(),
+				Resource: v0alpha1.Kind().Plural(),
+			}).Namespace("default"),
 	}
 }
