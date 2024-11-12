@@ -36,13 +36,14 @@ func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 type ManagerCfg struct {
 	SkipTLSVerify bool
 	BaseURL       string
+	gcomToken     string
 	Logger        log.PrettyLogger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
 		baseURL: cfg.BaseURL,
-		client:  NewClient(cfg.SkipTLSVerify, cfg.Logger),
+		client:  NewClient(cfg.SkipTLSVerify, cfg.gcomToken, cfg.Logger),
 		log:     cfg.Logger,
 	}
 }

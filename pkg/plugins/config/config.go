@@ -26,6 +26,8 @@ type PluginManagementCfg struct {
 
 	AngularSupportEnabled  bool
 	HideAngularDeprecation []string
+
+	GcomToken string
 }
 
 // Features contains the feature toggles used for the plugin management system.
@@ -38,7 +40,7 @@ type Features struct {
 // NewPluginManagementCfg returns a new PluginManagementCfg.
 func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	pluginsCDNURLTemplate string, appURL string, features Features, angularSupportEnabled bool,
-	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string,
+	grafanaComAPIURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, gcomToken string,
 ) *PluginManagementCfg {
 	return &PluginManagementCfg{
 		PluginsPath:            pluginsPath,
@@ -53,5 +55,6 @@ func NewPluginManagementCfg(devMode bool, pluginsPath string, pluginSettings set
 		AngularSupportEnabled:  angularSupportEnabled,
 		HideAngularDeprecation: hideAngularDeprecation,
 		ForwardHostEnvVars:     forwardHostEnvVars,
+		GcomToken:              gcomToken,
 	}
 }
