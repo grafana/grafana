@@ -228,13 +228,21 @@ WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
 {{% /admonition %}}
 
-## Needs descriptive title
+## Integrate plugins
 
-You can configure your Grafana instance to allow the frontends of plugins to to directly communicate locally with the backends of other plugins. By default, the backends of plugins can only be communicated with remotely.
+You can configure your Grafana instance to let the frontends of plugins directly communicate locally with the backends of other plugins. By default, you can only communicate with plugin backends remotely.
 
 To enable backend communication between plugins:
 
-1. Set the plugins you want to communicate with. In your configuration file (grafana.ini or custom.ini depending on your operating system) remove the semicolon to enable the following configuration options:
+1. Set the plugins you want to communicate between. In your configuration file (grafana.ini or custom.ini depending on your operating system) remove the semicolon to enable and then set the following configuration option:
+
+   ```
+   actions_allow_post_url=
+   ```
+
+   This is a comma-separated list which uses glob matching.
+
+`actions_allow_post_url=/api/plugins/grafana-special-app`
 
 ## Plugin Frontend Sandbox
 
