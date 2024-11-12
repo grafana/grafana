@@ -203,7 +203,7 @@ describe('runShardSplitQuery()', () => {
       callback();
     });
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
