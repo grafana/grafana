@@ -14,7 +14,7 @@ import {
   LabelName,
   MatchingModifierClause,
   MatchOp,
-  NumberLiteral,
+  NumberDurationLiteral,
   On,
   ParenExpr,
   parser,
@@ -334,7 +334,7 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
       break;
     }
 
-    case NumberLiteral: {
+    case NumberDurationLiteral: {
       op.params.push(parseFloat(getString(expr, node)));
       break;
     }
@@ -369,8 +369,8 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   const opDef = binaryScalarOperatorToOperatorName[op];
 
-  const leftNumber = left.type.id === NumberLiteral;
-  const rightNumber = right.type.id === NumberLiteral;
+  const leftNumber = left.type.id === NumberDurationLiteral;
+  const rightNumber = right.type.id === NumberDurationLiteral;
 
   const rightBinary = right.type.id === BinaryExpr;
 
@@ -389,7 +389,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.type.id === NumberLiteral) {
+    if (leftMostChild?.type.id === NumberDurationLiteral) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
