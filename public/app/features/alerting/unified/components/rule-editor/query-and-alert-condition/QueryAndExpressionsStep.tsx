@@ -36,7 +36,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { DataSourceType, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -61,12 +61,11 @@ import {
   addExpressions,
   addNewDataQuery,
   addNewExpression,
-  addReducerAtFirstPosition,
   duplicateQuery,
+  optimizeReducer,
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
-  removeFirstReducer,
   resetToSimpleCondition,
   rewireExpressions,
   setDataQueries,
@@ -167,14 +166,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
   const [showResetModeModal, setShowResetModal] = useState(false);
-
-  const removeReducer = useCallback(() => {
-    dispatch(removeFirstReducer());
-  }, [dispatch]);
-
-  const addReducer = useCallback(() => {
-    dispatch(addReducerAtFirstPosition());
-  }, [dispatch]);
 
   const { isAdvancedMode, simpleCondition, setSimpleCondition } = useAdvancedMode(
     editorSettings,
@@ -292,45 +283,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
-      // we only remove or add the reducer expression when creating a new alert.
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
       if (!editingExistingRule) {
-        // In case we are in the state of having 1 query and 2 expressions,
-        // then,we want to remove the reducer expression if query is instant to simplify the process of creating a non complex alert
-        const firstQueryIsPromOrLoki =
-          updatedQueries[0].model.datasource?.type === DataSourceType.Prometheus ||
-          updatedQueries[0].model.datasource?.type === DataSourceType.Loki;
-        const shouldRemoveReducer =
-          updatedQueries.length === 1 &&
-          'instant' in updatedQueries[0].model &&
-          (updatedQueries[0].model.instant === true ||
-            (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
-          expressionQueries.length === 2;
-        const onlyOneExpressionNotReducer =
-          expressionQueries.length === 1 &&
-          'type' in expressionQueries[0].model &&
-          expressionQueries[0].model.type !== ExpressionQueryType.reduce;
-
-        // we only add the reducer if we have one data query and one expression query. For other cases we don't do anything,
-        // and let the user add the reducer manually.
-        const shouldAddReducer =
-          updatedQueries.length === 1 &&
-          'instant' in updatedQueries[0].model &&
-          (updatedQueries[0].model.instant === false ||
-            (firstQueryIsPromOrLoki && updatedQueries[0].model.instant === undefined)) &&
-          onlyOneExpressionNotReducer;
-
-        // when changing the data source we need to reset the condition before checking if we should remove the reducer
-        // this is important when switching from prometheus or loki to another data source
-        if (updatedQueries.length === 1 && updatedQueries[0].datasourceUid !== previousQueries[0].datasourceUid) {
-          dispatch(resetToSimpleCondition());
-        }
-        if (shouldRemoveReducer) {
-          removeReducer();
-        }
-        if (shouldAddReducer) {
-          addReducer();
-        }
+        dispatch(optimizeReducer({ updatedQueries, expressionQueries }));
       }
 
       dispatch(setDataQueries(updatedQueries));
@@ -342,7 +298,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, removeReducer, editingExistingRule, addReducer]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
