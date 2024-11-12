@@ -307,7 +307,7 @@ describe('usePluginLinks()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should not log a warning if the extension point meta-info is correct if in dev-mode and used by a plugin', () => {
@@ -345,6 +345,6 @@ describe('usePluginLinks()', () => {
     // Trying to render an extension point that is not defined in the plugin meta
     let { result } = renderHook(() => usePluginLinks({ extensionPointId }), { wrapper });
     expect(result.current.links.length).toBe(0);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 });

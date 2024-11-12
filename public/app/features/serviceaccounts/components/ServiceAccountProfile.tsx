@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, OrgRole, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, OrgRole, TimeZone, dateTimeFormat } from '@grafana/data';
 import { Label, TextLink, useStyles2 } from '@grafana/ui';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/core';
@@ -50,6 +50,13 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
       <h3>Information</h3>
       <table className="filter-table">
         <tbody>
+          {serviceAccount.id && (
+            <ServiceAccountProfileRow
+              label="Numerical identifier"
+              value={serviceAccount.id.toString()}
+              disabled={true}
+            />
+          )}
           <ServiceAccountProfileRow
             label="Name"
             value={serviceAccount.name}
@@ -85,7 +92,7 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-bottom: ${theme.spacing(4)};
-  `,
+  section: css({
+    marginBottom: theme.spacing(4),
+  }),
 });

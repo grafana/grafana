@@ -73,10 +73,13 @@ export class AlertStatesDataLayer
     }
     const fetchData: () => Promise<RuleNamespace[]> = async () => {
       const promRules = await dispatch(
-        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate({
-          ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-          dashboardUid: uid,
-        })
+        alertRuleApi.endpoints.prometheusRuleNamespaces.initiate(
+          {
+            ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+            dashboardUid: uid,
+          },
+          { forceRefetch: true }
+        )
       );
       if (promRules.error) {
         throw new Error(`Unexpected alert rules response.`);

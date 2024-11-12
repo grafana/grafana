@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -130,4 +130,17 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
     }
   }
   return levelLikeLabel;
+}
+
+export function isRetriableError(errorResponse: DataQueryResponse) {
+  const message = errorResponse.errors
+    ? (errorResponse.errors[0].message ?? '').toLowerCase()
+    : (errorResponse.error?.message ?? '');
+  if (message.includes('timeout')) {
+    return true;
+  } else if (errorResponse.data.length > 0 && errorResponse.data[0].fields.length > 0) {
+    // Error response but we're receiving data, continue querying.
+    return false;
+  }
+  throw new Error(message);
 }

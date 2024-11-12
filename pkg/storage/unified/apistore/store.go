@@ -29,12 +29,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-const MaxUpdateAttempts = 30
+const (
+	MaxUpdateAttempts          = 30
+	LargeObjectSupportEnabled  = true
+	LargeObjectSupportDisabled = false
+)
 
 var _ storage.Interface = (*Storage)(nil)
+
+// Optional settings that apply to a single resource
+type StorageOptions struct {
+	LargeObjectSupport LargeObjectSupport
+}
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
@@ -51,6 +61,9 @@ type Storage struct {
 	getKey func(string) (*resource.ResourceKey, error)
 
 	versioner storage.Versioner
+
+	// Resource options like large object support
+	opts StorageOptions
 }
 
 // ErrFileNotExists means the file doesn't actually exist.
@@ -70,6 +83,7 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
 		store:        store,
@@ -85,6 +99,8 @@ func NewStorage(
 		getKey: keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
+
+		opts: opts,
 	}
 
 	// The key parsing callback allows us to support the hardcoded paths from upstream tests
@@ -449,17 +465,32 @@ func (s *Storage) GuaranteedUpdate(
 			if err != nil {
 				return err
 			}
+
 			mmm, err := utils.MetaAccessor(existingObj)
 			if err != nil {
 				return err
 			}
 			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
+			res.ResourceVersion = uint64(rsp.ResourceVersion)
 
-			if err := preconditions.Check(key, existingObj); err != nil {
-				if attempt >= MaxUpdateAttempts {
-					return fmt.Errorf("precondition failed: %w", err)
+			if rest.IsDualWriteUpdate(ctx) {
+				// Ignore the RV when updating legacy values
+				mmm.SetResourceVersion("")
+			} else {
+				if err := preconditions.Check(key, existingObj); err != nil {
+					if attempt >= MaxUpdateAttempts {
+						return fmt.Errorf("precondition failed: %w", err)
+					}
+					continue
 				}
-				continue
+			}
+
+			// restore the full original object before tryUpdate
+			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
+				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
+				if err != nil {
+					return err
+				}
 			}
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)

@@ -106,9 +106,16 @@ type GrafanaMetaAccessor interface {
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
 
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
 	GetFullPath() string
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
 	SetFullPath(path string)
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
 	GetFullPathUIDs() string
+
+	// Deprecated: this is a temporary hack for folders, it will be removed without notice soon
 	SetFullPathUIDs(path string)
 
 	// Find a title in the object
@@ -235,8 +242,9 @@ func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 	if info == nil {
 		m.SetAnnotation(AnnoKeyBlob, "") // delete
+	} else {
+		m.SetAnnotation(AnnoKeyBlob, info.String())
 	}
-	m.SetAnnotation(AnnoKeyBlob, info.String())
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {

@@ -24,15 +24,21 @@ import (
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
+type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
+
 type RESTOptionsGetter struct {
 	client   resource.ResourceClient
 	original storagebackend.Config
+
+	// Each group+resource may need custom options
+	options map[string]StorageOptions
 }
 
 func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
+		options:  make(map[string]StorageOptions),
 	}
 }
 
@@ -59,7 +65,8 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFile(path string,
-	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	originalStorageConfig storagebackend.Config,
+	features map[string]any) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -87,6 +94,10 @@ func NewRESTOptionsGetterForFile(path string,
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
+}
+
+func (r *RESTOptionsGetter) RegisterOptions(gr schema.GroupResource, opts StorageOptions) {
+	r.options[gr.String()] = opts
 }
 
 // TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
@@ -122,7 +133,8 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
+				trigger, indexers, r.options[resource.String()])
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,

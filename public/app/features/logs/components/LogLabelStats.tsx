@@ -11,36 +11,36 @@ const STATS_ROW_LIMIT = 5;
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    logsStats: css`
-      label: logs-stats;
-      background: inherit;
-      color: ${theme.colors.text.primary};
-      word-break: break-all;
-      width: fit-content;
-      max-width: 100%;
-    `,
-    logsStatsHeader: css`
-      label: logs-stats__header;
-      border-bottom: 1px solid ${theme.colors.border.medium};
-      display: flex;
-    `,
-    logsStatsTitle: css`
-      label: logs-stats__title;
-      font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(2)};
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    `,
-    logsStatsClose: css`
-      label: logs-stats__close;
-      cursor: pointer;
-    `,
-    logsStatsBody: css`
-      label: logs-stats__body;
-      padding: 5px 0px;
-    `,
+    logsStats: css({
+      label: 'logs-stats',
+      background: 'inherit',
+      color: theme.colors.text.primary,
+      wordBreak: 'break-all',
+      width: 'fit-content',
+      maxWidth: '100%',
+    }),
+    logsStatsHeader: css({
+      label: 'logs-stats__header',
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
+      display: 'flex',
+    }),
+    logsStatsTitle: css({
+      label: 'logs-stats__title',
+      fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(2),
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      flexGrow: 1,
+    }),
+    logsStatsClose: css({
+      label: 'logs-stats__close',
+      cursor: 'pointer',
+    }),
+    logsStatsBody: css({
+      label: 'logs-stats__body',
+      padding: '5px 0px',
+    }),
   };
 });
 

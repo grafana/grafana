@@ -5,19 +5,19 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/api/response"
-	request2 "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/api/response"
+	request2 "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -107,7 +107,7 @@ func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 					searchRequest := &resource.SearchRequest{
 						Tenant:    tenant,
-						Kind:      queryParams.Get("kind"),
+						Kind:      strings.Split(queryParams.Get("kind"), ","),
 						QueryType: queryParams.Get("queryType"),
 						Query:     queryParams.Get("query"),
 						Limit:     int64(limit),
@@ -144,7 +144,7 @@ func (b *SearchAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	return oas, nil
 }
 
-func (b *SearchAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (b *SearchAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ builder.APIGroupOptions) error {
 	apiGroupInfo.PrioritizedVersions = []schema.GroupVersion{b.GetGroupVersion()}
 	return nil
 }

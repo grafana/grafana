@@ -387,7 +387,6 @@ func TestIntegrationFolderService(t *testing.T) {
 			}{
 				{ActualError: dashboards.ErrDashboardTitleEmpty, ExpectedError: dashboards.ErrFolderTitleEmpty},
 				{ActualError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedError: dashboards.ErrFolderAccessDenied},
-				{ActualError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedError: dashboards.ErrFolderSameNameExists},
 				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
 				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
 				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
@@ -494,7 +493,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac, b)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, serviceWithFlagOn.store, featuresFlagOn, ac)
@@ -577,7 +576,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil)
 			require.NoError(t, err)
 
-			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac)
+			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac, b)
 			require.NoError(t, err)
 
 			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, serviceWithFlagOff.store, featuresFlagOff, ac)
@@ -722,7 +721,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil)
 				require.NoError(t, err)
-				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
+				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac, b)
 				require.NoError(t, err)
 
 				ancestors := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, tc.depth, tc.prefix, createCmd, true)

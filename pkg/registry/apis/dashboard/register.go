@@ -5,7 +5,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -44,6 +43,7 @@ type DashboardsAPIBuilder struct {
 	unified       resource.ResourceClient
 
 	log log.Logger
+	reg prometheus.Registerer
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
@@ -57,8 +57,8 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
@@ -75,7 +75,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			resource:       dashboard.DashboardResourceInfo,
 			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
 			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
+			features:       features,
 		},
+		reg: reg,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -124,11 +126,24 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
 }
 
-func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+
+	optsGetter := opts.OptsGetter
+	dualWriteBuilder := opts.DualWriteBuilder
 	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
+	legacyStore, err := b.legacy.newStore(scheme, optsGetter, b.reg)
 	if err != nil {
 		return err
+	}
+
+	// Split dashboards when they are large
+	var largeObjects apistore.LargeObjectSupport
+	if b.legacy.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		largeObjects = newDashboardLargeObjectSupport()
+		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
+			LargeObjectSupport: largeObjects,
+		})
 	}
 
 	storage := map[string]rest.Storage{}
@@ -151,7 +166,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], largeObjects, b)
 	if err != nil {
 		return err
 	}

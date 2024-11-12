@@ -24,6 +24,8 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -102,6 +104,7 @@ func SetupConfig(
 	buildBranch string,
 	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
 ) error {
+	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
@@ -165,6 +168,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
+	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -235,7 +239,13 @@ func InstallAPIs(
 	for group, buildersForGroup := range buildersGroupMap {
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
-			if err := b.UpdateAPIGroupInfo(&g, scheme, optsGetter, dualWrite); err != nil {
+			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
+				Scheme:           scheme,
+				OptsGetter:       optsGetter,
+				DualWriteBuilder: dualWrite,
+				MetricsRegister:  reg,
+				StorageOptions:   optsregister,
+			}); err != nil {
 				return err
 			}
 			if len(g.PrioritizedVersions) < 1 {
