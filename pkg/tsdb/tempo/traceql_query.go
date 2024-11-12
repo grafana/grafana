@@ -137,12 +137,17 @@ func (s *Service) createMetricsQuery(ctx context.Context, dsInfo *Datasource, qu
 	searchUrl, err := url.Parse(rawUrl)
 	if err != nil {
 		ctxLogger.Error("Failed to parse URL", "url", rawUrl, "error", err, "function", logEntrypoint())
+		return nil, err
 	}
 
 	q := searchUrl.Query()
 	q.Set("q", *query.Query)
-	q.Set("start", strconv.FormatInt(start, 10))
-	q.Set("end", strconv.FormatInt(end, 10))
+	if start > 0 {
+		q.Set("start", strconv.FormatInt(start, 10))
+	}
+	if end > 0 {
+		q.Set("end", strconv.FormatInt(end, 10))
+	}
 	if query.Step != nil {
 		q.Set("step", *query.Step)
 	}
