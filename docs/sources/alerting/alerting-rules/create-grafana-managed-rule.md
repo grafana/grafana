@@ -97,7 +97,7 @@ To make a backup of your configuration and to be able to restore deleted alertin
 If you are using Grafana OSS:
 
 1. Configure your [data sources](ref:data-sources).
-2. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
 
 If you are using Grafana OSS, Enterprise, or Cloud:
 
