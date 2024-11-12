@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -20,11 +21,12 @@ import (
 
 var (
 	// Target for user storage size < 3MB
-	userstorageSize = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	userstorageSize = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "userstorage",
-		Name:      "size",
-		Help:      "The current size in bytes of the user storage for a service",
-	}, []string{"name"})
+		Name:      "object_size_bytes",
+		Help:      "Histogram of user storage object sizes in bytes, broken down by service name",
+		Buckets:   prometheus.ExponentialBucketsRange(1024, 8*1024*1024, 8), // From 1 KB to 8 MB
+	}, []string{"service"})
 )
 
 type genericStrategy interface {
@@ -53,12 +55,10 @@ func newStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, registerer p
 }
 
 func compareResourceNameAndUserUID(name string, u identity.Requester) bool {
-	// ObjectMeta.Name should follow the format <service>:<user_uid>
-	nameSplit := strings.Split(name, ":")
-	if len(nameSplit) != 2 {
+	parsedName, err := parseName(name)
+	if err != nil {
 		return false
 	}
-	objUserUID := nameSplit[1]
 
 	// u.GetUID() returns user:<user_uid> so we need to remove the user: prefix
 	userUID := strings.Split(u.GetUID(), ":")
@@ -66,7 +66,7 @@ func compareResourceNameAndUserUID(name string, u identity.Requester) bool {
 		return false
 	}
 
-	return objUserUID == userUID[1]
+	return parsedName.UID == userUID[1]
 }
 
 func registerSize(obj runtime.Object) {
@@ -75,11 +75,16 @@ func registerSize(obj runtime.Object) {
 		return
 	}
 
+	parsedName, err := parseName(meta.GetName())
+	if err != nil {
+		return
+	}
+
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(obj); err != nil {
 		return
 	}
-	userstorageSize.WithLabelValues(meta.GetName()).Set(float64(b.Len()))
+	userstorageSize.WithLabelValues(parsedName.Service).Observe(float64(b.Len()))
 }
 
 // Validate ensures that when creating a userstorage object, the name matches the user id.
@@ -106,4 +111,21 @@ func (g *userstorageStrategy) Validate(ctx context.Context, obj runtime.Object) 
 func (g *userstorageStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	registerSize(obj)
 	return field.ErrorList{}
+}
+
+type storageObjectName struct {
+	Service string
+	UID     string
+}
+
+func parseName(name string) (*storageObjectName, error) {
+	vals := strings.Split(name, ":")
+	if len(vals) != 2 {
+		return nil, errors.New("name must be in the format <service>:<user_uid>")
+	}
+
+	return &storageObjectName{
+		Service: vals[0],
+		UID:     vals[1],
+	}, nil
 }
