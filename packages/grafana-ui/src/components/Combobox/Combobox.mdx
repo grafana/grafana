@@ -33,6 +33,58 @@ The `options` prop can accept and async function:
 
 Note: The calls are debounced. Old calls are invalidated when a new call is made.
 
+## Unit testing
+
+Writing unit tests with Combobox requires mocking the `getBoundingClientRect` method because of [the virtual list library](https://github.com/TanStack/virtual/issues/29#issuecomment-657519522)
+
+This code sets up the mocking before all tests:
+
+```js
+beforeAll(() => {
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
+
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
+});
+```
+
+### Selecting an option
+
+To select an option, you can any `*ByRole` methods, as Combobox has proper roles for accessibility.
+
+#### Selecting option by clicking
+
+```js
+render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
+
+const input = screen.getByRole('combobox');
+await userEvent.click(input);
+
+const item = await screen.findByRole('option', { name: 'Option 1' });
+await userEvent.click(item);
+expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+```
+
+#### Selecting option by typing
+
+```js
+render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+const input = screen.getByRole('combobox');
+await userEvent.type(input, 'Option 3');
+await userEvent.keyboard('{ArrowDown}{Enter}');
+
+expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+```
+
 ## Props
 
 <ArgTypes of={Combobox} />
