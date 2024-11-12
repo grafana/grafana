@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -403,6 +404,24 @@ func Test_create(t *testing.T) {
 			assert.Equal(t, current.ResolvedAt, state.ResolvedAt)
 			assert.Equal(t, current.LastSentAt, state.LastSentAt)
 			assert.Equal(t, current.LastEvaluationString, state.LastEvaluationString)
+		})
+		t.Run("copies system-owned annotations from current state", func(t *testing.T) {
+			current = randomSate(rule.GetKey())
+			current.CacheID = expectedLbl.Fingerprint()
+			current.State = eval.Error
+			for key := range ngModels.InternalAnnotationNameSet {
+				current.Annotations[key] = util.GenerateShortUID()
+			}
+			c.set(&current)
+
+			result.State = eval.Error
+			state = c.create(context.Background(), l, rule, result, extraLabels, url)
+			ann := expectedAnn.Copy()
+			for key := range ngModels.InternalAnnotationNameSet {
+				ann[key] = current.Annotations[key]
+			}
+			assert.EqualValues(t, expectedLbl, state.Labels)
+			assert.EqualValues(t, ann, state.Annotations)
 		})
 	})
 }
