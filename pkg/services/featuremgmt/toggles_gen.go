@@ -878,4 +878,8 @@ const (
 	// FlagEnableSCIM
 	// Enables SCIM support for user and group management
 	FlagEnableSCIM = "enableSCIM"
+
+	// FlagCrashDetection
+	// Enables browser crash detection reporting to Faro.
+	FlagCrashDetection = "crashDetection"
 )

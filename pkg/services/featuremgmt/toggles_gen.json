@@ -857,6 +857,19 @@
     },
     {
       "metadata": {
+        "name": "crashDetection",
+        "resourceVersion": "1730381712885",
+        "creationTimestamp": "2024-10-31T13:35:12Z"
+      },
+      "spec": {
+        "description": "Enables browser crash detection reporting to Faro.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1729671312626",
         "creationTimestamp": "2024-10-16T08:44:05Z",
