@@ -183,7 +183,7 @@ interface LocationStorageHistory extends H.MemoryHistory {
 function createLocationStorageHistory(options: LocalStorageHistoryOptions): LocationStorageHistory {
   const storedLocation = localStorage.getItem(options.storageKey);
   const initialEntry = storedLocation ? JSON.parse(storedLocation) : '/';
-  const locationSubject = new BehaviorSubject<H.Location | undefined>(undefined);
+  const locationSubject = new BehaviorSubject<H.Location | undefined>(initialEntry);
   const memoryHistory = H.createMemoryHistory({ initialEntries: [initialEntry] });
 
   let currentLocation = memoryHistory.location;
@@ -196,7 +196,6 @@ function createLocationStorageHistory(options: LocalStorageHistoryOptions): Loca
       );
       currentLocation = memoryHistory.location;
       locationSubject.next(memoryHistory.location);
-      console.log('newMemoryLocation', currentLocation);
     }
   }
 
