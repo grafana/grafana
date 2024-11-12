@@ -288,7 +288,7 @@ describe('usePluginComponent()', () => {
     // Shouldn't return the component, as it's not present in the plugin.json dependencies
     let { result } = renderHook(() => usePluginComponent(exposedComponentId), { wrapper });
     expect(result.current.component).toBe(null);
-    expect(log.warning).toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalled();
   });
 
   it('should return the exposed component if the meta-info is correct and in dev mode', () => {

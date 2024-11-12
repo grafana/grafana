@@ -375,55 +375,57 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
-          {isOpen && !asyncError && (
-            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                return (
-                  <li
-                    key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                    data-index={virtualRow.index}
-                    className={cx(
-                      styles.option,
-                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                      highlightedIndex === virtualRow.index && styles.optionFocused
-                    )}
-                    style={{
-                      height: virtualRow.size,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                    {...getItemProps({
-                      item: items[virtualRow.index],
-                      index: virtualRow.index,
-                    })}
-                  >
-                    <div className={styles.optionBody}>
-                      <span className={styles.optionLabel}>
-                        {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                      </span>
-                      {items[virtualRow.index].description && (
-                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+        {isOpen && (
+          <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+            {!asyncError && (
+              <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  return (
+                    <li
+                      key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                      data-index={virtualRow.index}
+                      className={cx(
+                        styles.option,
+                        selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                        highlightedIndex === virtualRow.index && styles.optionFocused
                       )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div aria-live="polite">
-            {asyncError && (
-              <MessageRow>
-                <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-                <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
-              </MessageRow>
+                      style={{
+                        height: virtualRow.size,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      {...getItemProps({
+                        item: items[virtualRow.index],
+                        index: virtualRow.index,
+                      })}
+                    >
+                      <div className={styles.optionBody}>
+                        <span className={styles.optionLabel}>
+                          {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                        </span>
+                        {items[virtualRow.index].description && (
+                          <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            {items.length === 0 && !asyncError && (
-              <MessageRow>
-                <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-              </MessageRow>
-            )}
-          </div>
-        </ScrollContainer>
+            <div aria-live="polite">
+              {asyncError && (
+                <MessageRow>
+                  <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+                  <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
+                </MessageRow>
+              )}
+              {items.length === 0 && !asyncError && (
+                <MessageRow>
+                  <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
+                </MessageRow>
+              )}
+            </div>
+          </ScrollContainer>
+        )}
       </div>
     </div>
   );
