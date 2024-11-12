@@ -378,7 +378,7 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe.only('when calling annotationQuery', () => {
+  describe('when calling annotationQuery', () => {
     const getTestContext = (frame: DataFrame, options = {}) => {
       const query = makeAnnotationQueryRequest(options);
 
