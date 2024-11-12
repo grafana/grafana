@@ -34,6 +34,7 @@ import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
+import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { StatusWrapper } from '../StatusWrapper';
 import { reportExploreMetrics } from '../interactions';
 import { updateOtelJoinWithGroupLeft } from '../otel/util';
@@ -439,7 +440,10 @@ export function buildAllLayout(
           ],
         })
       )
-      .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
+      .setHeaderActions([
+        new SelectLabelAction({ labelName: String(option.value) }),
+        new AddToExplorationButton({ labelName: String(option.value) }),
+      ])
       .setUnit(unit)
       .setBehaviors([fixLegendForUnspecifiedLabelValueBehavior])
       .build();
