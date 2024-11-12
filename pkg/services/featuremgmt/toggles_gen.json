@@ -3392,6 +3392,18 @@
     },
     {
       "metadata": {
+        "name": "userStorageAPI",
+        "resourceVersion": "1730204321785",
+        "creationTimestamp": "2024-10-29T12:18:41Z"
+      },
+      "spec": {
+        "description": "Enables the user storage API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
         "creationTimestamp": "2024-09-09T14:11:55Z"
