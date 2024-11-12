@@ -2,11 +2,13 @@ package resource
 
 import (
 	"context"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// Indexable values from a resource
-// This will likely get more structure assigned as the requirements become more clear
+// IndexableDocument can be written to a ResourceIndex
 type IndexableDocument interface {
+	// The ID must be unique across everything in the index
 	GetID() string
 }
 
@@ -16,14 +18,14 @@ type DocumentBuilder interface {
 	BuildDocument(ctx context.Context, key *ResourceKey, rv int64, value []byte) (IndexableDocument, error)
 }
 
-// Each namespace may need to load something
+// Register how documents can be built for a resource
 type DocumentBuilderInfo struct {
-	Group    string
-	Resource string
+	// The target resource (empty will be used to match anything)
+	GroupResource schema.GroupResource
 
-	// When the builder does not depend on cached namespace data
+	// Simpl/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
-	// For complicated builders (eg dashboards!) we need to load on demand
+	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced func(ctx context.Context, namespace string, blob BlobSupport) (DocumentBuilder, error)
 }

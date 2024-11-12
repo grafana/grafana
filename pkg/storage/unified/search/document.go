@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -38,13 +39,13 @@ var (
 func (p *standardDocumentProvider) GetDocumentBuilders(ctx context.Context) ([]resource.DocumentBuilderInfo, error) {
 	return []resource.DocumentBuilderInfo{
 		{
-			Group:    "",
-			Resource: "",
-			Builder:  &defaultDocumentBuilder{},
+			Builder: &defaultDocumentBuilder{},
 		},
 		{
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
+			GroupResource: schema.GroupResource{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+			},
 
 			// This is a dummy example, and will need resolver setup for enterprise stats and and (eventually) data sources
 			Namespaced: func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
