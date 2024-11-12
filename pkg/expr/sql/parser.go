@@ -5,17 +5,17 @@ import (
 	"sort"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/xwb1989/sqlparser"
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
+	parser := sqlparser.NewTestParser()
 
-	stmt, err := sqlparser.Parse(rawSQL)
+	stmt, err := parser.Parse(rawSQL)
 	if err != nil {
-		logger.Error("error parsing sql", "error", err.Error(), "sql", rawSQL)
 		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
 
@@ -23,8 +23,8 @@ func TablesList(rawSQL string) ([]string, error) {
 	var walkSubtree func(node sqlparser.SQLNode)
 
 	walkSubtree = func(node sqlparser.SQLNode) {
-		sqlparser.Walk(func(n sqlparser.SQLNode) (kontinue bool, err error) {
-			switch v := n.(type) {
+		sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
+			switch v := node.(type) {
 			case *sqlparser.AliasedTableExpr:
 				if tableName, ok := v.Expr.(sqlparser.TableName); ok {
 					tables[tableName.Name.String()] = struct{}{}
@@ -33,6 +33,10 @@ func TablesList(rawSQL string) ([]string, error) {
 				tables[v.Name.String()] = struct{}{}
 			case *sqlparser.Subquery:
 				walkSubtree(v.Select)
+			case *sqlparser.With:
+				for _, cte := range v.CTEs {
+					walkSubtree(cte.Subquery)
+				}
 			}
 			return true, nil
 		}, node)
@@ -51,8 +55,6 @@ func TablesList(rawSQL string) ([]string, error) {
 	}
 
 	sort.Strings(result)
-
-	logger.Debug("tables found in sql", "tables", result)
 
 	return result, nil
 }

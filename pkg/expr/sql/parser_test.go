@@ -144,51 +144,20 @@ func TestParens(t *testing.T) {
 }
 
 func TestWith(t *testing.T) {
-	sql := `WITH
-
-	current_month AS (
-	  select 
-		distinct "Month(ISO)" as mth
-	  from A
-	  ORDER BY mth DESC
-	  LIMIT 1
-	), 
-	
-	last_month_bill AS (
-	  select
-		CAST (
-		  sum(
-			CAST(BillableSeries AS INTEGER)
-		  ) AS INTEGER
-		) AS BillableSeries,
-		"Month(ISO)",
-		label_namespace
-		-- , B.activeseries_count
-	  from A
-	  JOIN current_month
-		ON current_month.mth = A."Month(ISO)"
-	  	JOIN B
-	  	ON B.namespace = A.label_namespace
-	  GROUP BY
-		label_namespace,
-		"Month(ISO)"
-	  ORDER BY BillableSeries DESC
+	sql := `WITH top_products AS (
+		SELECT * FROM products
+		ORDER BY price DESC
+		LIMIT 5
 	)
-	
-	SELECT
-	  last_month_bill.*,
-	  BEE.activeseries_count
-	FROM last_month_bill
-	JOIN BEE
-	  ON BEE.namespace = last_month_bill.label_namespace`
+	SELECT name, price
+	FROM top_products;`
 
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
-	assert.Equal(t, 5, len(tables))
-	assert.Equal(t, "A", tables[0])
-	assert.Equal(t, "B", tables[1])
-	assert.Equal(t, "BEE", tables[2])
+	assert.Equal(t, 2, len(tables))
+	assert.Equal(t, "products", tables[0])
+	assert.Equal(t, "top_products", tables[1])
 }
 
 func TestWithQuote(t *testing.T) {
