@@ -202,9 +202,14 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return [false, null];
   };
 
-  public getUsagesNetwork = () => {
+  public getUsages = () => {
     const model = transformSceneToSaveModel(this.getDashboard());
     const usages = createUsagesNetwork(this.getVariables(), model);
+    return usages;
+  };
+
+  public getUsagesNetwork = () => {
+    const usages = this.getUsages();
     const usagesNetwork = transformUsagesToNetwork(usages);
     return usagesNetwork;
   };
@@ -218,6 +223,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
+  const usages = useMemo(() => model.getUsages(), [model]);
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
@@ -242,6 +248,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       <NavToolbarActions dashboard={dashboard} />
       <VariableEditorList
         variables={variables}
+        usages={usages}
         usagesNetwork={usagesNetwork}
         onDelete={onDelete}
         onDuplicate={onDuplicated}

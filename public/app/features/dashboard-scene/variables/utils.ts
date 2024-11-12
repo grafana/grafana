@@ -103,6 +103,31 @@ export const traverseTree = (usage: UsagesToNetwork, parent: { id: string; value
   return usage;
 };
 
+export const getVariableUsages = (variableId: string, usages: VariableUsageTree[]): number => {
+  const usage = usages.find((usage) => usage.variable.state.name === variableId);
+  if (!usage) {
+    return 0;
+  }
+
+  if (isRecord(usage.tree)) {
+    return countLeaves(usage.tree);
+  }
+
+  return 0;
+};
+
+const countLeaves = (object: object): number => {
+  const total = Object.values(object).reduce<number>((count, value) => {
+    if (typeof value === 'object') {
+      return count + countLeaves(value);
+    }
+
+    return count + 1;
+  }, 0);
+
+  return total;
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
