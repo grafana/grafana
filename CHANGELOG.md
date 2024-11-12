@@ -1,3 +1,12 @@
+<!-- 11.2.3+security-01 START -->
+
+# 11.2.3+security-01 (2024-11-12)
+
+### Bug fixes
+
+- **MigrationAssistant:** Fix Migration Assistant issue [CVE-2024-9476]
+
+<!-- 11.2.3+security-01 END -->
 <!-- 11.2.3 START -->
 
 # 11.2.3 (2024-10-22)
