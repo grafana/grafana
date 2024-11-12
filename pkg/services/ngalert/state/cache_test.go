@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -409,7 +408,7 @@ func Test_create(t *testing.T) {
 			current = randomSate(rule.GetKey())
 			current.CacheID = expectedLbl.Fingerprint()
 			current.State = eval.Error
-			for key := range ngModels.InternalAnnotationNameSet {
+			for key := range models.InternalAnnotationNameSet {
 				current.Annotations[key] = util.GenerateShortUID()
 			}
 			c.set(&current)
@@ -417,7 +416,7 @@ func Test_create(t *testing.T) {
 			result.State = eval.Error
 			state = c.create(context.Background(), l, rule, result, extraLabels, url)
 			ann := expectedAnn.Copy()
-			for key := range ngModels.InternalAnnotationNameSet {
+			for key := range models.InternalAnnotationNameSet {
 				ann[key] = current.Annotations[key]
 			}
 			assert.EqualValues(t, expectedLbl, state.Labels)
