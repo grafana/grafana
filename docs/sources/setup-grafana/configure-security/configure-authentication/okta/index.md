@@ -262,11 +262,14 @@ To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../
 
 The following table outlines the various Okta OIDC configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
 
-Note: If the configuration option requires a [JMESPath](http://jmespath.org/examples.html) expression that includes a colon (:), enclose the entire expression in quotes to prevent parsing errors. For example:
+{{< admonition type="note" >}}
+If the configuration option requires a [JMESPath](http://jmespath.org/examples.html) expression that includes a colon (:), enclose the entire expression in quotes to prevent parsing errors. For example:
 
 ```
 role_attribute_path: "role:view"
 ```
+{{< /admonition >}}
+
 
 | Setting                 | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Default                       |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
