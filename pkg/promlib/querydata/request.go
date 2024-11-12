@@ -239,9 +239,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 
 	if res.StatusCode/100 != 2 {
 		// for differentiating the source of http errors by status code
-		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-		}
+		return addErrorForStatusCode(res)
 	}
 
 	defer func() {
@@ -262,18 +260,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	}
 
 	if res.StatusCode/100 != 2 {
-		// This is only for health check fall back scenario
-		// add more details to the health check error
-		if q.RefId == "__healthcheck__" {
-			return backend.DataResponse{
-				Error:       errors.New(res.Status),
-				ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-			}
-		}
 		// for differentiating the source of http errors by status code
-		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-		}
+		return addErrorForStatusCode(res)
 	}
 
 	defer func() {
@@ -294,9 +282,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 
 	if res.StatusCode/100 != 2 {
 		// for differentiating the source of http errors by status code
-		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-		}
+		return addErrorForStatusCode(res)
 	}
 
 	defer func() {
@@ -330,4 +316,11 @@ func addErrorSourceToDataResponse(err error) backend.DataResponse {
 		response.ErrorSource = backend.ErrorSourceDownstream
 	}
 	return response
+}
+
+func addErrorForStatusCode(res *http.Response) backend.DataResponse {
+	return backend.DataResponse{
+		Error:       errors.New(res.Status),
+		ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+	}
 }
