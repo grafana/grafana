@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 
+	//nolint:all
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
@@ -68,6 +69,11 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 	}
 
 	resp, responseBody, err := s.performMetricsQuery(ctx, dsInfo, tempoQuery, backendQuery, span)
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
+		}
+	}()
 	if err != nil {
 		return result, err
 	}
@@ -115,12 +121,6 @@ func (s *Service) performMetricsQuery(ctx context.Context, dsInfo *Datasource, m
 		span.SetStatus(codes.Error, err.Error())
 		return nil, nil, fmt.Errorf("failed get to tempo: %w", err)
 	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			ctxLogger.Error("Failed to close response body", "error", err, "function", logEntrypoint())
-		}
-	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

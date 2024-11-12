@@ -12,8 +12,9 @@ import (
 )
 
 func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
-	var frames []*data.Frame
-	for _, series := range resp.Series {
+	// prealloc frames
+	frames := make([]*data.Frame, 0, len(resp.Series))
+	for i, series := range resp.Series {
 		labels := make(data.Labels)
 		for _, label := range series.Labels {
 			labels[label.GetKey()] = metricsValueToString(label.GetValue())
@@ -55,7 +56,7 @@ func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
 			frame.AppendRow(time.UnixMilli(sample.GetTimestampMs()), sample.GetValue())
 		}
 
-		frames = append(frames, frame)
+		frames[i] = frame
 	}
 	return frames
 }
