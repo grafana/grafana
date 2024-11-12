@@ -13,7 +13,7 @@ import (
 
 func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
 	// prealloc frames
-	frames := make([]*data.Frame, 0, len(resp.Series))
+	frames := make([]*data.Frame, len(resp.Series))
 	for i, series := range resp.Series {
 		labels := make(data.Labels)
 		for _, label := range series.Labels {
