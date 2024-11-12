@@ -112,7 +112,7 @@ describe('VersionInstallButton', () => {
     expect(el).toBeVisible();
   });
 
-  it('should hide the upgrade plugin is preinstalled and pinned', () => {
+  it('should hide the upgrade button if preinstalled and pinned', () => {
     const version: Version = {
       version: '1.0.1',
       createdAt: '',
@@ -134,7 +134,7 @@ describe('VersionInstallButton', () => {
     expect(screen.getByText('Upgrade')).not.toBeVisible();
   });
 
-  it('should hide the downgrade plugin is preinstalled', () => {
+  it('should hide the downgrade button if preinstalled and pinned', () => {
     const version: Version = {
       version: '1.0.0',
       createdAt: '',
@@ -144,6 +144,28 @@ describe('VersionInstallButton', () => {
     const installedVersion = '1.0.1';
     config.featureToggles.preinstallAutoUpdate = true;
     config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '1.0.1' }];
+    renderWithStore(
+      <VersionInstallButton
+        installedVersion={installedVersion}
+        pluginId={'test'}
+        version={version}
+        disabled={false}
+        onConfirmInstallation={() => {}}
+      />
+    );
+    expect(screen.getByText('Downgrade')).not.toBeVisible();
+  });
+
+  it('should hide the downgrade button if preinstalled', () => {
+    const version: Version = {
+      version: '1.0.0',
+      createdAt: '',
+      isCompatible: false,
+      grafanaDependency: null,
+    };
+    const installedVersion = '1.0.1';
+    config.featureToggles.preinstallAutoUpdate = true;
+    config.pluginCatalogPreinstalledPlugins = [{ id: 'test', version: '' }];
     renderWithStore(
       <VersionInstallButton
         installedVersion={installedVersion}

@@ -97,12 +97,12 @@ export const VersionInstallButton = ({
     label = 'Install';
   } else if (gt(version.version, installedVersion)) {
     label = 'Upgrade';
-    if (isPreinstalled?.withVersion) {
+    if (isPreinstalled.withVersion) {
       // Hide button if the plugin is preinstalled with a specific version
       hidden = true;
     }
   } else {
-    if (isPreinstalled?.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
+    if (isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
       // Hide the downgrade button if the plugin is preinstalled since it will be auto-updated
       hidden = true;
     }
