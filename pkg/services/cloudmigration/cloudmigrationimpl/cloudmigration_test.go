@@ -48,7 +48,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
 func Test_NoopServiceDoesNothing(t *testing.T) {
@@ -784,8 +783,7 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool) cloudmigration.Servi
 	sqlStore := db.InitTestDB(t)
 	secretsService := secretsfakes.NewFakeSecretsService()
 	rr := routing.NewRouteRegister()
-	spanRecorder := tracetest.NewSpanRecorder()
-	tracer := tracing.InitializeTracerForTest(tracing.WithSpanProcessor(spanRecorder))
+	tracer := tracing.InitializeTracerForTest()
 	mockFolder := &foldertest.FakeService{
 		ExpectedFolder: &folder.Folder{UID: "folderUID", Title: "Folder"},
 	}
