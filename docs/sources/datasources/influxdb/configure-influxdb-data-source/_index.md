@@ -58,7 +58,7 @@ To help choose the best language for your needs, refer to
 a [comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)
 and [Why InfluxData created Flux](https://www.influxdata.com/blog/why-were-building-flux-a-new-data-scripting-and-query-language/).
 
-## Add the data source
+## Add the InfluxDB data source
 
 Complete the following steps to set up a new InfluxDB data source:
 
@@ -125,7 +125,7 @@ Click **Manage private data source connect** to be taken to your PDC connection 
 
 Once you have added your connection settings, click **Save & test** to test the data source connection.
 
-### InfluxQL specific configuration section
+### InfluxQL-specific configuration section
 
 The following settings are specific to the InfluxQL query language option.
 
@@ -138,7 +138,7 @@ The following settings are specific to the InfluxQL query language option.
 - **Min time interval** - _(Optional)_ Sets the minimum time interval for auto group-by.  Grafana recommends  setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#configure-min-time-interval) for format examples.
 - **Max series** - _(Optional)_ Sets a limit on the maximum number of series or tables that Grafana processes.  Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
-### SQL specific configuration section
+### SQL-specific configuration section
 
 The following settings are specific to the SQL query language option.
 
@@ -149,7 +149,7 @@ The following settings are specific to the SQL query language option.
 - **Insecure Connection** - Toggle to disable gRPC TLS security.
 - **Max series** - _(Optional)_ Sets a limit on the maximum number of series or tables that Grafana processes.  Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
-### Flux specific configuration section
+### Flux-specific configuration section
 
 The following settings are specific to the Flux query language option.
 
