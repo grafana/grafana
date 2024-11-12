@@ -17,8 +17,9 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	builder := &DashboardDocumentBuilder{
 		Namespace: key.Namespace,
 		Stats: map[string]map[string]int64{
-			"x": {
-				"y": 125,
+			"aaa": {
+				"test1": 123,
+				"test2": 456,
 			},
 		},
 		Lookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{

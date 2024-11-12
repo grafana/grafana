@@ -34,5 +34,9 @@
   ],
   "ds_type": [
     "datasource"
-  ]
+  ],
+  "stats": {
+    "test1": 123,
+    "test2": 456
+  }
 }

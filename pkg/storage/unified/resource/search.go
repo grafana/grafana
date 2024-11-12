@@ -23,7 +23,7 @@ type DocumentBuilderInfo struct {
 	// The target resource (empty will be used to match anything)
 	GroupResource schema.GroupResource
 
-	// Simpl/static builders that do not depend on the environment can be declared once
+	// simple/static builders that do not depend on the environment can be declared once
 	Builder DocumentBuilder
 
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
