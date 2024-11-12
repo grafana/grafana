@@ -242,7 +242,17 @@ To enable backend communication between plugins:
 
    This is a comma-separated list which uses glob matching.
 
-`actions_allow_post_url=/api/plugins/grafana-special-app`
+   For example, to allow access to all plugins that have a backend:
+
+   ```
+   actions_allow_post_url=/api/plugins/grafana-special-app
+   ```
+
+   Or, to access to the backend of only one plugin:
+
+   ```
+   actions_allow_post_url=/api/plugins/grafana-special-app
+   ```
 
 ## Plugin Frontend Sandbox
 
