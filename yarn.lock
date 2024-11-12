@@ -14324,6 +14324,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"crashme@npm:0.0.15":
+  version: 0.0.15
+  resolution: "crashme@npm:0.0.15"
+  checksum: 10/576110b3d61f996869b993c2f6b8dca33ac82d07ea708b39217b6349653e38a9894c1af838136bc60ba61f6c69bd68f1c60e3da772cb2fa1fe0b64c2fbc53b79
+  languageName: node
+  linkType: hard
+
 "create-jest@npm:^29.7.0":
   version: 29.7.0
   resolution: "create-jest@npm:29.7.0"
@@ -18878,6 +18885,7 @@ __metadata:
     common-tags: "npm:1.8.2"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.38.1"
+    crashme: "npm:0.0.15"
     css-loader: "npm:7.1.2"
     css-minimizer-webpack-plugin: "npm:6.0.0"
     cypress: "npm:13.10.0"
