@@ -222,6 +222,7 @@ Experimental features might be changed or removed without prior notice.
 | `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 | `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
+| `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
 
 ## Development feature toggles
 
