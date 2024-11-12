@@ -7,7 +7,6 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	t.Skip()
 	sql := "select * from foo"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
@@ -16,7 +15,6 @@ func TestParse(t *testing.T) {
 }
 
 func TestParseWithComma(t *testing.T) {
-	t.Skip()
 	sql := "select * from foo,bar"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
@@ -26,7 +24,6 @@ func TestParseWithComma(t *testing.T) {
 }
 
 func TestParseWithCommas(t *testing.T) {
-	t.Skip()
 	sql := "select * from foo,bar,baz"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
@@ -36,9 +33,16 @@ func TestParseWithCommas(t *testing.T) {
 	assert.Equal(t, "foo", tables[2])
 }
 
+func TestNoTable(t *testing.T) {
+	sql := "select 1 as 'n'"
+	tables, err := TablesList((sql))
+	assert.Nil(t, err)
+
+	assert.Equal(t, 0, len(tables))
+}
+
 func TestArray(t *testing.T) {
-	t.Skip()
-	sql := "SELECT array_value(1, 2, 3)"
+	sql := "SELECT JSON_ARRAY(1, 2, 3) AS array_value"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
@@ -46,8 +50,7 @@ func TestArray(t *testing.T) {
 }
 
 func TestArray2(t *testing.T) {
-	t.Skip()
-	sql := "SELECT array_value(1, 2, 3)[2]"
+	sql := "SELECT JSON_EXTRACT(JSON_ARRAY(1, 2, 3), '$[0]') AS first_element;"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
@@ -55,8 +58,7 @@ func TestArray2(t *testing.T) {
 }
 
 func TestXxx(t *testing.T) {
-	t.Skip()
-	sql := "SELECT [3, 2, 1]::INT[3];"
+	sql := "SELECT JSON_ARRAY(3, 2, 1) AS int_array;"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
@@ -64,8 +66,7 @@ func TestXxx(t *testing.T) {
 }
 
 func TestParseSubquery(t *testing.T) {
-	t.Skip()
-	sql := "select * from (select * from people limit 1)"
+	sql := "select * from (select * from people limit 1) AS subquery"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
@@ -74,7 +75,6 @@ func TestParseSubquery(t *testing.T) {
 }
 
 func TestJoin(t *testing.T) {
-	t.Skip()
 	sql := `select * from A
 	JOIN B ON A.name = B.name
 	LIMIT 10`
@@ -87,7 +87,6 @@ func TestJoin(t *testing.T) {
 }
 
 func TestRightJoin(t *testing.T) {
-	t.Skip()
 	sql := `select * from A
 	RIGHT JOIN B ON A.name = B.name
 	LIMIT 10`
@@ -100,7 +99,6 @@ func TestRightJoin(t *testing.T) {
 }
 
 func TestAliasWithJoin(t *testing.T) {
-	t.Skip()
 	sql := `select * from A as X
 	RIGHT JOIN B ON A.name = X.name
 	LIMIT 10`
@@ -113,7 +111,6 @@ func TestAliasWithJoin(t *testing.T) {
 }
 
 func TestAlias(t *testing.T) {
-	t.Skip()
 	sql := `select * from A as X LIMIT 10`
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
@@ -123,14 +120,12 @@ func TestAlias(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	t.Skip()
 	sql := `select * from zzz aaa zzz`
 	_, err := TablesList((sql))
 	assert.NotNil(t, err)
 }
 
 func TestParens(t *testing.T) {
-	t.Skip()
 	sql := `SELECT  t1.Col1,
 	t2.Col1,
 	t3.Col1
@@ -149,56 +144,23 @@ func TestParens(t *testing.T) {
 }
 
 func TestWith(t *testing.T) {
-	t.Skip()
-	sql := `WITH
-
-	current_month AS (
-	  select 
-		distinct "Month(ISO)" as mth
-	  from A
-	  ORDER BY mth DESC
-	  LIMIT 1
-	), 
-	
-	last_month_bill AS (
-	  select
-		CAST (
-		  sum(
-			CAST(BillableSeries AS INTEGER)
-		  ) AS INTEGER
-		) AS BillableSeries,
-		"Month(ISO)",
-		label_namespace
-		-- , B.activeseries_count
-	  from A
-	  JOIN current_month
-		ON current_month.mth = A."Month(ISO)"
-	  	JOIN B
-	  	ON B.namespace = A.label_namespace
-	  GROUP BY
-		label_namespace,
-		"Month(ISO)"
-	  ORDER BY BillableSeries DESC
+	sql := `WITH top_products AS (
+		SELECT * FROM products
+		ORDER BY price DESC
+		LIMIT 5
 	)
-	
-	SELECT
-	  last_month_bill.*,
-	  BEE.activeseries_count
-	FROM last_month_bill
-	JOIN BEE
-	  ON BEE.namespace = last_month_bill.label_namespace`
+	SELECT name, price
+	FROM top_products;`
 
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
 
-	assert.Equal(t, 5, len(tables))
-	assert.Equal(t, "A", tables[0])
-	assert.Equal(t, "B", tables[1])
-	assert.Equal(t, "BEE", tables[2])
+	assert.Equal(t, 2, len(tables))
+	assert.Equal(t, "products", tables[0])
+	assert.Equal(t, "top_products", tables[1])
 }
 
 func TestWithQuote(t *testing.T) {
-	t.Skip()
 	sql := "select *,'junk' from foo"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
@@ -207,7 +169,6 @@ func TestWithQuote(t *testing.T) {
 }
 
 func TestWithQuote2(t *testing.T) {
-	t.Skip()
 	sql := "SELECT json_serialize_sql('SELECT 1')"
 	tables, err := TablesList((sql))
 	assert.Nil(t, err)
