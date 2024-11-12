@@ -131,10 +131,14 @@ func (s *StandardDocumentFields) Load(key *resource.ResourceKey, rv int64, obj u
 	s.Name = key.Name
 
 	s.Folder = obj.GetFolder()
-	s.Created = obj.GetCreationTimestamp().Time
+	s.Created = obj.GetCreationTimestamp().Time.UTC()
 	s.CreatedBy = obj.GetCreatedBy()
 
-	s.Updated, _ = obj.GetUpdatedTimestamp()
+	ts, _ := obj.GetUpdatedTimestamp()
+	if ts != nil {
+		utc := ts.UTC()
+		s.Updated = &utc
+	}
 	s.UpdatedBy = obj.GetUpdatedBy()
 
 	origin, _ := obj.GetOriginInfo()
