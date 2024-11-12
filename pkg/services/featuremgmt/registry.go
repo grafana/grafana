@@ -1207,8 +1207,9 @@ var (
 		{
 			Name:        "accessActionSets",
 			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "disableNumericMetricsSortingInExpressions",
@@ -1568,6 +1569,12 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:        "userStorageAPI",
+			Description: "Enables the user storage API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1620,6 +1627,13 @@ var (
 			Description: "Enables SCIM support for user and group management",
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
+		},
+		{
+			Name:         "crashDetection",
+			Description:  "Enables browser crash detection reporting to Faro.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )
