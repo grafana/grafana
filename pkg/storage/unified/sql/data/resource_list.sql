@@ -2,7 +2,6 @@ SELECT
     {{ .Ident "resource_version" }},
     {{ .Ident "namespace" }},
     {{ .Ident "name" }},
-    {{ .Ident "folder" }},
     {{ .Ident "value" }}
     FROM {{ .Ident "resource" }}
     WHERE 1 = 1
