@@ -583,6 +583,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
+	// FlagLogQLScope
+	// In-development feature that will allow injection of labels into loki queries.
+	FlagLogQLScope = "logQLScope"
+
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
 	FlagSqlExpressions = "sqlExpressions"
@@ -838,6 +842,10 @@ const (
 	// FlagPrometheusUsesCombobox
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
+
+	// FlagUserStorageAPI
+	// Enables the user storage API
+	FlagUserStorageAPI = "userStorageAPI"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
