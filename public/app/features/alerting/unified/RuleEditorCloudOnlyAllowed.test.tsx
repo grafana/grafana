@@ -9,7 +9,7 @@ import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { discoverFeaturesByUid } from './api/buildInfo';
-import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from './api/ruler';
+import { fetchRulerRulesGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource } from './mocks';
@@ -121,8 +121,6 @@ const mocks = {
   api: {
     discoverFeaturesByUid: jest.mocked(discoverFeaturesByUid),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
-    fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
-    fetchRulerRules: jest.mocked(fetchRulerRules),
   },
 };
 

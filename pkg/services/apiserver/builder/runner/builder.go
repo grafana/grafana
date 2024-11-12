@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
-var _ builder.APIGroupBuilder = (*AppBuilder)(nil)
+var _ AppBuilder = (*appBuilder)(nil)
 
 type LegacyStorageGetter func(schema.GroupVersionResource) grafanarest.LegacyStorage
 
@@ -30,28 +30,35 @@ type AppBuilderConfig struct {
 	groupVersion schema.GroupVersion
 }
 
-type AppBuilder struct {
+type AppBuilder interface {
+	builder.APIGroupBuilder
+	builder.APIGroupMutation
+	builder.APIGroupValidation
+	SetApp(app app.App)
+}
+
+type appBuilder struct {
 	app    app.App
 	config AppBuilderConfig
 }
 
-func NewAppBuilder(appBuilderConfig AppBuilderConfig) (AppBuilder, error) {
-	return AppBuilder{
+func NewAppBuilder(appBuilderConfig AppBuilderConfig) (*appBuilder, error) {
+	return &appBuilder{
 		config: appBuilderConfig,
 	}, nil
 }
 
-func (b *AppBuilder) setApp(app app.App) {
+func (b *appBuilder) SetApp(app app.App) {
 	b.app = app
 }
 
 // GetGroupVersion implements APIGroupBuilder.GetGroupVersion
-func (b *AppBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *appBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.config.groupVersion
 }
 
 // InstallSchema implements APIGroupBuilder.InstallSchema
-func (b *AppBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := b.GetGroupVersion()
 	for _, kind := range b.config.ManagedKinds {
 		scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()), kind.ZeroValue())
@@ -61,7 +68,7 @@ func (b *AppBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo
-func (b *AppBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	for _, kind := range b.config.ManagedKinds {
 		version := kind.GroupVersionKind().Version
 		if _, ok := apiGroupInfo.VersionedResourcesStorageMap[version]; !ok {
@@ -77,7 +84,7 @@ func (b *AppBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	return nil
 }
 
-func (b *AppBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.APIGroupOptions) (grafanarest.Storage, error) {
+func (b *appBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.APIGroupOptions) (grafanarest.Storage, error) {
 	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	if err != nil {
 		return nil, err
@@ -91,17 +98,17 @@ func (b *AppBuilder) getStorage(resourceInfo utils.ResourceInfo, opts builder.AP
 }
 
 // GetOpenAPIDefinitions implements APIGroupBuilder.GetOpenAPIDefinitions
-func (b *AppBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *appBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return b.config.OpenAPIDefGetter
 }
 
 // GetAPIRoutes implements APIGroupBuilder.GetAPIRoutes
-func (b *AppBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *appBuilder) GetAPIRoutes() *builder.APIRoutes {
 	// TODO: The API routes are not yet exposed by the app.App interface.
 	return nil
 }
 
 // GetAuthorizer implements APIGroupBuilder.GetAuthorizer
-func (b AppBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *appBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.config.Authorizer
 }

@@ -1,4 +1,4 @@
-import { TRAIL_BREAKDOWN_VIEW_KEY, TRAIL_BREAKDOWN_SORT_KEY } from '../shared';
+import { TRAIL_BREAKDOWN_VIEW_KEY, TRAIL_BREAKDOWN_SORT_KEY, OTEL_EXPERIENCE_ENABLED_KEY } from '../shared';
 
 export function getVewByPreference() {
   return localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY) ?? 'grid';
@@ -22,4 +22,13 @@ export function setSortByPreference(target: string, sortBy: string) {
   if (sortBy) {
     localStorage.setItem(`${TRAIL_BREAKDOWN_SORT_KEY}.${target}.by`, `${sortBy}`);
   }
+}
+
+export function getOtelExperienceToggleState(): boolean {
+  const val = localStorage.getItem(OTEL_EXPERIENCE_ENABLED_KEY);
+  return val !== null ? JSON.parse(val) : true;
+}
+
+export function setOtelExperienceToggleState(value: boolean) {
+  return localStorage.setItem(OTEL_EXPERIENCE_ENABLED_KEY, value.toString());
 }

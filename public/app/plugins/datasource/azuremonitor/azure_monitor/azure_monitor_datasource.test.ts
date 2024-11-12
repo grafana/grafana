@@ -1,12 +1,10 @@
 import { get, set } from 'lodash';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
-
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
+import { AzureAPIResponse, AzureMonitorDataSourceInstanceSettings, Location } from '../types';
 
 let replace = () => '';
 
@@ -24,7 +22,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 interface TestContext {
-  instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
+  instanceSettings: AzureMonitorDataSourceInstanceSettings;
   ds: AzureMonitorDatasource;
 }
 
@@ -37,7 +35,7 @@ describe('AzureMonitorDatasource', () => {
       name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
-    } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
+    } as unknown as AzureMonitorDataSourceInstanceSettings;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
@@ -247,6 +245,9 @@ describe('AzureMonitorDatasource', () => {
 
     beforeEach(() => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        if (path.includes('westeurope')) {
+          return Promise.reject('failed to retrieve due to timeout');
+        }
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
           basePath +
@@ -272,6 +273,26 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
           expect(results[1].text).toEqual('microsoft.insights/components');
           expect(results[1].value).toEqual('microsoft.insights/components');
+        });
+    });
+
+    it('should return list of Metric Namespaces even if there is a failure', () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation();
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          true,
+          'westeurope'
+        )
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(0);
+          expect(consoleError).toHaveBeenCalled();
+          expect(consoleError.mock.calls[0][0]).toContain(
+            'Failed to get metric namespaces: failed to retrieve due to timeout'
+          );
         });
     });
   });
@@ -641,6 +662,7 @@ describe('AzureMonitorDatasource', () => {
 
       beforeEach(() => {
         ctx.instanceSettings.jsonData.azureAuthType = 'msi';
+        ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
         ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(response);
       });
 

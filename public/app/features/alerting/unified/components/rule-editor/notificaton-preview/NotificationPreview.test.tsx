@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { AccessControlAction } from 'app/types/accessControl';
@@ -462,5 +462,28 @@ describe('NotificationPreviewByAlertmanager', () => {
       expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
       expect(screen.queryByText(/regexfield/i)).not.toBeInTheDocument();
     });
+  });
+  it('matches regex with flags', async () => {
+    const potentialInstances: Labels[] = [{ regexfield: 'baaaaaaah' }];
+
+    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+      amConfigBuilder
+        .addReceivers((b) => b.withName('email'))
+        .withRoute((routeBuilder) =>
+          routeBuilder
+            .withReceiver('email')
+            .addRoute((rb) => rb.withReceiver('email').addMatcher('regexfield', MatcherOperator.regex, '(?i)BA.*h'))
+        )
+    );
+
+    render(
+      <NotificationPreviewByAlertManager
+        alertManagerSource={grafanaAlertManagerDataSource}
+        potentialInstances={potentialInstances}
+        onlyOneAM={true}
+      />
+    );
+
+    expect(await screen.findByText(/regexfield/i)).toBeInTheDocument();
   });
 });
