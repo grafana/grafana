@@ -10,8 +10,8 @@ weight: 1000
 
 # Configure group attribute sync
 
-Group attribute sync allows you to manage user permissions in Grafana based on group membership in an external system.
-It lets you map groups from your authentication provider to [fixed](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control#fixed-roles) and [custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control#custom-roles) role-based access control roles in Grafana.
+Group attribute sync allows you to manage user permissions in Grafana based on group membership sourced from the user's identity provider (IdP).
+Groups are mapped to [fixed](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control#fixed-roles) and [custom](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control#custom-roles) role-based access control roles in Grafana.
 
 > **Note:** Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
@@ -20,9 +20,9 @@ This feature is behind the `groupAttributeSync` feature toggle.
 You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
 {{% /admonition %}}
 
-When a user logs in, Grafana checks user's external group memberships and the configured group to role mappings, and assigns the corresponding roles to the user.
-If user's group memberships have changed or a new mapping is created, user's roles are updated the next time the user logs in.
-If a group mapping is removed, all users will lose the corresponding mapped role immediately.
+When a user logs in, Grafana checks the user's external group memberships and the configured group to role mappings to assign the corresponding roles to the user.
+If the user's group memberships change or a new mapping is created, the user's role assignments are updated the next time the user logs in.
+If a group mapping is removed, the role assignment to users for the group mapping is revoked immediately.
 
 Role mappings are tied to organizations, so you can have different mappings for different organizations.
 
