@@ -57,21 +57,21 @@ func (m FakeServiceImpl) CreateSession(_ context.Context, _ cloudmigration.Cloud
 	}, nil
 }
 
-func (m FakeServiceImpl) GetSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) GetSession(_ context.Context, _ int64, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) DeleteSession(_ context.Context, _ string) (*cloudmigration.CloudMigrationSession, error) {
+func (m FakeServiceImpl) DeleteSession(_ context.Context, _ int64, _ string) (*cloudmigration.CloudMigrationSession, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
 	return &cloudmigration.CloudMigrationSession{UID: "fake"}, nil
 }
 
-func (m FakeServiceImpl) GetSessionList(_ context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (m FakeServiceImpl) GetSessionList(_ context.Context, _ int64) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
@@ -154,7 +154,7 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	return cloudSnapshots, nil
 }
 
-func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, _ int64, sessionUid string, snapshotUid string) error {
 	if m.ReturnError {
 		return fmt.Errorf("mock error")
 	}

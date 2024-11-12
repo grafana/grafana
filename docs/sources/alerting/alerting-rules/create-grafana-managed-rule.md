@@ -64,16 +64,17 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
-  alert-list:
+  link-alert-rules-to-panels:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/alert-list/
-  time-series:
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
+  data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  compatible-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
 ---
 
 # Configure Grafana-managed alert rules
@@ -92,6 +93,13 @@ If you delete an alert resource created in the UI, you can no longer retrieve it
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 ## Before you begin
+
+If you are using Grafana OSS:
+
+1. Configure your [data sources](ref:data-sources).
+1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+
+If you are using Grafana OSS, Enterprise, or Cloud:
 
 You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
 
@@ -257,13 +265,9 @@ Annotations add metadata to provide more information on the alert in your alert 
    Webpage where you keep your runbook for the alert
 
 1. Optional: Add a custom annotation
-1. Optional: Add a **dashboard and panel link**.
+1. Optional: **Link dashboard and panel**.
 
-   Links alert rules to panels in a dashboard.
-
-   {{% admonition type="note" %}}
-   At the moment, alert rules are only supported in [time series](ref:time-series) and [alert list](ref:alert-list) visualizations.
-   {{% /admonition %}}
+   [Link the alert rule to a panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
 
 1. Click **Save rule**.
 

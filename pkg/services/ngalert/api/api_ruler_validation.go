@@ -313,12 +313,15 @@ func ValidateRuleGroup(
 			uids[rule.UID] = idx
 		}
 
-		var hasPause, isPaused bool
+		var hasPause, isPaused, hasMetadata bool
 		original := ruleGroupConfig.Rules[idx]
 		if alert := original.GrafanaManagedAlert; alert != nil {
 			if alert.IsPaused != nil {
 				isPaused = *alert.IsPaused
 				hasPause = true
+			}
+			if alert.Metadata != nil {
+				hasMetadata = true
 			}
 		}
 
@@ -327,6 +330,7 @@ func ValidateRuleGroup(
 		rule.RuleGroupIndex = idx + 1
 		ruleWithOptionals.AlertRule = *rule
 		ruleWithOptionals.HasPause = hasPause
+		ruleWithOptionals.HasMetadata = hasMetadata
 
 		result = append(result, &ruleWithOptionals)
 	}

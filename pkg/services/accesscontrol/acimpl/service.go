@@ -99,7 +99,7 @@ func ProvideOSSService(
 		log:            log.New("accesscontrol.service"),
 		roles:          accesscontrol.BuildBasicRoleDefinitions(),
 		store:          store,
-		reconciler:     dualwrite.NewZanzanaReconciler(zclient, db, lock),
+		reconciler:     dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock),
 		permRegistry:   permRegistry,
 	}
 
@@ -123,10 +123,6 @@ type Service struct {
 // Run implements accesscontrol.Service.
 func (s *Service) Run(ctx context.Context) error {
 	if s.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
-		if err := s.reconciler.Sync(context.Background()); err != nil {
-			s.log.Error("Failed to synchronise permissions to zanzana ", "err", err)
-		}
-
 		return s.reconciler.Reconcile(ctx)
 	}
 	return nil

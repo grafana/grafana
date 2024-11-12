@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,6 +53,8 @@ type Service struct {
 
 	cancelMutex sync.Mutex
 	cancelFunc  context.CancelFunc
+
+	isSyncSnapshotStatusFromGMSRunning int32
 
 	features      featuremgmt.FeatureToggles
 	gmsClient     gmsclient.Client
@@ -359,10 +362,10 @@ func (s *Service) DeleteToken(ctx context.Context, tokenID string) error {
 	return nil
 }
 
-func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *Service) GetSession(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSession")
 	defer span.End()
-	migration, err := s.store.GetMigrationSessionByUID(ctx, uid)
+	migration, err := s.store.GetMigrationSessionByUID(ctx, orgID, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -370,11 +373,11 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 	return migration, nil
 }
 
-func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
+func (s *Service) GetSessionList(ctx context.Context, orgID int64) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSessionList")
 	defer span.End()
 
-	values, err := s.store.GetCloudMigrationSessionList(ctx)
+	values, err := s.store.GetCloudMigrationSessionList(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving session list from store: %w", err)
 	}
@@ -405,7 +408,7 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 		return nil, cloudmigration.ErrTokenInvalid.Errorf("token could not be decoded") // don't want to leak info here
 	}
 
-	migration := token.ToMigration()
+	migration := token.ToMigration(cmd.OrgID)
 	// validate token against GMS before saving
 	if err := s.ValidateToken(ctx, migration); err != nil {
 		return nil, err
@@ -426,11 +429,11 @@ func (s *Service) CreateSession(ctx context.Context, cmd cloudmigration.CloudMig
 	}, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *Service) DeleteSession(ctx context.Context, orgID int64, sessionUID string) (*cloudmigration.CloudMigrationSession, error) {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.DeleteSession")
 	defer span.End()
 
-	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
+	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, orgID, sessionUID)
 	if err != nil {
 		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
 		return nil, fmt.Errorf("deleting migration from db for session %v: %w", sessionUID, err)
@@ -448,7 +451,7 @@ func (s *Service) CreateSnapshot(ctx context.Context, signedInUser *user.SignedI
 	defer span.End()
 
 	// fetch session for the gms auth token
-	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	session, err := s.store.GetMigrationSessionByUID(ctx, signedInUser.GetOrgID(), sessionUid)
 	if err != nil {
 		return nil, fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
 	}
@@ -535,19 +538,19 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.GetSnapshot")
 	defer span.End()
 
-	sessionUid, snapshotUid := query.SessionUID, query.SnapshotUID
-	snapshot, err := s.store.GetSnapshotByUID(ctx, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+	orgID, sessionUid, snapshotUid := query.OrgID, query.SessionUID, query.SnapshotUID
+	snapshot, err := s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
 	if err != nil {
 		return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 	}
 
-	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	session, err := s.store.GetMigrationSessionByUID(ctx, orgID, sessionUid)
 	if err != nil {
 		return nil, fmt.Errorf("fetching session for uid %s: %w", sessionUid, err)
 	}
 
-	// Ask GMS for snapshot status while the source of truth is in the cloud
-	if snapshot.ShouldQueryGMS() {
+	// FIXME: this function should be a method
+	syncStatus := func(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error) {
 		// Calculate offset based on how many results we currently have responses for
 		pending := snapshot.StatsRollup.CountsByStatus[cloudmigration.ItemStatusPending]
 		snapshotMeta, err := s.gmsClient.GetSnapshotStatus(ctx, *session, *snapshot, snapshot.StatsRollup.Total-pending)
@@ -591,13 +594,76 @@ func (s *Service) GetSnapshot(ctx context.Context, query cloudmigration.GetSnaps
 		}
 
 		// Refresh the snapshot after the update
-		snapshot, err = s.store.GetSnapshotByUID(ctx, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
+		snapshot, err = s.store.GetSnapshotByUID(ctx, orgID, sessionUid, snapshotUid, query.ResultPage, query.ResultLimit)
 		if err != nil {
 			return nil, fmt.Errorf("fetching snapshot for uid %s: %w", snapshotUid, err)
 		}
+		return snapshot, nil
 	}
 
+	// Create a context out the span context to ensure the trace is propagated
+	asyncSyncCtx := trace.ContextWithSpanContext(context.Background(), span.SpanContext())
+	// Sync snapshot results from GMS if the one created after upload is not running (e.g. due to a restart)
+	// and anybody is interested in the status.
+	go s.syncSnapshotStatusFromGMSUntilDone(asyncSyncCtx, session, snapshot, syncStatus)
+
 	return snapshot, nil
+}
+
+// FIXME: this definition should not exist once the function is GetSnapshot is converted to a method
+type syncStatusFunc func(context.Context, *cloudmigration.CloudMigrationSession, *cloudmigration.CloudMigrationSnapshot) (*cloudmigration.CloudMigrationSnapshot, error)
+
+func (s *Service) syncSnapshotStatusFromGMSUntilDone(ctx context.Context, session *cloudmigration.CloudMigrationSession, snapshot *cloudmigration.CloudMigrationSnapshot, syncStatus syncStatusFunc) {
+	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.syncSnapshotStatusFromGMSUntilDone")
+	span.SetAttributes(
+		attribute.String("sessionUID", session.UID),
+		attribute.String("snapshotUID", snapshot.UID),
+	)
+	defer span.End()
+
+	// Ensure only one in-flight sync running
+	if !atomic.CompareAndSwapInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0, 1) {
+		s.log.Info("synchronize snapshot status already running", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+		return
+	}
+	defer atomic.StoreInt32(&s.isSyncSnapshotStatusFromGMSRunning, 0)
+
+	if !snapshot.ShouldQueryGMS() {
+		return
+	}
+
+	s.cancelMutex.Lock()
+	defer func() {
+		s.cancelFunc = nil
+		s.cancelMutex.Unlock()
+	}()
+
+	ctx, s.cancelFunc = context.WithCancel(ctx)
+
+	updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+	if err != nil {
+		s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+	} else {
+		snapshot = updatedSnapshot
+	}
+
+	tick := time.NewTicker(10 * time.Second)
+	defer tick.Stop()
+
+	for snapshot.ShouldQueryGMS() {
+		select {
+		case <-ctx.Done():
+			s.log.Info("cancelling snapshot status polling", "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+			return
+		case <-tick.C:
+			updatedSnapshot, err := syncStatus(ctx, session, snapshot)
+			if err != nil {
+				s.log.Error("error fetching snapshot status from GMS", "error", err, "sessionUID", session.UID, "snapshotUID", snapshot.UID)
+				continue
+			}
+			snapshot = updatedSnapshot
+		}
+	}
 }
 
 var gmsStateToLocalStatus map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus = map[cloudmigration.SnapshotState]cloudmigration.SnapshotStatus{
@@ -619,7 +685,7 @@ func (s *Service) GetSnapshotList(ctx context.Context, query cloudmigration.List
 	return snapshotList, nil
 }
 
-func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {
+func (s *Service) UploadSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.UploadSnapshot",
 		trace.WithAttributes(
 			attribute.String("sessionUid", sessionUid),
@@ -629,7 +695,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	defer span.End()
 
 	// fetch session for the gms auth token
-	session, err := s.store.GetMigrationSessionByUID(ctx, sessionUid)
+	session, err := s.store.GetMigrationSessionByUID(ctx, orgID, sessionUid)
 	if err != nil {
 		return fmt.Errorf("fetching migration session for uid %s: %w", sessionUid, err)
 	}
@@ -637,6 +703,7 @@ func (s *Service) UploadSnapshot(ctx context.Context, sessionUid string, snapsho
 	snapshot, err := s.GetSnapshot(ctx, cloudmigration.GetSnapshotsQuery{
 		SnapshotUID: snapshotUid,
 		SessionUID:  sessionUid,
+		OrgID:       orgID,
 	})
 	if err != nil {
 		return fmt.Errorf("fetching snapshot with uid %s: %w", snapshotUid, err)

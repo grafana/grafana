@@ -3,6 +3,7 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -17,6 +18,7 @@ var (
 
 type Service struct {
 	runner *runner.APIGroupRunner
+	log    log.Logger
 }
 
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
@@ -42,12 +44,14 @@ func ProvideRegistryServiceSink(
 	if err != nil {
 		return nil, err
 	}
-	return &Service{runner: runner}, nil
+	return &Service{runner: runner, log: log.New("app-registry")}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
+	s.log.Debug("initializing app registry")
 	if err := s.runner.Init(ctx); err != nil {
 		return err
 	}
+	s.log.Info("app registry initialized")
 	return s.runner.Run(ctx)
 }
