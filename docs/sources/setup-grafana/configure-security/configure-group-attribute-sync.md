@@ -38,7 +38,6 @@ Ensure you have permission to create and update group mappings. By default, the 
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Users and access**.
-1. Click **Service accounts**.
 1. Click **External group sync**.
 1. Click **New**.
 1. Insert the group identifier for the group that you want to map.
@@ -57,7 +56,6 @@ Ensure you have permission to update group mappings. By default, the organizatio
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Users and access**.
-1. Click **Service accounts**.
 1. Click **External group sync**.
 1. Find the group whose mappings you want to update.
 1. Click on the role picker corresponding to the group and select the roles that you want to map.
@@ -75,7 +73,6 @@ Ensure you have permission to update group mappings. By default, the organizatio
 
 1. Sign in to Grafana and click **Administration** in the left-side menu.
 1. Click **Users and access**.
-1. Click **Service accounts**.
 1. Click **External group sync**.
 1. Find the group whose mappings you want to remove.
 1. Click on the trash bin icon corresponding to the group mappings you want to remove.
