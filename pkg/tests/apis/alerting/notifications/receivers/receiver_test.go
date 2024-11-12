@@ -1511,7 +1511,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 	t.Run("should filter by multiple filters", func(t *testing.T) {
 		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "API"),
+			FieldSelector: fmt.Sprintf("metadata.name=%s,spec.title=%s", recv2.Name, recv2.Spec.Title),
 		})
 		require.NoError(t, err)
 		require.Len(t, list.Items, 1)
@@ -1520,7 +1520,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 	t.Run("should be empty when filter does not match", func(t *testing.T) {
 		list, err := adminClient.List(ctx, v1.ListOptions{
-			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "unknown"),
+			FieldSelector: fmt.Sprintf("metadata.name=%s", "unknown"),
 		})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)

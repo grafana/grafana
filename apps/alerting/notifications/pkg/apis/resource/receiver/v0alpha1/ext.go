@@ -61,10 +61,9 @@ func SelectableFields(obj *Receiver) fields.Set {
 	if obj == nil {
 		return nil
 	}
-	set := fields.Set{
-		"metadata.provenance": obj.GetProvenanceStatus(),
-	}
-	for _, field := range schemaReceiver.SelectableFields() {
+	selectable := Schema().SelectableFields()
+	set := make(fields.Set, len(selectable))
+	for _, field := range selectable {
 		f, err := field.FieldValueFunc(obj)
 		if err != nil {
 			continue
