@@ -486,6 +486,7 @@ require (
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
+	github.com/grafana/grafana/apps/gituisync v0.0.0-20241112152344-e72b6299507f // indirect
 	github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 // indirect
 	github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 // indirect
 	github.com/grafana/sqlds/v4 v4.1.0 // indirect

@@ -4,7 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
 
@@ -28,4 +31,14 @@ func New(cfg app.Config) (app.App, error) {
 	}
 
 	return simpleApp, err
+}
+
+func GetKinds() map[schema.GroupVersion]resource.Kind {
+	gv := schema.GroupVersion{
+		Group:   v0alpha1.ConfigKind().Group(),
+		Version: v0alpha1.ConfigKind().Version(),
+	}
+	return map[schema.GroupVersion]resource.Kind{
+		gv: v0alpha1.ConfigKind(),
+	}
 }
