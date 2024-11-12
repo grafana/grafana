@@ -15,7 +15,7 @@
     "micro-memoize": "^4.1.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-select": "5.8.2",
+    "react-select": "5.8.3",
     "react-use": "17.5.1",
     "rxjs": "7.8.1",
     "tslib": "2.7.0",
