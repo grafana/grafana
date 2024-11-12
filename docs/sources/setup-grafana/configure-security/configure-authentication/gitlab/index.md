@@ -249,11 +249,13 @@ To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../
 
 The table below describes all GitLab OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
 
-Note: If the configuration option requires a [JMESPath](http://jmespath.org/examples.html) expression that includes a colon (:), enclose the entire expression in quotes to prevent parsing errors. For example:
+{{< admonition type="note” >}}
+If the configuration option requires a [JMESPath](http://jmespath.org/examples.html) expression that includes a colon (:), enclose the entire expression in quotes to prevent parsing errors. For example:
 
 ```
 role_attribute_path: "role:view"
 ```
+{{< /admonition >}}
 
 | Setting                      | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Default                              |
 | ---------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
