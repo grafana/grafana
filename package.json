@@ -380,7 +380,7 @@
     "react-router": "5.3.3",
     "react-router-dom": "5.3.3",
     "react-router-dom-v5-compat": "^6.26.1",
-    "react-select": "5.8.2",
+    "react-select": "5.8.3",
     "react-split-pane": "0.1.92",
     "react-table": "7.8.0",
     "react-transition-group": "4.4.5",
