@@ -33,7 +33,7 @@ export type ExtractedRecordingRules = {
  */
 async function fetchRecordingRuleGroups(datasourceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
   const recordingRuleUrl = `api/prometheus/${datasourceSettings.uid}/api/v1/rules`;
-  const recordingRules: BackendSrvRequest = { url: recordingRuleUrl };
+  const recordingRules: BackendSrvRequest = { url: recordingRuleUrl, showErrorAlert: false, showSuccessAlert: false };
   const { data } = await lastValueFrom<
     FetchResponse<{
       data: { groups: RecordingRuleGroup[] };
