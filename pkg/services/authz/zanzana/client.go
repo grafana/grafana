@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
 )
 
 // Client is a wrapper around [openfgav1.OpenFGAServiceClient]
