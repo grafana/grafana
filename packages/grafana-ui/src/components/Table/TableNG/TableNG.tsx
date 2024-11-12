@@ -160,18 +160,19 @@ export function TableNG(props: TableNGProps) {
         name: field.name,
         field,
         // rowHeight: rowHeightNumber,
-        cellClass: (row) => {
-          // eslint-ignore-next-line
-          // const value = row[key];
-          // const displayValue = shallowField.display!(value);
+        // cellClass: (row) => {
+        //   // eslint-ignore-next-line
+        //   // const value = row[key];
+        //   // const displayValue = shallowField.display!(value);
 
-          // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
-          // }
+        //   // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
+        //   // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
+        //   // }
 
-          // css()
-          return 'my-class';
-        },
+        //   // css()
+        //   return 'my-class';
+        // },
+        cellClass: styles.cell,
         renderCell: (props: any) => {
           const { row, rowIdx } = props;
           const value = row[key];
