@@ -608,11 +608,14 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), hs.AvatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrCreate, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, hs.GetSharingOptions)
+
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrCreate, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
+	r.Delete("/api/snapshots/:key", authorize(ac.EvalPermission(dashboards.ActionSnapshotsDelete)), routing.Wrap(hs.DeleteDashboardSnapshot))
+
+	// Snapshots delete for public mode or using the deleteKey
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrDelete, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
 }
 
 func middlewareUserUIDResolver(userService user.Service, paramName string) web.Handler {

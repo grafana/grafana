@@ -606,27 +606,27 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
-	snapshotsCreateRole := ac.RoleRegistration{
+	snapshotsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:snapshots:create",
+			Name:        "fixed:snapshots:creator",
 			DisplayName: "Create",
 			Description: "Create snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionSnapshotsCreate, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionSnapshotsCreate},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	snapshotsDeleteRole := ac.RoleRegistration{
+	snapshotsDeleterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:snapshots:delete",
+			Name:        "fixed:snapshots:deleter",
 			DisplayName: "Delete",
 			Description: "Delete snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionSnapshotsDelete, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionSnapshotsDelete},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
@@ -640,7 +640,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreateRole, snapshotsDeleteRole}
+		snapshotsCreatorRole, snapshotsDeleterRole}
 
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{
