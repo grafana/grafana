@@ -12,7 +12,6 @@ import { config } from '@grafana/runtime';
 import {
   AsyncSelect,
   Button,
-  CustomScrollbar,
   FormatOptionLabelMeta,
   getSelectStyles,
   Icon,
@@ -22,6 +21,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { PrometheusDatasource } from '../../datasource';
 import { truncateResult } from '../../language_utils';
@@ -245,15 +245,9 @@ export function MetricSelect({
         style={{ maxHeight: Math.round(maxHeight * 0.9) }}
         aria-label="Select options menu"
       >
-        <CustomScrollbar
-          scrollRefCallback={innerRef}
-          autoHide={false}
-          autoHeightMax="inherit"
-          hideHorizontalTrack
-          showScrollIndicators
-        >
+        <ScrollContainer ref={innerRef} showScrollIndicators>
           {children}
-        </CustomScrollbar>
+        </ScrollContainer>
         {optionsLoaded && (
           <div className={styles.customMenuFooter}>
             <div>

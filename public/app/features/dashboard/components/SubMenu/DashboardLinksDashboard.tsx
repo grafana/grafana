@@ -6,8 +6,9 @@ import { GrafanaTheme2, ScopedVars } from '@grafana/data';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { selectors } from '@grafana/e2e-selectors';
 import { DashboardLink } from '@grafana/schema';
-import { CustomScrollbar, Dropdown, Icon, Button, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, Button, Menu, useStyles2 } from '@grafana/ui';
 import { ButtonLinkProps, LinkButton } from '@grafana/ui/src/components/Button';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem } from 'app/features/search/types';
 
@@ -36,7 +37,7 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
   return (
     <Menu>
       <div className={styles.dropdown}>
-        <CustomScrollbar>
+        <ScrollContainer maxHeight="inherit">
           {resolvedLinks.map((resolvedLink, index) => {
             return (
               <Menu.Item
@@ -49,7 +50,7 @@ function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
               />
             );
           })}
-        </CustomScrollbar>
+        </ScrollContainer>
       </div>
     </Menu>
   );
@@ -157,7 +158,6 @@ function getStyles(theme: GrafanaTheme2) {
     dropdown: css({
       maxWidth: 'max(30vw, 300px)',
       maxHeight: '70vh',
-      overflowY: 'auto',
     }),
     button: css({
       color: theme.colors.text.primary,

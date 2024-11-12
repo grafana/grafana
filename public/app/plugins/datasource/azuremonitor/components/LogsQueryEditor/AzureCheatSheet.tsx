@@ -3,17 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  Button,
-  Card,
-  Collapse,
-  CustomScrollbar,
-  Field,
-  Input,
-  LoadingPlaceholder,
-  Select,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, Card, Collapse, Field, Input, LoadingPlaceholder, Select, useStyles2 } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
 import {
@@ -171,7 +162,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
               return totalQueries;
             }, 0)}
           </div>
-          <CustomScrollbar showScrollIndicators={true} autoHeightMax="350px">
+          <ScrollContainer showScrollIndicators maxHeight="350px">
             {Object.keys(visibleQueries).map((category: string) => {
               if (visibleQueries[category]!.length) {
                 return (
@@ -186,14 +177,14 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                       return (
                         <Card className={styles.card} key={query.id}>
                           <Card.Heading>{query.displayName}</Card.Heading>
-                          <CustomScrollbar showScrollIndicators={true} autoHeightMax="100px">
+                          <ScrollContainer showScrollIndicators maxHeight="100px">
                             <RawQuery
                               aria-label={`${query.displayName} raw query`}
                               query={query.body}
                               lang={lang}
                               className={styles.rawQuery}
                             />
-                          </CustomScrollbar>
+                          </ScrollContainer>
                           <Card.Actions>
                             <Button
                               size="sm"
@@ -224,7 +215,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
               }
               return;
             })}
-          </CustomScrollbar>
+          </ScrollContainer>
         </div>
       ) : (
         <LoadingPlaceholder text="Loading..." />
