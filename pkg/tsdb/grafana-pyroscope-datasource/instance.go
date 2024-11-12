@@ -32,7 +32,7 @@ type ProfilingClient interface {
 	ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error)
 	LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error)
 	LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error)
-	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, limit *int64, step float64) (*SeriesResponse, error)
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 	GetSpanProfile(ctx context.Context, profileTypeID string, labelSelector string, spanSelector []string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }
