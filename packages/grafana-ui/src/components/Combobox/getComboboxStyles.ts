@@ -18,8 +18,8 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
       zIndex: theme.zIndex.dropdown,
-      overflowY: 'auto',
       position: 'relative',
+      borderRadius: theme.shape.radius.default,
     }),
     menuUlContainer: css({
       label: 'grafana-select-menu-ul-container',
@@ -97,6 +97,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         color: theme.colors.text.primary,
       },
+    }),
+    warningIcon: css({
+      label: 'grafana-select-warning-icon',
+      color: theme.colors.text.secondary,
     }),
   };
 };

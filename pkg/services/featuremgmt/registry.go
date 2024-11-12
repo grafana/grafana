@@ -1087,6 +1087,13 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "logQLScope",
+			Description: "In-development feature that will allow injection of labels into loki queries.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "sqlExpressions",
 			Description:  "Enables using SQL and DuckDB functions as Expressions.",
 			Stage:        FeatureStageExperimental,
@@ -1306,6 +1313,13 @@ var (
 			Expression:  "false", // disabled by default
 		},
 		{
+			Name:         "sqlQuerybuilderFunctionParameters",
+			Description:  "Enables SQL query builder function parameters",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOSSBigTent,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "azureMonitorPrometheusExemplars",
 			Description: "Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars",
 			Stage:       FeatureStagePublicPreview,
@@ -1358,6 +1372,17 @@ var (
 		{
 			Name:              "reloadDashboardsOnParamsChange",
 			Description:       "Enables reload of dashboards on scopes, time range and variables changes",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:              "enableScopesInMetricsExplore",
+			Description:       "Enables the scopes usage in Metrics Explore",
 			FrontendOnly:      false,
 			Stage:             FeatureStageExperimental,
 			Owner:             grafanaDashboardsSquad,
@@ -1479,7 +1504,7 @@ var (
 		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
@@ -1550,6 +1575,12 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "preinstallAutoUpdate",
+			Description: "Enables automatic updates for pre-installed plugins",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "dashboardSchemaV2",
 			Description:  "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
 			Stage:        FeatureStageExperimental,
@@ -1562,6 +1593,33 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "exploreMetricsRelatedLogs",
+			Description:  "Display Related Logs in Explore Metrics",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:            "enableExtensionsAdminPage",
+			Description:     "Enables the extension admin page regardless of development mode",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "zipkinBackendMigration",
+			Description: "Enables querying Zipkin data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
+			Name:        "enableSCIM",
+			Description: "Enables SCIM support for user and group management",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

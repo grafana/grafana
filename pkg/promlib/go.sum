@@ -95,8 +95,8 @@ github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e h1:JKmoR8x90Iww1
 github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
 github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWSiMQ=
-github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3 h1:as4PmrFoYI1byS5JjsgPC7uSGTMh+SgS0ePv6hOyDGU=
-github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3/go.mod h1:lcjGB6SuaZ2o44A9nD6p/tR4QXSPbzViRY520Gy6pTQ=
+github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b h1:x2HCzk29I0o5pRPfqWP/qwhXaPGlcz8pohq5kO1NZoE=
+github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b/go.mod h1:SPLNCARd4xdjCkue0O6hvuoveuS1dGJjDnfxYe405YQ=
 github.com/grafana/grafana-plugin-sdk-go v0.258.0 h1:rWsaD+5wuGUSNr9fFnSwS6t/jcRtAoEJ51pIR9bbPNs=
 github.com/grafana/grafana-plugin-sdk-go v0.258.0/go.mod h1:jN19FbzhAcPTLPIy31X5nvx38rR5eoD/1rASiip0GBY=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=

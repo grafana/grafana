@@ -7,7 +7,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isGrafanaRecordingRule } from '../../utils/rules';
+import { isGrafanaRecordingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -53,9 +53,15 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <DetailsField label="Instances" horizontal={true}>
-        <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
-      </DetailsField>
+      {!(
+        isRecordingRulerRule(rule.rulerRule) ||
+        isRecordingRule(rule.promRule) ||
+        isGrafanaRecordingRule(rule.rulerRule)
+      ) && (
+        <DetailsField label="Instances" horizontal={true}>
+          <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
+        </DetailsField>
+      )}
     </div>
   );
 };

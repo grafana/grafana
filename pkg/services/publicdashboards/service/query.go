@@ -155,15 +155,15 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelID int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
-	queries, ok := queriesByPanel[panelId]
+	queries, ok := queriesByPanel[panelID]
 	if !ok {
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
 
-	ts := buildTimeSettings(dashboard, reqDTO, publicDashboard)
+	ts := buildTimeSettings(dashboard, reqDTO, publicDashboard, panelID)
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
@@ -372,8 +372,8 @@ func sanitizeData(data *simplejson.Json) {
 var NewTimeRange = gtime.NewTimeRange
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
-func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
-	from, to, timezone := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
+func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard, panelID int64) models.TimeSettings {
+	from, to, timezone := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled, panelID)
 
 	timeRange := NewTimeRange(from, to)
 
@@ -394,10 +394,15 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 }
 
 // returns from, to and timezone from the request if the timeSelection is enabled or the dashboard default values
-func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool) (string, string, *time.Location) {
+func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool, panelID int64) (string, string, *time.Location) {
 	from := d.Data.GetPath("time", "from").MustString()
 	to := d.Data.GetPath("time", "to").MustString()
 	dashboardTimezone := d.Data.GetPath("timezone").MustString()
+
+	panelRelativeTime := getPanelRelativeTimeRange(d.Data, panelID)
+	if panelRelativeTime != "" {
+		from = panelRelativeTime
+	}
 
 	// we use the values from the request if the time selection is enabled and the values are valid
 	if timeSelectionEnabled {
@@ -420,4 +425,16 @@ func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashb
 	}
 
 	return from, to, timezone
+}
+
+func getPanelRelativeTimeRange(dashboard *simplejson.Json, panelID int64) string {
+	for _, panelObj := range dashboard.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+
+		if panel.Get("id").MustInt64() == panelID {
+			return panel.Get("timeFrom").MustString()
+		}
+	}
+
+	return ""
 }

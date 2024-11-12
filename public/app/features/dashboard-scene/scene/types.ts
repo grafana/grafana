@@ -92,27 +92,23 @@ export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
  * Abstraction to handle editing of different layout elements (wrappers for VizPanels and other objects)
  * Also useful to when rendering / viewing an element outside it's layout scope
  */
-export interface DashboardLayoutElement extends SceneObject {
+export interface DashboardLayoutItem extends SceneObject {
   /**
    * Marks this object as a layout element
    */
-  isDashboardLayoutElement: true;
+  isDashboardLayoutItem: true;
   /**
    * Return layout elements options (like repeat, repeat direction, etc for the default DashboardGridItem)
    */
   getOptions?(): OptionsPaneItemDescriptor[];
-  /**
-   * Used by panel edit to commit changes
-   */
-  setBody(body: SceneObject): void;
   /**
    * Only implemented by elements that wrap VizPanels
    */
   getVizPanel?(): VizPanel;
 }
 
-export function isDashboardLayoutElement(obj: SceneObject): obj is DashboardLayoutElement {
-  return 'isDashboardLayoutElement' in obj;
+export function isDashboardLayoutItem(obj: SceneObject): obj is DashboardLayoutItem {
+  return 'isDashboardLayoutItem' in obj;
 }
 
 export interface DashboardRepeatsProcessedEventPayload {
