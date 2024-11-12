@@ -242,8 +242,9 @@ func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 	if info == nil {
 		m.SetAnnotation(AnnoKeyBlob, "") // delete
+	} else {
+		m.SetAnnotation(AnnoKeyBlob, info.String())
 	}
-	m.SetAnnotation(AnnoKeyBlob, info.String())
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {

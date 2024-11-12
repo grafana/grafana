@@ -50,7 +50,7 @@ type PluginExtensionConfigBase = {
   /**
    * A short description
    */
-  description: string;
+  description?: string;
 };
 
 export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionConfigBase & {

@@ -1,7 +1,15 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+<<<<<<< HEAD
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+||||||| 05dda7f0a15
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
+=======
+import { SceneObjectState, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
+>>>>>>> b9beb14da006934a48943a0aa7f13e9805e6d8de
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
