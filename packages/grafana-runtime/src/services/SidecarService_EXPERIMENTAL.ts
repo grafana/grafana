@@ -1,5 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 
+import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 
 import { locationService } from './LocationService';
@@ -91,6 +92,8 @@ export class SidecarService_EXPERIMENTAL {
 
     this._activePluginId.next(pluginId);
     this._initialContext.next(context);
+
+    reportInteraction('sidecar_service_open_app', { pluginId });
   }
 
   /**
@@ -107,6 +110,8 @@ export class SidecarService_EXPERIMENTAL {
       this._activePluginId.next(undefined);
       this._initialContext.next(undefined);
     }
+
+    reportInteraction('sidecar_service_close_app', { pluginId });
   }
 
   /**
@@ -130,10 +135,14 @@ export class SidecarService_EXPERIMENTAL {
       return false;
     }
 
-    return !!(
+    const result = !!(
       this._activePluginId.getValue() &&
       (this._activePluginId.getValue() === pluginId || getMainAppPluginId() === pluginId)
     );
+
+    reportInteraction('sidecar_service_is_app_opened', { pluginId, isOpened: result });
+
+    return result;
   }
 }
 
