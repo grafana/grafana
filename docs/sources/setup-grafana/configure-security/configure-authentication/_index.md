@@ -186,7 +186,7 @@ signout_redirect_url =
 
 ### Remote logout
 
-You can logout from other devices by removing login sessions from the bottom of your profile page. If you are
+You can log out from other devices by removing login sessions from the bottom of your profile page. If you are
 a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
 
 ### Protected roles
