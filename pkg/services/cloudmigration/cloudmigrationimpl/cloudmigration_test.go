@@ -2,6 +2,7 @@ package cloudmigrationimpl
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"os"
 	"path/filepath"
@@ -123,10 +124,10 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 
 	cleanupFunc := func() {
 		gmsClientMock.getStatusCalled = 0
-		gmsClientMock.getSnapshotResponse = nil
 		if s.cancelFunc != nil {
 			s.cancelFunc()
 		}
+		gmsClientMock.getSnapshotResponse = nil
 
 		err = s.store.UpdateSnapshot(context.Background(), cloudmigration.UpdateSnapshotCmd{
 			UID:       uid,
@@ -941,6 +942,9 @@ func (m *gmsClientMock) GetSnapshotStatus(_ context.Context, _ cloudmigration.Cl
 	m.mu.Lock()
 	m.getStatusCalled++
 	m.mu.Unlock()
+	if m.getSnapshotResponse == nil {
+		return nil, errors.New("no response set")
+	}
 
 	return m.getSnapshotResponse, nil
 }
