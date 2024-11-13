@@ -14,18 +14,18 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := tracer.Start(ctx, "authzServer.Check")
 	defer span.End()
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.checkTyped(ctx, r, info)
-	}
-	return s.checkGeneric(ctx, r)
-}
-
-func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
 	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
+	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
+		return s.checkTyped(ctx, r, info, storeInf)
+	}
+	return s.checkGeneric(ctx, r, storeInf)
+}
+
+func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo, storeInf *storeInfo) (*authzv1.CheckResponse, error) {
 	relation := common.VerbMapping[r.GetVerb()]
 
 	// 1. check if subject has direct access to resource
@@ -63,12 +63,7 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 }
 
-func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, storeInf *storeInfo) (*authzv1.CheckResponse, error) {
 	relation := common.VerbMapping[r.GetVerb()]
 	// 1. check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
