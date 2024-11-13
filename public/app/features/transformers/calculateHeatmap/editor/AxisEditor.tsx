@@ -1,19 +1,13 @@
 import { useState } from 'react';
 
-import {
-  SelectableValue,
-  StandardEditorProps,
-  VariableOrigin,
-  durationToMilliseconds,
-  isValidDuration,
-  parseDuration,
-} from '@grafana/data';
+import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { HorizontalGroup, Input, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
+import { convertDurationToMilliseconds } from '../utils';
 
 const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   {
@@ -46,22 +40,22 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
   const allowInterval = item.settings?.allowInterval ?? false;
 
   const onValueChange = (bucketValue: string) => {
+    let isValid = true;
     if (!allowInterval) {
-      setInvalid(!numberOrVariableValidator(bucketValue));
+      isValid = numberOrVariableValidator(bucketValue);
       setBucketQtyInvalid(false);
-    } else {
-      const isValidBucketDuration = isValidDuration(bucketValue);
-      const isValidNumberOrVariable = numberOrVariableValidator(bucketValue);
-      const isInvalid = !isValidBucketDuration && !isValidNumberOrVariable;
-      setInvalid(isInvalid);
-
-      if (item.settings.timeRange && mode === HeatmapCalculationMode.Size && !isInvalid && bucketValue !== '') {
-        const xBinIncr = durationToMilliseconds(parseDuration(bucketValue));
+    } else if (bucketValue !== '') {
+      let durationMS = convertDurationToMilliseconds(bucketValue);
+      if (durationMS === undefined) {
+        isValid = false;
+        setBucketQtyInvalid(false);
+      } else if (item.settings.timeRange && mode === HeatmapCalculationMode.Size) {
         const xMin = item.settings.timeRange.from.valueOf();
         const xMax = item.settings.timeRange.to.valueOf();
-        const numBins = Math.round((xMax - xMin) / xBinIncr);
+        const numBins = Math.round((xMax - xMin) / durationMS);
 
         if (numBins > X_BINS_MAX) {
+          isValid = false;
           setBucketQtyInvalid(true);
         } else {
           setBucketQtyInvalid(false);
@@ -69,11 +63,15 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
       } else {
         setBucketQtyInvalid(false);
       }
+    } else {
+      setBucketQtyInvalid(false);
     }
 
+    setInvalid(!isValid);
     onChange({
       ...value,
       value: bucketValue,
+      valid: isValid,
     });
   };
 
@@ -83,10 +81,10 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
   });
 
   const errorMsg = allowInterval
-    ? isInvalid
-      ? 'Value needs to be an duration or a variable'
-      : isBucketQtyInvalid
-        ? 'Value generates too many buckets. Please choose a larger interval.'
+    ? isBucketQtyInvalid
+      ? 'Value generates too many buckets. Please choose a larger interval.'
+      : isInvalid
+        ? 'Value needs to be an duration or a variable'
         : ''
     : 'Value needs to be an integer or a variable';
 

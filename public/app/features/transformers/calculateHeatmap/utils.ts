@@ -1,4 +1,6 @@
-import { guessDecimals, roundDecimals } from '@grafana/data';
+import { durationToMilliseconds, guessDecimals, isValidDuration, parseDuration, roundDecimals } from '@grafana/data';
+
+import { numberOrVariableValidator } from '../utils';
 
 const { abs, pow } = Math;
 
@@ -117,3 +119,27 @@ export const niceTimeIncrs = [
   9 * year,
   10 * year,
 ];
+
+// convert a string to the number of milliseconds. valid inputs are a number, variable, or duration. duration in ms is supported.
+// value out will always be an integer, as ms is the lowest granularity for heatmaps
+export const convertDurationToMilliseconds = (duration: string): number | undefined => {
+  const isValidNumberOrVariable = numberOrVariableValidator(duration); // check if number only. if so, equals number of ms
+  if (isValidNumberOrVariable) {
+    const durationMs = Number.parseInt(duration);
+    return isNaN(durationMs) ? undefined : durationMs;
+  } else {
+    const validDuration = isValidDuration(duration); // check if non-ms duration. If so, convert value to number of ms
+    if (validDuration) {
+      return durationToMilliseconds(parseDuration(duration));
+    } else {
+      const match = duration.match(/(\d+)(.+)/);
+      if (match?.[2].toLowerCase() === 'ms' && match?.[1] !== undefined) {
+        // check if ms duration, if so, match equals number of ms
+        const durationMs = Number.parseInt(match?.[1]);
+        return isNaN(durationMs) ? undefined : durationMs;
+      } else {
+        return undefined;
+      }
+    }
+  }
+};
