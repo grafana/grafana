@@ -1,9 +1,9 @@
-package gituisync
+package provisioning
 
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,37 +16,37 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-var _ builder.APIGroupBuilder = (*GitUISyncAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type GitUISyncAPIBuilder struct{}
+type ProvisioningAPIBuilder struct{}
 
-func NewGitUISyncAPIBuilder() *GitUISyncAPIBuilder {
-	return &GitUISyncAPIBuilder{}
+func NewProvisioningAPIBuilder() *ProvisioningAPIBuilder {
+	return &ProvisioningAPIBuilder{}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-) *GitUISyncAPIBuilder {
+) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewGitUISyncAPIBuilder()
+	builder := NewProvisioningAPIBuilder()
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func (b *GitUISyncAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // default authorizer is fine
 }
 
-func (b *GitUISyncAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return v0alpha1.SchemeGroupVersion
 }
 
-func (b *GitUISyncAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := v0alpha1.AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (b *GitUISyncAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(v0alpha1.SchemeGroupVersion)
 }
 
-func (b *GitUISyncAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 	optsGetter := opts.OptsGetter
 
@@ -77,16 +77,16 @@ func (b *GitUISyncAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 	return nil
 }
 
-func (b *GitUISyncAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *GitUISyncAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	// TODO: Do we need any?
 	return nil
 }
 
-func (b *GitUISyncAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana Git UI Sync"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"

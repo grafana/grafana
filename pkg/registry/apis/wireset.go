@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
-	"github.com/grafana/grafana/pkg/registry/apis/gituisync"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
@@ -34,9 +34,9 @@ var WireSet = wire.NewSet(
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
-	gituisync.RegisterAPIService,
 	iam.RegisterAPIService,
 	peakq.RegisterAPIService,
+	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	scope.RegisterAPIService,

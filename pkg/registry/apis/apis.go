@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
-	"github.com/grafana/grafana/pkg/registry/apis/gituisync"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
@@ -26,7 +26,6 @@ func ProvideRegistryServiceSink(
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
-	_ *gituisync.GitUISyncAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
@@ -34,6 +33,7 @@ func ProvideRegistryServiceSink(
 	_ *notifications.NotificationsAPIBuilder,
 	_ *search.SearchAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
+	_ *provisioning.ProvisioningAPIBuilder,
 ) *Service {
 	return &Service{}
 }

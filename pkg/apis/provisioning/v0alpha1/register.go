@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	GROUP      = "gituisync.grafana.app"
+	GROUP      = "provisioning.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
@@ -25,6 +25,7 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
 			// TODO: Add more here when I figure out the model...
+			// I think this is just the table you get in `kubectl get`. It shouldn't deal with anything around storage.
 		},
 		Reader: func(obj any) ([]interface{}, error) {
 			m, ok := obj.(*Repository)

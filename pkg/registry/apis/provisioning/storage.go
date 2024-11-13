@@ -1,9 +1,9 @@
-package gituisync
+package provisioning
 
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"k8s.io/apimachinery/pkg/fields"
