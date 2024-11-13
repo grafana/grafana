@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -160,15 +159,7 @@ func ProvideService(
 			return nil, fmt.Errorf("creating http client for AuthApi: %w", err)
 		}
 		// the api token is the same as for gcom
-
-		// TODO remove this, just for testing
-		s.authApiService = authapi.New(authapi.Config{ApiURL: strings.ReplaceAll(
-			cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").MustString("not_found"),
-			"/v1/sign-access-token",
-			""),
-			Token: cfg.CloudMigration.GcomAPIToken},
-			httpClientAuthApi)
-		//s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
+		s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{}
