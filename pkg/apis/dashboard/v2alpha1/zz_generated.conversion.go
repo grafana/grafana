@@ -11,7 +11,8 @@ import (
 	url "net/url"
 	unsafe "unsafe"
 
-	v0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	v0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -159,6 +160,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddConversionFunc((*v0alpha1.Unstructured)(nil), (*DashboardSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v0alpha1_Unstructured_To_v2alpha1_DashboardSpec(a.(*v0alpha1.Unstructured), b.(*DashboardSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*DashboardSpec)(nil), (*v0alpha1.Unstructured)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v2alpha1_DashboardSpec_To_v0alpha1_Unstructured(a.(*DashboardSpec), b.(*v0alpha1.Unstructured), scope)
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -218,7 +229,9 @@ func Convert_dashboard_AnnotationPermission_To_v2alpha1_AnnotationPermission(in 
 
 func autoConvert_v2alpha1_Dashboard_To_dashboard_Dashboard(in *Dashboard, out *dashboard.Dashboard, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
+	if err := Convert_v2alpha1_DashboardSpec_To_v0alpha1_Unstructured(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -229,7 +242,9 @@ func Convert_v2alpha1_Dashboard_To_dashboard_Dashboard(in *Dashboard, out *dashb
 
 func autoConvert_dashboard_Dashboard_To_v2alpha1_Dashboard(in *dashboard.Dashboard, out *Dashboard, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
-	out.Spec = in.Spec
+	if err := Convert_v0alpha1_Unstructured_To_v2alpha1_DashboardSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -274,7 +289,17 @@ func Convert_dashboard_DashboardAccess_To_v2alpha1_DashboardAccess(in *dashboard
 
 func autoConvert_v2alpha1_DashboardList_To_dashboard_DashboardList(in *DashboardList, out *dashboard.DashboardList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]dashboard.Dashboard)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]dashboard.Dashboard, len(*in))
+		for i := range *in {
+			if err := Convert_v2alpha1_Dashboard_To_dashboard_Dashboard(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -285,7 +310,17 @@ func Convert_v2alpha1_DashboardList_To_dashboard_DashboardList(in *DashboardList
 
 func autoConvert_dashboard_DashboardList_To_v2alpha1_DashboardList(in *dashboard.DashboardList, out *DashboardList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]Dashboard)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]Dashboard, len(*in))
+		for i := range *in {
+			if err := Convert_dashboard_Dashboard_To_v2alpha1_Dashboard(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -431,8 +466,8 @@ func autoConvert_v2alpha1_LibraryPanelSpec_To_dashboard_LibraryPanelSpec(in *Lib
 	out.Description = in.Description
 	out.Options = in.Options
 	out.FieldConfig = in.FieldConfig
-	out.Datasource = (*v0alpha1.DataSourceRef)(unsafe.Pointer(in.Datasource))
-	out.Targets = *(*[]v0alpha1.DataQuery)(unsafe.Pointer(&in.Targets))
+	out.Datasource = (*datav0alpha1.DataSourceRef)(unsafe.Pointer(in.Datasource))
+	out.Targets = *(*[]datav0alpha1.DataQuery)(unsafe.Pointer(&in.Targets))
 	return nil
 }
 
@@ -448,8 +483,8 @@ func autoConvert_dashboard_LibraryPanelSpec_To_v2alpha1_LibraryPanelSpec(in *das
 	out.Description = in.Description
 	out.Options = in.Options
 	out.FieldConfig = in.FieldConfig
-	out.Datasource = (*v0alpha1.DataSourceRef)(unsafe.Pointer(in.Datasource))
-	out.Targets = *(*[]v0alpha1.DataQuery)(unsafe.Pointer(&in.Targets))
+	out.Datasource = (*datav0alpha1.DataSourceRef)(unsafe.Pointer(in.Datasource))
+	out.Targets = *(*[]datav0alpha1.DataQuery)(unsafe.Pointer(&in.Targets))
 	return nil
 }
 

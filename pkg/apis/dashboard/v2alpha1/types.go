@@ -2,6 +2,7 @@ package v2alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	conversion "k8s.io/apimachinery/pkg/conversion"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -16,7 +17,12 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec common.Unstructured `json:"spec"`
+	Spec DashboardSpec `json:"spec"`
+}
+
+type DashboardSpec struct {
+	Title               string `json:"title"`
+	common.Unstructured `json:",inline"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -158,4 +164,23 @@ type AnnotationActions struct {
 	CanAdd    bool `json:"canAdd"`
 	CanEdit   bool `json:"canEdit"`
 	CanDelete bool `json:"canDelete"`
+}
+
+func Convert_v0alpha1_Unstructured_To_v2alpha1_DashboardSpec(in *common.Unstructured, out *DashboardSpec, s conversion.Scope) error {
+	out.Unstructured = *in
+
+	t := in.Object["title"]
+	title, ok := t.(string)
+	if !ok {
+		// do not force the title field
+		return nil
+	}
+	out.Title = title
+
+	return nil
+}
+
+func Convert_v2alpha1_DashboardSpec_To_v0alpha1_Unstructured(in *DashboardSpec, out *common.Unstructured, s conversion.Scope) error {
+	out = &in.Unstructured
+	return nil
 }
