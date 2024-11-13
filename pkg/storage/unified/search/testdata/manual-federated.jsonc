@@ -1,0 +1,98 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 4 Fields by 5 Rows
+//  +----------------+----------------+-------------------------+---------------------+
+//  | Name: id       | Name: title    | Name: tags              | Name: labels.region |
+//  | Labels:        | Labels:        | Labels:                 | Labels:             |
+//  | Type: []string | Type: []string | Type: []json.RawMessage | Type: []*string     |
+//  +----------------+----------------+-------------------------+---------------------+
+//  | folder/xxx     | test xxx       |                         | null                |
+//  | folder/yyy     | test yyy       |                         | west                |
+//  | dash/aaa       | test aaa       | ["aa","bb"]             | null                |
+//  | dash/bbb       | test bbb       | ["aa"]                  | east                |
+//  | dash/ccc       | test ccc       | ["aa"]                  | west                |
+//  +----------------+----------------+-------------------------+---------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "labels.region",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "folder/xxx",
+            "folder/yyy",
+            "dash/aaa",
+            "dash/bbb",
+            "dash/ccc"
+          ],
+          [
+            "test xxx",
+            "test yyy",
+            "test aaa",
+            "test bbb",
+            "test ccc"
+          ],
+          [
+            null,
+            null,
+            [
+              "aa",
+              "bb"
+            ],
+            [
+              "aa"
+            ],
+            [
+              "aa"
+            ]
+          ],
+          [
+            null,
+            "west",
+            null,
+            "east",
+            "west"
+          ]
+        ]
+      }
+    }
+  ]
+}

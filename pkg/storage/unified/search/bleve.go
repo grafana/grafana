@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"path/filepath"
+	"reflect"
 	"sync"
 
 	"github.com/blevesearch/bleve/v2"
@@ -277,6 +278,15 @@ func (b *bleveIndex) Search(
 		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
+	// Add sort requirements
+	for _, sort := range req.SortBy {
+		v := sort.Field
+		if !sort.Asc {
+			v = "-" + v // the bleve parser uses +/- to decide order
+		}
+		searchrequest.Sort = append(searchrequest.Sort, search.ParseSearchSortString(v))
+	}
+
 	res, err := index.Search(searchrequest)
 	if err != nil {
 		return nil, err
@@ -379,11 +389,20 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 }
 
 func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*data.Frame, error) {
+	// HACK, for now...
+	// it looks like array with one value is a string,
+	// but an array with two is an array.  So discovering the type
+	// using `data.FieldTypeFor(v)` is not a great long term solution
+	forceJSONArray := map[string]bool{
+		"tags": true,
+	}
+
 	size := hits.Len()
 	frame := data.NewFrame("")
 	for _, fname := range selectFields {
 		var field *data.Field
 		isJSON := false // for arrays
+		isForceJSONArray := forceJSONArray[fname]
 
 		for row, hit := range hits {
 			v, ok := hit.Fields[fname]
@@ -391,7 +410,7 @@ func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, exp
 				if field == nil {
 					// Add a field if any value exists
 					ftype := data.FieldTypeFor(v)
-					if ftype == data.FieldTypeUnknown {
+					if ftype == data.FieldTypeUnknown || isForceJSONArray {
 						ftype = data.FieldTypeJSON
 						isJSON = true
 					} else if row > 0 {
@@ -404,6 +423,13 @@ func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, exp
 
 				// Use json to support multi-valued fields
 				if isJSON {
+					if isForceJSONArray {
+						// currently single values are not arrays
+						k := reflect.TypeOf(v).Kind()
+						if !(k == reflect.Array || k == reflect.Slice) {
+							v = []any{v}
+						}
+					}
 					jj, _ := json.Marshal(v)
 					field.SetConcrete(row, json.RawMessage(jj))
 				} else {
