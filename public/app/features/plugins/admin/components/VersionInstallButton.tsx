@@ -7,9 +7,9 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
 import { Version } from '../types';
-import { isPreinstalledPlugin } from '../helpers';
 
 const PLUGINS_VERSION_PAGE_INSTALL_INTERACTION_EVENT_NAME = 'plugins_upgrade_clicked';
 const PLUGINS_VERSION_PAGE_CHANGE_INTERACTION_EVENT_NAME = 'plugins_downgrade_clicked';
