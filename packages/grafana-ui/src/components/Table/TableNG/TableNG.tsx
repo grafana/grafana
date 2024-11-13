@@ -211,8 +211,8 @@ export function TableNG(props: TableNGProps) {
               theme={theme}
               timeRange={timeRange}
               height={defaultRowHeight}
-              rowIdx={rowIdx}
               justifyContent={justifyColumnContent}
+              rowIdx={rowIdx}
             />
           );
         },
@@ -442,7 +442,7 @@ function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
 function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
   // Let's render row level things here!
   // i.e. we can look at row styles and such here
-  return <Row {...props} />;
+  return <Row key={key} {...props} />;
 }
 
 type Comparator = (a: any, b: any) => number;
