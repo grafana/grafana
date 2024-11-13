@@ -72,7 +72,7 @@ export const AlertRuleNameAndMetric = () => {
                 pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
               })}
               aria-label="metric"
-              placeholder={`Give your metric a name`}
+              placeholder={`Give the name of the new recorded metric`}
             />
           </Field>
         )}
