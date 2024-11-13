@@ -15,7 +15,7 @@ import { Combobox } from './Combobox';
 
 - Use the async functionality, when all items are only loaded on the initial load
 - Use when fewer than 4 items are needed, as a `RadioButtonGroup` may be more suitable (not for inline use cases)
-- Use this component if you need custom components as options
+- Use this component if you need custom option styling
 
 ## ComboboxOption
 
@@ -37,7 +37,7 @@ For inline usage, such as in query editors, it may be useful to size the input b
 
 ## Async Usage
 
-The `options` prop can accept and async function:
+The `options` prop can accept an async function:
 
 - When the menu opens, the `options` function is called with `''`, to load all options.
 - When the user types, the `options` function is called with the current input value.
@@ -69,7 +69,7 @@ beforeAll(() => {
 
 ### Selecting an option
 
-To select an option, you can any `*ByRole` methods, as Combobox has proper roles for accessibility.
+To select an option, you can use any `*ByRole` methods, as Combobox has proper roles for accessibility.
 
 #### Selecting option by clicking
 
