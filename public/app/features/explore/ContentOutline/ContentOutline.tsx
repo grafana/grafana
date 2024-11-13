@@ -4,7 +4,8 @@ import { useToggle, useScroll } from 'react-use';
 
 import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, PanelContainer, CustomScrollbar } from '@grafana/ui';
+import { useStyles2, PanelContainer } from '@grafana/ui';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
@@ -154,7 +155,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      <CustomScrollbar>
+      <ScrollContainer>
         <div className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
@@ -235,7 +236,7 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
             );
           })}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     </PanelContainer>
   );
 }

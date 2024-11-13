@@ -435,12 +435,16 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			ac.EvalPermission(ac.ActionAlertingReceiversRead),
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 		)
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
+			Text: "Contact points", SubTitle: "Choose how to notify your contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
 	}

@@ -37,7 +37,12 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   ignoreUrls: RegExp[];
 }
 
-const TRACKING_URLS = [/.*.google-analytics.com*.*/, /.*.googletagmanager.com*.*/, /frontend-metrics/];
+const TRACKING_URLS = [
+  /.*.google-analytics.com*.*/,
+  /.*.googletagmanager.com*.*/,
+  /frontend-metrics/,
+  /\/collect(?:\/[\w]*)?$/,
+];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
@@ -48,8 +53,9 @@ export class GrafanaJavascriptAgentBackend
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
     const instrumentations: Instrumentation[] = [];
+    const ignoreUrls = [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls];
 
-    const transports: BaseTransport[] = [new EchoSrvTransport()];
+    const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
     // If in cross origin iframe, default to writing to instance logging endpoint
     if (options.customEndpoint && !isCrossOriginIframe()) {
@@ -89,8 +95,9 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
+        'Failed sending payload to the receiver',
       ],
-      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls],
+      ignoreUrls,
       sessionTracking: {
         persistent: true,
       },
