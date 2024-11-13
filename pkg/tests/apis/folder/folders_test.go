@@ -934,14 +934,12 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	}
 
 	type testCase struct {
-		description            string
-		expectedCode           int
-		expectedMessage        string
-		expectedFolderSvcError error
-		params                 string
-		createFolders          []string
-		expectedOutput         []dtos.FolderSearchHit
-		permissions            []resourcepermissions.SetResourcePermissionCommand
+		description    string
+		expectedCode   int
+		params         string
+		createFolders  []string
+		expectedOutput []dtos.FolderSearchHit
+		permissions    []resourcepermissions.SetResourcePermissionCommand
 	}
 
 	folderCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
