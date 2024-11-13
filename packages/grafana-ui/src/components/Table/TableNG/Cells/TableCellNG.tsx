@@ -41,7 +41,7 @@ export function TableCellNG(props: any) {
       break;
     case TableCellDisplayMode.Auto:
     default:
-      cell = <AutoCell value={value} field={field} theme={theme} height={height} justifyContent={justifyContent} />;
+      cell = <AutoCell value={value} field={field} theme={theme} justifyContent={justifyContent} />;
   }
 
   return cell;

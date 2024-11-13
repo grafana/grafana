@@ -6,5 +6,5 @@ export default function AutoCell({ value, field, height, justifyContent }: CellN
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
 
-  return <div style={{ display: 'flex', justifyContent, height: `${height}px` }}>{formattedValue}</div>;
+  return <div style={{ display: 'flex', justifyContent }}>{formattedValue}</div>;
 }
