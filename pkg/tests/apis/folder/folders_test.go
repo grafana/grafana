@@ -926,3 +926,136 @@ func testDescription(description string, expectedErr error) string {
 		return description
 	}
 }
+
+// TestFoldersGetAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFolderGetAPIEndpoint
+func TestFoldersGetAPIEndpointK8S(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		description            string
+		expectedCode           int
+		expectedMessage        string
+		expectedFolderSvcError error
+		params                 string
+		createFolders          []string
+		expectedOutput         []dtos.FolderSearchHit
+		permissions            []resourcepermissions.SetResourcePermissionCommand
+	}
+
+	folderCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:create"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+
+	folder1 := "{ \"uid\": \"foo\", \"title\": \"Folder 1\"}"
+	folder2 := "{ \"uid\": \"bar\", \"title\": \"Folder 2\", \"parentUid\": \"foo\"}"
+	folder3 := "{ \"uid\": \"qux\", \"title\": \"Folder 3\"}"
+
+	tcs := []testCase{
+		{
+			description: "listing folders at root level succeeds",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			expectedCode: http.StatusOK,
+			expectedOutput: []dtos.FolderSearchHit{
+				dtos.FolderSearchHit{UID: "foo", Title: "Folder 1"},
+				dtos.FolderSearchHit{UID: "qux", Title: "Folder 3"},
+			},
+			permissions: folderCreatePermission,
+		},
+		{
+			description: "listing subfolders succeeds",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:       "?parentUid=foo",
+			expectedCode: http.StatusOK,
+			expectedOutput: []dtos.FolderSearchHit{
+				dtos.FolderSearchHit{UID: "bar", Title: "Folder 2", ParentUID: "foo"},
+			},
+			permissions: folderCreatePermission,
+		},
+	}
+
+	// test on all dualwriter modes
+	for mode := 1; mode <= 4; mode++ {
+		for _, tc := range tcs {
+			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
+				modeDw := grafanarest.DualWriterMode(mode)
+
+				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:    true,
+					DisableAnonymous:     true,
+					APIServerStorageType: "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						folderv0alpha1.RESOURCEGROUP: {
+							DualWriterMode: modeDw,
+						},
+					},
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+						featuremgmt.FlagNestedFolders,
+						featuremgmt.FlagKubernetesFolders,
+					},
+				})
+
+				userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+
+				for _, f := range tc.createFolders {
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User: userTest,
+						GVR:  gvr,
+					})
+					create2 := apis.DoRequest(helper, apis.RequestParams{
+						User:   client.Args.User,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(f),
+					}, &folder.Folder{})
+					require.NotEmpty(t, create2.Response)
+					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
+				}
+
+				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+				login := userTest.Identity.GetLogin()
+				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
+
+				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
+					"%s%s",
+					baseUrl,
+					fmt.Sprintf("/api/folders%s", tc.params),
+				), nil)
+				require.NoError(t, err)
+				req.Header.Set("Content-Type", "application/json")
+
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+				list := []dtos.FolderSearchHit{}
+				err = json.NewDecoder(resp.Body).Decode(&list)
+				require.NoError(t, err)
+				require.NoError(t, resp.Body.Close())
+
+				// ignore IDs
+				for i := 0; i < len(list); i++ {
+					list[i].ID = 0
+				}
+
+				require.ElementsMatch(t, tc.expectedOutput, list)
+			})
+		}
+	}
+}
