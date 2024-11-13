@@ -58,8 +58,9 @@ func (s *Server) batchCheckItem(ctx context.Context, storeInf *storeInfo, subjec
 	var err error
 	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
 		res, err = s.checkTyped(ctx, req, info, storeInf)
+	} else {
+		res, err = s.checkGeneric(ctx, req, storeInf)
 	}
-	res, err = s.checkGeneric(ctx, req, storeInf)
 	if err != nil {
 		return false, err
 	}
