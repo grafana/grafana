@@ -321,5 +321,7 @@ func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPa
 		}
 	}
 
+	// TODO: get list of datasource ids marked to be deleted
+
 	return dsCachingConfigs, nil
 }
