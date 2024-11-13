@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// ConfigMetadata defines model for ConfigMetadata.
-type ConfigMetadata struct {
+// NoOpMetadata defines model for NoOpMetadata.
+type NoOpMetadata struct {
 	CreatedBy         string            `json:"createdBy"`
 	CreationTimestamp time.Time         `json:"creationTimestamp"`
 	DeletionTimestamp *time.Time        `json:"deletionTimestamp,omitempty"`
@@ -21,7 +21,7 @@ type ConfigMetadata struct {
 // _kubeObjectMetadata is metadata found in a kubernetes object's metadata field.
 // It is not exhaustive and only includes fields which may be relevant to a kind's implementation,
 // As it is also intended to be generic enough to function with any API Server.
-type ConfigKubeObjectMetadata struct {
+type NoOpKubeObjectMetadata struct {
 	CreationTimestamp time.Time         `json:"creationTimestamp"`
 	DeletionTimestamp *time.Time        `json:"deletionTimestamp,omitempty"`
 	Finalizers        []string          `json:"finalizers"`

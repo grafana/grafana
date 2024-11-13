@@ -12,16 +12,16 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Config":                    schema_pkg_apis_gituisync_v0alpha1_Config(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigList":                schema_pkg_apis_gituisync_v0alpha1_ConfigList(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigOperatorState":       schema_pkg_apis_gituisync_v0alpha1_ConfigOperatorState(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigSpec":                schema_pkg_apis_gituisync_v0alpha1_ConfigSpec(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigStatus":              schema_pkg_apis_gituisync_v0alpha1_ConfigStatus(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigstatusOperatorState": schema_pkg_apis_gituisync_v0alpha1_ConfigstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp":                    schema_pkg_apis_gituisync_v0alpha1_NoOp(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpList":                schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpOperatorState":       schema_pkg_apis_gituisync_v0alpha1_NoOpOperatorState(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec":                schema_pkg_apis_gituisync_v0alpha1_NoOpSpec(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus":              schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState": schema_pkg_apis_gituisync_v0alpha1_NoOpstatusOperatorState(ref),
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_Config(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOp(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -50,13 +50,13 @@ func schema_pkg_apis_gituisync_v0alpha1_Config(ref common.ReferenceCallback) com
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigSpec"),
+							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus"),
 						},
 					},
 				},
@@ -64,11 +64,11 @@ func schema_pkg_apis_gituisync_v0alpha1_Config(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigSpec", "github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec", "github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_ConfigList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -101,7 +101,7 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigList(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Config"),
+										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp"),
 									},
 								},
 							},
@@ -112,15 +112,15 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Config", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_ConfigOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOpOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ConfigOperatorState defines model for ConfigOperatorState.",
+				Description: "NoOpOperatorState defines model for NoOpOperatorState.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"descriptiveState": {
@@ -168,11 +168,11 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigOperatorState(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_ConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOpSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ConfigSpec defines model for ConfigSpec.",
+				Description: "NoOpSpec defines model for NoOpSpec.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"noop_value_here": {
@@ -189,11 +189,11 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigSpec(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_ConfigStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ConfigStatus defines model for ConfigStatus.",
+				Description: "NoOpStatus defines model for NoOpStatus.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"additionalFields": {
@@ -220,7 +220,7 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigStatus(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState"),
 									},
 								},
 							},
@@ -230,15 +230,15 @@ func schema_pkg_apis_gituisync_v0alpha1_ConfigStatus(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.ConfigstatusOperatorState"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_ConfigstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_NoOpstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ConfigstatusOperatorState defines model for Configstatus.#OperatorState.",
+				Description: "NoOpstatusOperatorState defines model for NoOpstatus.#OperatorState.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"descriptiveState": {

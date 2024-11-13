@@ -22,7 +22,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind:    v0alpha1.ConfigKind(),
+				Kind:    v0alpha1.NoOpKind(),
 				Watcher: &simple.Watcher{},
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, ar *app.AdmissionRequest) (*app.MutatingResponse, error) {
@@ -52,11 +52,16 @@ func New(cfg app.Config) (app.App, error) {
 }
 
 func GetKinds() map[schema.GroupVersion]resource.Kind {
-	gv := schema.GroupVersion{
-		Group:   v0alpha1.ConfigKind().Group(),
-		Version: v0alpha1.ConfigKind().Version(),
+	kinds := []resource.Kind{
+		v0alpha1.NoOpKind(),
 	}
-	return map[schema.GroupVersion]resource.Kind{
-		gv: v0alpha1.ConfigKind(),
+	kindMap := make(map[schema.GroupVersion]resource.Kind, len(kinds))
+	for _, kind := range kinds {
+		gv := schema.GroupVersion{
+			Group:   kind.Group(),
+			Version: kind.Version(),
+		}
+		kindMap[gv] = kind
 	}
+	return kindMap
 }

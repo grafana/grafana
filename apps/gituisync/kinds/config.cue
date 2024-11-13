@@ -1,8 +1,8 @@
 package core
 
 externalName: {
-	kind: "Config"
-	pluralName: "Configs"
+	kind: "NoOp"
+	pluralName: "NoOps"
 	group: "gituisync"
 	apiResource: {
 		groupOverride: "gituisync.grafana.app"

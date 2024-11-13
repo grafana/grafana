@@ -1,22 +1,22 @@
 package v0alpha1
 
-// Defines values for ConfigOperatorStateState.
+// Defines values for NoOpOperatorStateState.
 const (
-	ConfigOperatorStateStateFailed     ConfigOperatorStateState = "failed"
-	ConfigOperatorStateStateInProgress ConfigOperatorStateState = "in_progress"
-	ConfigOperatorStateStateSuccess    ConfigOperatorStateState = "success"
+	NoOpOperatorStateStateFailed     NoOpOperatorStateState = "failed"
+	NoOpOperatorStateStateInProgress NoOpOperatorStateState = "in_progress"
+	NoOpOperatorStateStateSuccess    NoOpOperatorStateState = "success"
 )
 
-// Defines values for ConfigstatusOperatorStateState.
+// Defines values for NoOpstatusOperatorStateState.
 const (
-	ConfigstatusOperatorStateStateFailed     ConfigstatusOperatorStateState = "failed"
-	ConfigstatusOperatorStateStateInProgress ConfigstatusOperatorStateState = "in_progress"
-	ConfigstatusOperatorStateStateSuccess    ConfigstatusOperatorStateState = "success"
+	NoOpstatusOperatorStateStateFailed     NoOpstatusOperatorStateState = "failed"
+	NoOpstatusOperatorStateStateInProgress NoOpstatusOperatorStateState = "in_progress"
+	NoOpstatusOperatorStateStateSuccess    NoOpstatusOperatorStateState = "success"
 )
 
-// ConfigOperatorState defines model for ConfigOperatorState.
+// NoOpOperatorState defines model for NoOpOperatorState.
 // +k8s:openapi-gen=true
-type ConfigOperatorState struct {
+type NoOpOperatorState struct {
 	// descriptiveState is an optional more descriptive state field which has no requirements on format
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 
@@ -28,28 +28,28 @@ type ConfigOperatorState struct {
 
 	// state describes the state of the lastEvaluation.
 	// It is limited to three possible states for machine evaluation.
-	State ConfigOperatorStateState `json:"state"`
+	State NoOpOperatorStateState `json:"state"`
 }
 
-// ConfigOperatorStateState state describes the state of the lastEvaluation.
+// NoOpOperatorStateState state describes the state of the lastEvaluation.
 // It is limited to three possible states for machine evaluation.
 // +k8s:openapi-gen=true
-type ConfigOperatorStateState string
+type NoOpOperatorStateState string
 
-// ConfigStatus defines model for ConfigStatus.
+// NoOpStatus defines model for NoOpStatus.
 // +k8s:openapi-gen=true
-type ConfigStatus struct {
+type NoOpStatus struct {
 	// additionalFields is reserved for future use
 	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
 
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
-	OperatorStates map[string]ConfigstatusOperatorState `json:"operatorStates,omitempty"`
+	OperatorStates map[string]NoOpstatusOperatorState `json:"operatorStates,omitempty"`
 }
 
-// ConfigstatusOperatorState defines model for Configstatus.#OperatorState.
+// NoOpstatusOperatorState defines model for NoOpstatus.#OperatorState.
 // +k8s:openapi-gen=true
-type ConfigstatusOperatorState struct {
+type NoOpstatusOperatorState struct {
 	// descriptiveState is an optional more descriptive state field which has no requirements on format
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 
@@ -61,10 +61,10 @@ type ConfigstatusOperatorState struct {
 
 	// state describes the state of the lastEvaluation.
 	// It is limited to three possible states for machine evaluation.
-	State ConfigstatusOperatorStateState `json:"state"`
+	State NoOpstatusOperatorStateState `json:"state"`
 }
 
-// ConfigstatusOperatorStateState state describes the state of the lastEvaluation.
+// NoOpstatusOperatorStateState state describes the state of the lastEvaluation.
 // It is limited to three possible states for machine evaluation.
 // +k8s:openapi-gen=true
-type ConfigstatusOperatorStateState string
+type NoOpstatusOperatorStateState string
