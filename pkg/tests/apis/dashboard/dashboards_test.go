@@ -112,6 +112,9 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 }
 
 func TestIntegrationDashboardsApp(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	t.Run("with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
