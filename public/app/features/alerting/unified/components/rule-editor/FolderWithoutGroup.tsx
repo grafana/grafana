@@ -98,9 +98,6 @@ export function FolderWithoutGroup() {
             </Stack>
           </Field>
         }
-        {isCreatingFolder && (
-          <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
-        )}
       </Stack>
 
       {isCreatingFolder && (
