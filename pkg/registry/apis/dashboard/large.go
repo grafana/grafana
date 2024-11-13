@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -11,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func NewDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
+func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLargeObjectSupport {
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboard.DashboardResourceInfo.GroupResource(),
 
@@ -22,9 +21,9 @@ func NewDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
 		MaxByteSize: 10 * 1024 * 1024,
 
 		ReduceSpec: func(obj runtime.Object) error {
-			dash, ok := obj.(*dashboard.Dashboard)
-			if !ok {
-				return fmt.Errorf("expected dashboard")
+			dash, err := ToInternalDashboard(scheme, obj)
+			if err != nil {
+				return err
 			}
 			old := dash.Spec.Object
 			spec := commonV0.Unstructured{Object: make(map[string]any)}
@@ -42,9 +41,9 @@ func NewDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
 		},
 
 		RebuildSpec: func(obj runtime.Object, blob []byte) error {
-			dash, ok := obj.(*dashboard.Dashboard)
-			if !ok {
-				return fmt.Errorf("expected dashboard")
+			dash, err := ToInternalDashboard(scheme, obj)
+			if err != nil {
+				return err
 			}
 			return json.Unmarshal(blob, &dash.Spec)
 		},

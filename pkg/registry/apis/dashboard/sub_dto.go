@@ -107,8 +107,8 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	dash := &dashboard.Dashboard{}
-	if err := r.scheme.Convert(rawobj, dash, nil); err != nil {
+	dash, err := ToInternalDashboard(r.scheme, rawobj)
+	if err != nil {
 		return nil, err
 	}
 

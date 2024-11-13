@@ -115,7 +115,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
 	if b.legacy.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = dashboard.NewDashboardLargeObjectSupport()
+		largeObjects = dashboard.NewDashboardLargeObjectSupport(scheme)
 		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
 			LargeObjectSupport: largeObjects,
 		})
