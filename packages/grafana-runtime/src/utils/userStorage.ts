@@ -33,42 +33,41 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
   }
 }
 
-function getUserUID(): string {
-  return config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
-}
-
-function getResourceName(scope: string): string {
-  return `${scope}:${getUserUID()}`;
-}
-
-function canUseUserStorage(): boolean {
-  return config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
-}
-
-async function getUserStorage(resourceName: string): Promise<{ spec: UserStorageSpec } | null> {
-  const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
-    url: `/${resourceName}`,
-    method: 'GET',
-    showErrorAlert: false,
-  });
-  if ('error' in userStorage) {
-    if (get(userStorage, 'error.status') !== 404) {
-      console.error('Failed to get user storage', userStorage.error);
-    }
-    // No user storage found, return null
-    return null;
-  }
-  return userStorage.data;
-}
-
 /**
  * A class for interacting with the backend user storage.
  */
 export class UserStorage {
-  service: string;
+  private service: string;
+  private resourceName: string;
+  private userUID: string;
+  private canUseUserStorage: boolean;
+  private storageSpec: UserStorageSpec | null | undefined;
 
   constructor(service: string) {
     this.service = service;
+    this.userUID = config.bootData.user.uid === '' ? config.bootData.user.id.toString() : config.bootData.user.uid;
+    this.resourceName = `${service}:${this.userUID}`;
+    this.canUseUserStorage = config.featureToggles.userStorageAPI === true && config.bootData.user.isSignedIn;
+  }
+
+  private async init() {
+    if (this.storageSpec !== undefined) {
+      return;
+    }
+    const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
+      url: `/${this.resourceName}`,
+      method: 'GET',
+      showErrorAlert: false,
+    });
+    if ('error' in userStorage) {
+      if (get(userStorage, 'error.status') !== 404) {
+        console.error('Failed to get user storage', userStorage.error);
+      }
+      // No user storage found, return null
+      this.storageSpec = null;
+    } else {
+      this.storageSpec = userStorage.data.spec;
+    }
   }
 
   /**
@@ -77,17 +76,17 @@ export class UserStorage {
    * @returns A promise that resolves to the item value or null if not found.
    */
   async getItem(key: string): Promise<string | null> {
-    const resourceName = getResourceName(this.service);
-    if (!canUseUserStorage()) {
+    if (!this.canUseUserStorage) {
       // Fallback to localStorage
-      return localStorage.getItem(resourceName);
+      return localStorage.getItem(this.resourceName);
     }
-    const userStorage = await getUserStorage(resourceName);
-    if (!userStorage) {
+    // Ensure this.storageSpec is initialized
+    await this.init();
+    if (!this.storageSpec) {
       // Also, fallback to localStorage for backward compatibility once userStorageAPI is enabled
-      return localStorage.getItem(resourceName);
+      return localStorage.getItem(this.resourceName);
     }
-    return userStorage.spec.data[key];
+    return this.storageSpec.data[key];
   }
 
   /**
@@ -97,34 +96,37 @@ export class UserStorage {
    * @returns A promise that resolves when the item is set.
    */
   async setItem(key: string, value: string): Promise<void> {
-    const resourceName = getResourceName(this.service);
-    if (!canUseUserStorage()) {
+    if (!this.canUseUserStorage) {
       // Fallback to localStorage
       localStorage.setItem(key, value);
       return;
     }
 
-    const userStorage = await getUserStorage(resourceName);
-    if (!userStorage) {
+    const newData = { data: { [key]: value } };
+    // Ensure this.storageSpec is initialized
+    await this.init();
+
+    if (!this.storageSpec) {
       // No user storage found, create a new one
-      const userStorageData = { [key]: value };
       await apiRequest<UserStorageSpec>({
         url: `/`,
         method: 'POST',
         body: {
-          metadata: { name: resourceName, labels: { user: getUserUID(), service: this.service } },
-          spec: { data: userStorageData },
+          metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
+          spec: newData,
         },
       });
+      this.storageSpec = newData;
       return;
     }
 
     // Update existing user storage
-    userStorage.spec.data[key] = value;
+    this.storageSpec.data[key] = value;
     await apiRequest<UserStorageSpec>({
-      url: `/${resourceName}`,
-      method: 'PUT',
-      body: userStorage,
+      headers: { 'Content-Type': 'application/merge-patch+json' },
+      url: `/${this.resourceName}`,
+      method: 'PATCH',
+      body: { spec: newData },
     });
   }
 }

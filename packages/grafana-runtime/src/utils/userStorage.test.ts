@@ -127,9 +127,8 @@ describe('userStorage', () => {
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
-          method: 'PUT',
+          method: 'PATCH',
           data: {
-            metadata: { name: 'service:abc' },
             spec: {
               data: { key: 'new-value' },
             },
