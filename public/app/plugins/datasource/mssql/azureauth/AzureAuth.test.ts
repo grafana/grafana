@@ -118,7 +118,7 @@ describe('AzureAuth', () => {
       });
     });
 
-    describe('updateDatasourceCredentials()', () => {
+    describe('updateCredentials()', () => {
       it('should update the credentials for managed service identity correctly', () => {
         // If `dataSourceSettings.authType === 'msi'` && `config.azure.managedIdentityEnabled === true`.
         jest.mocked(config).azure.managedIdentityEnabled = true;
@@ -159,12 +159,12 @@ describe('AzureAuth', () => {
           dataSourceSettingsWithClientSecretOnServer,
           basicClientSecretCredentials
         );
-        expect(resultForClientSecretCredentials1).toEqual({
-          jsonData: {
-            azureCredentials: { ...basicClientSecretCredentials },
-          },
-          secureJsonData: { azureClientSecret: undefined },
-          secureJsonFields: { azureClientSecret: false },
+
+        expect(resultForClientSecretCredentials1.jsonData.azureCredentials).toEqual(basicClientSecretCredentials);
+        expect(resultForClientSecretCredentials1.secureJsonData).toEqual({ azureClientSecret: undefined });
+        expect(resultForClientSecretCredentials1.secureJsonFields).toEqual({
+          azureClientSecret: false,
+          clientSecret: false,
         });
 
         // If `dataSourceSettings.authType === 'clientsecret'` && `secureJsonFields.azureClientSecret == false`.
@@ -174,12 +174,14 @@ describe('AzureAuth', () => {
           dataSourceSettingsWithClientSecretInSecureJSONData,
           { ...basicClientSecretCredentials, clientSecret: 'XXXX-super-secret-secret-XXXX' }
         );
-        expect(resultForClientSecretCredentials2).toEqual({
-          jsonData: {
-            azureCredentials: { ...basicClientSecretCredentials },
-          },
-          secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
-          secureJsonFields: { azureClientSecret: false },
+
+        expect(resultForClientSecretCredentials2.jsonData.azureCredentials).toEqual(basicClientSecretCredentials);
+        expect(resultForClientSecretCredentials2.secureJsonData).toEqual({
+          azureClientSecret: 'XXXX-super-secret-secret-XXXX',
+        });
+        expect(resultForClientSecretCredentials2.secureJsonFields).toEqual({
+          azureClientSecret: false,
+          clientSecret: false,
         });
       });
     });
