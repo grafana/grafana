@@ -31,7 +31,7 @@ export function stringStartsAsRegEx(str: string): boolean {
 
 export function stringToJsRegex(str: string): RegExp {
   if (!stringStartsAsRegEx(str)) {
-    return new RegExp(`^${escapeStringForRegex(str)}$`);
+    return new RegExp(`^${str}$`);
   }
 
   const match = str.match(new RegExp('^/(.*?)/(g?i?m?y?s?)$'));
