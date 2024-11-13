@@ -64,7 +64,7 @@ export async function isPluginFrontendSandboxEligible({
   try {
     // don't run grafana-signed plugins in sandbox
     const pluginMeta = await getPluginSettings(pluginId, { showErrorAlert: false });
-    if (pluginMeta.signatureType === PluginSignatureType.grafana) {
+    if (pluginMeta.signatureType === PluginSignatureType.grafana || pluginMeta.signature === 'internal') {
       return false;
     }
   } catch (e) {
