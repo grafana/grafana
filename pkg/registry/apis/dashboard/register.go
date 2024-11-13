@@ -54,9 +54,9 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 	return scheme.SetVersionPriority(
-		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
-		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
 		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),
+		dashboardv2alpha1.DashboardResourceInfo.GroupVersion(),
 	)
 }
 

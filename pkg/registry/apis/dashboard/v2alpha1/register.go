@@ -141,14 +141,23 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(storage[dash.StoragePath()], largeObjects, b.legacy.Access, b.unified, b.accessControl)
+	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
+		storage[dash.StoragePath()],
+		largeObjects,
+		b.legacy.Access,
+		b.unified,
+		b.accessControl,
+		scheme,
+		func() runtime.Object { return &dashboardv2alpha1.DashboardWithAccessInfo{} },
+	)
 	if err != nil {
 		return err
 	}
 
 	// Expose read only library panels
 	storage[dashboardv2alpha1.LibraryPanelResourceInfo.StoragePath()] = &dashboard.LibraryPanelStore{
-		Access: b.legacy.Access,
+		Access:       b.legacy.Access,
+		ResourceInfo: dashboardv2alpha1.LibraryPanelResourceInfo,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboardv2alpha1.VERSION] = storage

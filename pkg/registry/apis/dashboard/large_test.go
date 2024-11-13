@@ -35,7 +35,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	require.True(t, found)
 	require.Len(t, panels, expectedPanelCount)
 
-	largeObject := newDashboardLargeObjectSupport()
+	largeObject := NewDashboardLargeObjectSupport()
 
 	// Convert the dashboard to a small value
 	err = largeObject.ReduceSpec(dash)

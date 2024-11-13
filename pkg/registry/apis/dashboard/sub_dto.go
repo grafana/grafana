@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
@@ -32,16 +32,28 @@ type DTOConnector struct {
 	unified       resource.ResourceClient
 	largeObjects  apistore.LargeObjectSupport
 	accessControl accesscontrol.AccessControl
+	scheme        *runtime.Scheme
+	newFunc       func() runtime.Object
 	log           log.Logger
 }
 
-func NewDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, legacyAccess legacy.DashboardAccess, resourceClient resource.ResourceClient, accessControl accesscontrol.AccessControl) (rest.Storage, error) {
+func NewDTOConnector(
+	dash rest.Storage,
+	largeObjects apistore.LargeObjectSupport,
+	legacyAccess legacy.DashboardAccess,
+	resourceClient resource.ResourceClient,
+	accessControl accesscontrol.AccessControl,
+	scheme *runtime.Scheme,
+	newFunc func() runtime.Object,
+) (rest.Storage, error) {
 	ok := false
 	v := &DTOConnector{
 		legacy:        legacyAccess,
 		accessControl: accessControl,
 		unified:       resourceClient,
 		largeObjects:  largeObjects,
+		newFunc:       newFunc,
+		scheme:        scheme,
 		log:           log.New("grafana-apiserver.dashboards.dto-connector"),
 	}
 	v.getter, ok = dash.(rest.Getter)
@@ -57,7 +69,7 @@ var (
 )
 
 func (r *DTOConnector) New() runtime.Object {
-	return &dashboard.DashboardWithAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *DTOConnector) Destroy() {
@@ -76,7 +88,7 @@ func (r *DTOConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *DTOConnector) ProducesObject(verb string) interface{} {
-	return &dashboard.DashboardWithAccessInfo{}
+	return r.newFunc()
 }
 
 func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -95,10 +107,11 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	dash, ok := rawobj.(*dashboard.Dashboard)
-	if !ok {
-		return nil, fmt.Errorf("expecting dashboard, not %t", rawobj)
+	dash := &dashboard.Dashboard{}
+	if err := r.scheme.Convert(rawobj, dash, nil); err != nil {
+		return nil, err
 	}
+
 	obj, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, err

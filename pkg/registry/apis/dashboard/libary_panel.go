@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
@@ -23,14 +23,13 @@ var (
 	_ rest.Storage              = (*LibraryPanelStore)(nil)
 )
 
-var lpr = dashboard.LibraryPanelResourceInfo
-
 type LibraryPanelStore struct {
-	Access legacy.DashboardAccess
+	Access       legacy.DashboardAccess
+	ResourceInfo utils.ResourceInfo
 }
 
 func (s *LibraryPanelStore) New() runtime.Object {
-	return lpr.NewFunc()
+	return s.ResourceInfo.NewFunc()
 }
 
 func (s *LibraryPanelStore) Destroy() {}
@@ -40,15 +39,15 @@ func (s *LibraryPanelStore) NamespaceScoped() bool {
 }
 
 func (s *LibraryPanelStore) GetSingularName() string {
-	return lpr.GetSingularName()
+	return s.ResourceInfo.GetSingularName()
 }
 
 func (s *LibraryPanelStore) NewList() runtime.Object {
-	return lpr.NewListFunc()
+	return s.ResourceInfo.NewListFunc()
 }
 
 func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return lpr.TableConverter().ConvertToTable(ctx, object, tableOptions)
+	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
 func (s *LibraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
@@ -90,5 +89,5 @@ func (s *LibraryPanelStore) Get(ctx context.Context, name string, options *metav
 	if len(found.Items) == 1 {
 		return &found.Items[0], nil
 	}
-	return nil, lpr.NewNotFound(name)
+	return nil, s.ResourceInfo.NewNotFound(name)
 }

@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"errors"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -128,8 +130,12 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		dashboardv0alpha1.DashboardResourceInfo.GroupResource(),
 	)
 
+	if optsGetter == nil {
+		return errors.New("missing RESTOptionsGetter")
+	}
+
 	// Dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil && dualWriteBuilder != nil {
+	if dualWriteBuilder != nil {
 		store, err := grafanaregistry.NewRegistryStore(scheme, dash, optsGetter)
 		if err != nil {
 			return err
@@ -141,14 +147,23 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(storage[dash.StoragePath()], largeObjects, b.legacy.Access, b.unified, b.accessControl)
+	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(
+		storage[dash.StoragePath()],
+		largeObjects,
+		b.legacy.Access,
+		b.unified,
+		b.accessControl,
+		scheme,
+		func() runtime.Object { return &dashboardv0alpha1.DashboardWithAccessInfo{} },
+	)
 	if err != nil {
 		return err
 	}
 
 	// Expose read only library panels
 	storage[dashboardv0alpha1.LibraryPanelResourceInfo.StoragePath()] = &dashboard.LibraryPanelStore{
-		Access: b.legacy.Access,
+		Access:       b.legacy.Access,
+		ResourceInfo: dashboardv0alpha1.LibraryPanelResourceInfo,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboardv0alpha1.VERSION] = storage
