@@ -14,16 +14,16 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.GitHubRepository": schema_pkg_apis_gituisync_v0alpha1_GitHubRepository(ref),
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.LocalRepository":  schema_pkg_apis_gituisync_v0alpha1_LocalRepository(ref),
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.Repository":       schema_pkg_apis_gituisync_v0alpha1_Repository(ref),
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.RepositoryList":   schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref),
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.RepositorySpec":   schema_pkg_apis_gituisync_v0alpha1_RepositorySpec(ref),
-		"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.S3Repository":     schema_pkg_apis_gituisync_v0alpha1_S3Repository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository": schema_pkg_apis_provisioning_v0alpha1_GitHubRepository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository":  schema_pkg_apis_provisioning_v0alpha1_LocalRepository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":       schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":   schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":   schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository":     schema_pkg_apis_provisioning_v0alpha1_S3Repository(ref),
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_GitHubRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_GitHubRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -47,7 +47,7 @@ func schema_pkg_apis_gituisync_v0alpha1_GitHubRepository(ref common.ReferenceCal
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_LocalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_LocalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -65,7 +65,7 @@ func schema_pkg_apis_gituisync_v0alpha1_LocalRepository(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -94,18 +94,18 @@ func schema_pkg_apis_gituisync_v0alpha1_Repository(ref common.ReferenceCallback)
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.RepositorySpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.RepositorySpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -138,7 +138,7 @@ func schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.Repository"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository"),
 									},
 								},
 							},
@@ -148,11 +148,11 @@ func schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.Repository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_RepositorySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -162,32 +162,32 @@ func schema_pkg_apis_gituisync_v0alpha1_RepositorySpec(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with s3 and github.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.LocalRepository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository"),
 						},
 					},
 					"s3": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository in an S3 bucket. Mutually exclusive with local and github.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.S3Repository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on GitHub. Mutually exclusive with local and s3.",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.GitHubRepository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.GitHubRepository", "github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.LocalRepository", "github.com/grafana/grafana/pkg/apis/gituisync/v0alpha1.S3Repository"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_S3Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_S3Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
