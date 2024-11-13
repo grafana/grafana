@@ -476,6 +476,17 @@ func (s *Service) uploadSnapshot(ctx context.Context, session *cloudmigration.Cl
 	// nolint:gosec
 	indexFile, err := os.Open(indexFilePath)
 	if err != nil {
+		files, err := os.ReadDir(snapshotMeta.LocalDir)
+		if err != nil {
+			s.log.FromContext(ctx).Error("could not read local dir", "dir", snapshotMeta.LocalDir, "err", err.Error())
+
+			return fmt.Errorf("opening local dir for index file: %w", err)
+		}
+
+		for _, file := range files {
+			s.log.FromContext(ctx).Error("CHECKING SNAPSHOT FILES", "dir", snapshotMeta.LocalDir, "file", fmt.Sprintf("name=%s,dir?=%v", file.Name(), file.IsDir()))
+		}
+
 		return fmt.Errorf("opening index files: %w", err)
 	}
 	defer func() {
