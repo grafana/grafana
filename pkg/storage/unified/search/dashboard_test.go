@@ -22,7 +22,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 				"test2": 456,
 			},
 		},
-		Lookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
+		DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
 			// empty for now
 		}),
 		Blob: nil, // not testing this yet
