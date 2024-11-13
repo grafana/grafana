@@ -208,123 +208,20 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	searchrequest := &bleve.SearchRequest{
-		Fields:  req.Fields,
-		Query:   bleve.NewMatchAllQuery(),
-		Size:    int(req.Limit),
-		From:    int(req.Offset),
-		Explain: req.Explain,
+	// convert protobuf request to bleve request
+	searchrequest, e := toBleveSearchRequest(req, access)
+	if e != nil {
+		response.Error = e
+		return response, nil
 	}
 
-	// Currently everything is within an AND query
-	queries := []query.Query{}
-	if len(req.Options.Labels) > 0 {
-		for _, v := range req.Options.Labels {
-			q, e := requirementQuery(v, "labels.")
-			if e != nil {
-				response.Error = e
-				return response, nil
-			}
-			queries = append(queries, q)
-		}
-	}
-	if len(req.Options.Fields) > 0 {
-		for _, v := range req.Options.Fields {
-			q, e := requirementQuery(v, "")
-			if e != nil {
-				response.Error = e
-				return response, nil
-			}
-			queries = append(queries, q)
-		}
-	}
-
-	if req.Query != "" {
-		// ??? Should expose the full power of query parsing here?
-		// it is great for exploration, but also hard to change in the future
-		q := bleve.NewQueryStringQuery(req.Query)
-		queries = append(queries, q)
-	}
-
-	if access != nil {
-		// TODO AUTHZ!!!!
-		// Need to add an authz filter into the mix
-		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
-		// NOTE, we likely want to pass in the already called checker because the resource server
-		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization")
-	}
-
-	switch len(queries) {
-	case 0:
-		break
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
-
-	// Make sure some fields are selected
+	// Show all fields when nothing is selected
 	if len(searchrequest.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
 		if err != nil {
 			return nil, err
 		}
 		searchrequest.Fields = f
-	}
-
-	for k, v := range req.Facet {
-		if searchrequest.Facets == nil {
-			searchrequest.Facets = make(bleve.FacetsRequest)
-		}
-		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
-	}
-
-	// Add the sort fields
-	for _, sort := range req.SortBy {
-		if sort.Field == "title" {
-			// ???? is this doing anything????
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   "title",
-				Desc:    sort.Desc,
-				Type:    search.SortFieldAsString, // force for title????
-				Mode:    search.SortFieldDefault,  // ???
-				Missing: search.SortFieldMissingLast,
-			})
-			continue
-		}
-
-		// hardcoded (for now)
-		if strings.HasPrefix(sort.Field, "stats.") {
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   sort.Field,
-				Desc:    sort.Desc,
-				Type:    search.SortFieldAsNumber, // force for now!
-				Mode:    search.SortFieldDefault,  // ???
-				Missing: search.SortFieldMissingLast,
-			})
-			continue
-		}
-
-		// Default support
-		input := sort.Field
-		if sort.Desc {
-			input = "-" + sort.Field
-		}
-		s := search.ParseSearchSortString(input)
-		searchrequest.Sort = append(searchrequest.Sort, s)
-	}
-
-	// Always sort by *something*, otherwise the order is unstable
-	if len(searchrequest.Sort) == 0 {
-		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
-			Desc: false,
-		})
-	}
-
-	if true { // debugging, what is happening!!
-		jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
-		fmt.Printf("SORT: %s\n", jj)
 	}
 
 	res, err := index.Search(searchrequest)
@@ -410,6 +307,117 @@ func (b *bleveIndex) getIndex(
 		return bleve.NewIndexAlias(all...), nil
 	}
 	return b.index, nil
+}
+
+func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.AccessClient) (*bleve.SearchRequest, *resource.ErrorResult) {
+	searchrequest := &bleve.SearchRequest{
+		Fields:  req.Fields,
+		Size:    int(req.Limit),
+		From:    int(req.Offset),
+		Explain: req.Explain,
+	}
+
+	// Currently everything is within an AND query
+	queries := []query.Query{}
+	if len(req.Options.Labels) > 0 {
+		for _, v := range req.Options.Labels {
+			q, err := requirementQuery(v, "labels.")
+			if err != nil {
+				return nil, err
+			}
+			queries = append(queries, q)
+		}
+	}
+	if len(req.Options.Fields) > 0 {
+		for _, v := range req.Options.Fields {
+			q, err := requirementQuery(v, "")
+			if err != nil {
+				return nil, err
+			}
+			queries = append(queries, q)
+		}
+	}
+
+	if req.Query != "" {
+		// ??? Should expose the full power of query parsing here?
+		// it is great for exploration, but also hard to change in the future
+		q := bleve.NewQueryStringQuery(req.Query)
+		queries = append(queries, q)
+	}
+
+	if access != nil {
+		// TODO AUTHZ!!!!
+		// Need to add an authz filter into the mix
+		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
+		// NOTE, we likely want to pass in the already called checker because the resource server
+		// will first need to check if we can see anything (or everything!) for this resource
+		fmt.Printf("TODO... check authorization")
+	}
+
+	switch len(queries) {
+	case 0:
+		searchrequest.Query = bleve.NewMatchAllQuery()
+	case 1:
+		searchrequest.Query = queries[0]
+	default:
+		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
+	}
+
+	for k, v := range req.Facet {
+		if searchrequest.Facets == nil {
+			searchrequest.Facets = make(bleve.FacetsRequest)
+		}
+		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
+	}
+
+	// Add the sort fields
+	for _, sort := range req.SortBy {
+		if sort.Field == "title" {
+			// ???? is this doing anything????
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field:   "title",
+				Desc:    sort.Desc,
+				Type:    search.SortFieldAsString, // force for title????
+				Mode:    search.SortFieldDefault,  // ???
+				Missing: search.SortFieldMissingLast,
+			})
+			continue
+		}
+
+		// hardcoded (for now)
+		if strings.HasPrefix(sort.Field, "stats.") {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field:   sort.Field,
+				Desc:    sort.Desc,
+				Type:    search.SortFieldAsNumber, // force for now!
+				Mode:    search.SortFieldDefault,  // ???
+				Missing: search.SortFieldMissingLast,
+			})
+			continue
+		}
+
+		// Default support
+		input := sort.Field
+		if sort.Desc {
+			input = "-" + sort.Field
+		}
+		s := search.ParseSearchSortString(input)
+		searchrequest.Sort = append(searchrequest.Sort, s)
+	}
+
+	// Always sort by *something*, otherwise the order is unstable
+	if len(searchrequest.Sort) == 0 {
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
+			Desc: false,
+		})
+	}
+
+	if true { // debugging, what is happening!!
+		jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
+		fmt.Printf("SORT: %s\n", jj)
+	}
+
+	return searchrequest, nil
 }
 
 // Convert a "requirement" into a bleve query
