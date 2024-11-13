@@ -1,0 +1,9 @@
+apiVersion: gituisync.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: local-test-repo
+  namespace: default
+spec:
+  repository:
+    type: local
+    path: ./test-repo

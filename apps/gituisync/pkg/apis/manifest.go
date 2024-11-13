@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	rawSchemaNoOpv0alpha1     = []byte(`{"spec":{"properties":{"noop_value_here":{"type":"boolean"}},"required":["noop_value_here"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
-	versionSchemaNoOpv0alpha1 app.VersionSchema
-	_                         = json.Unmarshal(rawSchemaNoOpv0alpha1, &versionSchemaNoOpv0alpha1)
+	rawSchemaRepositoryv0alpha1     = []byte(`{"spec":{"properties":{"repository":{"oneOf":[{"required":["type","path"]},{"required":["type","bucket"]},{"required":["type","owner","repository"]}],"properties":{"bucket":{"description":"TODO: Add ACL?\nTODO: Encryption??","type":"string"},"owner":{"description":"TODO: Do we want an SSH url instead maybe?","type":"string"},"path":{"type":"string"},"repository":{"description":"TODO: On-prem GitHub Enterprise support?","type":"string"},"type":{"description":"TODO: github or just 'git'??"}},"type":"object"}},"required":["repository"],"type":"object"},"status":{"properties":{"additionalFields":{"description":"additionalFields is reserved for future use","type":"object","x-kubernetes-preserve-unknown-fields":true},"operatorStates":{"additionalProperties":{"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"description":"details contains any extra information that is operator-specific","type":"object","x-kubernetes-preserve-unknown-fields":true},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object","x-kubernetes-preserve-unknown-fields":true}}`)
+	versionSchemaRepositoryv0alpha1 app.VersionSchema
+	_                               = json.Unmarshal(rawSchemaRepositoryv0alpha1, &versionSchemaRepositoryv0alpha1)
 )
 
 var appManifestData = app.ManifestData{
@@ -22,7 +22,7 @@ var appManifestData = app.ManifestData{
 	Group:   "gituisync.grafana.app",
 	Kinds: []app.ManifestKind{
 		{
-			Kind:       "NoOp",
+			Kind:       "Repository",
 			Scope:      "Namespaced",
 			Conversion: false,
 			Versions: []app.ManifestKindVersion{
@@ -42,7 +42,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					Schema: &versionSchemaNoOpv0alpha1,
+					Schema: &versionSchemaRepositoryv0alpha1,
 				},
 			},
 		},

@@ -15,19 +15,19 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type NoOp struct {
+type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata"`
-	Spec              NoOpSpec   `json:"spec"`
-	NoOpStatus        NoOpStatus `json:"status"`
+	Spec              RepositorySpec   `json:"spec"`
+	RepositoryStatus  RepositoryStatus `json:"status"`
 }
 
-func (o *NoOp) GetSpec() any {
+func (o *Repository) GetSpec() any {
 	return o.Spec
 }
 
-func (o *NoOp) SetSpec(spec any) error {
-	cast, ok := spec.(NoOpSpec)
+func (o *Repository) SetSpec(spec any) error {
+	cast, ok := spec.(RepositorySpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -35,36 +35,36 @@ func (o *NoOp) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *NoOp) GetSubresources() map[string]any {
+func (o *Repository) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.NoOpStatus,
+		"status": o.RepositoryStatus,
 	}
 }
 
-func (o *NoOp) GetSubresource(name string) (any, bool) {
+func (o *Repository) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.NoOpStatus, true
+		return o.RepositoryStatus, true
 	default:
 		return nil, false
 	}
 }
 
-func (o *NoOp) SetSubresource(name string, value any) error {
+func (o *Repository) SetSubresource(name string, value any) error {
 	switch name {
 	case "status":
-		cast, ok := value.(NoOpStatus)
+		cast, ok := value.(RepositoryStatus)
 		if !ok {
-			return fmt.Errorf("cannot set status type %#v, not of type NoOpStatus", value)
+			return fmt.Errorf("cannot set status type %#v, not of type RepositoryStatus", value)
 		}
-		o.NoOpStatus = cast
+		o.RepositoryStatus = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
 }
 
-func (o *NoOp) GetStaticMetadata() resource.StaticMetadata {
+func (o *Repository) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -75,7 +75,7 @@ func (o *NoOp) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *NoOp) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Repository) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -85,7 +85,7 @@ func (o *NoOp) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *NoOp) GetCommonMetadata() resource.CommonMetadata {
+func (o *Repository) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -117,7 +117,7 @@ func (o *NoOp) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *NoOp) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Repository) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -162,7 +162,7 @@ func (o *NoOp) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *NoOp) GetCreatedBy() string {
+func (o *Repository) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -170,7 +170,7 @@ func (o *NoOp) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *NoOp) SetCreatedBy(createdBy string) {
+func (o *Repository) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -178,7 +178,7 @@ func (o *NoOp) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *NoOp) GetUpdateTimestamp() time.Time {
+func (o *Repository) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -187,7 +187,7 @@ func (o *NoOp) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *NoOp) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Repository) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -195,7 +195,7 @@ func (o *NoOp) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *NoOp) GetUpdatedBy() string {
+func (o *Repository) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -203,7 +203,7 @@ func (o *NoOp) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *NoOp) SetUpdatedBy(updatedBy string) {
+func (o *Repository) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -211,43 +211,43 @@ func (o *NoOp) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *NoOp) Copy() resource.Object {
+func (o *Repository) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *NoOp) DeepCopyObject() runtime.Object {
+func (o *Repository) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &NoOp{}
+var _ resource.Object = &Repository{}
 
 // +k8s:openapi-gen=true
-type NoOpList struct {
+type RepositoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
-	Items           []NoOp `json:"items"`
+	Items           []Repository `json:"items"`
 }
 
-func (o *NoOpList) DeepCopyObject() runtime.Object {
+func (o *RepositoryList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *NoOpList) Copy() resource.ListObject {
-	cpy := &NoOpList{
+func (o *RepositoryList) Copy() resource.ListObject {
+	cpy := &RepositoryList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]NoOp, len(o.Items)),
+		Items:    make([]Repository, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*NoOp); ok {
+		if item, ok := o.Items[i].Copy().(*Repository); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *NoOpList) GetItems() []resource.Object {
+func (o *RepositoryList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -255,12 +255,12 @@ func (o *NoOpList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *NoOpList) SetItems(items []resource.Object) {
-	o.Items = make([]NoOp, len(items))
+func (o *RepositoryList) SetItems(items []resource.Object) {
+	o.Items = make([]Repository, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*NoOp)
+		o.Items[i] = *items[i].(*Repository)
 	}
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &NoOpList{}
+var _ resource.ListObject = &RepositoryList{}

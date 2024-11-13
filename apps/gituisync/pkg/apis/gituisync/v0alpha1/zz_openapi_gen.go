@@ -12,16 +12,22 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp":                    schema_pkg_apis_gituisync_v0alpha1_NoOp(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpList":                schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpOperatorState":       schema_pkg_apis_gituisync_v0alpha1_NoOpOperatorState(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec":                schema_pkg_apis_gituisync_v0alpha1_NoOpSpec(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus":              schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref),
-		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState": schema_pkg_apis_gituisync_v0alpha1_NoOpstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Repository":                    schema_pkg_apis_gituisync_v0alpha1_Repository(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryGitHubRepo":          schema_pkg_apis_gituisync_v0alpha1_RepositoryGitHubRepo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryList":                schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryLocalRepo":           schema_pkg_apis_gituisync_v0alpha1_RepositoryLocalRepo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryOperatorState":       schema_pkg_apis_gituisync_v0alpha1_RepositoryOperatorState(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryS3Repo":              schema_pkg_apis_gituisync_v0alpha1_RepositoryS3Repo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorySpec":                schema_pkg_apis_gituisync_v0alpha1_RepositorySpec(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryStatus":              schema_pkg_apis_gituisync_v0alpha1_RepositoryStatus(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryspecGitHubRepo":      schema_pkg_apis_gituisync_v0alpha1_RepositoryspecGitHubRepo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryspecLocalRepo":       schema_pkg_apis_gituisync_v0alpha1_RepositoryspecLocalRepo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryspecS3Repo":          schema_pkg_apis_gituisync_v0alpha1_RepositoryspecS3Repo(ref),
+		"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorystatusOperatorState": schema_pkg_apis_gituisync_v0alpha1_RepositorystatusOperatorState(ref),
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOp(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -50,13 +56,13 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOp(ref common.ReferenceCallback) commo
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec"),
+							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorySpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus"),
+							Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryStatus"),
 						},
 					},
 				},
@@ -64,11 +70,46 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOp(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpSpec", "github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorySpec", "github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositoryStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryGitHubRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryGitHubRepo defines model for RepositoryGitHubRepo.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"owner", "repository", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -101,7 +142,7 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp"),
+										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Repository"),
 									},
 								},
 							},
@@ -112,15 +153,43 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOpList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOp", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.Repository", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOpOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryLocalRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NoOpOperatorState defines model for NoOpOperatorState.",
+				Description: "RepositoryLocalRepo defines model for RepositoryLocalRepo.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"path", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryOperatorState defines model for RepositoryOperatorState.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"descriptiveState": {
@@ -168,32 +237,59 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOpOperatorState(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOpSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryS3Repo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NoOpSpec defines model for NoOpSpec.",
+				Description: "RepositoryS3Repo defines model for RepositoryS3Repo.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"noop_value_here": {
+					"bucket": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
 							Format:  "",
 						},
 					},
 				},
-				Required: []string{"noop_value_here"},
+				Required: []string{"bucket", "type"},
 			},
 		},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_RepositorySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NoOpStatus defines model for NoOpStatus.",
+				Description: "RepositorySpec defines model for RepositorySpec.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"object"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"repository"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryStatus defines model for RepositoryStatus.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"additionalFields": {
@@ -220,7 +316,7 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState"),
+										Ref:     ref("github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorystatusOperatorState"),
 									},
 								},
 							},
@@ -230,15 +326,106 @@ func schema_pkg_apis_gituisync_v0alpha1_NoOpStatus(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.NoOpstatusOperatorState"},
+			"github.com/grafana/grafana/apps/gituisync/pkg/apis/gituisync/v0alpha1.RepositorystatusOperatorState"},
 	}
 }
 
-func schema_pkg_apis_gituisync_v0alpha1_NoOpstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryspecGitHubRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "NoOpstatusOperatorState defines model for NoOpstatus.#OperatorState.",
+				Description: "RepositoryspecGitHubRepo defines model for Repositoryspec.#GitHubRepo.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"owner": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"repository": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"owner", "repository", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryspecLocalRepo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryspecLocalRepo defines model for Repositoryspec.#LocalRepo.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"path", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositoryspecS3Repo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositoryspecS3Repo defines model for Repositoryspec.#S3Repo.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"bucket": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"bucket", "type"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_gituisync_v0alpha1_RepositorystatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "RepositorystatusOperatorState defines model for Repositorystatus.#OperatorState.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"descriptiveState": {

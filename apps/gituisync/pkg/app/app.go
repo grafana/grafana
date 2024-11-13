@@ -11,7 +11,13 @@ import (
 	"k8s.io/klog/v2"
 )
 
+type GitUISyncConfig struct {
+}
+
 func New(cfg app.Config) (app.App, error) {
+	gitSyncConfig, ok := cfg.SpecificConfig.(*GitUISyncConfig)
+	klog.InfoS("got a specific config", "cfg", gitSyncConfig, "ok", ok)
+
 	simpleConfig := simple.AppConfig{
 		Name:       "gituisync",
 		KubeConfig: cfg.KubeConfig,
@@ -22,7 +28,7 @@ func New(cfg app.Config) (app.App, error) {
 		},
 		ManagedKinds: []simple.AppManagedKind{
 			{
-				Kind:    v0alpha1.NoOpKind(),
+				Kind:    v0alpha1.RepositoryKind(),
 				Watcher: &simple.Watcher{},
 				Mutator: &simple.Mutator{
 					MutateFunc: func(ctx context.Context, ar *app.AdmissionRequest) (*app.MutatingResponse, error) {
@@ -53,7 +59,7 @@ func New(cfg app.Config) (app.App, error) {
 
 func GetKinds() map[schema.GroupVersion]resource.Kind {
 	kinds := []resource.Kind{
-		v0alpha1.NoOpKind(),
+		v0alpha1.RepositoryKind(),
 	}
 	kindMap := make(map[schema.GroupVersion]resource.Kind, len(kinds))
 	for _, kind := range kinds {

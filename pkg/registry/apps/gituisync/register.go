@@ -18,6 +18,7 @@ func RegisterApp() *GitUISyncAppProvider {
 	appCfg := &runner.AppBuilderConfig{
 		OpenAPIDefGetter: v0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:     gituisyncapp.GetKinds(),
+		CustomConfig:     any(&gituisyncapp.GitUISyncConfig{}),
 	}
 	provider.Provider = simple.NewAppProvider(apis.LocalManifest(), appCfg, gituisyncapp.New)
 	return provider
