@@ -251,17 +251,6 @@ export const Combobox = <T extends string | number>({
       <InputComponent
         width={width === 'auto' ? undefined : width}
         className={styles.input}
-        {...restProps}
-        {...getInputProps({
-          ref: inputRef,
-          /*  Empty onCall to avoid TS error
-           *  See issue here: https://github.com/downshift-js/downshift/issues/718
-           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
-           */
-          onChange: () => {},
-          onBlur,
-          'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
-        })}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
@@ -285,6 +274,17 @@ export const Combobox = <T extends string | number>({
             <Icon name={suffixIcon} />
           </>
         }
+        {...restProps}
+        {...getInputProps({
+          ref: inputRef,
+          /*  Empty onCall to avoid TS error
+           *  See issue here: https://github.com/downshift-js/downshift/issues/718
+           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
+           */
+          onChange: () => {},
+          onBlur,
+          'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+        })}
       />
       <div
         className={cx(styles.menu, !isOpen && styles.menuClosed)}
