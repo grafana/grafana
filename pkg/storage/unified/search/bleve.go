@@ -252,6 +252,7 @@ func (b *bleveIndex) Search(
 		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
 		// NOTE, we likely want to pass in the already called checker because the resource server
 		// will first need to check if we can see anything (or everything!) for this resource
+		fmt.Printf("TODO... check authorization")
 	}
 
 	switch len(queries) {
@@ -421,6 +422,14 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 		q := query.NewMatchQuery(req.Values[0])
 		q.FieldVal = prefix + req.Key
 		return q, nil
+
+	case selection.NotEquals:
+	case selection.DoesNotExist:
+	case selection.GreaterThan:
+	case selection.LessThan:
+	case selection.Exists:
+	case selection.In:
+	case selection.NotIn:
 	}
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),

@@ -51,7 +51,7 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, func(index resource.ResourceIndex) (int64, error) {
-			index.Write(&StandardDocumentFields{
+			_ = index.Write(&StandardDocumentFields{
 				RV:         1,
 				ID:         "dash/aaa",
 				Name:       "aaa",
@@ -61,7 +61,7 @@ func TestBleveBackend(t *testing.T) {
 				Tags:       []string{"aa", "bb"},
 				Created:    time.Unix(10000, 0), // searchable, but not stored!!! (by default)
 			})
-			index.Write(&StandardDocumentFields{
+			_ = index.Write(&StandardDocumentFields{
 				RV:         2,
 				ID:         "dash/bbb",
 				Name:       "bbb",
@@ -73,7 +73,7 @@ func TestBleveBackend(t *testing.T) {
 					"region": "east",
 				},
 			})
-			index.Write(&StandardDocumentFields{
+			_ = index.Write(&StandardDocumentFields{
 				RV:         3,
 				ID:         "dash/ccc",
 				Name:       "ccc",
@@ -149,7 +149,7 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, func(index resource.ResourceIndex) (int64, error) {
-			index.Write(&StandardDocumentFields{
+			_ = index.Write(&StandardDocumentFields{
 				RV:         1,
 				ID:         "folder/xxx",
 				Name:       "xxx",
@@ -157,7 +157,7 @@ func TestBleveBackend(t *testing.T) {
 				OriginName: "SQL",
 				Created:    time.Unix(10000, 0), // searchable, but not stored!!! (by default)
 			})
-			index.Write(&StandardDocumentFields{
+			_ = index.Write(&StandardDocumentFields{
 				RV:         2,
 				ID:         "folder/yyy",
 				Name:       "yyy",
