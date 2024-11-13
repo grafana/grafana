@@ -83,7 +83,7 @@
     "@swc/core": "1.4.2",
     "@swc/helpers": "0.5.15",
     "@testing-library/dom": "10.4.0",
-    "@testing-library/jest-dom": "6.5.0",
+    "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.1",
     "@testing-library/user-event": "14.5.2",
     "@types/d3": "7.4.3",
