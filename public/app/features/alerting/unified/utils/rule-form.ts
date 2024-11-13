@@ -24,6 +24,7 @@ import {
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { DashboardViewItem } from 'app/features/search/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -92,7 +93,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     group: '',
 
     // grafana
-    folder: null,
+    folder: undefined,
     queries: [],
     recordingRulesQueries: [],
     condition: '',
@@ -371,7 +372,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
-        folder: { title: namespace, uid: ga.namespace_uid },
+        folder: { kind: 'folder', title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
       };
@@ -393,7 +394,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           condition: ga.condition,
           annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
           labels: listifyLabelsOrAnnotations(rule.labels, true),
-          folder: { title: namespace, uid: ga.namespace_uid },
+          folder: { kind: 'folder', title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
           contactPoints: routingSettings,
@@ -750,16 +751,18 @@ export const panelToRuleFormValues = async (
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
+  const folder: DashboardViewItem | undefined =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
 
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries,
     name: panel.title,
     condition: queries[queries.length - 1].refId,
@@ -821,15 +824,18 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const { folderTitle, folderUid } = dashboard.state.meta;
 
+  const folder: DashboardViewItem | undefined =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
+
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries: grafanaQueries,
     name: vizPanel.state.title,
     condition: grafanaQueries[grafanaQueries.length - 1].refId,
@@ -845,6 +851,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
       },
     ],
   };
+
   return formValues;
 };
 

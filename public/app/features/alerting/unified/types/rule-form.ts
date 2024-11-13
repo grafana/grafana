@@ -1,6 +1,5 @@
+import { DashboardViewItem } from 'app/features/search/types';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
-
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
 
 export enum RuleFormType {
   grafana = 'grafana-alerting',
@@ -44,7 +43,7 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: Folder | null;
+  folder: DashboardViewItem | undefined;
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;

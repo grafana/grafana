@@ -1,6 +1,7 @@
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -14,7 +15,6 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
@@ -126,7 +126,8 @@ function mockHasEditPermission(enabled: boolean) {
   return enabled ? grantUserPermissions(readAndWritePermissions) : grantUserPermissions(onlyReadPermissions);
 }
 
-const folder: Folder = {
+const folder: DashboardViewItem = {
+  kind: 'folder',
   uid: '1',
   title: 'title',
 };

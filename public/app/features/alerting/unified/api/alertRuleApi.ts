@@ -2,6 +2,7 @@ import { set } from 'lodash';
 
 import { RelativeTimeRange } from '@grafana/data';
 import { t } from 'app/core/internationalization';
+import { DashboardViewItem } from 'app/features/search/types';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
@@ -17,7 +18,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
@@ -25,9 +25,9 @@ import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule
 import { alertingApi, WithNotificationOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
+  getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -98,7 +98,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       {
         alertQueries: AlertQuery[];
         condition: string;
-        folder: Folder;
+        folder: DashboardViewItem;
         customLabels: Array<{
           key: string;
           value: string;

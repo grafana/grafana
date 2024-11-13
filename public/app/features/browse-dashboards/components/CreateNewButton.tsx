@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { locationUtil } from '@grafana/data';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import {
+  getImportPhrase,
   getNewDashboardPhrase,
   getNewFolderPhrase,
-  getImportPhrase,
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
+import { dispatch } from 'app/store/store';
 import { FolderDTO } from 'app/types';
 
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
@@ -29,15 +33,26 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
 
   const onCreateFolder = async (folderName: string) => {
     try {
-      await newFolder({
+      const folder = await newFolder({
         title: folderName,
         parentUid: parentFolder?.uid,
       });
+
       const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
       reportInteraction('grafana_manage_dashboards_folder_created', {
         is_subfolder: Boolean(parentFolder?.uid),
         folder_depth: depth,
       });
+
+      if (!folder.error) {
+        dispatch(notifyApp(createSuccessNotification('Folder created')));
+      } else {
+        dispatch(notifyApp(createErrorNotification('Failed to create folder')));
+      }
+
+      if (folder.data) {
+        locationService.push(locationUtil.stripBaseFromUrl(folder.data.url));
+      }
     } finally {
       setShowNewFolderDrawer(false);
     }
