@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
+	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
@@ -41,4 +42,5 @@ var WireSet = wire.NewSet(
 	notifications.RegisterAPIService,
 	secret.RegisterAPIService,
 	search.RegisterAPIService,
+	userstorage.RegisterAPIService,
 )

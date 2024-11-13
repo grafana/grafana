@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
+	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 )
 
 type Service struct{}
@@ -32,6 +33,7 @@ func ProvideRegistryServiceSink(
 	_ *secret.SecretAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
 	_ *search.SearchAPIBuilder,
+	_ *userstorage.UserStorageAPIBuilder,
 ) *Service {
 	return &Service{}
 }

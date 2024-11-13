@@ -162,6 +162,7 @@ export interface FeatureToggles {
   onPremToCloudMigrationsAlerts?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  logQLScope?: boolean;
   sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
@@ -226,9 +227,14 @@ export interface FeatureToggles {
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
+  userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
+  zipkinBackendMigration?: boolean;
+  enableSCIM?: boolean;
+  crashDetection?: boolean;
 }
