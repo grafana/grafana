@@ -3,8 +3,8 @@
   "version": "11.6.0-pre",
   "private": true,
   "scripts": {
-    "build": "webpack -c ./webpack.config.ts --env production",
-    "dev": "webpack -w -c ./webpack.config.ts --env development",
+    "build": "rspack -c ./rspack.config.ts --env production",
+    "dev": "rspack -w -c ./rspack.config.ts --env development",
     "typecheck": "tsc --noEmit",
     "lint": "eslint --cache --ignore-path ./.gitignore --ext .js,.jsx,.ts,.tsx ."
   },
@@ -12,6 +12,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
+    "@rspack/cli": "^1.0.0",
     "@types/lodash": "4.17.7",
     "@types/node": "22.10.2",
     "@types/prismjs": "1.26.4",
@@ -22,7 +23,6 @@
     "glob": "10.4.1",
     "ts-node": "10.9.2",
     "typescript": "5.5.4",
-    "webpack": "5.95.0",
     "webpack-merge": "5.10.0"
   },
   "engines": {
