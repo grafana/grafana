@@ -8,10 +8,6 @@ import (
 )
 
 type WriteAccessHooks struct {
-	// Check if a user has access to write folders
-	// When this is nil, no resources can have folders configured
-	Folder func(ctx context.Context, user claims.AuthInfo, uid string) bool
-
 	// When configured, this will make sure a user is allowed to save to a given origin
 	Origin func(ctx context.Context, user claims.AuthInfo, origin string) bool
 }
@@ -22,16 +18,6 @@ type LifecycleHooks interface {
 
 	// Stop function -- after calling this, any additional storage functions may error
 	Stop(context.Context) error
-}
-
-func (a *WriteAccessHooks) CanWriteFolder(ctx context.Context, user claims.AuthInfo, uid string) error {
-	if a.Folder == nil {
-		return fmt.Errorf("writing folders is not supported")
-	}
-	if !a.Folder(ctx, user, uid) {
-		return fmt.Errorf("not allowed to write resource to folder")
-	}
-	return nil
 }
 
 func (a *WriteAccessHooks) CanWriteOrigin(ctx context.Context, user claims.AuthInfo, uid string) error {
