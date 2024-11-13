@@ -17,7 +17,11 @@ const refIdMatcher: FrameMatcherInfo<string> = {
     if (stringStartsAsRegEx(pattern)) {
       try {
         regex = stringToJsRegex(pattern);
-      } catch {}
+      } catch (error) {
+        if (error instanceof Error) {
+          console.warn(error.message);
+        }
+      }
     }
 
     return (frame: DataFrame) => {
