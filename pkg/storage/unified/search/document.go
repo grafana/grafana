@@ -2,8 +2,7 @@ package search
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -15,6 +14,9 @@ import (
 )
 
 type DocumentBuilderProvider interface {
+	// The list returned here defines the set of resource kinds we know about and how to
+	// convert them to documents.  Long term this will likely need to to understand
+	// the "app manifest" that would includes declarative way to identify searchable fields
 	GetDocumentBuilders(ctx context.Context) ([]resource.DocumentBuilderInfo, error)
 }
 
@@ -53,10 +55,10 @@ func (p *standardDocumentProvider) GetDocumentBuilders(ctx context.Context) ([]r
 					// TODO, query data sources
 				})
 				return &DashboardDocumentBuilder{
-					Namespace: namespace,
-					Lookup:    lookup,
-					Stats:     nil, // loaded in enterprise
-					Blob:      blob,
+					Namespace:        namespace,
+					DatasourceLookup: lookup,
+					Stats:            nil, // loaded in enterprise
+					Blob:             blob,
 				}, nil
 			},
 		},
@@ -153,18 +155,17 @@ func (s *StandardDocumentFields) Load(key *resource.ResourceKey, rv int64, obj u
 }
 
 func toID(key *resource.ResourceKey) string {
-	h := sha256.New()
-
-	sep := []byte("/")
-	h.Write([]byte(key.Group))
-	h.Write(sep)
-	h.Write([]byte(key.Resource))
-	h.Write(sep)
-	h.Write([]byte(key.Namespace))
-	h.Write(sep)
-	h.Write([]byte(key.Name))
-
-	// ??? are the first 20 characters enough?
-	// github uses 7*hex as identifiers ???
-	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+	ns := key.Namespace
+	if ns == "" {
+		ns = "*cluster*"
+	}
+	var sb strings.Builder
+	sb.WriteString(key.Group)
+	sb.WriteString("/")
+	sb.WriteString(key.Resource)
+	sb.WriteString("/")
+	sb.WriteString(ns)
+	sb.WriteString("/")
+	sb.WriteString(key.Name)
+	return sb.String()
 }
