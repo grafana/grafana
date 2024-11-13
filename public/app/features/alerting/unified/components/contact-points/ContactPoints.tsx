@@ -164,31 +164,39 @@ const NotificationTemplatesTab = () => {
   );
 };
 
-const useTabQueryParam = () => {
+const useTabQueryParam = (defaultTab: ActiveTab) => {
   const [queryParams, setQueryParams] = useURLSearchParams();
   const param = useMemo(() => {
     const queryParam = queryParams.get('tab');
 
     if (!queryParam || !Object.values(ActiveTab).map(String).includes(queryParam)) {
-      return ActiveTab.ContactPoints;
+      return defaultTab;
     }
 
-    return queryParam || ActiveTab.ContactPoints;
-  }, [queryParams]);
+    return queryParam || defaultTab;
+  }, [defaultTab, queryParams]);
 
   const setParam = (tab: ActiveTab) => setQueryParams({ tab });
-
   return [param, setParam] as const;
 };
 
 export const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const [activeTab, setActiveTab] = useTabQueryParam();
+  const [, showContactPointsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
+
+  // Depending on permissions, user may not have access to all tabs,
+  // but we can default to picking the first one that they definitely _do_ have access to
+  const defaultTab = [
+    showContactPointsTab && ActiveTab.ContactPoints,
+    showTemplatesTab && ActiveTab.NotificationTemplates,
+  ].filter((tab) => !!tab)[0];
+
+  const [activeTab, setActiveTab] = useTabQueryParam(defaultTab);
 
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-  const [_, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -198,12 +206,14 @@ export const ContactPointsPageContents = () => {
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager!} />
       <Stack direction="column">
         <TabsBar>
-          <Tab
-            label="Contact Points"
-            active={showingContactPoints}
-            counter={contactPoints.length}
-            onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
-          />
+          {showContactPointsTab && (
+            <Tab
+              label="Contact Points"
+              active={showingContactPoints}
+              counter={contactPoints.length}
+              onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
+            />
+          )}
           {showTemplatesTab && (
             <Tab
               label="Notification Templates"
