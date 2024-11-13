@@ -10,6 +10,17 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
     disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
   })
   .setPanelOptions((builder, context) => {
+    builder.addSelect({
+      name: 'Zoom mode',
+      path: 'zoomMode',
+      defaultValue: 'cooperative',
+      settings: {
+        options: [
+          { value: 'cooperative', label: 'Cooperative', description: 'Lets you scroll the page normally' },
+          { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
+        ],
+      },
+    });
     builder.addNestedOptions({
       category: ['Nodes'],
       path: 'nodes',
@@ -42,17 +53,6 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
           name: 'Secondary stat unit',
           path: 'secondaryStatUnit',
         });
-      },
-    });
-    builder.addSelect({
-      name: 'Zoom mode',
-      path: 'zoomMode',
-      defaultValue: 'cooperative',
-      settings: {
-        options: [
-          { value: 'cooperative', label: 'Cooperative', description: 'Lets you scroll the page normally' },
-          { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
-        ],
       },
     });
   })
