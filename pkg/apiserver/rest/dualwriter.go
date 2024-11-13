@@ -10,7 +10,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -138,27 +137,6 @@ func NewDualWriter(
 	}
 }
 
-type updateWrapper struct {
-	upstream rest.UpdatedObjectInfo
-	updated  runtime.Object
-}
-
-// Returns preconditions built from the updated object, if applicable.
-// May return nil, or a preconditions object containing nil fields,
-// if no preconditions can be determined from the updated object.
-func (u *updateWrapper) Preconditions() *metav1.Preconditions {
-	if u.upstream == nil {
-		return nil
-	}
-	return u.upstream.Preconditions()
-}
-
-// UpdatedObject returns the updated object, given a context and old object.
-// The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
-func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
-	return u.updated, nil
-}
-
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
@@ -191,6 +169,7 @@ func SetDualWritingMode(
 		"2": Mode2,
 		"3": Mode3,
 		"4": Mode4,
+		"5": Mode5,
 	}
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
@@ -217,33 +196,14 @@ func SetDualWritingMode(
 		}
 	}
 
-	// Desired mode is 2 and current mode is 1
-	if (desiredMode == Mode2) && (currentMode == Mode1) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode2
-
+	switch {
+	case desiredMode == Mode2 || desiredMode == Mode1:
+		currentMode = desiredMode
 		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
-	}
-
-	if (desiredMode == Mode1) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode1
-
-		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
-		if err != nil {
-			return Mode0, errDualWriterSetCurrentMode
-		}
-	}
-
-	if (desiredMode == Mode3) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 3.
-
-		// gate #1: ensure the data is 100% in sync
+	case desiredMode >= Mode3 && currentMode < Mode3:
 		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
 		if err != nil {
 			klog.Info("data syncer failed for mode:", m)
@@ -258,12 +218,16 @@ func SetDualWritingMode(
 		if err != nil {
 			return currentMode, errDualWriterSetCurrentMode
 		}
-
 		return desiredMode, nil
+	case desiredMode >= Mode3 && currentMode >= Mode3:
+		currentMode = desiredMode
+		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
+		if err != nil {
+			return currentMode, errDualWriterSetCurrentMode
+		}
+	default:
+		return Mode0, errDualWriterSetCurrentMode
 	}
-
-	// 	#TODO add support for other combinations of desired and current modes
-
 	return currentMode, nil
 }
 

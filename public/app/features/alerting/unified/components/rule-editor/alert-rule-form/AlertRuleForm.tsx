@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -53,6 +53,7 @@ import {
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
+import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
@@ -102,12 +103,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (queryParams.has('defaults')) {
       return formValuesFromQueryParams(queryParams.get('defaults') ?? '', ruleType);
     }
+    const defaultRuleType = ruleType || RuleFormType.grafana;
 
     return {
       ...getDefaultFormValues(),
       condition: 'C',
-      queries: getDefaultQueries(),
-      type: ruleType || RuleFormType.grafana,
+      queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
+      type: defaultRuleType,
       evaluateEvery: evaluateEvery,
     };
   }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
@@ -283,38 +285,36 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
-          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {/* Step 3-4-5 */}
-              {showDataSourceDependantStep && (
-                <>
-                  {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && (
-                    <GrafanaEvaluationBehavior
-                      evaluateEvery={evaluateEvery}
-                      setEvaluateEvery={setEvaluateEvery}
-                      existing={Boolean(existing)}
-                      enableProvisionedGroups={false}
-                    />
-                  )}
+          <Stack direction="column" gap={3}>
+            {/* Step 1 */}
+            <AlertRuleNameAndMetric />
+            {/* Step 2 */}
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            {/* Step 3-4-5 */}
+            {showDataSourceDependantStep && (
+              <>
+                {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && (
+                  <GrafanaEvaluationBehavior
+                    evaluateEvery={evaluateEvery}
+                    setEvaluateEvery={setEvaluateEvery}
+                    existing={Boolean(existing)}
+                    enableProvisionedGroups={false}
+                  />
+                )}
 
-                  {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
+                {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
 
-                  {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
+                {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
 
-                  {/* Step 4 & 5 */}
-                  {/* Notifications step*/}
-                  <NotificationsStep alertUid={uidFromParams} />
-                  {/* Annotations only for cloud and Grafana */}
-                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
-                </>
-              )}
-            </Stack>
-          </CustomScrollbar>
+                {/* Step 4 & 5 */}
+                {/* Notifications step*/}
+                <NotificationsStep alertUid={uidFromParams} />
+                {/* Annotations only for cloud and Grafana */}
+                {!isRecordingRuleByType(type) && <AnnotationsStep />}
+              </>
+            )}
+          </Stack>
         </div>
       </form>
       {showDeleteModal ? (

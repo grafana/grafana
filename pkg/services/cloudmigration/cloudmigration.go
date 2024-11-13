@@ -17,13 +17,13 @@ type Service interface {
 	DeleteToken(ctx context.Context, uid string) error
 
 	CreateSession(ctx context.Context, signedInUser *user.SignedInUser, req CloudMigrationSessionRequest) (*CloudMigrationSessionResponse, error)
-	GetSession(ctx context.Context, migUID string) (*CloudMigrationSession, error)
-	DeleteSession(ctx context.Context, signedInUser *user.SignedInUser, migUID string) (*CloudMigrationSession, error)
-	GetSessionList(context.Context) (*CloudMigrationSessionListResponse, error)
+	GetSession(ctx context.Context, orgID int64, migUID string) (*CloudMigrationSession, error)
+	DeleteSession(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, migUID string) (*CloudMigrationSession, error)
+	GetSessionList(ctx context.Context, orgID int64) (*CloudMigrationSessionListResponse, error)
 
 	CreateSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string) (*CloudMigrationSnapshot, error)
 	GetSnapshot(ctx context.Context, query GetSnapshotsQuery) (*CloudMigrationSnapshot, error)
 	GetSnapshotList(ctx context.Context, query ListSnapshotsQuery) ([]CloudMigrationSnapshot, error)
-	UploadSnapshot(ctx context.Context, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error
+	UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error
 	CancelSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error
 }

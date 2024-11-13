@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSimpleServer(t *testing.T) {
@@ -52,10 +53,11 @@ func TestSimpleServer(t *testing.T) {
 
 	t.Run("playlist happy CRUD paths", func(t *testing.T) {
 		raw := []byte(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
+    		"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
+				"uid": "xyz",
 				"namespace": "default",
 				"annotations": {
 					"grafana.app/originName": "elsewhere",
@@ -167,11 +169,12 @@ func TestSimpleServer(t *testing.T) {
 
 	t.Run("playlist update optimistic concurrency check", func(t *testing.T) {
 		raw := []byte(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
+    	"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
 				"namespace": "default",
+				"uid": "xyz",
 				"annotations": {
 					"grafana.app/originName": "elsewhere",
 					"grafana.app/originPath": "path/to/item",

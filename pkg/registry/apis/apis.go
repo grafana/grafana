@@ -1,9 +1,6 @@
 package apiregistry
 
 import (
-	"context"
-
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
@@ -12,14 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
-	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
-)
-
-var (
-	_ registry.BackgroundService = (*Service)(nil)
+	"github.com/grafana/grafana/pkg/registry/apis/userstorage"
 )
 
 type Service struct{}
@@ -28,7 +21,6 @@ type Service struct{}
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
 	_ *dashboard.DashboardsAPIBuilder,
-	_ *playlist.PlaylistAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,
@@ -39,11 +31,7 @@ func ProvideRegistryServiceSink(
 	_ *query.QueryAPIBuilder,
 	_ *notifications.NotificationsAPIBuilder,
 	_ *search.SearchAPIBuilder,
+	_ *userstorage.UserStorageAPIBuilder,
 ) *Service {
 	return &Service{}
-}
-
-func (s *Service) Run(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }

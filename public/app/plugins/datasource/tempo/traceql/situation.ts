@@ -169,6 +169,10 @@ export function getSituation(text: string, offset: number): Situation | null {
     // Try again with the previous character.
     errorNode = getErrorNode(tree, shiftedOffset - 1);
   }
+  if (!errorNode) {
+    // Try again with the next character
+    errorNode = getErrorNode(tree, shiftedOffset + 1);
+  }
 
   const cur = errorNode != null ? errorNode.cursor() : tree.cursorAt(shiftedOffset);
 
@@ -340,7 +344,9 @@ function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const indexOfDot = attributeFieldParentText.indexOf('.');
   const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
 
-  if (['span', 'resource', 'parent'].find((item) => item === attributeFieldUpToDot)) {
+  if (
+    ['event', 'instrumentation', 'link', 'resource', 'span', 'parent'].find((item) => item === attributeFieldUpToDot)
+  ) {
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
       scope: attributeFieldUpToDot,

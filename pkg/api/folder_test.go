@@ -91,13 +91,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
-			expectedCode:           http.StatusConflict,
-			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
-			permissions:            []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
-		},
-		{
-			description:            "folder creation fails given folder service error %s",
-			input:                  folderWithoutParentInput,
 			expectedCode:           http.StatusForbidden,
 			expectedFolderSvcError: dashboards.ErrFolderAccessDenied,
 			permissions:            []accesscontrol.Permission{{Action: dashboards.ActionFoldersCreate}},
@@ -201,12 +194,6 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 			description:            "folder updating fails given folder service error %s",
 			expectedCode:           http.StatusBadRequest,
 			expectedFolderSvcError: dashboards.ErrDashboardUidTooLong,
-			permissions:            []accesscontrol.Permission{{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll}},
-		},
-		{
-			description:            "folder updating fails given folder service error %s",
-			expectedCode:           http.StatusConflict,
-			expectedFolderSvcError: dashboards.ErrFolderSameNameExists,
 			permissions:            []accesscontrol.Permission{{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll}},
 		},
 		{

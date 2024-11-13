@@ -55,13 +55,11 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -69,6 +67,7 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
 
@@ -460,10 +459,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.onEnterEditMode();
     }
 
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
-    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    vizPanel.clearParent();
-
     this.state.body.addPanel(vizPanel);
   }
 
@@ -508,11 +503,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
     const gridItem = buildGridItemForPanel(panelModel);
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
     const panel = gridItem.state.body;
-
-    panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    panel.clearParent();
 
     this.addPanel(panel);
 
@@ -580,11 +571,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewPanel(): VizPanel {
-    const vizPanel = getDefaultVizPanel(this);
+    const vizPanel = getDefaultVizPanel();
 
     this.addPanel(vizPanel);
 
     return vizPanel;
+  }
+
+  public switchLayout(layout: DashboardLayoutManager) {
+    this.setState({ body: layout });
   }
 
   /**

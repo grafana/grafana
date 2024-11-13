@@ -12,6 +12,8 @@ import (
 type Interface interface {
 	// Receivers returns a ReceiverInformer.
 	Receivers() ReceiverInformer
+	// RoutingTrees returns a RoutingTreeInformer.
+	RoutingTrees() RoutingTreeInformer
 	// TemplateGroups returns a TemplateGroupInformer.
 	TemplateGroups() TemplateGroupInformer
 	// TimeIntervals returns a TimeIntervalInformer.
@@ -32,6 +34,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // Receivers returns a ReceiverInformer.
 func (v *version) Receivers() ReceiverInformer {
 	return &receiverInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// RoutingTrees returns a RoutingTreeInformer.
+func (v *version) RoutingTrees() RoutingTreeInformer {
+	return &routingTreeInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // TemplateGroups returns a TemplateGroupInformer.

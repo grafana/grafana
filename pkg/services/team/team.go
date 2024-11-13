@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -23,23 +24,35 @@ type Service interface {
 	RegisterDelete(query string)
 }
 
+func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {
+	return func(ctx context.Context, orgID int64, resourceID string) (string, error) {
+		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
+		_, err := strconv.ParseInt(resourceID, 10, 64)
+		if resourceID == "" || err == nil {
+			return resourceID, nil
+		}
+		team, err := teamService.GetTeamByID(ctx, &GetTeamByIDQuery{UID: resourceID, OrgID: orgID})
+		if err != nil {
+			return "", err
+		}
+
+		return strconv.FormatInt(team.ID, 10), err
+	}
+}
+
 func MiddlewareTeamUIDResolver(teamService Service, paramName string) web.Handler {
+	handler := UIDToIDHandler(teamService)
+
 	return func(c *contextmodel.ReqContext) {
 		// Get team id from request, fetch team and replace teamId with team id
 		teamID := web.Params(c.Req)[paramName]
-		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
-		_, err := strconv.ParseInt(teamID, 10, 64)
-		if teamID == "" || err == nil {
-			return
-		}
-
-		team, err := teamService.GetTeamByID(c.Req.Context(), &GetTeamByIDQuery{UID: teamID, OrgID: c.OrgID})
+		id, err := handler(c.Req.Context(), c.OrgID, teamID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
-			gotParams[paramName] = strconv.FormatInt(team.ID, 10)
+			gotParams[paramName] = id
 			web.SetURLParams(c.Req, gotParams)
 		} else {
-			c.JsonApiErr(404, "Not found", nil)
+			c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		}
 	}
 }

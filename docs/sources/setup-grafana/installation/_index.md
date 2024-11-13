@@ -76,6 +76,11 @@ Grafana supports the versions of these databases that are officially supported b
 PostgreSQL versions 10.9, 11.4, and 12-beta2 are affected by a bug (tracked by the PostgreSQL project as [bug #15865](https://www.postgresql.org/message-id/flat/15865-17940eacc8f8b081%40postgresql.org)) which prevents those versions from being used with Grafana. The bug has been fixed in more recent versions of PostgreSQL.
 {{% /admonition %}}
 
+{{% admonition type="note" %}}
+Grafana binaries and images might not work with unsupported databases, even if they claim to be drop-in or replicate the API to their best.
+Binaries and images built with [BoringCrypto](https://pkg.go.dev/crypto/internal/boring) may have different problems than other distributions of Grafana.
+{{% /admonition %}}
+
 > Grafana can report errors when relying on read-only MySQL servers, such as in high-availability failover scenarios or serverless AWS Aurora MySQL. This is a known issue; for more information, see [issue #13399](https://github.com/grafana/grafana/issues/13399).
 
 ## Supported web browsers
