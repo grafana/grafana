@@ -60,6 +60,9 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     }
 
     if (target.query) {
+      if (config.featureToggles.zipkinBackendMigration && !this.nodeGraph?.enabled) {
+        return super.query(options);
+      }
       const query = this.applyTemplateVariables(target, options.scopedVars);
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
         map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
