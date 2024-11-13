@@ -90,7 +90,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
           test: /src\/(?:.*\/)?module\.tsx?$/,
           use: [
             {
-              loader: 'imports-loader',
+              loader: require.resolve('imports-loader'),
               options: {
                 imports: `side-effects grafana-public-path`,
               },

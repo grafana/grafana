@@ -15,6 +15,7 @@
     "eslint-webpack-plugin": "4.2.0",
     "fork-ts-checker-webpack-plugin": "9.0.2",
     "glob": "11.0.1",
+    "imports-loader": "^5.0.0",
     "replace-in-file-webpack-plugin": "1.0.6",
     "rspack-plugin-virtual-module": "^0.1.13",
     "typescript": "5.7.3",
