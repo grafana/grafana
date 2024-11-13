@@ -107,7 +107,7 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
 1. Click **Select**.
 1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
 
-If you don't have an SVG file, you can use a rectangle element instead an icon and reference another image file type. To add a custom image for another element type, follow the steps to [add a custom image](#add-custom-images-to-elements).
+If you don't have an SVG file, you can use a rectangle element instead of an icon and set its background image to an image file type. To add a custom image for another element type, follow the steps to [add a custom image](#add-custom-images-to-elements).
 
 ### Server
 
