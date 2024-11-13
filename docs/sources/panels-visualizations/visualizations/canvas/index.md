@@ -105,8 +105,9 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
 
 1. Click **Select**.
+1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
 
-To add a custom icon using another image file type, follow these steps:
+If you don't have an SVG file, follow these steps to add a custom icon:
 
 1. Under **Icon > SVG Path**, if it's not already selected, select **Fixed** as your file source.
 1. Change the **Fill color** option to **Transparent**.
