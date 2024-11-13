@@ -2,7 +2,7 @@
 import type { ConfigFile } from '@rtk-query/codegen-openapi';
 
 const config: ConfigFile = {
-  schemaFile: 'http://localhost:3000/swagger?api=gituisync.grafana.app-v0alpha1',
+  schemaFile: '../public/openapi3.json',
   apiFile: '', // leave this empty, and instead populate the outputFiles object below
   hooks: true,
   exportName: 'generatedAPI',
