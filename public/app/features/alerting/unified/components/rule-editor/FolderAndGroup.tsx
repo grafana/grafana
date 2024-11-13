@@ -7,13 +7,11 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
@@ -295,6 +293,7 @@ function FolderCreationModal({
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
 
+  const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
   const [createFolder] = useNewFolderMutation();
 
@@ -302,11 +301,10 @@ function FolderCreationModal({
     const { data, error } = await createFolder({ title });
 
     if (error) {
-      dispatch(notifyApp(createErrorNotification('Failed to create folder')));
+      notifyApp.error('Failed to create folder');
     } else if (data) {
       onCreate({ title: data.title, uid: data.uid });
-
-      dispatch(notifyApp(createSuccessNotification('Folder created')));
+      notifyApp.success('Folder created');
     }
   };
 
