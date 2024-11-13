@@ -1,8 +1,7 @@
-package dashboard
+package v2alpha1
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -11,13 +10,13 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
-	dashboardv0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -41,7 +40,7 @@ type DashboardsAPIBuilder struct {
 	dashboardService dashboards.DashboardService
 
 	accessControl accesscontrol.AccessControl
-	legacy        *dashboardStorage
+	legacy        *dashboard.DashboardStorage
 	unified       resource.ResourceClient
 
 	log log.Logger
@@ -67,17 +66,17 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
 	builder := &DashboardsAPIBuilder{
-		log: log.New("grafana-apiserver.dashboards"),
+		log: log.New("grafana-apiserver.dashboards.v2alpha1"),
 
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
 
-		legacy: &dashboardStorage{
-			resource:       dashboardv0.DashboardResourceInfo,
-			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
-			tableConverter: dashboardv0.DashboardResourceInfo.TableConverter(),
-			features:       features,
+		legacy: &dashboard.DashboardStorage{
+			Resource:       dashboardv2alpha1.DashboardResourceInfo,
+			Access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
+			TableConverter: dashboardv2alpha1.DashboardResourceInfo.TableConverter(),
+			Features:       features,
 		},
 		reg: reg,
 	}
@@ -86,11 +85,11 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 }
 
 func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return dashboardv0.DashboardResourceInfo.GroupVersion()
+	return dashboardv2alpha1.DashboardResourceInfo.GroupVersion()
 }
 
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return GetAuthorizer(b.dashboardService, b.log)
+	return dashboard.GetAuthorizer(b.dashboardService, b.log)
 }
 
 func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
@@ -99,36 +98,7 @@ func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap 
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(dashboardv0.SchemeGroupVersion,
-		&dashboardv0.Dashboard{},
-		&dashboardv0.DashboardList{},
-		&dashboardv0.DashboardWithAccessInfo{},
-		&dashboardv0.DashboardVersionList{},
-		&dashboardv0.VersionsQueryOptions{},
-		&dashboardv0.LibraryPanel{},
-		&dashboardv0.LibraryPanelList{},
-		&metav1.PartialObjectMetadata{},
-		&metav1.PartialObjectMetadataList{},
-	)
-
-	if !scheme.Recognizes(dashboard.DashboardResourceInfo.GroupVersionKind()) {
-		scheme.AddKnownTypes(dashboard.SchemeGroupVersion,
-			&dashboard.Dashboard{},
-			&dashboard.DashboardList{},
-			&dashboard.DashboardWithAccessInfo{},
-			&dashboard.DashboardVersionList{},
-			&dashboard.VersionsQueryOptions{},
-			&dashboard.LibraryPanel{},
-			&dashboard.LibraryPanelList{},
-		)
-	}
-
-	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	if err := dashboardv0.RegisterConversions(scheme); err != nil {
-		return err
-	}
-	metav1.AddToGroupVersion(scheme, dashboardv0.DashboardResourceInfo.GroupVersion())
-	return scheme.SetVersionPriority(dashboardv0.DashboardResourceInfo.GroupVersion())
+	return dashboardv2alpha1.AddToScheme(scheme)
 }
 
 func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -136,16 +106,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
-	dash := b.legacy.resource
-	legacyStore, err := b.legacy.newStore(scheme, optsGetter, b.reg)
+	dash := b.legacy.Resource
+	legacyStore, err := b.legacy.NewStore(scheme, optsGetter, b.reg)
 	if err != nil {
 		return err
 	}
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
-	if b.legacy.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
-		largeObjects = newDashboardLargeObjectSupport()
+	if b.legacy.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		largeObjects = dashboard.NewDashboardLargeObjectSupport()
 		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
 			LargeObjectSupport: largeObjects,
 		})
@@ -154,8 +124,8 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
-		b.legacy.server, // as client???
-		dashboardv0.DashboardResourceInfo.GroupResource(),
+		b.legacy.Server, // as client???
+		dashboardv2alpha1.DashboardResourceInfo.GroupResource(),
 	)
 
 	// Dual writes if a RESTOptionsGetter is provided
@@ -171,22 +141,22 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], largeObjects, b)
+	storage[dash.StoragePath("dto")], err = dashboard.NewDTOConnector(storage[dash.StoragePath()], largeObjects, b.legacy.Access, b.unified, b.accessControl)
 	if err != nil {
 		return err
 	}
 
 	// Expose read only library panels
-	storage[dashboardv0.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
-		access: b.legacy.access,
+	storage[dashboardv2alpha1.LibraryPanelResourceInfo.StoragePath()] = &dashboard.LibraryPanelStore{
+		Access: b.legacy.Access,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[dashboardv0.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashboardv2alpha1.VERSION] = storage
 	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return dashboardv0.GetOpenAPIDefinitions
+	return dashboardv2alpha1.GetOpenAPIDefinitions
 }
 
 func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -197,8 +167,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+dashboardv0.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+"watch/"+dashboardv0.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+dashboardv2alpha1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+dashboardv2alpha1.DashboardResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]

@@ -7,11 +7,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	commonV0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-func newDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
+func NewDashboardLargeObjectSupport() *apistore.BasicLargeObjectSupport {
 	return &apistore.BasicLargeObjectSupport{
 		TheGroupResource: dashboard.DashboardResourceInfo.GroupResource(),
 

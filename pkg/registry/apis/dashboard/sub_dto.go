@@ -35,14 +35,14 @@ type DTOConnector struct {
 	log           log.Logger
 }
 
-func newDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, builder *DashboardsAPIBuilder) (rest.Storage, error) {
+func NewDTOConnector(dash rest.Storage, largeObjects apistore.LargeObjectSupport, legacyAccess legacy.DashboardAccess, resourceClient resource.ResourceClient, accessControl accesscontrol.AccessControl) (rest.Storage, error) {
 	ok := false
 	v := &DTOConnector{
-		legacy:        builder.legacy.access,
-		accessControl: builder.accessControl,
-		unified:       builder.unified,
+		legacy:        legacyAccess,
+		accessControl: accessControl,
+		unified:       resourceClient,
 		largeObjects:  largeObjects,
-		log:           builder.log,
+		log:           log.New("grafana-apiserver.dashboards.dto-connector"),
 	}
 	v.getter, ok = dash.(rest.Getter)
 	if !ok {
