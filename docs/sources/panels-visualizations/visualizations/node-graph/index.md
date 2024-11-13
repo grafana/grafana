@@ -87,7 +87,7 @@ If a node lacks edge connections, it’s displayed on its own outside of the net
 
 Use the following options to refine your node graph visualization.
 
-- **Zoom mode** - Choose how the node graph should handle zoom/scroll events.
+- **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
 
 ## Nodes options
 
