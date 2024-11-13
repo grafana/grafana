@@ -20,6 +20,24 @@ func New(cfg app.Config) (app.App, error) {
 				klog.ErrorS(err, "Informer processing an error")
 			},
 		},
+		ManagedKinds: []simple.AppManagedKind{
+			{
+				Kind:    v0alpha1.ConfigKind(),
+				Watcher: &simple.Watcher{},
+				Mutator: &simple.Mutator{
+					MutateFunc: func(ctx context.Context, ar *app.AdmissionRequest) (*app.MutatingResponse, error) {
+						return &app.MutatingResponse{
+							UpdatedObject: ar.Object,
+						}, nil
+					},
+				},
+				Validator: &simple.Validator{
+					ValidateFunc: func(ctx context.Context, ar *app.AdmissionRequest) error {
+						return nil
+					},
+				},
+			},
+		},
 	}
 
 	simpleApp, err := simple.NewApp(simpleConfig)
