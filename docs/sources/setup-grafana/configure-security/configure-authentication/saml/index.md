@@ -284,26 +284,27 @@ Grafana supports user authentication through Okta, which is useful when you want
 1. Log in to the [Okta portal](https://login.okta.com/).
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
 1. In the Admin Console, navigate to **Applications** > **Applications**.
-1. Click **Add Application**.
-1. Click **Create New App** to start the Application Integration Wizard.
-1. Choose **Web** as a platform.
-1. Select **SAML 2.0** in the Sign on method section.
+1. Click **Create App Integration** to start the Application Integration Wizard.
+1. Choose **SAML 2.0** as the Sign-in method.
 1. Click **Create**.
 1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
 
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
-   - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
+   - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, by default it is the `/saml/metadata` endpoint of your Grafana instance (for example `https://example.grafana.com/saml/metadata`). This could be configured differently, but the value here must match the `entity_id` setting of the SAML settings of Grafana.
    - Leave the default values for **Name ID format** and **Application username**.
+     {{% admonition type="note" %}}
+     If you plan to enable SAML Single Logout, consider setting the **Name ID format** to `EmailAddress` or `Persistent`. This must match the `name_id_format` setting of the Grafana instance.
+     {{% /admonition %}}
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
-     | Attribute name (in Grafana) | Name and value (in Okta profile)                   |
-     | --------------------------- | -------------------------------------------------- |
-     | Login                       | Login `user.login`                                 |
-     | Email                       | Email `user.email`                                 |
-     | DisplayName                 | DisplayName `user.firstName + " " + user.lastName` |
+     | Attribute name (in Grafana) | Name and value (in Okta profile)                     | Grafana configuration (under `auth.saml`) |
+     | --------------------------- | ---------------------------------------------------- | ----------------------------------------- |
+     | Login                       | Login - `user.login`                                 | `assertion_attribute_login = Login`       |
+     | Email                       | Email - `user.email`                                 | `assertion_attribute_email = Email`       |
+     | DisplayName                 | DisplayName - `user.firstName + " " + user.lastName` | `assertion_attribute_name = DisplayName`  |
 
-   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
+   - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`, ensure it matches the `asssertion_attribute_groups` setting in Grafana) and set filter to `Matches regex .*` to return all user groups.
 
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
@@ -320,10 +321,13 @@ By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
 
 The following list includes valid configuration field values:
 
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`
-- `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`
-- `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`
-- `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`
+| `name_id_format` value in the configuration file or Terraform | `Name identifier format` on the UI |
+| ------------------------------------------------------------- | ---------------------------------- |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`         | Default                            |
+| `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`       | Unspecified                        |
+| `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`      | Email address                      |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`        | Persistent                         |
+| `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`         | Transient                          |
 
 ### IdP metadata
 
