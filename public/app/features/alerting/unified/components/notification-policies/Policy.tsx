@@ -39,7 +39,7 @@ import { RoutesMatchingFilters } from '../../NotificationPolicies';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';
-import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
+import { createContactPointLink, createContactPointSearchLink, createMuteTimingLink } from '../../utils/misc';
 import { InheritableProperties, getInheritedProperties } from '../../utils/notification-policies';
 import { InsertPosition } from '../../utils/routeTree';
 import { Authorize } from '../Authorize';
@@ -856,7 +856,11 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   }
 
   const integrations = details.grafana_managed_receiver_configs;
-  const contactPointId = getContactPointIdentifier(details);
+
+  const contactPointLink =
+    'id' in details && details.id
+      ? createContactPointLink(details.id, alertManagerSourceName)
+      : createContactPointSearchLink(details.name, alertManagerSourceName);
 
   return (
     <PopupCard
@@ -875,12 +879,7 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
         </Text>
       }
     >
-      <TextLink
-        href={createContactPointLink(contactPointId, alertManagerSourceName)}
-        color="primary"
-        variant="bodySmall"
-        inline={false}
-      >
+      <TextLink href={contactPointLink} color="primary" variant="bodySmall" inline={false}>
         {contactPoint}
       </TextLink>
     </PopupCard>
