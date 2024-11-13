@@ -2,7 +2,7 @@
 aliases:
   - ../../data-sources/influxdb/query-editor/
   - influxdb-flux/
-description: This topic describes te InfluxDB query editor, modes and querying the InfluxDB data source.
+description: This topic describes the InfluxDB query editor, modes and querying the InfluxDB data source.
 labels:
   products:
     - cloud
