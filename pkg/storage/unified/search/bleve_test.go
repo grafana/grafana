@@ -79,7 +79,9 @@ func TestBleveBackend(t *testing.T) {
 	require.NotNil(t, index)
 
 	rsp, err := index.Search(ctx, nil, &resource.ResourceSearchRequest{
-		Query: "*",
+		Options: &resource.ListOptions{
+			Key: key,
+		},
 		Limit: 100000,
 		Facet: map[string]*resource.ResourceSearchRequest_Facet{
 			"tags": {
@@ -87,7 +89,7 @@ func TestBleveBackend(t *testing.T) {
 				Limit: 100,
 			},
 		},
-	})
+	}, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
 	require.NotNil(t, rsp.Frame)

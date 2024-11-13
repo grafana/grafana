@@ -13,6 +13,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -180,9 +181,29 @@ func (b *bleveIndex) Origin(ctx context.Context, req *resource.OriginRequest) (*
 }
 
 // Search implements resource.DocumentIndex.
-func (b *bleveIndex) Search(ctx context.Context, access authz.AccessClient, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	if !(req.Query == "" || req.Query == "*") {
-		return nil, fmt.Errorf("currently only match all query is supported")
+func (b *bleveIndex) Search(
+	ctx context.Context,
+	access authz.AccessClient,
+	req *resource.ResourceSearchRequest,
+	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
+) (*resource.ResourceSearchResponse, error) {
+	if req.Options == nil || req.Options.Key == nil {
+		return &resource.ResourceSearchResponse{
+			Error: resource.NewBadRequestError("missing query key"),
+		}, nil
+	}
+
+	response := &resource.ResourceSearchResponse{
+		Error: b.verifyKey(req.Options.Key),
+	}
+	if response.Error != nil {
+		return response, nil
+	}
+
+	// Verifies the index federation
+	index, err := b.getIndex(req, federate)
+	if err != nil {
+		return nil, err
 	}
 
 	searchrequest := &bleve.SearchRequest{
@@ -193,29 +214,43 @@ func (b *bleveIndex) Search(ctx context.Context, access authz.AccessClient, req 
 		Explain: req.Explain,
 	}
 
+	// Currently everything is within an AND query
 	queries := []query.Query{}
-	if req.Options != nil {
-		if len(req.Options.Fields) > 0 {
-			return nil, fmt.Errorf("field queries not yet supported")
+	if len(req.Options.Labels) > 0 {
+		for _, v := range req.Options.Labels {
+			q, e := requirementQuery(v, "labels.")
+			if e != nil {
+				response.Error = e
+				return response, nil
+			}
+			queries = append(queries, q)
 		}
-		if len(req.Options.Labels) > 0 {
-			return nil, fmt.Errorf("label queries not yet supported")
+	}
+	if len(req.Options.Fields) > 0 {
+		for _, v := range req.Options.Fields {
+			q, e := requirementQuery(v, "")
+			if e != nil {
+				response.Error = e
+				return response, nil
+			}
+			queries = append(queries, q)
 		}
 	}
 
-	// The raw query syntax -- depends on the engine for now
-	if req.Query != "" && req.Query != "*" {
-		q, err := query.ParseQuery([]byte(req.Query))
-		if err != nil {
-			return &resource.ResourceSearchResponse{
-				Error: resource.NewBadRequestError("error parsing query"),
-			}, nil
-		}
+	if req.Query != "" {
+		// ??? Should expose the full power of query parsing here?
+		// it is great for exploration, but also hard to change in the future
+		q := bleve.NewQueryStringQuery(req.Query)
 		queries = append(queries, q)
 	}
 
-	// TODO AUTHZ!!!!
-	// Need to add an authz filter into the mix
+	if access != nil {
+		// TODO AUTHZ!!!!
+		// Need to add an authz filter into the mix
+		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
+		// NOTE, we likely want to pass in the already called checker because the resource server
+		// will first need to check if we can see anything (or everything!) for this resource
+	}
 
 	switch len(queries) {
 	case 0:
@@ -242,16 +277,14 @@ func (b *bleveIndex) Search(ctx context.Context, access authz.AccessClient, req 
 		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
-	res, err := b.index.Search(searchrequest)
+	res, err := index.Search(searchrequest)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp := &resource.ResourceSearchResponse{
-		TotalHits: res.Total,
-		QueryCost: res.Cost,
-		MaxScore:  res.MaxScore,
-	}
+	response.TotalHits = res.Total
+	response.QueryCost = res.Cost
+	response.MaxScore = res.MaxScore
 
 	// Convert the hits to a data frame
 	frame, err := hitsToFrame(searchrequest.Fields, res.Hits, req.Explain)
@@ -260,11 +293,12 @@ func (b *bleveIndex) Search(ctx context.Context, access authz.AccessClient, req 
 	}
 
 	// Write frame as JSON
-	rsp.Frame, err = frame.MarshalJSON()
+	response.Frame, err = frame.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
+	// parse the facet fields
 	for k, v := range res.Facets {
 		f := &resource.ResourceSearchResponse_Facet{
 			Field:   v.Field,
@@ -279,12 +313,69 @@ func (b *bleveIndex) Search(ctx context.Context, access authz.AccessClient, req 
 				})
 			}
 		}
-		if rsp.Facet == nil {
-			rsp.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
+		if response.Facet == nil {
+			response.Facet = make(map[string]*resource.ResourceSearchResponse_Facet)
 		}
-		rsp.Facet[k] = f
+		response.Facet[k] = f
 	}
-	return rsp, nil
+	return response, nil
+}
+
+// make sure the request key matches the index
+func (b *bleveIndex) verifyKey(key *resource.ResourceKey) *resource.ErrorResult {
+	if key.Namespace != b.key.Namespace {
+		return resource.NewBadRequestError("namespace mismatch (expected " + b.key.Namespace + ")")
+	}
+	if key.Group != b.key.Group {
+		return resource.NewBadRequestError("group mismatch (expected " + b.key.Group + ")")
+	}
+	if key.Resource != b.key.Resource {
+		return resource.NewBadRequestError("resource mismatch (expected " + b.key.Resource + ")")
+	}
+	return nil
+}
+
+func (b *bleveIndex) getIndex(
+	req *resource.ResourceSearchRequest,
+	federate []resource.ResourceIndex,
+) (bleve.Index, error) {
+	if len(req.Federated) != len(federate) {
+		return nil, fmt.Errorf("federation is misconfigured")
+	}
+
+	// Search across resources using
+	// https://blevesearch.com/docs/IndexAlias/
+	if len(federate) > 0 {
+		all := []bleve.Index{b.index}
+		for i, extra := range federate {
+			typedindex, ok := extra.(*bleveIndex)
+			if !ok {
+				return nil, fmt.Errorf("federated indexes must be the same type")
+			}
+			if typedindex.verifyKey(req.Federated[i]) != nil {
+				return nil, fmt.Errorf("federated index keys do not match")
+			}
+			all = append(all, typedindex.index)
+		}
+		return bleve.NewIndexAlias(all...), nil
+	}
+	return b.index, nil
+}
+
+// Convert a "requirement" into a bleve query
+func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *resource.ErrorResult) {
+	switch selection.Operator(req.Operator) {
+	case selection.Equals, selection.DoubleEquals:
+		if len(req.Values) != 1 {
+			return nil, resource.NewBadRequestError("equals query can have one value")
+		}
+		q := query.NewMatchQuery(req.Values[0])
+		q.FieldVal = prefix + req.Key
+		return q, nil
+	}
+	return nil, resource.NewBadRequestError(
+		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
+	)
 }
 
 func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*data.Frame, error) {

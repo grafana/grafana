@@ -238,6 +238,7 @@ require (
 	github.com/bboreham/go-loser v0.0.0-20230920113527-fcc2c21820a3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.12.0 // indirect
+	github.com/blevesearch/bleve/v2 v2.4.2 // @grafana/grafana-search-and-storage
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/mmap-go v1.0.4 // indirect
 	github.com/blevesearch/segment v0.9.1 // indirect
@@ -477,8 +478,6 @@ require github.com/jmespath-community/go-jmespath v1.1.1 // @grafana/identity-ac
 require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
-
-require github.com/blevesearch/bleve/v2 v2.4.2
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect

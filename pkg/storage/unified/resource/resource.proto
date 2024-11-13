@@ -359,29 +359,33 @@ message ResourceSearchRequest {
 
   // The key must include namespace + group + resource
   ListOptions options = 1;
+
+  // To search additional resource types, add additional keys to this list
+  // NOTE: queries will only support federation across kinds with common fields
+  repeated ResourceKey federated = 2; 
   
   // When a query exists, it is parsed and used to influence
   // query string for chosen implementation (currently just bleve)
   // The score is only relevant when a query exists
-  string query = 2;
+  string query = 3;
 
   // max results
-  int64 limit = 3;
+  int64 limit = 4;
 
   // where to start the query (eg, From)
-  int64 offset = 4;
+  int64 offset = 5;
 
   // sorting
-  repeated Sort sortBy = 5;
+  repeated Sort sortBy = 6;
 
   // calculate field statistics
-  map<string,Facet> facet = 6;
+  map<string,Facet> facet = 7;
 
   // the return fields (empty will return everything)
-  repeated string fields = 7;
+  repeated string fields = 8;
 
   // explain each result (added to the each row)
-  bool explain = 8;
+  bool explain = 9;
 }
 
 message ResourceSearchResponse {

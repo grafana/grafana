@@ -43,7 +43,8 @@ type ResourceIndex interface {
 	Flush() error
 
 	// Search within a namespaced resource
-	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest) (*ResourceSearchResponse, error)
+	// When working with federated queries, the additional indexes will be passed in explicitly
+	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
 
 	// Execute an origin query -- access control is not not checked for each item
 	// NOTE: this will likely be used for provisioning, or it will be removed
