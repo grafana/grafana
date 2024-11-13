@@ -271,7 +271,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                 variant="secondary"
                                 onClick={toggleCheatsheetOpened}
                               >
-                                Reference
+                                Help
                               </Button>
                             </>
                           }

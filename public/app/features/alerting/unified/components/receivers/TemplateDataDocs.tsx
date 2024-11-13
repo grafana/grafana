@@ -31,7 +31,11 @@ export function TemplateDataDocs() {
   return (
     <Stack gap={2}>
       <TemplateDataTable
-        caption={<h4 className={styles.header}>Template Data</h4>}
+        caption={
+          <h4 className={styles.header}>
+            Notification template data <span>Available in the context of a notification.</span>{' '}
+          </h4>
+        }
         dataItems={GlobalTemplateData}
         typeRenderer={(type) =>
           type === '[]Alert' ? (
