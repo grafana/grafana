@@ -45,7 +45,7 @@ export function GrafanaFolderAndLabelsStep() {
               <p>
                 {t(
                   'alerting.rule-form.folders.help-info',
-                  'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assigng permissions to individual folders.'
+                  'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders.'
                 )}
               </p>
               <p>

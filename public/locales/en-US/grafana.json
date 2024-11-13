@@ -277,7 +277,7 @@
       },
       "folder-and-labels": "Organize your rule with a folder and a set of labels.",
       "folders": {
-        "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assigng permissions to individual folders."
+        "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
       },
       "labels": {
         "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
