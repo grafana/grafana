@@ -395,7 +395,7 @@ export function TableNG(props: TableNGProps) {
 }
 
 function rowHeight(
-  row: Record<string, unknown>,
+  row: Record<string, string>,
   columnTypes: Record<string, string>,
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
   osContext: OffscreenCanvasRenderingContext2D | null,
