@@ -14,6 +14,9 @@ import (
 )
 
 type DocumentBuilderProvider interface {
+	// The list returned here defines the set of resource kinds we know about and how to
+	// convert them to documents.  Long term this will likely need to to understand
+	// the "app manifest" that would includes declarative way to identify searchable fields
 	GetDocumentBuilders(ctx context.Context) ([]resource.DocumentBuilderInfo, error)
 }
 
