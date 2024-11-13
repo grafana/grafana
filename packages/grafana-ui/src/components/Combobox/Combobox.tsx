@@ -72,6 +72,7 @@ function itemFilter<T extends string | number>(inputValue: string) {
   };
 }
 
+const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
 
 /**
@@ -79,17 +80,20 @@ const asyncNoop = () => Promise.resolve([]);
  *
  * @alpha
  */
-export const Combobox = <T extends string | number>({
-  options,
-  onChange,
-  value: valueProp,
-  isClearable = false,
-  createCustomValue = false,
-  id,
-  width,
-  'aria-labelledby': ariaLabelledBy,
-  ...restProps
-}: ComboboxProps<T>) => {
+export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+  const {
+    options,
+    onChange,
+    value: valueProp,
+    placeholder: placeholderProp,
+    isClearable = false,
+    createCustomValue = false,
+    id,
+    width,
+    'aria-labelledby': ariaLabelledBy,
+    ...restProps
+  } = props;
+
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
@@ -99,7 +103,31 @@ export const Combobox = <T extends string | number>({
   const [asyncLoading, setAsyncLoading] = useState(false);
   const [asyncError, setAsyncError] = useState(false);
 
-  const [items, setItems] = useState(isAsync ? [] : options);
+  // A custom setter to always prepend the custom value at the beginning, if needed
+  const [items, baseSetItems] = useState(isAsync ? [] : options);
+  const setItems = useCallback(
+    (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
+      let itemsToSet = items;
+
+      if (inputValue && createCustomValue) {
+        const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
+
+        if (!optionMatchingInput) {
+          const customValueOption = {
+            // Type casting needed to make this work when T is a number
+            value: inputValue as unknown as T,
+            description: t('combobox.custom-value.create', 'Create custom value'),
+          };
+
+          itemsToSet = items.slice(0);
+          itemsToSet.unshift(customValueOption);
+        }
+      }
+
+      baseSetItems(itemsToSet);
+    },
+    [createCustomValue]
+  );
 
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
@@ -142,10 +170,10 @@ export const Combobox = <T extends string | number>({
 
   const debounceAsync = useMemo(
     () =>
-      debounce((inputValue: string, customValueOption: ComboboxOption<T> | null) => {
+      debounce((inputValue: string) => {
         loadOptions(inputValue)
           .then((opts) => {
-            setItems(customValueOption ? [customValueOption, ...opts] : opts);
+            setItems(opts, inputValue);
             setAsyncLoading(false);
             setAsyncError(false);
           })
@@ -156,86 +184,126 @@ export const Combobox = <T extends string | number>({
             }
           });
       }, 200),
-    [loadOptions]
+    [loadOptions, setItems]
   );
 
-  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue, selectItem } =
-    useCombobox({
-      menuId,
-      labelId,
-      inputId: id,
-      items,
-      itemToString,
-      selectedItem,
-      onSelectedItemChange: ({ selectedItem }) => {
-        onChange(selectedItem);
-      },
-      defaultHighlightedIndex: selectedItemIndex ?? 0,
+  const {
+    isOpen,
+    highlightedIndex,
 
-      scrollIntoView: () => {},
-      onInputValueChange: ({ inputValue }) => {
-        const customValueOption =
-          createCustomValue &&
-          inputValue &&
-          items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
-            ? {
-                // Type casting needed to make this work when T is a number
-                value: inputValue as unknown as T,
-                description: t('combobox.custom-value.create', 'Create custom value'),
-              }
-            : null;
+    getInputProps,
+    getMenuProps,
+    getItemProps,
 
+    selectItem,
+  } = useCombobox({
+    menuId,
+    labelId,
+    inputId: id,
+    items,
+    itemToString,
+    selectedItem,
+
+    // Don't change downshift state in the onBlahChange handlers. Instead, use the stateReducer to make changes.
+    // Downshift calls change handlers on the render after so you can get sync/flickering issues if you change its state
+    // in them.
+    // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
+
+    onSelectedItemChange: ({ selectedItem }) => {
+      onChange(selectedItem);
+    },
+
+    defaultHighlightedIndex: selectedItemIndex ?? 0,
+
+    scrollIntoView: () => {},
+
+    onInputValueChange: ({ inputValue, isOpen }) => {
+      if (!isOpen) {
+        // Prevent stale options from showing on reopen
         if (isAsync) {
-          if (customValueOption) {
-            setItems([customValueOption]);
-          }
-          setAsyncLoading(true);
-          debounceAsync(inputValue, customValueOption);
-
-          return;
+          setItems([], '');
         }
 
+        // Otherwise there's nothing else to do when the menu isnt open
+        return;
+      }
+
+      if (!isAsync) {
         const filteredItems = options.filter(itemFilter(inputValue));
-
-        setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
-      },
-
-      onIsOpenChange: ({ isOpen, inputValue }) => {
-        // Default to displaying all values when opening
-        if (isOpen && !isAsync) {
-          setItems(options);
-          return;
+        setItems(filteredItems, inputValue);
+      } else {
+        if (inputValue && createCustomValue) {
+          setItems([], inputValue);
         }
 
-        if (isOpen && isAsync) {
-          setAsyncLoading(true);
-          loadOptions(inputValue ?? '')
-            .then((options) => {
-              setItems(options);
+        setAsyncLoading(true);
+        debounceAsync(inputValue);
+      }
+    },
+
+    onIsOpenChange: ({ isOpen, inputValue }) => {
+      // Loading async options mostly happens in onInputValueChange, but if the menu is opened with an empty input
+      // then onInputValueChange isn't called (because the input value hasn't changed)
+      if (isAsync && isOpen && inputValue === '') {
+        setAsyncLoading(true);
+        // TODO: dedupe this loading logic with debounceAsync
+        loadOptions(inputValue)
+          .then((opts) => {
+            setItems(opts, inputValue);
+            setAsyncLoading(false);
+            setAsyncError(false);
+          })
+          .catch((err) => {
+            if (!(err instanceof StaleResultError)) {
+              setAsyncError(true);
               setAsyncLoading(false);
-              setAsyncError(false);
-            })
-            .catch((err) => {
-              if (!(err instanceof StaleResultError)) {
-                setAsyncError(true);
-                setAsyncLoading(false);
-              }
-            });
-          return;
+            }
+          });
+      }
+    },
+
+    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+        rowVirtualizer.scrollToIndex(highlightedIndex);
+      }
+    },
+
+    stateReducer(state, actionAndChanges) {
+      let { changes } = actionAndChanges;
+      const menuBeingOpened = state.isOpen === false && changes.isOpen === true;
+      const menuBeingClosed = state.isOpen === true && changes.isOpen === false;
+
+      // Reset the input value when the menu is opened. If the menu is opened due to an input change
+      // then make sure we keep that.
+      // This will trigger onInputValueChange to load async options
+      if (menuBeingOpened && changes.inputValue === state.inputValue) {
+        changes = {
+          ...changes,
+          inputValue: '',
+        };
+      }
+
+      if (menuBeingClosed) {
+        // Flush the selected item to the input when the menu is closed
+        if (changes.selectedItem) {
+          changes = {
+            ...changes,
+            inputValue: itemToString(changes.selectedItem),
+          };
+        } else if (changes.inputValue !== '') {
+          // Otherwise if no selected value, clear any search from the input
+          changes = {
+            ...changes,
+            inputValue: '',
+          };
         }
-      },
-      onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-        if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-          rowVirtualizer.scrollToIndex(highlightedIndex);
-        }
-      },
-    });
+      }
+
+      return changes;
+    },
+  });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
-
-  const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
-  }, [selectedItem, setInputValue, value]);
 
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
 
@@ -245,6 +313,8 @@ export const Combobox = <T extends string | number>({
       isOpen
       ? 'search'
       : 'angle-down';
+
+  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   return (
     <div>
@@ -281,9 +351,9 @@ export const Combobox = <T extends string | number>({
            *  See issue here: https://github.com/downshift-js/downshift/issues/718
            *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
            */
-          onChange: () => {},
-          onBlur,
+          onChange: noop,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
+          placeholder,
         })}
       />
       <div
@@ -296,55 +366,57 @@ export const Combobox = <T extends string | number>({
           'aria-labelledby': ariaLabelledBy,
         })}
       >
-        <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
-          {isOpen && !asyncError && (
-            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                return (
-                  <li
-                    key={`${items[virtualRow.index].value}-${virtualRow.index}`}
-                    data-index={virtualRow.index}
-                    className={cx(
-                      styles.option,
-                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                      highlightedIndex === virtualRow.index && styles.optionFocused
-                    )}
-                    style={{
-                      height: virtualRow.size,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                    {...getItemProps({
-                      item: items[virtualRow.index],
-                      index: virtualRow.index,
-                    })}
-                  >
-                    <div className={styles.optionBody}>
-                      <span className={styles.optionLabel}>
-                        {items[virtualRow.index].label ?? items[virtualRow.index].value}
-                      </span>
-                      {items[virtualRow.index].description && (
-                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+        {isOpen && (
+          <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef}>
+            {!asyncError && (
+              <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  return (
+                    <li
+                      key={`${items[virtualRow.index].value}-${virtualRow.index}`}
+                      data-index={virtualRow.index}
+                      className={cx(
+                        styles.option,
+                        selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                        highlightedIndex === virtualRow.index && styles.optionFocused
                       )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div aria-live="polite">
-            {asyncError && (
-              <MessageRow>
-                <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
-                <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
-              </MessageRow>
+                      style={{
+                        height: virtualRow.size,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      {...getItemProps({
+                        item: items[virtualRow.index],
+                        index: virtualRow.index,
+                      })}
+                    >
+                      <div className={styles.optionBody}>
+                        <span className={styles.optionLabel}>
+                          {items[virtualRow.index].label ?? items[virtualRow.index].value}
+                        </span>
+                        {items[virtualRow.index].description && (
+                          <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            {items.length === 0 && !asyncError && (
-              <MessageRow>
-                <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-              </MessageRow>
-            )}
-          </div>
-        </ScrollContainer>
+            <div aria-live="polite">
+              {asyncError && (
+                <MessageRow>
+                  <Icon name="exclamation-triangle" size="md" className={styles.warningIcon} />
+                  <Trans i18nKey="combobox.async.error">An error occurred while loading options.</Trans>
+                </MessageRow>
+              )}
+              {items.length === 0 && !asyncError && (
+                <MessageRow>
+                  <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
+                </MessageRow>
+              )}
+            </div>
+          </ScrollContainer>
+        )}
       </div>
     </div>
   );
