@@ -210,11 +210,41 @@ func getAttributeVal(attr *commonv11.AnyValue) any {
 		return attr.GetBoolValue()
 	case *commonv11.AnyValue_DoubleValue:
 		return attr.GetDoubleValue()
-	case *commonv11.AnyValue_KvlistValue, *commonv11.AnyValue_ArrayValue:
-		return attr.GetStringValue()
+	case *commonv11.AnyValue_KvlistValue:
+		return kvListAsString(attr.GetKvlistValue())
+	case *commonv11.AnyValue_ArrayValue:
+		return arrayAsString(attr.GetArrayValue())
 	default:
-		return nil
+		return attr.GetStringValue()
 	}
+}
+
+func arrayAsString(list *commonv11.ArrayValue) string {
+	vals := make([]any, len(list.GetValues()))
+
+	for i, val := range list.GetValues() {
+		vals[i] = getAttributeVal(val)
+	}
+
+	res, err := json.Marshal(vals)
+	if err != nil {
+		return ""
+	}
+	return string(res)
+}
+
+func kvListAsString(list *commonv11.KeyValueList) string {
+	vals := make(map[string]any, len(list.GetValues()))
+
+	for _, val := range list.GetValues() {
+		vals[val.GetKey()] = getAttributeVal(val.GetValue())
+	}
+
+	res, err := json.Marshal(vals)
+	if err != nil {
+		return ""
+	}
+	return string(res)
 }
 
 func getSpanTags(span *tracev11.Span) []*KeyValue {
