@@ -107,6 +107,8 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
 1. Click **Select**.
 1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
 
+If you don't have an SVG file, you can use a rectangle element instead an icon and reference another image file type. To add a custom image for another element type, follow the steps to [add a custom image](#add-custom-images-to-elements).
+
 ### Server
 
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
