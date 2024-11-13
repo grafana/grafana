@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
@@ -111,7 +112,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}
 
 		remains := limit - int64(len(result))
-		res, err := dr.checkDashboards(ctx, query, findRes, remains)
+		res, err := dr.checkDashboardsBatch(ctx, query, findRes, remains)
 		if err != nil {
 			return nil, err
 		}
@@ -122,6 +123,69 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		// Stop when last page reached
 		if len(findRes) < defaultQueryLimit {
 			break
+		}
+	}
+
+	return result, nil
+}
+
+func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboardsBatch")
+	defer span.End()
+
+	if len(searchRes) == 0 {
+		return nil, nil
+	}
+
+	batchReqItems := make([]*authzextv1.BatchCheckItem, 0, len(searchRes))
+
+	for _, d := range searchRes {
+		// FIXME: support different access levels
+		kind := zanzana.KindDashboards
+		action := dashboards.ActionDashboardsRead
+		if d.IsFolder {
+			kind = zanzana.KindFolders
+			action = dashboards.ActionFoldersRead
+		}
+
+		checkReq, ok := zanzana.TranslateToCheckRequest("", action, kind, d.FolderUID, d.UID)
+		if !ok {
+			continue
+		}
+
+		batchReqItems = append(batchReqItems, &authzextv1.BatchCheckItem{
+			Verb:        checkReq.Verb,
+			Group:       checkReq.Group,
+			Resource:    checkReq.Resource,
+			Name:        checkReq.Name,
+			Folder:      checkReq.Folder,
+			Subresource: checkReq.Subresource,
+		})
+	}
+
+	batchReq := authzextv1.BatchCheckRequest{
+		Namespace: query.SignedInUser.GetNamespace(),
+		Subject:   query.SignedInUser.GetUID(),
+		Items:     batchReqItems,
+	}
+
+	res, err := dr.zclient.BatchCheck(ctx, &batchReq)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.All {
+		return searchRes, nil
+	}
+
+	result := make([]dashboards.DashboardSearchProjection, 0)
+	for _, d := range searchRes {
+		if len(result) >= int(remains) {
+			break
+		}
+
+		if _, ok := res.Items[d.UID]; ok {
+			result = append(result, d)
 		}
 	}
 
