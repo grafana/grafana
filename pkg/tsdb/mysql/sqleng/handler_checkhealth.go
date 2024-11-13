@@ -8,12 +8,18 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.db.Ping()
 	if err != nil {
 		logCheckHealthError(e.dsInfo, err, e.log)
+		if user, requesterErr := identity.GetRequester(ctx); requesterErr == nil {
+			if user.GetOrgRole() == identity.RoleAdmin {
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
+			}
+		}
 		var driverErr *mysql.MySQLError
 		if errors.As(err, &driverErr) {
 			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: e.TransformQueryError(e.log, driverErr).Error()}, nil
@@ -54,8 +60,8 @@ func logCheckHealthError(dsInfo DataSourceInfo, err error, logger log.Logger) {
 	}
 	configSummaryJson, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
-		logger.Error("Check health failed", "error", err)
+		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error", "plugin_id", "mysql")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error", "plugin_id", "mysql", "details", string(configSummaryJson))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_detailed_error", "plugin_id", "mysql", "details", string(configSummaryJson))
 }
