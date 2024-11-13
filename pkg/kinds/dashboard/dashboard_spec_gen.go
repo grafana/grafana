@@ -766,9 +766,6 @@ type Spec struct {
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *string `json:"refresh,omitempty"`
 
-	// Enable reporting of dashboard performance metrics
-	ReportPerformanceMetrics *bool `json:"reportPerformanceMetrics,omitempty"`
-
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
 	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`

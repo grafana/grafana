@@ -112,7 +112,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     id: state.id,
     editable: state.editable,
     preload: state.preload,
-    reportPerformanceMetrics: state.reportPerformanceMetrics,
     time: {
       from: timeRange.from,
       to: timeRange.to,

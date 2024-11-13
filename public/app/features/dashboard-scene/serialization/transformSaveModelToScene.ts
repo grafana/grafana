@@ -225,7 +225,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     tags: oldModel.tags || [],
     title: oldModel.title,
     uid: oldModel.uid,
-    reportPerformanceMetrics: dto.reportPerformanceMetrics ?? false,
     version: oldModel.version,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
@@ -248,8 +247,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         sync: oldModel.graphTooltip,
       }),
       new behaviors.SceneQueryController({
-        enableProfiling: config.dashboardPerformanceMetrics && dto.reportPerformanceMetrics, // TODO config for this
-        onProfileComplete: getDashboardInteractionCallback(oldModel.uid),
+        enableProfiling:
+          config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === oldModel.uid) !== -1,
+        onProfileComplete: getDashboardInteractionCallback(oldModel.uid, oldModel.title),
       }),
       registerDashboardMacro,
       registerPanelInteractionsReporter,
@@ -428,7 +428,7 @@ function trackIfEmpty(grid: SceneGridLayout) {
   };
 }
 
-function getDashboardInteractionCallback(uid: string) {
+function getDashboardInteractionCallback(uid: string, title: string) {
   return (e: SceneInteractionProfileEvent) => {
     let interactionType = '';
 
@@ -451,7 +451,7 @@ function getDashboardInteractionCallback(uid: string) {
         usedJSHeapSize: e.usedJSHeapSize,
         jsHeapSizeLimit: e.jsHeapSizeLimit,
       },
-      { dashboard: uid }
+      { dashboard: uid, title: title }
     );
   };
 }

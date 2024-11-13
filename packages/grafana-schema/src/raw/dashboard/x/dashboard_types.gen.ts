@@ -1071,10 +1071,6 @@ export interface Dashboard {
    */
   refresh?: string;
   /**
-   * Enable reporting of dashboard performance metrics
-   */
-  reportPerformanceMetrics?: boolean;
-  /**
    * This property should only be used in dashboards defined by plugins.  It is a quick check
    * to see if the version has changed since the last time.
    */
