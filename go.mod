@@ -478,8 +478,6 @@ require github.com/grafana/loki/v3 v3.2.1 // @grafana/observability-logs
 
 require github.com/openzipkin/zipkin-go v0.4.3 // @grafana/oss-big-tent
 
-require github.com/grafana/grafana/apps/gituisync v0.0.0-00010101000000-000000000000
-
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
@@ -524,5 +522,3 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
-
-replace github.com/grafana/grafana/apps/gituisync => ./apps/gituisync

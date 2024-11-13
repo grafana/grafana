@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apps/gituisync"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -27,7 +26,6 @@ func ProvideRegistryServiceSink(
 	registrar builder.APIRegistrar,
 	restConfigProvider apiserver.RestConfigProvider,
 	playlistAppProvider *playlist.PlaylistAppProvider,
-	gitUISyncAppProvider *gituisync.GitUISyncAppProvider,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) *rest.Config {
 		cfg := restConfigProvider.GetRestConfig(ctx)
@@ -42,7 +40,7 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider, gitUISyncAppProvider)
+	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider)
 	if err != nil {
 		return nil, err
 	}
