@@ -5,6 +5,7 @@ import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/ty
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { muteTimingsReducer } from '../reducers/alertmanager/muteTimings';
+import { notificationTemplatesReducer } from '../reducers/alertmanager/notificationTemplates';
 import { receiversReducer } from '../reducers/alertmanager/receivers';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 
@@ -26,7 +27,12 @@ export const initialAlertmanagerConfiguration: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const configurationReducer = reduceReducers(initialAlertmanagerConfiguration, muteTimingsReducer, receiversReducer);
+const configurationReducer = reduceReducers(
+  initialAlertmanagerConfiguration,
+  muteTimingsReducer,
+  receiversReducer,
+  notificationTemplatesReducer
+);
 
 /**
  * This hook will make sure we are always applying actions that mutate the Alertmanager configuration
