@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -190,69 +189,4 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 	}
 
 	return result, nil
-}
-
-func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
-	defer span.End()
-
-	if len(searchRes) == 0 {
-		return nil, nil
-	}
-
-	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
-	var wg sync.WaitGroup
-	res := make([]dashboards.DashboardSearchProjection, 0)
-	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
-	allowedResults := make(chan dashboards.DashboardSearchProjection, len(searchRes))
-
-	for i := 0; i < int(concurrentRequests); i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for d := range resToCheck {
-				if int64(len(allowedResults)) >= remains {
-					return
-				}
-
-				// FIXME: support different access levels
-				kind := zanzana.KindDashboards
-				action := dashboards.ActionDashboardsRead
-				if d.IsFolder {
-					kind = zanzana.KindFolders
-					action = dashboards.ActionFoldersRead
-				}
-
-				namespace := query.SignedInUser.GetNamespace()
-				req, ok := zanzana.TranslateToCheckRequest(namespace, action, kind, d.FolderUID, d.UID)
-				if !ok {
-					continue
-				}
-
-				res, err := dr.zclient.Check(ctx, query.SignedInUser, *req)
-				if err != nil {
-					dr.log.Error("error checking access", "error", err)
-				} else if res.Allowed {
-					allowedResults <- d
-				}
-			}
-		}()
-	}
-
-	for _, r := range searchRes {
-		resToCheck <- r
-	}
-	close(resToCheck)
-
-	wg.Wait()
-	close(allowedResults)
-
-	for r := range allowedResults {
-		if int64(len(res)) >= remains {
-			break
-		}
-		res = append(res, r)
-	}
-
-	return res, nil
 }
