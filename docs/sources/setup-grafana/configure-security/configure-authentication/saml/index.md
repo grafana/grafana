@@ -285,7 +285,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 1. Go to the Admin Console in your Okta organization by clicking **Admin** in the upper-right corner. If you are in the Developer Console, then click **Developer Console** in the upper-left corner and then click **Classic UI** to switch over to the Admin Console.
 1. In the Admin Console, navigate to **Applications** > **Applications**.
 1. Click **Create App Integration** to start the Application Integration Wizard.
-1. Choose **SAML 2.0** as the sign-on method.
+1. Choose **SAML 2.0** as the **Sign-in method**.
 1. Click **Create**.
 1. On the **General Settings** tab, enter a name for your Grafana integration. You can also upload a logo.
 1. On the **Configure SAML** tab, enter the SAML information related to your Grafana instance:
