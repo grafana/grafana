@@ -108,7 +108,7 @@ func (in *RepositorySpec) DeepCopyInto(out *RepositorySpec) {
 	*out = *in
 	out.Local = in.Local
 	out.S3 = in.S3
-	out.GitHubRepository = in.GitHubRepository
+	out.GitHub = in.GitHub
 	return
 }
 

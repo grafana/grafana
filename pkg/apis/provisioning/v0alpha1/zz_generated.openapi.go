@@ -31,14 +31,30 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepository(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"owner": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"repository": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"branchWorkflow": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"generateDashboardPreviews": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option. By default, this is false (i.e. we will not create previews). This option is a no-op if BranchWorkflow is `false` or default.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -93,8 +109,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
+							Ref: ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
 						},
 					},
 				},
@@ -158,6 +173,13 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"folderUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The UID of the folder that is backed by the repository.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with s3 and github.",

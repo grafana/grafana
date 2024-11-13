@@ -1,1 +1,2 @@
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitHubRepository
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,FolderUID
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositorySpec,GitHub
