@@ -1,3 +1,5 @@
+import { FieldType } from '@grafana/data';
+
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
@@ -48,4 +50,49 @@ export function getCellHeight(
   }
 
   return defaultRowHeight;
+}
+
+export function getRowHeight(
+  row: Record<string, string>,
+  columnTypes: Record<string, string>,
+  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number,
+  padding: number,
+  textWrap: boolean
+): number {
+  if (!textWrap) {
+    return defaultRowHeight;
+  }
+  /**
+   * 0. loop through all cells in row
+   * 1. find text cell in row
+   * 2. find width of text cell
+   * 3. calculate height based on width and text length
+   * 4. return biggest height
+   */
+
+  let biggestHeight = defaultRowHeight;
+
+  for (const key in row) {
+    if (isTextCell(key, columnTypes)) {
+      if (Object.keys(headerCellRefs.current).length === 0) {
+        return biggestHeight;
+      }
+      const cellWidth = headerCellRefs.current[key].offsetWidth;
+      const cellText = row[key];
+      const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+
+      if (newCellHeight > biggestHeight) {
+        biggestHeight = newCellHeight;
+      }
+    }
+  }
+
+  return biggestHeight;
+}
+
+function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
+  return columnTypes[key] === FieldType.string;
 }

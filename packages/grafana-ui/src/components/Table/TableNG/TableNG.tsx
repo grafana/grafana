@@ -17,7 +17,7 @@ import { getTextAlign, getFooterItems } from '../utils';
 
 import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
-import { getCellHeight } from './utils';
+import { getRowHeight } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -110,7 +110,7 @@ export function TableNG(props: TableNGProps) {
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
-  function getRowHeight(): number {
+  function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
     const lineHeight = theme.typography.body.lineHeight;
 
@@ -125,7 +125,7 @@ export function TableNG(props: TableNGProps) {
 
     return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
   }
-  const defaultRowHeight = getRowHeight();
+  const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
@@ -334,7 +334,7 @@ export function TableNG(props: TableNGProps) {
           resizable: true,
         }}
         rowHeight={(row) =>
-          rowHeight(
+          getRowHeight(
             row,
             columnTypes,
             headerCellRefs,
@@ -392,51 +392,6 @@ export function TableNG(props: TableNGProps) {
       )}
     </>
   );
-}
-
-function rowHeight(
-  row: Record<string, string>,
-  columnTypes: Record<string, string>,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  osContext: OffscreenCanvasRenderingContext2D | null,
-  lineHeight: number,
-  defaultRowHeight: number,
-  padding: number,
-  textWrap: boolean
-): number {
-  if (!textWrap) {
-    return defaultRowHeight;
-  }
-  /**
-   * 0. loop through all cells in row
-   * 1. find text cell in row
-   * 2. find width of text cell
-   * 3. calculate height based on width and text length
-   * 4. return biggest height
-   */
-
-  let biggestHeight = defaultRowHeight;
-
-  for (const key in row) {
-    if (isTextCell(key, columnTypes)) {
-      if (Object.keys(headerCellRefs.current).length === 0) {
-        return biggestHeight;
-      }
-      const cellWidth = headerCellRefs.current[key].offsetWidth;
-      const cellText = row[key];
-      const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
-
-      if (newCellHeight > biggestHeight) {
-        biggestHeight = newCellHeight;
-      }
-    }
-  }
-
-  return biggestHeight;
-}
-
-function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
-  return columnTypes[key] === FieldType.string;
 }
 
 function myRowRenderer(key: React.Key, props: RenderRowProps<TableRow>): React.ReactNode {
