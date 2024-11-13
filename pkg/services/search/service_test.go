@@ -30,7 +30,7 @@ func TestSearch_SortedResults(t *testing.T) {
 		&model.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 	}, nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{IsGrafanaAdmin: true}
-	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{10: true, 12: true}}
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[string]bool{10: true, 12: true}}
 	svc := &SearchService{
 		sqlstore:         db,
 		starService:      ss,
@@ -71,7 +71,7 @@ func TestSearch_StarredResults(t *testing.T) {
 		&model.Hit{ID: 3, Title: "C", Type: "dash-db"},
 	}, nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{}
-	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{1: true, 3: true, 4: true}}
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[string]bool{1: true, 3: true, 4: true}}
 	svc := &SearchService{
 		sqlstore:         db,
 		starService:      ss,

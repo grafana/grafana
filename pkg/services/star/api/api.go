@@ -63,11 +63,11 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 
 	uids := []string{}
 	if len(iuserstars.UserStars) > 0 {
-		var ids []int64
-		for id := range iuserstars.UserStars {
-			ids = append(ids, id)
+		var uids []string
+		for uid := range iuserstars.UserStars {
+			uids = append(uids, uid)
 		}
-		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardIDs: ids, OrgID: c.SignedInUser.GetOrgID()})
+		starredDashboards, err := api.dashboardService.GetDashboards(c.Req.Context(), &dashboards.GetDashboardsQuery{DashboardUIDs: uids, OrgID: c.SignedInUser.GetOrgID()})
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch dashboards", err)
 		}
@@ -146,7 +146,7 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 		return rsp
 	}
 
-	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: dash.ID}
+	cmd := star.StarDashboardCommand{UserID: userID, DashboardUID: dash.UID, OrgID: c.SignedInUser.GetOrgID()}
 
 	if err := api.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
@@ -222,7 +222,7 @@ func (api *API) UnstarDashboardByUID(c *contextmodel.ReqContext) response.Respon
 		return rsp
 	}
 
-	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardID: dash.ID}
+	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardUID: dash.UID, OrgID: c.SignedInUser.GetOrgID()}
 
 	if err := api.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)
