@@ -35,7 +35,7 @@ type DashboardDocumentBuilder struct {
 	Stats map[string]map[string]int64
 
 	// data source lookup
-	Lookup dashboard.DatasourceLookup
+	DatasourceLookup dashboard.DatasourceLookup
 
 	// For large dashboards we will need to load them from blob store
 	Blob resource.BlobSupport
@@ -71,7 +71,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		value = rsp.Value
 	}
 
-	summary, err := dashboard.ReadDashboard(bytes.NewReader(value), s.Lookup)
+	summary, err := dashboard.ReadDashboard(bytes.NewReader(value), s.DatasourceLookup)
 	if err != nil {
 		return nil, err
 	}
