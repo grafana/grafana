@@ -547,12 +547,13 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 
 func TestDeleteSession(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
+	user := &user.SignedInUser{UserUID: "user123"}
 
 	t.Run("when deleting a session that does not exist in the database, it returns an error", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		session, err := s.DeleteSession(ctx, 2, "invalid-session-uid")
+		session, err := s.DeleteSession(ctx, 2, user, "invalid-session-uid")
 		require.Nil(t, session)
 		require.Error(t, err)
 	})
@@ -570,12 +571,12 @@ func TestDeleteSession(t *testing.T) {
 			OrgID:     3,
 		}
 
-		createResp, err := s.CreateSession(ctx, cmd)
+		createResp, err := s.CreateSession(ctx, user, cmd)
 		require.NoError(t, err)
 		require.NotEmpty(t, createResp.UID)
 		require.NotEmpty(t, createResp.Slug)
 
-		deletedSession, err := s.DeleteSession(ctx, cmd.OrgID, createResp.UID)
+		deletedSession, err := s.DeleteSession(ctx, cmd.OrgID, user, createResp.UID)
 		require.NoError(t, err)
 		require.NotNil(t, deletedSession)
 		require.Equal(t, deletedSession.UID, createResp.UID)
@@ -597,7 +598,7 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil)
+			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil, "user123")
 		})
 
 		require.Zero(t, gmsMock.reportEventCalled)
@@ -613,7 +614,7 @@ func TestReportEvent(t *testing.T) {
 		s.gmsClient = gmsMock
 
 		require.NotPanics(t, func() {
-			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil)
+			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil, "user123")
 		})
 
 		require.Equal(t, 1, gmsMock.reportEventCalled)

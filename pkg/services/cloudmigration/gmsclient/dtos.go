@@ -50,6 +50,7 @@ type EventRequestDTO struct {
 	Event              LocalEventType `json:"event"`
 	Error              string         `json:"error"`
 	DurationIfFinished time.Duration  `json:"duration"`
+	UserUID            string         `json:"userUid"`
 }
 
 type LocalEventType string
