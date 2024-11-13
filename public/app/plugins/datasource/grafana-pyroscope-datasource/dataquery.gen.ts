@@ -24,6 +24,10 @@ export interface GrafanaPyroscopeDataQuery extends common.DataQuery {
    */
   labelSelector: string;
   /**
+   * Sets the maximum number of time series.
+   */
+  limit?: number;
+  /**
    * Sets the maximum number of nodes in the flamegraph.
    */
   maxNodes?: number;

@@ -91,6 +91,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[0].getIgnoreUrls()).toEqual([
+      new RegExp('/*/log-grafana-javascript-agent/'),
+      /.*.google-analytics.com*.*/,
+      /.*.googletagmanager.com*.*/,
+      /frontend-metrics/,
+      /\/collect(?:\/[\w]*)?$/,
+    ]);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[1]).toBeInstanceOf(FetchTransport);
   });
 
