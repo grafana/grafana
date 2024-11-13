@@ -74,7 +74,7 @@ func TestBleveBackend(t *testing.T) {
 				},
 			})
 			index.Write(&StandardDocumentFields{
-				RV:         2,
+				RV:         3,
 				ID:         "dash/ccc",
 				Name:       "ccc",
 				Title:      "test ccc",
@@ -97,9 +97,9 @@ func TestBleveBackend(t *testing.T) {
 			},
 			Limit: 100000,
 			// ????? this does not seem to work
-			// SortBy: []*resource.ResourceSearchRequest_Sort{
-			// 	{Field: "title", Desc: false}, // ccc,bbb,aaa
-			// },
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false}, // ccc,bbb,aaa
+			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
 					Field: "tags",

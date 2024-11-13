@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/blevesearch/bleve/v2"
@@ -280,11 +281,36 @@ func (b *bleveIndex) Search(
 
 	// Add the sort fields
 	for _, sort := range req.SortBy {
-		v := sort.Field
-		if sort.Desc {
-			v = "-" + v // the bleve parser uses +/- to decide order
+		if sort.Field == "title" {
+			// ???? is this doing anything????
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field:   "title",
+				Desc:    sort.Desc,
+				Type:    search.SortFieldAsString, // force for title????
+				Mode:    search.SortFieldDefault,  // ???
+				Missing: search.SortFieldMissingLast,
+			})
+			continue
 		}
-		s := search.ParseSearchSortString(v)
+
+		// hardcoded (for now)
+		if strings.HasPrefix(sort.Field, "stats.") {
+			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
+				Field:   sort.Field,
+				Desc:    sort.Desc,
+				Type:    search.SortFieldAsNumber, // force for now!
+				Mode:    search.SortFieldDefault,  // ???
+				Missing: search.SortFieldMissingLast,
+			})
+			continue
+		}
+
+		// Default support
+		input := sort.Field
+		if sort.Desc {
+			input = "-" + sort.Field
+		}
+		s := search.ParseSearchSortString(input)
 		searchrequest.Sort = append(searchrequest.Sort, s)
 	}
 
@@ -293,6 +319,11 @@ func (b *bleveIndex) Search(
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
 			Desc: false,
 		})
+	}
+
+	if true { // debugging, what is happening!!
+		jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
+		fmt.Printf("SORT: %s\n", jj)
 	}
 
 	res, err := index.Search(searchrequest)
