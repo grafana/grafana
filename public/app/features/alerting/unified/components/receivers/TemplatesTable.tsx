@@ -191,7 +191,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
         <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
           <td></td>
           <td colSpan={2}>
-            <DetailsField label="Description" horizontal={true}>
+            <DetailsField label="" horizontal={true}>
               <TemplateEditor
                 width={'auto'}
                 height={'auto'}
