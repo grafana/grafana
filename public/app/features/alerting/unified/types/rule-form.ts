@@ -1,4 +1,3 @@
-import { DashboardViewItem } from 'app/features/search/types';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
@@ -43,7 +42,7 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: DashboardViewItem | undefined;
+  folder: Folder | undefined;
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
@@ -60,3 +59,5 @@ export interface RuleFormValues {
   keepFiringForTimeUnit?: string;
   expression: string;
 }
+
+export type Folder = { title: string; uid: string };

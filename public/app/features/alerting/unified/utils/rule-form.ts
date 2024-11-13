@@ -24,7 +24,6 @@ import {
   getQueryRunnerFor,
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { DashboardViewItem } from 'app/features/search/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -372,7 +371,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
-        folder: { kind: 'folder', title: namespace, uid: ga.namespace_uid },
+        folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
         metric: ga.record?.metric,
       };
@@ -394,7 +393,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           condition: ga.condition,
           annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
           labels: listifyLabelsOrAnnotations(rule.labels, true),
-          folder: { kind: 'folder', title: namespace, uid: ga.namespace_uid },
+          folder: { title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
           contactPoints: routingSettings,
@@ -751,7 +750,7 @@ export const panelToRuleFormValues = async (
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
-  const folder: DashboardViewItem | undefined =
+  const folder =
     folderUid && folderTitle
       ? {
           kind: 'folder',
@@ -824,7 +823,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const { folderTitle, folderUid } = dashboard.state.meta;
 
-  const folder: DashboardViewItem | undefined =
+  const folder =
     folderUid && folderTitle
       ? {
           kind: 'folder',

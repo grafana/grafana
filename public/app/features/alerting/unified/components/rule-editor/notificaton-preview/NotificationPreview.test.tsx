@@ -1,7 +1,6 @@
 import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -9,6 +8,7 @@ import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
+import { Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
   AlertManagerDataSource,
@@ -126,8 +126,7 @@ function mockHasEditPermission(enabled: boolean) {
   return enabled ? grantUserPermissions(readAndWritePermissions) : grantUserPermissions(onlyReadPermissions);
 }
 
-const folder: DashboardViewItem = {
-  kind: 'folder',
+const folder: Folder = {
   uid: '1',
   title: 'title',
 };

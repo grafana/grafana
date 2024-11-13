@@ -13,14 +13,13 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { DashboardViewItem } from 'app/features/search/types';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { RuleFormValues } from '../../types/rule-form';
+import { Folder, RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRecordingRuleByType, isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
@@ -113,7 +112,7 @@ export function FolderAndGroup({
   const onOpenFolderCreationModal = () => setIsCreatingFolder(true);
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
 
-  const handleFolderCreation = (folder: DashboardViewItem) => {
+  const handleFolderCreation = (folder: Folder) => {
     resetGroup();
     setValue('folder', folder);
     setIsCreatingFolder(false);
@@ -174,7 +173,7 @@ export function FolderAndGroup({
                           value={folder?.uid}
                           onChange={(uid, title) => {
                             if (uid && title) {
-                              setValue('folder', { kind: 'folder', title, uid });
+                              setValue('folder', { title, uid });
                             } else {
                               setValue('folder', undefined);
                             }
@@ -292,7 +291,7 @@ function FolderCreationModal({
   onCreate,
 }: {
   onClose: () => void;
-  onCreate: (folder: DashboardViewItem) => void;
+  onCreate: (folder: Folder) => void;
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
 
@@ -305,8 +304,7 @@ function FolderCreationModal({
     if (error) {
       dispatch(notifyApp(createErrorNotification('Failed to create folder')));
     } else if (data) {
-      const folder: DashboardViewItem = { kind: 'folder', title: data.title, uid: data.uid };
-      onCreate(folder);
+      onCreate({ title: data.title, uid: data.uid });
 
       dispatch(notifyApp(createSuccessNotification('Folder created')));
     }
