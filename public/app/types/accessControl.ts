@@ -134,6 +134,11 @@ export enum AccessControlAction {
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
 
+  // Alerting templates actions
+  AlertingTemplatesRead = 'alert.notifications.templates:read',
+  AlertingTemplatesWrite = 'alert.notifications.templates:write',
+  AlertingTemplatesDelete = 'alert.notifications.templates:delete',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
