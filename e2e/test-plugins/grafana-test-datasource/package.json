@@ -11,7 +11,6 @@
   "author": "Grafana",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/eslint-config": "7.0.0",
     "@grafana/plugin-configs": "11.4.0-pre",
     "@types/lodash": "4.17.7",
     "@types/node": "20.14.14",
