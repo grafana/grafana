@@ -205,7 +205,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
           {/* name field for the template */}
           <FieldSet disabled={isProvisioned} className={styles.fieldset}>
             <InlineField
-              label="Template name"
+              label="Template group name"
               error={errors?.title?.message}
               invalid={!!errors.title?.message}
               required
@@ -216,7 +216,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                   required: { value: true, message: 'Required.' },
                   validate: { titleIsUnique },
                 })}
-                placeholder="Give your template a title"
+                placeholder="Give your template group a name"
                 width={42}
                 autoFocus={true}
                 id="new-template-name"
@@ -234,7 +234,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                     <div className={cx(styles.flexColumn, styles.containerWithBorderAndRadius, styles.minEditorSize)}>
                       <div>
                         <EditorColumnHeader
-                          label="Template"
+                          label="Template group"
                           actions={
                             <>
                               {/* examples dropdown – only available for Grafana Alertmanager */}

@@ -43,7 +43,7 @@ jest.mock('@grafana/ui', () => ({
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
   form: {
-    title: byLabelText(/Template name/),
+    title: byLabelText(/Template group name/),
     saveButton: byRole('button', { name: 'Save' }),
   },
 };
@@ -93,7 +93,7 @@ describe('Templates routes', () => {
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('');
+    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('');
   });
 
   it('should pass name validation when editing existing template', async () => {
@@ -134,7 +134,7 @@ describe('Templates K8s API', () => {
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email');
+    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
       '{{ define "custom-email" }}  Custom email template {{ end }}'
     );
@@ -146,7 +146,7 @@ describe('Templates K8s API', () => {
     const form = await ui.templateForm.find();
 
     expect(form).toBeInTheDocument();
-    expect(within(form).getByRole('textbox', { name: /Template name/ })).toHaveValue('custom-email (copy)');
+    expect(within(form).getByRole('textbox', { name: /Template group name/ })).toHaveValue('custom-email (copy)');
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveTextContent(
       '{{ define "custom-email_NEW" }} Custom email template {{ end }}'
     );
