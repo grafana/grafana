@@ -157,7 +157,7 @@ export function enhanceContactPointsWithMetadata({
   return enhanced.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export function getContactPointIdentifier(contactPoint: Receiver): string {
+function getContactPointIdentifier(contactPoint: Receiver): string {
   return 'id' in contactPoint && contactPoint.id ? contactPoint.id : contactPoint.name;
 }
 
