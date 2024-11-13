@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/dolthub/vitess/go/vt/sqlparser"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var logger = log.New("sql_expr")
 
 // TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
-	parser := sqlparser.NewTestParser()
-
-	stmt, err := parser.Parse(rawSQL)
+	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
@@ -31,12 +29,6 @@ func TablesList(rawSQL string) ([]string, error) {
 				}
 			case *sqlparser.TableName:
 				tables[v.Name.String()] = struct{}{}
-			case *sqlparser.Subquery:
-				walkSubtree(v.Select)
-			case *sqlparser.With:
-				for _, cte := range v.CTEs {
-					walkSubtree(cte.Subquery)
-				}
 			}
 			return true, nil
 		}, node)
