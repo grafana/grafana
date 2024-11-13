@@ -346,7 +346,7 @@ message SearchRequest {
 message ResourceSearchRequest {
   message Sort {
     string field = 1;
-    bool asc = 2;
+    bool desc = 2; // defaults to ascending
   }
   
   message Facet {

@@ -3,7 +3,6 @@ package search
 import (
 	"context"
 	"encoding/json"
-	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -30,15 +29,14 @@ func TestBleveBackend(t *testing.T) {
 	tmpdir, err := os.CreateTemp("", "bleve-test")
 	require.NoError(t, err)
 
-	backend := &bleveBackend{
-		tracer: tracing.NewNoopTracerService(),
-		log:    slog.Default(),
-		opts: bleveOptions{
+	backend := NewBleveBackend(
+		bleveOptions{
 			Root:          tmpdir.Name(),
-			FileThreshold: 5,
+			FileThreshold: 5, // with more than 5 items we create a file on disk
 		},
-		cache: make(map[resource.NamespacedResource]*bleveIndex),
-	}
+		tracing.NewNoopTracerService(),
+		nil,
+	)
 
 	rv := int64(10)
 	ctx := context.Background()
@@ -98,8 +96,9 @@ func TestBleveBackend(t *testing.T) {
 				Key: key,
 			},
 			Limit: 100000,
+			// ????? this does not seem to work
 			// SortBy: []*resource.ResourceSearchRequest_Sort{
-			// 	{Field: "title", Asc: false}, // ccc,bbb,aaa
+			// 	{Field: "title", Desc: false}, // ccc,bbb,aaa
 			// },
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {

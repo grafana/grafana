@@ -48,7 +48,7 @@ type bleveBackend struct {
 	cacheMu sync.RWMutex
 }
 
-func newBleveBackend(opts bleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
+func NewBleveBackend(opts bleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
 	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
@@ -278,13 +278,21 @@ func (b *bleveIndex) Search(
 		searchrequest.Facets[k] = bleve.NewFacetRequest(v.Field, int(v.Limit))
 	}
 
-	// Add sort requirements
+	// Add the sort fields
 	for _, sort := range req.SortBy {
 		v := sort.Field
-		if !sort.Asc {
+		if sort.Desc {
 			v = "-" + v // the bleve parser uses +/- to decide order
 		}
-		searchrequest.Sort = append(searchrequest.Sort, search.ParseSearchSortString(v))
+		s := search.ParseSearchSortString(v)
+		searchrequest.Sort = append(searchrequest.Sort, s)
+	}
+
+	// Always sort by *something*, otherwise the order is unstable
+	if len(searchrequest.Sort) == 0 {
+		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{
+			Desc: false,
+		})
 	}
 
 	res, err := index.Search(searchrequest)
