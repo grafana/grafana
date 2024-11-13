@@ -168,9 +168,7 @@ func ProvideService(
 			""),
 			Token: cfg.CloudMigration.GcomAPIToken},
 			httpClientAuthApi)
-
 		//s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
-
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{}
