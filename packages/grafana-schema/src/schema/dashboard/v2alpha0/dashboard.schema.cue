@@ -537,7 +537,7 @@ VariableCustomFormatterFn: {
 		// `custom`: Define the variable options manually using a comma-separated list.
 		// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 VariableType: "query" | "adhoc" | "groupby" | "constant" | "datasource" | "interval" | "textbox" | "custom" |
-			"system" | "snapshot" 
+			"system" | "snapshot"
 
 // Sort variable options
 // Accepted values are:
@@ -561,36 +561,45 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 
 // Determine if the variable shows on dashboard
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
-VariableHide: "dontHide" | "hideLabel" | "hideVariable"
+VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 
-// Variable value option
+// FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
   label: string
   value: VariableValueSingle
   group?: string
 }
 
+// Variable option specification
+VariableOption: {
+  // Whether the option is selected or not
+  selected?: bool
+  // Text to be displayed for the option
+  text: string | [...string]
+  // Value of the option
+value: string | [...string]
+}
+
 // Query variable specification
 QueryVariableSpec: {
   name: string | *""
-  value: VariableValue | *""
-  text: VariableValue | *""
-  current: VariableValueOption | *{
-    label: ""
+  current: VariableOption | *{
+    text: ""
     value: ""
   }
   label?: string
-  hide: bool | *false
+  hide: VariableHide
+  refresh: VariableRefresh
   skipUrlSync: bool | *false
   description?: string
   datasource: DataSourceRef | *{}
   query: string | DataQueryKind | *""
   regex: string | *""
-  sort: VariableSort 
+  sort: VariableSort
   definition?: string
-  options: [...VariableValueOption] | *[]
-  isMulti: bool | *false
+  options: [...VariableOption] | *[]
+  multi: bool | *false
   includeAll: bool | *false
   allValue?: string
   placeholder?: string
@@ -605,9 +614,13 @@ QueryVariableKind: {
 // Text variable specification
 TextVariableSpec: {
   name: string | *""
-  value: string | *""
+  current: VariableOption | *{
+    text: ""
+    value: ""
+  }
+  query: string | *""
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -621,9 +634,13 @@ TextVariableKind: {
 // Constant variable specification
 ConstantVariableSpec: {
   name: string | *""
-  value: string | *""
+  query: string | *""
+  current: VariableOption | *{
+    text: ""
+    value: ""
+  }
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -637,21 +654,20 @@ ConstantVariableKind: {
 // Datasource variable specification
 DatasourceVariableSpec: {
   name: string | *""
-  value: string | *""
-  text: string | *""
   pluginId: string | *""
+  refresh: VariableRefresh
   regex: string | *""
-  current: VariableValueOption | *{
-    label: ""
+  current: VariableOption | *{
+    text: ""
     value: ""
   }
   defaultOptionEnabled: bool | *false
-  options: [...VariableValueOption] | *[]
-  isMulti: bool | *false
+  options: [...VariableOption] | *[]
+  multi: bool | *false
   includeAll: bool | *false
   allValue?: string
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -665,18 +681,18 @@ DatasourceVariableKind: {
 // Interval variable specification
 IntervalVariableSpec: {
   name: string | *""
-  value: string | *""
-  intervals: [...string] | *[]
-  current: VariableValueOption | *{
-    label: ""
+  query: string | *""
+  current: VariableOption | *{
+    text: ""
     value: ""
   }
-  autoEnabled: bool | *false
-  autoMinInterval: string | *""
-  autoStepCount: int | *0
-  refresh: VariableRefresh 
+  options: [...VariableOption] | *[]
+  auto: bool | *false
+  auto_min: string | *""
+  auto_count: int | *0
+  refresh: VariableRefresh
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -690,19 +706,17 @@ IntervalVariableKind: {
 // Custom variable specification
 CustomVariableSpec: {
   name: string | *""
-  value: VariableValue | *""
   query: string | *""
-  text: VariableValue | *""
-  current: VariableValueOption | *{
+  current: VariableOption | *{
     label: ""
     value: ""
   }
-  options: [...VariableValueOption] | *[]
-  isMulti: bool | *false
+  options: [...VariableOption] | *[]
+  multi: bool | *false
   includeAll: bool | *false
   allValue?: string
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -716,16 +730,17 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
-  value: string | *""
   datasource: DataSourceRef | *{}
-  current?: VariableValueOption
-  text: VariableValue | *""
-  options: [...VariableValueOption] | *[]
-  isMulti: bool | *false
+  current: VariableOption | *{
+    text: ""
+    value: ""
+  }
+  options: [...VariableOption] | *[]
+  multi: bool | *false
   includeAll: bool | *false
   allValue?: string
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }
@@ -744,7 +759,7 @@ AdhocVariableSpec: {
   filters: [...AdHocFilterWithLabels] | *[]
   defaultKeys: [...MetricFindValue] | *[]
   label?: string
-  hide: bool | *false
+  hide: VariableHide
   skipUrlSync: bool | *false
   description?: string
 }

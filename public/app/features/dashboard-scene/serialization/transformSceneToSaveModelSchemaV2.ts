@@ -107,11 +107,40 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 }
 
 function getCursorSync(state: DashboardSceneState) {
-  const cursorSync =
-    state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state.sync ??
-    defaultDashboardSpec().cursorSync;
-  return cursorSync;
+  // Find the first `CursorSync` behavior in the `$behaviors` array
+  const cursorSyncBehavior = state.$behaviors?.find(
+    (behavior): behavior is behaviors.CursorSync => behavior instanceof behaviors.CursorSync
+  );
+  // If found, get its `sync` property; otherwise, it will be `undefined`
+  const cursorSync = cursorSyncBehavior?.state.sync;
+
+  // transform numeric value to CursorSync enum
+  let cursorSyncEnum: DashboardCursorSync;
+  if (cursorSync !== undefined) {
+    //map numeric value to CursorSync enum
+    // 0 => Off = "Off",
+    // 1=> Crosshair = "Crosshair",
+    // 2 => Tooltip = "Tooltip",
+    switch (cursorSync) {
+      case 0:
+        cursorSyncEnum = DashboardCursorSync.Off;
+        break;
+      case 1:
+        cursorSyncEnum = DashboardCursorSync.Crosshair;
+        break;
+      case 2:
+        cursorSyncEnum = DashboardCursorSync.Tooltip;
+        break;
+      default:
+        cursorSyncEnum = defaultDashboardSpec().cursorSync;
+    }
+    return cursorSyncEnum;
+  }
+
+  //Return `cursorSync` if it exists, otherwise return the default value
+  return cursorSync ?? defaultDashboardSpec().cursorSync;
 }
+
 
 function getLiveNow(state: DashboardSceneState) {
   const liveNow =
@@ -119,7 +148,7 @@ function getLiveNow(state: DashboardSceneState) {
     undefined;
   // hack for validator
   if (liveNow === undefined) {
-    return defaultDashboardSpec().liveNow;
+    return false;
   }
   return liveNow;
 }
@@ -378,7 +407,7 @@ function isDashboardSchemaV2(dashboard: unknown): dashboard is DashboardV2 {
   if (typeof dash.spec.description !== 'string') {
     return false;
   }
-  if (typeof dash.spec.cursorSync !== 'number') {
+  if (typeof dash.spec.cursorSync !== 'string') {
     return false;
   }
   if (!Object.values(DashboardCursorSync).includes(dash.spec.cursorSync)) {
