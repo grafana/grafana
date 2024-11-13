@@ -171,7 +171,7 @@ export const ContactPointReceiverSummary = ({ receivers, limit }: ContactPointRe
     <Stack direction="column" gap={0}>
       <Stack direction="row" alignItems="center" gap={1}>
         {integrationsShown.length === 0 && (
-          <MetaText color="warning" icon="exclamation-circle">
+          <MetaText color="warning" icon="exclamation-triangle">
             <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
           </MetaText>
         )}
