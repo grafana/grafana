@@ -1,0 +1,12 @@
+# Assuming you're in the root of the Grafana OSS repo with `make run` running elsewhere.
+# kubectl --kubeconfig ./data/grafana-apiserver/grafana.kubeconfig create -f ./apps/gituisync/github-repo.yaml
+apiVersion: gituisync.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: github-test-repo
+  namespace: default
+spec:
+  repository:
+    type: github
+    owner: grafana
+    repository: test-dashboards
