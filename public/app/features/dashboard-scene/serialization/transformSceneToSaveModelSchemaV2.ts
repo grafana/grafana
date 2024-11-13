@@ -304,6 +304,14 @@ export function getDataQueryKind(query: SceneDataQuery): string {
 }
 
 
+export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
+  const dataQuerySpec = {
+    kind: getDataQueryKind(query),
+    spec: query,
+  };
+  return dataQuerySpec;
+}
+
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;

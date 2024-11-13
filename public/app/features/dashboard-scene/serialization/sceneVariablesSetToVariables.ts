@@ -5,7 +5,7 @@ import { AdhocVariableKind, ConstantVariableKind, CustomVariableKind, DataQueryK
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-import { getDataQueryKind } from './transformSceneToSaveModelSchemaV2';
+import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
 
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
@@ -230,8 +230,8 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: getDataQueryKind(query),//FIXME is it not the same as queryGroup? like "prometheus"?
-          spec: query,
+          kind: "DataQuery",//FIXME is it not the same as queryGroup? like "prometheus"?
+          spec: getDataQuerySpec(query),
         }
       } else {
         dataQuery = query;
