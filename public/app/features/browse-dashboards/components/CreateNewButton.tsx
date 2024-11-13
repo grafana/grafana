@@ -4,15 +4,13 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import {
   getImportPhrase,
   getNewDashboardPhrase,
   getNewFolderPhrase,
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
-import { dispatch } from 'app/store/store';
 import { FolderDTO } from 'app/types';
 
 import { useNewFolderMutation } from '../api/browseDashboardsAPI';
@@ -30,6 +28,7 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   const location = useLocation();
   const [newFolder] = useNewFolderMutation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+  const notifyApp = useAppNotification();
 
   const onCreateFolder = async (folderName: string) => {
     try {
@@ -45,9 +44,9 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
       });
 
       if (!folder.error) {
-        dispatch(notifyApp(createSuccessNotification('Folder created')));
+        notifyApp.success('Folder created');
       } else {
-        dispatch(notifyApp(createErrorNotification('Failed to create folder')));
+        notifyApp.error('Failed to create folder');
       }
 
       if (folder.data) {
