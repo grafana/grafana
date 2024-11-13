@@ -42,11 +42,9 @@ describe('SidecarService_EXPERIMENTAL', () => {
     expect(sidecarService.isAppOpened('pluginId')).toBe(false);
 
     sidecarService.openApp('pluginId');
-
     expect(sidecarService.isAppOpened('pluginId')).toBe(true);
 
     sidecarService.closeApp();
-
     expect(sidecarService.isAppOpened('pluginId')).toBe(false);
   });
 
@@ -55,11 +53,9 @@ describe('SidecarService_EXPERIMENTAL', () => {
     expect(sidecarService.isAppOpened('pluginId')).toBe(false);
 
     sidecarService.openAppV2('pluginId');
-
     expect(sidecarService.isAppOpened('pluginId')).toBe(true);
 
     sidecarService.closeApp();
-
     expect(sidecarService.isAppOpened('pluginId')).toBe(false);
   });
 });
