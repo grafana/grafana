@@ -14,14 +14,14 @@ var logger = log.New("sql_expr")
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
+		logger.Error("error parsing sql: %s", err.Error(), "sql", rawSQL)
 		return nil, fmt.Errorf("error parsing sql: %s", err.Error())
 	}
 
 	tables := make(map[string]struct{})
-	var walkSubtree func(node sqlparser.SQLNode)
 
-	walkSubtree = func(node sqlparser.SQLNode) {
-		sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
+	walkSubtree := func(node sqlparser.SQLNode) {
+		err = sqlparser.Walk(func(node sqlparser.SQLNode) (kontinue bool, err error) {
 			switch v := node.(type) {
 			case *sqlparser.AliasedTableExpr:
 				if tableName, ok := v.Expr.(sqlparser.TableName); ok {
@@ -32,6 +32,10 @@ func TablesList(rawSQL string) ([]string, error) {
 			}
 			return true, nil
 		}, node)
+
+		if err != nil {
+			logger.Error("error walking sql", "error", err, "node", node)
+		}
 	}
 
 	walkSubtree(stmt)
@@ -47,6 +51,8 @@ func TablesList(rawSQL string) ([]string, error) {
 	}
 
 	sort.Strings(result)
+
+	logger.Debug("tables found in sql", "tables", tables)
 
 	return result, nil
 }
