@@ -1622,6 +1622,7 @@ func (x *WatchEvent) GetPrevious() *WatchEvent_Resource {
 	return nil
 }
 
+// Deprecated: will be replaced with ResourceSearchRequest
 type SearchRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2069,6 +2070,7 @@ func (x *Group) GetCount() int64 {
 	return 0
 }
 
+// Deprecated: will be replaced with ResourceSearchResponse
 type SearchResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

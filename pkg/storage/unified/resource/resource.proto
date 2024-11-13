@@ -323,6 +323,7 @@ message WatchEvent {
   Resource previous = 4;
 }
 
+// This will soon be deprecated/replaced with ResourceSearchRequest
 message SearchRequest {
   // query string for chosen implementation (currently just bleve)
   string query = 1;
@@ -441,6 +442,7 @@ message Group {
   int64 count = 2;
 }
 
+// This will soon be deprecated/replaced with ResourceSearchResponse
 message SearchResponse {
   repeated ResourceWrapper items = 1;
   repeated Group groups = 2;
