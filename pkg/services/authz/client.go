@@ -45,6 +45,7 @@ func ProvideAuthZClient(
 
 	var client Client
 
+	// TODO(gamab): Replace with the multi-tenant flavor.
 	// Register the server
 	server, err := newLegacyServer(authnSvc, ac, folderSvc, features, grpcServer, tracer, authCfg)
 	if err != nil {

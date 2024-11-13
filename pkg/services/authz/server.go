@@ -2,12 +2,15 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/dskit/services"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -15,11 +18,93 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authz/legacy"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func ProvideLegacyAuthZServer(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*LegacyAuthZServer, error) {
+	svcName := "authz-service"
+	s := &LegacyAuthZServer{
+		cfg:      cfg,
+		features: features,
+		logger:   log.New(svcName),
+	}
+
+	tracerCfg, err := tracing.ProvideTracingConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	tracerCfg.ServiceName = svcName
+
+	tracer, err := tracing.ProvideService(tracerCfg)
+	if err != nil {
+		return nil, err
+	}
+	s.tracer = tracer
+
+	// TODO (gamab): use authnlib.GrpcAuthenticator
+	s.authenticator = noopAuthenticator{}
+
+	s.BasicService = services.NewBasicService(s.start, s.running, s.stopping).WithName(svcName)
+
+	return s, nil
+}
+
+// LegacyAuthZServer is the gRPC service that provides the AuthZ Service backed by RBAC.
+// This service will be replaced by Zanzana (ReBAC) in the future.
+type LegacyAuthZServer struct {
+	*services.BasicService
+
+	cfg *setting.Cfg
+
+	authenticator interceptors.Authenticator
+	logger        log.Logger
+	tracer        tracing.Tracer
+	handler       grpcserver.Provider
+	features      featuremgmt.FeatureToggles
+}
+
+func (s *LegacyAuthZServer) start(ctx context.Context) error {
+	var err error
+	// TODO (gamab): instatiate db
+	server := legacy.NewServer(nil, s.logger, s.tracer)
+
+	s.handler, err = grpcserver.ProvideService(s.cfg, s.features, s.authenticator, s.tracer, prometheus.DefaultRegisterer)
+	if err != nil {
+		return err
+	}
+
+	srv := s.handler.GetServer()
+	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
+	// TODO (gamab): Implement health check
+
+	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *LegacyAuthZServer) running(ctx context.Context) error {
+	return s.handler.Run(ctx)
+}
+
+func (s *LegacyAuthZServer) stopping(failureCase error) error {
+	if failureCase != nil && !errors.Is(failureCase, context.Canceled) {
+		s.logger.Error("Stopping authz-service due to unexpected error", "err", failureCase)
+	}
+	return nil
+}
+
+// TODO(gamab): Remove the following code once the multi-tenant flavor of this is implemented.
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
 var _ grpc_auth.ServiceAuthFuncOverride = (*legacyServer)(nil)

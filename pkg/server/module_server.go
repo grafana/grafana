@@ -138,6 +138,10 @@ func (s *ModuleServer) Run() error {
 		return authz.ProvideZanzanaService(s.cfg, s.features)
 	})
 
+	m.RegisterModule(modules.AuthZServer, func() (services.Service, error) {
+		return authz.ProvideLegacyAuthZServer(s.cfg, s.features)
+	})
+
 	m.RegisterModule(modules.All, nil)
 
 	return m.Run(s.context)
