@@ -1136,20 +1136,6 @@
     },
     {
       "metadata": {
-        "name": "disableDashboardReportTimeRangeTransformation",
-        "resourceVersion": "1730298834441",
-        "creationTimestamp": "2024-10-30T14:33:54Z",
-        "deletionTimestamp": "2024-11-05T21:05:53Z"
-      },
-      "spec": {
-        "description": "Disables the absolute time range transformation performed in the backend for reporting",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "disableEnvelopeEncryption",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-05-24T08:34:47Z",
@@ -3008,6 +2994,19 @@
     },
     {
       "metadata": {
+        "name": "reportingUseRawTimeRange",
+        "resourceVersion": "1731512908822",
+        "creationTimestamp": "2024-11-13T15:48:28Z"
+      },
+      "spec": {
+        "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1727337187819",
         "creationTimestamp": "2024-09-26T07:53:07Z"
@@ -3391,19 +3390,6 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true,
         "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
-        "name": "useReportRawTimeRange",
-        "resourceVersion": "1730840741637",
-        "creationTimestamp": "2024-11-05T21:05:41Z"
-      },
-      "spec": {
-        "description": "Uses the original report time range instead of making an absolute transformation",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
       }
     },
     {

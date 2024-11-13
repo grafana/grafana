@@ -223,7 +223,7 @@ Experimental features might be changed or removed without prior notice.
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 | `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
-| `useReportRawTimeRange`                       | Uses the original report time range instead of making an absolute transformation                                                                                                                                                                                                  |
+| `reportingUseRawTimeRange`                    | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                                                                                                     |
 
 ## Development feature toggles
 

@@ -883,7 +883,7 @@ const (
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
 
-	// FlagUseReportRawTimeRange
-	// Uses the original report time range instead of making an absolute transformation
-	FlagUseReportRawTimeRange = "useReportRawTimeRange"
+	// FlagReportingUseRawTimeRange
+	// Uses the original report or dashboard time range instead of making an absolute transformation
+	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
 )

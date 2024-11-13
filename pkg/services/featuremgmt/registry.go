@@ -1636,8 +1636,8 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "useReportRawTimeRange",
-			Description: "Uses the original report time range instead of making an absolute transformation",
+			Name:        "reportingUseRawTimeRange",
+			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 			Expression:  "false", // disabled by default
