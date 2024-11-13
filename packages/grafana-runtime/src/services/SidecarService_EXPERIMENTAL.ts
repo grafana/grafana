@@ -206,14 +206,14 @@ function createLocationStorageHistory(options: LocalStorageHistoryOptions): Loca
   // as normal functions. So if this were to be a class we would still need to bind each of these methods to the
   // instance so at that moment this just seems easier.
   return {
+    ...memoryHistory,
+    // Getter aren't destructured as getter but as values, so they have to be still here even though we are not
+    // modifying them.
     get index() {
       return memoryHistory.index;
     },
     get entries() {
       return memoryHistory.entries;
-    },
-    canGo(n: number) {
-      return memoryHistory.canGo(n);
     },
     get length() {
       return memoryHistory.length;
@@ -243,15 +243,6 @@ function createLocationStorageHistory(options: LocalStorageHistoryOptions): Loca
     goForward() {
       memoryHistory.goForward();
       maybeUpdateLocation();
-    },
-    block(prompt?: boolean | string | H.TransitionPromptHook<H.LocationState>) {
-      return memoryHistory.block(prompt);
-    },
-    listen(listener: H.LocationListener<H.LocationState>) {
-      return memoryHistory.listen(listener);
-    },
-    createHref(location: H.LocationDescriptorObject<H.LocationState>) {
-      return memoryHistory.createHref(location);
     },
     getLocationObservable() {
       return locationSubject.asObservable();
