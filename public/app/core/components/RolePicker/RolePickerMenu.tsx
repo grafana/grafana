@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -217,14 +218,11 @@ export const RolePickerMenu = ({
       )}
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar
-          autoHide={false}
-          autoHeightMax={`${MENU_MAX_HEIGHT}px`}
-          hideHorizontalTrack
-          hideVerticalTrack
+        <ScrollContainer
+          maxHeight={`${MENU_MAX_HEIGHT}px`}
           // NOTE: this is a way to force hiding of the scrollbar
           // the scrollbar makes the mouseEvents drop
-          className={cx(customStyles.hideScrollBar)}
+          scrollbarWidth="none"
         >
           {showBasicRole && (
             <div className={customStyles.menuSection}>
@@ -254,7 +252,7 @@ export const RolePickerMenu = ({
               showOnLeftSubMenu={menuLeft}
             />
           ))}
-        </CustomScrollbar>
+        </ScrollContainer>
         <div className={customStyles.menuButtonRow}>
           <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
