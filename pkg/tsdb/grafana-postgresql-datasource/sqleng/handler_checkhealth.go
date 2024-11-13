@@ -6,17 +6,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.Ping()
 	if err != nil {
 		logCheckHealthError(e.dsInfo, err, e.log)
-		if user, requesterErr := identity.GetRequester(ctx); requesterErr == nil {
-			if user.GetOrgRole() == identity.RoleAdmin {
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
-			}
+		if req.PluginContext.User.Role == "Admin" {
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
 		}
 		errResponse := &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
