@@ -159,96 +159,83 @@ export const Combobox = <T extends string | number>({
     [loadOptions]
   );
 
-  const {
-    getInputProps,
-    getMenuProps,
-    getItemProps,
-    isOpen,
-    highlightedIndex,
-    setInputValue,
-    openMenu,
-    closeMenu,
-    selectItem,
-  } = useCombobox({
-    menuId,
-    labelId,
-    inputId: id,
-    items,
-    itemToString,
-    selectedItem,
-    onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
-    },
-    defaultHighlightedIndex: selectedItemIndex ?? 0,
+  const { getInputProps, getMenuProps, getItemProps, isOpen, highlightedIndex, setInputValue, selectItem } =
+    useCombobox({
+      menuId,
+      labelId,
+      inputId: id,
+      items,
+      itemToString,
+      selectedItem,
+      onSelectedItemChange: ({ selectedItem }) => {
+        onChange(selectedItem);
+      },
+      defaultHighlightedIndex: selectedItemIndex ?? 0,
 
-    scrollIntoView: () => {},
-    onInputValueChange: ({ inputValue }) => {
-      const customValueOption =
-        createCustomValue &&
-        inputValue &&
-        items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
-          ? {
-              // Type casting needed to make this work when T is a number
-              value: inputValue as unknown as T,
-              description: t('combobox.custom-value.create', 'Create custom value'),
-            }
-          : null;
+      scrollIntoView: () => {},
+      onInputValueChange: ({ inputValue }) => {
+        const customValueOption =
+          createCustomValue &&
+          inputValue &&
+          items.findIndex((opt) => opt.label === inputValue || opt.value === inputValue) === -1
+            ? {
+                // Type casting needed to make this work when T is a number
+                value: inputValue as unknown as T,
+                description: t('combobox.custom-value.create', 'Create custom value'),
+              }
+            : null;
 
-      if (isAsync) {
-        if (customValueOption) {
-          setItems([customValueOption]);
+        if (isAsync) {
+          if (customValueOption) {
+            setItems([customValueOption]);
+          }
+          setAsyncLoading(true);
+          debounceAsync(inputValue, customValueOption);
+
+          return;
         }
-        setAsyncLoading(true);
-        debounceAsync(inputValue, customValueOption);
 
-        return;
-      }
+        const filteredItems = options.filter(itemFilter(inputValue));
 
-      const filteredItems = options.filter(itemFilter(inputValue));
+        setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
+      },
 
-      setItems(customValueOption ? [customValueOption, ...filteredItems] : filteredItems);
-    },
+      onIsOpenChange: ({ isOpen, inputValue }) => {
+        // Default to displaying all values when opening
+        if (isOpen && !isAsync) {
+          setItems(options);
+          return;
+        }
 
-    onIsOpenChange: ({ isOpen, inputValue }) => {
-      // Default to displaying all values when opening
-      if (isOpen && !isAsync) {
-        setItems(options);
-        return;
-      }
-
-      if (isOpen && isAsync) {
-        setAsyncLoading(true);
-        loadOptions(inputValue ?? '')
-          .then((options) => {
-            setItems(options);
-            setAsyncLoading(false);
-            setAsyncError(false);
-          })
-          .catch((err) => {
-            if (!(err instanceof StaleResultError)) {
-              setAsyncError(true);
+        if (isOpen && isAsync) {
+          setAsyncLoading(true);
+          loadOptions(inputValue ?? '')
+            .then((options) => {
+              setItems(options);
               setAsyncLoading(false);
-            }
-          });
-        return;
-      }
-    },
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
-  });
+              setAsyncError(false);
+            })
+            .catch((err) => {
+              if (!(err instanceof StaleResultError)) {
+                setAsyncError(true);
+                setAsyncLoading(false);
+              }
+            });
+          return;
+        }
+      },
+      onHighlightedIndexChange: ({ highlightedIndex, type }) => {
+        if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
+          rowVirtualizer.scrollToIndex(highlightedIndex);
+        }
+      },
+    });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
-
-  const handleSuffixClick = useCallback(() => {
-    isOpen ? closeMenu() : openMenu();
-  }, [isOpen, openMenu, closeMenu]);
 
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
 
@@ -260,9 +247,10 @@ export const Combobox = <T extends string | number>({
       : 'angle-down';
 
   return (
-    <Box position="relative">
+    <div>
       <InputComponent
         width={width === 'auto' ? undefined : width}
+        className={styles.input}
         {...restProps}
         {...getInputProps({
           ref: inputRef,
@@ -274,32 +262,30 @@ export const Combobox = <T extends string | number>({
           onBlur,
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
-      />
-      <div className={styles.suffix}>
-        {!!value && value === selectedItem?.value && isClearable && (
-          <Icon
-            name="times"
-            className={styles.clear}
-            title={t('combobox.clear.title', 'Clear value')}
-            tabIndex={0}
-            role="button"
-            onClick={() => {
-              selectItem(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                selectItem(null);
-              }
-            }}
-          />
-        )}
+        suffix={
+          <>
+            {!!value && value === selectedItem?.value && isClearable && (
+              <Icon
+                name="times"
+                className={styles.clear}
+                title={t('combobox.clear.title', 'Clear value')}
+                tabIndex={0}
+                role="button"
+                onClick={() => {
+                  selectItem(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    selectItem(null);
+                  }
+                }}
+              />
+            )}
 
-        {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
-            translated to the input, so it blocks the input from being focused. So we need an additional event
-            handler here to open/close the menu. It should not have button role because we intentionally don't
-            want it in the a11y tree. */}
-        <Icon name={suffixIcon} onClick={handleSuffixClick} />
-      </div>
+            <Icon name={suffixIcon} />
+          </>
+        }
+      />
       <div
         className={cx(styles.menu, !isOpen && styles.menuClosed)}
         style={{
@@ -360,7 +346,7 @@ export const Combobox = <T extends string | number>({
           </div>
         </ScrollContainer>
       </div>
-    </Box>
+    </div>
   );
 };
 
