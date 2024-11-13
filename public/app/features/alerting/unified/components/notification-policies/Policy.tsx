@@ -865,17 +865,14 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
       placement="top"
       header={
         <MetaText icon="at">
-          <div>
-            <Trans i18nKey="alerting.contact-point">Contact Point</Trans>
-          </div>
           <Text color="primary">{contactPoint}</Text>
         </MetaText>
       }
       key={uniqueId()}
       content={
-        <Stack justifyContent="center">
+        <Text variant="bodySmall" color="secondary">
           <ContactPointReceiverSummary receivers={details.grafana_managed_receiver_configs || []} limit={3} />
-        </Stack>
+        </Text>
       }
     >
       <TextLink
