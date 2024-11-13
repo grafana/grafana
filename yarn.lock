@@ -3889,7 +3889,7 @@ __metadata:
     "@lezer/highlight": "npm:1.2.1"
     "@lezer/lr": "npm:1.4.2"
     "@prometheus-io/lezer-promql": "npm:0.55.1"
-    "@reduxjs/toolkit": "npm:2.2.8"
+    "@reduxjs/toolkit": "npm:2.3.0"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.3.0"
     "@swc/core": "npm:1.4.2"
@@ -6995,9 +6995,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:2.2.8":
-  version: 2.2.8
-  resolution: "@reduxjs/toolkit@npm:2.2.8"
+"@reduxjs/toolkit@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@reduxjs/toolkit@npm:2.3.0"
   dependencies:
     immer: "npm:^10.0.3"
     redux: "npm:^5.0.1"
@@ -7011,7 +7011,7 @@ __metadata:
       optional: true
     react-redux:
       optional: true
-  checksum: 10/d89bf5fd3e763669d34169fdc68da2a673cebc07a20bfc835277112dcdc2e7276258646fce9aa9792e3680caef719813bdc2dd654117632018ec027266026873
+  checksum: 10/3aa0bf29ce4dfe4ae75416cb5338a91ccc89f06c5a2fcdae5dc137dca02b3990c46306062696e158869ac399b50cae6476e5536902df9bd1ad1a998195221af6
   languageName: node
   linkType: hard
 
@@ -18755,7 +18755,7 @@ __metadata:
     "@react-types/menu": "npm:3.9.12"
     "@react-types/overlays": "npm:3.8.10"
     "@react-types/shared": "npm:3.25.0"
-    "@reduxjs/toolkit": "npm:2.2.8"
+    "@reduxjs/toolkit": "npm:2.3.0"
     "@rtk-query/codegen-openapi": "npm:^1.2.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
     "@stylistic/eslint-plugin-ts": "npm:^2.9.0"
