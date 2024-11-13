@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/gitlab/
-description: Grafana OAuthentication Guide
+description: Grafana GitLab OAuth Guide
 keywords:
   - grafana
   - configuration
@@ -31,7 +31,7 @@ If Users use the same email address in GitLab that they use with other authentic
 
 Ensure you know how to create a GitLab OAuth application. Consult GitLab's documentation on [creating a GitLab OAuth application](https://docs.gitlab.com/ee/integration/oauth_provider.html) for more information.
 
-### Create a GitLab OAuth 2.0 client
+### Create a GitLab OAuth Application
 
 1. Log in to your GitLab account and go to **Profile > Preferences > Applications**.
 1. Click **Add new application**.

@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/grafana/
-description: Grafana OAuthentication Guide
+description: Grafana Cloud OAuth Guide
 labels:
   products:
     - enterprise
