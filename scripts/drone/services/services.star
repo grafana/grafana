@@ -57,7 +57,7 @@ def integration_test_services():
             "name": "mimir_backend",
             "image": images["mimir"],
             "environment": {},
-            "commands": ["/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled"],
+            "commands": ["/bin/mimir -target=backend -alertmanager.grafana-alertmanager-compatibility-enabled -alertmanager.utf8-strict-mode-enabled"],
         },
         {
             "name": "redis",
