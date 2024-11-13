@@ -1,7 +1,7 @@
 import { config } from '@grafana/runtime';
 import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
 import { VariableHide, VariableModel, VariableOption, VariableRefresh, VariableSort } from '@grafana/schema';
-import { AdhocVariableKind, ConstantVariableKind, CustomVariableKind, DataQueryKind, DatasourceVariableKind, defaultDataSourceRef, GroupVariableKind, IntervalVariableKind, PanelQuerySpec, QueryVariableKind, TextVariableKind, VariableValueOption } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { AdhocVariableKind, ConstantVariableKind, CustomVariableKind, DataQueryKind, DatasourceVariableKind, IntervalVariableKind, QueryVariableKind, TextVariableKind, GroupByVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -199,7 +199,7 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
 
 export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQueryOptions?: boolean): Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind> {
 
-  let variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind> = [];
+  let variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupByVariableKind | AdhocVariableKind> = [];
 
   for (const variable of set.state.variables) {
     const commonProperties = {
@@ -338,20 +338,21 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
 
       variables.push(textBoxVariable);
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
-      const groupVariable: GroupVariableKind = {
-        kind: 'GroupVariable',
+      options = variableValueOptionsToVariableOptions(variable.state);
+
+      const groupVariable: GroupByVariableKind = {
+        kind: 'GroupByVariable',
         spec: {
           ...commonProperties,
-          datasource: variable.state.datasource,
+          datasource: variable.state.datasource || {}, // FIXME what is the default value?,
           // Only persist the statically defined options
           options: variable.state.defaultOptions?.map((option) => ({
             text: option.text,
             value: String(option.value),
-          })),
-          current: {
-            text: variable.state.text,
-            value: variable.state.value,
-          },
+          })) || [],
+          current: currentVariableOption,
+          multi: variable.state.isMulti || false,
+          includeAll: variable.state.includeAll || false,
         },
       };
       variables.push(groupVariable);
