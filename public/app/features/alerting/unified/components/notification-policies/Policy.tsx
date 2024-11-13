@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { defaults, isArray, sumBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { FC, Fragment, ReactNode, useState } from 'react';
 import * as React from 'react';
+import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,7 +21,7 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
@@ -48,6 +48,7 @@ import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
+import { getContactPointIdentifier } from '../contact-points/utils';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
@@ -855,7 +856,7 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   }
 
   const integrations = details.grafana_managed_receiver_configs;
-  const contactPointId = 'id' in details ? details.id || details.name : details.name;
+  const contactPointId = getContactPointIdentifier(details);
 
   return (
     <PopupCard
