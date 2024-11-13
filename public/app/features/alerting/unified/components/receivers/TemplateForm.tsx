@@ -350,12 +350,22 @@ function TemplatingBasics() {
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert title="How to" severity="info">
+    <Alert title="" severity="info">
       <Stack direction="row">
         <div>
-          Grafana uses Go templating language to create notification messages.
+          Notification templates use the Go templating language to create notification messages.
           <br />
-          To find out more about templating please visit our documentation.
+          <br />
+          In Grafana, a template group can define multiple notification templates using {'{{'} define "{'<NAME>'}"{' '}
+          {'}}'}.
+          <br />
+          These templates can then be used in contact points and within other notification templates by calling {
+            '{{'
+          }{' '}
+          template "{'<NAME>'}" {'}}'}.
+          <br />
+          <br />
+          For detailed information about notification templates, please visit our documentation.
         </div>
         <div>
           <LinkButton
@@ -364,7 +374,7 @@ function TemplatingBasics() {
             icon="external-link-alt"
             variant="secondary"
           >
-            Templating documentation
+            Notification templates documentation
           </LinkButton>
         </div>
       </Stack>
