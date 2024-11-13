@@ -1,4 +1,4 @@
-package v0alpha1
+package dashboard
 
 import (
 	"fmt"
@@ -12,12 +12,8 @@ import (
 
 const (
 	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v0alpha1"
+	VERSION    = runtime.APIVersionInternal
 	APIVERSION = GROUP + "/" + VERSION
-)
-
-var (
-	localSchemeBuilder runtime.SchemeBuilder
 )
 
 var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,

@@ -5,12 +5,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
+	dashboardv1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -30,12 +32,12 @@ import (
 )
 
 var (
-	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
-	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilderV1)(nil)
+	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilderV1)(nil)
 )
 
 // This is used just so wire has something unique to return
-type DashboardsAPIBuilder struct {
+type DashboardsAPIBuilderV1 struct {
 	dashboardService dashboards.DashboardService
 
 	accessControl accesscontrol.AccessControl
@@ -46,7 +48,7 @@ type DashboardsAPIBuilder struct {
 	reg prometheus.Registerer
 }
 
-func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+func RegisterAPIServiceV1(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	accessControl accesscontrol.AccessControl,
@@ -56,7 +58,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	sql db.DB,
 	tracing *tracing.TracingService,
 	unified resource.ResourceClient,
-) *DashboardsAPIBuilder {
+) *DashboardsAPIBuilderV1 {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
@@ -64,7 +66,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	softDelete := features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore)
 	dbp := legacysql.NewDatabaseProvider(sql)
 	namespacer := request.GetNamespaceMapper(cfg)
-	builder := &DashboardsAPIBuilder{
+	builder := &DashboardsAPIBuilderV1{
 		log: log.New("grafana-apiserver.dashboards"),
 
 		dashboardService: dashboardService,
@@ -72,9 +74,9 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		unified:          unified,
 
 		legacy: &dashboardStorage{
-			resource:       dashboard.DashboardResourceInfo,
+			resource:       dashboardv1.DashboardResourceInfo,
 			access:         legacy.NewDashboardAccess(dbp, namespacer, dashStore, provisioning, softDelete),
-			tableConverter: dashboard.DashboardResourceInfo.TableConverter(),
+			tableConverter: dashboardv1.DashboardResourceInfo.TableConverter(),
 			features:       features,
 		},
 		reg: reg,
@@ -83,50 +85,53 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	return builder
 }
 
-func (b *DashboardsAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return dashboard.DashboardResourceInfo.GroupVersion()
+func (b *DashboardsAPIBuilderV1) GetGroupVersion() schema.GroupVersion {
+	return dashboardv1.DashboardResourceInfo.GroupVersion()
 }
 
-func (b *DashboardsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+func (b *DashboardsAPIBuilderV1) GetAuthorizer() authorizer.Authorizer {
+	return GetAuthorizer(b.dashboardService, b.log)
+}
+
+func (b *DashboardsAPIBuilderV1) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
 	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
 	return grafanarest.Mode0
 }
 
-func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
-	scheme.AddKnownTypes(gv,
-		&dashboard.Dashboard{},
-		&dashboard.DashboardList{},
-		&dashboard.DashboardWithAccessInfo{},
-		&dashboard.DashboardVersionList{},
-		&dashboard.VersionsQueryOptions{},
-		&dashboard.LibraryPanel{},
-		&dashboard.LibraryPanelList{},
+func (b *DashboardsAPIBuilderV1) InstallSchema(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(dashboardv1.SchemeGroupVersion,
+		&dashboardv1.Dashboard{},
+		&dashboardv1.DashboardList{},
+		&dashboardv1.DashboardWithAccessInfo{},
+		&dashboardv1.DashboardVersionList{},
+		&dashboardv1.VersionsQueryOptions{},
+		&dashboardv1.LibraryPanel{},
+		&dashboardv1.LibraryPanelList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
-}
 
-func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	resourceInfo := dashboard.DashboardResourceInfo
-	addKnownTypes(scheme, resourceInfo.GroupVersion())
-
-	// Link this version to the internal representation.
-	// This is used for server-side-apply (PATCH), and avoids the error:
-	//   "no kind is registered for the type"
-	addKnownTypes(scheme, schema.GroupVersion{
-		Group:   resourceInfo.GroupVersion().Group,
-		Version: runtime.APIVersionInternal,
-	})
+	if !scheme.Recognizes(dashboard.DashboardResourceInfo.GroupVersionKind()) {
+		scheme.AddKnownTypes(dashboard.SchemeGroupVersion,
+			&dashboard.Dashboard{},
+			&dashboard.DashboardList{},
+			&dashboard.DashboardWithAccessInfo{},
+			&dashboard.DashboardVersionList{},
+			&dashboard.VersionsQueryOptions{},
+			&dashboard.LibraryPanel{},
+			&dashboard.LibraryPanelList{},
+		)
+	}
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
-	// if err := playlist.RegisterConversions(scheme); err != nil {
-	//   return err
-	// }
-	metav1.AddToGroupVersion(scheme, resourceInfo.GroupVersion())
-	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
+	if err := dashboardv1.RegisterConversions(scheme); err != nil {
+		return err
+	}
+	metav1.AddToGroupVersion(scheme, dashboardv1.DashboardResourceInfo.GroupVersion())
+	return scheme.SetVersionPriority(dashboardv1.DashboardResourceInfo.GroupVersion())
 }
 
-func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+func (b *DashboardsAPIBuilderV1) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	scheme := opts.Scheme
 
 	optsGetter := opts.OptsGetter
@@ -150,7 +155,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage[dash.StoragePath()] = legacyStore
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
 		b.legacy.server, // as client???
-		dashboard.DashboardResourceInfo.GroupResource(),
+		dashboardv1.DashboardResourceInfo.GroupResource(),
 	)
 
 	// Dual writes if a RESTOptionsGetter is provided
@@ -172,19 +177,19 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Expose read only library panels
-	storage[dashboard.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
+	storage[dashboardv1.LibraryPanelResourceInfo.StoragePath()] = &libraryPanelStore{
 		access: b.legacy.access,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashboardv1.VERSION] = storage
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return dashboard.GetOpenAPIDefinitions
+func (b *DashboardsAPIBuilderV1) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return dashboardv1.GetOpenAPIDefinitions
 }
 
-func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (b *DashboardsAPIBuilderV1) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	// The plugin description
 	oas.Info.Description = "Grafana dashboards as resources"
 
@@ -192,8 +197,8 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
 	// Hide the ability to list or watch across all tenants
-	delete(oas.Paths.Paths, root+dashboard.DashboardResourceInfo.GroupResource().Resource)
-	delete(oas.Paths.Paths, root+"watch/"+dashboard.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+dashboardv1.DashboardResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+"watch/"+dashboardv1.DashboardResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
@@ -203,6 +208,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	return oas, nil
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *DashboardsAPIBuilderV1) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
