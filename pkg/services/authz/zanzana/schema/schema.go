@@ -7,31 +7,25 @@ import (
 )
 
 var (
-	//go:embed core.fga
+	//go:embed schema_core.fga
 	coreDSL string
-	//go:embed dashboard.fga
-	dashboardDSL string
-	//go:embed folder.fga
+	//go:embed schema_folder.fga
 	folderDSL string
-	//go:embed resource.fga
+	//go:embed schema_resource.fga
 	resourceDSL string
 )
 
 var SchemaModules = []transformer.ModuleFile{
 	{
-		Name:     "core.fga",
+		Name:     "schema_core.fga",
 		Contents: coreDSL,
 	},
 	{
-		Name:     "dashboard.fga",
-		Contents: dashboardDSL,
-	},
-	{
-		Name:     "folder.fga",
+		Name:     "schema_folder.fga",
 		Contents: folderDSL,
 	},
 	{
-		Name:     "resource.fga",
+		Name:     "schema_resource.fga",
 		Contents: resourceDSL,
 	},
 }

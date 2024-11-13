@@ -106,8 +106,8 @@ const AnnotationsStep = () => {
       </Stack>
     );
   }
-
-  const step = !isGrafanaManagedRuleByType(type) ? 5 : 6;
+  // when using Grafana managed rules, the annotations step is the 6th step, as we have an additional step for the configure labels and notifications
+  const step = isGrafanaManagedRuleByType(type) ? 6 : 5;
 
   return (
     <RuleEditorSection

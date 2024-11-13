@@ -137,6 +137,15 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	// Split dashboards when they are large
+	var largeObjects apistore.LargeObjectSupport
+	if b.legacy.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
+		largeObjects = newDashboardLargeObjectSupport()
+		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
+			LargeObjectSupport: largeObjects,
+		})
+	}
+
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
@@ -157,7 +166,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
-	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], largeObjects, b)
 	if err != nil {
 		return err
 	}

@@ -4,15 +4,16 @@ import { useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Field, Input, Label, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { FolderWithoutGroup } from './FolderWithoutGroup';
+import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { containsSlashes, Folder } from './RuleFolderPicker';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
@@ -46,8 +47,39 @@ export function GrafanaFolderAndLabelsStep() {
     }
     setShowLabelsEditor(false);
   }
+
+  function SectionDescription() {
+    return (
+      <Stack direction="row" gap={0.5} alignItems="center">
+        <Text variant="bodySmall" color="secondary">
+          <Trans i18nKey="alerting.rule-form.folder-and-labels">
+            Organize your rule with a folder and a set of labels.
+          </Trans>
+        </Text>
+        <NeedHelpInfo
+          contentText={
+            <>
+              <p>
+                {t(
+                  'alerting.rule-form.folders.help-info',
+                  'Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assigng permissions to individual folders.'
+                )}
+              </p>
+              <p>
+                {t(
+                  'alerting.rule-form.labels.help-info',
+                  'Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications.'
+                )}
+              </p>
+            </>
+          }
+        />
+      </Stack>
+    );
+  }
+
   return (
-    <RuleEditorSection stepNo={3} title="Folder and labels">
+    <RuleEditorSection stepNo={3} title="Add folder and labels" description={<SectionDescription />}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderWithoutGroup />
         <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
