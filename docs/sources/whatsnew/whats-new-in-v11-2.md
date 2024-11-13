@@ -277,3 +277,33 @@ _Available in public preview in all editions of Grafana_
 [The SSO settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/) has been updated to include support for LDAP settings. This feature is experimental behind the feature flag `ssoSettingsLDAP`.
 
 You will soon be able to configure LDAP from the UI and Terraform.
+
+### Reduce number of required fields from the SAML form
+
+<!-- #proj-grafana-sso-config -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud Pro and Advanced_
+
+The private key and certificate fields are no longer mandatory in the SAML form. To configure SAML without providing a private key and a certificate you have to opt out from using signed requests.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-11-2-saml-sign-requests.png" alt="Sign requests in SAML config form" >}}
+
+### Generate SAML certificate and private key
+
+<!-- #proj-grafana-sso-config -->
+
+_Generally available in Grafana Enterprise and Grafana Cloud Pro_
+
+You can generate a new certificate and private key for SAML directly from the UI form. Click on the **Generate key and certificate** button from the **Sign requests** tab in the SAML form and then fill in the information you want to be embedded in your generated certificate.
+
+{{< video-embed src="/media/docs/grafana/screen-recording-11-2-generate-saml-certificate.mp4" >}}
+
+### OpenID Connect Discovery URL for Generic OAuth
+
+<!-- #proj-grafana-sso-config -->
+
+_Generally available in all editions of Grafana_
+
+The OpenID Connect Discovery URL is available in the Generic OAuth form. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.
+
+{{< video-embed src="/media/docs/grafana/screen-recording-11-2-openid-discovery-url.mp4" >}}
