@@ -4,45 +4,69 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
+	"github.com/grafana/authlib/authz"
+
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 const (
-	TypeUser     string = "user"
-	TypeTeam     string = "team"
-	TypeRole     string = "role"
-	TypeFolder   string = "folder"
-	TypeResource string = "resource"
+	TypeUser      = common.TypeUser
+	TypeTeam      = common.TypeTeam
+	TypeRole      = common.TypeRole
+	TypeFolder    = common.TypeFolder
+	TypeResource  = common.TypeResource
+	TypeNamespace = common.TypeNamespace
 )
 
 const (
-	RelationTeamMember string = "member"
-	RelationTeamAdmin  string = "admin"
-	RelationParent     string = "parent"
-	RelationAssignee   string = "assignee"
-	RelationOrg        string = "org"
+	RelationTeamMember = common.RelationTeamMember
+	RelationTeamAdmin  = common.RelationTeamAdmin
+	RelationParent     = common.RelationParent
+	RelationAssignee   = common.RelationAssignee
 
-	// FIXME action sets
-	RelationAdmin            string = "admin"
-	RelationRead             string = "read"
-	RelationWrite            string = "write"
-	RelationCreate           string = "create"
-	RelationDelete           string = "delete"
-	RelationPermissionsRead  string = "permissions_read"
-	RelationPermissionsWrite string = "permissions_write"
+	RelationSetView  = common.RelationSetView
+	RelationSetEdit  = common.RelationSetEdit
+	RelationSetAdmin = common.RelationSetAdmin
 
-	FolderResourceRelationAdmin            string = "resource_admin"
-	FolderResourceRelationRead             string = "resource_read"
-	FolderResourceRelationWrite            string = "resource_write"
-	FolderResourceRelationCreate           string = "resource_create"
-	FolderResourceRelationDelete           string = "resource_delete"
-	FolderResourceRelationPermissionsRead  string = "resource_permissions_read"
-	FolderResourceRelationPermissionsWrite string = "resource_permissions_write"
+	RelationRead             = common.RelationRead
+	RelationWrite            = common.RelationWrite
+	RelationCreate           = common.RelationCreate
+	RelationDelete           = common.RelationDelete
+	RelationPermissionsRead  = common.RelationPermissionsRead
+	RelationPermissionsWrite = common.RelationPermissionsWrite
+
+	RelationFolderResourceSetView  = common.RelationFolderResourceSetView
+	RelationFolderResourceSetEdit  = common.RelationFolderResourceSetEdit
+	RelationFolderResourceSetAdmin = common.RelationFolderResourceSetAdmin
+
+	RelationFolderResourceRead             = common.RelationFolderResourceRead
+	RelationFolderResourceWrite            = common.RelationFolderResourceWrite
+	RelationFolderResourceCreate           = common.RelationFolderResourceCreate
+	RelationFolderResourceDelete           = common.RelationFolderResourceDelete
+	RelationFolderResourcePermissionsRead  = common.RelationFolderResourcePermissionsRead
+	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
 )
 
-var ResourceRelations = []string{RelationRead, RelationWrite, RelationCreate, RelationDelete, RelationPermissionsRead, RelationPermissionsWrite}
-var FolderRelations = append(ResourceRelations, FolderResourceRelationRead, FolderResourceRelationWrite, FolderResourceRelationCreate, FolderResourceRelationDelete, FolderResourceRelationPermissionsRead, FolderResourceRelationPermissionsWrite)
+var ResourceRelations = []string{
+	RelationRead,
+	RelationWrite,
+	RelationCreate,
+	RelationDelete,
+	RelationPermissionsRead,
+	RelationPermissionsWrite,
+}
+
+var FolderRelations = append(
+	ResourceRelations,
+	RelationFolderResourceRead,
+	RelationFolderResourceWrite,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+	RelationFolderResourcePermissionsRead,
+	RelationFolderResourcePermissionsWrite,
+)
 
 const (
 	KindDashboards string = "dashboards"
@@ -60,6 +84,18 @@ const (
 	BasicRoleUIDPrefix = "basic_"
 
 	GlobalOrgID = 0
+)
+
+var (
+	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
+	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
+	ToAuthzExtTupleKeyWithoutCondition  = common.ToAuthzExtTupleKeyWithoutCondition
+	ToAuthzExtTupleKeysWithoutCondition = common.ToAuthzExtTupleKeysWithoutCondition
+
+	ToOpenFGATuple                    = common.ToOpenFGATuple
+	ToOpenFGATuples                   = common.ToOpenFGATuples
+	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
+	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
 )
 
 // NewTupleEntry constructs new openfga entry type:id[#relation].
@@ -110,13 +146,31 @@ func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {
 	va.GetListValue().Values = append(va.GetListValue().Values, vb.GetListValue().Values...)
 }
 
-func TranslateFixedRole(role string) string {
-	role = strings.ReplaceAll(role, ":", "_")
-	role = strings.ReplaceAll(role, ".", "_")
-	return role
-}
+func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*authz.CheckRequest, bool) {
+	translation, ok := resourceTranslations[kind]
 
-// Translate "read" for the dashboard into "dashboard_read" for folder
-func TranslateToFolderRelation(relation, objectType string) string {
-	return fmt.Sprintf("%s_%s", objectType, relation)
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := common.RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authz.CheckRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
+		Name:      name,
+		Folder:    folder,
+	}
+
+	return req, true
 }
