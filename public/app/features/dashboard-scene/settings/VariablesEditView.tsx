@@ -14,6 +14,7 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
+import { VariablesUnknownTable } from './variables/VariablesUnknownTable';
 import {
   EditableVariableType,
   RESERVED_GLOBAL_VARIABLE_NAME_REGEX,
@@ -21,6 +22,7 @@ import {
   getVariableDefault,
   getVariableScene,
 } from './variables/utils';
+
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
 }
@@ -202,8 +204,12 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return [false, null];
   };
 
+  public getSaveModel = () => {
+    return transformSceneToSaveModel(this.getDashboard());
+  };
+
   public getUsages = () => {
-    const model = transformSceneToSaveModel(this.getDashboard());
+    const model = this.getSaveModel();
     const usages = createUsagesNetwork(this.getVariables(), model);
     return usages;
   };
@@ -224,6 +230,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { editIndex } = model.useState();
   const usagesNetwork = useMemo(() => model.getUsagesNetwork(), [model]);
   const usages = useMemo(() => model.getUsages(), [model]);
+  const saveModel = model.getSaveModel();
 
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
@@ -256,6 +263,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onAdd={onAdd}
         onEdit={onEdit}
       />
+      <VariablesUnknownTable variables={variables} dashboard={saveModel} />
     </Page>
   );
 }

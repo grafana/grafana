@@ -5,7 +5,13 @@ import { createCustomVariableAdapter } from 'app/features/variables/custom/adapt
 import { createDataSourceVariableAdapter } from 'app/features/variables/datasource/adapter';
 import { createQueryVariableAdapter } from 'app/features/variables/query/adapter';
 
-import { createDependencyEdges, createDependencyNodes, createUsagesNetwork, transformUsagesToNetwork } from './utils';
+import {
+  createDependencyEdges,
+  getVariableName,
+  createDependencyNodes,
+  createUsagesNetwork,
+  transformUsagesToNetwork,
+} from './utils';
 
 variableAdapters.setInit(() => [
   createDataSourceVariableAdapter(),
@@ -141,5 +147,19 @@ describe('transformUsagesToNetwork', () => {
     expect(network).toHaveLength(2);
     expect(network[0].nodes).toContainEqual({ id: 'dashboard', label: 'dashboard' });
     expect(network[0].edges).toHaveLength(2);
+  });
+});
+
+describe('getVariableName', () => {
+  it('should return undefined if no match is found', () => {
+    expect(getVariableName('no variable here')).toBeUndefined();
+  });
+
+  it('should return undefined if variable matches inherited object prop names', () => {
+    expect(getVariableName('${toString}')).toBeUndefined();
+  });
+
+  it('should return the variable name if it exists and does not match inherited object prop names', () => {
+    expect(getVariableName('${myVariable}')).toBe('myVariable');
   });
 });
