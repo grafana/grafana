@@ -114,7 +114,7 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 
   if (pageId === PluginTabIds.USAGE && pluginConfig) {
     return (
-      <div>
+      <div className={styles.wrap}>
         <PluginUsage plugin={pluginConfig?.meta} />
       </div>
     );
@@ -136,6 +136,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
+  wrap: css({
+    width: '100%',
+    height: '50vh',
+  }),
   readme: css({
     '& img': {
       maxWidth: '100%',
