@@ -303,6 +303,8 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	if obj.GetUID() == "" {
+		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
+		// return nil, NewBadRequestError("object is missing UID")
 		s.log.Error("object is missing UID", "key", key)
 	}
 
