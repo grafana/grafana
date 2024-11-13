@@ -42,7 +42,7 @@ func Provision(ctx context.Context, configDirectory string, dsService BaseDataSo
 
 // GetCacheConfigs scans a directory for provisioning config files
 // and returns cache configs of the the datasources in those files.
-func GetCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]*DatasourceCachingConfig, error) {
+func GetCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) (*DatasourceCachingInfo, error) {
 	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
 	return dc.getCachingConfigs(ctx, configDirectory)
 }
@@ -287,13 +287,63 @@ type DatasourceCachingConfig struct {
 	UseDefaultTTL bool
 }
 
-func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPath string) ([]*DatasourceCachingConfig, error) {
+type DatasourceCachingInfo struct {
+	DeleteDatasourceUIDs     []string
+	DatasourceCachingConfigs []DatasourceCachingConfig
+}
+
+func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPath string) (*DatasourceCachingInfo, error) {
 	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return nil, err
 	}
 
-	dsCachingConfigs := make([]*DatasourceCachingConfig, 0)
+	// Get UIDs for datasources marked for deletion
+	deleteDatasourceUIDs := dc.getDeleteDatasourceUIDs(ctx, configs)
+
+	// Obtain caching configurations of new datasources
+	dsCachingConfigs := dc.buildDatasourceCachingConfigs(ctx, configs)
+
+	dsCachingInfo := &DatasourceCachingInfo{
+		DeleteDatasourceUIDs:     deleteDatasourceUIDs,
+		DatasourceCachingConfigs: dsCachingConfigs,
+	}
+	return dsCachingInfo, nil
+}
+
+func (dc *DatasourceProvisioner) getDeleteDatasourceUIDs(ctx context.Context, configs []*configs) []string {
+	deleteDatasourceUIDsMap := make(map[string]bool)
+
+	// Add prunable provisioned datasource UIDs to the deletion map
+	prunableDatasources, err := dc.dsService.GetPrunableProvisionedDataSources(ctx)
+	if err != nil {
+		for _, ds := range prunableDatasources {
+			deleteDatasourceUIDsMap[ds.UID] = true
+		}
+	}
+
+	// Add UIDs for datasources marked for deletion
+	for _, config := range configs {
+		for _, ds := range config.DeleteDatasources {
+			cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+			deleteDatasource, err := dc.dsService.GetDataSource(ctx, cmd)
+			if err != nil || deleteDatasource == nil {
+				continue
+			}
+			deleteDatasourceUIDsMap[deleteDatasource.UID] = true
+		}
+	}
+
+	deleteDatasourceUIDs := make([]string, 0, len(deleteDatasourceUIDsMap))
+	for uid := range deleteDatasourceUIDsMap {
+		deleteDatasourceUIDs = append(deleteDatasourceUIDs, uid)
+	}
+	return deleteDatasourceUIDs
+}
+
+func (dc *DatasourceProvisioner) buildDatasourceCachingConfigs(ctx context.Context, configs []*configs) []DatasourceCachingConfig {
+	dsCachingConfigs := make([]DatasourceCachingConfig, 0)
+
 	for _, config := range configs {
 		for _, ds := range config.Datasources {
 			if ds.Caching == nil {
@@ -305,23 +355,22 @@ func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPa
 				// Caching config must contain datasource uid
 				cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
 				dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
-				if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				if err != nil {
+					dc.log.Warn("Could not obtain datasource UID to get caching config", "name", ds.Name, "orgID", ds.OrgID)
 					continue
 				}
 				dsUID = dataSource.UID
 			}
-			dsCachingConfig := &DatasourceCachingConfig{
+
+			dsCachingConfigs = append(dsCachingConfigs, DatasourceCachingConfig{
 				DataSourceUID: dsUID,
 				Enabled:       ds.Caching.Enabled,
 				QueriesTTL:    ds.Caching.QueriesTTL,
 				ResourcesTTL:  ds.Caching.ResourcesTTL,
 				UseDefaultTTL: ds.Caching.UseDefaultTTL,
-			}
-			dsCachingConfigs = append(dsCachingConfigs, dsCachingConfig)
+			})
 		}
 	}
 
-	// TODO: get list of datasource ids marked to be deleted
-
-	return dsCachingConfigs, nil
+	return dsCachingConfigs
 }
