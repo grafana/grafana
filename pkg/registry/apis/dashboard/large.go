@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -37,6 +38,11 @@ func NewDashboardLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLarge
 					spec.Object[k] = v
 				}
 			}
+
+			if err := scheme.Convert(dash, obj, nil); err != nil {
+				return fmt.Errorf("failed to update original object: %w", err)
+			}
+
 			return nil
 		},
 
