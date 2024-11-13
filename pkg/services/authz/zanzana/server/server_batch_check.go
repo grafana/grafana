@@ -16,7 +16,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	batchRes := &authzextv1.BatchCheckResponse{
 		Items: make(map[string]bool, len(r.Items)),
 	}
-	allowed := 0
+	allowedCount := 0
 
 	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
 	if err != nil {
@@ -25,35 +25,44 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	subject := r.GetSubject()
 
 	for _, item := range r.Items {
-		req := &authzv1.CheckRequest{
-			Subject:     subject,
-			Verb:        item.GetVerb(),
-			Group:       item.GetGroup(),
-			Resource:    item.GetResource(),
-			Name:        item.GetName(),
-			Folder:      item.GetFolder(),
-			Subresource: item.GetSubresource(),
-		}
-
-		var res *authzv1.CheckResponse
-		var err error
-		if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
-			res, err = s.checkTyped(ctx, req, info, storeInf)
-		}
-		res, err = s.checkGeneric(ctx, req, storeInf)
+		allowed, err := s.batchCheckItem(ctx, storeInf, subject, item)
 		if err != nil {
 			return nil, err
 		}
 
-		batchRes.Items[item.GetName()] = res.Allowed
-		if res.Allowed {
-			allowed++
+		batchRes.Items[item.GetName()] = allowed
+		if allowed {
+			allowedCount++
 		}
 	}
 
-	if len(r.Items) == allowed {
+	if len(r.Items) == allowedCount {
 		batchRes.All = true
 	}
 
 	return batchRes, nil
+}
+
+func (s *Server) batchCheckItem(ctx context.Context, storeInf *storeInfo, subject string, item *authzextv1.BatchCheckItem) (bool, error) {
+	req := &authzv1.CheckRequest{
+		Subject:     subject,
+		Verb:        item.GetVerb(),
+		Group:       item.GetGroup(),
+		Resource:    item.GetResource(),
+		Name:        item.GetName(),
+		Folder:      item.GetFolder(),
+		Subresource: item.GetSubresource(),
+	}
+
+	var res *authzv1.CheckResponse
+	var err error
+	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
+		res, err = s.checkTyped(ctx, req, info, storeInf)
+	}
+	res, err = s.checkGeneric(ctx, req, storeInf)
+	if err != nil {
+		return false, err
+	}
+
+	return res.Allowed, nil
 }
