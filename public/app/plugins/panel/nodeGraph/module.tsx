@@ -50,7 +50,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
       defaultValue: 'cooperative',
       settings: {
         options: [
-          { value: 'cooperative', label: 'Cooperative', description: 'Lets user scroll the page normally' },
+          { value: 'cooperative', label: 'Cooperative', description: 'Lets you scroll the page normally' },
           { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
         ],
       },
