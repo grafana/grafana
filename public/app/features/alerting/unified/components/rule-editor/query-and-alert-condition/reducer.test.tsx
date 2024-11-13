@@ -15,7 +15,7 @@ import {
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
-  optimizeReducer,
+  optimizeReduceExpression,
   queriesAndExpressionsReducer,
   QueriesAndExpressionsState,
   removeExpression,
@@ -392,7 +392,10 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(
       initialState,
-      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [reduceExpression, thresholdExpression] })
+      optimizeReduceExpression({
+        updatedQueries: [alertQuery],
+        expressionQueries: [reduceExpression, thresholdExpression],
+      })
     );
     expect(newState).toMatchSnapshot();
   });
@@ -404,7 +407,10 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(
       initialState,
-      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression, reduceExpression] })
+      optimizeReduceExpression({
+        updatedQueries: [alertQuery],
+        expressionQueries: [thresholdExpression, reduceExpression],
+      })
     );
     expect(newState).toEqual(initialState);
   });
@@ -416,7 +422,7 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(
       initialState,
-      optimizeReducer({
+      optimizeReduceExpression({
         updatedQueries: [alertQuery, alertQuery],
         expressionQueries: [reduceExpression, thresholdExpression],
       })
@@ -441,7 +447,7 @@ describe('Query and expressions reducer', () => {
 
     const newState = queriesAndExpressionsReducer(
       initialState,
-      optimizeReducer({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
+      optimizeReduceExpression({ updatedQueries: [alertQuery], expressionQueries: [thresholdExpression] })
     );
     expect(newState).toMatchSnapshot();
   });

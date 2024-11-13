@@ -64,8 +64,8 @@ export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: 
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
-export const optimizeReducer = createAction<{ updatedQueries: AlertQuery[]; expressionQueries: AlertQuery[] }>(
-  'optimizeReducer'
+export const optimizeReduceExpression = createAction<{ updatedQueries: AlertQuery[]; expressionQueries: AlertQuery[] }>(
+  'optimizeReduceExpression'
 );
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
@@ -231,7 +231,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(rewireExpressions, (state, { payload }) => {
       state.queries = queriesWithUpdatedReferences(state.queries, payload.oldRefId, payload.newRefId);
     })
-    .addCase(optimizeReducer, (state, { payload }) => {
+    .addCase(optimizeReduceExpression, (state, { payload }) => {
       const { updatedQueries, expressionQueries } = payload;
 
       //sometimes we dont have data source in the model yet
@@ -256,23 +256,23 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
         'type' in expressionQueries[0].model &&
         expressionQueries[0].model.type !== ExpressionQueryType.reduce;
 
-      // we only add the reducer if we have one data query and one expression query. For other cases we don't do anything,
+      // we only add the reduce expression if we have one data query and one expression query. For other cases we don't do anything,
       // and let the user add the reducer manually.
-      const shouldAddReducer =
+      const shouldAddReduceExpression =
         firstQueryIsPromOrLoki && updatedQueries.length === 1 && !isInstant && onlyOneExpressionNotReducer;
 
       if (shouldRemoveReducer) {
-        const reducerIndex = state.queries.findIndex(
+        const reduceExpressionIndex = state.queries.findIndex(
           (query) => isExpressionQuery(query.model) && query.model.type === ExpressionQueryType.reduce
         );
 
-        if (reducerIndex === 1) {
-          // means the reducer is the second query
-          state.queries.splice(reducerIndex, 1);
+        if (reduceExpressionIndex === 1) {
+          // means the reduce expression is the second query
+          state.queries.splice(reduceExpressionIndex, 1);
           state.queries[1].model.expression = SimpleConditionIdentifier.queryId;
         }
       }
-      if (shouldAddReducer) {
+      if (shouldAddReduceExpression) {
         // add reducer to the second position
         // we only update the refid and the model to point to the reducer expression
         state.queries[1].model.expression = SimpleConditionIdentifier.reducerId;

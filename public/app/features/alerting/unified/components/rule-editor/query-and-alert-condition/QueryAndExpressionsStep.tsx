@@ -62,7 +62,7 @@ import {
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
-  optimizeReducer,
+  optimizeReduceExpression,
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
@@ -85,10 +85,10 @@ export function areQueriesTransformableToSimpleCondition(
   if (dataQueries.length !== 1) {
     return false;
   }
-  const reducerRemovedOk =
+  const singleReduceExpressionInInstantQuery =
     'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2 && !reducerRemovedOk) {
+  if (expressionQueries.length !== 2 && !singleReduceExpressionInInstantQuery) {
     return false;
   }
 
@@ -114,9 +114,11 @@ export function areQueriesTransformableToSimpleCondition(
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdIndexOk = reducerRemovedOk ? thresholdExpressionIndex === 0 : thresholdExpressionIndex === 1;
+  const thresholdIndexOk = singleReduceExpressionInInstantQuery
+    ? thresholdExpressionIndex === 0
+    : thresholdExpressionIndex === 1;
   const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
-  return (Boolean(reduceOk) || Boolean(reducerRemovedOk)) && Boolean(thresholdOk);
+  return (Boolean(reduceOk) || Boolean(singleReduceExpressionInInstantQuery)) && Boolean(thresholdOk);
 }
 
 interface Props {
@@ -286,7 +288,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
       if (!editingExistingRule) {
-        dispatch(optimizeReducer({ updatedQueries, expressionQueries }));
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
       }
 
       dispatch(setDataQueries(updatedQueries));
