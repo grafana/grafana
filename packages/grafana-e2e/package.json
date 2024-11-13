@@ -3,6 +3,7 @@
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
   "version": "10.4.13",
+  "private": true,
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
