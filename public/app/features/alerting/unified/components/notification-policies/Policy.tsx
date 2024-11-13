@@ -48,7 +48,6 @@ import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
-import { getContactPointIdentifier } from '../contact-points/utils';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';

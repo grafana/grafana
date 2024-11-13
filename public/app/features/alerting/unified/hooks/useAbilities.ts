@@ -354,5 +354,5 @@ function useCanSilence(rule: CombinedRule): [boolean, boolean] {
 const toAbility = (
   supported: boolean,
   /** If user has any of these permissions, then they are allowed to perform the action */
-  ...actions: Array<AccessControlAction | null>
+  ...actions: AccessControlAction[]
 ): Ability => [supported, actions.some((action) => action && ctx.hasPermission(action))];
