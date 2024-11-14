@@ -113,13 +113,14 @@ To install a plugin you have multiple possibilities, the regular way is using Gr
 There are also additional ways to install plugins depending on your setup.
 
 #### Install a plugin using grafana cli
+
 Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line. For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
-
 #### Install a plugin from a zip file
+
 This way is usually used for plugins not distributed via plugins catalog or in environments without internet connection.
 
-Download the archive containing the plugin assets and install it by extracting the archive into  plugin directory. For example:
+Download the archive containing the plugin assets and install it by extracting the archive into plugin directory. For example:
 
 ```bash
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
@@ -128,6 +129,7 @@ unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
 #### Install a plugin in air-gapped environment
+
 Plugin installation usually requires an internet connection, you can check which endpoints are being used on your instance when installing a plugin regularly and add them to allowlist of your instance.
 
 If this is not possible you can go via installing a plugin using [grafana cli](#install-a-plugin-using-grafana-cli) or as a [zip file](#install-a-plugin-from-a-zip-file).
@@ -135,7 +137,7 @@ If this is not possible you can go via installing a plugin using [grafana cli](#
 You can fetch any plugin from Grafana.com API following the download link referenced in the API.
 Here is an example based on `grafana-lokiexplore-app` plugins.
 
-1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section 
+1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section
 1. Find a `download` url which looks something like `https://grafana.com/api/plugins/grafana-lokiexplore-app/versions/1.0.2/download`
 1. Using this URL you can fetch the plugin zip file that you can as described above.
 
@@ -175,7 +177,6 @@ To uninstall a plugin:
 1. Click **Uninstall**.
 
 When the update is complete, you'll see a confirmation message that the uninstall was successful.
-
 
 ## Plugin signatures
 
