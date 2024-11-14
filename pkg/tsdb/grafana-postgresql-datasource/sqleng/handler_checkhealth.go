@@ -11,7 +11,7 @@ import (
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	err := e.Ping()
 	if err != nil {
-		logCheckHealthError(e.dsInfo, err, e.log)
+		logCheckHealthError(ctx, e.dsInfo, err, e.log)
 		if req.PluginContext.User.Role == "Admin" {
 			return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
 		}
@@ -24,7 +24,7 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
-func logCheckHealthError(dsInfo DataSourceInfo, err error, logger log.Logger) {
+func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error, logger log.Logger) {
 	configSummary := map[string]any{
 		"config_url_length":                 len(dsInfo.URL),
 		"config_user_length":                len(dsInfo.User),
