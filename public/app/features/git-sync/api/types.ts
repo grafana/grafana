@@ -1,25 +1,34 @@
 import { Resource, ResourceForCreate, ResourceList } from '../../apiserver/types';
 
-export type GitHubRepository = {
+export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
   owner?: string;
   repository?: string;
 };
 
-export type LocalRepository = {
+export type LocalRepositoryConfig = {
   path?: string;
 };
 
-export type S3Repository = {
+export type S3RepositoryConfig = {
   bucket?: string;
+  region?: string;
 };
 
 export type RepositorySpec = {
-  folderUid?: string;
-  github?: GitHubRepository;
-  local?: LocalRepository;
-  s3?: S3Repository;
+  description?: string;
+  folder?: string;
+  github?: GitHubRepositoryConfig;
+  local?: LocalRepositoryConfig;
+  s3?: S3RepositoryConfig;
+  title: string;
+  type: 'github' | 'local' | 's3';
+};
+
+export type WatchEvent = {
+  object: unknown;
+  type: string;
 };
 
 export interface RequestArg {
@@ -35,3 +44,9 @@ export interface UpdateRequestArg extends RequestArg {
 export type RepositoryList = ResourceList<RepositorySpec>;
 
 export type RepositoryResource = Resource<RepositorySpec>;
+
+export type HelloWorld = {
+  apiVersion?: string;
+  kind?: string;
+  whom?: string;
+};
