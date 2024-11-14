@@ -3,7 +3,6 @@ package migrations
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
 )
@@ -44,7 +43,11 @@ func (m *FillDashbordUIDMigration) SQL(dialect migrator.Dialect) string {
 }
 
 func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	// sqllite
+	return RunStarMigrations(sess, mg.Dialect.DriverName())
+}
+
+func RunStarMigrations(sess *xorm.Session, driverName string) error {
+	// sqlite
 	sql := `UPDATE star
 	SET 
     	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = star.dashboard_id),
@@ -53,7 +56,7 @@ func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrato
 	WHERE 
     	(dashboard_uid IS NULL OR org_id IS NULL)
     	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = star.dashboard_id);`
-	if mg.Dialect.DriverName() == migrator.Postgres {
+	if driverName == migrator.Postgres {
 		sql = `UPDATE star 
 		SET dashboard_uid = dashboard.uid, 
 			org_id = dashboard.org_id,
@@ -61,7 +64,7 @@ func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrato
 		FROM dashboard 
 		WHERE star.dashboard_id = dashboard.id
 			AND (star.dashboard_uid IS NULL OR star.org_id IS NULL);`
-	} else if mg.Dialect.DriverName() == migrator.MySQL {
+	} else if driverName == migrator.MySQL {
 		sql = `UPDATE star 
 		LEFT JOIN dashboard ON star.dashboard_id = dashboard.id 
 		SET star.dashboard_uid = dashboard.uid, 

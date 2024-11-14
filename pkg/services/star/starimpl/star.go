@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/star"
 )
 
@@ -12,6 +13,11 @@ type Service struct {
 }
 
 func ProvideService(db db.DB) star.Service {
+	// fill out dashboard_uid, org_id and updated columns for stars
+	// need to run this at startup in case any downgrade happened after
+	// the initial migration
+	migrations.RunStarMigrations(db.GetEngine().NewSession(), db.GetDialect().DriverName())
+
 	return &Service{
 		store: &sqlStore{
 			db: db,
