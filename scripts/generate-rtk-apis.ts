@@ -38,6 +38,7 @@ const config: ConfigFile = {
     },
     '../public/app/features/git-sync/api/endpoints.gen.ts': {
       apiFile: '../public/app/features/git-sync/api/baseApi.ts',
+      schemaFile: '../public/app/features/git-sync/api/api.json',
       apiImport: 'baseAPI',
     },
   },
