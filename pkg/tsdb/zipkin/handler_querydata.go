@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/openzipkin/zipkin-go/model"
 )
 
@@ -18,7 +17,15 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 	for _, q := range req.Queries {
 		query, err := loadQuery(q)
 		if err != nil {
-			return nil, err
+			es := backend.ErrorSourcePlugin
+			if backend.IsDownstreamError(err) {
+				es = backend.ErrorSourceDownstream
+			}
+			response.Responses[q.RefID] = backend.DataResponse{
+				Error:       err,
+				ErrorSource: es,
+			}
+			continue
 		}
 
 		switch query.QueryType {
@@ -67,7 +74,7 @@ func loadQuery(backendQuery backend.DataQuery) (zipkinQuery, error) {
 	var query zipkinQuery
 	err := json.Unmarshal(backendQuery.JSON, &query)
 	if err != nil {
-		return query, errorsource.DownstreamError(fmt.Errorf("error while parsing the query json. %w", err), false)
+		return query, backend.DownstreamError(fmt.Errorf("error while parsing the query json. %w", err))
 	}
 	return query, err
 }
