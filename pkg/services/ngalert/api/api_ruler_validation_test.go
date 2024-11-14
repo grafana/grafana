@@ -1046,6 +1046,36 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 	}
 }
 
+func TestValidateRuleNodeEditorSettings(t *testing.T) {
+	cfg := config(t)
+	limits := makeLimits(cfg)
+
+	editorSettings := models.EditorSettings{
+		SimplifiedQueryAndExpressionsSection: true,
+		SimplifiedNotificationsSection:       true,
+	}
+
+	testCases := []struct {
+		name           string
+		editorSettings models.EditorSettings
+	}{
+		{
+			name:           "valid editor settings",
+			editorSettings: editorSettings,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			r := validRule()
+			r.GrafanaManagedAlert.Metadata = AlertRuleMetadataFromModelMetadata(models.AlertRuleMetadata{EditorSettings: tt.editorSettings})
+			newRule, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
+			require.NoError(t, err)
+			require.Equal(t, tt.editorSettings, newRule.Metadata.EditorSettings)
+		})
+	}
+}
+
 func TestValidateRuleNodeReservedLabels(t *testing.T) {
 	cfg := config(t)
 	limits := makeLimits(cfg)
