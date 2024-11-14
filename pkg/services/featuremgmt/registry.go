@@ -96,7 +96,7 @@ var (
 			Name:           "correlations",
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaExploreSquad,
+			Owner:          grafanaDatavizSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
@@ -1224,7 +1224,7 @@ var (
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
 			Stage:          FeatureStageExperimental,
-			Owner:          grafanaExploreSquad,
+			Owner:          grafanaFrontendPlatformSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
@@ -1492,7 +1492,7 @@ var (
 			Name:        "appSidecar",
 			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaExploreSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "groupAttributeSync",

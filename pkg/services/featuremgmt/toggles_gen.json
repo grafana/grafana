@@ -415,13 +415,16 @@
     {
       "metadata": {
         "name": "appSidecar",
-        "resourceVersion": "1722872007883",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
+        "resourceVersion": "1731608393499",
+        "creationTimestamp": "2024-09-09T12:45:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 18:19:53.499798 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
         "stage": "experimental",
-        "codeowner": "@grafana/explore-squad"
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -842,16 +845,16 @@
     {
       "metadata": {
         "name": "correlations",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1731608393499",
         "creationTimestamp": "2022-09-16T13:14:27Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-14 18:19:53.499798 +0000 UTC"
         }
       },
       "spec": {
         "description": "Correlations page",
         "stage": "GA",
-        "codeowner": "@grafana/explore-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "allowSelfServe": true,
         "expression": "true"
       }
@@ -2847,14 +2850,17 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1718727528075",
+        "resourceVersion": "1731609408207",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 18:36:48.207329 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
         "stage": "experimental",
-        "codeowner": "@grafana/explore-squad"
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
