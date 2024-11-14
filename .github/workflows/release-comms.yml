@@ -12,8 +12,8 @@ on:
       version:
         required: true
       latest:
-        type: string
-        default: "0"
+        type: boolean
+        default: false
   pull_request:
     types:
     - closed
