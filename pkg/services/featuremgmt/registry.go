@@ -1639,9 +1639,9 @@ var (
 		{
 			Name:        "reportingUseRawTimeRange",
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
-			Expression:  "true", // disabled by default
+			Expression:  "false", // disabled by default
 		},
 	}
 )

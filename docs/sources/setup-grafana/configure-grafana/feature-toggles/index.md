@@ -116,6 +116,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorPrometheusExemplars` | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `useSessionStorageForRedirection` | Use session storage for handling the redirection after login                                                                                                                                 |
+| `reportingUseRawTimeRange`        | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                |
 
 ## Experimental feature toggles
 
@@ -223,7 +224,6 @@ Experimental features might be changed or removed without prior notice.
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 | `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
-| `reportingUseRawTimeRange`                    | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                                                                                                     |
 
 ## Development feature toggles
 
