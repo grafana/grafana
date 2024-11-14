@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -17,15 +18,18 @@ import (
 type API struct {
 	starService      star.Service
 	dashboardService dashboards.DashboardService
+	logger           log.Logger
 }
 
 func ProvideApi(
 	starService star.Service,
 	dashboardService dashboards.DashboardService,
 ) *API {
+	starLogger := log.New("stars.api")
 	api := &API{
 		starService:      starService,
 		dashboardService: dashboardService,
+		logger:           starLogger,
 	}
 	return api
 }
@@ -107,6 +111,8 @@ func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
 
+	api.logger.Warn("POST /user/stars/dashboard/{dashboard_id} is deprecated, please use POST /user/stars/dashboard/uid/{dashboard_uid} instead")
+
 	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: id, Updated: time.Now()}
 	if cmd.DashboardID <= 0 {
 		return response.Error(http.StatusBadRequest, "Missing dashboard id", nil)
@@ -182,6 +188,8 @@ func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
+
+	api.logger.Warn("DELETE /user/stars/dashboard/{dashboard_id} is deprecated, please use DELETE /user/stars/dashboard/uid/{dashboard_uid} instead")
 
 	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardID: id}
 	if cmd.DashboardID <= 0 {

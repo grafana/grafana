@@ -30,7 +30,6 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 		// && the deprecated endpoints have been removed
 		rawSQL := "SELECT 1 from star where user_id=? and dashboard_id=?"
 		results, err := sess.Query(rawSQL, query.UserID, query.DashboardID)
-
 		if err != nil {
 			return err
 		}
