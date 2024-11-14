@@ -138,13 +138,11 @@ Set the mode of the gradient fill. Fill gradient is based on the line color. To 
 
   - **From thresholds** - If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
 
-    {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
+    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-color-thresholds-v11.3.png" alt="Color scheme From thresholds" caption="Color scheme: From thresholds" >}}
 
   - **Gradient color schemes** - The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
-    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-color-scale-v11.3.png" max-width="1200px" alt="Color scheme: Green-Yellow-Red" caption="Color scheme: Green-Yellow-Red" >}}
-
-<!--fix this - Graph styles not part of bar chart - option is under Standard options -->
+    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-color-scale-v11.3.png" alt="Color scheme Green-Yellow-Red" caption="Color scheme: Green-Yellow-Red" >}}
 
 ### Tooltip options
 
