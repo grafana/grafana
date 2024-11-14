@@ -184,7 +184,7 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
 			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
 			expectedError:        ErrAlertRuleFailedValidation,
-			expectedErrContains:  fmt.Sprintf("%s", PanelIDAnnotation),
+			expectedErrContains:  PanelIDAnnotation,
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
