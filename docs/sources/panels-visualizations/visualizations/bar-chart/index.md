@@ -110,16 +110,17 @@ Use these options to refine your visualization.
 | Option                           | Description                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | X Axis                           | Specify which field is used for the x-axis.          |
-| Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on what the panel dimensions.</li><li>**Horizontal** - Will make the X axis the category axis.</li><li>**Vertical** - Will make the Y axis the category axis.</li></ul>                                              |
-| Rotate x-axis tick labels        | When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.        |
-| X-axis tick label maximum length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`.         |
-| Bar labels minimum spacing       | Sets the minimum spacing between bar labels.    |
+| Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on what the panel dimensions.</li><li>**Horizontal** - Will make the X axis the category axis.</li><li>**Vertical** - Will make the Y axis the category axis.</li></ul> |
+| Rotate x-axis tick labels        | When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.  |
+| X-axis tick label max length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`. |
+| X-axis labels minimum spacing | Sets the minimum spacing between x-axis labels. Depending on your choice, you can select the **RTL** checkbox to require space from the right side. Choose from: <ul><li>**None** - All tick marks are shown.</li><li>**Small** - 100 px of space is required between labels.</li><li>**Medium** - 200 px of space is required between labels.</li><li>**Large** - 300 px of space is required between labels.</li></ul>  |
 | Show values                      | This controls whether values are shown on top or to the left of bars. Choose from: <ul><li>**Auto** Values will be shown if there is space</li><li>**Always** Always show values.</li><li>**Never** Never show values.</li></ul>                                                               |
 | Stacking                         | Controls bar chart stacking. Choose from: <ul><li>**Off**: Bars will not be stacked.</li><li>**Normal**: Bars will be stacked on each other.</li><li>**Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.</li></ul> |
 | Group width                      | Controls the width of groups. 1 = max with, 0 = min width.       |
 | Bar width                        | Controls the width of bars. 1 = Max width, 0 = Min width.    |
 | Bar radius                       | Controls the radius of the bars. Choose from: <ul><li>0 = Minimum radius</li><li>0.5 = Maximum radius</li></ul>     |
 | Highlight full area on cover     | Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.    |
+| Color by field    | Use the color value for a sibling field to color each bar value. |
 | Line width                       | Controls line width of the bars.    |
 | Fill opacity                     | Controls the fill opacity bars.                    |
 | [Gradient mode](#gradient-mode)  | Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. Gradient appearance is influenced by the **Fill opacity** setting.                                                                               |
@@ -167,9 +168,14 @@ Some field options will not affect the visualization until you click outside of 
 
 | Option | Description |
 | ------ | ----------- |
-| Placement | Select the placement of the Y-axis. Choose from: <ul><li>**Auto** - Grafana automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.</li><li>**Left** - Display all Y-axes on the left side.</li><li>**Right** - Display all Y-axes on the right side.</li><li>**Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.</li> |
+| Placement | Select the placement of the Y-axis. Choose from: <ul><li>**Auto** - Grafana automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.</li><li>**Left** - Display all Y-axes on the left side.</li><li>**Right** - Display all Y-axes on the right side.</li><li>**Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.</li></ul> |
 | Label | Set a Y-axis text label. If you have more than one Y-axis, then you can give assign different labels with an override. |
-| Width | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.<br>By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other. |
+| Width | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.<br></br>By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other. |
+| Show grid lines | Set whether grid lines are displayed in the chart. Choose from: <ul><li>**Auto** - Grafana automatically set whether grid lines are displayed.</li><li>**On** - Grid lines are always displayed.</li><li>**Off** - Grid lines are never displayed</li></ul> |
+| Color | Choose whether the axis color is the **Text** or **Series** color. |
+| Show border | Choose whether the axis color is the **Text** or **Series** color. |
+| Scale | Set how the y-axis is split into buckets. Choose from: <ul><li>**Linear**</li><li>**Logarithmic** - Choose between log base 2 or log base 10.</li><li>**Symlog** - Uses a symmetrical logarithmic scale. Choose between log base 2 or log base 10, allowing for negative values.</li></ul> |
+| Centered zero | Set the y-axis so it's centered on zero. |
 | [Soft min and soft max](#soft-min-and-soft-max) | Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset. |
 
 <!-- prettier-ignore-end -->
