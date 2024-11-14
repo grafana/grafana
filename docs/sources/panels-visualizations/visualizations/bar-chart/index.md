@@ -206,7 +206,7 @@ The following image shows a bar chart with the **Green-Yellow-Red (by value)** c
 
 ### Tooltip options
 
-{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Legend options
 
@@ -264,7 +264,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions](ref:standard-options-definitions).
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
 
 ### Standard options
 
