@@ -533,9 +533,9 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <BookmarksPage />,
     },
     {
-      path: '/admin/git-sync',
+      path: '/admin/provisioning',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "GitSynConfigPage"*/ 'app/features/git-sync/ConfigPage')
+        () => import(/* webpackChunkName: "GitSynConfigPage"*/ '../features/provisioning/ConfigPage')
       ),
     },
     ...getPluginCatalogRoutes(),

@@ -32,7 +32,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
 }
 
 export const baseAPI = createApi({
-  reducerPath: 'gitSyncAPI',
+  reducerPath: 'provisioningAPI',
   baseQuery: createBackendSrvBaseQuery({
     baseURL: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`,
   }),

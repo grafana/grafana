@@ -41,6 +41,7 @@ export function configureStore(initialState?: Partial<StoreState>) {
         cloudMigrationAPI.middleware,
         queryLibraryApi.middleware,
         userPreferencesAPI.middleware,
+
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

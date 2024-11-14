@@ -72,10 +72,10 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 
 	// TODO Add feature toggle / permissions check
 	generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
-		Text:     "Git Sync",
-		Id:       "git-sync",
+		Text:     "Provisioning",
+		Id:       "provisioning",
 		SubTitle: "Store and version control your resources",
-		Url:      s.cfg.AppSubURL + "/admin/git-sync",
+		Url:      s.cfg.AppSubURL + "/admin/provisioning",
 	})
 
 	generalNode := &navtree.NavLink{
