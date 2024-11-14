@@ -1,5 +1,5 @@
 import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
+import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import {
   DashboardV2,
@@ -21,7 +21,7 @@ import {
   DatasourceVariableKind,
   CustomVariableKind,
   ConstantVariableKind,
-  GroupVariableKind,
+  GroupByVariableKind,
   AdhocVariableKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -31,13 +31,13 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
-import { sceneVariablesSetToSchemaV2Variables, sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-  }
+      [P in keyof T]?: DeepPartial<T[P]>;
+    }
   : T;
 
 export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2> {
@@ -141,7 +141,6 @@ function getCursorSync(state: DashboardSceneState) {
   return cursorSync ?? defaultDashboardSpec().cursorSync;
 }
 
-
 function getLiveNow(state: DashboardSceneState) {
   const liveNow =
     state.$behaviors?.find((b): b is behaviors.LiveNowTimer => b instanceof behaviors.LiveNowTimer)?.isEnabled ||
@@ -210,9 +209,7 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
       height: height,
       element: {
         kind: 'ElementReference',
-        spec: {
-          name: elementName,
-        },
+        name: elementName,
       },
     },
   };
@@ -240,7 +237,7 @@ function getElements(state: DashboardSceneState) {
             queries: getVizPanelQueries(vizPanel),
             transformations: getVizPanelTransformations(vizPanel),
             queryOptions: getVizPanelQueryOptions(vizPanel),
-          }
+          },
         },
         vizConfig: {
           kind: vizPanel.state.pluginId,
@@ -248,10 +245,10 @@ function getElements(state: DashboardSceneState) {
             pluginVersion: vizPanel.state.pluginVersion ?? '',
             options: vizPanel.state.options,
             fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
-          }
-        }
+          },
+        },
       },
-    }
+    };
     acc.push(elementSpec);
     return acc;
   }, []);
@@ -280,7 +277,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
       const dataQuery: DataQueryKind = {
         kind: getDataQueryKind(query),
         spec: query,
-      }
+      };
       const querySpec: PanelQuerySpec = {
         datasource: datasource ?? defaultDataSourceRef(),
         query: dataQuery,
@@ -302,7 +299,6 @@ export function getDataQueryKind(query: SceneDataQuery): string {
   // should we use default datasource type?
   return query.datasource?.type ?? '';
 }
-
 
 export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
   const dataQuerySpec = {
@@ -370,21 +366,31 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
   return queryOptions;
 }
 
-function createElements(
-  panels: PanelKind[]
-): Record<string, PanelKind> {
-  return panels.reduce((acc, panel) => {
-    const key = panel.spec.uid;
-    acc[key] = panel;
-    return acc;
-  }, {} as Record<string, PanelKind>);
+function createElements(panels: PanelKind[]): Record<string, PanelKind> {
+  return panels.reduce(
+    (acc, panel) => {
+      const key = panel.spec.uid;
+      acc[key] = panel;
+      return acc;
+    },
+    {} as Record<string, PanelKind>
+  );
 }
 
 function getVariables(oldDash: DashboardSceneState) {
   const variablesSet = oldDash.$variables;
 
   // variables is an array of all variables kind (union)
-  let variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind> = [];
+  let variables: Array<
+    | QueryVariableKind
+    | TextVariableKind
+    | IntervalVariableKind
+    | DatasourceVariableKind
+    | CustomVariableKind
+    | ConstantVariableKind
+    | GroupByVariableKind
+    | AdhocVariableKind
+  > = [];
 
   if (variablesSet instanceof SceneVariableSet) {
     variables = sceneVariablesSetToSchemaV2Variables(variablesSet);

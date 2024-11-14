@@ -44,7 +44,7 @@ DashboardSpec: {
   // Configured template variables.
   variables: [...QueryVariableKind | TextVariableKind | ConstantVariableKind | DatasourceVariableKind | IntervalVariableKind | CustomVariableKind | GroupByVariableKind | AdhocVariableKind]
 
-  elements: [ElementReferenceKind.spec.name]: PanelKind // |* more element types in the future
+  elements: [ElementReference.name]: PanelKind // |* more element types in the future
 
   annotations: [...AnnotationQueryKind]
 
@@ -451,7 +451,7 @@ GridLayoutItemSpec: {
   y: int
   width: int
   height: int
-  element: ElementReferenceKind // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+  element: ElementReference // reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
 }
 
 GridLayoutItemKind: {
@@ -482,14 +482,12 @@ PanelKind: {
   spec: PanelSpec
 }
 
-ElementReferenceKind: {
+ElementReference: {
   kind: "ElementReference"
-  spec: ElementReferenceSpec
-}
-
-ElementReferenceSpec: {
   name: string
 }
+
+
 
 
 // Start FIXME: variables - in CUE PR - this are things that should be added into the cue schema
