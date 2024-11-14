@@ -16,7 +16,6 @@ autoMigrateTablePanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigratePiechartPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateWorldmapPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
-autoMigrateXYChartPanel,GA,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 vizActions,experimental,@grafana/dataviz-squad,false,false,true
