@@ -1603,6 +1603,15 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:              "passwordlessMagicLinkAuthentication",
+			Description:       "Enable passwordless login via magic link authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+		},
+		{
 			Name:         "exploreMetricsRelatedLogs",
 			Description:  "Display Related Logs in Explore Metrics",
 			Stage:        FeatureStageExperimental,
