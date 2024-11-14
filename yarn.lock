@@ -18914,7 +18914,7 @@ __metadata:
     pseudoizer: "npm:^0.1.0"
     rc-slider: "npm:11.1.7"
     rc-time-picker: "npm:3.7.3"
-    rc-tree: "npm:5.9.0"
+    rc-tree: "npm:5.10.1"
     re-resizable: "npm:6.10.1"
     react: "npm:18.2.0"
     react-diff-viewer-continued: "npm:^3.4.0"
@@ -26839,23 +26839,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.9.0":
-  version: 5.9.0
-  resolution: "rc-tree@npm:5.9.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.10.1"
-    classnames: "npm:2.x"
-    rc-motion: "npm:^2.0.1"
-    rc-util: "npm:^5.16.1"
-    rc-virtual-list: "npm:^3.5.1"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/d7525c4a524c6de8e177ebc90fe9b924046951a02bacee85efd4529fb05a66add936802b43d5ca8d84469f9c63b8d542437365b911480f62a78e03e2c7fbaca0
-  languageName: node
-  linkType: hard
-
-"rc-tree@npm:~5.10.1":
+"rc-tree@npm:5.10.1, rc-tree@npm:~5.10.1":
   version: 5.10.1
   resolution: "rc-tree@npm:5.10.1"
   dependencies:
