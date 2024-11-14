@@ -93,37 +93,41 @@ While the first field can be time-based and you can use a bar chart to plot time
 
 We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Bar chart options
+### Bar chart options
 
 Use these options to refine your visualization.
 
-### X Axis
+#### X Axis
 
 Specify which field is used for the x-axis.
 
-### Orientation
+#### Orientation
 
 - **Auto** - Grafana decides the bar orientation based on what the panel dimensions.
 - **Horizontal** - Will make the X axis the category axis.
 - **Vertical** - Will make the Y axis the category axis.
 
-### Rotate x-axis tick labels
+#### Rotate x-axis tick labels
 
 When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.
 
-### X-axis tick label maximum length
+#### X-axis tick label maximum length
 
 Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`.
 
-### Bar labels minimum spacing
+#### Bar labels minimum spacing
 
 Sets the minimum spacing between bar labels.
 
-### Show values
+#### Show values
 
 This controls whether values are shown on top or to the left of bars.
 
@@ -131,7 +135,7 @@ This controls whether values are shown on top or to the left of bars.
 - **Always** Always show values.
 - **Never** Never show values.
 
-### Stacking
+#### Stacking
 
 Controls bar chart stacking.
 
@@ -139,120 +143,120 @@ Controls bar chart stacking.
 - **Normal**: Bars will be stacked on each other.
 - **Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.
 
-### Group width
+#### Group width
 
 Controls the width of groups. 1 = max with, 0 = min width.
 
-### Bar width
+#### Bar width
 
 Controls the width of bars. 1 = Max width, 0 = Min width.
 
-### Bar radius
+#### Bar radius
 
 Controls the radius of the bars.
 
 - 0 = Minimum radius
 - 0.5 = Maximum radius
 
-### Highlight full area on cover
+#### Highlight full area on cover
 
 Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.
 
-### Line width
+#### Line width
 
 Controls line width of the bars.
 
-### Fill opacity
+#### Fill opacity
 
 Controls the fill opacity bars.
 
-### Gradient mode
+#### Gradient mode
 
 Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 
 Gradient appearance is influenced by the **Fill opacity** setting.
 
-#### None
+##### None
 
 No gradient fill. This is the default setting.
 
-#### Opacity
+##### Opacity
 
 Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 
-#### Hue
+##### Hue
 
 Gradient color is generated based on the hue of the line color.
 
-#### Scheme gradient mode
+##### Scheme gradient mode
 
 The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
 
-##### From thresholds
+###### From thresholds
 
 If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
 
-##### Gradient color schemes
+###### Gradient color schemes
 
 The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-## Tooltip options
+### Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Legend options
+### Legend options
 
 {{< docs/shared lookup="visualizations/legend-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Text size
+### Text size
 
 Enter a **Value** to change the size of the text on your bar chart.
 
-## Axis
+### Axis
 
 Use the following field settings to refine how your axes display.
 
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-### Placement
+#### Placement
 
 Select the placement of the Y-axis.
 
-#### Auto
+##### Auto
 
 Grafana automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.
 
-#### Left
+##### Left
 
 Display all Y-axes on the left side.
 
-#### Right
+##### Right
 
 Display all Y-axes on the right side.
 
-#### Hidden
+##### Hidden
 
 Hide all axes.
 
 To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
-### Label
+#### Label
 
 Set a Y-axis text label.
 
 If you have more than one Y-axis, then you can give assign different labels with an override.
 
-### Width
+#### Width
 
 Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.
 
 By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other.
 
-### Soft min and soft max
+#### Soft min and soft max
 
 Set a **Soft min** or **soft max** option for better control of Y-axis limits. By default, Grafana sets the range for the Y-axis automatically based on the dataset.
 
@@ -262,22 +266,22 @@ You can set standard min/max options to define hard limits of the Y-axis. For mo
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
