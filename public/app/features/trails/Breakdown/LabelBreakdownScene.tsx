@@ -494,7 +494,10 @@ function buildNormalLayout(
       .setTitle(getLabelValue(frame))
       .setData(new SceneDataNode({ data: { ...data, series: [frame] } }))
       .setColor({ mode: 'fixed', fixedColor: getColorByIndex(frameIndex) })
-      .setHeaderActions(new AddToFiltersGraphAction({ frame }))
+      .setHeaderActions([
+        new AddToFiltersGraphAction({ frame }),
+        new AddToExplorationButton({ labelName: getLabelValue(frame) }),
+      ])
       .setUnit(unit)
       .build();
 

@@ -1,13 +1,15 @@
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, VizPanel, SceneQueryRunner } from '@grafana/scenes';
-import { RadioButtonGroup } from '@grafana/ui';
 
+import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { MDP_METRIC_OVERVIEW, trailDS } from '../shared';
 import { getMetricSceneFor } from '../utils';
 
+import { AutoVizPanelQuerySelector } from './AutoVizPanelQuerySelector';
 import { AutoQueryDef } from './types';
 
 export interface AutoVizPanelState extends SceneObjectState {
   panel?: VizPanel;
+  metric?: string;
 }
 
 export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
@@ -19,22 +21,10 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
 
   public onActivate() {
     if (!this.state.panel) {
-      const { autoQuery } = getMetricSceneFor(this).state;
+      const { autoQuery, metric } = getMetricSceneFor(this).state;
 
-      this.setState({ panel: this.getVizPanelFor(autoQuery.main) });
+      this.setState({ panel: this.getVizPanelFor(autoQuery.main, metric), metric });
     }
-  }
-
-  private getQuerySelector(def: AutoQueryDef) {
-    const { autoQuery } = getMetricSceneFor(this).state;
-
-    if (autoQuery.variants.length === 0) {
-      return;
-    }
-
-    const options = autoQuery.variants.map((q) => ({ label: q.variant, value: q.variant }));
-
-    return <RadioButtonGroup size="sm" options={options} value={def.variant} onChange={this.onChangeQuery} />;
   }
 
   public onChangeQuery = (variant: string) => {
@@ -46,7 +36,7 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
     metricScene.setState({ queryDef: def });
   };
 
-  private getVizPanelFor(def: AutoQueryDef) {
+  private getVizPanelFor(def: AutoQueryDef, metric?: string) {
     return def
       .vizBuilder()
       .setData(
@@ -56,7 +46,10 @@ export class AutoVizPanel extends SceneObjectBase<AutoVizPanelState> {
           queries: def.queries,
         })
       )
-      .setHeaderActions(this.getQuerySelector(def))
+      .setHeaderActions([
+        new AutoVizPanelQuerySelector({ queryDef: def, onChangeQuery: this.onChangeQuery }),
+        new AddToExplorationButton({ labelName: metric ?? this.state.metric }),
+      ])
       .build();
   }
 
