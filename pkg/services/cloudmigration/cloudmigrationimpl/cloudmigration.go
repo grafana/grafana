@@ -316,7 +316,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	return cloudmigration.CreateAccessTokenResponse{Token: base64.StdEncoding.EncodeToString(bytes)}, nil
 }
 
-func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug, orgId, accessPolicyName string) (*authapi.AccessPolicy, error) {
+func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug string, orgId int, accessPolicyName string) (*authapi.AccessPolicy, error) {
 	accessPolicies, err := s.authApiService.ListAccessPolicies(ctx, authapi.ListAccessPoliciesParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
 		Region:    regionSlug,
