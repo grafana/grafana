@@ -7,6 +7,7 @@ import (
 	"xorm.io/xorm"
 )
 
+// does not rely on dashboard table existing, can be run before dashboard migrations
 func addStarMigrations(mg *Migrator) {
 	starV1 := Table{
 		Name: "star",
@@ -23,7 +24,7 @@ func addStarMigrations(mg *Migrator) {
 	mg.AddMigration("create star table", NewAddTableMigration(starV1))
 	mg.AddMigration("add unique index star.user_id_dashboard_id", NewAddIndexMigration(starV1, starV1.Indices[0]))
 	mg.AddMigration("Add column dashboard_uid in star", NewAddColumnMigration(starV1, &Column{
-		Name: "dashboard_uid", Type: DB_Text, Nullable: true,
+		Name: "dashboard_uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 	mg.AddMigration("Add column org_id in star", NewAddColumnMigration(starV1, &Column{
 		Name: "org_id", Type: DB_BigInt, Nullable: true, Default: "1",
@@ -31,6 +32,15 @@ func addStarMigrations(mg *Migrator) {
 	mg.AddMigration("Add column updated in star", NewAddColumnMigration(starV1, &Column{
 		Name: "updated", Type: DB_DateTime, Nullable: true,
 	}))
+	mg.AddMigration("add index in star table on dashboard_uid, org_id and user_id columns",
+		NewAddIndexMigration(starV1, &Index{
+			Cols: []string{"user_id", "dashboard_uid", "org_id"},
+			Type: UniqueIndex,
+		}))
+}
+
+// relies on the dashboard table existing & must be run after the dashboard migrations are run
+func addDashboardUIDStarMigrations(mg *Migrator) {
 	mg.AddMigration("Add missing dashboard_uid and org_id to star", &FillDashbordUIDMigration{})
 }
 
