@@ -136,7 +136,6 @@ type Cfg struct {
 	DataPath              string
 	LogsPath              string
 	PluginsPath           string
-	BundledPluginsPath    string
 	EnterpriseLicensePath string
 
 	// SMTP email settings
@@ -1092,7 +1091,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	cfg.PluginsPath = makeAbsolute(plugins, cfg.HomePath)
-	cfg.BundledPluginsPath = makeAbsolute("plugins-bundled", cfg.HomePath)
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
 

@@ -96,7 +96,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
-		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
+		if plugin.IsCorePlugin() {
 			return nil, plugins.ErrInstallCorePlugin
 		}
 
@@ -165,7 +165,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
+	if plugin.IsCorePlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 
