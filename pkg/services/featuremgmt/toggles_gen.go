@@ -886,4 +886,8 @@ const (
 	// FlagCrashDetection
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
+
+	// FlagJaegerBackendMigration
+	// Enables querying the Jaeger data source without the proxy
+	FlagJaegerBackendMigration = "jaegerBackendMigration"
 )

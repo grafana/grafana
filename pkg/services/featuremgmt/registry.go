@@ -1645,6 +1645,12 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "jaegerBackendMigration",
+			Description: "Enables querying the Jaeger data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
 	}
 )
 

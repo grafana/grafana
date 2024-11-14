@@ -223,6 +223,7 @@ Experimental features might be changed or removed without prior notice.
 | `zipkinBackendMigration`                      | Enables querying Zipkin data source without the proxy                                                                                                                                                                                                                             |
 | `enableSCIM`                                  | Enables SCIM support for user and group management                                                                                                                                                                                                                                |
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
+| `jaegerBackendMigration`                      | Enables querying the Jaeger data source without the proxy                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
