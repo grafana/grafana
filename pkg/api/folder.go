@@ -826,11 +826,6 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 
 	f := internalfolders.UnstructuredToLegacyFolder(item, orgID)
 
-	fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
-	if err != nil {
-		return dtos.Folder{}, err
-	}
-
 	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
 	toUID := func(rawIdentifier string) string {
 		parts := strings.Split(rawIdentifier, ":")
@@ -841,6 +836,11 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	}
 
 	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
+		fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
+		if err != nil {
+			return dtos.Folder{}, err
+		}
+
 		g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
 			return dtos.Folder{}, err
@@ -875,18 +875,24 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		}
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
 
-		fDTO.CanSave = canSave
-		fDTO.CanEdit = canEdit
-		fDTO.CanAdmin = canAdmin
-		fDTO.CanDelete = canDelete
-		fDTO.CreatedBy = creator
-		fDTO.UpdatedBy = updater
-		fDTO.AccessControl = acMetadata
-		fDTO.OrgID = f.OrgID
-		// #TODO version doesn't seem to be used--confirm or set it properly
-		fDTO.Version = 1
-
-		return *fDTO, nil
+		return dtos.Folder{
+			ID:            fold.ID, // nolint:staticcheck
+			UID:           fold.UID,
+			Title:         fold.Title,
+			URL:           fold.URL,
+			HasACL:        fold.HasACL,
+			CanSave:       canSave,
+			CanEdit:       canEdit,
+			CanAdmin:      canAdmin,
+			CanDelete:     canDelete,
+			CreatedBy:     creator,
+			Created:       fold.Created,
+			UpdatedBy:     updater,
+			Updated:       fold.Updated,
+			Version:       fold.Version,
+			AccessControl: acMetadata,
+			ParentUID:     fold.ParentUID,
+		}, nil
 	}
 
 	// no need to check view permission for the starting folder since it's already checked by the callers
@@ -917,12 +923,18 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		uid := parentsFullPathUIDs[1:][i]
 		url := dashboards.GetFolderURL(uid, slug)
 
-		parents = append(parents, dtos.Folder{
+		ff := folder.Folder{
 			UID:   uid,
-			OrgID: c.SignedInUser.GetOrgID(),
 			Title: v,
 			URL:   url,
-		})
+		}
+		parentDTO, err := toDTO(&ff, true)
+		if err != nil {
+			// #TODO should we log this error?
+			return dtos.Folder{}, err
+		}
+
+		parents = append(parents, parentDTO)
 	}
 
 	folderDTO.Parents = parents
