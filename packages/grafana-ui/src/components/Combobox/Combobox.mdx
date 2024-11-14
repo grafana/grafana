@@ -1,0 +1,101 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+
+import { Combobox } from './Combobox';
+
+<Meta title="MDX|Combobox" component={Combobox} />
+
+## Usage
+
+**Do**
+
+- Use in inline query editors
+- Use when you require async calls from a select input
+
+**Don't**
+
+- Use the async functionality, when all items are only loaded on the initial load
+- Use when fewer than 4 items are needed, as a `RadioButtonGroup` may be more suitable (not for inline use cases)
+- Use this component if you need custom option styling
+
+## ComboboxOption
+
+The `ComboboxOption` currently supports 3 properties:
+
+- `label` - The text that is visible in the menu.
+- `value` (required) - The value that is selected.
+- `description` - A longer description that describes the choice.
+
+If no `label` is given, `value` will be used as a display value.
+
+## Sizing
+
+The recommended way to set the width is by sizing the container element. This is so it may reflect a similar size as other inputs in the context.
+
+If that is not possible, the width can be set directly on the component, by setting a number, which is a multiple of `8px`.
+
+For inline usage, such as in query editors, it may be useful to size the input based on the content. Set `width="auto"` to achieve this. In this case, it is also recommended to set `maxWidth` and `minWidth`.
+
+## Async Usage
+
+The `options` prop can accept an async function:
+
+- When the menu opens, the `options` function is called with `''`, to load all options.
+- When the user types, the `options` function is called with the current input value.
+
+Note: The calls are debounced. Old calls are invalidated when a new call is made.
+
+## Unit testing
+
+Writing unit tests with Combobox requires mocking the `getBoundingClientRect` method because of [the virtual list library](https://github.com/TanStack/virtual/issues/29#issuecomment-657519522)
+
+This code sets up the mocking before all tests:
+
+```js
+beforeAll(() => {
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
+
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
+});
+```
+
+### Selecting an option
+
+To select an option, you can use any `*ByRole` methods, as Combobox has proper roles for accessibility.
+
+#### Selecting option by clicking
+
+```js
+render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
+
+const input = screen.getByRole('combobox');
+await userEvent.click(input);
+
+const item = await screen.findByRole('option', { name: 'Option 1' });
+await userEvent.click(item);
+expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
+```
+
+#### Selecting option by typing
+
+```js
+render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+const input = screen.getByRole('combobox');
+await userEvent.type(input, 'Option 3');
+await userEvent.keyboard('{ArrowDown}{Enter}');
+
+expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
+```
+
+## Props
+
+<ArgTypes of={Combobox} />

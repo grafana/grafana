@@ -11,12 +11,18 @@ import { Field } from '../Forms/Field';
 import { AsyncSelect, Select } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
+import mdx from './Combobox.mdx';
 
 type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
 
 const meta: Meta<PropsAndCustomArgs> = {
   title: 'Forms/Combobox',
   component: Combobox,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
   args: {
     loading: undefined,
     invalid: undefined,
