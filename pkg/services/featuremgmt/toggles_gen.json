@@ -535,6 +535,7 @@
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1722537244598",
         "creationTimestamp": "2024-03-22T15:44:37Z",
+        "deletionTimestamp": "2024-11-14T01:17:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
         }
