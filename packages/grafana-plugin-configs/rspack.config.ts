@@ -33,7 +33,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
   const baseConfig: Configuration = {
     context: process.cwd(),
 
-    devtool: env.production ? 'source-map' : 'eval-source-map',
+    devtool: 'source-map',
 
     entry: await getEntries(),
 
