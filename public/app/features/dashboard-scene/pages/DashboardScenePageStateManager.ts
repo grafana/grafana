@@ -218,7 +218,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     };
 
     // We shouldn't check all params since:
-    // - version doesn't impact the new dashboard and it's there for increased compatibility
+    // - version doesn't impact the new dashboard, and it's there for increased compatibility
     // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
     // - other params don't affect the dashboard content
     if (
