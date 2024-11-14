@@ -282,6 +282,10 @@
       "labels": {
         "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
       },
+      "notifications-step": {
+        "contact-point": "Notifications for firing alerts are routed to a selected contact point.",
+        "notification-policy": "Notifications for firing alerts are routed to contact points based on matching labels."
+      },
       "pause": {
         "label": "Pause evaluation"
       }
