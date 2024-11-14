@@ -122,7 +122,7 @@
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
 /pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
-/pkg/services/correlations/ @grafana/explore-squad
+/pkg/services/correlations/ @grafana/dataviz-squad
 /pkg/services/dashboardimport/ @grafana/grafana-backend-group
 /pkg/services/dashboards/ @grafana/grafana-app-platform-squad
 /pkg/services/dashboardversion/ @grafana/grafana-backend-group
@@ -162,7 +162,7 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/apis/query @grafana/grafana-datasources-core-services
 /pkg/tests/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
-/pkg/tests/api/correlations/ @grafana/explore-squad
+/pkg/tests/api/correlations/ @grafana/dataviz-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-group
 /pkg/tsdb/opentsdb/ @grafana/partner-datasources
 /pkg/util/ @grafana/grafana-backend-group
@@ -432,7 +432,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend
-/public/app/features/correlations/ @grafana/explore-squad
+/public/app/features/correlations/ @grafana/dataviz-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
 /public/app/features/dashboard/components/TransformationsEditor/ @grafana/dataviz-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
@@ -456,7 +456,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
-/public/app/features/query-library/ @grafana/explore-squad
+/public/app/features/query-library/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
 /public/app/features/sandbox/ @grafana/grafana-frontend-platform
