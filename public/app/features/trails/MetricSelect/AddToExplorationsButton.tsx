@@ -99,7 +99,7 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
 
   public static Component = ({ model }: SceneComponentProps<AddToExplorationButton>) => {
     const { context, disabledLinks } = model.useState();
-    const { links } = usePluginLinks({ extensionPointId, context });
+    const { links } = usePluginLinks({ extensionPointId, context, limitPerPlugin: 1 });
     const link = links.find((link) => link.pluginId === explorationsPluginId);
 
     if (!link) {
