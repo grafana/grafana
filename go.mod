@@ -46,6 +46,7 @@ require (
 	github.com/crewjam/saml v0.4.13 // @grafana/identity-access-team
 	github.com/dave/dst v0.27.3 // @grafana/grafana-as-code
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
+	github.com/dolthub/go-mysql-server v0.0.0-20241106123535-0ef231abdb39 // @grafana/grafana-datasources-core-services
 	github.com/dolthub/vitess v0.0.0-20241104125316-860772ba6683 // @grafana/grafana-datasources-core-services
 	github.com/fatih/color v1.17.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
@@ -483,6 +484,9 @@ require (
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
+	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
+	github.com/dolthub/go-icu-regex v0.0.0-20240916130659-0118adc6b662 // indirect
+	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
@@ -493,6 +497,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
+	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/maypok86/otter v1.2.2 // indirect
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/pires/go-proxyproto v0.7.0 // indirect
@@ -500,11 +505,14 @@ require (
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
 	github.com/sercand/kuberesolver/v5 v5.1.1 // indirect
 	github.com/shadowspore/fossil-delta v0.0.0-20240102155221-e3a8590b820b // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
+	github.com/tetratelabs/wazero v1.1.0 // indirect
 	go.opentelemetry.io/collector/featuregate v1.9.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
+	gopkg.in/src-d/go-errors.v1 v1.0.0 // indirect
 	k8s.io/apiextensions-apiserver v0.31.1 // indirect
 )
 
@@ -522,3 +530,6 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
+
+// Our fork bumps the Otel version to 1.31.0 to resolve a dependency conflict
+replace github.com/dolthub/go-mysql-server => github.com/samjewell/go-mysql-server v0.0.0-20241106123535-0ef231abdb39
