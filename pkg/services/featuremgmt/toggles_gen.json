@@ -535,6 +535,7 @@
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1722537244598",
         "creationTimestamp": "2024-03-22T15:44:37Z",
+        "deletionTimestamp": "2024-11-14T01:17:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
         }
@@ -2464,6 +2465,20 @@
     },
     {
       "metadata": {
+        "name": "passwordlessMagicLinkAuthentication",
+        "resourceVersion": "1730232874003",
+        "creationTimestamp": "2024-10-29T20:14:34Z"
+      },
+      "spec": {
+        "description": "Enable passwordless login via magic link authentication",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -2602,13 +2617,17 @@
     {
       "metadata": {
         "name": "preinstallAutoUpdate",
-        "resourceVersion": "1730904343525",
-        "creationTimestamp": "2024-11-06T14:45:43Z"
+        "resourceVersion": "1731581146864",
+        "creationTimestamp": "2024-11-06T14:45:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 10:45:46.864585 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {

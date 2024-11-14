@@ -143,14 +143,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:         "autoMigrateXYChartPanel",
-			Description:  "Migrate old XYChart panel to new XYChart2 model",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDatavizSquad,
-		},
-		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -1584,8 +1576,9 @@ var (
 		{
 			Name:        "preinstallAutoUpdate",
 			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSchemaV2",
@@ -1600,6 +1593,15 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:              "passwordlessMagicLinkAuthentication",
+			Description:       "Enable passwordless login via magic link authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
 		},
 		{
 			Name:         "exploreMetricsRelatedLogs",

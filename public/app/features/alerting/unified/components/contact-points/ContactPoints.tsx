@@ -243,6 +243,11 @@ const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
+  if (pageItems.length === 0) {
+    const emptyMessage = t('alerting.contact-points.no-contact-points-found', 'No contact points found');
+    return <EmptyState variant="not-found" message={emptyMessage} />;
+  }
+
   return (
     <>
       {pageItems.map((contactPoint, index) => {
