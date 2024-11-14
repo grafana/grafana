@@ -15,6 +15,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 var _ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
@@ -69,8 +70,11 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	helloWorld := &helloWorldSubresource{}
+
 	storage := map[string]rest.Storage{}
 	storage[v0alpha1.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	storage[v0alpha1.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return nil
 }
@@ -89,9 +93,25 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 	// TODO: we might want to register some extras for subresources here.
+	sub := oas.Paths.Paths[root+"namespaces/{namespace}/repositories/{name}/hello"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Description = "Get a nice hello :)"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "whom",
+					In:          "query",
+					Example:     "World!",
+					Description: "Who should get the nice greeting?",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+	}
 
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}

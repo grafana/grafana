@@ -109,3 +109,10 @@ type RepositoryList struct {
 
 	Items []Repository `json:"items,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HelloWorld struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Whom string `json:"whom,omitempty"`
+}
