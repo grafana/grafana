@@ -353,7 +353,7 @@ function TemplatingBasics() {
     <Alert title="" severity="info">
       <Stack direction="row">
         <div>
-          Notification templates use the Go templating language to create notification messages.
+          Notification templates use Go templating language to create notification messages.
           <br />
           <br />
           In Grafana, a template group can define multiple notification templates using {'{{'} define "{'<NAME>'}"{' '}
