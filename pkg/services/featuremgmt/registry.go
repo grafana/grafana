@@ -1641,7 +1641,7 @@ var (
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
-			Expression:  "false", // disabled by default
+			Expression:  "true", // disabled by default
 		},
 	}
 )
