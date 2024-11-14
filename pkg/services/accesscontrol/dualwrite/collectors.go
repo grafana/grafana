@@ -195,8 +195,8 @@ func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 	return s
 }
 
-// basicRolesCollector collects permissions for basic roles
-func basicRolesCollector(store db.DB) legacyTupleCollector {
+// basicRolePermissionsCollector collects permissions for basic roles
+func basicRolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, _ int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		const query = `
 			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
@@ -228,6 +228,53 @@ func basicRolesCollector(store db.DB) legacyTupleCollector {
 			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
 			if !ok {
 				continue
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+// basicRoleBindingsCollects permissions for basic roles
+func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		query := `
+			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role
+			FROM org_user ou
+			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ou.user_id
+			WHERE ou.org_id = ?
+			AND NOT u.is_service_account
+		`
+		// FIXME: handle service admin role
+		type Binding struct {
+			UserUID string `xorm:"user_uid"`
+			OrgRole string `xorm:"org_role"`
+		}
+
+		var bindings []Binding
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query, orgID).Find(&bindings)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, b := range bindings {
+			subject := zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, "")
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(b.OrgRole), ""),
 			}
 
 			if tuples[tuple.Object] == nil {
