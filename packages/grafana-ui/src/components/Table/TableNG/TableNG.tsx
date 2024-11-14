@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect, useCallback, useRef } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
 import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
@@ -57,8 +57,18 @@ export function TableNG(props: TableNGProps) {
   const columnWidth = useMemo(() => {
     setRevId(revId + 1);
     return fieldConfig?.defaults?.custom?.width || 'auto';
-  }, [fieldConfig, props.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
+
+  const prevProps = useRef(props);
+  useEffect(() => {
+    // TODO: there is a usecase when adding a new column to the table doesn't update the table
+    if (prevProps.current.data.fields.length !== props.data.fields.length) {
+      setRevId(revId + 1);
+    }
+
+    prevProps.current = props;
+  }, [props.data]);
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
