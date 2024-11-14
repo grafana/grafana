@@ -17,9 +17,5 @@ export const PERMISSIONS_CONTACT_POINTS_MODIFY = [
 
 /**
  * List of all permissions that allow contact points read/write functionality
- *
- * Any permission in this list will also be checked for whether the built-in Grafana Alertmanager is shown
- * (as the implication is that if they have one of these permissions, then they should be able to see Grafana AM in the AM selector)
  */
-
 export const PERMISSIONS_CONTACT_POINTS = [...PERMISSIONS_CONTACT_POINTS_READ, ...PERMISSIONS_CONTACT_POINTS_MODIFY];
