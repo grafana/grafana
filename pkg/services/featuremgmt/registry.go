@@ -1637,6 +1637,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "reportingUseRawTimeRange",
+			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false", // disabled by default
+		},
 	}
 )
 
