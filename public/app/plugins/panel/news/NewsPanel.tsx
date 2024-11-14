@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { Alert, Icon } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import { Alert, Icon, ScrollContainer } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';

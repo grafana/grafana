@@ -3,8 +3,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Card, Collapse, Field, Input, LoadingPlaceholder, Select, useStyles2 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import {
+  Button,
+  Card,
+  Collapse,
+  Field,
+  Input,
+  LoadingPlaceholder,
+  ScrollContainer,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
 import {
