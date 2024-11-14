@@ -2891,7 +2891,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.1.0, @floating-ui/react-dom@npm:^2.1.2":
+"@floating-ui/react-dom@npm:^2.1.2":
   version: 2.1.2
   resolution: "@floating-ui/react-dom@npm:2.1.2"
   dependencies:
@@ -2903,21 +2903,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.16":
-  version: 0.26.16
-  resolution: "@floating-ui/react@npm:0.26.16"
-  dependencies:
-    "@floating-ui/react-dom": "npm:^2.1.0"
-    "@floating-ui/utils": "npm:^0.2.0"
-    tabbable: "npm:^6.0.0"
-  peerDependencies:
-    react: ">=16.8.0"
-    react-dom: ">=16.8.0"
-  checksum: 10/4d5216ba10c05f08a94730c0899578ead75a6cdfa9e531461e8d7ef7fea43d6b5818869c38a3c30c36f2e557c0af58b52b2325248d19029e2a89f34bfcc8c421
-  languageName: node
-  linkType: hard
-
-"@floating-ui/react@npm:0.26.27":
+"@floating-ui/react@npm:0.26.27, @floating-ui/react@npm:^0.26.16":
   version: 0.26.27
   resolution: "@floating-ui/react@npm:0.26.27"
   dependencies:
@@ -4067,44 +4053,45 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.23.1":
-  version: 5.23.1
-  resolution: "@grafana/scenes-react@npm:5.23.1"
+"@grafana/scenes-react@npm:5.25.0":
+  version: 5.25.0
+  resolution: "@grafana/scenes-react@npm:5.25.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^11.0.0"
-    "@grafana/scenes": "npm:5.23.1"
-    react-use: "npm:17.4.0"
+    "@grafana/scenes": "npm:5.25.0"
+    lru-cache: "npm:^10.2.2"
+    react-use: "npm:^17.4.0"
   peerDependencies:
     "@grafana/data": ^11.0.0
+    "@grafana/e2e-selectors": ^11.0.0
     "@grafana/runtime": ^11.0.0
     "@grafana/schema": ^11.0.0
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/83a17169e3382fa6d6e83ec3aec619b3591602fe8ab45bea883c293fc8460f1869596efe1f90758e364319c143345e3ef19015e684224c3325bf503d8ddeca6a
+  checksum: 10/7b1b253aab445ef8e8ed17ed8168c456066ccd518020ed217a0bfecc10635089e7ec5ff4acd0ccf2f86b506ee868602b2c2835de1dffc005b04fe73ce5154170
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.23.1":
-  version: 5.23.1
-  resolution: "@grafana/scenes@npm:5.23.1"
+"@grafana/scenes@npm:5.25.0":
+  version: 5.25.0
+  resolution: "@grafana/scenes@npm:5.25.0"
   dependencies:
-    "@floating-ui/react": "npm:0.26.16"
-    "@grafana/e2e-selectors": "npm:^11.0.0"
+    "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.14"
     "@tanstack/react-virtual": "npm:^3.9.0"
-    react-grid-layout: "npm:1.3.4"
-    react-use: "npm:17.5.0"
-    react-virtualized-auto-sizer: "npm:1.0.24"
+    react-grid-layout: "npm:^1.3.4"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
     uuid: "npm:^9.0.0"
   peerDependencies:
     "@grafana/data": ">=10.4"
+    "@grafana/e2e-selectors": ">=10.4"
     "@grafana/runtime": ">=10.4"
     "@grafana/schema": ">=10.4"
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/74cc74cc42102638ab3388e910242f3f641b325da5e42a2ab9bd18d9e6d14e55adbc93f25dcfad594ecc97003f1920c27b2e166e73e1a5f17459e0573615a1fd
+  checksum: 10/bef40f88970de1486ba49afca03d2538b1c72ba7d7cfd1df42978ad369b842c66c30d87c814438fe00187d77112520c7ea508fc77d31a9045f37e043ecf12bf7
   languageName: node
   linkType: hard
 
@@ -18721,8 +18708,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.23.1"
-    "@grafana/scenes-react": "npm:5.23.1"
+    "@grafana/scenes": "npm:5.25.0"
+    "@grafana/scenes-react": "npm:5.25.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
@@ -24047,7 +24034,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nano-css@npm:^5.3.1, nano-css@npm:^5.6.1, nano-css@npm:^5.6.2":
+"nano-css@npm:^5.6.2":
   version: 5.6.2
   resolution: "nano-css@npm:5.6.2"
   dependencies:
@@ -27810,57 +27797,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-use@npm:17.4.0":
-  version: 17.4.0
-  resolution: "react-use@npm:17.4.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.3.1"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 10/98566c4817b00251107824743ea9dff41f167b548bd5f249f6eb9e2ec09388a2de1e89988e4432cead3f8aa83cf706e0255db8a20c0615768c670751973d2761
-  languageName: node
-  linkType: hard
-
-"react-use@npm:17.5.0":
-  version: 17.5.0
-  resolution: "react-use@npm:17.5.0"
-  dependencies:
-    "@types/js-cookie": "npm:^2.2.6"
-    "@xobotyi/scrollbar-width": "npm:^1.9.5"
-    copy-to-clipboard: "npm:^3.3.1"
-    fast-deep-equal: "npm:^3.1.3"
-    fast-shallow-equal: "npm:^1.0.0"
-    js-cookie: "npm:^2.2.1"
-    nano-css: "npm:^5.6.1"
-    react-universal-interface: "npm:^0.6.2"
-    resize-observer-polyfill: "npm:^1.5.1"
-    screenfull: "npm:^5.1.0"
-    set-harmonic-interval: "npm:^1.0.1"
-    throttle-debounce: "npm:^3.0.1"
-    ts-easing: "npm:^0.2.0"
-    tslib: "npm:^2.1.0"
-  peerDependencies:
-    react: "*"
-    react-dom: "*"
-  checksum: 10/5d81fe0902303d3ed7810cdd56c6cae12b08124a3d4fcbfa3924327105b81447b039ea9d6aff20aac3c13999f949000870a7a2fa29fe20ed844ac26606462fa0
-  languageName: node
-  linkType: hard
-
-"react-use@npm:17.5.1, react-use@npm:^17.4.2":
+"react-use@npm:17.5.1, react-use@npm:^17.4.0, react-use@npm:^17.4.2, react-use@npm:^17.5.0":
   version: 17.5.1
   resolution: "react-use@npm:17.5.1"
   dependencies:
@@ -27896,7 +27833,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtualized-auto-sizer@npm:1.0.24":
+"react-virtualized-auto-sizer@npm:1.0.24, react-virtualized-auto-sizer@npm:^1.0.24":
   version: 1.0.24
   resolution: "react-virtualized-auto-sizer@npm:1.0.24"
   peerDependencies:
