@@ -60,6 +60,7 @@ type ListAccessPoliciesParams struct {
 	RequestID string
 	Region    string
 	Name      string
+	OrgId     string
 }
 
 type ListAccessPoliciesResponse struct {
@@ -245,6 +246,7 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	query.Set("name", params.Name)
 	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
+	request.Header.Set("X-Org-ID", params.OrgId)
 	request.Header.Set("Accept", "application/json")
 
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))

@@ -25,6 +25,7 @@ type Instance struct {
 	Slug        string `json:"slug"`
 	RegionSlug  string `json:"regionSlug"`
 	ClusterSlug string `json:"clusterSlug"`
+	OrgId       string `json:"orgId"`
 }
 
 type GcomClient struct {
