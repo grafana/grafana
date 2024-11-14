@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"sync"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -24,8 +23,6 @@ var _ authzv1.AuthzServiceServer = (*Server)(nil)
 var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
-
-var errAuthorizationModelNotInitialized = errors.New("authorization model not initialized")
 
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer

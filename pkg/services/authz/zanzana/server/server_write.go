@@ -17,9 +17,6 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	if err != nil {
 		return nil, err
 	}
-	if storeInf.AuthorizationModelId == "" {
-		return nil, errAuthorizationModelNotInitialized
-	}
 
 	writeTuples := make([]*openfgav1.TupleKey, 0)
 	for _, t := range req.GetWrites().GetTupleKeys() {
