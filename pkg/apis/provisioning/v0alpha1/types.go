@@ -1,10 +1,6 @@
 package v0alpha1
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,15 +12,12 @@ type Repository struct {
 	Spec RepositorySpec `json:"spec,omitempty"`
 }
 
-type LocalRepository struct {
+type LocalRepositoryConfig struct {
 	Path string `json:"path,omitempty"`
 }
 
-func (r *LocalRepository) IsEmpty() bool {
-	return r == nil || r.Path == ""
-}
-
-type S3Repository struct {
+type S3RepositoryConfig struct {
+	Region string `json:"region,omitempty"`
 	Bucket string `json:"bucket,omitempty"`
 
 	// TODO: Add ACL?
@@ -32,11 +25,7 @@ type S3Repository struct {
 	// TODO: How do we define access? Secrets?
 }
 
-func (r *S3Repository) IsEmpty() bool {
-	return r == nil || r.Bucket == ""
-}
-
-type GitHubRepository struct {
+type GitHubRepositoryConfig struct {
 	// The owner of the repository (e.g. example in `example/test` or `https://github.com/example/test`).
 	Owner string `json:"owner,omitempty"`
 	// The name of the repository (e.g. test in `example/test` or `https://github.com/example/test`).
@@ -56,50 +45,43 @@ type GitHubRepository struct {
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 }
 
-func (r *GitHubRepository) IsEmpty() bool {
-	// we don't need to check options here, just the most important stuff to actually connect.
-	return r == nil || r.Owner == "" || r.Repository == ""
-}
+// RepositoryType defines the types of Repository
+// +enum
+type RepositoryType string
+
+// RepositoryType values
+const (
+	LocalRepositoryType  RepositoryType = "local"
+	S3RepositoryType     RepositoryType = "s3"
+	GithubRepositoryType RepositoryType = "github"
+)
 
 type RepositorySpec struct {
+	// Describe the feature toggle
+	Title string `json:"title"`
+
+	// Describe the feature toggle
+	Description string `json:"description,omitempty"`
+
 	// The folder that is backed by the repository.
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
 	Folder string `json:"folder,omitempty"`
 
+	// The repository type.  When selected oneOf the values below should be non-nil
+	Type RepositoryType `json:"type"`
+
 	// The repository on the local file system.
 	// Mutually exclusive with s3 and github.
-	Local LocalRepository `json:"local,omitempty"`
+	Local *LocalRepositoryConfig `json:"local,omitempty"`
+
 	// The repository in an S3 bucket.
 	// Mutually exclusive with local and github.
-	S3 S3Repository `json:"s3,omitempty"`
+	S3 *S3RepositoryConfig `json:"s3,omitempty"`
+
 	// The repository on GitHub.
 	// Mutually exclusive with local and s3.
 	// TODO: github or just 'git'??
-	GitHub GitHubRepository `json:"github,omitempty"`
-}
-
-func (s *RepositorySpec) UnmarshalJSON(data []byte) error {
-	type Alias RepositorySpec
-	real := struct {
-		*Alias `json:",inline"`
-	}{(*Alias)(s)}
-
-	if err := json.Unmarshal(data, &real); err != nil {
-		return err
-	}
-
-	nonEmpty := 0
-	type IsEmptyer interface{ IsEmpty() bool }
-	for _, it := range []IsEmptyer{&real.GitHub, &real.S3, &real.Local} {
-		if !it.IsEmpty() {
-			nonEmpty++
-		}
-	}
-	if nonEmpty != 1 {
-		return fmt.Errorf("%w (found %d)", errors.New("one (and exactly one) of github, s3, and local must be set"), nonEmpty)
-	}
-
-	return nil
+	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

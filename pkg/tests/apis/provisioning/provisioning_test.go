@@ -40,7 +40,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		//fmt.Printf("%s", string(v1Disco))
+		// fmt.Printf("%s", string(v1Disco))
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
@@ -85,23 +85,65 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 		})
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-		r0, err := client.Resource.Create(ctx,
+
+		// Load the samples
+		_, err := client.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
 			createOptions,
 		)
+		require.NoError(t, err)
 
-		require.NoError(t, err)
-		require.Equal(t, "devenv", r0.GetName())
-		r1, err := client.Resource.Get(ctx, "devenv", metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t,
-			mustNestedString(r0.Object, "spec", "local", "path"),
-			mustNestedString(r1.Object, "spec", "local", "path"),
+		_, err = client.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			createOptions,
 		)
-		require.Equal(t,
-			"path/to/folder", //
-			mustNestedString(r1.Object, "spec", "local", "path"),
+		require.NoError(t, err)
+
+		_, err = client.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/s3-example.yaml"),
+			createOptions,
 		)
+		require.NoError(t, err)
+
+		samples, err := client.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		found := map[string]any{}
+		for _, v := range samples.Items {
+			found[v.GetName()] = v.Object["spec"]
+		}
+
+		js, _ := json.MarshalIndent(found, "", "  ")
+		// fmt.Printf("%s", string(js))
+		require.JSONEq(t, `{
+			"github-example": {
+				"description": "load resources from github",
+				"github": {
+					"branchWorkflow": true,
+					"generateDashboardPreviews": true,
+					"owner": "grafana",
+					"repository": "git-ui-sync-demo"
+				},
+				"title": "Github Example",
+				"type": "github"
+			},
+			"local-devenv": {
+				"description": "load resources from grafana/grafana devenv folder",
+				"local": {
+					"path": "path/to/folder"
+				},
+				"title": "Local devenv files",
+				"type": "local"
+			},
+			"s3-example": {
+				"description": "load resources from an S3 bucket",
+				"s3": {
+					"bucket": "my-bucket",
+					"region": "us-west-1"
+				},
+				"title": "S3 Example",
+				"type": "s3"
+			}
+		}`, string(js))
 	})
 
 	t.Run("basic helloworld subresource", func(t *testing.T) {
@@ -115,7 +157,19 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 		})
 
+		// Add it if this is the only test that ran
+		_, err := client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+
+		// "test" is Not found
 		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		require.Error(t, err) // "test" not found
+		require.Nil(t, resp)  // "test" not found
+
+		resp, err = client.Resource.Get(ctx, "local-devenv", metav1.GetOptions{}, "hello")
 		require.NoError(t, err)
 		require.Equal(t,
 			"World",

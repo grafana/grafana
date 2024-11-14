@@ -1,0 +1,13 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: github-example
+spec:
+  title: Github Example
+  description: load resources from github
+  type: github
+  github:
+    owner: grafana
+    repository: git-ui-sync-demo
+    branchWorkflow: true
+    generateDashboardPreviews: true
