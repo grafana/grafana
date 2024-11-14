@@ -96,6 +96,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	result := make([]suggestData, 0)
 	dupCheck := make(map[string]bool)
 	for _, reservation := range instances.Reservations {
+	instanceLoop:
 		for _, instance := range reservation.Instances {
 			tags := make(map[string]string)
 			for _, tag := range instance.Tags {
@@ -111,6 +112,9 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				v := reflect.ValueOf(instance)
 				for _, key := range attributePath {
 					if v.Kind() == reflect.Ptr {
+						if v.IsNil() {
+							continue instanceLoop
+						}
 						v = v.Elem()
 					}
 					if v.Kind() != reflect.Struct {
@@ -121,12 +125,20 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 						return nil, errors.New("invalid attribute path")
 					}
 				}
+
+				if v.Kind() == reflect.Ptr && v.IsNil() {
+					continue
+				}
 				if attr, ok := v.Interface().(*string); ok {
 					data = *attr
 				} else if attr, ok := v.Interface().(*time.Time); ok {
 					data = attr.String()
+				} else if _, ok := v.Interface().(*bool); ok {
+					data = fmt.Sprint(v.Elem().Bool())
+				} else if v.Kind() == reflect.Ptr && v.Elem().CanInt() {
+					data = fmt.Sprint(v.Elem().Int())
 				} else {
-					return nil, errors.New("invalid attribute path")
+					return nil, errors.New("cannot parse attribute")
 				}
 			}
 
