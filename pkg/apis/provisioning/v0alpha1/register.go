@@ -22,12 +22,11 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"repositories", "repository", "Repositories",
 	func() runtime.Object { return &Repository{} },     // newObj
 	func() runtime.Object { return &RepositoryList{} }, // newList
-	utils.TableColumns{
+	utils.TableColumns{ // Returned by `kubectl get`. Doesn't affect disk storage.
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
-			// TODO: Add more here when I figure out the model...
-			// I think this is just the table you get in `kubectl get`. It shouldn't deal with anything around storage.
+			// TODO: Add more here when we figure out the model...
 			{Name: "Type", Type: "string"},
 			{Name: "Target", Type: "string"},
 		},
@@ -38,6 +37,7 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			}
 
 			var typ, target string
+			// TODO: Can probably make this prettier. Function on Repository maybe?
 			if !m.Spec.GitHub.IsEmpty() {
 				typ = "github"
 				// TODO: Enterprise GH??
