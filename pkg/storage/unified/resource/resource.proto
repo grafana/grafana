@@ -448,6 +448,145 @@ message HealthCheckResponse {
   ServingStatus status = 1;
 }
 
+
+
+// // Table is a tabular representation of a set of API resources. The server transforms the
+// // object into a set of preferred columns for quickly reviewing the objects.
+// // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// // +protobuf=false
+// type Table struct {
+// 	TypeMeta `json:",inline"`
+// 	// Standard list metadata.
+// 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+// 	// +optional
+// 	ListMeta `json:"metadata,omitempty"`
+
+// 	// columnDefinitions describes each column in the returned items array. The number of cells per row
+// 	// will always match the number of column definitions.
+// 	// +listType=atomic
+// 	ColumnDefinitions []TableColumnDefinition `json:"columnDefinitions"`
+// 	// rows is the list of items in the table.
+// 	// +listType=atomic
+// 	Rows []TableRow `json:"rows"`
+// }
+
+// HealthCheckResponse
+// TableColumnDefinition contains information about a column returned in the Table.
+// +protobuf=false
+message TableColumnDefinition {
+  // See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types for more.
+  enum ColumnType {
+    UNKNOWN_TYPE = 0;
+    STRING = 1;
+    NUMBER = 2; 
+    INTEGER = 3;  
+    BOOLEAN = 4; 
+  }
+
+  // See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types for more.
+  enum ColumnFormat {
+    UNKNOWN_FORMAT = 0; // used for string
+    INT32 = 1;
+    INT64 = 2; 
+    FLOAT = 3;  
+    DOUBLE = 4; 
+    BYTE = 5; 
+    BINARY = 6; 
+    DATE = 7; 
+    DATE_TIME = 8; 
+    PASSWORD = 9; 
+  }
+
+  // These values are not part of standard k8s format however are useful when trying to display
+  message Properties {
+    // All values in this columns should be unique
+    bool unique_values = 1;
+
+    // The string value is free text; using text analyzers is appropriate
+    bool free_text = 2;
+
+    // The value(s) are reasonable to use for search refinement
+    // When indexing, these values would be good to add to an index
+    bool filterable = 3;
+
+    // Null values can exist
+    bool nullable = 4;
+  }
+
+	// name is a human readable name for the column.
+	string name = 1;
+
+  // type is an OpenAPI type definition for this column, such as number, integer, string
+	ColumnType type = 2;
+
+	// format is an optional OpenAPI type modifier for this column. A format modifies the type and
+	// imposes additional rules, like date or time formatting for a string. The 'name' format is applied
+	// to the primary identifier column which has type 'string' to assist in clients identifying column
+	// is the resource name.
+	// See https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#data-types for more.
+	ColumnFormat format = 3;
+
+  // Note that the value is an array of the given type (in k8s, the type would become array?)
+  bool is_array = 4;
+
+	// description is a human readable description of this column.
+	string description = 5;
+
+  // Properties about this column
+  Properties properties = 6;
+
+	// priority is an integer defining the relative importance of this column compared to others. Lower
+	// numbers are considered higher priority. Columns that may be omitted in limited space scenarios
+	// should be given a higher priority.
+	int32 priority = 7;
+}
+
+// // TableRow is an individual row in a table.
+// // +protobuf=false
+// type TableRow struct {
+// 	// cells will be as wide as the column definitions array and may contain strings, numbers (float64 or
+// 	// int64), booleans, simple maps, lists, or null. See the type field of the column definition for a
+// 	// more detailed description.
+// 	// +listType=atomic
+// 	Cells []interface{} `json:"cells"`
+// 	// conditions describe additional status of a row that are relevant for a human user. These conditions
+// 	// apply to the row, not to the object, and will be specific to table output. The only defined
+// 	// condition type is 'Completed', for a row that indicates a resource that has run to completion and
+// 	// can be given less visual priority.
+// 	// +optional
+// 	// +listType=atomic
+// 	Conditions []TableRowCondition `json:"conditions,omitempty"`
+// 	// This field contains the requested additional information about each object based on the includeObject
+// 	// policy when requesting the Table. If "None", this field is empty, if "Object" this will be the
+// 	// default serialization of the object for the current API version, and if "Metadata" (the default) will
+// 	// contain the object metadata. Check the returned kind and apiVersion of the object before parsing.
+// 	// The media type of the object will always match the enclosing list - if this as a JSON table, these
+// 	// will be JSON encoded objects.
+// 	// +optional
+// 	Object runtime.RawExtension `json:"object,omitempty"`
+// }
+
+// // TableRowCondition allows a row to be marked with additional information.
+// // +protobuf=false
+// type TableRowCondition struct {
+// 	// Type of row condition. The only defined value is 'Completed' indicating that the
+// 	// object this row represents has reached a completed state and may be given less visual
+// 	// priority than other rows. Clients are not required to honor any conditions but should
+// 	// be consistent where possible about handling the conditions.
+// 	Type RowConditionType `json:"type"`
+// 	// Status of the condition, one of True, False, Unknown.
+// 	Status ConditionStatus `json:"status"`
+// 	// (brief) machine readable reason for the condition's last transition.
+// 	// +optional
+// 	Reason string `json:"reason,omitempty"`
+// 	// Human readable message indicating details about last transition.
+// 	// +optional
+// 	Message string `json:"message,omitempty"`
+// }
+
+
+
+
 //----------------------------
 // Blob Support
 //----------------------------
