@@ -83,7 +83,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 
 	t.Run("Get different types", func(t *testing.T) {
 		var expectedInt int64 = 3
-		var expectedBool bool = true
+		var expectedBool = true
 		var expectedArn = "arn"
 		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
@@ -141,7 +141,6 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 		for _, tc := range testcases {
 			t.Run(tc.name, func(t *testing.T) {
-
 				filterMap := map[string][]string{}
 				filterJson, err := json.Marshal(filterMap)
 				require.NoError(t, err)
