@@ -70,6 +70,14 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	// TODO Add feature toggle / permissions check
+	generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+		Text:     "Git Sync",
+		Id:       "git-sync",
+		SubTitle: "Store and version control your resources",
+		Url:      s.cfg.AppSubURL + "/admin/git-sync",
+	})
+
 	generalNode := &navtree.NavLink{
 		Text:     "General",
 		SubTitle: "Manage default preferences and settings across Grafana",
