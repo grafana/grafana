@@ -455,7 +455,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "create": "Create custom value"
+      "label": "Custom value: "
     },
     "options": {
       "no-found": "No options found."
