@@ -69,9 +69,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#span-idroute-get-alert-rule-exportspan-export-an-alert-rule-in-provisioning-file-format-_routegetalertruleexport_
   alerting_http_templates:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#templates
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#notification-template-groups
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/#templates
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/#notification-template-groups
   alerting_http_contactpoints:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#contact-points
@@ -165,15 +165,15 @@ To export contact points from the Grafana UI, complete the following steps.
 
 1. Click **Copy Code** or **Download**.
 
-### Export templates
+### Export notification template groups
 
-Grafana currently doesn't offer an Export UI or [Export endpoint](#export-api-endpoints) for notification templates, unlike other Alerting resources presented in this documentation.
+Grafana currently doesn't offer an Export UI or [Export endpoint](#export-api-endpoints) for notification template groups, unlike other Alerting resources presented in this documentation.
 
-However, you can export it by manually copying the content template and title directly from the Grafana UI.
+However, you can export it by manually copying the content and name of the notification template group from the Grafana UI.
 
 1. Click **Alerts & IRM** -> **Contact points** -> **Notification templates** tab.
-1. Find the template you want to export.
-1. Copy the content and title.
+1. Find the notification template group you want to export.
+1. Copy the content and name.
 1. Adjust it for the [file provisioning format](ref:alerting_file_provisioning_template) or [Terraform resource](ref:alerting_tf_provisioning_template).
 
 ### Export the notification policy tree
@@ -217,8 +217,8 @@ You can use the [Alerting HTTP API](ref:alerting_http_provisioning) to return ex
 | [Alert rules](ref:alerting_http_alertrules)                        | /api/v1/provisioning/alert-rules    |
 | [Contact points](ref:alerting_http_contactpoints)                  | /api/v1/provisioning/contact-points |
 | [Notification policy tree](ref:alerting_http_notificationpolicies) | /api/v1/provisioning/policies       |
+| [Notification template groups](ref:alerting_http_templates)        | /api/v1/provisioning/templates      |
 | [Mute timings](ref:alerting_http_mutetimings)                      | /api/v1/provisioning/mute-timings   |
-| [Templates](ref:alerting_http_templates)                           | /api/v1/provisioning/templates      |
 
 However, note the standard endpoints return a JSON format that is not compatible for provisioning through configuration files or Terraform, except the `/export` endpoints listed below.
 
