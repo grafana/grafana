@@ -1459,6 +1459,14 @@
     },
     "forgot-password": "Passwort vergessen?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Passwort",
       "password-placeholder": "",
       "password-required": "Passwort ist erforderlich",
@@ -1466,7 +1474,9 @@
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
       "username-placeholder": "",
-      "username-required": "E-Mail oder Benutzername ist erforderlich"
+      "username-required": "E-Mail oder Benutzername ist erforderlich",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Mit {{serviceName}} anmelden"
