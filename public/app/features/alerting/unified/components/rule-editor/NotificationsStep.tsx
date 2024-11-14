@@ -5,7 +5,6 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -84,16 +83,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         }
       : undefined;
 
-  const recipientText = manualRouting
-    ? t(
-        'alerting.rule-form.notifications-step.contact-point',
-        'Notifications for firing alerts are routed to a selected contact point.'
-      )
-    : t(
-        'alerting.rule-form.notifications-step.notification-policy',
-        'Notifications for firing alerts are routed to contact points based on matching labels.'
-      );
-
   return (
     <RuleEditorSection
       stepNo={step}
@@ -136,9 +125,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Recipient</Text>
-          <Text variant="bodySmall" color="secondary">
-            {recipientText}
-          </Text>
         </div>
       )}
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule

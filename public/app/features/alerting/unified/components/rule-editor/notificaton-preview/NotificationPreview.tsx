@@ -118,6 +118,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   previewHeader: css({
     margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
   }),
   routePreviewHeaderRow: css({
     display: 'flex',
@@ -131,6 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   button: css({
     justifyContent: 'flex-end',
+    marginTop: theme.spacing(-0.5),
   }),
   tagsInDetails: css({
     display: 'flex',
