@@ -44,7 +44,7 @@ refs:
 A bar chart is a visual representation that uses rectangular bars, where the length of each bar represents each value.
 You can use the bar chart visualization when you want to compare values over different categories or time periods. The visualization can display the bars horizontally or vertically, and can be customized to group or stack bars for more complex data analysis.
 
-{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" alt="Bar chart" >}}
+![Bar chart visualizations](/media/docs/grafana/panels-visualizations/screenshot-bar-charts-v11.3.png)
 
 You can use the bar chart visualization if you need to show:
 
@@ -142,7 +142,7 @@ Set the mode of the gradient fill. Fill gradient is based on the line color. To 
 
   - **Gradient color schemes** - The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
-    {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+    {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-color-scale-v11.3.png" max-width="1200px" alt="Color scheme: Green-Yellow-Red" caption="Color scheme: Green-Yellow-Red" >}}
 
 <!--fix this - Graph styles not part of bar chart - option is under Standard options -->
 
