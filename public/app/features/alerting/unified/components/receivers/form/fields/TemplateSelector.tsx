@@ -132,7 +132,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
       label: 'Select notification template',
       ariaLabel: 'Select notification template',
       value: 'Existing',
-      description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save will save your changes to the selected template.' : ''}`,
+      description: `Select an existing notification template and preview it, or copy it to paste it in the custom tab. ${templateOption === 'Existing' ? 'Clicking Save saves your changes to the selected template.' : ''}`,
     },
     {
       label: `Enter custom ${option.label.toLowerCase()}`,
