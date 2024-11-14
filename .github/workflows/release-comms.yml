@@ -8,11 +8,12 @@ on:
       dry_run:
         required: false
         default: true
+        type: boolean
       version:
         required: true
       latest:
-        type: bool
-        default: false
+        type: string
+        default: "0"
   pull_request:
     types:
     - closed
@@ -35,12 +36,12 @@ jobs:
         echo setting up GITHUB_ENV for ${{ github.event_name }}
         echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
         echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
-        echo "LATEST=${{ inputs.latest }}" >> $GITHUB_ENV
+        echo "LATEST=${{ inputs.latest == 'true' && '1' || '0' }}" >> $GITHUB_ENV
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
         echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\///g')" >> $GITHUB_ENV
         echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
-        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
+        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}" >> $GITHUB_ENV
     - id: output
       run: |
         echo "dry_run: $DRY_RUN"
