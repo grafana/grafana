@@ -50,7 +50,7 @@
   "scripts": {
     "build": "rspack -c ./rspack.config.ts --env production",
     "build:commit": "rspack -c ./rspack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
-    "dev": "rspack-w -c rspackwebpack.config.ts --env development"
+    "dev": "rspack -w -c rspack.config.ts --env development"
   },
   "packageManager": "yarn@4.6.0"
 }
