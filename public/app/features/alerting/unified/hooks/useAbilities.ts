@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
@@ -238,17 +239,17 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewContactPoint]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversRead : null
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
     ),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
     ),
     [AlertmanagerAction.DeleteContactPoint]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.delete,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
     ),
     // At the time of writing, only Grafana flavored alertmanager supports exporting,
     // and if a user can view the contact point, then they can also export it
@@ -258,17 +259,17 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateNotificationTemplate]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.create,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
     ),
     [AlertmanagerAction.ViewNotificationTemplate]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesRead : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesRead] : [])
     ),
     [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
     ),
     [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
