@@ -103,12 +103,54 @@ To browse for available plugins:
 
 ### Install a plugin
 
-To install a plugin:
+To install a plugin you have multiple possibilities, the regular way is using Grafana UI.
 
 1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find a plugin.
 1. Click the plugin's logo.
 1. Click **Install**.
+
+There are also additional ways to install plugins depending on your setup.
+
+#### Install a plugin using grafana cli
+Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line. For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
+
+
+#### Install a plugin from a zip file
+This way is usually used for plugins not distributed via plugins catalog or in environments without internet connection.
+
+Download the archive containing the plugin assets and install it by extracting the archive into  plugin directory. For example:
+
+```bash
+unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
+```
+
+The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
+
+#### Install a plugin in air-gapped environment
+Plugin installation usually requires an internet connection, you can check which endpoints are being used on your instance when installing a plugin regularly and add them to allowlist of your instance.
+
+If this is not possible you can go via installing a plugin using [grafana cli](#install-a-plugin-using-grafana-cli) or as a [zip file](#install-a-plugin-from-a-zip-file).
+
+You can fetch any plugin from Grafana.com API following the download link referenced in the API.
+Here is an example based on `grafana-clock-panel` plugins.
+
+1. Open `https://grafana.com/api/plugins/grafana-clock-panel` and look for `links` section 
+1. Find a `download` url which looks something like `https://grafana.com/api/plugins/grafana-clock-panel/versions/2.1.8/download`
+1. Using this URL you can fetch the plugin zip file that you can as described above.
+
+#### Install plugins using the Grafana Helm chart
+
+With the Grafana Helm chart, add the plugins you want to install as a list using the `plugins` field in the your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
+
+The following YAML snippet installs v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin.
+You must incorporate this snippet within your Helm values file.
+
+```yaml
+plugins:
+  - https://grafana.com/api/plugins/grafana-oncall-app/versions/v1.9.0/download;grafana-oncall-app
+  - redis-datasource
+```
 
 When the update is complete, you'll see a confirmation message that the installation was successful.
 
@@ -134,49 +176,6 @@ To uninstall a plugin:
 
 When the update is complete, you'll see a confirmation message that the uninstall was successful.
 
-## Install Grafana plugins
-
-Grafana supports data source, panel, and app plugins.
-
-1. In a web browser, navigate to the [Grafana plugin catalog](https://grafana.com/plugins) and find a plugin that you want to install.
-1. Click the plugin, and then click the **Installation** tab.
-
-### Install plugin on Grafana Cloud
-
-On the **Installation tab**, in the **For** field, click the name of the Grafana instance on which you want to install the plugin.
-
-Grafana Cloud handles the plugin installation automatically.
-
-If you're logged in to Grafana Cloud when you add a plugin, log out and then log back in again to use the new plugin.
-
-### Install plugins using the Grafana Helm chart
-
-With the Grafana Helm chart, add the plugins you want to install as a list using the `plugins` field in the your values file. For more information about the configuration, refer to [the Helm chart configuration reference](https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration).
-
-The following YAML snippet installs v1.9.0 of the Grafana OnCall App plugin and the Redis data source plugin.
-You must incorporate this snippet within your Helm values file.
-
-```yaml
-plugins:
-  - https://grafana.com/api/plugins/grafana-oncall-app/versions/v1.9.0/download;grafana-oncall-app
-  - redis-datasource
-```
-
-### Install plugin on local Grafana
-
-Follow the instructions on the **Install** tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompressing a zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The zip option is available if your Grafana server doesn't have access to the internet.
-
-For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
-
-#### Install a packaged plugin
-
-After the user has downloaded the archive containing the plugin assets, they can install it by extracting the archive into their plugin directory. For example:
-
-```bash
-unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
-```
-
-The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
 ## Plugin signatures
 
