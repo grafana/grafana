@@ -675,7 +675,7 @@ func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
 	query := strings.ToUpper(c.Query("query"))
 	folders := []folder.Folder{}
 	for _, item := range out.Items {
-		p := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
+		p, _ := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
 		if p == nil {
 			continue
 		}
@@ -820,11 +820,9 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
 
-func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) {
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) { //
 	// #TODO revisit how/where we get orgID
 	ctx := c.Req.Context()
-
-	f := internalfolders.UnstructuredToLegacyFolder(item, orgID)
 
 	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
 	toUID := func(rawIdentifier string) string {
@@ -835,12 +833,9 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		return parts[1]
 	}
 
-	toDTO := func(fold *folder.Folder, checkCanView bool) (dtos.Folder, error) {
-		fDTO, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
-		if err != nil {
-			return dtos.Folder{}, err
-		}
+	f, createdBy := internalfolders.UnstructuredToLegacyFolder(item, orgID)
 
+	toDTO := func(fold *folder.Folder, createdBy string, checkCanView bool) (dtos.Folder, error) {
 		g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
 		if err != nil {
 			return dtos.Folder{}, err
@@ -855,11 +850,11 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		updater, creator := anonString, anonString
 		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
 		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
-		if len(fDTO.CreatedBy) > 0 {
-			creator = fk8s.getUserLogin(ctx, toUID(fDTO.CreatedBy))
+		if len(createdBy) > 0 {
+			creator = fk8s.getUserLogin(ctx, toUID(createdBy))
 		}
-		if len(fDTO.UpdatedBy) > 0 {
-			updater = fk8s.getUserLogin(ctx, toUID(fDTO.UpdatedBy))
+		if len(createdBy) > 0 {
+			updater = fk8s.getUserLogin(ctx, toUID(createdBy))
 		}
 
 		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
@@ -876,27 +871,28 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
 
 		return dtos.Folder{
-			ID:            fold.ID, // nolint:staticcheck
-			UID:           fold.UID,
-			Title:         fold.Title,
-			URL:           fold.URL,
-			HasACL:        fold.HasACL,
-			CanSave:       canSave,
-			CanEdit:       canEdit,
-			CanAdmin:      canAdmin,
-			CanDelete:     canDelete,
-			CreatedBy:     creator,
-			Created:       fold.Created,
-			UpdatedBy:     updater,
-			Updated:       fold.Updated,
-			Version:       fold.Version,
+			ID:        fold.ID, // nolint:staticcheck
+			UID:       fold.UID,
+			Title:     fold.Title,
+			URL:       fold.URL,
+			HasACL:    fold.HasACL,
+			CanSave:   canSave,
+			CanEdit:   canEdit,
+			CanAdmin:  canAdmin,
+			CanDelete: canDelete,
+			CreatedBy: creator,
+			Created:   fold.Created,
+			UpdatedBy: updater,
+			Updated:   fold.Updated,
+			// #TODO version doesn't seem to be used--confirm or set it properly
+			Version:       1,
 			AccessControl: acMetadata,
 			ParentUID:     fold.ParentUID,
 		}, nil
 	}
 
 	// no need to check view permission for the starting folder since it's already checked by the callers
-	folderDTO, err := toDTO(f, false)
+	folderDTO, err := toDTO(f, createdBy, false)
 	if err != nil {
 		return dtos.Folder{}, err
 	}
@@ -928,7 +924,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 			Title: v,
 			URL:   url,
 		}
-		parentDTO, err := toDTO(&ff, true)
+		parentDTO, err := toDTO(&ff, "", true)
 		if err != nil {
 			// #TODO should we log this error?
 			return dtos.Folder{}, err
