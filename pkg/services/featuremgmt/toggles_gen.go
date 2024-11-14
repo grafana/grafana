@@ -863,6 +863,10 @@ const (
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
 
+	// FlagPasswordlessMagicLinkAuthentication
+	// Enable passwordless login via magic link authentication
+	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
+
 	// FlagExploreMetricsRelatedLogs
 	// Display Related Logs in Explore Metrics
 	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
