@@ -103,5 +103,4 @@ func TestConvertDashboardVersionsToInternal(t *testing.T) {
 	dash, err = ToInternalDashboard(scheme, dashV2)
 	require.NoError(t, err)
 	require.Equal(t, expectedDashbaord, *dash)
-
 }
