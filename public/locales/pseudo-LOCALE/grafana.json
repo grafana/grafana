@@ -137,7 +137,6 @@
       "export-all": "Ēχpőřŧ äľľ",
       "view": "Vįęŵ"
     },
-    "contact-point": "Cőŉŧäčŧ Pőįŉŧ",
     "contact-points": {
       "create": "Cřęäŧę čőŉŧäčŧ pőįŉŧ",
       "custom-template-value": "Cūşŧőm ŧęmpľäŧę väľūę",
@@ -155,6 +154,7 @@
       },
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
       "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
+      "no-contact-points-found": "Ńő čőŉŧäčŧ pőįŉŧş ƒőūŉđ",
       "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
       "no-integrations": "Ńő įŉŧęģřäŧįőŉş čőŉƒįģūřęđ",
       "only-firing": "Đęľįvęřįŉģ <1>őŉľy ƒįřįŉģ</1> ŉőŧįƒįčäŧįőŉş",
