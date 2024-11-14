@@ -44,7 +44,15 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
-  queryParams?: UrlQueryMap;
+  params?: {
+    version: number;
+    scopes: string[];
+    timeRange: {
+      from: string;
+      to: string;
+    };
+    variables: UrlQueryMap;
+  };
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -59,11 +67,11 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     uid,
     route,
     urlFolderUid,
-    queryParams,
+    params,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
-    if (!queryParams) {
+    if (!params) {
       const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
       if (cachedDashboard) {
@@ -97,6 +105,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
+          const queryParams = params
+            ? {
+                version: params.version,
+                scopes: params.scopes,
+                from: params.timeRange.from,
+                to: params.timeRange.to,
+                ...params.variables,
+              }
+            : undefined;
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
@@ -188,17 +205,26 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  public async reloadDashboard(queryParams?: LoadDashboardOptions['queryParams'] | undefined) {
-    if (!this.state.options) {
+  public async reloadDashboard(params: LoadDashboardOptions['params']) {
+    const stateOptions = this.state.options;
+
+    if (!stateOptions) {
       return;
     }
 
     const options = {
-      ...this.state.options,
-      queryParams,
+      ...stateOptions,
+      params,
     };
 
-    if (isEqual(options, this.state.options)) {
+    // We shouldn't check all params since:
+    // - version doesn't impact the new dashboard and it's there for increased compatibility
+    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
+    // - other params don't affect the dashboard content
+    if (
+      isEqual(options.params?.variables, stateOptions.params?.variables) &&
+      isEqual(options.params?.scopes, stateOptions.params?.scopes)
+    ) {
       return;
     }
 
@@ -208,6 +234,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
+      // This is here for testing purposes and should be removed before merging
+      // if (rsp?.dashboard && params?.variables) {
+      //   rsp.dashboard.version =
+      //     params.variables['var-custom1'] === '1' && params.variables['var-custom2'] === 'a'
+      //       ? 3
+      //       : params.variables['var-custom1'] === '2' && params.variables['var-custom2'] === 'a'
+      //         ? 4
+      //         : params.variables['var-custom1'] === '1' && params.variables['var-custom2'] === 'b'
+      //           ? 5
+      //           : params.variables['var-custom1'] === '2' && params.variables['var-custom2'] === 'b'
+      //             ? 6
+      //             : 3;
+      // }
+
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         this.setState({ isLoading: false });
         return;
@@ -216,6 +256,49 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       if (!rsp?.dashboard) {
         this.setState({ isLoading: false, loadError: 'Dashboard not found' });
         return;
+      }
+
+      // This is here for testing purposes and should be removed before merging
+      // This emulates the passed variables being set as the current value of a variable
+      if (rsp.dashboard.templating?.list && options.params?.variables) {
+        const vars = Object.entries(options.params.variables).reduce<Record<string, string | string[]>>(
+          (acc, [key, value]) => {
+            const actualKey = key.replace('var-', '');
+            const actualValue = Array.isArray(value)
+              ? value.map((v) => {
+                  switch (typeof v) {
+                    case 'number':
+                      return String(v);
+                    case 'string':
+                      return v;
+                    case 'boolean':
+                      return v ? 'true' : 'false';
+                  }
+                })
+              : String(value);
+
+            acc[actualKey] = acc[actualKey]
+              ? Array.isArray(acc[actualKey])
+                ? [...acc[actualKey], ...(Array.isArray(actualValue) ? actualValue : [actualValue])]
+                : [acc[actualKey], ...(Array.isArray(actualValue) ? actualValue : [actualValue])]
+              : actualValue;
+
+            return acc;
+          },
+          {}
+        );
+
+        rsp.dashboard.templating.list = rsp.dashboard.templating.list.map((variable) => {
+          if (variable.name in vars && vars[variable.name] && !isEqual(variable.current?.value, vars[variable.name])) {
+            const opt = variable.options?.find((option) => isEqual(option.value, vars[variable.name]));
+
+            variable.current = opt
+              ? { value: opt.value, text: opt.text }
+              : { value: vars[variable.name], text: vars[variable.name] };
+          }
+
+          return variable;
+        });
       }
 
       const scene = transformSaveModelToScene(rsp);
