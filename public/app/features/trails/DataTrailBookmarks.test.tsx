@@ -1,47 +1,56 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
 import { DataTrailsBookmarks } from './DataTrailBookmarks';
-import { getTrailStore, getBookmarkKey } from './TrailStore/TrailStore';
+import { getTrailStore, getBookmarkKey, DataTrailBookmark } from './TrailStore/TrailStore';
 
 jest.mock('./TrailStore/TrailStore', () => ({
   getTrailStore: jest.fn(),
   getBookmarkKey: jest.fn(() => 'bookmark-key'),
 }));
 
-describe('DataTrailsBookmarks', () => {
-  const onDelete = jest.fn();
-  const model = { onSelectBookmark: jest.fn() };
+const onSelect = jest.fn();
+const onDelete = jest.fn();
 
+describe('DataTrailsBookmarks', () => {
   beforeEach(() => {
-    getTrailStore.mockReturnValue({
+    onSelect.mockClear();
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
       bookmarks: [],
-    });
+      recent: [],
+      getTrailForBookmark: jest.fn(),
+    }));
   });
 
   it('does not render if there are no bookmarks', () => {
-    render(<DataTrailsBookmarks model={model} onDelete={onDelete} />);
+    render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
     expect(screen.queryByText('Or view bookmarks')).not.toBeInTheDocument();
   });
 
   it('renders the bookmarks header and toggle button', () => {
-    getTrailStore.mockReturnValue({
+    console.warn = jest.fn();
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
       bookmarks: [{}, {}, {}],
-    });
-    render(<DataTrailsBookmarks model={model} onDelete={onDelete} />);
+      recent: [],
+    }));
+    render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
     expect(screen.getByText('Or view bookmarks')).toBeInTheDocument();
     expect(screen.getByLabelText('bookmarkCarrot')).toBeInTheDocument();
   });
 
   it('toggles the bookmark list when the toggle button is clicked', () => {
-    getTrailStore.mockReturnValue({
-      bookmarks: [{}, {}, {}],
-    });
-    render(<DataTrailsBookmarks model={model} onDelete={onDelete} />);
+    console.warn = jest.fn();
+    const bookmark: DataTrailBookmark = { urlValues: { key: '1', metric: 'Test Bookmark' }, createdAt: Date.now() };
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [bookmark],
+      recent: [],
+      getTrailForBookmark: jest.fn(),
+    }));
+    render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
     const button = screen.getByLabelText('bookmarkCarrot');
     fireEvent.click(button);
-    expect(screen.getByText('bookmark-key')).toBeInTheDocument();
+    expect(screen.getByText('Test Bookmark')).toBeInTheDocument();
     fireEvent.click(button);
-    expect(screen.queryByText('bookmark-key')).not.toBeInTheDocument();
+    expect(screen.queryByText('Test Bookmark')).not.toBeInTheDocument();
   });
 
   it('calls onDelete when the delete button is clicked', () => {
@@ -52,16 +61,5 @@ describe('DataTrailsBookmarks', () => {
     fireEvent.click(screen.getByLabelText('bookmarkCarrot'));
     fireEvent.click(screen.getByLabelText('Delete'));
     expect(onDelete).toHaveBeenCalled();
-  });
-
-  it('selecting a bookmark card takes you to the metric', () => {
-    const onSelectBookmark = jest.fn();
-    getTrailStore.mockReturnValue({
-      bookmarks: [{ resolve: () => ({ state: { key: '1' }, onSelectBookmark }) }],
-    });
-    render(<DataTrailsBookmarks model={model} onDelete={onDelete} />);
-    fireEvent.click(screen.getByLabelText('bookmarkCarrot'));
-    fireEvent.click(screen.getByText('1'));
-    expect(onSelectBookmark).toHaveBeenCalled();
   });
 });

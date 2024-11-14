@@ -89,7 +89,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           </Stack>
         </div>
         <DataTrailsRecentMetrics onSelect={model.onSelectRecentTrail} />
-        <DataTrailsBookmarks model={model} onDelete={onDelete} />
+        <DataTrailsBookmarks onSelect={model.onSelectBookmark} onDelete={onDelete} />
       </div>
     );
   };
