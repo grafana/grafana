@@ -44,19 +44,29 @@ func (m *FillDashbordUIDMigration) SQL(dialect migrator.Dialect) string {
 }
 
 func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	sql := `UPDATE star 
+	// sqllite
+	sql := `UPDATE star
+	SET 
+    	dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = star.dashboard_id),
+    	org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = star.dashboard_id),
+    	updated = DATETIME('now')
+	WHERE 
+    	(dashboard_uid IS NULL OR org_id IS NULL)
+    	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = star.dashboard_id);`
+	if mg.Dialect.DriverName() == migrator.Postgres {
+		sql = `UPDATE star 
 		SET dashboard_uid = dashboard.uid, 
-		org_id = dashboard.org_id,
-		updated = NOW()
+			org_id = dashboard.org_id,
+			updated = NOW()
 		FROM dashboard 
 		WHERE star.dashboard_id = dashboard.id
-		AND star.dashboard_uid IS NULL OR star.org_id IS NULL;`
-	if mg.Dialect.DriverName() == migrator.MySQL {
+			AND (star.dashboard_uid IS NULL OR star.org_id IS NULL);`
+	} else if mg.Dialect.DriverName() == migrator.MySQL {
 		sql = `UPDATE star 
 		LEFT JOIN dashboard ON star.dashboard_id = dashboard.id 
 		SET star.dashboard_uid = dashboard.uid, 
-		star.org_id = dashboard.org_id,
-		star.updated = NOW()
+			star.org_id = dashboard.org_id,
+			star.updated = NOW()
 		WHERE star.dashboard_uid IS NULL OR star.org_id IS NULL;`
 	}
 

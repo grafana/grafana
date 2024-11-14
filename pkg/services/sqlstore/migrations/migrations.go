@@ -32,9 +32,9 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	mg.AddCreateMigration()
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
-	addStarMigrations(mg)
 	addOrgMigrations(mg)
 	addDashboardMigration(mg) // Do NOT add more migrations to this function.
+	addStarMigrations(mg)
 	addDataSourceMigration(mg)
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
