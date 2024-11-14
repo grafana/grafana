@@ -27,7 +27,13 @@ export type ComboboxOption<T extends string | number = string> = {
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
 interface ComboboxBaseProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
   isClearable?: boolean;
+  /**
+   * Allows the user to set a value which is not in the list of options.
+   */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
   onChange: (option: ComboboxOption<T> | null) => void;
@@ -45,7 +51,13 @@ interface ComboboxBaseProps<T extends string | number>
 type AutoSizeConditionals =
   | {
       width: 'auto';
+      /**
+       * Needs to be set when width is 'auto' to prevent the input from shrinking too much
+       */
       minWidth: number;
+      /**
+       * Recommended to set when width is 'auto' to prevent the input from growing too much.
+       */
       maxWidth?: number;
     }
   | {

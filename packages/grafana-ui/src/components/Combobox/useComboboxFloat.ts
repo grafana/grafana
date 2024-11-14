@@ -43,7 +43,7 @@ export const useComboboxFloat = (
         const preferredMaxHeight = availableHeight - POPOVER_PADDING;
 
         const width = Math.max(preferredMaxWidth, 0);
-        const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT), POPOVER_MAX_HEIGHT);
+        const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
 
         setPopoverMaxSize({ width, height });
       },
