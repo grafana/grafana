@@ -57,6 +57,9 @@ type AutoSizeConditionals =
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
+  if (item?.label?.includes('Custom value: ')) {
+    return item?.value.toString();
+  }
   return item?.label ?? item?.value.toString() ?? '';
 }
 
