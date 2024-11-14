@@ -105,104 +105,43 @@ We recommend that you only use one dataset in a bar chart because using multiple
 
 Use these options to refine your visualization.
 
-#### X Axis
+<!-- prettier-ignore-start -->
 
-Specify which field is used for the x-axis.
-
-#### Orientation
-
-- **Auto** - Grafana decides the bar orientation based on what the panel dimensions.
-- **Horizontal** - Will make the X axis the category axis.
-- **Vertical** - Will make the Y axis the category axis.
-
-#### Rotate x-axis tick labels
-
-When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.
-
-#### X-axis tick label maximum length
-
-Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`.
-
-#### Bar labels minimum spacing
-
-Sets the minimum spacing between bar labels.
-
-#### Show values
-
-This controls whether values are shown on top or to the left of bars.
-
-- **Auto** Values will be shown if there is space
-- **Always** Always show values.
-- **Never** Never show values.
-
-#### Stacking
-
-Controls bar chart stacking.
-
-- **Off**: Bars will not be stacked.
-- **Normal**: Bars will be stacked on each other.
-- **Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.
-
-#### Group width
-
-Controls the width of groups. 1 = max with, 0 = min width.
-
-#### Bar width
-
-Controls the width of bars. 1 = Max width, 0 = Min width.
-
-#### Bar radius
-
-Controls the radius of the bars.
-
-- 0 = Minimum radius
-- 0.5 = Maximum radius
-
-#### Highlight full area on cover
-
-Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.
-
-#### Line width
-
-Controls line width of the bars.
-
-#### Fill opacity
-
-Controls the fill opacity bars.
+| Option                           | Description                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| X Axis                           | Specify which field is used for the x-axis.                                                                                                                                                                                                                                                    |
+| Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on what the panel dimensions.</li><li>**Horizontal** - Will make the X axis the category axis.</li><li>**Vertical** - Will make the Y axis the category axis.</li></ul>                                              |
+| Rotate x-axis tick labels        | When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.                                                                                                                                      |
+| X-axis tick label maximum length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`.                                                                                                                                                                     |
+| Bar labels minimum spacing       | Sets the minimum spacing between bar labels.                                                                                                                                                                                                                                                   |
+| Show values                      | This controls whether values are shown on top or to the left of bars. Choose from: <ul><li>**Auto** Values will be shown if there is space</li><li>**Always** Always show values.</li><li>**Never** Never show values.</li></ul>                                                               |
+| Stacking                         | Controls bar chart stacking. Choose from: <ul><li>**Off**: Bars will not be stacked.</li><li>**Normal**: Bars will be stacked on each other.</li><li>**Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.</li></ul> |
+| Group width                      | Controls the width of groups. 1 = max with, 0 = min width.                                                                                                                                                                                                                                     |
+| Bar width                        | Controls the width of bars. 1 = Max width, 0 = Min width.                                                                                                                                                                                                                                      |
+| Bar radius                       | Controls the radius of the bars. Choose from: <ul><li>0 = Minimum radius</li><li>0.5 = Maximum radius</li></ul>                                                                                                                                                                                |
+| Highlight full area on cover     | Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.                                                                                                                                                                                                 |
+| Line width                       | Controls line width of the bars.                                                                                                                                                                                                                                                               |
+| Fill opacity                     | Controls the fill opacity bars.                                                                                                                                                                                                                                                                |
+| [Gradient mode](#gradient-mode)  | Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. Gradient appearance is influenced by the **Fill opacity** setting.                                                                               |
 
 #### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option. Gradient appearance is influenced by the **Fill opacity** setting. Choose from:
 
-Gradient appearance is influenced by the **Fill opacity** setting.
+- **None** - No gradient fill. This is the default setting.
+- **Opacity** - Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
+- **Hue** - Gradient color is generated based on the hue of the line color.
+- **Scheme gradient mode** - The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
 
-##### None
+  - **From thresholds** - If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
 
-No gradient fill. This is the default setting.
+    {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
 
-##### Opacity
+  - **Gradient color schemes** - The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
-Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
+    {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
 
-##### Hue
-
-Gradient color is generated based on the hue of the line color.
-
-##### Scheme gradient mode
-
-The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
-
-###### From thresholds
-
-If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
-
-###### Gradient color schemes
-
-The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
-
-{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+<!--fix this - Graph styles not part of bar chart - option is under Standard options -->
 
 ### Tooltip options
 
