@@ -163,6 +163,24 @@ func TestIntegrationProvisioning(t *testing.T) {
 			"World",
 			mustNestedString(resp.Object, "whom"))
 	})
+
+	t.Run("basic helloworld subresource", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default", // actually org1
+			GVR: schema.GroupVersionResource{
+				Group:    "provisioning.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "repositories",
+			},
+		})
+
+		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		require.NoError(t, err)
+		require.Equal(t,
+			"World",
+			mustNestedString(resp.Object, "whom"))
+	})
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
