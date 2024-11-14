@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -63,10 +64,7 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	scheme := opts.Scheme
-	optsGetter := opts.OptsGetter
-
-	repositoryStorage, err := newRepositoryStorage(scheme, optsGetter)
+	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, v0alpha1.RepositoryResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
