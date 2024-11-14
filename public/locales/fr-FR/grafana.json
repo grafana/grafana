@@ -1459,6 +1459,14 @@
     },
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Mot de passe",
       "password-placeholder": "",
       "password-required": "Vous devez renseigner le mot de passe",
@@ -1466,7 +1474,9 @@
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
       "username-placeholder": "",
-      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Se connecter avec {{serviceName}}"

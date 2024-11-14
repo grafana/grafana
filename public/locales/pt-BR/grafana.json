@@ -1459,6 +1459,14 @@
     },
     "forgot-password": "Esqueceu sua senha?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Senha",
       "password-placeholder": "",
       "password-required": "A senha é obrigatória",
@@ -1466,7 +1474,9 @@
       "submit-loading-label": "Fazendo login...",
       "username-label": "E-mail ou nome de usuário",
       "username-placeholder": "",
-      "username-required": "O e-mail ou nome de usuário é obrigatório"
+      "username-required": "O e-mail ou nome de usuário é obrigatório",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Fazer login com {{serviceName}}"
