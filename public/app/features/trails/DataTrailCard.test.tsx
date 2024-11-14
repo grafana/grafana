@@ -13,7 +13,9 @@ jest.mock('./utils', () => ({
 
 // note: might be good to have the same tests for both trail and bookmark; OR maybe the component should be changed to just take what it needs
 describe('DataTrailCard', () => {
+  // trail is a recent metric exploration
   const trail = new DataTrail({ key: '1', metric: 'Test Recent Exploration' });
+  // bookmark is a data trail stored in a url
   const bookmark: DataTrailBookmark = { urlValues: { key: '1', metric: 'Test Bookmark' }, createdAt: Date.now() };
   const onSelect = jest.fn();
   const onDelete = jest.fn();
@@ -44,14 +46,6 @@ describe('DataTrailCard', () => {
     expect(onDelete).toHaveBeenCalled();
   });
 
-  // it('truncates long metric name after 2 lines', () => {
-  //   const longName =
-  //     'aajalsdkfaldkjfalskdjfalsdkjfalsdkjflaskjdflaskjdflaskjdflaskjdflasjkdflaskjdflaskjdflaskjflaskdjfldaskjflasjflaskdjflaskjflasjflaskfjalsdfjlskdjflaskjdflajkfjfalkdfjaverylongalskdjlalsjflajkfklsajdfalskjdflkasjdflkadjf';
-  //   const bookmarkWithLongName = { urlValues: { key: '1', metric: longName }, createdAt: Date.now() };
-  //   render(<DataTrailCard bookmark={bookmarkWithLongName} onSelect={onSelect} onDelete={onDelete} />);
-  //   expect(screen.getByText('...', { exact: false })).toBeInTheDocument();
-  // });
-
   it('truncates singular long label in recent explorations', () => {
     const longLabel =
       'aajalsdkfaldkjfalskdjfalsdkjfalsdkjflaskjdflaskjdflaskjdflaskjdflasjkdflaskjdflaskjdflaskjflaskdjfldaskjflasjflaskdjflaskjflasjflaskfjalsdfjlskdjflaskjdflajkfjfalkdfjaverylongalskdjlalsjflajkfklsajdfalskjdflkasjdflkadjf';
@@ -61,5 +55,21 @@ describe('DataTrailCard', () => {
     };
     render(<DataTrailCard bookmark={bookmarkWithLongLabel} onSelect={onSelect} onDelete={onDelete} />);
     expect(screen.getByText('...', { exact: false })).toBeInTheDocument();
+  });
+
+  it('truncates long list of labels after 3 lines in recent explorations', () => {
+    const bookmarkWithLongLabel: DataTrailBookmark = {
+      urlValues: {
+        key: '1',
+        metric: 'metric',
+        // labels are in a comma separated list
+        'var-filters': `zone|=|averylonglabeltotakeupspace,zone=averylonglabeltotakeupspace,zone1=averylonglabeltotakeupspace,zone2=averylonglabeltotakeupspace,zone3=averylonglabeltotakeupspace,zone4=averylonglabeltotakeupspace`,
+      },
+      createdAt: Date.now(),
+    };
+    render(<DataTrailCard bookmark={bookmarkWithLongLabel} onSelect={onSelect} onDelete={onDelete} />);
+    // to test the non-existence of a truncated label we need queryByText
+    const truncatedLabel = screen.queryByText('zone4');
+    expect(truncatedLabel).not.toBeInTheDocument();
   });
 });

@@ -112,8 +112,4 @@ describe('DataTrailsRecentMetrics', () => {
     fireEvent.click(screen.getByText('select me'));
     expect(onSelect).toHaveBeenCalledWith(trail);
   });
-
-  // TODO: test that..
-  // truncates singular long label in recent explorations
-  // truncates multiple labels, max of 3 lines
 });
