@@ -36,14 +36,14 @@ var (
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
 func Provision(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
 }
 
 // GetCacheConfigs scans a directory for provisioning config files
 // and returns cache configs of the the datasources in those files.
 func GetCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) (*DatasourceCachingInfo, error) {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
 	return dc.getCachingConfigs(ctx, configDirectory)
 }
 
@@ -56,10 +56,11 @@ type DatasourceProvisioner struct {
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+func newDatasourceProvisioner(dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+	logger := log.New("provisioning.datasources")
 	return DatasourceProvisioner{
-		log:               log,
-		cfgProvider:       &configReader{log: log, orgService: orgService},
+		log:               logger,
+		cfgProvider:       &configReader{log: logger, orgService: orgService},
 		dsService:         dsService,
 		correlationsStore: correlationsStore,
 	}

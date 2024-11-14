@@ -1,6 +1,10 @@
 package provisioning
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
+)
 
 type Calls struct {
 	RunInitProvisioners                 []any
@@ -11,6 +15,7 @@ type Calls struct {
 	GetDashboardProvisionerResolvedPath []any
 	GetAllowUIUpdatesFromConfig         []any
 	Run                                 []any
+	GetCachingConfigs                   []any
 }
 
 type ProvisioningServiceMock struct {
@@ -22,6 +27,7 @@ type ProvisioningServiceMock struct {
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 	GetAllowUIUpdatesFromConfigFunc         func(name string) bool
 	RunFunc                                 func(ctx context.Context) error
+	GetCachingConfigsFunc                   func(ctx context.Context) (*datasources.DatasourceCachingInfo, error)
 }
 
 func NewProvisioningServiceMock(ctx context.Context) *ProvisioningServiceMock {
@@ -89,4 +95,12 @@ func (mock *ProvisioningServiceMock) Run(ctx context.Context) error {
 		return mock.RunFunc(ctx)
 	}
 	return nil
+}
+
+func (mock *ProvisioningServiceMock) GetCachingConfigs(ctx context.Context) (*datasources.DatasourceCachingInfo, error) {
+	mock.Calls.GetCachingConfigs = append(mock.Calls.GetCachingConfigs, nil)
+	if mock.GetCachingConfigsFunc != nil {
+		return mock.GetCachingConfigsFunc(ctx)
+	}
+	return nil, nil
 }
