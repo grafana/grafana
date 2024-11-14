@@ -18,13 +18,13 @@ export function getNotificationsScene(datasource: DataSourceRef, panelTitle: str
     queries: [
       {
         refId: 'A',
-        exprA,
+        expr: exprA,
         range: true,
         legendFormat: 'success',
       },
       {
         refId: 'B',
-        exprB,
+        expr: exprB,
         range: true,
         legendFormat: 'failed',
       },

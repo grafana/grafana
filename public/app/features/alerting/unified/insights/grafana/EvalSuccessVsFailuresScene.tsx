@@ -18,13 +18,13 @@ export function getGrafanaEvalSuccessVsFailuresScene(datasource: DataSourceRef, 
     queries: [
       {
         refId: 'A',
-        exprA,
+        expr: exprA,
         range: true,
         legendFormat: 'success',
       },
       {
         refId: 'B',
-        exprB,
+        expr: exprB,
         range: true,
         legendFormat: 'failed',
       },
