@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,8 +65,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 				{
 					"name": "repositories/hello",
 					"singularName": "",
-					"namespaced": true,
 					"kind": "HelloWorld",
+					"namespaced": true,
 					"verbs": [
 						"get"
 					]
@@ -144,4 +145,27 @@ func TestIntegrationProvisioning(t *testing.T) {
 			}
 		}`, string(js))
 	})
+
+	t.Run("basic helloworld subresource", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default", // actually org1
+			GVR: schema.GroupVersionResource{
+				Group:    "provisioning.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "repositories",
+			},
+		})
+
+		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		require.NoError(t, err)
+		require.Equal(t,
+			"World",
+			mustNestedString(resp.Object, "whom"))
+	})
+}
+
+func mustNestedString(obj map[string]interface{}, fields ...string) string {
+	v, _, _ := unstructured.NestedString(obj, fields...)
+	return v
 }

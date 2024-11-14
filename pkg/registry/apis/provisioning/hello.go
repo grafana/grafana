@@ -68,7 +68,7 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		fmt.Printf(" github: %+v\n", repo.Spec.GitHub)
 		fmt.Printf(" s3: %+v\n", repo.Spec.S3)
 
-		responder.Object(http.StatusTeapot, &v0alpha1.HelloWorld{Whom: whom})
+		responder.Object(http.StatusOK, &v0alpha1.HelloWorld{Whom: whom})
 	}), nil
 }
 
