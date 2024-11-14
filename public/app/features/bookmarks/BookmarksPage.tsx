@@ -2,13 +2,12 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { EmptyState, useStyles2 } from '@grafana/ui';
+import { usePinnedItems } from 'app/core/components/AppChrome/MegaMenu/hooks';
+import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { NavLandingPageCard } from 'app/core/components/NavLandingPage/NavLandingPageCard';
 import { Page } from 'app/core/components/Page/Page';
 import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
-
-import { usePinnedItems } from '../AppChrome/MegaMenu/hooks';
-import { findByUrl } from '../AppChrome/MegaMenu/utils';
-import { NavLandingPageCard } from '../NavLandingPage/NavLandingPageCard';
 
 export function BookmarksPage() {
   const styles = useStyles2(getStyles);
@@ -63,3 +62,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2, 0),
   }),
 });
+
+export default BookmarksPage;

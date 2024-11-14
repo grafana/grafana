@@ -28,7 +28,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `publicDashboardsScene`                | Enables public dashboard rendering using scenes                                                                                                                           | Yes                |
 | `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                                                                     |                    |
 | `correlations`                         | Correlations page                                                                                                                                                         | Yes                |
-| `autoMigrateXYChartPanel`              | Migrate old XYChart panel to new XYChart2 model                                                                                                                           | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                                  | Yes                |
 | `accessControlOnCall`                  | Access control primitives for OnCall                                                                                                                                      | Yes                |
 | `nestedFolders`                        | Enable folder nesting                                                                                                                                                     | Yes                |
@@ -80,6 +79,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                             | Yes                |
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                          | Yes                |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                                          |                    |
+| `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                                                       | Yes                |
 
 ## Public preview feature toggles
 
@@ -115,6 +115,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorPrometheusExemplars` | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `ssoSettingsLDAP`                 | Use the new SSO Settings API to configure LDAP                                                                                                                                               |
 | `useSessionStorageForRedirection` | Use session storage for handling the redirection after login                                                                                                                                 |
+| `reportingUseRawTimeRange`        | Uses the original report or dashboard time range instead of making an absolute transformation                                                                                                |
 
 ## Experimental feature toggles
 
@@ -216,7 +217,6 @@ Experimental features might be changed or removed without prior notice.
 | `timeRangeProvider`                           | Enables time pickers sync                                                                                                                                                                                                                                                         |
 | `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
 | `userStorageAPI`                              | Enables the user storage API                                                                                                                                                                                                                                                      |
-| `preinstallAutoUpdate`                        | Enables automatic updates for pre-installed plugins                                                                                                                                                                                                                               |
 | `dashboardSchemaV2`                           | Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.                                                                                                                                                         |
 | `playlistsWatcher`                            | Enables experimental watcher for playlists                                                                                                                                                                                                                                        |
 | `enableExtensionsAdminPage`                   | Enables the extension admin page regardless of development mode                                                                                                                                                                                                                   |

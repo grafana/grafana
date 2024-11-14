@@ -96,7 +96,7 @@ var (
 			Name:           "correlations",
 			Description:    "Correlations page",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaExploreSquad,
+			Owner:          grafanaDatavizSquad,
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 		},
@@ -140,14 +140,6 @@ var (
 			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:         "autoMigrateXYChartPanel",
-			Description:  "Migrate old XYChart panel to new XYChart2 model",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
 			Owner:        grafanaDatavizSquad,
 		},
 		{
@@ -1232,7 +1224,7 @@ var (
 			Name:           "queryLibrary",
 			Description:    "Enables Query Library feature in Explore",
 			Stage:          FeatureStageExperimental,
-			Owner:          grafanaExploreSquad,
+			Owner:          grafanaFrontendPlatformSquad,
 			FrontendOnly:   false,
 			AllowSelfServe: false,
 		},
@@ -1500,7 +1492,7 @@ var (
 			Name:        "appSidecar",
 			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaExploreSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "groupAttributeSync",
@@ -1584,8 +1576,9 @@ var (
 		{
 			Name:        "preinstallAutoUpdate",
 			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSchemaV2",
@@ -1600,6 +1593,15 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:              "passwordlessMagicLinkAuthentication",
+			Description:       "Enable passwordless login via magic link authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
 		},
 		{
 			Name:         "exploreMetricsRelatedLogs",
@@ -1634,6 +1636,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "reportingUseRawTimeRange",
+			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false", // disabled by default
 		},
 	}
 )
