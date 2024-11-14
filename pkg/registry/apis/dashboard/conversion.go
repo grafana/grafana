@@ -6,9 +6,9 @@ import (
 )
 
 func ToInternalDashboard(scheme *runtime.Scheme, obj runtime.Object) (*dashboard.Dashboard, error) {
-	dashboard := &dashboard.Dashboard{}
-	if err := scheme.Convert(obj, dashboard, nil); err != nil {
+	dash := &dashboard.Dashboard{}
+	if err := scheme.Convert(obj, dash, nil); err != nil {
 		return nil, err
 	}
-	return dashboard, nil
+	return dash, nil
 }
