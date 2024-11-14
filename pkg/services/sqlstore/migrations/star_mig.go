@@ -35,14 +35,14 @@ func addStarMigrations(mg *Migrator) {
 }
 
 type FillDashbordUIDMigration struct {
-	migrator.MigrationBase
+	MigrationBase
 }
 
-func (m *FillDashbordUIDMigration) SQL(dialect migrator.Dialect) string {
+func (m *FillDashbordUIDMigration) SQL(dialect Dialect) string {
 	return "code migration"
 }
 
-func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+func (m *FillDashbordUIDMigration) Exec(sess *xorm.Session, mg *Migrator) error {
 	return RunStarMigrations(sess, mg.Dialect.DriverName())
 }
 
@@ -56,7 +56,7 @@ func RunStarMigrations(sess *xorm.Session, driverName string) error {
 	WHERE 
     	(dashboard_uid IS NULL OR org_id IS NULL)
     	AND EXISTS (SELECT 1 FROM dashboard WHERE dashboard.id = star.dashboard_id);`
-	if driverName == migrator.Postgres {
+	if driverName == Postgres {
 		sql = `UPDATE star 
 		SET dashboard_uid = dashboard.uid, 
 			org_id = dashboard.org_id,
@@ -64,7 +64,7 @@ func RunStarMigrations(sess *xorm.Session, driverName string) error {
 		FROM dashboard 
 		WHERE star.dashboard_id = dashboard.id
 			AND (star.dashboard_uid IS NULL OR star.org_id IS NULL);`
-	} else if driverName == migrator.MySQL {
+	} else if driverName == MySQL {
 		sql = `UPDATE star 
 		LEFT JOIN dashboard ON star.dashboard_id = dashboard.id 
 		SET star.dashboard_uid = dashboard.uid, 
