@@ -231,7 +231,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: 'relative',
     overflow: 'auto',
     overscrollBehavior: 'contain',
-    maxHeight: `calc(100vh - ${theme.spacing(12)})`,
+    maxHeight: `calc(min(650px, 100vh - ${theme.spacing(12)}))`,
   }),
   child: css({
     position: 'absolute',
