@@ -72,10 +72,10 @@ github.com/docker/go-connections v0.5.0/go.mod h1:ov60Kzw0kKElRwhNs9UlUHAE/F9Fe6
 github.com/docker/go-units v0.4.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/drone-runners/drone-runner-docker v1.8.2 h1:F7+39FSyzEUqLXYMvTdTGBhCS79ODDIhw3DQeF5GYT8=
-github.com/drone-runners/drone-runner-docker v1.8.2/go.mod h1:JR3pZeVZKKpkbTajiq0YtAx9WutkODdVKZGNR83kEwE=
-github.com/drone/drone-cli v1.6.1 h1:Beh0opEGR5XYezOyOmiqWzTMBGHkGDrh2tIG1cY/5GY=
-github.com/drone/drone-cli v1.6.1/go.mod h1://HC780Gua3Nhob/I2VPL3nTqmleEE/HIhGhTcJb2ds=
+github.com/drone-runners/drone-runner-docker v1.8.3 h1:uUnC45C1JMSLW+9uy6RoKG5ugzeXWN89pygs9BMLObY=
+github.com/drone-runners/drone-runner-docker v1.8.3/go.mod h1:JR3pZeVZKKpkbTajiq0YtAx9WutkODdVKZGNR83kEwE=
+github.com/drone/drone-cli v1.8.0 h1:tpp+GPonS87IKMZCGbIoa+zfDwiuJDL3NIC6S7neNrU=
+github.com/drone/drone-cli v1.8.0/go.mod h1:zu6/7OpQjWBw/5VG0M3K4iJc6kSoTrjnY7CRLBrGH84=
 github.com/drone/drone-go v1.7.1 h1:ZX+3Rs8YHUSUQ5mkuMLmm1zr1ttiiE2YGNxF3AnyDKw=
 github.com/drone/drone-go v1.7.1/go.mod h1:fxCf9jAnXDZV1yDr0ckTuWd1intvcQwfJmTRpTZ1mXg=
 github.com/drone/envsubst v1.0.2/go.mod h1:bkZbnc/2vh1M12Ecn7EYScpI4YGYU0etwLJICOWi8Z0=
