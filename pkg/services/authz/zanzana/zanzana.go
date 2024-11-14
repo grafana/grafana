@@ -121,6 +121,10 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 		return nil, false
 	}
 
+	if name == "*" {
+		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
+	}
+
 	if translation.typ == TypeResource {
 		return common.NewResourceTuple(subject, m.relation, translation.group, translation.resource, name), true
 	}
