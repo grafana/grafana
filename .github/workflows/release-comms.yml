@@ -31,6 +31,7 @@ jobs:
       latest: ${{ steps.output.outputs.latest }}
     runs-on: ubuntu-latest
     steps:
+      # The github-release action expects a `LATEST` value of either '1' or '0'
     - if: ${{ github.event_name == 'workflow_dispatch' }}
       run: |
         echo setting up GITHUB_ENV for ${{ github.event_name }}
