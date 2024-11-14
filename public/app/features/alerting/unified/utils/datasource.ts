@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import {
   AlertManagerDataSourceJsonData,
@@ -13,6 +14,7 @@ import { PromApplication, RulesSourceApplication } from 'app/types/unified-alert
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
+import { PERMISSIONS_TEMPLATES } from '../components/templates/permissions';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
@@ -153,6 +155,8 @@ export function getAlertManagerDataSourcesByPermission(permission: 'instance' | 
     ...Object.values(permissions).flatMap((permissions) => permissions.grafana),
     ...PERMISSIONS_CONTACT_POINTS,
     ...PERMISSIONS_NOTIFICATION_POLICIES,
+    ...PERMISSIONS_TEMPLATES,
+    ...PERMISSIONS_TIME_INTERVALS,
   ];
 
   const hasPermissionsForInternalAlertmanager = builtinAlertmanagerPermissions.some((permission) =>
