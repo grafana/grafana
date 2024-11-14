@@ -6,7 +6,6 @@ import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
 import {
-  HistoryWrapper,
   locationService,
   LocationServiceProvider,
   useChromeHeaderHeight,
@@ -19,9 +18,6 @@ import { AppChrome } from '../core/components/AppChrome/AppChrome';
 import { AppNotificationList } from '../core/components/AppNotifications/AppNotificationList';
 import { ModalsContextProvider } from '../core/context/ModalsContextProvider';
 import { QueriesDrawerContextProvider } from '../features/explore/QueriesDrawer/QueriesDrawerContext';
-import AppRootPage from '../features/plugins/components/AppRootPage';
-
-import { createLocationStorageHistory } from './utils';
 
 type RouterWrapperProps = {
   routes?: JSX.Element | false;
@@ -64,7 +60,7 @@ export function RouterWrapper(props: RouterWrapperProps) {
  * @constructor
  */
 export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
-  const { activePluginId, closeApp } = useSidecar_EXPERIMENTAL();
+  const { closeApp, locationService, activePluginId } = useSidecar_EXPERIMENTAL();
 
   let { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
@@ -85,9 +81,10 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
 
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
-  const memoryLocationService = new HistoryWrapper(
-    createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
-  );
+
+  // Right now we consider only app plugin to be opened here but in the future we might want to just open any kind
+  // of url and so this should check whether there is a location in the sidecar locationService.
+  const sidecarOpen = Boolean(activePluginId);
 
   return (
     // Why do we need these 2 wrappers here? We want for one app case to render very similar as if there was no split
@@ -95,17 +92,17 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
     // time we don't want to rerender the main app when going from 2 apps render to single app render which would happen
     // if we removed the wrappers. So the solution is to keep those 2 divs but make them no actually do anything in
     // case we are rendering a single app.
-    <div {...(activePluginId ? containerProps : { className: styles.dummyWrapper })}>
-      <div {...(activePluginId ? primaryProps : { className: styles.dummyWrapper })}>
+    <div {...(sidecarOpen ? containerProps : { className: styles.dummyWrapper })}>
+      <div {...(sidecarOpen ? primaryProps : { className: styles.dummyWrapper })}>
         <RouterWrapper {...props} />
       </div>
       {/* Sidecar */}
-      {activePluginId && (
+      {sidecarOpen && (
         <>
           <div {...splitterProps} />
           <div {...secondaryProps}>
-            <Router history={memoryLocationService.getHistory()}>
-              <LocationServiceProvider service={memoryLocationService}>
+            <Router history={locationService.getHistory()}>
+              <LocationServiceProvider service={locationService}>
                 <CompatRouter>
                   <GlobalStyles />
                   <div className={styles.secondAppChrome}>
@@ -115,11 +112,13 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
                         style={{ margin: '8px' }}
                         name={'times'}
                         aria-label={'close'}
-                        onClick={() => closeApp(activePluginId)}
+                        onClick={() => closeApp()}
                       />
                     </div>
                     <div className={styles.secondAppWrapper}>
-                      <AppRootPage pluginId={activePluginId} />
+                      {/*We don't render anything other than app plugin but we want to keep the same routing layout so*/}
+                      {/*there are is no difference with matching relative routes between main and sidecar view.*/}
+                      {props.routes}
                     </div>
                   </div>
                 </CompatRouter>
