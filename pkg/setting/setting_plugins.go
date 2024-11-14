@@ -49,7 +49,12 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
-		preinstallPlugins := defaultPreinstallPlugins
+		preinstallPlugins := make(map[string]InstallPlugin)
+		// Add the default preinstalled plugins
+		for _, plugin := range defaultPreinstallPlugins {
+			preinstallPlugins[plugin.ID] = plugin
+		}
+		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {
 			parts := strings.Split(plugin, "@")
 			id := parts[0]

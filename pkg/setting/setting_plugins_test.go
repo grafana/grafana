@@ -99,8 +99,10 @@ func Test_readPluginSettings(t *testing.T) {
 
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
 		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
+		defaultPreinstallPluginsIDs := []string{}
 		for _, p := range defaultPreinstallPlugins {
 			defaultPreinstallPluginsList = append(defaultPreinstallPluginsList, p)
+			defaultPreinstallPluginsIDs = append(defaultPreinstallPluginsIDs, p.ID)
 		}
 		tests := []struct {
 			name              string
@@ -130,6 +132,12 @@ func Test_readPluginSettings(t *testing.T) {
 				rawInput:       "plugin1",
 				disablePlugins: "plugin1",
 				expected:       defaultPreinstallPluginsList,
+			},
+			{
+				name:           "it should remove default plugins",
+				rawInput:       "",
+				disablePlugins: strings.Join(defaultPreinstallPluginsIDs, ","),
+				expected:       nil,
 			},
 			{
 				name:              "should ignore input when preinstall is disabled",
