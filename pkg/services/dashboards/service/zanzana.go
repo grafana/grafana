@@ -173,10 +173,6 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 		return nil, err
 	}
 
-	if res.All {
-		return searchRes, nil
-	}
-
 	result := make([]dashboards.DashboardSearchProjection, 0)
 	for _, d := range searchRes {
 		if len(result) >= int(remains) {

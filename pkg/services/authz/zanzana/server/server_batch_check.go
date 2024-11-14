@@ -16,7 +16,6 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	batchRes := &authzextv1.BatchCheckResponse{
 		Items: make(map[string]bool, len(r.Items)),
 	}
-	allowedCount := 0
 
 	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
 	if err != nil {
@@ -31,13 +30,6 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		}
 
 		batchRes.Items[item.GetName()] = allowed
-		if allowed {
-			allowedCount++
-		}
-	}
-
-	if len(r.Items) == allowedCount {
-		batchRes.All = true
 	}
 
 	return batchRes, nil

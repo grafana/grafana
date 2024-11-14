@@ -105,6 +105,5 @@ message BatchCheckItem {
 }
 
 message BatchCheckResponse {
-  bool all = 1;
-  map<string, bool> items = 2;
+  map<string, bool> items = 1;
 }

@@ -36,7 +36,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.False(t, res.All)
 		require.Len(t, res.Items, 2)
 
 		assert.True(t, res.Items["1"])
@@ -49,7 +48,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.True(t, res.All)
 		assert.Len(t, res.Items, 0)
 	})
 
@@ -59,7 +57,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.False(t, res.All)
 		require.Len(t, res.Items, 2)
 
 		assert.True(t, res.Items["1"])
@@ -73,7 +70,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "3", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.False(t, res.All)
 		require.Len(t, res.Items, 3)
 
 		assert.True(t, res.Items["1"])
@@ -87,7 +83,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.False(t, res.All)
 		require.Len(t, res.Items, 2)
 
 		assert.True(t, res.Items["1"])
@@ -100,7 +95,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2"},
 		}))
 		require.NoError(t, err)
-		assert.False(t, res.All)
 		require.Len(t, res.Items, 2)
 
 		assert.True(t, res.Items["1"])
@@ -113,7 +107,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2"},
 		}))
 		require.NoError(t, err)
-		assert.True(t, res.All)
 		require.Len(t, res.Items, 0)
 	})
 }
