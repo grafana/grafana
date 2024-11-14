@@ -14,17 +14,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository": schema_pkg_apis_provisioning_v0alpha1_GitHubRepository(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":       schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository":  schema_pkg_apis_provisioning_v0alpha1_LocalRepository(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":       schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":   schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":   schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
-		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository":     schema_pkg_apis_provisioning_v0alpha1_S3Repository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig": schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.HelloWorld":             schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig":  schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.Repository":             schema_pkg_apis_provisioning_v0alpha1_Repository(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositoryList":         schema_pkg_apis_provisioning_v0alpha1_RepositoryList(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec":         schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref),
+		"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig":     schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref),
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_GitHubRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -96,7 +96,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HelloWorld(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_LocalRepository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_LocalRepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -142,7 +142,8 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.RepositorySpec"),
 						},
 					},
 				},
@@ -206,6 +207,21 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"title": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Describe the feature toggle",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Describe the feature toggle",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"folder": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace.",
@@ -213,41 +229,54 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"github\"`\n - `\"local\"`\n - `\"s3\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"github", "local", "s3"},
+						},
+					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with s3 and github.",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig"),
 						},
 					},
 					"s3": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository in an S3 bucket. Mutually exclusive with local and github.",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig"),
 						},
 					},
 					"github": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on GitHub. Mutually exclusive with local and s3.",
-							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig"),
 						},
 					},
 				},
+				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepository", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepository", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3Repository"},
+			"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.GitHubRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.LocalRepositoryConfig", "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.S3RepositoryConfig"},
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_S3Repository(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_provisioning_v0alpha1_S3RepositoryConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"region": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"bucket": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},

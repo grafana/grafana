@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 const (
@@ -26,7 +26,7 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Created At", Type: "date"},
-			// TODO: Add more here when we figure out the model...
+			{Name: "Title", Type: "string"},
 			{Name: "Type", Type: "string"},
 			{Name: "Target", Type: "string"},
 		},
@@ -36,28 +36,21 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				return nil, errors.New("expected Repository")
 			}
 
-			var typ, target string
-			// TODO: Can probably make this prettier. Function on Repository maybe?
-			if !m.Spec.GitHub.IsEmpty() {
-				typ = "github"
-				// TODO: Enterprise GH??
-				target = fmt.Sprintf("%s/%s", m.Spec.GitHub.Owner, m.Spec.GitHub.Repository)
-			} else if !m.Spec.Local.IsEmpty() {
-				typ = "local"
+			var target string
+			switch m.Spec.Type {
+			case LocalRepositoryType:
 				target = m.Spec.Local.Path
-			} else if !m.Spec.S3.IsEmpty() {
-				typ = "s3"
-				// TODO: Can bucket URLs include sensitive info?
+			case S3RepositoryType:
 				target = m.Spec.S3.Bucket
-			} else {
-				klog.InfoS("we have a repository with no known tabular converter",
-					"name", m.Name, "namespace", m.Namespace)
+			case GithubRepositoryType:
+				target = fmt.Sprintf("%s/%s", m.Spec.GitHub.Owner, m.Spec.GitHub.Repository)
 			}
 
 			return []interface{}{
-				m.Name,
+				m.Name, // may our may not be nice to read
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
-				typ,
+				m.Spec.Title, // explicitly configured title that can change
+				m.Spec.Type,
 				target,
 			}, nil
 		},
