@@ -13,8 +13,8 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { getComboboxStyles } from './getComboboxStyles';
-import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
+import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -69,6 +69,9 @@ type AutoSizeConditionals =
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
+  if (item?.label?.includes('Custom value: ')) {
+    return item?.value.toString();
+  }
   return item?.label ?? item?.value.toString() ?? '';
 }
 
@@ -122,13 +125,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       let itemsToSet = items;
 
       if (inputValue && createCustomValue) {
-        const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
+        const optionMatchingInput = items.find(
+          (opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue
+        );
 
         if (!optionMatchingInput) {
           const customValueOption = {
+            label: t('combobox.custom-value.label', 'Custom value: ') + inputValue,
             // Type casting needed to make this work when T is a number
             value: inputValue as unknown as T,
+            /* TODO: Add this back when we do support descriptions and have need for it
             description: t('combobox.custom-value.create', 'Create custom value'),
+            */
           };
 
           itemsToSet = items.slice(0);
@@ -174,7 +182,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => OPTION_HEIGHT,
+    estimateSize: () => MENU_OPTION_HEIGHT,
     overscan: 4,
   };
 

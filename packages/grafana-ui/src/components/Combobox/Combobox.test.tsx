@@ -166,7 +166,7 @@ describe('Combobox', () => {
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
-    it('should proivde custom string when all options are numbers', async () => {
+    it('should provide custom string when all options are numbers', async () => {
       const options = [
         { label: '1', value: 1 },
         { label: '2', value: 2 },
@@ -333,7 +333,7 @@ describe('Combobox', () => {
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
-      const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
+      const customItem = screen.queryByRole('option', { name: 'Custom value: fir' });
 
       expect(customItem).toBeInTheDocument();
     });
