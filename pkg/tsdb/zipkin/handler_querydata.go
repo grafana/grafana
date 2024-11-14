@@ -26,7 +26,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 			logger.Debug("upload query type is not supported in backend mode")
 			response.Responses[q.RefID] = backend.DataResponse{
 				Error:       fmt.Errorf("unsupported query type %s. only available in frontend mode", query.QueryType),
-				ErrorSource: backend.ErrorSourceDownstream,
+				ErrorSource: backend.ErrorSourcePlugin,
 			}
 		default:
 			traces, err := dsInfo.ZipkinClient.Trace(query.Query)
