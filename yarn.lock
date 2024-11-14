@@ -3671,17 +3671,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.11.0, @grafana/faro-core@npm:^1.3.6":
-  version: 1.11.0
-  resolution: "@grafana/faro-core@npm:1.11.0"
+"@grafana/faro-core@npm:^1.11.0, @grafana/faro-core@npm:^1.12.0, @grafana/faro-core@npm:^1.3.6":
+  version: 1.12.0
+  resolution: "@grafana/faro-core@npm:1.12.0"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/otlp-transformer": "npm:^0.53.0"
-  checksum: 10/1f7983e2c5edd6c5f6835884c78e5c9ed016d0dd0ac113c7bc3d5d456b45f50f27ce6eb35a978bc89c1459f73ccf3f5ca434b32ae3d49cf9811caeca11eb434b
+  checksum: 10/beb747ad360263737e3576ad8d0dccab0828e538797032cf97eed4a3e1c31232750285afb4c3840de80bc25b17defb3ab75976c59622778131311548ebd86100
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.11.0, @grafana/faro-web-sdk@npm:^1.11.0, @grafana/faro-web-sdk@npm:^1.3.6":
+"@grafana/faro-web-sdk@npm:1.11.0":
   version: 1.11.0
   resolution: "@grafana/faro-web-sdk@npm:1.11.0"
   dependencies:
@@ -3689,6 +3689,17 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
   checksum: 10/751d7374b536aef6959869c18fdcb07c81857f3601dda5c347f8a55c19ce0114c40d4329d50e7e65b279908b2f271422608b956c63727bd9c5ba4683f06873a9
+  languageName: node
+  linkType: hard
+
+"@grafana/faro-web-sdk@npm:^1.11.0, @grafana/faro-web-sdk@npm:^1.3.6":
+  version: 1.12.0
+  resolution: "@grafana/faro-web-sdk@npm:1.12.0"
+  dependencies:
+    "@grafana/faro-core": "npm:^1.12.0"
+    ua-parser-js: "npm:^1.0.32"
+    web-vitals: "npm:^4.0.1"
+  checksum: 10/220c31d90b18150e42ab69ace544a10ca8bc3710f95d44d95dd5ea8d8318dc6938daec67a5ab0c288b0470edda373a796ea32f231c71c6fb1f248d1f8632b397
   languageName: node
   linkType: hard
 
