@@ -7,6 +7,10 @@ import { IconButton } from '@grafana/ui';
 import MimirLogo from '../../../plugins/datasource/prometheus/img/mimir_logo.svg';
 import { VAR_DATASOURCE_EXPR } from '../shared';
 
+export const explorationsPluginId = 'grafana-explorations-app';
+export const extensionPointId = 'grafana-explore-metrics/exploration/v1';
+export const addToExplorationsButtonLabel = 'add panel to exploration';
+
 export interface AddToExplorationButtonState extends SceneObjectState {
   frame?: DataFrame;
   dsUid?: string;
@@ -35,18 +39,19 @@ interface ExtensionContext {
 export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButtonState> {
   constructor(state: Omit<AddToExplorationButtonState, 'disabledLinks' | 'queries'>) {
     super({ ...state, disabledLinks: [], queries: [] });
+
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
   private _onActivate = () => {
-    const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
-
     this._subs.add(
       this.subscribeToState(() => {
         this.getQueries();
         this.getContext();
       })
     );
+
+    const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
     this.setState({ dsUid: datasourceUid });
   };
 
@@ -94,38 +99,38 @@ export class AddToExplorationButton extends SceneObjectBase<AddToExplorationButt
 
   public static Component = ({ model }: SceneComponentProps<AddToExplorationButton>) => {
     const { context, disabledLinks } = model.useState();
-    const { links } = usePluginLinks({ extensionPointId: 'grafana-explore-metrics/exploration/v1', context });
+    const { links } = usePluginLinks({ extensionPointId, context });
+    const link = links.find((link) => link.pluginId === explorationsPluginId);
+
+    if (!link) {
+      return null;
+    }
 
     return (
-      <>
-        {links
-          .filter((link) => link.pluginId === 'grafana-explorations-app' && link.onClick)
-          .map((link) => (
-            <IconButton
-              tooltip={link.description}
-              disabled={link.category === 'disabled' || disabledLinks.includes(link.id)}
-              aria-label="extension-link-to-open-exploration"
-              key={link.id}
-              name={link.icon ?? 'panel-add'}
-              onClick={(e) => {
-                if (link.onClick) {
-                  link.onClick(e);
-                }
-                model.setState({ disabledLinks: [...disabledLinks, link.id] });
-              }}
-            />
-          ))}
-      </>
+      <IconButton
+        tooltip={link.description}
+        disabled={link.category === 'disabled' || disabledLinks.includes(link.id)}
+        aria-label={addToExplorationsButtonLabel} // this is overriden by the `tooltip`
+        key={link.id}
+        name={link.icon ?? 'panel-add'}
+        onClick={(e) => {
+          if (link.onClick) {
+            link.onClick(e);
+          }
+          model.setState({ disabledLinks: [...disabledLinks, link.id] });
+        }}
+      />
     );
   };
 }
 
 const getFilter = (frame: DataFrame) => {
   const filterNameAndValueObj = frame.fields[1]?.labels ?? {};
-  if (Object.keys(filterNameAndValueObj).length !== 1) {
+  const keys = Object.keys(filterNameAndValueObj);
+  if (keys.length !== 1) {
     return;
   }
-  const name = Object.keys(filterNameAndValueObj)[0];
+  const name = keys[0];
   return { name, value: filterNameAndValueObj[name] };
 };
 
