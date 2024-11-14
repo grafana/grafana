@@ -301,6 +301,36 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 				require.Contains(t, err.Error(), apiModel.Rules[0].GrafanaManagedAlert.UID)
 			},
 		},
+		{
+			name: "fail with 4xx if rule contains only panelID",
+			group: func() *apimodels.PostableRuleGroupConfig {
+				r1 := validRule()
+				panelId := int64(42)
+				r1.Annotations = map[string]string{
+					models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
+				}
+				g := validGroup(cfg, r1)
+				return &g
+			},
+			assert: func(t *testing.T, apiModel *apimodels.PostableRuleGroupConfig, err error) {
+				require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			},
+		},
+		{
+			name: "fail with 4xx if rule contains only dashboardUID",
+			group: func() *apimodels.PostableRuleGroupConfig {
+				r1 := validRule()
+				dashboardUid := "oinwerfgiuac"
+				r1.Annotations = map[string]string{
+					models.DashboardUIDAnnotation: dashboardUid,
+				}
+				g := validGroup(cfg, r1)
+				return &g
+			},
+			assert: func(t *testing.T, apiModel *apimodels.PostableRuleGroupConfig, err error) {
+				require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
