@@ -241,7 +241,7 @@ func basicRolePermissionsCollector(store db.DB) legacyTupleCollector {
 	}
 }
 
-// basicRoleBindingsCollects permissions for basic roles
+// basicRoleBindingsCollects collects role bindings for basic roles
 func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
