@@ -927,7 +927,7 @@ func testDescription(description string, expectedErr error) string {
 	}
 }
 
-// TestFoldersGetAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFolderGetAPIEndpoint
+// There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
 func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
