@@ -234,13 +234,9 @@ func (s *QueryData) fetch(traceCtx context.Context, client *client.Client, q *mo
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return addErrorSourceToDataResponse(err)
-	}
-
-	if res.StatusCode/100 != 2 {
-		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+			Error:  err,
+			Status: backend.StatusBadGateway,
 		}
 	}
 
@@ -257,22 +253,16 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		// confirm that it is a downstream error
-		return addErrorSourceToDataResponse(err)
+		return backend.DataResponse{
+			Error:  err,
+			Status: backend.StatusBadGateway,
+		}
 	}
 
-	if res.StatusCode/100 != 2 {
-		// This is only for health check fall back scenario
-		// add more details to the health check error
-		if q.RefId == "__healthcheck__" {
-			return backend.DataResponse{
-				Error:       errors.New(res.Status),
-				ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
-			}
-		}
-		// for differentiating the source of http errors by status code
+	// This is only for health check fall back scenario
+	if res.StatusCode != 200 && q.RefId == "__healthcheck__" {
 		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+			Error: errors.New(res.Status),
 		}
 	}
 
@@ -289,13 +279,8 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return addErrorSourceToDataResponse(err)
-	}
-
-	if res.StatusCode/100 != 2 {
-		// for differentiating the source of http errors by status code
 		return backend.DataResponse{
-			ErrorSource: backend.ErrorSourceFromHTTPStatus(res.StatusCode),
+			Error: err,
 		}
 	}
 
@@ -318,16 +303,4 @@ func addDataResponse(res *backend.DataResponse, dr *backend.DataResponse) {
 		dr.Status = res.Status
 	}
 	dr.Frames = append(dr.Frames, res.Frames...)
-}
-
-func addErrorSourceToDataResponse(err error) backend.DataResponse {
-	response := backend.DataResponse{
-		Error:  err,
-		Status: backend.StatusBadGateway,
-	}
-
-	if backend.IsDownstreamHTTPError(err) {
-		response.ErrorSource = backend.ErrorSourceDownstream
-	}
-	return response
 }
