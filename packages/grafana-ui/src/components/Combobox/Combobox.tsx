@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { logOptions } from '../../utils';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -16,7 +17,6 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
-import { logOptions } from '../../utils';
 
 export type ComboboxOption<T extends string | number = string> = {
   label?: string;
