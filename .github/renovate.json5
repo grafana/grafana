@@ -13,6 +13,10 @@
     "slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate-react", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
     "@types/slate", // we don't want to continue using this on the long run, use Monaco editor instead of Slate
+
+    // Temporarily pause updating lerna and nx until we resolve build issues
+    "lerna",
+    "nx"
   ],
   includePaths: ["package.json", "packages/**", "public/app/plugins/**"],
   ignorePaths: ["emails/**", "plugins-bundled/**", "**/mocks/**"],
