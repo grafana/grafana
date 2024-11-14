@@ -3,10 +3,6 @@ package provisioning
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,6 +12,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
@@ -70,7 +71,9 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	helloWorld := &helloWorldSubresource{}
+	helloWorld := &helloWorldSubresource{
+		getter: repositoryStorage,
+	}
 
 	storage := map[string]rest.Storage{}
 	storage[v0alpha1.RepositoryResourceInfo.StoragePath()] = repositoryStorage
