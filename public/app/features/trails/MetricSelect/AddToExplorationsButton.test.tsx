@@ -59,6 +59,7 @@ describe('AddToExplorationButton', () => {
     }));
     const scene = new AddToExplorationButton({});
     render(<scene.Component model={scene} />);
-    expect(screen.queryByLabelText(addToExplorationsButtonLabel)).toBeInTheDocument();
+    const button = screen.getByLabelText(addToExplorationsButtonLabel);
+    expect(button).toBeInTheDocument();
   });
 });
