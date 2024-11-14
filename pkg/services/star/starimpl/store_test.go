@@ -3,6 +3,7 @@ package starimpl
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -107,20 +108,29 @@ func testIntegrationUserStarsDataAccess(t *testing.T, fn getStore) {
 
 		t.Run("DeleteByUser should remove the star for user", func(t *testing.T) {
 			star1 := star.StarDashboardCommand{
-				DashboardID: 10,
-				UserID:      12,
+				DashboardUID: "test",
+				OrgID:        1,
+				Updated:      time.Now(),
+				DashboardID:  10,
+				UserID:       12,
 			}
 			err := starStore.Insert(context.Background(), &star1)
 			require.NoError(t, err)
 			star2 := star.StarDashboardCommand{
-				DashboardID: 11,
-				UserID:      12,
+				DashboardUID: "test2",
+				OrgID:        1,
+				Updated:      time.Now(),
+				DashboardID:  11,
+				UserID:       12,
 			}
 			err = starStore.Insert(context.Background(), &star2)
 			require.NoError(t, err)
 			star3 := star.StarDashboardCommand{
-				DashboardID: 11,
-				UserID:      11,
+				DashboardUID: "test2",
+				OrgID:        1,
+				Updated:      time.Now(),
+				DashboardID:  11,
+				UserID:       11,
 			}
 			err = starStore.Insert(context.Background(), &star3)
 			require.NoError(t, err)
