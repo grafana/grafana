@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, PropsWithChildren, ReactNode, useMemo } from 'react';
+import { memo, PropsWithChildren, ReactNode, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -16,7 +16,13 @@ import {
   withErrorBoundary,
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { DataSourceRuleGroupIdentifier, Rule, RuleIdentifier } from 'app/types/unified-alerting';
+import {
+  DataSourceNamespaceIdentifier,
+  DataSourceRuleGroupIdentifier,
+  Rule,
+  RuleGroup,
+  RuleIdentifier,
+} from 'app/types/unified-alerting';
 import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
@@ -24,7 +30,9 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
+import { EditCloudGroupModal } from '../components/rules/EditRuleGroupModal';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
+import { ReorderCloudGroupModal } from '../components/rules/ReorderRuleGroupModal';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
@@ -43,6 +51,8 @@ import { LoadingIndicator } from './components/RuleGroup';
 import { usePaginatedPrometheusRuleNamespaces } from './hooks/usePaginatedPrometheusRuleNamespaces';
 
 const { useGetRuleGroupForNamespaceQuery } = alertRuleApi;
+
+const GROUP_PAGE_SIZE = 10;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -114,6 +124,7 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
   return null;
 };
 
+// TODO Try to use a better rules source identifier
 interface PaginatedDataSourceLoaderProps extends Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'> {
   ruleSourceName: string;
 }
@@ -126,7 +137,7 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
     canMoveForward,
     canMoveBackward,
     isLoading,
-  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, 10);
+  } = usePaginatedPrometheusRuleNamespaces(ruleSourceName, GROUP_PAGE_SIZE);
 
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
@@ -141,39 +152,12 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
             }
           >
             {namespace.groups.map((group) => (
-              <ListGroup
-                key={group.name}
-                name={group.name}
-                isOpen={false}
-                actions={
-                  <>
-                    <Dropdown
-                      overlay={
-                        <Menu>
-                          <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
-                          <Menu.Item label="Re-order rules" icon="flip" />
-                          <Menu.Divider />
-                          <Menu.Item label="Export" icon="download-alt" />
-                          <Menu.Item label="Delete" icon="trash-alt" destructive />
-                        </Menu>
-                      }
-                    >
-                      <IconButton name="ellipsis-h" aria-label="rule group actions" />
-                    </Dropdown>
-                  </>
-                }
-              >
-                {group.rules.map((rule) => {
-                  const groupIdentifier: DataSourceRuleGroupIdentifier = {
-                    rulesSource: { uid: getDatasourceAPIUid(ruleSourceName), name: ruleSourceName },
-                    namespace: { name: namespace.name },
-                    groupName: group.name,
-                    groupOrigin: 'datasource',
-                  };
-
-                  return <AlertRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />;
-                })}
-              </ListGroup>
+              <RuleGroupListItem
+                key={`${ruleSourceName}-${namespace.name}-${group.name}`}
+                group={group}
+                ruleSourceName={ruleSourceName}
+                namespaceId={namespace}
+              />
             ))}
           </ListSection>
         ))}
@@ -187,6 +171,52 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
         )}
       </Stack>
     </DataSourceSection>
+  );
+}
+
+interface RuleGroupListItemProps {
+  group: RuleGroup;
+  ruleSourceName: string;
+  namespaceId: DataSourceNamespaceIdentifier;
+}
+
+function RuleGroupListItem({ group, ruleSourceName, namespaceId }: RuleGroupListItemProps) {
+  const [groupAction, setGroupAction] = useState<'edit' | 'reorder' | undefined>(undefined);
+
+  return (
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      isOpen={false}
+      actions={
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
+                <Menu.Item label="Re-order rules" icon="flip" />
+                <Menu.Divider />
+                <Menu.Item label="Export" icon="download-alt" />
+                <Menu.Item label="Delete" icon="trash-alt" destructive />
+              </Menu>
+            }
+          >
+            <IconButton name="ellipsis-h" aria-label="rule group actions" />
+          </Dropdown>
+        </>
+      }
+    >
+      {group.rules.map((rule) => {
+        const groupIdentifier: DataSourceRuleGroupIdentifier = {
+          rulesSource: { uid: getDatasourceAPIUid(ruleSourceName), name: ruleSourceName },
+          namespace: namespaceId,
+          groupName: group.name,
+          groupOrigin: 'datasource',
+        };
+
+        return <AlertRuleLoader key={hashRule(rule)} rule={rule} groupIdentifier={groupIdentifier} />;
+      })}
+    </ListGroup>
   );
 }
 

@@ -6,7 +6,7 @@ interface PromRulesResponse {
   status: string;
   data: {
     groups: PromRuleGroupDTO[];
-    nextToken?: string;
+    groupNextToken?: string;
   };
   errorType?: string;
   error?: string;
@@ -17,23 +17,23 @@ interface PromRulesOptions {
   namespace?: string;
   groupName?: string;
   ruleName?: string;
-  maxGroups?: number;
+  groupLimit?: number;
   excludeAlerts?: boolean;
-  nextToken?: string;
+  groupNextToken?: string;
 }
 
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     groups: build.query<PromRulesResponse, PromRulesOptions>({
-      query: ({ ruleSource, namespace, groupName, ruleName, maxGroups, excludeAlerts, nextToken }) => ({
+      query: ({ ruleSource, namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
         url: `api/prometheus/${ruleSource.uid}/api/v1/rules`,
         params: {
           'file[]': namespace,
           'group[]': groupName,
           'rule[]': ruleName,
-          max_groups: maxGroups?.toFixed(0),
           exclude_alerts: excludeAlerts?.toString(),
-          next_token: nextToken,
+          group_limit: groupLimit?.toFixed(0),
+          group_next_token: groupNextToken,
         },
       }),
     }),

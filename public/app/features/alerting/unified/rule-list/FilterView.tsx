@@ -125,7 +125,7 @@ function useFilteredRulesIteratorProvider() {
 
       const response = await fetchGroups({
         ruleSource: { uid: ruleSourceUid },
-        maxGroups,
+        groupLimit: maxGroups,
       });
 
       if (response.data?.data) {
@@ -133,22 +133,22 @@ function useFilteredRulesIteratorProvider() {
       }
 
       let lastToken: string | undefined = undefined;
-      if (response.data?.data?.nextToken) {
-        lastToken = response.data.data.nextToken;
+      if (response.data?.data?.groupNextToken) {
+        lastToken = response.data.data.groupNextToken;
       }
 
       while (lastToken) {
         const response = await fetchGroups({
           ruleSource: { uid: ruleSourceUid },
-          nextToken: lastToken,
-          maxGroups,
+          groupNextToken: lastToken,
+          groupLimit: maxGroups,
         });
 
         if (response.data?.data) {
           yield* response.data.data.groups.map((group) => mapGroupToGroupWithIdentifier(group, ruleSourceName));
         }
 
-        lastToken = response.data?.data?.nextToken;
+        lastToken = response.data?.data?.groupNextToken;
       }
     },
     [fetchGroups]
@@ -159,11 +159,13 @@ function useFilteredRulesIteratorProvider() {
       const dsGenerators = rulesSourceNames.map((ds) => [ds, getGroups(ds, maxGroups)] as const);
 
       const dsActiveRequests = new Map(
-        dsGenerators.map(([ds, gen]) => [ds, gen.next().then((iterator) => ({ datasource: ds, iterator }))] as const)
+        dsGenerators.map(
+          ([ds, gen]) => [ds, gen.next().then((iteratorResult) => ({ datasource: ds, iteratorResult }))] as const
+        )
       );
 
       while (dsActiveRequests.size > 0) {
-        const { datasource, iterator } = await Promise.race(dsActiveRequests.values());
+        const { datasource, iteratorResult: iterator } = await Promise.race(dsActiveRequests.values());
         if (iterator.done) {
           dsActiveRequests.delete(datasource);
         } else {
@@ -172,7 +174,7 @@ function useFilteredRulesIteratorProvider() {
           if (currentGenerator) {
             dsActiveRequests.set(
               datasource,
-              currentGenerator[1].next().then((iterator) => ({ datasource, iterator }))
+              currentGenerator[1].next().then((iteratorResult) => ({ datasource, iteratorResult }))
             );
           }
         }

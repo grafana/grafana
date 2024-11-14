@@ -87,7 +87,7 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
 
       const response = await fetchGroups({
         ruleSource: { uid: ruleSourceUid },
-        maxGroups,
+        groupLimit: maxGroups,
       });
 
       // TODO Add filtering
@@ -96,22 +96,22 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
       }
 
       let lastToken: string | undefined = undefined;
-      if (response.data?.data?.nextToken) {
-        lastToken = response.data.data.nextToken;
+      if (response.data?.data?.groupNextToken) {
+        lastToken = response.data.data.groupNextToken;
       }
 
       while (lastToken) {
         const response = await fetchGroups({
           ruleSource: { uid: ruleSourceUid },
-          nextToken: lastToken,
-          maxGroups,
+          groupNextToken: lastToken,
+          groupLimit: maxGroups,
         });
 
         if (response.data?.data) {
           yield* response.data.data.groups;
         }
 
-        lastToken = response.data?.data?.nextToken;
+        lastToken = response.data?.data?.groupNextToken;
       }
     },
     [fetchGroups]
