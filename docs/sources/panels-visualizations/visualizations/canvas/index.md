@@ -91,7 +91,23 @@ The text element lets you easily add text to the canvas. The element also suppor
 
 ### Icon
 
-The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
+The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds or value mappings.
+
+#### Add a custom icon
+
+You can add a custom icon by referencing an SVG file. To add a custom icon, follow these steps:
+
+1. Under **Icon > SVG Path**, if it's not already selected, select **Fixed** as your file source.
+1. Click **Select a value** in the field below.
+1. In the dialog box that opens, click the **URL** tab.
+1. Enter the URL in the field below the **URL** tab.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+
+1. Click **Select**.
+1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
+
+If you don't have an SVG file, you can use a rectangle element instead of an icon and set its background image to an image file type. To add a custom image for another element type, follow the steps to [add a custom image](#add-custom-images-to-elements).
 
 ### Server
 
@@ -110,6 +126,25 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 {{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
 
 {{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
+
+## Add custom images to elements
+
+You can add custom background images to all elements except **Button** by referencing an image URL.
+The image must be hosted at a URL that allows requests from your Grafana instance.
+
+To upload a custom image, follow these steps:
+
+1. Under **Background (\<ELEMENT TYPE\>)**, if it's not already selected, select **Fixed** as your image source.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-src-v11.3.png" max-width="300px" alt="Custom image source selection" >}}
+
+1. Click **Select a value** in the field below.
+1. In the dialog box that opens, click the **URL** tab.
+1. Enter the URL in the field below the **URL** tab.
+
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+
+1. Click **Select**.
 
 ## Connections
 
