@@ -78,7 +78,6 @@ The various metrics are documented [here](https://cloud.google.com/monitoring/ap
 Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this fashion an aggregatino is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this](https://cloud.google.com/monitoring/charts/charting-distribution-metrics) documentation.
 {{% /admonition %}}
 
-
 ### Apply a filter
 
 **To add and apply a filter:**
