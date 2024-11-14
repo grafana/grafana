@@ -1,0 +1,329 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "count": 106,
+//          "locationInfo": {
+//              "yboVMzb7z": {
+//                  "kind": "folder",
+//                  "name": "gdev dashboards",
+//                  "url": "/dashboards/f/yboVMzb7z/gdev-dashboards"
+//              }
+//          },
+//          "sortBy": "name_sort"
+//      }
+//  }
+//  Name: Query results
+//  Dimensions: 9 Fields by 4 Rows
+//  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | Name: kind     | Name: uid      | Name: name              | Name: panel_type | Name: url                            | Name: tags               | Name: ds_uid              | Name: location | Name: allowed_actions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+//  | Labels:        | Labels:        | Labels:                 | Labels:          | Labels:                              | Labels:                  | Labels:                   | Labels:        | Labels:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+//  | Type: []string | Type: []string | Type: []string          | Type: []string   | Type: []string                       | Type: []*json.RawMessage | Type: []json.RawMessage   | Type: []string | Type: []json.RawMessage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+//  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  | folder         | ujaM1h6nz      | abc2                    |                  | /dashboards/f/ujaM1h6nz/abc2         | null                     | []                        |                | [{"kind":"folder","uid":"ujaM1h6nz","actions":["folders.permissions:read","folders.permissions:write","folders:create","folders:delete","folders:read","folders:write"]}]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+//  | dashboard      | 7MeksYbmk      | Alerting with TestData  |                  | /d/7MeksYbmk/alerting-with-testdata  | [                        | [                         | yboVMzb7z      | [{"kind":"dashboard","uid":"7MeksYbmk","actions":["dashboards.permissions:read","dashboards.permissions:write","dashboards:create","dashboards:delete","dashboards:read","dashboards:write"]},{"kind":"ds","uid":"datasource-1","actions":["datasources.id:read","datasources.permissions:read","datasources.permissions:write","datasources:delete","datasources:explore","datasources:query","datasources:read","datasources:write"]}]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+//  |                |                |                         |                  |                                      |           "gdev",        |           "datasource-1"  |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |           "alerting"     |         ]                 |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |         ]                |                           |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  | dashboard      | vmie2cmWz      | Bar Gauge Demo          |                  | /d/vmie2cmWz/bar-gauge-demo          | [                        | [                         | yboVMzb7z      | [{"kind":"dashboard","uid":"vmie2cmWz","actions":["dashboards.permissions:read","dashboards.permissions:write","dashboards:create","dashboards:delete","dashboards:read","dashboards:write"]},{"kind":"ds","uid":"datasource-2","actions":["datasources.id:read","datasources.permissions:read","datasources.permissions:write","datasources:delete","datasources:explore","datasources:query","datasources:read","datasources:write"]},{"kind":"ds","uid":"datasource-3","actions":["datasources.id:read","datasources.permissions:read","datasources.permissions:write","datasources:delete","datasources:explore","datasources:query","datasources:read","datasources:write"]},{"kind":"ds","uid":"datasource-4","actions":["datasources.id:read","datasources.permissions:read","datasources.permissions:write","datasources:delete","datasources:explore","datasources:query","datasources:read","datasources:write"]}] |
+//  |                |                |                         |                  |                                      |           "gdev",        |           "datasource-2", |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |           "demo"         |           "datasource-3", |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |         ]                |           "datasource-4"  |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |                          |         ]                 |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  | dashboard      | xMsQdBfWz      | Bar Gauge Demo Unfilled |                  | /d/xMsQdBfWz/bar-gauge-demo-unfilled | [                        | []                        | yboVMzb7z      | [{"kind":"dashboard","uid":"xMsQdBfWz","actions":["dashboards.permissions:read","dashboards.permissions:write","dashboards:create","dashboards:delete","dashboards:read","dashboards:write"]}]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+//  |                |                |                         |                  |                                      |           "gdev",        |                           |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |           "demo"         |                           |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  |                |                |                         |                  |                                      |         ]                |                           |                |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+//  +----------------+----------------+-------------------------+------------------+--------------------------------------+--------------------------+---------------------------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "Query results",
+        "refId": "Search",
+        "meta": {
+          "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "count": 106,
+            "locationInfo": {
+              "yboVMzb7z": {
+                "kind": "folder",
+                "name": "gdev dashboards",
+                "url": "/dashboards/f/yboVMzb7z/gdev-dashboards"
+              }
+            },
+            "sortBy": "name_sort"
+          }
+        },
+        "fields": [
+          {
+            "name": "kind",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "panel_type",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "url",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "link",
+                  "url": "${__value.text}"
+                }
+              ]
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            }
+          },
+          {
+            "name": "ds_uid",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "location",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "allowed_actions",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "folder",
+            "dashboard",
+            "dashboard",
+            "dashboard"
+          ],
+          [
+            "ujaM1h6nz",
+            "7MeksYbmk",
+            "vmie2cmWz",
+            "xMsQdBfWz"
+          ],
+          [
+            "abc2",
+            "Alerting with TestData",
+            "Bar Gauge Demo",
+            "Bar Gauge Demo Unfilled"
+          ],
+          [
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "/dashboards/f/ujaM1h6nz/abc2",
+            "/d/7MeksYbmk/alerting-with-testdata",
+            "/d/vmie2cmWz/bar-gauge-demo",
+            "/d/xMsQdBfWz/bar-gauge-demo-unfilled"
+          ],
+          [
+            null,
+            [
+              "gdev",
+              "alerting"
+            ],
+            [
+              "gdev",
+              "demo"
+            ],
+            [
+              "gdev",
+              "demo"
+            ]
+          ],
+          [
+            [],
+            [
+              "datasource-1"
+            ],
+            [
+              "datasource-2",
+              "datasource-3",
+              "datasource-4"
+            ],
+            []
+          ],
+          [
+            "",
+            "yboVMzb7z",
+            "yboVMzb7z",
+            "yboVMzb7z"
+          ],
+          [
+            [
+              {
+                "kind": "folder",
+                "uid": "ujaM1h6nz",
+                "actions": [
+                  "folders.permissions:read",
+                  "folders.permissions:write",
+                  "folders:create",
+                  "folders:delete",
+                  "folders:read",
+                  "folders:write"
+                ]
+              }
+            ],
+            [
+              {
+                "kind": "dashboard",
+                "uid": "7MeksYbmk",
+                "actions": [
+                  "dashboards.permissions:read",
+                  "dashboards.permissions:write",
+                  "dashboards:create",
+                  "dashboards:delete",
+                  "dashboards:read",
+                  "dashboards:write"
+                ]
+              },
+              {
+                "kind": "ds",
+                "uid": "datasource-1",
+                "actions": [
+                  "datasources.id:read",
+                  "datasources.permissions:read",
+                  "datasources.permissions:write",
+                  "datasources:delete",
+                  "datasources:explore",
+                  "datasources:query",
+                  "datasources:read",
+                  "datasources:write"
+                ]
+              }
+            ],
+            [
+              {
+                "kind": "dashboard",
+                "uid": "vmie2cmWz",
+                "actions": [
+                  "dashboards.permissions:read",
+                  "dashboards.permissions:write",
+                  "dashboards:create",
+                  "dashboards:delete",
+                  "dashboards:read",
+                  "dashboards:write"
+                ]
+              },
+              {
+                "kind": "ds",
+                "uid": "datasource-2",
+                "actions": [
+                  "datasources.id:read",
+                  "datasources.permissions:read",
+                  "datasources.permissions:write",
+                  "datasources:delete",
+                  "datasources:explore",
+                  "datasources:query",
+                  "datasources:read",
+                  "datasources:write"
+                ]
+              },
+              {
+                "kind": "ds",
+                "uid": "datasource-3",
+                "actions": [
+                  "datasources.id:read",
+                  "datasources.permissions:read",
+                  "datasources.permissions:write",
+                  "datasources:delete",
+                  "datasources:explore",
+                  "datasources:query",
+                  "datasources:read",
+                  "datasources:write"
+                ]
+              },
+              {
+                "kind": "ds",
+                "uid": "datasource-4",
+                "actions": [
+                  "datasources.id:read",
+                  "datasources.permissions:read",
+                  "datasources.permissions:write",
+                  "datasources:delete",
+                  "datasources:explore",
+                  "datasources:query",
+                  "datasources:read",
+                  "datasources:write"
+                ]
+              }
+            ],
+            [
+              {
+                "kind": "dashboard",
+                "uid": "xMsQdBfWz",
+                "actions": [
+                  "dashboards.permissions:read",
+                  "dashboards.permissions:write",
+                  "dashboards:create",
+                  "dashboards:delete",
+                  "dashboards:read",
+                  "dashboards:write"
+                ]
+              }
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

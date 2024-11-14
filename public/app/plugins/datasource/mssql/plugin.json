@@ -1,0 +1,32 @@
+{
+  "type": "datasource",
+  "name": "Microsoft SQL Server",
+  "id": "mssql",
+  "executable": "gpx_mssql",
+  "category": "sql",
+
+  "info": {
+    "description": "Data source for Microsoft SQL Server compatible databases",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/sql_server_logo.svg",
+      "large": "img/sql_server_logo.svg"
+    },
+    "version": "%VERSION%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=10.4.0"
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true,
+  "backend": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+}

@@ -1,0 +1,5 @@
+#group,false,false,false,false,false,true
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,double,string
+#default,_result,,,,,
+,result,table,_start_water,_stop_water,_value,st
+,,0,2020-06-28T17:50:13.012584046Z,2020-06-29T17:50:13.012584046Z,156.304,1

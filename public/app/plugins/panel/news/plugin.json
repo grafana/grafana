@@ -1,0 +1,21 @@
+{
+  "type": "panel",
+  "name": "News",
+  "id": "news",
+
+  "skipDataQuery": true,
+
+  "state": "beta",
+
+  "info": {
+    "description": "RSS feed reader",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/news.svg",
+      "large": "img/news.svg"
+    }
+  }
+}

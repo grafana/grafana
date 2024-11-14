@@ -1,0 +1,98 @@
+#!/usr/bin/env sh
+
+set -e
+
+[ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
+
+IS_UPGRADE=false
+
+
+# Initial installation: $1 == configure
+# Upgrade: $1 == configure, and $2 not empty
+if [ "$1" = configure ]; then
+  [ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
+  [ -z "$GRAFANA_GROUP" ] && GRAFANA_GROUP="grafana"
+  [ -z "$GRAFANA_HOME" ] && GRAFANA_HOME="/usr/share/grafana"
+  if ! getent group "$GRAFANA_GROUP" > /dev/null 2>&1 ; then
+    addgroup --system "$GRAFANA_GROUP" --quiet
+  fi
+  if ! id "$GRAFANA_USER" > /dev/null 2>&1 ; then
+    adduser --system --home "$GRAFANA_HOME" --no-create-home \
+      --ingroup "$GRAFANA_GROUP" --disabled-password --shell /bin/false \
+      "$GRAFANA_USER"
+  fi
+
+  # Set user permissions on /var/log/grafana, /var/lib/grafana
+  mkdir -p /var/log/grafana /var/lib/grafana
+  chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
+  chmod 755 /var/log/grafana /var/lib/grafana
+
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp "${GRAFANA_HOME}/conf/sample.ini" $CONF_FILE
+    cp "${GRAFANA_HOME}/conf/ldap.toml" /etc/grafana/ldap.toml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/dashboards $PROVISIONING_CFG_DIR/datasources
+    cp "${GRAFANA_HOME}/conf/provisioning/dashboards/sample.yaml" $PROVISIONING_CFG_DIR/dashboards/sample.yaml
+    cp "${GRAFANA_HOME}/conf/provisioning/datasources/sample.yaml" $PROVISIONING_CFG_DIR/datasources/sample.yaml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR/plugins ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/plugins
+    cp "${GRAFANA_HOME}/conf/provisioning/plugins/sample.yaml" $PROVISIONING_CFG_DIR/plugins/sample.yaml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR/access-control ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/access-control
+    cp "${GRAFANA_HOME}/conf/provisioning/access-control/sample.yaml" $PROVISIONING_CFG_DIR/access-control/sample.yaml
+  fi
+
+  if [ ! -d $PROVISIONING_CFG_DIR/alerting ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/alerting
+    cp "${GRAFANA_HOME}/conf/provisioning/alerting/sample.yaml" $PROVISIONING_CFG_DIR/alerting/sample.yaml
+  fi
+
+	# configuration files should not be modifiable by grafana user, as this can be a security issue
+	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
+	chmod 755 /etc/grafana
+	find /etc/grafana -type f -exec chmod 640 {} ';'
+	find /etc/grafana -type d -exec chmod 755 {} ';'
+
+  # If $1=configure and $2 is set, this is an upgrade
+  if [ "$2" != "" ]; then
+    IS_UPGRADE=true
+  fi
+
+  if [ "x$IS_UPGRADE" != "xtrue" ]; then
+    if command -v systemctl >/dev/null; then
+      echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
+      echo " sudo /bin/systemctl daemon-reload"
+      echo " sudo /bin/systemctl enable grafana-server"
+      echo "### You can start grafana-server by executing"
+      echo " sudo /bin/systemctl start grafana-server"
+    elif command -v update-rc.d >/dev/null; then
+      echo "### NOT starting grafana-server by default on bootup, please execute"
+      echo " sudo update-rc.d grafana-server defaults 95 10"
+      echo "### In order to start grafana-server, execute"
+      echo " sudo service grafana-server start"
+    fi
+  elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
+
+    echo -n "Restarting grafana-server service..."
+
+    if command -v systemctl >/dev/null; then
+      systemctl daemon-reload
+      systemctl restart grafana-server || true
+    elif [ -x /etc/init.d/grafana-server ]; then
+      if command -v invoke-rc.d >/dev/null; then
+        invoke-rc.d grafana-server restart || true
+      else
+        /etc/init.d/grafana-server restart || true
+      fi
+    fi
+    echo " OK"
+
+  fi
+fi

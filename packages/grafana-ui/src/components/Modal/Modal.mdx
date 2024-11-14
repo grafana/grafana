@@ -1,0 +1,36 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Modal } from './Modal';
+import { ModalTabsHeader } from './ModalTabsHeader';
+
+<Meta title="MDX|Modal" component={Modal} />
+
+# Modal
+
+Generic Modal component.
+
+Example usage:
+
+```tsx
+<Modal title="title" isOpen={true}>
+  <div>Some body</div>
+  <Modal.ButtonRow>
+    <Button variant="secondary" fill="outline">
+      Cancel
+    </Button>
+    <Button>Save</Button>
+  </Modal.ButtonRow>
+</Modal>
+```
+
+For buttons at the bottom of the modal you should always use:
+
+- Modal.ButtonRow - this makes sure the Buttons are right aligned
+- If you have a Cancel button use fill="outline" and variant="secondary" and place it on the left side of any other button.
+
+<ArgTypes of={Modal} />
+
+# ModalTabsHeader
+
+Custom header element with tabs
+
+<ArgTypes of={ModalTabsHeader} />

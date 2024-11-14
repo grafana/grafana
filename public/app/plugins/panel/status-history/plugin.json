@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Status history",
+  "id": "status-history",
+
+  "info": {
+    "description": "Periodic status history",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/status.svg",
+      "large": "img/status.svg"
+    }
+  }
+}

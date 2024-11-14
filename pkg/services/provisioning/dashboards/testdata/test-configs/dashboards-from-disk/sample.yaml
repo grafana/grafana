@@ -1,0 +1,10 @@
+apiVersion: 1
+
+#providers:
+#- name: 'gasdf'
+#  orgId: 2
+#  folder: 'developers'
+#  editable: true
+#  type: file
+#  options:
+#    path: /var/lib/grafana/dashboards

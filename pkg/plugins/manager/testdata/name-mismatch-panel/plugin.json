@@ -1,0 +1,14 @@
+{
+  "type": "panel",
+  "name": "ID/Name mismatch",
+  "id": "name-mismatch-panel",
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

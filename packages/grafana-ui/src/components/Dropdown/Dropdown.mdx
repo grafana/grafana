@@ -1,0 +1,35 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+
+import { Dropdown } from './Dropdown';
+
+<Meta title="MDX|Dropdown" component={Dropdown} />
+
+# Dropdown
+
+Hook up a menu or other overlay to any trigger.
+
+### When to use
+
+When you want a button, link or icon button to open a Menu or Popover. By default the trigger is click but it can be changed to show on hover using the
+trigger property.
+
+### Usage
+
+```tsx
+import { Dropdown, Menu, Button } from '@grafana/ui';
+
+const menu = (
+  <Menu>
+    <Menu.Item label="Google" />
+    <Menu.Item label="Filter" />
+  </Menu>
+);
+
+return (
+  <Dropdown overlay={menu}>
+    <Button icon="bars" />
+  </Dropdown>
+);
+```
+
+<ArgTypes of={Dropdown} />

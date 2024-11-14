@@ -1,0 +1,22 @@
+{
+    "UserID": 0,
+    "UserUID": "",
+    "OrgID": 0,
+    "OrgName": "",
+    "OrgRole": "",
+    "Login": "",
+    "Name": "",
+    "Email": "",
+    "EmailVerified": false,
+    "AuthID": "",
+    "AuthenticatedBy": "",
+    "ApiKeyID": 0,
+    "IsServiceAccount": false,
+    "IsGrafanaAdmin": false,
+    "IsAnonymous": false,
+    "IsDisabled": false,
+    "HelpFlags1": 0,
+    "LastSeenAt": "0001-01-01T00:00:00Z",
+    "Teams": null,
+    "NamespacedID": {}
+}

@@ -1,0 +1,1 @@
+export { DashboardSettings } from './DashboardSettings';

@@ -1,0 +1,6 @@
+#group,false,false,true,true,false,false,true
+#datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,dateTime:RFC3339,long,string
+#default,last,,,,,,
+,result,table,_start,_stop,_time,_value,table
+,,0,2021-02-05T14:02:04.7009051Z,2021-02-05T14:03:04.7009051Z,2021-02-05T14:03:04.7009051Z,42,something
+

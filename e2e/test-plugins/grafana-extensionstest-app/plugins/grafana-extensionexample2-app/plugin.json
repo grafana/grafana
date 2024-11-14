@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "D App",
+  "id": "grafana-extensionexample2-app",
+  "preload": true,
+  "info": {
+    "keywords": ["app"],
+    "description": "Will extend root app with ui extensions",
+    "author": {
+      "name": "grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "extensions": {
+    "addedLinks": [
+      {
+        "targets": [
+          "plugins/grafana-extensionstest-app/actions",
+          "plugins/grafana-extensionstest-app/use-plugin-links/v1"
+        ],
+        "title": "Open from B",
+        "description": "Open a modal from plugin B"
+      }
+    ],
+    "addedComponents": [
+      {
+        "targets": ["plugins/grafana-extensionstest-app/configure-extension-component/v1"],
+        "title": "Configure extension component from B",
+        "description": "A component that can be reused by other app plugins. Shared using configureExtensionComponent api"
+      },
+      {
+        "targets": ["plugins/grafana-extensionstest-app/addComponent/v1"],
+        "title": "Added component from B",
+        "description": "A component that can be reused by other app plugins. Shared using addComponent api"
+      }
+    ]
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Default",
+      "path": "/a/grafana-extensionexample2-app",
+      "role": "Admin",
+      "addToNav": false,
+      "defaultNav": false
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.3.3",
+    "plugins": []
+  }
+}

@@ -1,0 +1,9 @@
+  slow_proxy:
+    build: docker/blocks/slow_proxy
+    ports:
+      - "3011:3011"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      ORIGIN_SERVER: ${ORIGIN_SERVER}
+      SLEEP_DURATION: ${SLEEP_DURATION}

@@ -1,0 +1,4 @@
+  alert_webhook_listener:
+    build: docker/blocks/alert_webhook_listener
+    ports:
+      - "3010:3010"

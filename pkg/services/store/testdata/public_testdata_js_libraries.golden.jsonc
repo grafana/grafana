@@ -1,0 +1,100 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: js_libraries.csv
+//  Dimensions: 4 Fields by 6 Rows
+//  +-----------------+--------------------+----------------+----------------+
+//  | Name: Library   | Name: Github Stars | Name: Forks    | Name: Watchers |
+//  | Labels:         | Labels:            | Labels:        | Labels:        |
+//  | Type: []*string | Type: []*int64     | Type: []*int64 | Type: []*int64 |
+//  +-----------------+--------------------+----------------+----------------+
+//  | React.js        | 169000             | 34000          | 6700           |
+//  | Vue             | 184000             | 29100          | 6300           |
+//  | Angular         | 73400              | 19300          | 3200           |
+//  | JQuery          | 54900              | 20000          | 3300           |
+//  | Meteor          | 42400              | 5200           | 1700           |
+//  | Aurelia         | 11600              | 684            | 442            |
+//  +-----------------+--------------------+----------------+----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "js_libraries.csv",
+        "fields": [
+          {
+            "name": "Library",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Github Stars",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Forks",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "Watchers",
+            "type": "number",
+            "typeInfo": {
+              "frame": "int64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "React.js",
+            "Vue",
+            "Angular",
+            "JQuery",
+            "Meteor",
+            "Aurelia"
+          ],
+          [
+            169000,
+            184000,
+            73400,
+            54900,
+            42400,
+            11600
+          ],
+          [
+            34000,
+            29100,
+            19300,
+            20000,
+            5200,
+            684
+          ],
+          [
+            6700,
+            6300,
+            3200,
+            3300,
+            1700,
+            442
+          ]
+        ]
+      }
+    }
+  ]
+}

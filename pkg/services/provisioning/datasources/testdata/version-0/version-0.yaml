@@ -1,0 +1,26 @@
+datasources:
+  - name: name
+    type: type
+    access: proxy
+    org_id: 2
+    url: url
+    user: user
+    database: database
+    basic_auth: true
+    basic_auth_user: basic_auth_user
+    with_credentials: true
+    is_default: true
+    json_data:
+      graphiteVersion: "1.1"
+      tlsAuth: true
+      tlsAuthWithCACert: true
+    secure_json_data:
+      tlsCACert: "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA=="
+      tlsClientCert: "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ=="
+      tlsClientKey: "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A=="
+    editable: true
+    version: 10
+
+delete_datasources:
+  - name: old-graphite3
+    org_id: 2

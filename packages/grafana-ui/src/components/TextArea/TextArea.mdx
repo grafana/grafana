@@ -1,0 +1,34 @@
+import { ArgTypes, Preview } from '@storybook/blocks';
+import { Field } from '../Forms/Field';
+import { TextArea } from './TextArea';
+
+# TextArea
+
+Use for multi line inputs like descriptions.
+
+### Usage
+
+```jsx
+<TextArea invalid={invalid} placeholder={placeholder} cols={cols} disabled={disabled} />
+```
+
+### Usage in forms with Field
+
+`TextArea` should be used with the `Field` component to get labels and descriptions. It can also be used for validation by using the `required` attribute. See the `Field` component for more information.
+
+```jsx
+<Field label="Important information" description="This information is very important, so you really need to fill it in">
+  <TextArea name="importantTextarea" required />
+</Field>
+```
+
+<Preview>
+  <Field
+    label="Important information"
+    description="This information is very important, so you really need to fill it in"
+  >
+    <TextArea name="importantTextarea" required />
+  </Field>
+</Preview>
+
+<ArgTypes of={TextArea} />

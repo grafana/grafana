@@ -1,0 +1,9 @@
+example.com/foo/wire.go:x:y: inject injectFooBar: unused provider set "unusedSet"
+
+example.com/foo/wire.go:x:y: inject injectFooBar: unused provider "main.provideUnused"
+
+example.com/foo/wire.go:x:y: inject injectFooBar: unused value of type string
+
+example.com/foo/wire.go:x:y: inject injectFooBar: unused interface binding to type example.com/foo.Fooer
+
+example.com/foo/wire.go:x:y: inject injectFooBar: unused field "example.com/foo.S".Cfg

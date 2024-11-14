@@ -1,0 +1,382 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Query and expressions reducer should add a new expression 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "hide": false,
+        "refId": "B",
+        "type": "math",
+      },
+      "queryType": "",
+      "refId": "B",
+      "relativeTimeRange": undefined,
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should add query 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
+      "model": {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
+        },
+        "hide": false,
+        "refId": "B",
+      },
+      "queryType": "",
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0,
+      },
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should duplicate query 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "hide": false,
+        "refId": "B",
+      },
+      "queryType": "",
+      "refId": "B",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0,
+      },
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should remove an expression or alert query 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should rewire expressions 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "C",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "refId": "B",
+        "type": "classic_conditions",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should set data queries 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "A",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "refId": "B",
+        "type": "classic_conditions",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should update an expression 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "A",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "refId": "B",
+        "type": "math",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should update an expression refId and rewire expressions 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "C",
+      },
+      "queryType": "query",
+      "refId": "C",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "C",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "refId": "B",
+        "type": "classic_conditions",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+  ],
+}
+`;
+
+exports[`Query and expressions reducer should update expression type 1`] = `
+{
+  "queries": [
+    {
+      "datasourceUid": "abc123",
+      "model": {
+        "refId": "A",
+      },
+      "queryType": "query",
+      "refId": "A",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [],
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "name": "Expression",
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "",
+        "refId": "B",
+        "type": "reduce",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+  ],
+}
+`;

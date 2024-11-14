@@ -1,0 +1,2 @@
+The icons contained in this unicons icons folder were originally created
+by [IconScout](https://github.com/Iconscout/unicons)

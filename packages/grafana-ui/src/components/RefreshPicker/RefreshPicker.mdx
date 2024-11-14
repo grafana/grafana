@@ -1,0 +1,20 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { RefreshPicker } from './RefreshPicker';
+
+<Meta title="MDX|RefreshPicker" component={RefreshPicker} />
+
+# Refresh Picker
+
+This component is used on dashboards to refresh visualizations. Grafana does not do this automatically, queries run on their own schedule according to the panel settings. Grafana cancels any pending requests when a new refresh is triggered.
+
+**The refresh icon:** will immediately run the query and refresh the visualizations.
+
+**The down arrow:** will display a list of refresh intervals. If one of them is selected the dashboard will regularly refresh according to that schedule.
+
+<Preview>
+  <RefreshPicker tooltip="Run query" />
+  <RefreshPicker text="Run query" tooltip="Run query" />
+  <RefreshPicker text="Run query" isLoading={true} tooltip="Run query" value="1h" />
+</Preview>
+
+<ArgTypes of={RefreshPicker} />

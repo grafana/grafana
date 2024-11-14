@@ -1,0 +1,20 @@
+{
+  "type": "datasource",
+  "name": "-- Dashboard --",
+  "id": "dashboard",
+  "builtIn": true,
+
+  "info": {
+    "description": "Uses the result set from another panel in the same dashboard",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-reusequeries.svg",
+      "large": "img/icn-reusequeries.svg"
+    }
+  },
+
+  "metrics": true
+}

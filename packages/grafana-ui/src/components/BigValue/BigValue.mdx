@@ -1,0 +1,75 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { BigValue } from './BigValue';
+
+<Meta title="MDX|BigValue" component={BigValue} />
+
+# BigValue
+
+Component for showing a value based on a [DisplayValue](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/displayValue.ts#L5).
+
+### Display properties
+
+There are a few properties that will determine the look of the BigValue.
+
+#### Justify mode
+
+There are two modes for aligning text, auto and center.
+
+#### Graph mode
+
+You can control graph shown in BigValue with the `GraphMode` property. `GraphMode.Area` renders a
+graph in the behind the value. `GrapMode.None` will hide it.
+
+#### Color mode
+
+`ColorMode` controls which part of the component that should have the color from thresholds or field config,
+`ColorMode.Background` and `ColorMode.Value`.
+
+Note, `ColorMode.Value` will only set the color for the value.
+
+#### Text mode
+
+There are four variants to render text:
+
+- `TextMode.Auto` - Show value and name if there's more than on BigValue in the same pane.
+- `TextMode.Value` - Show only the value.
+- `TextMode.ValueAndName` - Show value and the name.
+- `TextMode.None` - Do not show any value or name.
+
+### Example usage
+
+An example usage is in the [Stat panel](https://grafana.com/docs/grafana/latest/panels/visualizations/stat-panel/).
+
+```tsx
+import { DisplayValue } from '@grafana/data';
+import {
+  BigValue,
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  useTheme,
+} from '@grafana/ui';
+
+const bigValue: DisplayValue = {
+  color: 'red',
+  value: '5000',
+  numeric: 5000,
+  title: 'Volume',
+};
+
+return (
+  <BigValue
+    theme={useTheme()}
+    justifyMode={BigValueJustifyMode.Auto}
+    graphMode={BigValueGraphMode.Area}
+    colorMode={BigValueColorMode.Value}
+    textMode={BigValueTextMode.Auto}
+    value={bigValue}
+  />
+);
+```
+
+### Props
+
+<ArgTypes of={BigValue} />

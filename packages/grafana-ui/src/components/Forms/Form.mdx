@@ -1,0 +1,296 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Form } from './Form';
+
+<Meta title="MDX|Form" component={Form} />
+
+# Form
+
+Form component provides a way to build simple forms at Grafana. It is built on top of [react-hook-form](https://react-hook-form.com/) library and incorporates the same concepts while adjusting the API slightly.
+
+**Note: This component is deprecated and will be removed in the future versions of grafana/ui. Use the `useForm` hook from react-hook-form instead.**
+
+## Usage
+
+```tsx
+import { Forms } from '@grafana/ui';
+
+interface UserDTO {
+  name: string;
+  email: string;
+  //...
+}
+
+const defaultUser: Partial<UserDTO> = {
+  name: 'Roger Waters',
+  // ...
+}
+
+<Form
+  defaultValues={defaultUser}
+  onSubmit={async (user: UserDTO) => await createUser(user)}
+>{({register, errors}) => {
+  return (
+    <Field>
+      <Input {...register("name")}/>
+      <Input {...register("email", {required: true})} type="email" />
+      <Button type="submit">Create User</Button>
+    </Field>
+  )
+}}</Form>
+```
+
+### Form API
+
+`Form` component exposes API via render prop. Three properties are exposed: `register`, `errors` and `control`
+
+#### `register`
+
+`register` allows registering form elements (inputs, selects, radios, etc) in the form. In order to do that you need to invoke the function itself and spread the props into the input. For example:
+
+```jsx
+<Input {...register('inputName')} />
+```
+
+The first argument for `register` is the field name. It also accepts an object, which describes validation rules for a given input:
+
+```jsx
+<Input
+  {...register("inputName", {
+    required: true,
+    minLength: 10,
+    validate: v => { // custom validation rule }
+  })}
+/>
+```
+
+See [Validation](#validation) for examples on validation and validation rules.
+
+#### `errors`
+
+`errors` is an object that contains validation errors of the form. To show error message and invalid input indication in your form, wrap input element with `<Field ...>` component and pass `invalid` and `error` props to it:
+
+```jsx
+<Field label="Name" invalid={!!errors.name} error="Name is required">
+  <Input {...register('name', { required: true })} />
+</Field>
+```
+
+#### `control`
+
+By default `Form` component assumes form elements are uncontrolled (https://reactjs.org/docs/glossary.html#controlled-vs-uncontrolled-components).
+There are some components like `RadioButton` or `Select` that are controlled-only and require some extra work. To make
+them work with the form, you need to render those using `InputControl` component:
+
+```jsx
+import { Form, Field, InputControl } from '@grafana/ui';
+
+// render function
+<Form ...>{({register, errors, control}) => (
+  <>
+    <Field label="RadioButtonExample">
+      <InputControl
+        {/* Render InputControl as controlled input (RadioButtonGroup) */}
+        render={({field}) => <RadioButtonGroup {...field} options={...} />}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="radio"
+      />
+    </Field>
+
+    <Field label="SelectExample">
+      <InputControl
+        {/* Render InputControl as controlled input (Select) */}
+        render={({field}) => <Select {...field} options={...} />}
+        {/* Pass control exposed from Form render prop */}
+        control={control}
+        name="select"
+      />
+    </Field>
+  </>
+)}
+</Form>
+```
+
+In case we want to modify the selected value before passing it to the form, we can use the `onChange` callback from the render's `field` argument:
+
+```jsx
+<Field label="SelectExample">
+  <InputControl
+    {/* Here `value` has a nested `value` property, which we want to save onto the form. */}
+    render={(field: {onChange, ...field}) => <Select {...field} onChange={(value) => onChange(value.value)}/>}
+    control={control}
+    name="select"
+  />
+</Field>
+```
+
+Note that `field` also contains `ref` prop, which is passed down to the rendered component by default. In case if that component doesn't support this prop, it will need to be removed before spreading the `field`.
+
+```jsx
+<Field label="SelectExample">
+  <InputControl
+     {/*Remove `ref` prop, so it doesn't get passed down to the component that doesn't support it. */}
+    render={(field: {onChange, ref, ...field}) => <Select {...field} onChange={(value) => onChange(value.value)}/>}
+    control={control}
+    name="select"
+  />
+</Field>
+```
+
+### Default values
+
+Default values of the form can be passed either via `defaultValues` property on the `Form` element, or directly on
+form's input via `defaultValue` prop.
+Note that changing/updating `defaultValues` passed to the form will reset the form's state, which might be undesirable in
+case it has both controlled and uncontrolled components. In that case it's better to pass `defaultValue` to each form component separately.
+
+```jsx
+// Passing default values to the Form
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Form defaultValues={defaultValues} ...>{...}</Form>
+```
+
+```jsx
+// Passing default value directly to form inputs
+
+interface FormDTO {
+  name: string;
+  isAdmin: boolean;
+}
+
+const defaultValues: FormDto {
+  name: 'Roger Waters',
+  isAdmin: false,
+}
+
+<Form ...>{
+  ({register}) => (
+    <>
+      <Input {...register("name")} defaultValue={default.name} />
+    </>
+  )}
+</Form>
+```
+
+### Validation
+
+Validation can be performed either synchronously or asynchronously. What's important here is that the validation function must return either a `boolean` or a `string`.
+
+#### Basic required example
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name && 'Name is required'}
+      <Input
+        {...register("name", { required: true })}
+        defaultValue={default.name}
+      />
+    </>
+  )}
+</Form>
+```
+
+#### Required with synchronous custom validation
+
+One important thing to note is that if you want to provide different error messages for different kind of validation errors you'll need to return a `string` instead of a `boolean`.
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name?.message }
+      <Input
+        defaultValue={default.name}
+        {...register("name", {
+          required: 'Name is required',
+          validation: v => {
+            return v !== 'John' && 'Name must be John'
+          },
+        )}
+      />
+    </>
+  )}
+</Form>
+```
+
+#### Asynchronous validation
+
+For cases when you might want to validate fields asynchronously (on the backend or via some service) you can provide an asynchronous function to the field.
+
+Consider this function that simulates a call to some service. Remember, if you want to display an error message replace `return true` or `return false` with `return 'your error message'`.
+
+```jsx
+validateAsync = (newValue: string) => {
+  try {
+    (await new Promise()) <
+      ValidateResult >
+      ((resolve, reject) => {
+        setTimeout(() => {
+          reject('Something went wrong...');
+        }, 2000);
+      });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+```
+
+```jsx
+<Form ...>{
+  ({register, errors}) => (
+    <>
+      <Field invalid={!!errors.name} error={errors.name?.message}
+      <Input
+        defaultValue={default.name}
+        {...register("name", {
+          required: 'Name is required',
+          validation: async v => {
+            return  await validateAsync(v);
+          },
+        )}
+      />
+    </>
+  )}
+</Form>
+```
+
+### Upgrading to v8
+
+Version 8 of Grafana-UI is using version 7 of `react-hook-form` (previously version 5 was used), which introduced a few breaking changes to the `Form` API. The detailed list of changes can be found in the library's migration guides:
+
+- [Migration guide v5 to v6](https://react-hook-form.com/migrate-v5-to-v6/)
+- [Migration guide v6 to v7](https://react-hook-form.com/migrate-v6-to-v7/)
+
+In a nutshell, the two most important changes are:
+
+- register method is no longer passed as a `ref`, but instead its result is spread onto the input component:
+
+```jsx
+-(<input ref={register({ required: true })} name="test" />) + <input {...register('test', { required: true })} />;
+```
+
+- `InputControl`'s `as` prop has been replaced with `render`, which has `field` and `fieldState` objects as arguments. `onChange`, `onBlur`, `value`, `name`, and `ref` are parts of `field`.
+
+```jsx
+- <Controller as={<input />} />
++ <Controller render={({ field }) => <input {...field} />}
+// or
++ <Controller render={({ field, fieldState }) => <input {...field} />} />
+```
+
+### Props
+
+<ArgTypes of={Form} />

@@ -1,0 +1,52 @@
+{{>partial_header}}
+package {{packageName}}
+
+{{#operations}}
+import (
+	"github.com/go-macaron/binding"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/middleware"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+)
+
+type {{classname}} interface { {{#operation}}
+	{{nickname}}(*contextmodel.ReqContext) response.Response{{/operation}}
+}
+
+{{#operations}}{{#operation}}
+func (f *{{classname}}Handler) {{nickname}}(ctx *contextmodel.ReqContext) response.Response { {{#hasPathParams}}
+	// Parse Path Parameters{{/hasPathParams}}{{#pathParams}}
+	{{paramName}}Param := web.Params(ctx.Req)[":{{baseName}}"]{{/pathParams}}
+	{{#bodyParams}}
+	// Parse Request Body
+	conf := apimodels.{{dataType}}{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	{{/bodyParams}}return f.handle{{nickname}}(ctx{{#bodyParams}}, conf{{/bodyParams}}{{#pathParams}}, {{paramName}}Param{{/pathParams}})
+}
+{{/operation}}{{/operations}}
+
+func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API) {
+	api.RouteRegister.Group("", func(group routing.RouteRegister){ {{#operations}}{{#operation}}
+	group.{{httpMethod}}(
+		toMacaronPath("/api{{{path}}}"),
+		requestmeta.SetOwner(requestmeta.TeamAlerting),
+		requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+		api.authorize(http.Method{{httpMethod}}, "/api{{{path}}}"),
+		metrics.Instrument(
+			http.Method{{httpMethod}},
+			"/api{{{path}}}",
+			api.Hooks.Wrap(srv.{{nickname}}),
+			m,
+		),
+  ){{/operation}}{{/operations}}
+	}, middleware.ReqSignedIn)
+}{{#operation}}
+{{/operation}}{{/operations}}

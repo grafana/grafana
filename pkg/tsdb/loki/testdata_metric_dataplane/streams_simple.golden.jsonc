@@ -1,0 +1,377 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "frameType": "LabeledTimeValues"
+//      },
+//      "stats": [
+//          {
+//              "displayName": "Summary: bytes processed per second",
+//              "unit": "Bps",
+//              "value": 3507022
+//          },
+//          {
+//              "displayName": "Summary: lines processed per second",
+//              "value": 24818
+//          },
+//          {
+//              "displayName": "Summary: total bytes processed",
+//              "unit": "decbytes",
+//              "value": 7772
+//          },
+//          {
+//              "displayName": "Summary: total lines processed",
+//              "value": 55
+//          },
+//          {
+//              "displayName": "Summary: exec time",
+//              "unit": "s",
+//              "value": 0.002216125
+//          },
+//          {
+//              "displayName": "Store: total chunks ref",
+//              "value": 2
+//          },
+//          {
+//              "displayName": "Store: total chunks downloaded",
+//              "value": 3
+//          },
+//          {
+//              "displayName": "Store: chunks download time",
+//              "unit": "s",
+//              "value": 0.000390958
+//          },
+//          {
+//              "displayName": "Store: head chunk bytes",
+//              "unit": "decbytes",
+//              "value": 4
+//          },
+//          {
+//              "displayName": "Store: head chunk lines",
+//              "value": 5
+//          },
+//          {
+//              "displayName": "Store: decompressed bytes",
+//              "unit": "decbytes",
+//              "value": 7772
+//          },
+//          {
+//              "displayName": "Store: decompressed lines",
+//              "value": 55
+//          },
+//          {
+//              "displayName": "Store: compressed bytes",
+//              "unit": "decbytes",
+//              "value": 31432
+//          },
+//          {
+//              "displayName": "Store: total duplicates",
+//              "value": 6
+//          },
+//          {
+//              "displayName": "Ingester: total reached",
+//              "value": 7
+//          },
+//          {
+//              "displayName": "Ingester: total chunks matched",
+//              "value": 8
+//          },
+//          {
+//              "displayName": "Ingester: total batches",
+//              "value": 9
+//          },
+//          {
+//              "displayName": "Ingester: total lines sent",
+//              "value": 10
+//          },
+//          {
+//              "displayName": "Ingester: head chunk bytes",
+//              "unit": "decbytes",
+//              "value": 11
+//          },
+//          {
+//              "displayName": "Ingester: head chunk lines",
+//              "value": 12
+//          },
+//          {
+//              "displayName": "Ingester: decompressed bytes",
+//              "unit": "decbytes",
+//              "value": 13
+//          },
+//          {
+//              "displayName": "Ingester: decompressed lines",
+//              "value": 14
+//          },
+//          {
+//              "displayName": "Ingester: compressed bytes",
+//              "unit": "decbytes",
+//              "value": 15
+//          },
+//          {
+//              "displayName": "Ingester: total duplicates",
+//              "value": 16
+//          }
+//      ],
+//      "executedQueryString": "Expr: query1"
+//  }
+//  Name: 
+//  Dimensions: 5 Fields by 6 Rows
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+--------------------------------+
+//  | Name: labels                          | Name: Time                              | Name: Line       | Name: tsNs          | Name: id                       |
+//  | Labels:                               | Labels:                                 | Labels:          | Labels:             | Labels:                        |
+//  | Type: []json.RawMessage               | Type: []time.Time                       | Type: []string   | Type: []string      | Type: []string                 |
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+--------------------------------+
+//  | {"code":"one\",","location":"moon🌙"} | 2022-02-16 16:50:44.81075712 +0000 UTC  | log line error 1 | 1645030244810757120 | 1645030244810757120_1d8c2178   |
+//  | {"code":"\",two","location":"moon🌙"} | 2022-02-16 16:50:47.02773504 +0000 UTC  | log line info 1  | 1645030247027735040 | 1645030247027735040_87a7aed2   |
+//  | {"code":"\",two","location":"moon🌙"} | 2022-02-16 16:50:46.277587968 +0000 UTC | log line info 2  | 1645030246277587968 | 1645030246277587968_318d05c9   |
+//  | {"code":"\",two","location":"moon🌙"} | 2022-02-16 16:50:46.277587968 +0000 UTC | log line info 2  | 1645030246277587968 | 1645030246277587968_318d05c9_1 |
+//  | {"code":"\",two","location":"moon🌙"} | 2022-02-16 16:50:45.539423744 +0000 UTC | log line info 3  | 1645030245539423744 | 1645030245539423744_fd17f65c   |
+//  | {"code":"\",two","location":"moon🌙"} | 2022-02-16 16:50:44.091700992 +0000 UTC | log line info 4  | 1645030244091700992 | 1645030244091700992_62ae07f3   |
+//  +---------------------------------------+-----------------------------------------+------------------+---------------------+--------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "frameType": "LabeledTimeValues"
+          },
+          "stats": [
+            {
+              "displayName": "Summary: bytes processed per second",
+              "unit": "Bps",
+              "value": 3507022
+            },
+            {
+              "displayName": "Summary: lines processed per second",
+              "value": 24818
+            },
+            {
+              "displayName": "Summary: total bytes processed",
+              "unit": "decbytes",
+              "value": 7772
+            },
+            {
+              "displayName": "Summary: total lines processed",
+              "value": 55
+            },
+            {
+              "displayName": "Summary: exec time",
+              "unit": "s",
+              "value": 0.002216125
+            },
+            {
+              "displayName": "Store: total chunks ref",
+              "value": 2
+            },
+            {
+              "displayName": "Store: total chunks downloaded",
+              "value": 3
+            },
+            {
+              "displayName": "Store: chunks download time",
+              "unit": "s",
+              "value": 0.000390958
+            },
+            {
+              "displayName": "Store: head chunk bytes",
+              "unit": "decbytes",
+              "value": 4
+            },
+            {
+              "displayName": "Store: head chunk lines",
+              "value": 5
+            },
+            {
+              "displayName": "Store: decompressed bytes",
+              "unit": "decbytes",
+              "value": 7772
+            },
+            {
+              "displayName": "Store: decompressed lines",
+              "value": 55
+            },
+            {
+              "displayName": "Store: compressed bytes",
+              "unit": "decbytes",
+              "value": 31432
+            },
+            {
+              "displayName": "Store: total duplicates",
+              "value": 6
+            },
+            {
+              "displayName": "Ingester: total reached",
+              "value": 7
+            },
+            {
+              "displayName": "Ingester: total chunks matched",
+              "value": 8
+            },
+            {
+              "displayName": "Ingester: total batches",
+              "value": 9
+            },
+            {
+              "displayName": "Ingester: total lines sent",
+              "value": 10
+            },
+            {
+              "displayName": "Ingester: head chunk bytes",
+              "unit": "decbytes",
+              "value": 11
+            },
+            {
+              "displayName": "Ingester: head chunk lines",
+              "value": 12
+            },
+            {
+              "displayName": "Ingester: decompressed bytes",
+              "unit": "decbytes",
+              "value": 13
+            },
+            {
+              "displayName": "Ingester: decompressed lines",
+              "value": 14
+            },
+            {
+              "displayName": "Ingester: compressed bytes",
+              "unit": "decbytes",
+              "value": 15
+            },
+            {
+              "displayName": "Ingester: total duplicates",
+              "value": 16
+            }
+          ],
+          "executedQueryString": "Expr: query1"
+        },
+        "fields": [
+          {
+            "name": "labels",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "tsNs",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            {
+              "code": "one\",",
+              "location": "moon🌙"
+            },
+            {
+              "code": "\",two",
+              "location": "moon🌙"
+            },
+            {
+              "code": "\",two",
+              "location": "moon🌙"
+            },
+            {
+              "code": "\",two",
+              "location": "moon🌙"
+            },
+            {
+              "code": "\",two",
+              "location": "moon🌙"
+            },
+            {
+              "code": "\",two",
+              "location": "moon🌙"
+            }
+          ],
+          [
+            1645030244810,
+            1645030247027,
+            1645030246277,
+            1645030246277,
+            1645030245539,
+            1645030244091
+          ],
+          [
+            "log line error 1",
+            "log line info 1",
+            "log line info 2",
+            "log line info 2",
+            "log line info 3",
+            "log line info 4"
+          ],
+          [
+            "1645030244810757120",
+            "1645030247027735040",
+            "1645030246277587968",
+            "1645030246277587968",
+            "1645030245539423744",
+            "1645030244091700992"
+          ],
+          [
+            "1645030244810757120_1d8c2178",
+            "1645030247027735040_87a7aed2",
+            "1645030246277587968_318d05c9",
+            "1645030246277587968_318d05c9_1",
+            "1645030245539423744_fd17f65c",
+            "1645030244091700992_62ae07f3"
+          ]
+        ],
+        "nanos": [
+          null,
+          [
+            757120,
+            735040,
+            587968,
+            587968,
+            423744,
+            700992
+          ],
+          null,
+          null,
+          null
+        ]
+      }
+    }
+  ]
+}

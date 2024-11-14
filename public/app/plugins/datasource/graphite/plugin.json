@@ -1,0 +1,40 @@
+{
+  "name": "Graphite",
+  "type": "datasource",
+  "id": "graphite",
+  "category": "tsdb",
+
+  "includes": [
+    { "type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json" },
+    { "type": "dashboard", "name": "Metrictank (Graphite alternative)", "path": "dashboards/metrictank.json" }
+  ],
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+  "backend": true,
+
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+
+  "info": {
+    "description": "Open source time series database",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/graphite_logo.png",
+      "large": "img/graphite_logo.png"
+    },
+    "links": [
+      { "name": "Learn more", "url": "https://graphiteapp.org/" },
+      {
+        "name": "Graphite 1.1 Release",
+        "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"
+      }
+    ]
+  }
+}

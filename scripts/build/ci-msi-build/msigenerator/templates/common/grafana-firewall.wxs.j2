@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:fire="http://schemas.microsoft.com/wix/FirewallExtension">
+  <Fragment>
+      <ComponentGroup Id="GrafanaFirewallExceptionsGroup">
+        <Component Id="FirewallGrafanaServer" Guid="7278f07d-de6f-497f-9267-d5feb5216a5c" Directory="INSTALLDIR">
+          <File KeyPath="yes" Source="SourceDir\grafana\bin\grafana-server.exe">
+             <fire:FirewallException
+              Id="FWX1"
+              Name="Grafana Server TCP 3000"
+              Port="3000"
+              Profile="all"
+              Protocol="tcp"
+              Scope="any"/>
+          </File>
+        </Component>
+      </ComponentGroup>
+  </Fragment>
+</Wix>

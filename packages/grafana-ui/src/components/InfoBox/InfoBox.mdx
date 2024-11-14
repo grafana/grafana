@@ -1,0 +1,18 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { InfoBox } from './InfoBox';
+
+<Meta title="MDX|InfoBox" component={InfoBox} />
+
+# InfoBox
+
+A component for displaying information in different levels of severity (Success, Warning, Error, Info).
+
+### Example usage
+
+This component can be found in the settings for various data sources.
+
+```tsx
+<InfoBox title="Example info box" severity="info" url="http://url.to.some.documentation" onDismiss={dissmisInfoBox} />
+```
+
+<ArgTypes of={InfoBox} />

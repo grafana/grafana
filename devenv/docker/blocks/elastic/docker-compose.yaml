@@ -1,0 +1,20 @@
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
+
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_version}
+    command: elasticsearch
+    environment:
+      - "discovery.type=single-node"
+      - "xpack.license.self_generated.type=basic"
+      - "xpack.security.enabled=false"
+    ports:
+      - "9200:9200"
+
+  elastic-data:
+    build: docker/blocks/elastic/data
+    command: node /home/node/data.js http://elastic:9200
+    depends_on:
+      - elastic
+    # elastic starts slowly, the first couple start of data.js
+    # might fail, so we auto-restart it on failure.
+    restart: "on-failure"

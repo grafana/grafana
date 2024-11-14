@@ -1,0 +1,321 @@
+import { Meta, ArgTypes, Story } from '@storybook/blocks';
+
+import { InteractiveTable } from './InteractiveTable';
+import { Badge } from '../Badge/Badge';
+
+<Meta title="MDX|InteractiveTable" component={InteractiveTable} />
+
+# InteractiveTable
+
+<Badge text="Alpha" icon="rocket" color="blue" tooltip="This component is still experimental." />
+
+The InteractiveTable is used to display and select data efficiently.
+It allows for the display and modification of detailed information.
+With additional functionality it allows for batch editing, as needed by your feature's users.
+
+It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more information, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
+
+### When to use
+
+The InteractiveTable can be used to allow users to perform administrative tasks workflows.
+
+### When not to use
+
+Avoid using the InteractiveTable where mobile or responsiveness may be a requirement.
+Consider an alternative pattern where the user is presented with a summary list and can click/tap to an individual page for each row in that list.
+
+### Usage
+
+<ArgTypes of={InteractiveTable} />
+
+#### About `columns` and `data` Props
+
+To avoid unnecessary rerenders, `columns` and `data` must be memoized.
+
+Columns are rendered in the same order defined in the `columns` prop.
+Each Cell's content is automatically rendered by matching the `id` of the column to the key of each object in the `data` array prop.
+
+##### Example
+
+```tsx
+interface TableData {
+  projectName: string;
+  repository: string;
+}
+
+const columns = useMemo<Array<Column<TableData>>>(
+  () => [
+    id: 'projectName'
+    header: "Project Name"
+  ],
+  [
+    id: 'repository',
+    header: "Repository"
+  ],
+  []
+);
+
+const data = useMemo<Array<TableData>>(
+  () => [
+    {
+      projectName: 'Grafana',
+      repository: 'https://github.com/grafana/grafana',
+   }
+  ],
+  [
+    {
+      projectName: 'Loki';
+      repository: 'https://github.com/grafana/loki';
+    }
+  ],
+  []
+);
+```
+
+## Examples
+
+### With row expansion
+
+Individual rows can be expanded to display additional details or reconfigure properties previously defined when the row was created.
+The expanded row area should be used to unclutter the primary presentation of data, carefully consider what the user needs to know at first glance and what can be hidden behind the Row Expander button.
+
+In general, data-types that are consistent across all dataset are in the primary table, variances are pushed to the expanded section for each individual row.
+
+<Story id="experimental-interactivetable--with-row-expansion" />
+
+Row expansion is enabled whenever the `renderExpanded` prop is provided. The `renderExpanded` function is called with the row's data and should return a ReactNode.
+
+```tsx
+interface TableData {
+  datasource: string;
+  repo: string;
+  description: string;
+}
+
+const tableData: TableData[] = [
+  //...
+];
+
+const columns: Array<Column<TableData>> = [
+  //...
+];
+
+const ExpandedCell = ({ description }: TableData) => {
+  return <p>{description}</p>;
+};
+
+export const MyComponent = () => {
+  return (
+    <InteractiveTable
+      columns={columns}
+      data={tableData}
+      getRowId={(r) => r.datasource}
+      renderExpandedRow={ExpandedCell}
+      showExpandAll
+    />
+  );
+};
+```
+
+### Custom Cell Rendering
+
+Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
+
+<Story id="experimental-interactivetable--with-custom-cell" />
+
+```tsx
+interface TableData {
+  datasource: string;
+  repo: string;
+}
+
+const RepoCell = ({
+  row: {
+    original: { repo },
+  },
+}: CellProps<WithCustomCellData, void>) => {
+  return (
+    <LinkButton href={repo} size="sm" icon="external-link-alt">
+      Open on GitHub
+    </LinkButton>
+  );
+};
+
+const tableData: WithCustomCellData[] = [
+  {
+    datasource: 'Prometheus',
+    repo: 'https://github.com/prometheus/prometheus',
+  },
+  {
+    datasource: 'Loki',
+    repo: 'https://github.com/grafana/loki',
+  },
+  {
+    datasource: 'Tempo',
+    repo: 'https://github.com/grafana/tempo',
+  },
+];
+
+const columns: Array<Column<WithCustomCellData>> = [
+  { id: 'datasource', header: 'Data Source' },
+  { id: 'repo', header: 'Repo', cell: RepoCell },
+];
+
+export const MyComponent = () => {
+  return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
+};
+```
+
+### With pagination
+
+The table can be rendered with pagination controls by passing in the `pageSize` property. All data must be provided as
+only client side pagination is supported.
+
+<Story id="experimental-interactivetable--with-pagination" />
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const MyComponent = () => {
+  const pageableData: WithPaginationData[] = [
+    { id: '48a3926a-e82c-4c26-b959-3a5f473e186e', firstName: 'Brynne', lastName: 'Denisevich', car: 'Cougar', age: 47 },
+    {
+      id: 'cf281390-adbf-4407-8cf3-a52e012f63e6',
+      firstName: 'Aldridge',
+      lastName: 'Shirer',
+      car: 'Viper RT/10',
+      age: 74,
+    },
+    // ...
+    {
+      id: 'b9b0b559-acc1-4bd8-b052-160ecf3e4f68',
+      firstName: 'Ermanno',
+      lastName: 'Sinott',
+      car: 'Thunderbird',
+      age: 26,
+    },
+  ];
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name' },
+    { id: 'lastName', header: 'Last name' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age', sortType: 'number' },
+  ];
+  return <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} pageSize={15} />;
+};
+```
+
+### With header tooltips
+
+It may be useful to render a tooltip on the header of a column to provide additional information about the data in that column.
+
+<Story id="experimental-interactivetable--with-header-tooltips" />
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const MyComponent = () => {
+  const pageableData: WithPaginationData[] = [
+    { id: '48a3926a-e82c-4c26-b959-3a5f473e186e', firstName: 'Brynne', lastName: 'Denisevich', car: 'Cougar', age: 47 },
+    {
+      id: 'cf281390-adbf-4407-8cf3-a52e012f63e6',
+      firstName: 'Aldridge',
+      lastName: 'Shirer',
+      car: 'Viper RT/10',
+      age: 74,
+    },
+    // ...
+    {
+      id: 'b9b0b559-acc1-4bd8-b052-160ecf3e4f68',
+      firstName: 'Ermanno',
+      lastName: 'Sinott',
+      car: 'Thunderbird',
+      age: 26,
+    },
+  ];
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name' },
+    { id: 'lastName', header: 'Last name' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age', sortType: 'number' },
+  ];
+
+  const headerToolTips = {
+    age: { content: 'The number of years since the person was born' },
+    lastName: {
+      content: () => {
+        return (
+          <>
+            <h4>Here is an h4</h4>
+            <div>Some content</div>
+            <div>Some more content</div>
+          </>
+        );
+      },
+      iconName: 'plus-square',
+    },
+  };
+  return (
+    <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} headerToolTips={headerToolTips} />
+  );
+};
+```
+
+### With controlled sorting
+
+The default sorting can be changed to controlled sorting by passing in the `fetchData` function, which is called whenever the sorting changes and should return the sorted data. This is useful when the sorting is done server side. It is important to memoize the `fetchData` function to prevent unnecessary rerenders and the possibility of an infinite render loop.
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name', sortType: 'string' },
+    { id: 'lastName', header: 'Last name', sortType: 'string' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age' },
+  ];
+  const [data, setData] = useState(pageableData);
+
+  // In production the function will most likely make an API call to fetch the sorted data
+  const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
+    if (!sortBy?.length) {
+      return setData(pageableData);
+    }
+
+    setTimeout(() => {
+      const newData = [...pageableData];
+      newData.sort((a, b) => {
+        const sort = sortBy[0];
+        const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        if (sort.desc) {
+          return bData.localeCompare(aData);
+        }
+        return aData.localeCompare(bData);
+      });
+      setData(newData);
+    }, 300);
+  }, []);
+
+  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.id} pageSize={15} fetchData={fetchData} />;
+};
+```

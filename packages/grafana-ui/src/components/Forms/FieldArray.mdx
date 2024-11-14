@@ -1,0 +1,42 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { FieldArray } from './FieldArray';
+
+<Meta title="MDX|FieldArray" component={FieldArray} />
+
+# FieldArray
+
+`FieldArray` provides a way to render a list of dynamic inputs. It exposes the functionality of `useFieldArray` in [react-hook-form](https://react-hook-form.com/advanced-usage/#FieldArrays). `FieldArray` must be wrapped at some level by a `<Form>` element.
+
+**Note: This component is deprecated and will be removed in the future versions of grafana/ui. Use the `useFieldArray` hook from react-hook-form instead.**
+
+### Usage
+
+```jsx
+import { Form, FieldArray } from '@grafana/ui';
+
+<Form onSubmit={() => console.log('form submitted')}>
+  ({control, register}) => (
+    <FieldArray control={control} name="People">
+      {({ fields, append }) => (
+          <div>
+              {fields.map((field, index) => (
+                  <div key={field.id}>
+                      <Input key={index} {...register(`people[${index}].firstName` as const)} value={field.firstName} />
+                      <Input {...register(`people[${index}].lastName` as const)} value={field.lastName} />
+                  </div>
+              ))}
+              <Button onClick={() => append({firstName: 'Roger', lastName: 'Waters'})}>Append</Button>
+          </div>
+      )}
+    </FieldArray>
+  )
+</Form>;
+```
+
+### FieldArray API
+
+The `FieldArray` component exposes its API via render prop. Properties exposed are: `fields`, `append`, `prepend`, `remove`, `swap`, `move`, `insert`
+
+### Props
+
+<ArgTypes of={FieldArray} />

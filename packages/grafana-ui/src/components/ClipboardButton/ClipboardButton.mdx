@@ -1,0 +1,37 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { ClipboardButton } from './ClipboardButton';
+
+<Meta title="MDX|ClipboardButton" component={ClipboardButton} />
+
+# ClipboardButton
+
+A control for allowing the user to copy text to their clipboard. Uses native APIs on modern browsers, falling back to the old `document.execCommand('copy')` API on other browsers. The text to be copied should be provided via `getText` prop.
+
+Commonly it is passed in the `addonAfter` prop on `<Input />`
+
+# Usage
+
+```jsx
+<ClipboardButton
+  variant="secondary"
+  getText={() => 'Text to be copied'}
+  onClipboardCopy={() => console.log('text copied')}
+>
+  Copy to clipboard
+</ClipboardButton>
+```
+
+```jsx
+<Input
+  id="link-url-input"
+  value={shareUrl}
+  readOnly
+  addonAfter={
+    <ClipboardButton icon="copy" variant="primary" getText={() => shareUrl}>
+      Copy
+    </ClipboardButton>
+  }
+/>
+```
+
+<ArgTypes of={ClipboardButton} />

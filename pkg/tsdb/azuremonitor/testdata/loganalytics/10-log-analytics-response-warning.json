@@ -1,0 +1,40 @@
+{
+    "tables": [
+      {
+        "name": "PrimaryResult",
+        "columns": [
+          {
+            "name": "OperationName",
+            "type": "string"
+          },
+          {
+            "name": "Level",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            "Create or Update Virtual Machine",
+            "Informational"
+          ]
+        ]
+      }
+    ],
+    "error": {
+      "code": "PartialError",
+      "message": "There were some errors when processing your query.",
+      "details": [
+        {
+          "code": "EngineError",
+          "message": "Something went wrong processing your query on the server.",
+          "innererror": {
+            "code": "-2133196797",
+            "message": "Not sure what happened.",
+            "severity": 2,
+            "severityName": "Warning"
+          }
+        }
+      ]
+    }
+  }
+  

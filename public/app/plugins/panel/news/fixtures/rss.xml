@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:slash="http://purl.org/rss/1.0/modules/slash/">
+
+  <channel>
+    <title>RSS Feed Example</title>
+    <atom:link href="https://www.example.net/feed" rel="self" type="application/rss+xml" />
+    <link>https://www.example.net</link>
+    <description>A small description of this feed</description>
+    <language>en-US</language>
+    <item>
+      <title>A fake item</title>
+      <link>https://www.example.net/2022/02/10/something-fake/</link>
+
+      <dc:creator>Bill Test</dc:creator>
+      <pubDate>Thu, 10 Feb 2022 16:00:17 +0000</pubDate>
+      <category>Fake</category>
+
+      <description>A description of a fake blog post</description>
+    </item>
+  </channel>
+</rss>

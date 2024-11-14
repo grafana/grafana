@@ -1,0 +1,20 @@
+{
+  "type": "panel",
+  "name": "Annotations list",
+  "id": "annolist",
+  "aliasIDs": ["ryantxu-annolist-panel"],
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "List annotations",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-annolist-panel.svg",
+      "large": "img/icn-annolist-panel.svg"
+    }
+  }
+}

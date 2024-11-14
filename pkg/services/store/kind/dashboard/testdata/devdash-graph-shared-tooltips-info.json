@@ -1,0 +1,121 @@
+{
+  "title": "Panel Tests - shared tooltips",
+  "tags": [
+    "gdev",
+    "panel-tests",
+    "graph-ng"
+  ],
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 4,
+      "title": "two units",
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Speed vs Temperature (XY)",
+      "type": "xychart",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ],
+      "transformer": [
+        "seriesToColumns",
+        "organize"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Cursor info",
+      "type": "debug",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Only temperature",
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Only Speed",
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Panel Title",
+      "type": "timeseries",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "flot panel (temperature)",
+      "type": "graph",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "flot panel (no units)",
+      "type": "graph",
+      "pluginVersion": "7.5.0-pre",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 28,
+  "linkCount": 0,
+  "timeFrom": "2020-09-14T16:13:20.000Z",
+  "timeTo": "2020-09-15T20:00:00.000Z",
+  "timezone": ""
+}

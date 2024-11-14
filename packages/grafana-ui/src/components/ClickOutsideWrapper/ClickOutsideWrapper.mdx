@@ -1,0 +1,19 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { ClickOutsideWrapper } from './ClickOutsideWrapper';
+
+<Meta title="MDX|ClickOutsideWrapper" component={ClickOutsideWrapper} />
+
+# ClickOutsideWrapper
+
+A wrapper component that detects clicks outside of the elements by attaching event listener to `window` or `document` objects.
+Useful for components that require an action being triggered when a click outside has occurred, for example closing an overlay or popup.
+
+# Usage
+
+```jsx
+<ClickOutsideWrapper onClick={() => console.log('Clicked outside')}>
+  <div style={{ width: '300px' }}>Container</div>
+</ClickOutsideWrapper>
+```
+
+<ArgTypes of={ClickOutsideWrapper} />

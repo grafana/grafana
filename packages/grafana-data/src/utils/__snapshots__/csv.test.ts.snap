@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`read csv should get X and y 1`] = `
+{
+  "fields": [
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "Field 1",
+      "type": "string",
+      "values": [
+        "",
+        "2",
+        "5",
+        "",
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "Field 2",
+      "type": "number",
+      "values": [
+        1,
+        3,
+        6,
+        NaN,
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "Field 3",
+      "type": "number",
+      "values": [
+        undefined,
+        4,
+        undefined,
+        NaN,
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "Field 4",
+      "type": "number",
+      "values": [
+        undefined,
+        undefined,
+        undefined,
+        7,
+      ],
+    },
+  ],
+  "meta": undefined,
+  "name": undefined,
+  "refId": undefined,
+}
+`;
+
+exports[`read csv should read csv from local file system 1`] = `
+{
+  "fields": [
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "a",
+      "type": "number",
+      "values": [
+        10,
+        40,
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "b",
+      "type": "number",
+      "values": [
+        20,
+        50,
+      ],
+    },
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "c",
+      "type": "number",
+      "values": [
+        30,
+        60,
+      ],
+    },
+  ],
+  "meta": undefined,
+  "name": undefined,
+  "refId": undefined,
+}
+`;
+
+exports[`read csv should read csv with headers 1`] = `
+{
+  "fields": [
+    {
+      "config": {
+        "unit": "ms",
+      },
+      "labels": undefined,
+      "name": "a",
+      "type": "number",
+      "values": [
+        10,
+        40,
+        40,
+        40,
+      ],
+    },
+    {
+      "config": {
+        "unit": "lengthm",
+      },
+      "labels": undefined,
+      "name": "b",
+      "type": "number",
+      "values": [
+        20,
+        50,
+        500,
+        50,
+      ],
+    },
+    {
+      "config": {
+        "unit": "s",
+      },
+      "labels": undefined,
+      "name": "c",
+      "type": "boolean",
+      "values": [
+        true,
+        false,
+        false,
+        true,
+      ],
+    },
+  ],
+  "meta": undefined,
+  "name": undefined,
+  "refId": undefined,
+}
+`;

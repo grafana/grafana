@@ -1,0 +1,19 @@
+http:
+  middlewares:
+    compress-response:
+      compress: {}
+
+  services:
+    grafana-subpath:
+      loadBalancer:
+        servers:
+          - url: 'http://grafana-subpath:3000/'
+
+  routers:
+    grafana-subpath:
+      entryPoints:
+        - web
+      middlewares:
+        - compress-response
+      rule: 'Path(`/grafana`) || PathPrefix(`/grafana/`)'
+      service: grafana-subpath

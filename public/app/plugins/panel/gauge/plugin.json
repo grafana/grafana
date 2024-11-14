@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Gauge",
+  "id": "gauge",
+
+  "info": {
+    "description": "Standard gauge visualization",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icon_gauge.svg",
+      "large": "img/icon_gauge.svg"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+pid /tmp/nginx.pid;
+
+events {}
+
+http {
+  resolver 127.0.0.11 ipv6=off;  
+
+  # Use basic auth user in `X-Scope-OrgID` if the header is not already set.
+  map $http_x_scope_orgid $add_x_scope_orgid {
+    default $http_x_scope_orgid;
+    "" $remote_user;
+  }
+
+  server {
+    listen 8080;
+    proxy_set_header X-Scope-OrgID $add_x_scope_orgid;
+
+    location / {
+      auth_basic "Mimir Backend";
+      auth_basic_user_file /etc/nginx/.htpasswd;
+      proxy_pass http://${MIMIR_BACKEND_URL};
+    }
+  }
+}

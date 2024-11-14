@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Dashboard list",
+  "id": "dashlist",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "List of dynamic links to other dashboards",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-dashlist-panel.svg",
+      "large": "img/icn-dashlist-panel.svg"
+    }
+  }
+}

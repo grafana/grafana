@@ -1,0 +1,38 @@
+import { ArgTypes } from '@storybook/blocks';
+import { ContextMenu } from './ContextMenu';
+import { WithContextMenu } from './WithContextMenu';
+
+# ContextMenu
+
+A menu displaying additional options when it's not possible to show them at all times due to a space constraint.
+
+### Usage
+
+There are controlled and uncontrolled versions of the component available. With the controlled component (`ContextMenu`) the open/close logic needs to be handled separately. Uncontrolled component (`WithContextMenu`) handles this logic internally.
+
+#### Controlled component
+
+```jsx
+<ContextMenu
+  x={10}
+  y={11}
+  onClose={() => {}}
+  items={[{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }]}
+/>
+```
+
+#### Uncontrolled component
+
+```jsx
+<WithContextMenu getContextMenuItems={() => [{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }]}>
+  {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
+</WithContextMenu>
+```
+
+### Props of ContextMenu
+
+<ArgTypes of={ContextMenu} />
+
+### Props of WithContextMenu
+
+<ArgTypes of={WithContextMenu} />

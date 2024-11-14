@@ -1,0 +1,43 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { PluginSignatureBadge } from './PluginSignatureBadge';
+
+<Meta title="MDX|PluginSignatureBadge" component={PluginSignatureBadge} />
+
+# Plugin Signature Badge
+
+The Plugin Signature Badge can be found in each information plugin card of the configuration plugins panel (Grafana menu > Configuration > Plugins).
+This is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see the plugin signature status.
+
+## Badges:
+
+1.- Core: this badge indicates that the plugin has been built into Grafana.
+
+<Preview>
+  <PluginSignatureBadge status="internal" />
+</Preview>
+
+2.- Signed: the plugin's signature was successfully verified.
+
+<Preview>
+  <PluginSignatureBadge status="valid" />
+</Preview>
+
+3.- Invalid signature: this plugin has a invalid signature.
+
+<Preview>
+  <PluginSignatureBadge status="invalid" />
+</Preview>
+
+4.- Modified signature: this plugin has changed since it was signed. This may indicate malicious intent.
+
+<Preview>
+  <PluginSignatureBadge status="modified" />
+</Preview>
+
+5.- Unsigned: the plugin is not signed. In this case, as upon loading Grafana checks the plugins signature, Grafana will not load or start it. Furthermore, it will write an error message to the server log.
+
+<Preview>
+  <PluginSignatureBadge status="unsigned" />
+</Preview>
+
+<ArgTypes of={PluginSignatureBadge} />

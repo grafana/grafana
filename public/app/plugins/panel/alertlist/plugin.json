@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Alert list",
+  "id": "alertlist",
+
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "Shows list of alerts and their current status",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-singlestat-panel.svg",
+      "large": "img/icn-singlestat-panel.svg"
+    }
+  }
+}
