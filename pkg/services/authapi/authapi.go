@@ -240,7 +240,7 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	}
 
 	query := url.Values{}
-	// TODO this seems that is not needed, delete other references
+	// TODO LND this seems that is not needed, delete other references
 	// query.Set("region", params.Region)
 	query.Set("name", params.Name)
 	request.URL.RawQuery = query.Encode()
@@ -268,7 +268,8 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
 		return responseBody.Items, fmt.Errorf("unmarshaling response body: %w", err)
 	}
-
+	// TODO LND REMOVE
+	client.log.Info("received access policy internal", "ap", responseBody)
 	return responseBody.Items, nil
 }
 

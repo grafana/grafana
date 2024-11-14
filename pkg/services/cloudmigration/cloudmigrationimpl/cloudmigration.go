@@ -246,6 +246,9 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("fetching access policy by name: name=%s %w", accessPolicyName, err)
 	}
 
+	// TODO LND REMOVE
+	logger.Info("received access policy", "ap", existingAccessPolicy)
+
 	if existingAccessPolicy != nil {
 		timeoutCtx, cancel := context.WithTimeout(ctx, s.cfg.CloudMigration.DeleteAccessPolicyTimeout)
 		defer cancel()
