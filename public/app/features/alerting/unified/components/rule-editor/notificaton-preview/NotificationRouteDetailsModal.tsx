@@ -9,7 +9,7 @@ import { AlertmanagerAction } from '../../../hooks/useAbilities';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 import { getAmMatcherFormatter } from '../../../utils/alertmanager';
 import { MatcherFormatter } from '../../../utils/matchers';
-import { makeAMLink } from '../../../utils/misc';
+import { createContactPointSearchLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
@@ -98,10 +98,7 @@ export function NotificationRouteDetailsModal({
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
                 <a
-                  href={makeAMLink(
-                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                    alertManagerSourceName
-                  )}
+                  href={createContactPointSearchLink(receiver.name, alertManagerSourceName)}
                   className={styles.link}
                   target="_blank"
                   rel="noreferrer"

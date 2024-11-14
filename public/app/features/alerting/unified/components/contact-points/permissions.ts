@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types';
  *
  * Any permission in this list will be checked for client side access to view Contact Points functionality.
  */
-const PERMISSIONS_CONTACT_POINTS_READ = [AccessControlAction.AlertingReceiversRead];
+export const PERMISSIONS_CONTACT_POINTS_READ = [AccessControlAction.AlertingReceiversRead];
 
 /**
  * List of granular permissions that allow modifying contact points

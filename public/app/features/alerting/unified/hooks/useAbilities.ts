@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 
 import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { PERMISSIONS_CONTACT_POINTS_READ } from 'app/features/alerting/unified/components/contact-points/permissions';
+import {
+  PERMISSIONS_TIME_INTERVALS_MODIFY,
+  PERMISSIONS_TIME_INTERVALS_READ,
+} from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -229,22 +234,22 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       notificationsPermissions.create,
       // TODO: Move this into the permissions config and generalise that code to allow for an array of permissions
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversCreate : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversCreate] : [])
     ),
     [AlertmanagerAction.ViewContactPoint]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversRead : null
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_CONTACT_POINTS_READ : [])
     ),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
     ),
     [AlertmanagerAction.DeleteContactPoint]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.delete,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingReceiversWrite] : [])
     ),
     // At the time of writing, only Grafana flavored alertmanager supports exporting,
     // and if a user can view the contact point, then they can also export it
@@ -254,17 +259,17 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateNotificationTemplate]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.create,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
     ),
     [AlertmanagerAction.ViewNotificationTemplate]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesRead : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesRead] : [])
     ),
     [AlertmanagerAction.UpdateNotificationTemplate]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
-      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingTemplatesWrite : null
+      ...(isGrafanaFlavoredAlertmanager ? [AccessControlAction.AlertingTemplatesWrite] : [])
     ),
     [AlertmanagerAction.DeleteNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
     // -- notification policies --
@@ -287,11 +292,27 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
     [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
-    // -- mute timtings --
-    [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
-    [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
-    [AlertmanagerAction.UpdateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
-    [AlertmanagerAction.DeleteMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
+    // -- mute timings --
+    [AlertmanagerAction.CreateMuteTiming]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
+    ),
+    [AlertmanagerAction.ViewMuteTiming]: toAbility(
+      AlwaysSupported,
+      notificationsPermissions.read,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_READ : [])
+    ),
+    [AlertmanagerAction.UpdateMuteTiming]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.update,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
+    ),
+    [AlertmanagerAction.DeleteMuteTiming]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.delete,
+      ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
+    ),
     [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
   };
 
@@ -355,7 +376,8 @@ function useCanSilence(rule: CombinedRule): [boolean, boolean] {
 }
 
 // just a convenient function
-const toAbility = (supported: boolean, ...actions: Array<AccessControlAction | null>): Ability => [
-  supported,
-  actions.some((action) => action && ctx.hasPermission(action)),
-];
+const toAbility = (
+  supported: boolean,
+  /** If user has any of these permissions, then they are allowed to perform the action */
+  ...actions: AccessControlAction[]
+): Ability => [supported, actions.some((action) => action && ctx.hasPermission(action))];

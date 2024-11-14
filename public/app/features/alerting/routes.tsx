@@ -4,6 +4,10 @@ import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/type
 import { AccessControlAction } from 'app/types';
 
 import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
+import {
+  PERMISSIONS_TIME_INTERVALS_MODIFY,
+  PERMISSIONS_TIME_INTERVALS_READ,
+} from './unified/components/mute-timings/permissions';
 import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permissions';
 import { evaluateAccess } from './unified/utils/access-control';
 
@@ -33,6 +37,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
@@ -43,6 +49,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () =>
@@ -56,6 +63,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
       component: importAlertingComponent(
         () =>

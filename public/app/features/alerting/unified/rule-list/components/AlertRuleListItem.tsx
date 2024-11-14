@@ -15,7 +15,7 @@ import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
-import { createContactPointLink } from '../../utils/misc';
+import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
@@ -106,7 +106,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       <MetaText icon="at">
         <Trans i18nKey="alerting.contact-points.delivered-to">Delivered to</Trans>{' '}
         <TextLink
-          href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
+          href={createContactPointSearchLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
           variant="bodySmall"
           color="primary"
           inline={false}

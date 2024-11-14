@@ -137,7 +137,6 @@
       "export-all": "Export all",
       "view": "View"
     },
-    "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
@@ -155,6 +154,7 @@
       },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
+      "no-contact-points-found": "No contact points found",
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
