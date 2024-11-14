@@ -13,16 +13,11 @@ export function logOptions(
 ): void {
   if (amount > recommendedAmount) {
     const msg = `[Combobox] Items exceed the recommended amount ${recommendedAmount}.`;
-    console.warn(msg);
-    try {
-      console.warn(msg, {
-        itemsCount: '' + amount,
-        recommendedAmount: '' + recommendedAmount,
-        'aria-labelledby': ariaLabelledBy ?? '',
-        id: id ?? '',
-      });
-    } catch (e) {
-      console.warn('Failed to log faro event!');
-    }
+    console.warn(msg, {
+      itemsCount: '' + amount,
+      recommendedAmount: '' + recommendedAmount,
+      'aria-labelledby': ariaLabelledBy ?? '',
+      id: id ?? '',
+    });
   }
 }
