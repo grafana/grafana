@@ -240,7 +240,8 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	}
 
 	query := url.Values{}
-	query.Set("region", params.Region)
+	// TODO this seems that is not needed, delete other references
+	// query.Set("region", params.Region)
 	query.Set("name", params.Name)
 	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
