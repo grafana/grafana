@@ -66,9 +66,8 @@ export function TableNG(props: TableNGProps) {
     if (prevProps.current.data.fields.length !== props.data.fields.length) {
       setRevId(revId + 1);
     }
-
     prevProps.current = props;
-  }, [props.data]);
+  }, [props.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
