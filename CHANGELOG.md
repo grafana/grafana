@@ -1,3 +1,28 @@
+<!-- 11.3.0+security-01 START -->
+
+# 11.3.0+security-01 (2024-11-12)
+
+### Bug fixes
+
+- **MigrationAssistant:** Fix Migration Assistant issue [CVE-2024-9476]
+
+<!-- 11.3.0+security-01 END -->
+<!-- 11.2.3+security-01 START -->
+
+# 11.2.3+security-01 (2024-11-12)
+
+- **MigrationAssistant:** Fix Migration Assistant issue [CVE-2024-9476]
+
+<!-- 11.2.3+security-01 END -->
+<!-- 10.4.12 START -->
+
+# 10.4.12 (2024-11-08)
+
+### Bug fixes
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96058](https://github.com/grafana/grafana/pull/96058), [@fayzal-g](https://github.com/fayzal-g)
+
+<!-- 10.4.12 END -->
 <!-- 11.3.0 START -->
 
 # 11.3.0 (2024-10-22)

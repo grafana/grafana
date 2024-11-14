@@ -85,6 +85,13 @@ type Interactions = {
       | 'open_from_embedded'
     );
   };
+  // User clicks on one of the action buttons associated with related logs
+  related_logs_action_clicked: {
+    action: (
+      // Opens Explore Logs
+      | 'open_explore_logs'
+    );
+  };
   // User selects a metric
   metric_selected: {
     from: (

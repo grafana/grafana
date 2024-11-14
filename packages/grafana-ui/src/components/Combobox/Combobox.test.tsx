@@ -28,6 +28,10 @@ describe('Combobox', () => {
     });
   });
 
+  afterEach(() => {
+    onChangeHandler.mockReset();
+  });
+
   it('renders without error', () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
     expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -43,6 +47,15 @@ describe('Combobox', () => {
     await userEvent.click(item);
     expect(screen.getByDisplayValue('Option 1')).toBeInTheDocument();
     expect(onChangeHandler).toHaveBeenCalledWith(options[0]);
+  });
+
+  it("shows the placeholder with the menu open when there's no value", async () => {
+    render(<Combobox options={options} value={null} onChange={onChangeHandler} placeholder="Select an option" />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+
+    expect(input).toHaveAttribute('placeholder', 'Select an option');
   });
 
   it('selects value by clicking that needs scrolling', async () => {
@@ -93,6 +106,54 @@ describe('Combobox', () => {
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
   });
 
+  describe('with a value already selected', () => {
+    it('shows an empty text input when opening the menu', async () => {
+      const selectedValue = options[0].value;
+      render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(input).toHaveValue('');
+    });
+
+    it('shows all options unfiltered when opening the menu', async () => {
+      const selectedValue = options[0].value;
+      render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const optionsEls = await screen.findAllByRole('option');
+      expect(optionsEls).toHaveLength(options.length);
+    });
+
+    it('shows the current selected value as the placeholder of the input', async () => {
+      const selectedValue = options[0].value;
+      render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
+      expect(screen.getByRole('combobox')).toBeInTheDocument();
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(input).toHaveAttribute('placeholder', options[0].label);
+    });
+
+    it('exiting the menu without selecting an item restores the value to the text input', async () => {
+      const selectedValue = options[0].value;
+      render(<Combobox options={options} value={selectedValue} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.type(input, 'Option 3');
+      await userEvent.keyboard('{Esc}');
+
+      expect(onChangeHandler).not.toHaveBeenCalled();
+      expect(input).toHaveValue('Option 1');
+    });
+  });
+
   describe('create custom value', () => {
     it('should allow creating a custom value', async () => {
       const onChangeHandler = jest.fn();
@@ -105,7 +166,7 @@ describe('Combobox', () => {
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
-    it('should proivde custom string when all options are numbers', async () => {
+    it('should provide custom string when all options are numbers', async () => {
       const options = [
         { label: '1', value: 1 },
         { label: '2', value: 2 },
@@ -155,6 +216,8 @@ describe('Combobox', () => {
 
       const input = screen.getByRole('combobox');
       await user.click(input);
+
+      await act(async () => jest.advanceTimersByTime(200));
 
       expect(asyncOptions).toHaveBeenCalled();
     });
@@ -270,7 +333,7 @@ describe('Combobox', () => {
         jest.advanceTimersByTime(500); // Custom value while typing
       });
 
-      const customItem = screen.queryByRole('option', { name: 'fir Create custom value' });
+      const customItem = screen.queryByRole('option', { name: 'Custom value: fir' });
 
       expect(customItem).toBeInTheDocument();
     });
@@ -293,6 +356,58 @@ describe('Combobox', () => {
       const emptyMessage = screen.queryByText('An error occurred while loading options.');
 
       expect(emptyMessage).toBeInTheDocument();
+    });
+
+    describe('with a value already selected', () => {
+      const selectedValue = { value: '1', label: 'Option 1' };
+
+      it('shows an empty text input when opening the menu', async () => {
+        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        render(<Combobox options={asyncOptions} value={selectedValue} onChange={onChangeHandler} />);
+
+        const input = screen.getByRole('combobox');
+        await user.click(input);
+
+        // Flush out async on open changes
+        await act(async () => Promise.resolve());
+
+        expect(input).toHaveValue('');
+      });
+
+      it('shows all options unfiltered when opening the menu', async () => {
+        const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+        render(<Combobox options={asyncOptions} value={selectedValue} onChange={onChangeHandler} />);
+
+        const input = screen.getByRole('combobox');
+        await user.click(input);
+
+        // Flush out async on open changes
+        await act(async () => Promise.resolve());
+
+        const optionsEls = await screen.findAllByRole('option');
+        expect(optionsEls).toHaveLength(simpleAsyncOptions.length);
+      });
+
+      it('exiting the menu without selecting an item restores the value to the text input', async () => {
+        const asyncOptions = jest.fn(async () => {
+          return new Promise<ComboboxOption[]>((resolve) => setTimeout(() => resolve([{ value: 'first' }]), 2000));
+        });
+
+        render(<Combobox options={asyncOptions} value={selectedValue} onChange={onChangeHandler} createCustomValue />);
+
+        const input = screen.getByRole('combobox');
+        await user.click(input);
+
+        await act(async () => {
+          await user.type(input, 'Opt');
+          jest.advanceTimersByTime(500); // Custom value while typing
+        });
+
+        await user.keyboard('{Esc}');
+
+        expect(onChangeHandler).not.toHaveBeenCalled();
+        expect(input).toHaveValue('Option 1');
+      });
     });
   });
 });

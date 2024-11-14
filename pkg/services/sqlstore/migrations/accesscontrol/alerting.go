@@ -85,3 +85,34 @@ func (m *alertingMigrator) migrateNotificationActions() error {
 
 	return nil
 }
+
+type receiverCreateScopeMigration struct {
+	migrator.MigrationBase
+}
+
+var _ migrator.CodeMigration = new(alertingMigrator)
+
+func (m *receiverCreateScopeMigration) SQL(migrator.Dialect) string {
+	return "code migration"
+}
+
+func (m *receiverCreateScopeMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	result, err := sess.Exec(`UPDATE permission
+		SET scope = '',
+		    kind = '',
+		    attribute='',
+		    identifier=''
+		WHERE action = 'alert.notifications.receivers:create'
+		    AND (scope <> '' OR kind <> '' OR attribute <> '' OR identifier <> '');`)
+	if result != nil {
+		aff, _ := result.RowsAffected()
+		if aff > 0 {
+			mg.Logger.Info("Removed scope from permission 'alert.notifications.receivers:create'", "affectedRows", aff)
+		}
+	}
+	return err
+}
+
+func AddReceiverCreateScopeMigration(mg *migrator.Migrator) {
+	mg.AddMigration("remove scope from alert.notifications.receivers:create", &receiverCreateScopeMigration{})
+}

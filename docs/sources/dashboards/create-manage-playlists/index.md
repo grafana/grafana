@@ -24,7 +24,7 @@ A _playlist_ is a list of dashboards that are displayed in a sequence. You might
 
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
-You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
+You can access the **Playlist** feature from Grafana's side menu, in the Dashboards submenu.
 
 {{< admonition type="note" >}}
 You must have at least Editor role permissions to create and manage playlists.
@@ -41,12 +41,12 @@ Use the information in this section to access playlists. Start and control the d
 
 ### Start a playlist
 
-You can start a playlist in six different view modes. View modes determine how the menus and navigation bar appear on the dashboards as well as how panels are sized.
+You can start a playlist in four different view modes. View modes determine how the menus and navigation bar appear on the dashboards as well as how panels are sized.
 
 1. Click **Dashboards** in the main menu.
 1. Click **Playlists**.
 1. Find the desired playlist and click **Start playlist**.
-1. In the dialog box that opens, select one of the [six playlist modes](#playlist-modes) available.
+1. In the dialog box that opens, select one of the [four playlist modes](#playlist-modes) available.
 1. Disable any dashboard controls that you don't want displayed while the list plays; these controls are enabled and visible by default. Select from:
 
    - **Time and refresh**
@@ -55,31 +55,28 @@ You can start a playlist in six different view modes. View modes determine how t
 
 1. Click **Start \<playlist name\>**.
 
-The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. After a playlist starts, you can [control](#control-a-playlist) it using the navbar at the top of your screen.
+The playlist displays each dashboard for the time specified in the **Interval** field, set when creating or editing a playlist. After a playlist starts, you can [start or stop it](#control-a-playlist) it using the controls at the top of your screen.
 
 ### Playlist modes
 
-| Mode                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Normal mode                        | <ul><li>The side menu remains visible.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul>                                                                                                                                                                                                                                                                                                 |
-| Normal mode (with auto fit panels) | <ul><li>The side menu remains visible.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul>                                                                                                                                                                                                             |
-| TV mode                            | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul><ul><li>Enabled automatically after one minute of user inactivity.</li></ul><ul><li>Enable it manually using the `d v` sequence shortcut, or by appending the parameter `?inactive` to the dashboard URL.</li></ul><ul><li>Disable it with any mouse movement or keyboard action.</li></ul> |
-| TV mode (with auto fit panels)     | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul><ul>                                                                                                                                                                                                    |
-| Kiosk mode                         | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul><ul><li>You can disable or enable it manually using the `d v` sequence shortcut after the playlist has started.</li></ul>                                                                                                                                                                   |
-| Kiosk mode (with auto fit panels)  | <ul><li>The side menu is hidden or removed.</li></ul><ul><li>The navbar and dashboard controls appear at the top of the screen.</li></ul><ul><li>You can disable or enable it manually using the `d v` sequence shortcut after the playlist has started.</li></ul><ul><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul>                                                                               |
+<!-- prettier-ignore-start -->
 
-### Control a playlist
+| Mode                               | Description                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| Normal mode                        | <ul><li>The main menu and navbar remain visible.</li><li>Dashboard controls are hidden.</li><li>Playlist controls are displayed at the top of the screen.<li><ul> |
+| Normal mode (with auto fit panels) | <ul><li>The main menu and navbar remain visible.</li><li>Dashboard controls are hidden.</li><li>Playlist controls are displayed at the top of the screen.</li><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul> |
+| Kiosk mode                         | <ul><li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started. Doing so causes the playlist controls to be displayed at the top of the screen briefly.</li></ul> |
+| Kiosk mode (with auto fit panels)  | <ul><<li>The main menu, navbar, and dashboard controls are hidden.</li><li>You can disable the playlist manually by pressing the `Esc` key after the playlist has started. Doing so causes the playlist controls to be displayed at the top of the screen briefly.</li><li>Dashboard panels automatically adjust to optimize space on screen.</li></ul> |
 
-You can control a playlist in **Normal** or **TV** mode after it's started, using the navigation bar at the top of your screen. Press the Esc key in your keyboard to stop the playlist.
+<!-- prettier-ignore-end -->
 
-| Button                         | Result                                                                                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Next (double-right arrow)      | Advances to the next dashboard.                                                                                                                 |
-| Back (left arrow)              | Returns to the previous dashboard.                                                                                                              |
-| Stop (square)                  | Ends the playlist, and exits to the current dashboard.                                                                                          |
-| Cycle view mode (monitor icon) | Rotates the display of the dashboards in different view modes.                                                                                  |
-| Time range                     | Displays data within a time range. It can be set to display the last 5 minutes up to 5 years ago, or a custom time range, using the down arrow. |
-| Refresh (circle arrow)         | Reloads the dashboard, to display the current data. It can be set to reload automatically every 5 seconds to 1 day, using the drop-down arrow.  |
+### Playlist controls
+
+You can control a playlist in **Normal** mode after it's started, using the buttons at the top of your screen. Press the `Esc` key to stop the playlist.
+
+- **Next (double-right arrow)** - Advances to the next dashboard.
+- **Back (doublt-left arrow)** - Returns to the previous dashboard.
+- **Stop playlist** - Ends the playlist, and exits to the current dashboard.
 
 ## Create a playlist
 

@@ -55,6 +55,9 @@ var (
 		Isolation: sql.LevelReadCommitted,
 		ReadOnly:  true,
 	}
+	RepeatableRead = &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	}
 )
 
 type sqlResourceRequest struct {

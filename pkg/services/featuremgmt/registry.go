@@ -1087,6 +1087,13 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "logQLScope",
+			Description: "In-development feature that will allow injection of labels into loki queries.",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:         "sqlExpressions",
 			Description:  "Enables using SQL and DuckDB functions as Expressions.",
 			Stage:        FeatureStageExperimental,
@@ -1200,8 +1207,9 @@ var (
 		{
 			Name:        "accessActionSets",
 			Description: "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "disableNumericMetricsSortingInExpressions",
@@ -1374,6 +1382,17 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "enableScopesInMetricsExplore",
+			Description:       "Enables the scopes usage in Metrics Explore",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "alertingApiServer",
 			Description:     "Register Alerting APIs with the K8s API server",
 			Stage:           FeatureStageExperimental,
@@ -1486,7 +1505,7 @@ var (
 		{
 			Name:         "groupAttributeSync",
 			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
@@ -1550,11 +1569,24 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:        "userStorageAPI",
+			Description: "Enables the user storage API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "preinstallAutoUpdate",
+			Description: "Enables automatic updates for pre-installed plugins",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSchemaV2",
@@ -1569,6 +1601,49 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:              "passwordlessMagicLinkAuthentication",
+			Description:       "Enable passwordless login via magic link authentication",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+			AllowSelfServe:    false,
+		},
+		{
+			Name:         "exploreMetricsRelatedLogs",
+			Description:  "Display Related Logs in Explore Metrics",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+			FrontendOnly: true,
+			HideFromDocs: true,
+		},
+		{
+			Name:            "enableExtensionsAdminPage",
+			Description:     "Enables the extension admin page regardless of development mode",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "zipkinBackendMigration",
+			Description: "Enables querying Zipkin data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
+			Name:        "enableSCIM",
+			Description: "Enables SCIM support for user and group management",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+		},
+		{
+			Name:         "crashDetection",
+			Description:  "Enables browser crash detection reporting to Faro.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: true,
 		},
 	}
 )

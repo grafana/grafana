@@ -8,7 +8,7 @@ export function labelsToTags(labels: Labels) {
 }
 
 export function objectLabelsToArray(labels: Labels): Label[] {
-  return Object.entries(labels).map(([label, value]) => [label, value]);
+  return Object.entries(labels);
 }
 
 export function arrayLabelsToObject(labels: Label[]): Labels {
