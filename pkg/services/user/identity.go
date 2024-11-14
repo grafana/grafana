@@ -104,7 +104,12 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 
 // GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
-	return u.Name
+	// kubernetesAggregator feature flag which allows Cloud Apps to become available
+	// in single tenant Grafana requires that GetName() returns something and not an empty string
+	if u.Name != "" {
+		return u.Name
+	}
+	return u.GetRawIdentifier() // returns "u000000002" for "user:2"
 }
 
 // GetExtra implements Requester.
