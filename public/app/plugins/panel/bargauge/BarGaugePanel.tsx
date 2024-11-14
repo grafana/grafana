@@ -2,22 +2,23 @@ import { isNumber } from 'lodash';
 import { PureComponent } from 'react';
 
 import {
+  DisplayProcessor,
+  DisplayValue,
   DisplayValueAlignmentFactors,
+  FieldConfig,
   FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
   PanelProps,
-  FieldConfig,
-  DisplayProcessor,
-  DisplayValue,
   VizOrientation,
 } from '@grafana/data';
 import { BarGaugeSizing } from '@grafana/schema';
-import { BarGauge, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
+import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { Options, defaultOptions } from './panelcfg.gen';
+import { BarGaugeLegend } from './BarGaugeLegend';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -123,26 +124,43 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     return { minVizWidth, minVizHeight, maxVizHeight };
   }
 
+  getLegend() {
+    const { options, data } = this.props;
+    const { legend } = options;
+
+    if (legend.showLegend && data && data.series.length > 0) {
+      return <BarGaugeLegend data={data.series} {...legend} />;
+    }
+
+    return null;
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
 
     const { minVizWidth, minVizHeight, maxVizHeight } = this.calcBarSize();
 
     return (
-      <VizRepeater
-        source={data}
-        getAlignmentFactors={getDisplayValueAlignmentFactors}
-        getValues={this.getValues}
-        renderValue={this.renderValue}
-        renderCounter={renderCounter}
-        width={width}
-        height={height}
-        maxVizHeight={maxVizHeight}
-        minVizWidth={minVizWidth}
-        minVizHeight={minVizHeight}
-        itemSpacing={this.getItemSpacing()}
-        orientation={options.orientation}
-      />
+      <VizLayout width={width} height={height} legend={this.getLegend()}>
+        {(vizWidth: number, vizHeight: number) => {
+          return (
+            <VizRepeater
+              source={data}
+              getAlignmentFactors={getDisplayValueAlignmentFactors}
+              getValues={this.getValues}
+              renderValue={this.renderValue}
+              renderCounter={renderCounter}
+              width={vizWidth}
+              height={vizHeight}
+              maxVizHeight={maxVizHeight}
+              minVizWidth={minVizWidth}
+              minVizHeight={minVizHeight}
+              itemSpacing={this.getItemSpacing()}
+              orientation={options.orientation}
+            />
+          );
+        }}
+      </VizLayout>
     );
   }
 }

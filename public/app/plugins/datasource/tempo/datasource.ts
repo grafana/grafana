@@ -34,12 +34,7 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import {
-  generateQueryFromAdHocFilters,
-  generateQueryFromFilters,
-  getTagWithoutScope,
-  interpolateFilters,
-} from './SearchTraceQLEditor/utils';
+import { generateQueryFromAdHocFilters, getTagWithoutScope, interpolateFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -228,7 +223,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    const query = generateQueryFromAdHocFilters(options.filters);
+    const query = generateQueryFromAdHocFilters(options.filters, this.languageProvider);
     return this.tagValuesQuery(options.key, query);
   }
 
@@ -286,18 +281,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * Check if streaming for search queries is enabled (and available).
    *
    * We need to check:
-   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
-   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
-   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   * - the Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - if Grafana Live is enabled
    *
    * @return true if streaming for search queries is enabled, false otherwise
    */
   isStreamingSearchEnabled() {
-    return (
-      (config.featureToggles.traceQLStreaming || this.streamingEnabled?.search) &&
-      this.isFeatureAvailable(FeatureName.streaming) &&
-      config.liveEnabled
-    );
+    return this.streamingEnabled?.search && config.liveEnabled;
   }
 
   isTraceQlMetricsQuery(query: string): boolean {
@@ -371,7 +361,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.streamingEnabled,
+              streaming: this.isStreamingSearchEnabled(),
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -387,9 +377,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
           if (target) {
             const appliedQuery = this.applyVariables(target, options.scopedVars);
-            subQueries.push(
-              this.handleMetricsSummaryQuery(appliedQuery, generateQueryFromFilters(appliedQuery.filters), options)
-            );
+            const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
+            subQueries.push(this.handleMetricsSummaryQuery(appliedQuery, queryFromFilters, options));
           }
         }
 
@@ -398,22 +387,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
-          const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters);
+          const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
 
           reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
-            query: queryValueFromFilters ?? '',
-            streaming: this.streamingEnabled,
+            query: queryFromFilters ?? '',
+            streaming: this.isStreamingSearchEnabled(),
           });
 
           if (this.isStreamingSearchEnabled()) {
-            subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryValueFromFilters));
+            subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
             subQueries.push(
               this._request('/api/search', {
-                q: queryValueFromFilters,
+                q: queryFromFilters,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
                 spss: options.targets[0].spss ?? DEFAULT_SPSS,
                 start: options.range.from.unix(),
@@ -836,7 +825,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     const appliedQuery = this.applyVariables(query, {});
-    return generateQueryFromFilters(appliedQuery.filters);
+    return this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
   }
 }
 

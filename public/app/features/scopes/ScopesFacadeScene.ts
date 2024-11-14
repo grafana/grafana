@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
 import { scopesSelectorScene } from './instance';
@@ -20,7 +22,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> {
 
     this._subs.add(
       scopesSelectorScene?.subscribeToState((newState, prevState) => {
-        if (!newState.isLoadingScopes && (prevState.isLoadingScopes || newState.scopes !== prevState.scopes)) {
+        if (!newState.isLoadingScopes && (prevState.isLoadingScopes || !isEqual(newState.scopes, prevState.scopes))) {
           this.state.handler?.(this);
         }
       })

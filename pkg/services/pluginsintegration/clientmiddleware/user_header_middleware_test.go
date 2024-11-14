@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/stretchr/testify/require"
@@ -17,12 +17,12 @@ func TestUserHeaderMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewUserHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewUserHeaderMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -30,7 +30,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not forward user header when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -40,7 +40,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
 				}, nopCallResourceSender)
@@ -50,7 +50,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward user header when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -61,12 +61,12 @@ func TestUserHeaderMiddleware(t *testing.T) {
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					IsAnonymous: true,
 					Login:       "anonymous"},
 				),
-				clienttest.WithMiddlewares(NewUserHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewUserHeaderMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -74,7 +74,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not forward user header when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -84,7 +84,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward user header when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
 				}, nopCallResourceSender)
@@ -94,7 +94,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward user header when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -110,11 +110,11 @@ func TestUserHeaderMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					Login: "admin",
 				}),
-				clienttest.WithMiddlewares(NewUserHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewUserHeaderMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -122,7 +122,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should forward user header when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -133,7 +133,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
 				}, nopCallResourceSender)
@@ -144,7 +144,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward user header when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -156,11 +156,11 @@ func TestUserHeaderMiddleware(t *testing.T) {
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
 					Login: "admin",
 				}),
-				clienttest.WithMiddlewares(NewUserHeaderMiddleware()),
+				handlertest.WithMiddlewares(NewUserHeaderMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -168,7 +168,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should forward user header when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -179,7 +179,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward user header when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
 				}, nopCallResourceSender)
@@ -190,7 +190,7 @@ func TestUserHeaderMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward user header when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})

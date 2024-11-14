@@ -48,11 +48,11 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
   }
 
   if (value.intValue !== undefined) {
-    return Number.parseInt(value.intValue as any, 10);
+    return Number.parseInt(String(value.intValue), 10);
   }
 
   if (value.doubleValue) {
-    return Number.parseFloat(value.doubleValue as any);
+    return Number.parseFloat(String(value.doubleValue));
   }
 
   if (value.arrayValue) {
@@ -132,7 +132,7 @@ function getLogs(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
           fields.push({ key: attribute.key, value: getAttributeValue(attribute.value) });
         }
       }
-      logs.push({ fields, timestamp: event.timeUnixNano / 1000000 });
+      logs.push({ fields, timestamp: event.timeUnixNano / 1000000, name: event.name });
     }
   }
 
@@ -364,7 +364,7 @@ function getOTLPEvents(logs: TraceLog[]): collectorTypes.opentelemetryProto.trac
       timeUnixNano: log.timestamp * 1000000,
       attributes: [],
       droppedAttributesCount: 0,
-      name: '',
+      name: log.name || '',
     };
     for (const field of log.fields) {
       event.attributes!.push({

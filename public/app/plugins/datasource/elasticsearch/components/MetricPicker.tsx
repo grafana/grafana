@@ -6,9 +6,9 @@ import { Segment } from '@grafana/ui';
 import { MetricAggregation } from '../types';
 import { describeMetric } from '../utils';
 
-const noWrap = css`
-  white-space: nowrap;
-`;
+const noWrap = css({
+  whiteSpace: 'nowrap',
+});
 
 const toOption = (metric: MetricAggregation) => ({
   label: describeMetric(metric),

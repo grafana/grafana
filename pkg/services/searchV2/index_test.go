@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -754,7 +754,7 @@ func setupIntegrationEnv(t *testing.T, folderCount, dashboardsPerFolder int, sql
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService()).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, folder.NewFakeStore()).(*StandardSearchService)
 	require.True(t, ok)
 
 	err = runSearchService(searchService)
@@ -773,8 +773,7 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	// Set up search v2.
 	folderCount := 1
 	dashboardsPerFolder := 1
-	replStore, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replStore.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	searchService, testUser, err := setupIntegrationEnv(t, folderCount, dashboardsPerFolder, sqlStore)
 	require.NoError(t, err)
 
@@ -791,8 +790,12 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 
 	// Set up dashboard store.
 	quotaService := quotatest.New(false, nil)
-	featureToggles := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagDashboardRestore)
-	dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+	featureToggles := featuremgmt.WithFeatures(
+		featuremgmt.FlagPanelTitleSearch,
+		featuremgmt.FlagDashboardRestore,
+		featuremgmt.FlagMysqlParseTime,
+	)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	// Soft delete "dashboard2".

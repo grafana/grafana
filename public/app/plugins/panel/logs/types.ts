@@ -1,6 +1,8 @@
+import React, { ReactNode } from 'react';
+
 import { DataFrame } from '@grafana/data';
 
-export { Options } from './panelcfg.gen';
+export type { Options } from './panelcfg.gen';
 
 type onClickFilterLabelType = (key: string, value: string, frame?: DataFrame) => void;
 type onClickFilterOutLabelType = (key: string, value: string, frame?: DataFrame) => void;
@@ -36,4 +38,8 @@ export function isOnClickShowField(callback: unknown): callback is isOnClickShow
 
 export function isOnClickHideField(callback: unknown): callback is isOnClickHideFieldType {
   return typeof callback === 'function';
+}
+
+export function isReactNodeArray(node: unknown): node is ReactNode[] {
+  return Array.isArray(node) && node.every(React.isValidElement);
 }

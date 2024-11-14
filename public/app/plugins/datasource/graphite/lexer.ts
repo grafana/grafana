@@ -62,7 +62,7 @@ const unicodeLetterTable = [
   177972, 177984, 177984, 178205, 178205, 194560, 195101,
 ];
 
-const identifierStartTable: any[] = [];
+const identifierStartTable: boolean[] = [];
 
 for (let i = 0; i < 128; i++) {
   identifierStartTable[i] =
@@ -81,6 +81,7 @@ for (let i = 0; i < 128; i++) {
     i === 37 || // %
     i === 35 || // #
     i === 61 || // =
+    i === 64 || // @
     (i >= 97 && i <= 122); // a-z
 }
 
@@ -206,7 +207,7 @@ export class Lexer {
       return /^[0-9a-fA-F]$/.test(str);
     }
 
-    const readUnicodeEscapeSequence = bind(function (this: any) {
+    const readUnicodeEscapeSequence = bind(function (this: Lexer) {
       index += 1;
 
       if (this.peek(index) !== 'u') {
@@ -233,7 +234,7 @@ export class Lexer {
       return null;
     }, this);
 
-    const getIdentifierStart = bind(function (this: any) {
+    const getIdentifierStart = bind(function (this: Lexer) {
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 
@@ -263,7 +264,7 @@ export class Lexer {
       return null;
     }, this);
 
-    const getIdentifierPart = bind(function (this: any) {
+    const getIdentifierPart = bind(function (this: Lexer) {
       const chr = this.peek(index);
       const code = chr.charCodeAt(0);
 

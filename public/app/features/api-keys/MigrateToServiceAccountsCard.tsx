@@ -17,7 +17,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const docsLink = (
     <a
       className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/)"
       target="_blank"
       rel="noopener noreferrer"
     >
@@ -74,14 +74,14 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  text: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  actionRow: css`
-    display: flex;
-    align-items: center;
-  `,
-  actionButton: css`
-    margin-right: ${theme.spacing(2)};
-  `,
+  text: css({
+    marginBottom: theme.spacing(2),
+  }),
+  actionRow: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  actionButton: css({
+    marginRight: theme.spacing(2),
+  }),
 });

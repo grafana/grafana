@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -24,7 +23,7 @@ var (
 )
 
 type togglesStorage struct {
-	resource       *common.ResourceInfo
+	resource       *utils.ResourceInfo
 	tableConverter rest.TableConvertor
 
 	// The startup toggles

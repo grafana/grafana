@@ -4,17 +4,17 @@
 //      "type": "timeseries-multi",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
 //      "executedQueryString": "Expr: test1\nStep: 1s"
 //  }
-//  Name: go_goroutines{job="prometheus"}
+//  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------------------------------------+
-//  | Name: Time                    | Name: Value                                    |
+//  | Name: Time                    | Name: go_goroutines                            |
 //  | Labels:                       | Labels: __name__=go_goroutines, job=prometheus |
 //  | Type: []time.Time             | Type: []float64                                |
 //  +-------------------------------+------------------------------------------------+
@@ -30,12 +30,11 @@
   "frames": [
     {
       "schema": {
-        "name": "go_goroutines{job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "custom": {
             "resultType": "matrix"
@@ -54,7 +53,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "go_goroutines",
             "type": "number",
             "typeInfo": {
               "frame": "float64"

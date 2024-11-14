@@ -1,7 +1,7 @@
 import { debounce, isEqual } from 'lodash';
 
 import { urlUtil } from '@grafana/data';
-import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
 import { dispatch } from 'app/store/store';
 
 import { notifyApp } from '../../../core/reducers/appNotification';
@@ -36,10 +36,11 @@ export class TrailStore {
   private _recent: Array<SceneObjectRef<DataTrail>> = [];
   private _bookmarks: DataTrailBookmark[] = [];
   private _save: () => void;
+  private _lastModified: number;
 
   constructor() {
     this.load();
-
+    this._lastModified = Date.now();
     const doSave = () => {
       const serializedRecent = this._recent
         .slice(0, MAX_RECENT_TRAILS)
@@ -47,6 +48,7 @@ export class TrailStore {
       localStorage.setItem(RECENT_TRAILS_KEY, JSON.stringify(serializedRecent));
 
       localStorage.setItem(TRAIL_BOOKMARKS_KEY, JSON.stringify(this._bookmarks));
+      this._lastModified = Date.now();
     };
 
     this._save = debounce(doSave, 1000);
@@ -120,7 +122,7 @@ export class TrailStore {
     const history = trail.state.history.state.steps.map((step) => {
       const stepTrail = new DataTrail(sceneUtils.cloneSceneObjectState(step.trailState));
       return {
-        urlValues: getUrlSyncManager().getUrlState(stepTrail),
+        urlValues: sceneUtils.getUrlState(stepTrail),
         type: step.type,
         description: step.description,
         parentIndex: step.parentIndex,
@@ -168,10 +170,16 @@ export class TrailStore {
     return this._recent;
   }
 
+  // Last updated metric
+  get lastModified() {
+    return this._lastModified;
+  }
+
   load() {
     this._recent = this._loadRecentTrailsFromStorage();
     this._bookmarks = this._loadBookmarksFromStorage();
     this._refreshBookmarkIndexMap();
+    this._lastModified = Date.now();
   }
 
   setRecentTrail(recentTrail: DataTrail) {
@@ -203,7 +211,7 @@ export class TrailStore {
   }
 
   addBookmark(trail: DataTrail) {
-    const urlState = getUrlSyncManager().getUrlState(trail);
+    const urlState = sceneUtils.getUrlState(trail);
 
     const bookmarkState: DataTrailBookmark = {
       urlValues: urlState,
@@ -243,7 +251,7 @@ export class TrailStore {
 }
 
 function getUrlStateForComparison(trail: DataTrail) {
-  const urlState = getUrlSyncManager().getUrlState(trail);
+  const urlState = sceneUtils.getUrlState(trail);
   // Make a few corrections
   correctUrlStateForComparison(urlState);
 

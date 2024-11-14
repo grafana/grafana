@@ -32,11 +32,15 @@ package slugify
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/google/uuid"
+	// can ignore because we don't need a cryptographically secure hash function
+	// sha1 low chance of collisions and better performance than sha256
+	// nolint:gosec
+	"crypto/sha1"
 )
 
 var (
@@ -52,7 +56,9 @@ var (
 func Slugify(value string) string {
 	s := simpleSlugger.Slugify(strings.TrimSpace(value))
 	if len(s) > 50 || s == "" {
-		s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
+		h := sha1.New()
+		h.Write([]byte(s))
+		s = hex.EncodeToString(h.Sum(nil))[:7]
 	}
 
 	return s

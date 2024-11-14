@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -787,7 +790,6 @@ func Test_PluginsSettings(t *testing.T) {
 		Info: plugins.Info{
 			Version: "1.0.0",
 		}}, plugins.ClassExternal, plugins.NewFakeFS())
-
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
 			p1.ID: p1,
@@ -817,6 +819,7 @@ func Test_PluginsSettings(t *testing.T) {
 					Version: "1.0.0",
 				},
 				SecureJsonFields: map[string]bool{},
+				LoadingStrategy:  plugins.LoadingStrategyScript,
 			},
 		},
 		{
@@ -841,6 +844,10 @@ func Test_PluginsSettings(t *testing.T) {
 						ErrorCode: tc.errCode,
 					})
 				}
+				pCfg := &config.PluginManagementCfg{}
+				pluginCDN := pluginscdn.ProvideService(pCfg)
+				sig := signature.ProvideService(pCfg, statickey.New())
+				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())

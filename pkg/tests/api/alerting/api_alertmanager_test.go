@@ -790,7 +790,13 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"namespace_uid": %q,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
-								"exec_err_state": "Alerting"
+								"exec_err_state": "Alerting",
+								"metadata": {
+									"editor_settings": {
+										"simplified_query_and_expressions_section": false,
+										"simplified_notifications_section": false
+									}
+								}
 							}
 						}
 					]
@@ -1268,7 +1274,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
+							  }
+						  }
 					   }
 					},
 					{
@@ -1304,7 +1316,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
+							  }
+						  }
 					   }
 					}
 				 ]
@@ -1612,7 +1630,13 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"Alerting"
+		                  "exec_err_state":"Alerting",
+						  "metadata": {
+						      "editor_settings": {
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
+							  }
+						  }
 		               }
 		            }
 		         ]
@@ -1721,8 +1745,14 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
-				       }
+					  "exec_err_state":"Alerting",
+					  "metadata": {
+				        "editor_settings": {
+					      "simplified_query_and_expressions_section": false,
+						  "simplified_notifications_section": false
+					    }
+					   }
+				      }
 				    }
 				 ]
 			      }
@@ -1809,8 +1839,14 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
-				       }
+					  "exec_err_state":"Alerting",
+					  "metadata": {
+				        "editor_settings": {
+					      "simplified_query_and_expressions_section": false,
+						  "simplified_notifications_section": false
+					    }
+					   }
+				      }
 				    }
 				 ]
 			      }
@@ -2336,8 +2372,14 @@ func TestIntegrationQuota(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
-					       }
+						  "exec_err_state":"Alerting",
+						  "metadata": {
+						    "editor_settings": {
+							  "simplified_query_and_expressions_section": false,
+							  "simplified_notifications_section": false
+							 }
+						   }
+					      }
 					    }
 					 ]
 				      }
@@ -2656,17 +2698,17 @@ func rulesNamespaceWithoutVariableValues(t *testing.T, b []byte) (string, map[st
 	return string(json), m
 }
 
-func createUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

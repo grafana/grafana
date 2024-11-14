@@ -65,12 +65,12 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
   return (
     <>
       <p>
-        <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
+        <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel</Trans>
       </p>
       <Field>
         <Stack gap={1} alignItems="start">
           <Switch
-            label={t('share-modal.embed.time-range', 'Time range')}
+            label={t('share-modal.embed.time-range', 'Lock time range')}
             id="share-current-time-range"
             value={useCurrentTimeRange}
             onChange={onUseCurrentTimeRangeChange}
@@ -81,7 +81,7 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
               'Change the current relative time range to an absolute time range'
             )}
           >
-            <Trans i18nKey="embed.share.time-range-label">Time range</Trans>
+            <Trans i18nKey="embed.share.time-range-label">Lock time range</Trans>
           </Label>
         </Stack>
       </Field>
@@ -90,7 +90,7 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
         label={t('share-modal.embed.html', 'Embed HTML')}
         description={t(
           'share-modal.embed.html-description',
-          'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.'
+          'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into Grafana for the graph to load.'
         )}
       >
         <TextArea

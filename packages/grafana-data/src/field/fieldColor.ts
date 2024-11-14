@@ -218,7 +218,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
       }
     } else if (this.useSeriesName) {
       return (_: number, _percent: number, _threshold?: Threshold) => {
-        return colors[Math.abs(stringHash(field.name)) % colors.length];
+        return colors[Math.abs(stringHash(field.state?.displayName ?? field.name)) % colors.length];
       };
     } else {
       return (_: number, _percent: number, _threshold?: Threshold) => {

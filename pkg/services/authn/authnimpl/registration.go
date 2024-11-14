@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/gcomsso"
@@ -16,10 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +32,7 @@ type Registration struct{}
 func ProvideRegistration(
 	cfg *setting.Cfg, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
-	accessControlService accesscontrol.Service,
+	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService, userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
@@ -37,7 +40,7 @@ func ProvideRegistration(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
-	tracer tracing.Tracer,
+	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -77,6 +80,11 @@ func ProvideRegistration(
 		}
 	}
 
+	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
+		authnSvc.RegisterClient(passwordless)
+	}
+
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {
 		proxy, err := clients.ProvideProxy(cfg, cache, proxyClients...)
 		if err != nil {
@@ -109,7 +117,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
-	rbacSync := sync.ProvideRBACSync(accessControlService, tracer)
+	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)
 	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
 		authnSvc.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 		authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
@@ -118,5 +126,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 
+	nsSync := sync.ProvideNamespaceSync(cfg)
+	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
 	return Registration{}
 }

@@ -145,23 +145,43 @@ export const PublicDashboardListTable = () => {
         {!isLoading && !isError && !!paginatedPublicDashboards && (
           <div>
             {paginatedPublicDashboards.publicDashboards.length === 0 ? (
-              <EmptyState
-                variant="call-to-action"
-                message={t(
-                  'public-dashboard-list.empty-state.message',
-                  "You haven't created any public dashboards yet"
-                )}
-              >
-                <Trans i18nKey="public-dashboard-list.empty-state.more-info">
-                  Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
-                  <TextLink
-                    external
-                    href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
-                  >
-                    Learn more
-                  </TextLink>
-                </Trans>
-              </EmptyState>
+              config.featureToggles.newDashboardSharingComponent ? (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'shared-dashboard-list.empty-state.message',
+                    "You haven't created any shared dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="shared-dashboard-list.empty-state.more-info">
+                    Create a shared dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/shared-dashboards"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              ) : (
+                <EmptyState
+                  variant="call-to-action"
+                  message={t(
+                    'public-dashboard-list.empty-state.message',
+                    "You haven't created any public dashboards yet"
+                  )}
+                >
+                  <Trans i18nKey="public-dashboard-list.empty-state.more-info">
+                    Create a public dashboard from any existing dashboard through the <b>Share</b> modal.{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/#make-a-dashboard-public"
+                    >
+                      Learn more
+                    </TextLink>
+                  </Trans>
+                </EmptyState>
+              )
             ) : (
               <>
                 <ul className={styles.list}>
@@ -189,46 +209,46 @@ export const PublicDashboardListTable = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  list: css`
-    list-style-type: none;
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  card: css`
-    ${theme.breakpoints.up('sm')} {
-      display: flex;
-    }
-  `,
-  heading: css`
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-    flex: 1;
-  `,
-  orphanedTitle: css`
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(1)};
-  `,
-  actions: css`
-    display: flex;
-    align-items: center;
-    position: relative;
+  list: css({
+    listStyleType: 'none',
+    marginBottom: theme.spacing(2),
+  }),
+  card: css({
+    [theme.breakpoints.up('sm')]: {
+      display: 'flex',
+    },
+  }),
+  heading: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    flex: 1,
+  }),
+  orphanedTitle: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  }),
+  actions: css({
+    display: 'flex',
+    alignItems: 'center',
+    position: 'relative',
 
-    gap: ${theme.spacing(0.5)};
-    ${theme.breakpoints.up('sm')} {
-      gap: ${theme.spacing(1)};
-    }
-  `,
-  pauseSwitch: css`
-    display: flex;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    margin-bottom: 0;
-    flex: 1;
+    gap: theme.spacing(0.5),
+    [theme.breakpoints.up('sm')]: {
+      gap: theme.spacing(1),
+    },
+  }),
+  pauseSwitch: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    fontSize: theme.typography.bodySmall.fontSize,
+    marginBottom: 0,
+    flex: 1,
 
-    ${theme.breakpoints.up('sm')} {
-      padding-right: ${theme.spacing(2)};
-    }
-  `,
+    [theme.breakpoints.up('sm')]: {
+      paddingRight: theme.spacing(2),
+    },
+  }),
 });

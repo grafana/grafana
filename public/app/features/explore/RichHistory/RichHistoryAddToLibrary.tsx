@@ -3,8 +3,12 @@ import { useState } from 'react';
 
 import { DataQuery } from '@grafana/schema';
 import { Button, Modal } from '@grafana/ui';
-import { isQueryLibraryEnabled } from 'app/features/query-library';
+import { isQueryLibraryEnabled, useAllQueryTemplatesQuery } from 'app/features/query-library';
 
+import {
+  queryLibraryTrackAddFromQueryHistory,
+  queryLibraryTrackAddFromQueryHistoryAddModalShown,
+} from '../QueryLibrary/QueryLibraryAnalyticsEvents';
 import { QueryTemplateForm } from '../QueryLibrary/QueryTemplateForm';
 
 type Props = {
@@ -12,6 +16,7 @@ type Props = {
 };
 
 export const RichHistoryAddToLibrary = ({ query }: Props) => {
+  const { refetch } = useAllQueryTemplatesQuery();
   const [isOpen, setIsOpen] = useState(false);
   const [hasBeenSaved, setHasBeenSaved] = useState(false);
 
@@ -19,7 +24,14 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
 
   return isQueryLibraryEnabled() && !hasBeenSaved ? (
     <>
-      <Button variant="secondary" aria-label={buttonLabel} onClick={() => setIsOpen(true)}>
+      <Button
+        variant="secondary"
+        aria-label={buttonLabel}
+        onClick={() => {
+          setIsOpen(true);
+          queryLibraryTrackAddFromQueryHistoryAddModalShown();
+        }}
+      >
         {buttonLabel}
       </Button>
       <Modal
@@ -34,6 +46,8 @@ export const RichHistoryAddToLibrary = ({ query }: Props) => {
             if (isSuccess) {
               setIsOpen(false);
               setHasBeenSaved(true);
+              refetch();
+              queryLibraryTrackAddFromQueryHistory(query.datasource?.type || '');
             }
           }}
         />

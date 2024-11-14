@@ -34,6 +34,7 @@ export const AlertRuleNameAndMetric = () => {
   const isGrafanaRecordingRule = isGrafanaRecordingRuleByType(ruleFormType);
   const isCloudRecordingRule = isCloudRecordingRuleByType(ruleFormType);
   const recordingLabel = isGrafanaRecordingRule ? 'recording rule and metric' : 'recording rule';
+  const namePlaceholder = isRecording ? 'recording rule' : 'alert rule';
   const entityName = isRecording ? recordingLabel : 'alert rule';
   return (
     <RuleEditorSection
@@ -58,7 +59,7 @@ export const AlertRuleNameAndMetric = () => {
                 : undefined,
             })}
             aria-label="name"
-            placeholder={`Give your ${entityName} a name`}
+            placeholder={`Give your ${namePlaceholder} a name`}
           />
         </Field>
         {isGrafanaRecordingRule && (
@@ -71,7 +72,7 @@ export const AlertRuleNameAndMetric = () => {
                 pattern: recordingRuleNameValidationPattern(RuleFormType.grafanaRecording),
               })}
               aria-label="metric"
-              placeholder={`Give your metric a name`}
+              placeholder={`Give the name of the new recorded metric`}
             />
           </Field>
         )}

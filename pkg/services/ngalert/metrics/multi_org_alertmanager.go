@@ -22,7 +22,7 @@ type MultiOrgAlertmanager struct {
 }
 
 func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
-	registries := metrics.NewTenantRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) //TODO: Should this be here? Probably not.
+	registries := metrics.NewTenantRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) // TODO: Should this be here? Probably not.
 	moa := &MultiOrgAlertmanager{
 		Registerer: r,
 		registries: registries,
@@ -120,6 +120,7 @@ type AlertmanagerAggregatedMetrics struct {
 	objectMatchers *prometheus.Desc
 
 	configHash *prometheus.Desc
+	configSize *prometheus.Desc
 }
 
 func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *AlertmanagerAggregatedMetrics {
@@ -265,6 +266,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			fmt.Sprintf("%s_%s_alertmanager_config_hash", Namespace, Subsystem),
 			"The hash of the Alertmanager configuration.",
 			[]string{"org"}, nil),
+
+		configSize: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_config_size_bytes", Namespace, Subsystem),
+			"The size of the grafana alertmanager configuration in bytes",
+			[]string{"org"}, nil),
 	}
 
 	return aggregatedMetrics
@@ -311,6 +317,7 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 	out <- a.objectMatchers
 
 	out <- a.configHash
+	out <- a.configSize
 }
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
@@ -356,4 +363,5 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfGauges(out, a.objectMatchers, "alertmanager_config_object_matchers")
 
 	data.SendMaxOfGaugesPerTenant(out, a.configHash, "alertmanager_config_hash")
+	data.SendMaxOfGaugesPerTenant(out, a.configSize, "alertmanager_config_size_bytes")
 }

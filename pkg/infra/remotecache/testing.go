@@ -15,7 +15,7 @@ import (
 func NewFakeStore(t *testing.T) *RemoteCache {
 	t.Helper()
 
-	opts := &setting.RemoteCacheOptions{
+	opts := &setting.RemoteCacheSettings{
 		Name:    "database",
 		ConnStr: "",
 	}

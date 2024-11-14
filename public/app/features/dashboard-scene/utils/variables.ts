@@ -1,5 +1,5 @@
 import { TypedVariableModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -17,6 +17,8 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
+
+const DEFAULT_DATASOURCE = 'default';
 
 export function createVariablesForDashboard(oldModel: DashboardModel) {
   const variableObjects = oldModel.templating.list
@@ -56,6 +58,10 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
+            layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+            supportsMultiValueOperators: Boolean(
+              getDataSourceSrv().getInstanceSettings(v.datasource)?.meta.multiValueFilterOperators
+            ),
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -133,6 +139,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       baseFilters: variable.baseFilters ?? [],
       defaultKeys: variable.defaultKeys,
       useQueriesAsFilterForOptions: true,
+      layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      supportsMultiValueOperators: Boolean(
+        getDataSourceSrv().getInstanceSettings(variable.datasource)?.meta.multiValueFilterOperators
+      ),
     });
   }
   if (variable.type === 'custom') {
@@ -181,6 +191,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       isMulti: variable.multi,
       hide: variable.hide,
+      defaultOptionEnabled: variable.current?.value === DEFAULT_DATASOURCE && variable.current?.text === 'default',
     });
   } else if (variable.type === 'interval') {
     const intervals = getIntervalsFromQueryString(variable.query);

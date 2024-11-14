@@ -401,6 +401,12 @@ func (c contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsonite
 		desc.Decoder = codec
 		desc.Encoder = codec
 	}
+	if structDescriptor.Type == reflect2.TypeOf(definitions.MqttIntegration{}) {
+		codec := &numberAsStringCodec{ignoreError: true}
+		desc := structDescriptor.GetField("QoS")
+		desc.Decoder = codec
+		desc.Encoder = codec
+	}
 }
 
 type emailAddressCodec struct{}

@@ -36,5 +36,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     flex: 1,
     padding: theme.spacing(1),
+    lineHeight: 1,
   }),
 });

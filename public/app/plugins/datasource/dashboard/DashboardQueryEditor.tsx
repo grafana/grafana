@@ -23,9 +23,11 @@ function getQueryDisplayText(query: DataQuery): string {
 
 function isPanelInEdit(panelId: number, panelInEditId?: number) {
   let idToCompareWith = panelInEditId;
+
   if (window.__grafanaSceneContext && window.__grafanaSceneContext instanceof DashboardScene) {
-    idToCompareWith = window.__grafanaSceneContext.state.editPanel?.state.panelId;
+    idToCompareWith = window.__grafanaSceneContext.state.editPanel?.getPanelId();
   }
+
   return panelId === idToCompareWith;
 }
 

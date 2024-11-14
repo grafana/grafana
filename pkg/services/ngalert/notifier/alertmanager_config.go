@@ -2,16 +2,19 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -47,6 +50,44 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 
 type configurationStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+}
+
+func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
+
+	orgAM, err := moa.alertmanagerForOrg(orgId)
+	if err != nil {
+		return err
+	}
+
+	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
+
+	err = orgAM.SaveAndApplyDefaultConfig(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			defaultedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
+			if err != nil {
+				return err
+			}
+			newReceiverNames, err := extractReceiverNames(defaultedConfig.AlertmanagerConfiguration)
+			if err != nil {
+				return err
+			}
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
+	}
+
+	return nil
 }
 
 // ApplyConfig will apply the given alertmanager configuration for a given org.
@@ -114,11 +155,28 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 		}
 	}
 
+	previousConfig, cleanPermissionsErr := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
+
 	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
 		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
 	moa.logger.Info("Applied historical alertmanager configuration", "org", orgId, "id", id)
+
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames, err := extractReceiverNames(config.AlertmanagerConfiguration)
+			if err != nil {
+				return err
+			}
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
+	}
 
 	return nil
 }
@@ -215,13 +273,14 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 
 	// Get the last known working configuration
-	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
+	previousConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration %w", err)
 		}
 	}
+	cleanPermissionsErr := err
 
 	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
@@ -250,6 +309,21 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 			return ErrAlertmanagerTimeIntervalInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Interval": errTimeIntervalDoesNotExist.Reference}, Error: err})
 		}
 		return AlertmanagerConfigRejectedError{err}
+	}
+
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
+			for _, r := range config.AlertmanagerConfig.Receivers {
+				newReceiverNames.Insert(r.Name)
+			}
+			return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
 	return nil
@@ -335,4 +409,52 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	}
 
 	return config, nil
+}
+
+// cleanPermissions will remove permissions for receivers that are no longer defined in the new configuration and
+// set default permissions for new receivers.
+func (moa *MultiOrgAlertmanager) cleanPermissions(ctx context.Context, orgID int64, previousConfig *models.AlertConfiguration, newReceiverNames sets.Set[string]) error {
+	previousReceiverNames, err := extractReceiverNames(previousConfig.AlertmanagerConfiguration)
+	if err != nil {
+		return fmt.Errorf("failed to extract receiver names from previous configuration: %w", err)
+	}
+
+	var errs []error
+	for receiverName := range previousReceiverNames.Difference(newReceiverNames) { // Deleted receivers.
+		if err := moa.receiverResourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(receiverName)); err != nil {
+			errs = append(errs, fmt.Errorf("failed to delete permissions for receiver %s: %w", receiverName, err))
+		}
+	}
+
+	for receiverName := range newReceiverNames.Difference(previousReceiverNames) { // Added receivers.
+		moa.receiverResourcePermissions.SetDefaultPermissions(ctx, orgID, nil, legacy_storage.NameToUid(receiverName))
+	}
+
+	return errors.Join(errs...)
+}
+
+// extractReceiverNames extracts receiver names from the raw Alertmanager configuration. Unmarshalling ignores fields
+// unrelated to receiver names, making it more resilient to invalid configurations.
+func extractReceiverNames(rawConfig string) (sets.Set[string], error) {
+	// Slimmed down version of the Alertmanager configuration to extract receiver names. This is more resilient to
+	// invalid configurations when all we are interested in is the receiver names.
+	type receiverUserConfig struct {
+		AlertmanagerConfig struct {
+			Receivers []struct {
+				Name string `yaml:"name" json:"name"`
+			} `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+		} `yaml:"alertmanager_config" json:"alertmanager_config"`
+	}
+
+	cfg := &receiverUserConfig{}
+	if err := json.Unmarshal([]byte(rawConfig), cfg); err != nil {
+		return nil, fmt.Errorf("unable to parse Alertmanager configuration: %w", err)
+	}
+
+	receiverNames := make(sets.Set[string], len(cfg.AlertmanagerConfig.Receivers))
+	for _, r := range cfg.AlertmanagerConfig.Receivers {
+		receiverNames[r.Name] = struct{}{}
+	}
+
+	return receiverNames, nil
 }

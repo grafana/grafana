@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -87,65 +88,62 @@ type DualWriterMode int
 
 const (
 	// Mode0 represents writing to and reading from solely LegacyStorage. This mode is enabled when the
-	// `unifiedStorage` feature flag is not set. All reads and writes are made to LegacyStorage. None are made to Storage.
+	// Unified Storage is disabled. All reads and writes are made to LegacyStorage. None are made to Storage.
 	Mode0 DualWriterMode = iota
 	// Mode1 represents writing to and reading from LegacyStorage for all primary functionality while additionally
 	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+	// The objects written to storage will include any labels and annotations.
+	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
+	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
 	Mode3
 	// Mode4 represents writing and reading from Storage.
+	// NOTE: Requesting mode4 will only happen when after a background sync job succeeds
 	Mode4
+	// Mode5 uses storage regardless of the background sync state
+	Mode5
 )
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
 // NewDualWriter returns a new DualWriter.
-func NewDualWriter(mode DualWriterMode, legacy LegacyStorage, storage Storage, reg prometheus.Registerer, kind string) DualWriter {
+func NewDualWriter(
+	mode DualWriterMode,
+	legacy LegacyStorage,
+	storage Storage,
+	reg prometheus.Registerer,
+	resource string,
+) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
-	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-	// writing to legacy storage without `unifiedStorage` enabled.
+	case Mode0:
+		return legacy
 	case Mode1:
 		// read and write only from legacy storage
-		return newDualWriterMode1(legacy, storage, metrics, kind)
+		return newDualWriterMode1(legacy, storage, metrics, resource)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
-		return newDualWriterMode2(legacy, storage, metrics, kind)
+		return newDualWriterMode2(legacy, storage, metrics, resource)
 	case Mode3:
 		// write to both, read from storage only
-		return newDualWriterMode3(legacy, storage, metrics, kind)
-	case Mode4:
-		// read and write only from storage
-		return newDualWriterMode4(legacy, storage, metrics, kind)
+		return newDualWriterMode3(legacy, storage, metrics, resource)
+	case Mode4, Mode5:
+		return storage
 	default:
-		return newDualWriterMode1(legacy, storage, metrics, kind)
+		return newDualWriterMode1(legacy, storage, metrics, resource)
 	}
-}
-
-type updateWrapper struct {
-	upstream rest.UpdatedObjectInfo
-	updated  runtime.Object
-}
-
-// Returns preconditions built from the updated object, if applicable.
-// May return nil, or a preconditions object containing nil fields,
-// if no preconditions can be determined from the updated object.
-func (u *updateWrapper) Preconditions() *metav1.Preconditions {
-	return u.upstream.Preconditions()
-}
-
-// UpdatedObject returns the updated object, given a context and old object.
-// The only time an empty oldObj should be passed in is if a "create on update" is occurring (there is no oldObj).
-func (u *updateWrapper) UpdatedObject(ctx context.Context, oldObj runtime.Object) (newObj runtime.Object, err error) {
-	return u.updated, nil
 }
 
 type NamespacedKVStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
 	Set(ctx context.Context, key, value string) error
+}
+
+type ServerLockService interface {
+	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
 }
 
 func SetDualWritingMode(
@@ -156,6 +154,8 @@ func SetDualWritingMode(
 	entity string,
 	desiredMode DualWriterMode,
 	reg prometheus.Registerer,
+	serverLockService ServerLockService,
+	requestInfo *request.RequestInfo,
 ) (DualWriterMode, error) {
 	// Mode0 means no DualWriter
 	if desiredMode == Mode0 {
@@ -164,11 +164,12 @@ func SetDualWritingMode(
 
 	toMode := map[string]DualWriterMode{
 		// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-		// writing to legacy storage without `unifiedStorage` enabled.
+		// writing to legacy storage without Unified Storage enabled.
 		"1": Mode1,
 		"2": Mode2,
 		"3": Mode3,
 		"4": Mode4,
+		"5": Mode5,
 	}
 	errDualWriterSetCurrentMode := errors.New("failed to set current dual writing mode")
 
@@ -182,7 +183,7 @@ func SetDualWritingMode(
 
 	if !valid && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Info("invalid dual writing mode for playlists mode:", m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", entity, m)
 	}
 
 	if !valid || !ok {
@@ -195,30 +196,38 @@ func SetDualWritingMode(
 		}
 	}
 
-	// Desired mode is 2 and current mode is 1
-	if (desiredMode == Mode2) && (currentMode == Mode1) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 1 to mode 2.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode2
-
+	switch {
+	case desiredMode == Mode2 || desiredMode == Mode1:
+		currentMode = desiredMode
 		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
 			return Mode0, errDualWriterSetCurrentMode
 		}
-	}
-	if (desiredMode == Mode1) && (currentMode == Mode2) {
-		// This is where we go through the different gates to allow the instance to migrate from mode 2 to mode 1.
-		// There are none between mode 1 and mode 2
-		currentMode = Mode1
+	case desiredMode >= Mode3 && currentMode < Mode3:
+		syncOk, err := runDataSyncer(ctx, currentMode, legacy, storage, entity, reg, serverLockService, requestInfo)
+		if err != nil {
+			klog.Info("data syncer failed for mode:", m)
+			return currentMode, err
+		}
+		if !syncOk {
+			klog.Info("data syncer not ok for mode:", m)
+			return currentMode, nil
+		}
 
+		err = kvs.Set(ctx, entity, fmt.Sprint(desiredMode))
+		if err != nil {
+			return currentMode, errDualWriterSetCurrentMode
+		}
+		return desiredMode, nil
+	case desiredMode >= Mode3 && currentMode >= Mode3:
+		currentMode = desiredMode
 		err := kvs.Set(ctx, entity, fmt.Sprint(currentMode))
 		if err != nil {
-			return Mode0, errDualWriterSetCurrentMode
+			return currentMode, errDualWriterSetCurrentMode
 		}
+	default:
+		return Mode0, errDualWriterSetCurrentMode
 	}
-
-	// 	#TODO add support for other combinations of desired and current modes
-
 	return currentMode, nil
 }
 
@@ -229,20 +238,18 @@ func Compare(storageObj, legacyObj runtime.Object) bool {
 	if storageObj == nil || legacyObj == nil {
 		return storageObj == nil && legacyObj == nil
 	}
-	return bytes.Equal(removeMeta(storageObj), removeMeta(legacyObj))
+	return bytes.Equal(extractSpec(storageObj), extractSpec(legacyObj))
 }
 
-func removeMeta(obj runtime.Object) []byte {
+func extractSpec(obj runtime.Object) []byte {
 	cpy := obj.DeepCopyObject()
 	unstObj, err := defaultConverter.ToUnstructured(cpy)
 	if err != nil {
 		return nil
 	}
-	// we don't want to compare meta fields
-	delete(unstObj, "metadata")
-	delete(unstObj, "objectMeta")
 
-	jsonObj, err := json.Marshal(unstObj)
+	// we just want to compare the spec field
+	jsonObj, err := json.Marshal(unstObj["spec"])
 	if err != nil {
 		return nil
 	}

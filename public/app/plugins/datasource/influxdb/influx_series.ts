@@ -3,14 +3,22 @@ import { each, map, includes, flatten, keys } from 'lodash';
 import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
 
+import { InfluxQuery } from './types';
+
 export default class InfluxSeries {
   refId?: string;
   series: any;
-  alias: any;
-  annotation: any;
+  alias?: string;
+  annotation?: InfluxQuery;
   meta?: QueryResultMeta;
 
-  constructor(options: { series: any; alias?: any; annotation?: any; meta?: QueryResultMeta; refId?: string }) {
+  constructor(options: {
+    series: any;
+    alias?: string;
+    annotation?: InfluxQuery;
+    meta?: QueryResultMeta;
+    refId?: string;
+  }) {
     this.series = options.series;
     this.alias = options.alias;
     this.annotation = options.annotation;
@@ -70,7 +78,7 @@ export default class InfluxSeries {
     const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
-    return this.alias.replace(regex, (match: any, g1: any, g2: any) => {
+    return this.alias?.replace(regex, (match, g1, g2) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
@@ -102,7 +110,7 @@ export default class InfluxSeries {
       let titleCol: any = null;
       let timeCol: any = null;
       let timeEndCol: any = null;
-      const tagsCol: any = [];
+      const tagsCol: string[] = [];
       let textCol: any = null;
 
       each(series.columns, (column, index) => {
@@ -113,19 +121,19 @@ export default class InfluxSeries {
         if (column === 'sequence_number') {
           return;
         }
-        if (column === this.annotation.titleColumn) {
+        if (column === this.annotation?.titleColumn) {
           titleCol = index;
           return;
         }
-        if (includes((this.annotation.tagsColumn || '').replace(' ', '').split(','), column)) {
+        if (includes((this.annotation?.tagsColumn || '').replace(' ', '').split(','), column)) {
           tagsCol.push(index);
           return;
         }
-        if (column === this.annotation.textColumn) {
+        if (column === this.annotation?.textColumn) {
           textCol = index;
           return;
         }
-        if (column === this.annotation.timeEndColumn) {
+        if (column === this.annotation?.timeEndColumn) {
           timeEndCol = index;
           return;
         }
@@ -144,10 +152,10 @@ export default class InfluxSeries {
           // Remove empty values, then split in different tags for comma separated values
           tags: flatten(
             tagsCol
-              .filter((t: any) => {
+              .filter((t) => {
                 return value[t];
               })
-              .map((t: any) => {
+              .map((t) => {
                 return value[t].split(',');
               })
           ),

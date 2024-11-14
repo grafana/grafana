@@ -28,6 +28,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
     variable.setState({
       datasource: dsRef,
+      supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
     });
   };
 

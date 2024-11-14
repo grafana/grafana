@@ -297,6 +297,11 @@ describe('datasource_srv', () => {
       expect(list[2].name).toBe('${datasource}');
     });
 
+    it('Should filter out the -- Grafana -- datasource', () => {
+      const list = dataSourceSrv.getList({ filter: (x) => x.name !== '-- Grafana --' });
+      expect(list.find((x) => x.name === '-- Grafana --')).toBeUndefined();
+    });
+
     it('Can get list of data sources with tracing: true', () => {
       const list = dataSourceSrv.getList({ tracing: true });
       expect(list[0].name).toBe('Jaeger');

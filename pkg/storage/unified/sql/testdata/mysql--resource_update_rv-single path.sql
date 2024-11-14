@@ -1,4 +1,4 @@
-UPDATE "resource"
-    SET "resource_version" = 0
-    WHERE  "guid" = ''
+UPDATE `resource`
+    SET `resource_version` = 0
+    WHERE  `guid` = ''
 ;

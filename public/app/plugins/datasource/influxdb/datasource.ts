@@ -324,11 +324,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel, query?: string) {
-    // If there is no query just return the value directly
-    if (!query) {
-      return value;
-    }
-
     if (typeof value === 'string') {
       // Check the value is a number. If not run to escape special characters
       if (!isNaN(parseFloat(value))) {
@@ -358,7 +353,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // regex below checks if the variable inside /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (regex.test(query)) {
+    if (query && regex.test(query)) {
       if (typeof value === 'string') {
         return escapeRegex(value);
       }
@@ -551,7 +546,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return getBackendSrv()
       .fetch(req)
       .pipe(
-        map((result: any) => {
+        map((result: FetchResponse) => {
           const { data } = result;
           if (data) {
             data.executedQueryString = q;

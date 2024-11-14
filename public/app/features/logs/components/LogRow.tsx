@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
-import { MouseEvent, PureComponent } from 'react';
+import { MouseEvent, PureComponent, ReactNode } from 'react';
 
 import {
   CoreApp,
@@ -65,6 +65,8 @@ interface Props extends Themeable2 {
   pinned?: boolean;
   containerRendered?: boolean;
   handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 interface State {
@@ -149,9 +151,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   onMouseLeave = () => {
     this.setState({ mouseIsOver: false });
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(undefined);
-    }
   };
 
   componentDidMount() {
@@ -213,6 +212,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       styles,
       getRowContextQuery,
       pinned,
+      logRowMenuIconsBefore,
+      logRowMenuIconsAfter,
     } = this.props;
 
     const { showDetails, showingContext, permalinked } = this.state;
@@ -317,6 +318,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
               expanded={this.state.showDetails}
+              logRowMenuIconsBefore={logRowMenuIconsBefore}
+              logRowMenuIconsAfter={logRowMenuIconsAfter}
             />
           )}
         </tr>

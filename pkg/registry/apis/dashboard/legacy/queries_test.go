@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
-func TestQueries(t *testing.T) {
+func TestDashboardQueries(t *testing.T) {
 	// prefix tables with grafana
 	nodb := &legacysql.LegacyDatabaseHelper{
 		Table: func(n string) string {
@@ -19,6 +19,12 @@ func TestQueries(t *testing.T) {
 
 	getQuery := func(q *DashboardQuery) sqltemplate.SQLTemplate {
 		v := newQueryReq(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	getLibraryQuery := func(q *LibraryPanelQuery) sqltemplate.SQLTemplate {
+		v := newLibraryQueryReq(nodb, q)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
 		return &v
 	}
@@ -61,6 +67,29 @@ func TestQueries(t *testing.T) {
 					Data: getQuery(&DashboardQuery{
 						OrgID:  2,
 						LastID: 22,
+					}),
+				},
+			},
+			sqlQueryPanels: {
+				{
+					Name: "list",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID: 1,
+						Limit: 5,
+					}),
+				},
+				{
+					Name: "list_page_two",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID:  1,
+						LastID: 4,
+					}),
+				},
+				{
+					Name: "get_uid",
+					Data: getLibraryQuery(&LibraryPanelQuery{
+						OrgID: 1,
+						UID:   "xyz",
 					}),
 				},
 			},

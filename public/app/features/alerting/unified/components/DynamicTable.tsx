@@ -43,7 +43,6 @@ export interface DynamicTableProps<T = unknown> {
   onCollapse?: (item: DynamicTableItemProps<T>) => void;
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
-
   renderExpandedContent?: (
     item: DynamicTableItemProps<T>,
     index: number,

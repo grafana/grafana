@@ -1,9 +1,15 @@
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
+import {
+  PromAlertingRuleState,
+  PromRuleGroupDTO,
+  PromRulesResponse,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
@@ -88,6 +94,16 @@ export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName:
   groups.forEach((group) => {
     group.rules.forEach((rule) => {
       rule.query = rule.query || '';
+      if (rule.type === PromRuleType.Alerting) {
+        // There's a possibility that a custom/unexpected datasource might response with
+        // `type: alerting` but no state
+        // In this case, we fall back to `Inactive` state so that elsewhere in the UI we don't fail/have to handle the edge case
+        // and log a message so we can identify how frequently this might be happening
+        if (!rule.state) {
+          logInfo('prom rule with type=alerting is missing a state', { dataSourceName, ruleName: rule.name });
+          rule.state = PromAlertingRuleState.Inactive;
+        }
+      }
     });
     if (!nsMap[group.file]) {
       nsMap[group.file] = {

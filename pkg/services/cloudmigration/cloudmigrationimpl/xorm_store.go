@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -23,15 +24,16 @@ type sqlStore struct {
 }
 
 const (
-	tableName       = "cloud_migration_resource"
-	secretType      = "cloudmigration-snapshot-encryption-key"
-	GetAllSnapshots = -1
+	tableName                    = "cloud_migration_resource"
+	secretType                   = "cloudmigration-snapshot-encryption-key"
+	GetAllSnapshots              = -1
+	GetSnapshotListSortingLatest = "latest"
 )
 
-func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	var cm cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", uid).Get(&cm)
+		exist, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&cm)
 		if err != nil {
 			return err
 		}
@@ -45,31 +47,15 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 	}
 
 	if err := ss.decryptToken(ctx, &cm); err != nil {
-		return &cm, err
+		return nil, fmt.Errorf("decrypting token: %w", err)
 	}
 
 	return &cm, err
 }
 
-func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		cmr.Created = time.Now()
-		cmr.Updated = time.Now()
-		cmr.Finished = time.Now()
-		cmr.UID = util.GenerateShortUID()
-
-		_, err := sess.Insert(&cmr)
-		return err
-	})
-	if err != nil {
-		return "", err
-	}
-	return cmr.UID, nil
-}
-
 func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
 	if err := ss.encryptToken(ctx, &migration); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encrypting token: %w", err)
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -89,11 +75,10 @@ func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudm
 	return &migration, nil
 }
 
-func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudmigration.CloudMigrationSession, error) {
+func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context, orgID int64) ([]*cloudmigration.CloudMigrationSession, error) {
 	var migrations = make([]*cloudmigration.CloudMigrationSession, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.OrderBy("created DESC")
-		return sess.Find(&migrations)
+		return sess.Where("org_id=?", orgID).OrderBy("created DESC").Find(&migrations)
 	})
 	if err != nil {
 		return nil, err
@@ -101,18 +86,19 @@ func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudm
 
 	for i := 0; i < len(migrations); i++ {
 		m := migrations[i]
+
 		if err := ss.decryptToken(ctx, m); err != nil {
-			return migrations, err
+			return nil, fmt.Errorf("decrypting token: %w", err)
 		}
 	}
 
 	return migrations, nil
 }
 
-func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, []cloudmigration.CloudMigrationSnapshot, error) {
 	var c cloudmigration.CloudMigrationSession
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", uid).Get(&c)
+		exist, err := sess.Where("org_id=? AND uid=?", orgID, uid).Get(&c)
 		if err != nil {
 			return err
 		}
@@ -138,11 +124,11 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 
 	err = ss.db.InTransaction(ctx, func(ctx context.Context) error {
 		for _, snapshot := range snapshots {
-			err := ss.DeleteSnapshotResources(ctx, snapshot.UID)
+			err := ss.deleteSnapshotResources(ctx, snapshot.UID)
 			if err != nil {
 				return fmt.Errorf("deleting snapshot resource from db: %w", err)
 			}
-			err = ss.DeleteSnapshot(ctx, snapshot.UID)
+			err = ss.deleteSnapshot(ctx, orgID, snapshot.UID)
 			if err != nil {
 				return fmt.Errorf("deleting snapshot from db: %w", err)
 			}
@@ -169,38 +155,10 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 	}
 
 	if err := ss.decryptToken(ctx, &c); err != nil {
-		return &c, snapshots, err
+		return nil, nil, fmt.Errorf("decrypting token: %w", err)
 	}
 
 	return &c, snapshots, nil
-}
-
-func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	var c cloudmigration.CloudMigrationSnapshot
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", cmrUID).Get(&c)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return cloudmigration.ErrMigrationRunNotFound
-		}
-		return nil
-	})
-	return &c, err
-}
-
-func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationSnapshot, error) {
-	var runs = make([]*cloudmigration.CloudMigrationSnapshot, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
-			SessionUID: migrationUID,
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-	return runs, nil
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
@@ -256,7 +214,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 
 		// Update resources if set
 		if len(update.Resources) > 0 {
-			if err := ss.CreateUpdateSnapshotResources(ctx, update.UID, update.Resources); err != nil {
+			if err := ss.createUpdateSnapshotResources(ctx, update.UID, update.Resources); err != nil {
 				return err
 			}
 		}
@@ -266,7 +224,7 @@ func (ss *sqlStore) UpdateSnapshot(ctx context.Context, update cloudmigration.Up
 	return err
 }
 
-func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) error {
+func (ss *sqlStore) deleteSnapshot(ctx context.Context, orgID int64, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cloudmigration.CloudMigrationSnapshot{
 			UID: snapshotUid,
@@ -275,9 +233,16 @@ func (ss *sqlStore) DeleteSnapshot(ctx context.Context, snapshotUid string) erro
 	})
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+	// first we check if the session exists, using orgId and sessionUid
+	session, err := ss.GetMigrationSessionByUID(ctx, orgID, sessionUid)
+	if err != nil || session == nil {
+		return nil, err
+	}
+
+	// now we get the snapshot
 	var snapshot cloudmigration.CloudMigrationSnapshot
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exist, err := sess.Where("session_uid=? AND uid=?", sessionUid, uid).Get(&snapshot)
 		if err != nil {
 			return err
@@ -299,11 +264,11 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 		snapshot.EncryptionKey = []byte(secret)
 	}
 
-	resources, err := ss.GetSnapshotResources(ctx, uid, resultPage, resultLimit)
+	resources, err := ss.getSnapshotResources(ctx, uid, resultPage, resultLimit)
 	if err == nil {
 		snapshot.Resources = resources
 	}
-	stats, err := ss.GetSnapshotResourceStats(ctx, uid)
+	stats, err := ss.getSnapshotResourceStats(ctx, uid)
 	if err == nil {
 		snapshot.StatsRollup = *stats
 	}
@@ -316,12 +281,16 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, sessionUid, uid string
 func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.ListSnapshotsQuery) ([]cloudmigration.CloudMigrationSnapshot, error) {
 	var snapshots = make([]cloudmigration.CloudMigrationSnapshot, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Join("INNER", "cloud_migration_session", "cloud_migration_session.uid = cloud_migration_snapshot.session_uid")
+		sess.Join("INNER", "cloud_migration_session",
+			"cloud_migration_session.uid = cloud_migration_snapshot.session_uid AND cloud_migration_session.org_id = ?", query.OrgID,
+		)
 		if query.Limit != GetAllSnapshots {
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
 		}
-		sess.OrderBy("created DESC")
+		if query.Sort == GetSnapshotListSortingLatest {
+			sess.OrderBy("cloud_migration_snapshot.created DESC")
+		}
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
@@ -338,7 +307,7 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			snapshot.EncryptionKey = []byte(secret)
 		}
 
-		if stats, err := ss.GetSnapshotResourceStats(ctx, snapshot.UID); err != nil {
+		if stats, err := ss.getSnapshotResourceStats(ctx, snapshot.UID); err != nil {
 			return nil, err
 		} else {
 			snapshot.StatsRollup = *stats
@@ -350,13 +319,13 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 
 // CreateUpdateSnapshotResources either updates a migration resource for a snapshot, or creates it if it does not exist
 // If the uid is not known, it uses snapshot_uid + resource_uid as a lookup
-func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
+func (ss *sqlStore) createUpdateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	return ss.db.InTransaction(ctx, func(ctx context.Context) error {
-		sql := "UPDATE cloud_migration_resource SET status=?, error_string=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
+		sql := "UPDATE cloud_migration_resource SET status=?, error_string=?, error_code=? WHERE uid=? OR (snapshot_uid=? AND resource_uid=?)"
 		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			for _, r := range resources {
 				// try an update first
-				result, err := sess.Exec(sql, r.Status, r.Error, r.UID, snapshotUid, r.RefID)
+				result, err := sess.Exec(sql, r.Status, r.Error, r.ErrorCode, r.UID, snapshotUid, r.RefID)
 				if err != nil {
 					return err
 				}
@@ -384,7 +353,7 @@ func (ss *sqlStore) CreateUpdateSnapshotResources(ctx context.Context, snapshotU
 	})
 }
 
-func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
+func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -406,7 +375,7 @@ func (ss *sqlStore) GetSnapshotResources(ctx context.Context, snapshotUid string
 	return resources, nil
 }
 
-func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error) {
+func (ss *sqlStore) getSnapshotResourceStats(ctx context.Context, snapshotUid string) (*cloudmigration.SnapshotResourceStats, error) {
 	typeCounts := make([]struct {
 		Count int    `json:"count"`
 		Type  string `json:"type"`
@@ -453,7 +422,7 @@ func (ss *sqlStore) GetSnapshotResourceStats(ctx context.Context, snapshotUid st
 	return stats, nil
 }
 
-func (ss *sqlStore) DeleteSnapshotResources(ctx context.Context, snapshotUid string) error {
+func (ss *sqlStore) deleteSnapshotResources(ctx context.Context, snapshotUid string) error {
 	return ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		_, err := sess.Delete(cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
@@ -474,16 +443,41 @@ func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 }
 
 func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
+	if cm == nil {
+		return fmt.Errorf("unable to decypt token because migration session was not found: %w", cloudmigration.ErrMigrationNotFound)
+	}
+
+	if len(cm.AuthToken) == 0 {
+		return fmt.Errorf("unable to decrypt token because token is empty: %w", cloudmigration.ErrTokenNotFound)
+	}
+
 	decoded, err := base64.StdEncoding.DecodeString(cm.AuthToken)
 	if err != nil {
-		return fmt.Errorf("token could not be decoded")
+		return fmt.Errorf("unable to base64 decode token: %w", err)
 	}
 
 	t, err := ss.secretsService.Decrypt(ctx, decoded)
 	if err != nil {
 		return fmt.Errorf("decrypting auth token: %w", err)
 	}
+
 	cm.AuthToken = string(t)
 
 	return nil
+}
+
+// TODO move this function dashboards/databases/databases.go
+func (ss *sqlStore) GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*dashboards.Dashboard, error) {
+	//ctx, span := tracer.Start(ctx, "dashboards.database.GetAllDashboardsByOrgId")
+	//defer span.End()
+
+	var dashs = make([]*dashboards.Dashboard, 0)
+	err := ss.db.WithDbSession(ctx, func(session *db.Session) error {
+		// "deleted IS NULL" is to avoid deleted dashboards
+		return session.Where("org_id = ? AND deleted IS NULL", orgID).Find(&dashs)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashs, nil
 }

@@ -24,6 +24,8 @@ import (
 var (
 	// ErrFolderNameMissing is returned when folder name is missing.
 	ErrFolderNameMissing = errors.New("folder name missing")
+	// ErrGetOrCreateFolder is returned when there is a failure to fetch or create a provisioning folder.
+	ErrGetOrCreateFolder = errors.New("failed to get or create provisioning folder")
 )
 
 // FileReader is responsible for reading dashboards from disk and
@@ -147,7 +149,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-		return err
+		return fmt.Errorf("%w with name %q: %w", ErrGetOrCreateFolder, fr.Cfg.Folder, err)
 	}
 
 	// save dashboards based on json files
@@ -177,7 +179,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 
 		folderID, folderUID, err := fr.getOrCreateFolder(ctx, fr.Cfg, fr.dashboardProvisioningService, folderName)
 		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
-			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
+			return fmt.Errorf("%w with name %q from file system structure: %w", ErrGetOrCreateFolder, folderName, err)
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, folderUID, fileInfo, dashboardRefs)
@@ -260,8 +262,11 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 			&dashboards.GetDashboardQuery{
 				OrgID:     jsonFile.dashboard.OrgID,
 				UID:       jsonFile.dashboard.Dashboard.UID,
-				Title:     &jsonFile.dashboard.Dashboard.Title,
 				FolderUID: util.Pointer(""),
+
+				// provisioning depends on unique names
+				//nolint:staticcheck
+				Title: &jsonFile.dashboard.Dashboard.Title,
 			},
 		)
 		if err != nil {
@@ -347,6 +352,8 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 	if cfg.FolderUID != "" {
 		cmd.UID = cfg.FolderUID
 	} else {
+		// provisioning depends on unique names
+		//nolint:staticcheck
 		cmd.Title = &folderName
 	}
 

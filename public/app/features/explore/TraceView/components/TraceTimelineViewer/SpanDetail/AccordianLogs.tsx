@@ -16,12 +16,12 @@ import { css } from '@emotion/css';
 import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
-import { TraceLog, TraceKeyValuePair, TraceLink } from '../../types/trace';
+import { TraceLink } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -30,34 +30,37 @@ import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    AccordianLogs: css`
-      label: AccordianLogs;
-      border: 1px solid ${autoColor(theme, '#d8d8d8')};
-      position: relative;
-      margin-bottom: 0.25rem;
-    `,
-    AccordianLogsHeader: css`
-      label: AccordianLogsHeader;
-      background: ${autoColor(theme, '#e4e4e4')};
-      color: inherit;
-      display: block;
-      padding: 0.25rem 0.5rem;
-      &:hover {
-        background: ${autoColor(theme, '#dadada')};
-      }
-    `,
-    AccordianLogsContent: css`
-      label: AccordianLogsContent;
-      background: ${autoColor(theme, '#f0f0f0')};
-      border-top: 1px solid ${autoColor(theme, '#d8d8d8')};
-      padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-    `,
-    AccordianLogsFooter: css`
-      label: AccordianLogsFooter;
-      color: ${autoColor(theme, '#999')};
-    `,
+    AccordianLogs: css({
+      label: 'AccordianLogs',
+      border: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+      position: 'relative',
+      marginBottom: '0.25rem',
+    }),
+    AccordianLogsHeader: css({
+      label: 'AccordianLogsHeader',
+      background: autoColor(theme, '#e4e4e4'),
+      color: 'inherit',
+      display: 'block',
+      padding: '0.25rem 0.5rem',
+      '&:hover': {
+        background: autoColor(theme, '#dadada'),
+      },
+    }),
+    AccordianLogsContent: css({
+      label: 'AccordianLogsContent',
+      background: autoColor(theme, '#f0f0f0'),
+      borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+      padding: '0.5rem 0.5rem 0.25rem 0.5rem',
+    }),
+    AccordianLogsFooter: css({
+      label: 'AccordianLogsFooter',
+      color: autoColor(theme, '#999'),
+    }),
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
+    }),
+    parenthesis: css({
+      color: `${autoColor(theme, '#777')}`,
     }),
   };
 };
@@ -108,22 +111,35 @@ export default function AccordianLogs({
       </HeaderComponent>
       {isOpen && (
         <div className={styles.AccordianLogsContent}>
-          {_sortBy(logs, 'timestamp').map((log, i) => (
-            <AccordianKeyValues
-              // `i` is necessary in the key because timestamps can repeat
-              key={`${log.timestamp}-${i}`}
-              className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
-              data={log.fields || []}
-              highContrast
-              interactive={interactive}
-              isOpen={openedItems ? openedItems.has(log) : false}
-              label={`${formatDuration(log.timestamp - timestamp)}`}
-              linksGetter={linksGetter}
-              onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
-            />
-          ))}
+          {_sortBy(logs, 'timestamp').map((log, i) => {
+            const formattedDuration = formatDuration(log.timestamp - timestamp);
+            const truncateLogNameInSummary = log.name && log.name.length > 20;
+            const formattedLogName = log.name && truncateLogNameInSummary ? log.name.slice(0, 20) + '...' : log.name;
+            const label = formattedLogName ? (
+              <span>
+                {formattedDuration} <span>({formattedLogName})</span>
+              </span>
+            ) : (
+              formattedDuration
+            );
+            return (
+              <AccordianKeyValues
+                // `i` is necessary in the key because timestamps can repeat
+                key={`${log.timestamp}-${i}`}
+                className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
+                data={log.fields || []}
+                logName={truncateLogNameInSummary ? log.name : undefined}
+                highContrast
+                interactive={interactive}
+                isOpen={openedItems ? openedItems.has(log) : false}
+                label={label}
+                linksGetter={linksGetter}
+                onToggle={interactive && onItemToggle ? () => onItemToggle(log) : null}
+              />
+            );
+          })}
           <small className={styles.AccordianLogsFooter}>
-            Log timestamps are relative to the start time of the full trace.
+            Event timestamps are relative to the start time of the full trace.
           </small>
         </div>
       )}
