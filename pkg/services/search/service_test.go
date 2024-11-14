@@ -71,7 +71,7 @@ func TestSearch_StarredResults(t *testing.T) {
 		&model.Hit{UID: "test3", Title: "C", Type: "dash-db"},
 	}, nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{}
-	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[string]bool{"test": true, "test2": true, "test4": true}}
+	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[string]bool{"test": true, "test3": true, "test4": true}}
 	svc := &SearchService{
 		sqlstore:         db,
 		starService:      ss,
