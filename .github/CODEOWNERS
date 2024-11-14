@@ -629,7 +629,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /pkg/services/rendering/ @grafana/sharing-squad
 
 # SSE - Server Side Expressions
-/pkg/expr/ @grafana/observability-metrics
+/pkg/expr/ @grafana/grafana-datasources-core-services
 
 # Cloud middleware
 /grafana-mixin/ @grafana/grafana-backend-services-squad
