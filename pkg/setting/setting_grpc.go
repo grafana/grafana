@@ -122,5 +122,4 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")
 	fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
 	fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
-
 }
