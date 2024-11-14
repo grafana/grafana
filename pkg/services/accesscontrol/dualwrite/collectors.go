@@ -17,7 +17,7 @@ func teamMembershipCollector(store db.DB) legacyTupleCollector {
 			FROM team_member tm
 			INNER JOIN team t ON tm.team_id = t.id
 			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON tm.user_id = u.id
-			WHERE org_id = ?
+			WHERE t.org_id = ?
 		`
 
 		type membership struct {
