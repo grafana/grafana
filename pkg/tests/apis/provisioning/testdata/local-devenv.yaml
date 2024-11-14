@@ -1,0 +1,13 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: devenv # anything is ok here... except yes or true -- they become boolean!
+spec:
+  # title: Local devenv
+  # description: files from devenv
+  folder: abc # do we create a file with k8s name abc???
+
+  # provider: local 
+
+  local:
+    path: path/to/folder
