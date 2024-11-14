@@ -2,9 +2,7 @@ import { cx } from '@emotion/css';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
 import { debounce } from 'lodash';
-import { ReactNode, useCallback, useId, useMemo, useRef, useState } from 'react';
-
-import { logInfo } from '@grafana/runtime';
+import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t, Trans } from '../../utils/i18n';
@@ -18,6 +16,7 @@ import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { getComboboxStyles } from './getComboboxStyles';
 import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
+import { logOptions } from '../../utils';
 
 export type ComboboxOption<T extends string | number = string> = {
   label?: string;
@@ -79,26 +78,6 @@ function itemFilter<T extends string | number>(inputValue: string) {
 const noop = () => {};
 const asyncNoop = () => Promise.resolve([]);
 
-function logOptions(
-  items: Array<ComboboxOption<string | number>>,
-  id: string | undefined,
-  ariaLabelledBy: string | undefined
-): void {
-  if (items.length > RECOMMENDED_ITEMS_AMOUNT) {
-    const msg = `[Combobox] Items exceed the recommended amount ${RECOMMENDED_ITEMS_AMOUNT}.`;
-    console.warn(msg);
-    try {
-      logInfo(msg, {
-        itemsCount: '' + items.length,
-        'aria-labelledby': ariaLabelledBy ?? '',
-        id: id ?? '',
-      });
-    } catch (e) {
-      console.warn('Failed to log faro event!');
-    }
-  }
-}
-
 /**
  * A performant Select replacement.
  *
@@ -132,7 +111,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const setItems = useCallback(
     (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
       let itemsToSet = items;
-      logOptions(itemsToSet, id, ariaLabelledBy);
+      logOptions(itemsToSet.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabelledBy);
       if (inputValue && createCustomValue) {
         const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
 
