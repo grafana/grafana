@@ -40,7 +40,6 @@ import { JSONViewCell } from './Cells/JSONViewCell';
 import { SparklineCell } from './Cells/SparklineCell';
 import { getFooterValue } from './TableRT/FooterRow';
 import { RowExpander } from './TableRT/RowExpander';
-import { TableStyles } from './TableRT/styles';
 import {
   CellColors,
   CellComponent,

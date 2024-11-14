@@ -58,7 +58,7 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
   const alignmentFactors = getAlignmentFactor(field, displayValue, rowIdx!);
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
-    const { openMenu, targetClassName } = menuProps;
+    const { openMenu } = menuProps;
 
     return (
       <BarGauge
@@ -72,7 +72,6 @@ export const BarGaugeCell = ({ value, field, theme, height, rowIdx }: BarGaugeCe
         theme={theme}
         alignmentFactors={alignmentFactors}
         onClick={openMenu}
-        //   className={targetClassName}
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}

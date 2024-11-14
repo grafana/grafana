@@ -70,10 +70,10 @@ export function TableNG(props: TableNGProps) {
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
-  const [readyForRowHeightCalc, setReadyForRowHeightCalc] = useState(false);
+  const [, setReadyForRowHeightCalc] = useState(false);
 
   // This state will trigger re-render for recalculating row heights
-  const [resizeTrigger, setResizeTrigger] = useState(0);
+  const [, setResizeTrigger] = useState(0);
 
   // Create off-screen canvas for measuring rows for virtualized rendering
   // This line is like this because Jest doesn't have OffscreenCanvas mocked
