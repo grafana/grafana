@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../../auth/keycloak/
-description: Keycloak Grafana OAuthentication Guide
+description: Grafana Keycloak Guide
 keywords:
   - grafana
   - keycloak
