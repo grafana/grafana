@@ -286,7 +286,42 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		f.FullpathUIDs = f.UID // set full path to the folder UID
 	}
 
+	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
+		f, err = s.setFullpath(ctx, f, q.SignedInUser)
+	}
+
 	return f, err
+}
+
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester) (*folder.Folder, error) {
+	// #TODO is some kind of intermediate conversion required as is the case with user id where
+	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
+	// part of the parsing?
+	f.CreatedByUID = user.GetUID()
+	f.UpdatedByUID = user.GetUID()
+
+	if f.ParentUID == "" {
+		return f, nil
+	}
+
+	// Fetch the parent since the permissions for fetching the newly created folder
+	// are not yet present for the user--this requires a call to ClearUserPermissionCache
+	parent, err := s.Get(ctx, &folder.GetFolderQuery{
+		UID:              &f.ParentUID,
+		OrgID:            f.OrgID,
+		WithFullpath:     true,
+		WithFullpathUIDs: true,
+		SignedInUser:     user,
+	})
+	if err != nil {
+		return nil, err
+	}
+	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
+	// Escape forward slashes in the title
+	title := strings.Replace(f.Title, "/", "\\/", -1)
+	f.Fullpath = title + "/" + parent.Fullpath
+	f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
+	return f, nil
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
@@ -673,33 +708,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesFolders) {
-		// #TODO is some kind of intermediate conversion required as is the case with user id where
-		// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
-		// part of the parsing?
-		f.CreatedByUID = user.GetUID()
-		f.UpdatedByUID = user.GetUID()
-
-		if f.ParentUID == "" {
-			return f, nil
-		}
-
-		// Fetch the parent since the permissions for fetching the newly created folder
-		// are not yet present for the user--this requires a call to ClearUserPermissionCache
-		parent, err := s.Get(ctx, &folder.GetFolderQuery{
-			UID:              &f.ParentUID,
-			OrgID:            f.OrgID,
-			WithFullpath:     true,
-			WithFullpathUIDs: true,
-			SignedInUser:     user,
-		})
-		if err != nil {
-			return nil, err
-		}
-		// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
-		// Escape forward slashes in the title
-		title := strings.Replace(f.Title, "/", "\\/", -1)
-		f.Fullpath = title + "/" + parent.Fullpath
-		f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
+		f, err = s.setFullpath(ctx, f, user)
 	}
 
 	return f, nil
