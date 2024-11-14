@@ -4,7 +4,6 @@ import { useAsync } from 'react-use';
 
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
@@ -15,6 +14,7 @@ import {
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
+import { useReturnTo } from '../../../hooks/useReturnTo';
 import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, formValuesToRulerGrafanaRuleDTO } from '../../../utils/rule-form';
@@ -39,11 +39,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     defaultValues: ruleForm,
     shouldFocusError: true,
   });
-  const [queryParams] = useQueryParams();
 
   const existing = Boolean(ruleForm); // always should be true
   const notifyApp = useAppNotification();
-  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
+  const { returnTo } = useReturnTo('/alerting/list');
 
   const [exportData, setExportData] = useState<RuleFormValues | undefined>(undefined);
 

@@ -36,6 +36,7 @@ import {
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useReturnTo } from '../../../hooks/useReturnTo';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { DataSourceType } from '../../../utils/datasource';
@@ -84,6 +85,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
+  const { returnTo } = useReturnTo();
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
@@ -178,9 +180,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
     if (exitOnSave) {
-      const returnTo = queryParams.get('returnTo') || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+      const returnToUrl = returnTo || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
 
-      locationService.push(returnTo);
+      locationService.push(returnToUrl);
       return;
     }
 
