@@ -77,7 +77,7 @@ export function getRowHeight(
 
   for (const key in row) {
     if (isTextCell(key, columnTypes)) {
-      if (Object.keys(headerCellRefs.current).length === 0) {
+      if (Object.keys(headerCellRefs.current).length === 0 || !headerCellRefs.current[key]) {
         return biggestHeight;
       }
       const cellWidth = headerCellRefs.current[key].offsetWidth;
