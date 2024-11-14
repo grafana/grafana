@@ -9,7 +9,7 @@ publicDashboardsScene,GA,@grafana/sharing-squad,false,false,true
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
-correlations,GA,@grafana/explore-squad,false,false,false
+correlations,GA,@grafana/dataviz-squad,false,false,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateGraphPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateTablePanel,preview,@grafana/dataviz-squad,false,false,true
@@ -160,7 +160,7 @@ cloudWatchNewLabelParsing,GA,@grafana/aws-datasources,false,false,false
 accessActionSets,GA,@grafana/identity-access-team,false,false,false
 disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-metrics,false,true,false
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-queryLibrary,experimental,@grafana/explore-squad,false,false,false
+queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
@@ -196,7 +196,7 @@ exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,fals
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
 appPlatformGrpcClientAuth,experimental,@grafana/identity-access-team,false,false,false
-appSidecar,experimental,@grafana/explore-squad,false,false,false
+appSidecar,experimental,@grafana/grafana-frontend-platform,false,false,false
 groupAttributeSync,privatePreview,@grafana/identity-access-team,false,false,false
 alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,false,true
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
