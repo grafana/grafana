@@ -40,7 +40,7 @@ describe('AddToExplorationButton', () => {
     }));
     const scene = new AddToExplorationButton({});
     render(<scene.Component model={scene} />);
-    expect(screen.queryByLabelText(addToExplorationsButtonLabel)).not.toBeInTheDocument();
+    expect(() => screen.getByLabelText(addToExplorationsButtonLabel)).toThrow();
   });
 
   it('should render when the Explorations app provides a plugin extension link', async () => {
