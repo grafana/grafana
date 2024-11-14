@@ -40,7 +40,7 @@
 
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
-/docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
+/docs/sources/explore/                                                            @grafana/observability-traces-and-profiling @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
 /docs/sources/upgrade-guide/                                                      @imatwawana
@@ -140,7 +140,7 @@
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
 /pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-app-platform-squad
-/pkg/services/queryhistory/ @grafana/explore-squad
+/pkg/services/queryhistory/ @grafana/observability-traces-and-profiling
 /pkg/services/quota/ @grafana/grafana-search-and-storage
 /pkg/services/screenshot/ @grafana/grafana-backend-group
 /pkg/services/search/ @grafana/grafana-search-and-storage
@@ -417,7 +417,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
 
 
-/public/app/core/history/ @grafana/explore-squad
+/public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
@@ -440,7 +440,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/datasources/ @grafana/plugins-platform-frontend
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/dataviz-squad
-/public/app/features/explore/ @grafana/explore-squad
+/public/app/features/explore/ @grafana/observability-traces-and-profiling
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/grafana-frontend-platform
 /public/app/features/inspector/ @grafana/dashboards-squad
