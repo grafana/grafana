@@ -2602,13 +2602,17 @@
     {
       "metadata": {
         "name": "preinstallAutoUpdate",
-        "resourceVersion": "1730904343525",
-        "creationTimestamp": "2024-11-06T14:45:43Z"
+        "resourceVersion": "1731581146864",
+        "creationTimestamp": "2024-11-06T14:45:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 10:45:46.864585 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
