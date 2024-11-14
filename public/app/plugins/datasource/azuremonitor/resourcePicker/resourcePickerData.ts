@@ -1,4 +1,3 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
@@ -13,7 +12,8 @@ import {
   resourceToString,
 } from '../components/ResourcePicker/utils';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceInstanceSettings,
+  AzureMonitorDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorResource,
   AzureMonitorQuery,
@@ -31,14 +31,17 @@ const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).j
 
 export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
-export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
+export default class ResourcePickerData extends DataSourceWithBackend<
+  AzureMonitorQuery,
+  AzureMonitorDataSourceJsonData
+> {
   private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;
   supportedMetricNamespaces = '';
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    instanceSettings: AzureMonitorDataSourceInstanceSettings,
     azureMonitorDatasource: AzureMonitorDatasource
   ) {
     super(instanceSettings);
