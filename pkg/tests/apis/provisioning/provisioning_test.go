@@ -157,25 +157,19 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 		})
 
-		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		// Add it if this is the only test that ran
+		_, err := client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			metav1.UpdateOptions{},
+		)
 		require.NoError(t, err)
-		require.Equal(t,
-			"World",
-			mustNestedString(resp.Object, "whom"))
-	})
 
-	t.Run("basic helloworld subresource", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: "default", // actually org1
-			GVR: schema.GroupVersionResource{
-				Group:    "provisioning.grafana.app",
-				Version:  "v0alpha1",
-				Resource: "repositories",
-			},
-		})
-
+		// "test" is Not found
 		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		require.Error(t, err) // "test" not found
+		require.Nil(t, resp)  // "test" not found
+
+		resp, err = client.Resource.Get(ctx, "local-devenv", metav1.GetOptions{}, "hello")
 		require.NoError(t, err)
 		require.Equal(t,
 			"World",
