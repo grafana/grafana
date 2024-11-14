@@ -162,7 +162,7 @@ describe('Combobox', () => {
       await userEvent.type(input, 'custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('Custom value: custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
       expect(onChangeHandler).toHaveBeenCalledWith(expect.objectContaining({ value: 'custom value' }));
     });
 
@@ -181,7 +181,7 @@ describe('Combobox', () => {
       await userEvent.type(input, 'custom value');
       await userEvent.keyboard('{Enter}');
 
-      expect(screen.getByDisplayValue('Custom value: custom value')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'string').toBeTruthy();
       expect(typeof onChangeHandler.mock.calls[0][0].value === 'number').toBeFalsy();
 
