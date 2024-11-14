@@ -365,7 +365,7 @@ function TemplatingBasics() {
           template "{'<NAME>'}" {'}}'}.
           <br />
           <br />
-          For detailed information about notification templates, please visit our documentation.
+          For detailed information about notification templates, refer to our documentation.
         </div>
         <div>
           <LinkButton
