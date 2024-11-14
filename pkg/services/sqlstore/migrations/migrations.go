@@ -141,33 +141,3 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	accesscontrol.AddReceiverCreateScopeMigration(mg)
 }
-
-func addStarMigrations(mg *Migrator) {
-	starV1 := Table{
-		Name: "star",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "user_id", Type: DB_BigInt, Nullable: false},
-			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"user_id", "dashboard_id"}, Type: UniqueIndex},
-		},
-	}
-
-	mg.AddMigration("create star table", NewAddTableMigration(starV1))
-	mg.AddMigration("add unique index star.user_id_dashboard_id", NewAddIndexMigration(starV1, starV1.Indices[0]))
-	mg.AddMigration("Add column dashboard_uid in star", NewAddColumnMigration(starV1, &Column{
-		Name: "dashboard_uid", Type: DB_Text, Nullable: true,
-	}))
-	mg.AddMigration("Add column org_id in star", NewAddColumnMigration(starV1, &Column{
-		Name: "org_id", Type: DB_BigInt, Nullable: false, Default: "1",
-	}))
-	mg.AddMigration(
-		"Update dashboard_uid and org_id value in star",
-		NewRawSQLMigration("").
-			SQLite("UPDATE star SET dashboard_uid = (SELECT uid FROM dashboard WHERE dashboard.id = star.dashboard_id), org_id = (SELECT org_id FROM dashboard WHERE dashboard.id = star.dashboard_id);").
-			Postgres("UPDATE star SET dashboard_uid = dashboard.uid, org_id = dashboard.org_id FROM dashboard WHERE star.dashboard_id = dashboard.id;").
-			Mysql("UPDATE star JOIN dashboard ON star.dashboard_id = dashboard.id SET star.dashboard_uid = dashboard.uid, star.org_id = dashboard.org_id;"),
-	)
-}

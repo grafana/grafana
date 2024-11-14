@@ -1,25 +1,30 @@
 package star
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var ErrCommandValidationFailed = errors.New("command missing required fields")
 
 type Star struct {
-	ID           int64  `xorm:"pk autoincr 'id'" db:"id"`
-	UserID       int64  `xorm:"user_id" db:"user_id"`
-	DashboardID  int64  `xorm:"dashboard_id" db:"dashboard_id"`
-	DashboardUID string `xorm:"dashboard_id" db:"dashboard_uid"`
-	OrgID        int64  `xorm:"org_id" db:"org_id"`
+	ID           int64     `xorm:"pk autoincr 'id'" db:"id"`
+	UserID       int64     `xorm:"user_id" db:"user_id"`
+	DashboardID  int64     `xorm:"dashboard_id" db:"dashboard_id"`
+	DashboardUID string    `xorm:"dashboard_id" db:"dashboard_uid"`
+	OrgID        int64     `xorm:"org_id" db:"org_id"`
+	Updated      time.Time `xorm:"updated" db:"updated"`
 }
 
 // ----------------------
 // COMMANDS
 
 type StarDashboardCommand struct {
-	UserID       int64  `xorm:"user_id"`
-	DashboardID  int64  `xorm:"dashboard_id"`
-	DashboardUID string `xorm:"dashboard_uid"`
-	OrgID        int64  `xorm:"org_id" db:"org_id"`
+	UserID       int64     `xorm:"user_id"`
+	DashboardID  int64     `xorm:"dashboard_id"`
+	DashboardUID string    `xorm:"dashboard_uid"`
+	OrgID        int64     `xorm:"org_id"`
+	Updated      time.Time `xorm:"updated"`
 }
 
 func (cmd *StarDashboardCommand) Validate() error {
@@ -33,7 +38,7 @@ type UnstarDashboardCommand struct {
 	UserID       int64  `xorm:"user_id"`
 	DashboardID  int64  `xorm:"dashboard_id"`
 	DashboardUID string `xorm:"dashboard_uid"`
-	OrgID        int64  `xorm:"org_id" db:"org_id"`
+	OrgID        int64  `xorm:"org_id"`
 }
 
 func (cmd *UnstarDashboardCommand) Validate() error {
@@ -51,10 +56,11 @@ type GetUserStarsQuery struct {
 }
 
 type IsStarredByUserQuery struct {
-	UserID       int64  `xorm:"user_id"`
-	DashboardID  int64  `xorm:"dashboard_id"`
-	DashboardUID string `xorm:"dashboard_uid"`
-	OrgID        int64  `xorm:"org_id" db:"org_id"`
+	UserID       int64     `xorm:"user_id"`
+	DashboardID  int64     `xorm:"dashboard_id"`
+	DashboardUID string    `xorm:"dashboard_uid"`
+	OrgID        int64     `xorm:"org_id"`
+	Updated      time.Time `xorm:"updated"`
 }
 
 type GetUserStarsResult struct {

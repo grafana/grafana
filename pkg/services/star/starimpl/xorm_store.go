@@ -48,6 +48,7 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 			DashboardID:  cmd.DashboardID,
 			DashboardUID: cmd.DashboardUID,
 			OrgID:        cmd.OrgID,
+			Updated:      cmd.Updated,
 		}
 
 		_, err := sess.Insert(&entity)
