@@ -49,7 +49,7 @@ func (*helloWorldSubresource) Connect(ctx context.Context, name string, opts run
 			whom = "World"
 		}
 
-		responder.Object(http.StatusTeapot, &v0alpha1.HelloWorld{Whom: whom})
+		responder.Object(http.StatusOK, &v0alpha1.HelloWorld{Whom: whom})
 	}), nil
 }
 
