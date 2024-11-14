@@ -496,6 +496,7 @@ describe('sceneVariablesSetToVariables', () => {
   it('should handle AdHocFiltersVariable', () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
+      allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
       datasource: { uid: 'fake-std', type: 'fake-std' },
@@ -523,6 +524,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchInlineSnapshot(`
     {
+      "allowCustomValue": true,
       "baseFilters": [
         {
           "key": "baseFilterTest",
@@ -553,6 +555,7 @@ describe('sceneVariablesSetToVariables', () => {
   it('should handle AdHocFiltersVariable with defaultKeys', () => {
     const variable = new AdHocFiltersVariable({
       name: 'test',
+      allowCustomValue: true,
       label: 'test-label',
       description: 'test-desc',
       datasource: { uid: 'fake-std', type: 'fake-std' },
@@ -594,6 +597,7 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchInlineSnapshot(`
     {
+      "allowCustomValue": true,
       "baseFilters": [
         {
           "key": "baseFilterTest",

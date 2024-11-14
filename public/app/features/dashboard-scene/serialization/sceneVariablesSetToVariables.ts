@@ -153,6 +153,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         name: variable.state.name,
         type: 'adhoc',
         datasource: variable.state.datasource,
+        allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,

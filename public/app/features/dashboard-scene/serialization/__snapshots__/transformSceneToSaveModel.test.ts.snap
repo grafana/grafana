@@ -558,6 +558,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "templating": {
     "list": [
       {
+        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
@@ -920,6 +921,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "templating": {
     "list": [
       {
+        "allowCustomValue": true,
         "baseFilters": [],
         "datasource": {
           "type": "prometheus",
