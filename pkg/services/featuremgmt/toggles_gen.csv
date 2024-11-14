@@ -210,7 +210,7 @@ timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,fa
 prometheusUsesCombobox,experimental,@grafana/observability-metrics,false,false,false
 userStorageAPI,experimental,@grafana/plugins-platform-backend,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
-preinstallAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 dashboardSchemaV2,experimental,@grafana/dashboards-squad,false,false,true
 playlistsWatcher,experimental,@grafana/grafana-app-platform-squad,false,true,false
 exploreMetricsRelatedLogs,experimental,@grafana/observability-metrics,false,false,true
