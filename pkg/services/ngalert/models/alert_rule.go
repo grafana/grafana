@@ -278,6 +278,7 @@ type AlertRuleMetadata struct {
 
 type EditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -299,7 +300,8 @@ type AlertRuleWithOptionals struct {
 	AlertRule
 	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
 	// DB in case it was not sent.
-	HasPause bool
+	HasPause    bool
+	HasMetadata bool
 }
 
 // AlertsRulesBy is a function that defines the ordering of alert rules.
@@ -809,7 +811,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	// Currently metadata contains only editor settings, so we can just copy it.
 	// If we add more fields to metadata, we might need to handle them separately,
 	// and/or merge or update their values.
-	if ruleToPatch.Metadata == (AlertRuleMetadata{}) {
+	if !ruleToPatch.HasMetadata {
 		ruleToPatch.Metadata = existingRule.Metadata
 	}
 }

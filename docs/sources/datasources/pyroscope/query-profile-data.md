@@ -135,6 +135,8 @@ Using **Group by**, you can group metric data by a specified label.
 Without any **Group by** label, metric data aggregates over all the labels into single time series.
 You can use multiple labels to group by. Group by only effects the metric data and doesn't change the profile data results.
 
+In conjunction with **Group by**, you can set a positive number in the **Limit** input to limit the maximum number of time series returned by the data source. The series returned are always ordered by descending value for the total aggregated data over the time period.
+
 ## Profiles query results
 
 Profiles can be visualized in a flame graph.
