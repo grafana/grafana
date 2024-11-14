@@ -173,9 +173,9 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"folderUid": {
+					"folder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UID of the folder that is backed by the repository.",
+							Description: "The folder that is backed by the repository. The value is a reference to the Kubernetes metadata name of the folder in the same namespace.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

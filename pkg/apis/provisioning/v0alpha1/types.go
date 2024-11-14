@@ -62,8 +62,9 @@ func (r *GitHubRepository) IsEmpty() bool {
 }
 
 type RepositorySpec struct {
-	// The UID of the folder that is backed by the repository.
-	FolderUID string `json:"folderUid,omitempty"`
+	// The folder that is backed by the repository.
+	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
+	Folder string `json:"folder,omitempty"`
 
 	// The repository on the local file system.
 	// Mutually exclusive with s3 and github.
