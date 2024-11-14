@@ -237,4 +237,5 @@ export interface FeatureToggles {
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
+  reportingUseRawTimeRange?: boolean;
 }

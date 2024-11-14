@@ -3019,6 +3019,22 @@
     },
     {
       "metadata": {
+        "name": "reportingUseRawTimeRange",
+        "resourceVersion": "1731604692461",
+        "creationTimestamp": "2024-11-13T15:48:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 17:18:12.461446 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1727337187819",
         "creationTimestamp": "2024-09-26T07:53:07Z"
