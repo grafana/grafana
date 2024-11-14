@@ -13,8 +13,8 @@ import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { getComboboxStyles } from './getComboboxStyles';
-import { useComboboxFloat, OPTION_HEIGHT } from './useComboboxFloat';
+import { getComboboxStyles, MENU_OPTION_HEIGHT } from './getComboboxStyles';
+import { useComboboxFloat } from './useComboboxFloat';
 import { StaleResultError, useLatestAsyncCall } from './useLatestAsyncCall';
 
 export type ComboboxOption<T extends string | number = string> = {
@@ -27,7 +27,13 @@ export type ComboboxOption<T extends string | number = string> = {
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
 interface ComboboxBaseProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange' | 'width'> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
   isClearable?: boolean;
+  /**
+   * Allows the user to set a value which is not in the list of options.
+   */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
   onChange: (option: ComboboxOption<T> | null) => void;
@@ -45,7 +51,13 @@ interface ComboboxBaseProps<T extends string | number>
 type AutoSizeConditionals =
   | {
       width: 'auto';
+      /**
+       * Needs to be set when width is 'auto' to prevent the input from shrinking too much
+       */
       minWidth: number;
+      /**
+       * Recommended to set when width is 'auto' to prevent the input from growing too much.
+       */
       maxWidth?: number;
     }
   | {
@@ -57,6 +69,9 @@ type AutoSizeConditionals =
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 function itemToString<T extends string | number>(item: ComboboxOption<T> | null) {
+  if (item?.label?.includes('Custom value: ')) {
+    return item?.value.toString();
+  }
   return item?.label ?? item?.value.toString() ?? '';
 }
 
@@ -110,13 +125,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       let itemsToSet = items;
 
       if (inputValue && createCustomValue) {
-        const optionMatchingInput = items.find((opt) => opt.label === inputValue || opt.value === inputValue);
+        const optionMatchingInput = items.find(
+          (opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue
+        );
 
         if (!optionMatchingInput) {
           const customValueOption = {
+            label: t('combobox.custom-value.label', 'Custom value: ') + inputValue,
             // Type casting needed to make this work when T is a number
             value: inputValue as unknown as T,
+            /* TODO: Add this back when we do support descriptions and have need for it
             description: t('combobox.custom-value.create', 'Create custom value'),
+            */
           };
 
           itemsToSet = items.slice(0);
@@ -162,7 +182,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const virtualizerOptions = {
     count: items.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => OPTION_HEIGHT,
+    estimateSize: () => MENU_OPTION_HEIGHT,
     overscan: 4,
   };
 

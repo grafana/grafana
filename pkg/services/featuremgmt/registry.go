@@ -1584,8 +1584,9 @@ var (
 		{
 			Name:        "preinstallAutoUpdate",
 			Description: "Enables automatic updates for pre-installed plugins",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSchemaV2",

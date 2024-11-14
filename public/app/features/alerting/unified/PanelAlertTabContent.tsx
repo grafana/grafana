@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import { Alert, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
