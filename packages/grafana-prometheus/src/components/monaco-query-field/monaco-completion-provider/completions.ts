@@ -22,10 +22,7 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
-const metricNamesSearch = {
-  simple: new UFuzzy({ intraMode: 1 }),
-  complex: new UFuzzy({ intraMode: 0 }),
-};
+const metricNamesSearch = new UFuzzy({ intraMode: 1 });
 
 interface MetricFilterOptions {
   metricNames: string[];
@@ -33,52 +30,33 @@ interface MetricFilterOptions {
   limit: number;
 }
 
-function isComplexSearch(terms: string[]): boolean {
-  // Consider a search complex if it has:
-  // 1. More than 4 terms OR
-  // 2. Any term longer than 30 characters (likely copy-pasted)
-  return terms.length > 4 || terms.some((term) => term.length > 30);
-}
-
-function simpleSubstringFilter(metrics: string[], needle: string): string[] {
-  // Split the needle into terms and convert to lowercase
-  const terms = needle.toLowerCase().split(/\s+/);
-
-  // A metric matches if it contains all the terms in any order
-  return metrics.filter((metric) => {
-    const lowerMetric = metric.toLowerCase();
-    return terms.every((term) => lowerMetric.includes(term));
-  });
-}
-
 export function filterMetricNames({ metricNames, inputText, limit }: MetricFilterOptions): string[] {
   if (!inputText?.trim()) {
     return metricNames.slice(0, limit);
   }
 
-  const terms = metricNamesSearch.simple.split(inputText);
+  const terms = metricNamesSearch.split(inputText); // e.g. 'some_metric_name or-another' -> ['some', 'metric', 'name', 'or', 'another']
+  const isComplexSearch = terms.length > 4;
 
-  if (isComplexSearch(terms)) {
-    // for complex searches, first do a quick substring filter
-    const substringMatches = simpleSubstringFilter(metricNames, inputText);
+  if (isComplexSearch) {
+    // for complex searches, prioritize performance by using substring matching
+    const matches: string[] = [];
 
-    if (substringMatches.length === 0) {
-      return [];
-    }
-
-    // if we still have too many matches, optionally apply uFuzzy with intraMode: 0
-    if (substringMatches.length > limit) {
-      const fuzzyResults = metricNamesSearch.complex.filter(substringMatches, inputText);
-      if (fuzzyResults) {
-        return fuzzyResults.slice(0, limit).map((idx) => substringMatches[idx]);
+    for (const metric of metricNames) {
+      const lowercaseMetric = metric.toLowerCase();
+      if (terms.every((term) => lowercaseMetric.includes(term))) {
+        matches.push(metric);
+      }
+      if (matches.length > limit) {
+        break;
       }
     }
 
-    return substringMatches.slice(0, limit);
+    return matches;
   }
 
-  // for simple searches, prefer uFuzzy with intraMode: 1 for better flexibility
-  const fuzzyResults = metricNamesSearch.simple.filter(metricNames, inputText);
+  // for simple searches, prioritize flexibility by using fuzzy search
+  const fuzzyResults = metricNamesSearch.filter(metricNames, inputText);
   return fuzzyResults ? fuzzyResults.slice(0, limit).map((idx) => metricNames[idx]) : [];
 }
 
