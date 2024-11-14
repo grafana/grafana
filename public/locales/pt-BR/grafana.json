@@ -137,7 +137,6 @@
       "export-all": "",
       "view": ""
     },
-    "contact-point": "",
     "contact-points": {
       "create": "",
       "custom-template-value": "",
@@ -155,6 +154,7 @@
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
+      "no-contact-points-found": "",
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
@@ -455,7 +455,7 @@
       "title": ""
     },
     "custom-value": {
-      "create": ""
+      "label": ""
     },
     "options": {
       "no-found": ""
