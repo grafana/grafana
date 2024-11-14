@@ -767,6 +767,100 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationFolderGetPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		description          string
+		input                string
+		permissions          []resourcepermissions.SetResourcePermissionCommand
+		expectedCode         int
+		expectedParentUIDs   []string
+		expectedParentTitles []string
+		expectedParentOrgIDs []int64
+	}
+	tcs := []testCase{
+		{
+			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			expectedCode:         http.StatusOK,
+			expectedParentUIDs:   []string{api.REDACTED},
+			expectedParentTitles: []string{api.REDACTED},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{dashboards.ActionFoldersRead},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "descUid",
+				},
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
+			})
+
+			parentPayload := `{
+				"title": "testparent",
+				"uid": "parentuid"
+				}`
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			parentUID := parentCreate.Result.UID
+			require.NotEmpty(t, parentUID)
+
+			payload := "{ \"uid\": \"descUid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(payload),
+			}, &dtos.Folder{})
+			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+
+			user := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+
+			getResp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodGet,
+				Path:   "/api/folders/descUid",
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+			require.NotNil(t, getResp.Result)
+			parents := getResp.Result.Parents
+
+			require.Equal(t, len(tc.expectedParentUIDs), len(parents))
+			require.Equal(t, len(tc.expectedParentTitles), len(parents))
+
+			for i := 0; i < len(tc.expectedParentUIDs); i++ {
+				require.Equal(t, tc.expectedParentUIDs[i], parents[i].UID)
+				require.Equal(t, tc.expectedParentTitles[i], parents[i].Title)
+			}
+		})
+	}
+}
+
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestFoldersCreateAPIEndpointK8S(t *testing.T) {
 	if testing.Short() {
