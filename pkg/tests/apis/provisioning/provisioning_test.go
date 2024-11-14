@@ -61,6 +61,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 						"update",
 						"watch"
 					]
+				},
+				{
+					"name": "repositories/hello",
+					"singularName": "",
+					"kind": "HelloWorld",
+					"namespaced": true,
+					"verbs": [
+						"get"
+					]
 				}
 			]
 		}`, string(v1Disco))
@@ -93,6 +102,24 @@ func TestIntegrationProvisioning(t *testing.T) {
 			"path/to/folder", //
 			mustNestedString(r1.Object, "spec", "local", "path"),
 		)
+	})
+
+	t.Run("basic helloworld subresource", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Admin,
+			Namespace: "default", // actually org1
+			GVR: schema.GroupVersionResource{
+				Group:    "provisioning.grafana.app",
+				Version:  "v0alpha1",
+				Resource: "repositories",
+			},
+		})
+
+		resp, err := client.Resource.Get(ctx, "test", metav1.GetOptions{}, "hello")
+		require.NoError(t, err)
+		require.Equal(t,
+			"World",
+			mustNestedString(resp.Object, "whom"))
 	})
 }
 
