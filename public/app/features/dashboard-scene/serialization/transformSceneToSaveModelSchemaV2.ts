@@ -1,5 +1,4 @@
 import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { GridLayoutItemKind, QueryOptionsSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import {
   DashboardV2,
@@ -15,6 +14,8 @@ import {
   PanelQuerySpec,
   DataQueryKind,
   defaultDataSourceRef,
+  GridLayoutItemKind,
+  QueryOptionsSpec,
   QueryVariableKind,
   TextVariableKind,
   IntervalVariableKind,
@@ -32,6 +33,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
+import { transformDashboardLinksToEnums, transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -57,7 +59,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       liveNow: getLiveNow(oldDash),
       preload: oldDash.preload,
       editable: oldDash.editable,
-      links: oldDash.links,
+      links: transformDashboardLinksToEnums(oldDash.links),
       tags: oldDash.tags,
       // EOF dashboard settings
 
@@ -107,38 +109,10 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 }
 
 function getCursorSync(state: DashboardSceneState) {
-  // Find the first `CursorSync` behavior in the `$behaviors` array
-  const cursorSyncBehavior = state.$behaviors?.find(
-    (behavior): behavior is behaviors.CursorSync => behavior instanceof behaviors.CursorSync
-  );
-  // If found, get its `sync` property; otherwise, it will be `undefined`
-  const cursorSync = cursorSyncBehavior?.state.sync;
+  const cursorSync = state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync)?.state
+    .sync;
 
-  // transform numeric value to CursorSync enum
-  let cursorSyncEnum: DashboardCursorSync;
-  if (cursorSync !== undefined) {
-    //map numeric value to CursorSync enum
-    // 0 => Off = "Off",
-    // 1=> Crosshair = "Crosshair",
-    // 2 => Tooltip = "Tooltip",
-    switch (cursorSync) {
-      case 0:
-        cursorSyncEnum = DashboardCursorSync.Off;
-        break;
-      case 1:
-        cursorSyncEnum = DashboardCursorSync.Crosshair;
-        break;
-      case 2:
-        cursorSyncEnum = DashboardCursorSync.Tooltip;
-        break;
-      default:
-        cursorSyncEnum = defaultDashboardSpec().cursorSync;
-    }
-    return cursorSyncEnum;
-  }
-
-  //Return `cursorSync` if it exists, otherwise return the default value
-  return cursorSync ?? defaultDashboardSpec().cursorSync;
+  return transformCursorSynctoEnum(cursorSync);
 }
 
 function getLiveNow(state: DashboardSceneState) {
@@ -147,7 +121,7 @@ function getLiveNow(state: DashboardSceneState) {
     undefined;
   // hack for validator
   if (liveNow === undefined) {
-    return false;
+    return defaultDashboardSpec().liveNow;
   }
   return liveNow;
 }
@@ -400,12 +374,10 @@ function getVariables(oldDash: DashboardSceneState) {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2
-function isDashboardSchemaV2(dashboard: unknown): dashboard is DashboardV2 {
-  if (typeof dashboard !== 'object' || dashboard === null) {
+function isDashboardSchemaV2(dash: any): dash is DashboardV2 {
+  if (typeof dash !== 'object' || dash === null) {
     return false;
   }
-
-  const dash = dashboard as any;
 
   if (dash.kind !== 'Dashboard') {
     return false;

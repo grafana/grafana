@@ -497,12 +497,13 @@ export const defaultVizConfigSpec = (): VizConfigSpec => ({
 });
 
 export interface VizConfigKind {
-	kind: "VizConfig";
+	// The kind of a VizConfigKind is the plugin ID
+	kind: string;
 	spec: VizConfigSpec;
 }
 
 export const defaultVizConfigKind = (): VizConfigKind => ({
-	kind: "VizConfig",
+	kind: "",
 	spec: defaultVizConfigSpec(),
 });
 
@@ -552,12 +553,13 @@ export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
 });
 
 export interface DataQueryKind {
-	kind: "DataQuery";
+	// The kind of a DataQueryKind is the datasource type
+	kind: string;
 	spec: Record<string, any>;
 }
 
 export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "DataQuery",
+	kind: "",
 	spec: {},
 });
 
@@ -586,12 +588,13 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 });
 
 export interface TransformationKind {
-	kind: "Transformation";
+	// The kind of a TransformationKind is the transformation ID
+	kind: string;
 	spec: DataTransformerConfig;
 }
 
 export const defaultTransformationKind = (): TransformationKind => ({
-	kind: "Transformation",
+	kind: "",
 	spec: defaultDataTransformerConfig(),
 });
 
@@ -1128,7 +1131,7 @@ export interface CustomVariableSpec {
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	name: "",
 	query: "",
-	current: { value: "", },
+	current: defaultVariableOption(),
 	options: [],
 	multi: false,
 	includeAll: false,

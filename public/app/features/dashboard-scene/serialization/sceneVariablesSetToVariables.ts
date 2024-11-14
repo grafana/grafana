@@ -1,12 +1,34 @@
 import { config } from '@grafana/runtime';
 import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
-import { VariableHide, VariableModel, VariableOption, VariableRefresh, VariableSort } from '@grafana/schema';
-import { AdhocVariableKind, ConstantVariableKind, CustomVariableKind, DataQueryKind, DatasourceVariableKind, IntervalVariableKind, QueryVariableKind, TextVariableKind, GroupByVariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  VariableModel,
+  VariableRefresh as OldVariableRefresh,
+  VariableHide as OldVariableHide,
+  VariableSort as OldVariableSort,
+} from '@grafana/schema';
+import {
+  AdhocVariableKind,
+  ConstantVariableKind,
+  CustomVariableKind,
+  DataQueryKind,
+  DatasourceVariableKind,
+  IntervalVariableKind,
+  QueryVariableKind,
+  TextVariableKind,
+  GroupByVariableKind,
+  defaultVariableHide,
+  VariableOption,
+  VariableRefresh,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
 import { getDataQueryKind, getDataQuerySpec } from './transformSceneToSaveModelSchemaV2';
-
+import {
+  transformVariableRefreshToEnum,
+  transformVariableHideToEnum,
+  transformSortVariableToEnum,
+} from './transformToV2TypesUtils';
 /**
  * Converts a SceneVariables object into an array of VariableModel objects.
  * @param set - The SceneVariables object containing the variables to convert.
@@ -24,14 +46,14 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       label: variable.state.label,
       description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
-      hide: variable.state.hide || VariableHide.dontHide,
+      hide: variable.state.hide || OldVariableHide.dontHide,
       type: variable.state.type,
     };
     if (sceneUtils.isQueryVariable(variable)) {
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (variable.state.refresh === VariableRefresh.never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       variables.push({
@@ -80,7 +102,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         },
         options: [],
         regex: variable.state.regex,
-        refresh: VariableRefresh.onDashboardLoad,
+        refresh: OldVariableRefresh.onDashboardLoad,
         query: variable.state.pluginId,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
@@ -97,7 +119,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         },
         // @ts-expect-error
         query: variable.state.value,
-        hide: VariableHide.hideVariable,
+        hide: OldVariableHide.hideVariable,
       });
     } else if (sceneUtils.isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
@@ -165,7 +187,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
 
   // Remove some defaults
   for (const variable of variables) {
-    if (variable.hide === VariableHide.dontHide) {
+    if (variable.hide === OldVariableHide.dontHide) {
       delete variable.hide;
     }
 
@@ -181,7 +203,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       delete variable.multi;
     }
 
-    if (variable.sort === VariableSort.disabled) {
+    if (variable.sort === OldVariableSort.disabled) {
       delete variable.sort;
     }
   }
@@ -197,9 +219,29 @@ function variableValueOptionsToVariableOptions(varState: MultiValueVariable['sta
   }));
 }
 
-export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQueryOptions?: boolean): Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupVariableKind | AdhocVariableKind> {
-
-  let variables: Array<QueryVariableKind | TextVariableKind | IntervalVariableKind | DatasourceVariableKind | CustomVariableKind | ConstantVariableKind | GroupByVariableKind | AdhocVariableKind> = [];
+export function sceneVariablesSetToSchemaV2Variables(
+  set: SceneVariables,
+  keepQueryOptions?: boolean
+): Array<
+  | QueryVariableKind
+  | TextVariableKind
+  | IntervalVariableKind
+  | DatasourceVariableKind
+  | CustomVariableKind
+  | ConstantVariableKind
+  | GroupByVariableKind
+  | AdhocVariableKind
+> {
+  let variables: Array<
+    | QueryVariableKind
+    | TextVariableKind
+    | IntervalVariableKind
+    | DatasourceVariableKind
+    | CustomVariableKind
+    | ConstantVariableKind
+    | GroupByVariableKind
+    | AdhocVariableKind
+  > = [];
 
   for (const variable of set.state.variables) {
     const commonProperties = {
@@ -207,7 +249,7 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
       label: variable.state.label,
       description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
-      hide: variable.state.hide || VariableHide.dontHide,
+      hide: transformVariableHideToEnum(variable.state.hide) || defaultVariableHide(),
     };
 
     // current: VariableOption;
@@ -222,7 +264,7 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
     if (sceneUtils.isQueryVariable(variable)) {
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (variable.state.refresh === VariableRefresh.never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       //query: DataQueryKind | string;
@@ -230,9 +272,9 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
       let dataQuery: DataQueryKind | string;
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: "DataQuery",//FIXME is it not the same as queryGroup? like "prometheus"?
+          kind: getDataQueryKind(query),
           spec: getDataQuerySpec(query),
-        }
+        };
       } else {
         dataQuery = query;
       }
@@ -245,19 +287,17 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
           query: dataQuery,
           definition: variable.state.definition,
           datasource: variable.state.datasource || {},
-          sort: variable.state.sort,
-          refresh: variable.state.refresh,
+          sort: transformSortVariableToEnum(variable.state.sort),
+          refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
           multi: variable.state.isMulti || false,
           skipUrlSync: variable.state.skipUrlSync || false,
-
         },
       };
       variables.push(queryVariable);
     } else if (sceneUtils.isCustomVariable(variable)) {
-
       options = variableValueOptionsToVariableOptions(variable.state);
       const customVariable: CustomVariableKind = {
         kind: 'CustomVariable',
@@ -280,8 +320,9 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
           current: currentVariableOption,
           options: [],
           regex: variable.state.regex,
-          refresh: VariableRefresh.onDashboardLoad,
-          query: variable.state.pluginId,
+          refresh: VariableRefresh.OnDashboardLoad,
+          pluginId: variable.state.pluginId,
+          defaultOptionEnabled: variable.state.defaultOptionEnabled!!,
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
@@ -306,9 +347,8 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
         spec: {
           ...commonProperties,
           current: currentVariableOption,
-          value: variable.state.value,
           query: intervals,
-          refresh: VariableRefresh.onTimeRangeChanged,
+          refresh: VariableRefresh.OnTimeRangeChanged,
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
@@ -325,7 +365,6 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
         text: variable.state.value,
         value: variable.state.value,
       };
-
 
       const textBoxVariable: TextVariableKind = {
         kind: 'TextVariable',
@@ -346,10 +385,11 @@ export function sceneVariablesSetToSchemaV2Variables(set: SceneVariables, keepQu
           ...commonProperties,
           datasource: variable.state.datasource || {}, // FIXME what is the default value?,
           // Only persist the statically defined options
-          options: variable.state.defaultOptions?.map((option) => ({
-            text: option.text,
-            value: String(option.value),
-          })) || [],
+          options:
+            variable.state.defaultOptions?.map((option) => ({
+              text: option.text,
+              value: String(option.value),
+            })) || [],
           current: currentVariableOption,
           multi: variable.state.isMulti || false,
           includeAll: variable.state.includeAll || false,

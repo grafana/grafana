@@ -353,7 +353,8 @@ VizConfigSpec: {
 }
 
 VizConfigKind: {
-  kind: "VizConfig"
+  // The kind of a VizConfigKind is the plugin ID
+  kind: string
   spec: VizConfigSpec
 }
 
@@ -386,7 +387,8 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-  kind: "DataQuery"
+  // The kind of a DataQueryKind is the datasource type
+  kind: string
   spec: [string]: _
 }
 
@@ -404,7 +406,8 @@ PanelQueryKind: {
 }
 
 TransformationKind: {
-  kind: "Transformation"
+  // The kind of a TransformationKind is the transformation ID
+  kind: string
   spec: DataTransformerConfig
 }
 
@@ -705,10 +708,7 @@ IntervalVariableKind: {
 CustomVariableSpec: {
   name: string | *""
   query: string | *""
-  current: VariableOption | *{
-    label: ""
-    value: ""
-  }
+  current: VariableOption
   options: [...VariableOption] | *[]
   multi: bool | *false
   includeAll: bool | *false
