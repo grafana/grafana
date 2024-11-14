@@ -44,7 +44,7 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 };
 
 export const SparklineCell = (props: SparklineCellProps) => {
-  const { field, value, theme, timeRange, height, rowIdx, justifyContent } = props;
+  const { field, value, theme, timeRange, rowIdx, justifyContent } = props;
   const styles = useStyles2(getStyles, justifyContent);
   const sparkline = getSparkline(value);
 

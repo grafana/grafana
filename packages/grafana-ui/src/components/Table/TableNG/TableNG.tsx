@@ -1,10 +1,11 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect, useCallback } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
 import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
 import { ContextMenu } from '../../ContextMenu/ContextMenu';
@@ -12,10 +13,11 @@ import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 import { FooterItem, TableNGProps } from '../types';
-import { getCellColors, getTextAlign, getFooterItems } from '../utils';
+import { getTextAlign, getFooterItems } from '../utils';
 
 import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
+import { getRowHeight } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -25,7 +27,6 @@ type TableRow = Record<string, unknown>;
 interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
-  rowHeight: number;
   field: Field;
 }
 
@@ -38,8 +39,11 @@ interface HeaderCellProps {
 
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
+
+  const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, textWrap);
 
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
@@ -56,6 +60,15 @@ export function TableNG(props: TableNGProps) {
   }, [fieldConfig]); // eslint-disable-line react-hooks/exhaustive-deps
   const columnMinWidth = fieldConfig?.defaults?.custom?.minWidth || COLUMN_MIN_WIDTH;
 
+  const prevProps = useRef(props);
+  useEffect(() => {
+    // TODO: there is a usecase when adding a new column to the table doesn't update the table
+    if (prevProps.current.data.fields.length !== props.data.fields.length) {
+      setRevId(revId + 1);
+    }
+    prevProps.current = props;
+  }, [props.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [contextMenuProps, setContextMenuProps] = useState<{
     rowIdx: number;
     value: string;
@@ -64,6 +77,29 @@ export function TableNG(props: TableNGProps) {
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+
+  const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
+  const [, setReadyForRowHeightCalc] = useState(false);
+
+  // This state will trigger re-render for recalculating row heights
+  const [, setResizeTrigger] = useState(0);
+
+  // Create off-screen canvas for measuring rows for virtualized rendering
+  // This line is like this because Jest doesn't have OffscreenCanvas mocked
+  // nor is it a part of the jest-canvas-mock package
+  let osContext = null;
+  if (window.OffscreenCanvas !== undefined) {
+    // The canvas size is defined arbitrarily
+    // As we never actually visualize rendered content
+    // from the offscreen canvas, only perform text measurements
+    osContext = new OffscreenCanvas(256, 1024).getContext('2d');
+  }
+
+  // Set font property using theme info
+  // This will make text measurement accurate
+  if (osContext !== undefined && osContext !== null) {
+    osContext.font = `${theme.typography.fontSize}px ${theme.typography.body.fontFamily}`;
+  }
 
   useLayoutEffect(() => {
     if (!isContextMenuOpen) {
@@ -83,28 +119,39 @@ export function TableNG(props: TableNGProps) {
 
   const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>([]);
 
-  function rowHeight() {
+  function getDefaultRowHeight(): number {
     const bodyFontSize = theme.typography.fontSize;
     const lineHeight = theme.typography.body.lineHeight;
 
     switch (cellHeight) {
-      case 'md':
+      case TableCellHeight.Sm:
+        return 36;
+      case TableCellHeight.Md:
         return 42;
-      case 'lg':
+      case TableCellHeight.Lg:
         return 48;
     }
 
     return DEFAULT_CELL_PADDING * 2 + bodyFontSize * lineHeight;
   }
-  const rowHeightNumber = rowHeight();
+  const defaultRowHeight = getDefaultRowHeight();
+  const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
+    const headerRef = useRef(null);
+
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
     };
 
+    useLayoutEffect(() => {
+      if (headerRef.current) {
+        headerCellRefs.current[column.key] = headerRef.current;
+      }
+    }, [headerRef, column.key]);
+
     return (
-      <div style={{ display: 'flex', justifyContent }}>
+      <div ref={headerRef} style={{ display: 'flex', justifyContent }}>
         <button className={styles.headerCellLabel} onClick={handleSort}>
           <div>{column.name}</div>
           {direction &&
@@ -159,19 +206,7 @@ export function TableNG(props: TableNGProps) {
         key,
         name: field.name,
         field,
-        rowHeight: rowHeightNumber,
-        cellClass: (row) => {
-          // eslint-ignore-next-line
-          // const value = row[key];
-          // const displayValue = shallowField.display!(value);
-
-          // if (shallowField.config.custom.type === TableCellDisplayMode.ColorBackground) {
-          // let colors = getCellColors(theme, shallowField.config.custom, displayValue);
-          // }
-
-          // css()
-          return 'my-class';
-        },
+        cellClass: styles.cell,
         renderCell: (props: any) => {
           const { row, rowIdx } = props;
           const value = row[key];
@@ -184,7 +219,7 @@ export function TableNG(props: TableNGProps) {
               field={field}
               theme={theme}
               timeRange={timeRange}
-              height={rowHeight()}
+              height={defaultRowHeight}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
             />
@@ -247,6 +282,10 @@ export function TableNG(props: TableNGProps) {
 
   const columns = mapFrameToDataGrid(props.data);
 
+  useLayoutEffect(() => {
+    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
+  }, [columns]);
+
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
@@ -303,7 +342,18 @@ export function TableNG(props: TableNGProps) {
           sortable: true,
           resizable: true,
         }}
-        rowHeight={rowHeightNumber}
+        rowHeight={(row) =>
+          getRowHeight(
+            row,
+            columnTypes,
+            headerCellRefs,
+            osContext,
+            defaultLineHeight,
+            defaultRowHeight,
+            DEFAULT_CELL_PADDING,
+            textWrap
+          )
+        }
         // TODO: This doesn't follow current table behavior
         style={{ width, height }}
         renderers={{ renderRow: myRowRenderer }}
@@ -324,6 +374,10 @@ export function TableNG(props: TableNGProps) {
         // footer
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
         bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
+        onColumnResize={() => {
+          // TODO: this is a hack to force rowHeight re-calculation
+          setResizeTrigger((prev) => prev + 1);
+        }}
       />
 
       {isContextMenuOpen && (
@@ -370,7 +424,7 @@ function getComparator(sortColumnType: string): Comparator {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
   contextMenu: css({
     position: 'absolute',
     backgroundColor: '#ffffff',
@@ -405,5 +459,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   sortIcon: css({
     marginLeft: theme.spacing(0.5),
+  }),
+  cell: css({
+    whiteSpace: `${textWrap ? 'break-spaces' : 'nowrap'}`,
+    wordWrap: 'break-word',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
 });
