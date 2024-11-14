@@ -1,4 +1,4 @@
-import { stringToJsRegex } from '../../text/string';
+import { stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
 import { DataFrame } from '../../types/dataFrame';
 import { FrameMatcherInfo } from '../../types/transformations';
 
@@ -12,9 +12,20 @@ const refIdMatcher: FrameMatcherInfo<string> = {
   defaultOptions: 'A',
 
   get: (pattern: string) => {
-    const regex = stringToJsRegex(pattern);
+    let regex: RegExp | null = null;
+
+    if (stringStartsAsRegEx(pattern)) {
+      try {
+        regex = stringToJsRegex(pattern);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.warn(error.message);
+        }
+      }
+    }
+
     return (frame: DataFrame) => {
-      return regex.test(frame.refId || '');
+      return regex?.test(frame.refId || '') ?? frame.refId === pattern;
     };
   },
 
