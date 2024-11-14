@@ -1459,6 +1459,14 @@
     },
     "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
     "form": {
+      "confirmation-code": "Cőŉƒįřmäŧįőŉ čőđę įş řęqūįřęđ",
+      "confirmation-code-label": "Cőŉƒįřmäŧįőŉ čőđę",
+      "confirmation-code-placeholder": "čőŉƒįřmäŧįőŉ čőđę",
+      "email-label": "Ēmäįľ",
+      "email-placeholder": "ęmäįľ",
+      "email-required": "Ēmäįľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "ŉämę",
       "password-label": "Päşşŵőřđ",
       "password-placeholder": "päşşŵőřđ",
       "password-required": "Päşşŵőřđ įş řęqūįřęđ",
@@ -1466,7 +1474,9 @@
       "submit-loading-label": "Ŀőģģįŉģ įŉ...",
       "username-label": "Ēmäįľ őř ūşęřŉämę",
       "username-placeholder": "ęmäįľ őř ūşęřŉämę",
-      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
+      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ",
+      "verify-email-label": "Ŝęŉđ ä vęřįƒįčäŧįőŉ ęmäįľ",
+      "verify-email-loading-label": "Ŝęŉđįŉģ ęmäįľ..."
     },
     "services": {
       "sing-in-with-prefix": "Ŝįģŉ įŉ ŵįŧĥ {{serviceName}}"

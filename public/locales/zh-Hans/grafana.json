@@ -1449,6 +1449,14 @@
     },
     "forgot-password": "忘记密码？",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "密码",
       "password-placeholder": "",
       "password-required": "必须输入密码",
@@ -1456,7 +1464,9 @@
       "submit-loading-label": "正在登录...",
       "username-label": "电子邮箱或用户名",
       "username-placeholder": "",
-      "username-required": "电子邮箱或用户名是必填项"
+      "username-required": "电子邮箱或用户名是必填项",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "使用 {{serviceName}} 登录"
