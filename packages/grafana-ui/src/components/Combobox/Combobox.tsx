@@ -9,7 +9,7 @@ import { logOptions } from '../../utils';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
-import { Input, Props as InputProps } from '../Input/Input';
+import { Input } from '../Input/Input';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -49,9 +49,9 @@ interface ComboboxBaseProps<T extends string | number> {
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
-  placeholder?: InputProps['placeholder'];
-  'aria-labelledby'?: InputProps['aria-labelledby'];
-  id?: InputProps['id'];
+  placeholder?: string;
+  'aria-labelledby'?: string;
+  id?: string;
 }
 
 const RECOMMENDED_ITEMS_AMOUNT = 100_000;
