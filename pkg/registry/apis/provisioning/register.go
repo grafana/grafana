@@ -42,7 +42,17 @@ func RegisterAPIService(
 }
 
 func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default authorizer is fine
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			if a.GetSubresource() == "webhook" {
+				// for now????
+				return authorizer.DecisionAllow, "", nil
+			}
+
+			// fallback to the standard authorizer
+			return authorizer.DecisionNoOpinion, "", nil
+		})
+	}
 }
 
 func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -71,13 +81,14 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	helloWorld := &helloWorldSubresource{
-		getter: repositoryStorage,
-	}
-
 	storage := map[string]rest.Storage{}
 	storage[v0alpha1.RepositoryResourceInfo.StoragePath()] = repositoryStorage
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
+	storage[v0alpha1.RepositoryResourceInfo.StoragePath("hello")] = &helloWorldSubresource{
+		getter: repositoryStorage,
+	}
+	storage[v0alpha1.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
+		getter: repositoryStorage,
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return nil
 }

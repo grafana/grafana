@@ -98,3 +98,11 @@ type HelloWorld struct {
 
 	Whom string `json:"whom,omitempty"`
 }
+
+// Dummy object to return for webhooks
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type WebhookResponse struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Status string `json:"status,omitempty"`
+}
