@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -37,7 +38,7 @@ export function ConfigForm() {
     },
   });
   const [tokenConfigured, setTokenConfigured] = useState(false);
-
+  const navigate = useNavigate();
   const watchType = watch('type');
 
   useEffect(() => {
@@ -50,8 +51,9 @@ export function ConfigForm() {
         payload: ['Repository settings saved'],
       });
       reset(formData);
+      navigate('/admin/provisioning');
     }
-  }, [request.isSuccess, reset, getValues]);
+  }, [request.isSuccess, reset, getValues, navigate]);
 
   const onSubmit = (data: RepositoryFormData) => {
     const spec = dataToSpec(data);
