@@ -49,14 +49,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "publicDashboards",
-			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaSharingSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,

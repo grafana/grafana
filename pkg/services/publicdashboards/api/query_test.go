@@ -102,7 +102,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
-			testServer := setupTestServer(t, nil, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser)
 
 			response := callAPI(testServer, http.MethodGet,
 				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
@@ -191,7 +191,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
-		testServer := setupTestServer(t, nil, service, anonymousUser, true)
+		testServer := setupTestServer(t, nil, service, anonymousUser)
 
 		return testServer, service
 	}
@@ -335,7 +335,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// setup test server
-	server := setupTestServer(t, cfg, pds, anonymousUser, true)
+	server := setupTestServer(t, cfg, pds, anonymousUser)
 
 	resp := callAPI(server, http.MethodPost,
 		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
@@ -418,7 +418,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 					Return(test.Annotations, test.ServiceError).Once()
 			}
 
-			testServer := setupTestServer(t, nil, service, anonymousUser, true)
+			testServer := setupTestServer(t, nil, service, anonymousUser)
 
 			path := fmt.Sprintf("/api/public/dashboards/%s/annotations?from=%s&to=%s", test.AccessToken, test.From, test.To)
 			response := callAPI(testServer, http.MethodGet, path, nil, t)

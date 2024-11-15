@@ -3,7 +3,6 @@ disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false
 live-service-web-worker,experimental,@grafana/dashboards-squad,false,false,true
 queryOverLive,experimental,@grafana/dashboards-squad,false,false,true
 panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
-publicDashboards,GA,@grafana/sharing-squad,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
 publicDashboardsScene,GA,@grafana/sharing-squad,false,false,true
 lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false

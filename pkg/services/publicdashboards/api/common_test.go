@@ -50,7 +50,6 @@ func setupTestServer(
 	cfg *setting.Cfg,
 	service publicdashboards.Service,
 	user *user.SignedInUser,
-	ffEnabled bool,
 ) *web.Mux {
 	t.Helper()
 
@@ -66,9 +65,6 @@ func setupTestServer(
 	m.Use(contextProvider(&testContext{user}))
 
 	features := featuremgmt.WithFeatures()
-	if ffEnabled {
-		features = featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
-	}
 
 	if cfg == nil {
 		cfg = setting.NewCfg()

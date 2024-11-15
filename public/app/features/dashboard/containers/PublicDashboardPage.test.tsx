@@ -122,8 +122,6 @@ const dashboardBase = {
 
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
-    config.featureToggles.publicDashboards = true;
-
     jest.clearAllMocks();
   });
 
