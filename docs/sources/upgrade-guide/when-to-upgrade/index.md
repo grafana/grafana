@@ -48,11 +48,11 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 | ---------------------------- | -------------------- | ------------------ |
 | May 14, 2024                 | 11                   | Major and patching |
 | June 25, 2024                | 11.1                 | Minor and patching |
-| July 23, 2024                | Supported Versions   | Patching           |
+| July 23, 2024                | Supported versions   | Patching           |
 | Aug. 27, 2024                | 11.2                 | Minor and patching |
-| Sept. 24, 2024               | Supported Versions   | Patching           |
+| Sept. 24, 2024               | Supported versions   | Patching           |
 | Oct. 22, 2024                | 11.3                 | Minor and patching |
-| Nov. 19, 2024                | Supported Versions   | Patching           |
+| Nov. 19, 2024                | Supported versions   | Patching           |
 | Dec. 5, 2024                 | 11.4                 | Minor and patching |
 | Jan. 28, 2025                | 11.5                 | Minor and patching |
 
@@ -65,16 +65,16 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 
 **Freeze dates:** 
 
-* Nov. 25, 2024 to Dec.2, 2024  
-* Dec. 19, 2024 to Jan. 2, 2025
+- November 25, 2024 - December 2, 2024  
+- December 19, 2024 - January 2, 2025
 
 **Impacted products:**
 
-* Grafana in Grafana Cloud’s Grafana  
-* Grafana OSS  
-* Grafana Enterprise  
-* Grafana query service  
-* Multi-tenant data source services
+- Grafana in Grafana Cloud’s Grafana  
+- Grafana OSS  
+- Grafana Enterprise  
+- Grafana query service  
+- Multi-tenant data source services
 
 During these times, no scheduled releases will be executed. However, this does not apply to changes that may be required during the course of an operational or security incident. 
   
@@ -103,7 +103,7 @@ Here is an overview of projected version support through 2024:
 
 | **Version**               | **Release date**        | **Support end of life (EOL)** |
 | ------------------------- | ----------------------- | ----------------------------- |
-| 10.3                      | January 2024            | NO LONGER SUPPORTED as of Oct. 2024                 |
+| 10.3                      | January 2024            | NO LONGER SUPPORTED as of October 2024                 |
 | 10.4 (Last minor of 10.0) | March 2024              | June 2025 (extended support)  |
 | 11.0                      | May 2024                | February 2025                 |
 | 11.1                      | June 2024               | March 2025                    |
