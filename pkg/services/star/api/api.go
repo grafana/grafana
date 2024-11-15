@@ -114,6 +114,7 @@ func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
 	api.logger.Warn("POST /user/stars/dashboard/{dashboard_id} is deprecated, please use POST /user/stars/dashboard/uid/{dashboard_uid} instead")
 
 	cmd := star.StarDashboardCommand{UserID: userID, DashboardID: id, Updated: time.Now()}
+	// nolint:staticcheck
 	if cmd.DashboardID <= 0 {
 		return response.Error(http.StatusBadRequest, "Missing dashboard id", nil)
 	}
@@ -192,6 +193,7 @@ func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 	api.logger.Warn("DELETE /user/stars/dashboard/{dashboard_id} is deprecated, please use DELETE /user/stars/dashboard/uid/{dashboard_uid} instead")
 
 	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardID: id}
+	// nolint:staticcheck
 	if cmd.DashboardID <= 0 {
 		return response.Error(http.StatusBadRequest, "Missing dashboard id", nil)
 	}

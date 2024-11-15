@@ -43,7 +43,8 @@ func (s *sqlStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (b
 func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		entity := star.Star{
-			UserID:       cmd.UserID,
+			UserID: cmd.UserID,
+			// nolint:staticcheck
 			DashboardID:  cmd.DashboardID,
 			DashboardUID: cmd.DashboardUID,
 			OrgID:        cmd.OrgID,
@@ -70,6 +71,7 @@ func (s *sqlStore) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand)
 		// TODO: Remove this block after all dashboards have a UID
 		// && the deprecated endpoints have been removed
 		var rawSQL = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
+		// nolint:staticcheck
 		_, err := sess.Exec(rawSQL, cmd.UserID, cmd.DashboardID)
 		return err
 	})

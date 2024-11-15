@@ -8,8 +8,8 @@ import (
 var ErrCommandValidationFailed = errors.New("command missing required fields")
 
 type Star struct {
-	ID           int64     `xorm:"pk autoincr 'id'" db:"id"`
-	UserID       int64     `xorm:"user_id" db:"user_id"`
+	ID     int64 `xorm:"pk autoincr 'id'" db:"id"`
+	UserID int64 `xorm:"user_id" db:"user_id"`
 	// Deprecated: use DashboardUID
 	DashboardID  int64     `xorm:"dashboard_id" db:"dashboard_id"`
 	DashboardUID string    `xorm:"dashboard_uid" db:"dashboard_uid"`
@@ -21,7 +21,7 @@ type Star struct {
 // COMMANDS
 
 type StarDashboardCommand struct {
-	UserID       int64     `xorm:"user_id"`
+	UserID int64 `xorm:"user_id"`
 	// Deprecated: use DashboardUID
 	DashboardID  int64     `xorm:"dashboard_id"`
 	DashboardUID string    `xorm:"dashboard_uid"`
@@ -45,6 +45,7 @@ type UnstarDashboardCommand struct {
 }
 
 func (cmd *UnstarDashboardCommand) Validate() error {
+	// nolint:staticcheck
 	if (cmd.DashboardID == 0 && cmd.DashboardUID == "" && cmd.OrgID == 0) || cmd.UserID == 0 {
 		return ErrCommandValidationFailed
 	}
