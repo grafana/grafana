@@ -8,19 +8,29 @@ import (
 
 func TestIdentityGetName(t *testing.T) {
 	tt := []struct {
-		name string
-		user *SignedInUser
+		name     string
+		user     *SignedInUser
+		expected string
 	}{
 		{
-			name: "GetName on a user with empty name returns raw identifier",
+			name: "GetName on a user with empty name returns Login, if set",
 			user: &SignedInUser{
-				UserUID: "u000000002",
+				Login: "userLogin",
+				Email: "user@grafana.com",
 			},
+			expected: "userLogin",
+		},
+		{
+			name: "GetName on a user with empty name returns Email, if no Login is set",
+			user: &SignedInUser{
+				Email: "user@grafana.com",
+			},
+			expected: "user@grafana.com",
 		},
 	}
 
 	for _, tc := range tt {
 		user := tc.user
-		require.Equal(t, user.GetName(), user.GetRawIdentifier(), tc.name)
+		require.Equal(t, user.GetName(), tc.expected, tc.name)
 	}
 }
