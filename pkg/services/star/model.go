@@ -22,6 +22,7 @@ type Star struct {
 
 type StarDashboardCommand struct {
 	UserID       int64     `xorm:"user_id"`
+	// Deprecated: use DashboardUID
 	DashboardID  int64     `xorm:"dashboard_id"`
 	DashboardUID string    `xorm:"dashboard_uid"`
 	OrgID        int64     `xorm:"org_id"`
