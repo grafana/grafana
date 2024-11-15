@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
+import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -51,14 +52,17 @@ export function ConfigForm() {
         payload: ['Repository settings saved'],
       });
       reset(formData);
-      navigate('/admin/provisioning');
+      setTimeout(() => {
+        navigate('/admin/provisioning');
+      }, 0);
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 
   const onSubmit = (data: RepositoryFormData) => {
     const spec = dataToSpec(data);
-    submitData({ metadata: { generateName: 'test' }, spec });
+    submitData({ metadata: { generateName: uuidv4() }, spec });
   };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 600 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
