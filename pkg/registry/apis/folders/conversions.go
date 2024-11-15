@@ -153,8 +153,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
-	fmt.Println("v.UpdatedByUID:", v.UpdatedByUID)
-	fmt.Println("v.CreatedByUID:", v.CreatedByUID)
 
 	if v.CreatedByUID != "" {
 		meta.SetCreatedBy(v.UpdatedByUID)
