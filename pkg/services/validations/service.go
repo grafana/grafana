@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PluginRequestValidator interface {
+type DataSourceRequestValidator interface {
 	// Validate performs a request validation based
 	// on the data source URL and some of the request
 	// attributes (headers, cookies, etc).

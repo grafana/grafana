@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
@@ -44,7 +44,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator v
 
 type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
-	PluginRequestValidator validations.PluginRequestValidator
+	PluginRequestValidator validations.DataSourceRequestValidator
 	pluginStore            pluginstore.Store
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider

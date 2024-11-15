@@ -13,7 +13,7 @@ import (
 
 const HostRedirectValidationMiddlewareName = "host-redirect-validation"
 
-func RedirectLimitMiddleware(reqValidator validations.PluginRequestValidator) sdkhttpclient.Middleware {
+func RedirectLimitMiddleware(reqValidator validations.DataSourceRequestValidator) sdkhttpclient.Middleware {
 	return sdkhttpclient.NamedMiddlewareFunc(HostRedirectValidationMiddlewareName, func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 		return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
 			res, err := next.RoundTrip(req)

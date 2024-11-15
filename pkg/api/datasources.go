@@ -840,7 +840,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		Headers:       map[string]string{},
 	}
 
-	err = hs.PluginRequestValidator.Validate(ds, hs.Cfg.SecureSocksDSProxy, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds, hs.Cfg.SecureSocksDSProxy, c.Req)
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
