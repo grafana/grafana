@@ -17,15 +17,11 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		Groups: make(map[string]*authzextv1.BatchCheckGroup),
 	}
 
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
-	}
 	subject := r.GetSubject()
 
 	for _, item := range r.Items {
 		groupPrefix := common.FormatGroupResource(item.GetGroup(), item.GetResource())
-		allowed, err := s.batchCheckItem(ctx, storeInf, subject, item)
+		allowed, err := s.batchCheckItem(ctx, subject, item)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +37,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	return batchRes, nil
 }
 
-func (s *Server) batchCheckItem(ctx context.Context, storeInf *storeInfo, subject string, item *authzextv1.BatchCheckItem) (bool, error) {
+func (s *Server) batchCheckItem(ctx context.Context, subject string, item *authzextv1.BatchCheckItem) (bool, error) {
 	req := &authzv1.CheckRequest{
 		Subject:     subject,
 		Verb:        item.GetVerb(),
@@ -55,9 +51,9 @@ func (s *Server) batchCheckItem(ctx context.Context, storeInf *storeInfo, subjec
 	var res *authzv1.CheckResponse
 	var err error
 	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
-		res, err = s.checkTyped(ctx, req, info, storeInf)
+		res, err = s.checkTyped(ctx, req, info)
 	} else {
-		res, err = s.checkGeneric(ctx, req, storeInf)
+		res, err = s.checkGeneric(ctx, req)
 	}
 	if err != nil {
 		return false, err

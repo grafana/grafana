@@ -168,12 +168,6 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	return req, true
 }
 
-type ResourceInfo struct {
-	Typ      string
-	Group    string
-	Resource string
-}
-
 func TranslateToGroupResource(kind string) string {
 	translation, ok := resourceTranslations[kind]
 	if !ok {
