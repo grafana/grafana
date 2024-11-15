@@ -20,9 +20,15 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { AdHocFilterItem, ErrorBoundaryAlert, PanelContainer, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  AdHocFilterItem,
+  ErrorBoundaryAlert,
+  PanelContainer,
+  ScrollContainer,
+  Themeable2,
+  withTheme2,
+} from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { StoreState } from 'app/types';
