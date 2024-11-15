@@ -48,6 +48,18 @@ export function createContactPointLink(contactPoint: string, alertManagerSourceN
   });
 }
 
+/**
+ * @deprecated Avoid using this - we should instead endeavour to use IDs to link directly to contact points.
+ * This isn't always possible, so only use this if we only have access to a contact point's name
+ */
+export function createContactPointSearchLink(contactPoint: string, alertManagerSourceName = ''): string {
+  return createRelativeUrl(`/alerting/notifications`, {
+    search: contactPoint,
+    tab: 'contact_points',
+    alertmanager: alertManagerSourceName,
+  });
+}
+
 export function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
   return createRelativeUrl('/alerting/routes/mute-timing/edit', {
     muteName: muteTimingName,

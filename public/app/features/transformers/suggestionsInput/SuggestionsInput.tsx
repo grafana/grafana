@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { CustomScrollbar, FieldValidationMessage, Portal, TextArea, useTheme2 } from '@grafana/ui';
+import { FieldValidationMessage, Portal, ScrollContainer, TextArea, useTheme2 } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 
@@ -61,6 +61,7 @@ export const SuggestionsInput = ({
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [variableValue, setVariableValue] = useState<string>(value.toString());
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
@@ -69,6 +70,10 @@ export const SuggestionsInput = ({
   const styles = getStyles(theme, inputHeight);
 
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, scrollTop);
+  }, [scrollTop]);
 
   // the order of middleware is important!
   const middleware = [
@@ -189,10 +194,10 @@ export const SuggestionsInput = ({
       {showingSuggestions && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
-            <CustomScrollbar
-              scrollTop={scrollTop}
-              autoHeightMax="300px"
-              setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+            <ScrollContainer
+              maxHeight="300px"
+              onScroll={(event) => setScrollTop(event.currentTarget.scrollTop ?? 0)}
+              ref={scrollRef}
             >
               {/* This suggestion component has a specialized name,
                     but is rather generalistic in implementation,
@@ -205,7 +210,7 @@ export const SuggestionsInput = ({
                 onClose={() => setShowingSuggestions(false)}
                 activeIndex={suggestionsIndex}
               />
-            </CustomScrollbar>
+            </ScrollContainer>
           </div>
         </Portal>
       )}

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/zanzana/proto/v1"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
 func testList(t *testing.T, server *Server) {
@@ -52,8 +52,16 @@ func testList(t *testing.T, server *Server) {
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)
 		assert.Len(t, res.GetFolders(), 2)
-		assert.Equal(t, res.GetFolders()[0], "1")
-		assert.Equal(t, res.GetFolders()[1], "3")
+
+		first := res.GetFolders()[0]
+		second := res.GetFolders()[1]
+
+		if first == "3" {
+			first, second = second, first
+		}
+
+		assert.Equal(t, first, "1")
+		assert.Equal(t, second, "3")
 	})
 
 	t.Run("user:5 should be get list all dashboards.grafana.app/dashboards in folder 1 with set relation", func(t *testing.T) {
