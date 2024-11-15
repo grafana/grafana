@@ -535,7 +535,13 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/provisioning',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "GitSynConfigPage"*/ '../features/provisioning/ConfigPage')
+        () => import(/* webpackChunkName: "RepositoryListPage"*/ '../features/provisioning/RepositoryListPage')
+      ),
+    },
+    {
+      path: '/admin/provisioning/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NewRepositoryPage"*/ '../features/provisioning/NewRepositoryPage')
       ),
     },
     ...getPluginCatalogRoutes(),
