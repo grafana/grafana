@@ -46,7 +46,7 @@ The following video provides a walkthrough of creating a logs visualization. You
 
 ## Supported data formats
 
-The logs visualization works best with log-type datasets such as queries from data sources like Loki, Elastic, and InlfuxDB.
+The logs visualization works best with log-type datasets such as queries from data sources like Loki, Elastic, and InfluxDB.
 
 You can also build log-formatted data from other data sources as long as the first field is a time type followed by string, number, and time fields. The leading time field is used to sort and timestamp the logs and if the data contains other time-type fields, they’re included as elements of the logged record.
 
