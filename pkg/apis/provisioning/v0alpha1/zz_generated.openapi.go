@@ -46,6 +46,20 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"token": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Token for accessing the repository.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"webhookSecret": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookSecret is the secret used to validate incoming webhooks.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"branchWorkflow": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should commit to change branches and use a Pull Request flow to achieve this. By default, this is false (i.e. we will commit straight to the main branch).",
