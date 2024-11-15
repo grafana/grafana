@@ -9624,6 +9624,9 @@
           "branding": {
             "$ref": "#/components/schemas/ReportBrandingOptions"
           },
+          "embeddedImageTheme": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9631,6 +9634,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "pdfTheme": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
@@ -11056,6 +11062,9 @@
             "type": "array"
           },
           "teamId": {
+            "type": "string"
+          },
+          "teamUid": {
             "type": "string"
           }
         },
@@ -22432,7 +22441,8 @@
     },
     "/reports/{id}": {
       "delete": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "deleteReport",
         "parameters": [
           {
@@ -22472,7 +22482,8 @@
         ]
       },
       "get": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "getReport",
         "parameters": [
           {
@@ -22512,7 +22523,8 @@
         ]
       },
       "put": {
-        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.",
+        "deprecated": true,
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
         "operationId": "updateReport",
         "parameters": [
           {

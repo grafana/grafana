@@ -2,7 +2,16 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue, TimeRange, FieldConfigSource, ActionModel } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  KeyValue,
+  SelectableValue,
+  TimeRange,
+  FieldConfigSource,
+  ActionModel,
+  InterpolateFunction,
+} from '@grafana/data';
 import * as schema from '@grafana/schema';
 
 import { TableStyles } from './TableRT/styles';
@@ -109,6 +118,7 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export interface GeneralTableProps extends BaseTableProps {
@@ -174,5 +184,9 @@ export interface CellColors {
   bgHoverColor?: string;
 }
 
-// export type GetActionsFunction = (frame: DataFrame, field: Field, fieldScopedVars: any, replaceVariables: any, actions: Action[], config: any) => ActionModel[];
-export type GetActionsFunction = (frame: DataFrame, field: Field) => ActionModel[];
+export type GetActionsFunction = (
+  frame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables?: InterpolateFunction
+) => ActionModel[];

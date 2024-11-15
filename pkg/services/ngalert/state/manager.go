@@ -124,16 +124,19 @@ func (st *Manager) Run(ctx context.Context) error {
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceReader InstanceReader) {
+	logger := st.log.FromContext(ctx)
+
 	if st.instanceStore == nil {
-		st.log.Info("Skip warming the state because instance store is not configured")
+		logger.Info("Skip warming the state because instance store is not configured")
 		return
 	}
+
 	startTime := time.Now()
-	st.log.Info("Warming state cache for startup")
+	logger.Info("Warming state cache for startup")
 
 	orgIds, err := instanceReader.FetchOrgIds(ctx)
 	if err != nil {
-		st.log.Error("Unable to fetch orgIds", "error", err)
+		logger.Error("Unable to fetch orgIds", "error", err)
 	}
 
 	statesCount := 0
@@ -144,7 +147,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 		}
 		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch previous state", "error", err)
 		}
 
 		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
@@ -158,7 +161,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 		// We will not enforce this here, but it's convenient to emit the warning here as we load up all the rules.
 		for name, size := range groupSizes {
 			if st.rulesPerRuleGroupLimit > 0 && size > st.rulesPerRuleGroupLimit {
-				st.log.Warn(
+				logger.Warn(
 					"Large rule group was loaded. Large groups are discouraged and changes to them may be disallowed in the future.",
 					"limit", st.rulesPerRuleGroupLimit,
 					"actual", size,
@@ -173,7 +176,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 		}
 		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch previous state", "error", err)
 		}
 
 		for _, entry := range alertInstances {
@@ -195,11 +198,11 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 			if entry.ResultFingerprint != "" {
 				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
 				if err != nil {
-					st.log.Error("Failed to parse result fingerprint of alert instance", "error", err, "ruleUID", entry.RuleUID)
+					logger.Error("Failed to parse result fingerprint of alert instance", "error", err, "ruleUID", entry.RuleUID)
 				}
 				resultFp = data.Fingerprint(fp)
 			}
-			state := State{
+			state := &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
 				CacheID:              cacheID,
@@ -215,12 +218,12 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader, instanceRea
 				ResolvedAt:           entry.ResolvedAt,
 				LastSentAt:           entry.LastSentAt,
 			}
-			st.cache.getOrAdd(state, st.log)
+			st.cache.set(state)
 			statesCount++
 		}
 	}
 
-	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
+	logger.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {
@@ -388,46 +391,50 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 				}
 			}
 		}
-		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		annotations := map[string]string{
+			"datasource_uid": datasourceUIDs.String(),
+			"ref_id":         refIds.String(),
+		}
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, annotations)
 		if len(transitions) > 0 {
-			for _, t := range transitions {
-				if t.State.Annotations == nil {
-					t.State.Annotations = make(map[string]string)
-				}
-				t.State.Annotations["datasource_uid"] = datasourceUIDs.String()
-				t.State.Annotations["ref_id"] = refIds.String()
-			}
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
 	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
 		// TODO squash all errors into one, and provide as annotation
-		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, nil)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
-		currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
-		s := st.setNextState(ctx, alertRule, currentState, result, logger)
+		currentState := st.cache.create(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		s := st.setNextState(ctx, alertRule, currentState, result, nil, logger)
+		st.cache.set(currentState) // replace the existing state with the new one
 		transitions = append(transitions, s)
 	}
 	return transitions
 }
 
-func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger) []StateTransition {
+func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger, extraAnnotations data.Labels) []StateTransition {
 	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
 	transitions := make([]StateTransition, 0, len(currentStates))
+	updated := ruleStates{
+		states: make(map[data.Fingerprint]*State, len(currentStates)),
+	}
 	for _, currentState := range currentStates {
-		t := st.setNextState(ctx, alertRule, currentState, result, logger)
+		newState := currentState.Copy()
+		t := st.setNextState(ctx, alertRule, newState, result, extraAnnotations, logger)
+		updated.states[newState.CacheID] = newState
 		transitions = append(transitions, t)
 	}
+	st.cache.setRuleStates(alertRule.GetKey(), updated)
 	return transitions
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, extraAnnotations data.Labels, logger log.Logger) StateTransition {
 	start := st.clock.Now()
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -515,7 +522,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		}
 	}
 
-	st.cache.set(currentState)
+	for key, val := range extraAnnotations {
+		currentState.Annotations[key] = val
+	}
 
 	nextState := StateTransition{
 		State:               currentState,

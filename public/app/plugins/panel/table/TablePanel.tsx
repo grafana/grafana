@@ -23,7 +23,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -71,6 +71,7 @@ export function TablePanel(props: Props) {
       fieldConfig={fieldConfig}
       useTableNg={useTableNg}
       getActions={getCellActions}
+      replaceVariables={replaceVariables}
     />
   );
 
@@ -147,7 +148,12 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
 // placeholder function; assuming the values are already interpolated
 const replaceVars: InterpolateFunction = (value: string) => value;
 
-const getCellActions = (dataFrame: DataFrame, field: Field) => {
+const getCellActions = (
+  dataFrame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables: InterpolateFunction | undefined
+) => {
   if (!config.featureToggles?.vizActions) {
     return [];
   }
@@ -159,9 +165,9 @@ const getCellActions = (dataFrame: DataFrame, field: Field) => {
     dataFrame,
     field,
     field.state!.scopedVars!,
-    replaceVars,
+    replaceVariables ?? replaceVars,
     field.config.actions ?? [],
-    {}
+    { valueRowIndex: rowIndex }
   );
 
   actionsModel.forEach((action) => {

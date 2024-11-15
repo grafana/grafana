@@ -20,7 +20,7 @@ import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../../Pagination/Pagination';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from '../hooks';
 import { getInitialState, useTableStateReducer } from '../reducer';
-import { FooterItem, GrafanaTableState, TableRTProps } from '../types';
+import { FooterItem, GrafanaTableState, BaseTableProps as Props } from '../types';
 import {
   getColumns,
   sortCaseInsensitive,
@@ -39,7 +39,7 @@ const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 const NO_DATA_TEXT = 'No data';
 
-export const Table = memo((props: TableRTProps) => {
+export const Table = memo((props: Props) => {
   const {
     ariaLabel,
     data,
@@ -61,6 +61,7 @@ export const Table = memo((props: TableRTProps) => {
     initialRowIndex = undefined,
     fieldConfig,
     getActions,
+    replaceVariables,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -362,6 +363,7 @@ export const Table = memo((props: TableRTProps) => {
                 longestField={longestField}
                 textWrapField={textWrapField}
                 getActions={getActions}
+                replaceVariables={replaceVariables}
               />
             </div>
           ) : (
