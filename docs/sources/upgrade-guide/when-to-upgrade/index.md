@@ -42,24 +42,53 @@ We provide release documentation in multiple places to address different needs:
 
 ## When to expect releases
 
-Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for 2024:
+Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for 2024-early 2025:
 
 | **Anticipated release date** | **Grafana versions** | **Release type**   |
 | ---------------------------- | -------------------- | ------------------ |
 | May 14, 2024                 | 11                   | Major and patching |
 | June 25, 2024                | 11.1                 | Minor and patching |
-| July 23, 2024                | 11.1.x               | Patching           |
+| July 23, 2024                | Supported versions   | Patching           |
 | Aug. 27, 2024                | 11.2                 | Minor and patching |
-| Sept. 24, 2024               | 11.2.x               | Patching           |
+| Sept. 24, 2024               | Supported versions   | Patching           |
 | Oct. 22, 2024                | 11.3                 | Minor and patching |
-| November/December 2024       | To be determined     | To be determined   |
+| Nov. 19, 2024                | Supported versions   | Patching           |
+| Dec. 5, 2024                 | 11.4                 | Minor and patching |
+| Jan. 28, 2025                | 11.5                 | Minor and patching |
 
 ### A few important notes
 
 - The schedule above outlines how we plan release dates. However, unforeseen events and circumstances may cause dates to change.
 - High severity security and feature degradation incidents will result in ad-hoc releases that are not scheduled ahead of time.
 - Patching releases are for the current (last released) minor version of Grafana. Additional older versions of Grafana may be included if there is a critical bug or security vulnerability that needs to be patched.
-- A Grafana release freeze occurs for a week in November and again during the end of December. This does not apply to changes that may be required during the course of an operational or security incident.
+- Each year Grafana implements two release freezes to accommodate for the holiday season. This year our release freezes will be implemented as outlined below:
+
+**Freeze dates:**
+
+- November 25, 2024 - December 2, 2024
+- December 19, 2024 - January 2, 2025
+
+**Impacted products:**
+
+- Grafana in Grafana Cloud’s Grafana
+- Grafana OSS
+- Grafana Enterprise
+- Grafana query service
+- Multi-tenant data source services
+
+During these times, no scheduled releases will be executed. However, this does not apply to changes that may be required during the course of an operational or security incident.
+
+## Grafana security releases: improved version naming convention
+
+We've enhanced our naming convention for security release versions to make it easier to clearly identify our security releases from our standard patching releases.
+
+In the past, critical vulnerabilities triggered unscheduled releases that incremented the patch version (e.g., 10.3.0 to 10.3.1). However, we found that the naming convention for these releases didn't clearly communicate the nature of the update. For example, if there was a version change from 11.3.0 to 11.3.1, there was no indication whether it was a security fix, a bug fix, or a minor feature update. This lack of clarity led to confusion about the urgency and nature of the update.
+
+Our new approach directly addresses this issue. Going forward, security releases will be appended with "+security" to indicate that the release is the indicated version PLUS the security fix.
+
+**For example**: A release named "11.2.3+security-01" would consist of what was released in 11.2.3 PLUS the indicated security fix. Once released, the security fix will also then be automatically included in all future releases of the impacted version.
+
+This naming convention should make it easier to identify security updates and the Grafana version they're based on, allowing for a better understanding of the importance and urgency of each release.
 
 ## What to know about version support
 
@@ -72,13 +101,14 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions is 
 
 Here is an overview of projected version support through 2024:
 
-| **Version**               | **Release date**        | **Support end of life (EOL)** |
-| ------------------------- | ----------------------- | ----------------------------- |
-| 10.3                      | January 2024            | October 2024                  |
-| 10.4 (Last minor of 10.0) | March 2024              | June 2025 (extended support)  |
-| 11.0                      | May 2024                | February 2025                 |
-| 11.1                      | June 2024               | March 2025                    |
-| 11.2                      | August 2024 (tentative) | May 2025 (tentative)          |
+| **Version**               | **Release date** | **Support end of life (EOL)**          |
+| ------------------------- | ---------------- | -------------------------------------- |
+| 10.3                      | January 2024     | NO LONGER SUPPORTED as of October 2024 |
+| 10.4 (Last minor of 10.0) | March 2024       | June 2025 (extended support)           |
+| 11.0                      | May 2024         | February 2025                          |
+| 11.1                      | June 2024        | March 2025                             |
+| 11.2                      | August 2024      | May 2025                               |
+| 11.3                      | October 2024     | July 2025                              |
 
 {{< admonition type="note" >}}
 Grafana 9.5.x was the last supported minor for the 9.0 major release and is no longer supported as of July 2024.
