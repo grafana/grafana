@@ -247,7 +247,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select folder before setting evaluation group and interval"
+        "select-folder-before": "Select a folder before setting evaluation group and interval"
       },
       "evaluation-behaviour": {
         "description": {
@@ -268,14 +268,14 @@
       "folder": {
         "cancel": "Cancel",
         "create": "Create",
-        "create-folder": "Create a new folder to store your rule",
+        "create-folder": "Create a new folder to store your alert rule in.",
         "creating-new-folder": "Creating new folder",
         "folder-name": "Folder name",
         "label": "Folder",
         "new-folder": "New folder",
         "new-folder-or": "or"
       },
-      "folder-and-labels": "Organize your rule with a folder and a set of labels.",
+      "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
         "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
       },

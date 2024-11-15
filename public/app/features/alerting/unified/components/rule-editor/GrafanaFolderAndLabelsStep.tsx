@@ -36,7 +36,7 @@ export function GrafanaFolderAndLabelsStep() {
       <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
           <Trans i18nKey="alerting.rule-form.folder-and-labels">
-            Organize your rule with a folder and a set of labels.
+            Organize your alert rule with a folder and set of labels.
           </Trans>
         </Text>
         <NeedHelpInfo

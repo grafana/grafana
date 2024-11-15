@@ -43,7 +43,7 @@ export function FolderWithoutGroup() {
         {
           <Field
             label={
-              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+              <Label htmlFor="folder" description={'Select a folder to store your rule in.'}>
                 <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
               </Label>
             }
@@ -135,7 +135,9 @@ function FolderCreationModal({
   return (
     <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
       <div className={styles.modalTitle}>
-        <Trans i18nKey="alerting.rule-form.folder.create-folder">Create a new folder to store your rule</Trans>
+        <Trans i18nKey="alerting.rule-form.folder.create-folder">
+          Create a new folder to store your alert rule in.
+        </Trans>
       </div>
 
       <form onSubmit={onSubmit}>
