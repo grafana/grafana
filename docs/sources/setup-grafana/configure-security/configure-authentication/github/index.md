@@ -166,7 +166,18 @@ All other users are granted the `Viewer` role.
 role_attribute_path = contains(groups[*], '@my-github-organization/my-github-team') && 'Editor' || 'Viewer'
 ```
 
-#### Map server administrator role
+##### Map roles using multiple GitHub teams
+
+In this example, the users from GitHub teams `admins` and `devops` have been granted the `Admin` role,
+the users from GitHub teams `engineers` and `managers` have been granted the `Editor` role,
+the users from GitHub team `qa` have been granted the `Viewer` role and
+all other users are granted the `None` role.
+
+```bash
+role_attribute_path = contains(groups[*], '@my-github-organization/admins') && 'Admin' || contains(groups[*], '@my-github-organization/devops') && 'Admin' || contains(groups[*], '@my-github-organization/engineers') && 'Editor' || contains(groups[*], '@my-github-organization/managers') && 'Editor' || contains(groups[*], '@my-github-organization/qa') && 'Viewer' || 'None'
+```
+
+##### Map server administrator role
 
 In this example, the user with login `octocat` has been granted the `Admin` organization role as well as the Grafana server admin role.
 All other users are granted the `Viewer` role.
