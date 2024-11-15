@@ -51,7 +51,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2", Folder: "2"},
 		}))
 		require.NoError(t, err)
-		assert.Len(t, res.Groups[groupPrefix].Items, 0)
+		assert.Len(t, res.Groups[groupPrefix].Items, 2)
 	})
 
 	t.Run("user:3 should be able to read resource:dashboards.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
@@ -115,6 +115,6 @@ func testBatchCheck(t *testing.T, server *Server) {
 			{Name: "2"},
 		}))
 		require.NoError(t, err)
-		require.Len(t, res.Groups[groupPrefix].Items, 0)
+		require.Len(t, res.Groups[groupPrefix].Items, 2)
 	})
 }

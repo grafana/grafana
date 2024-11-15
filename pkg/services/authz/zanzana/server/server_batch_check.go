@@ -21,7 +21,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 
 	for _, item := range r.Items {
 		groupPrefix := common.FormatGroupResource(item.GetGroup(), item.GetResource())
-		allowed, err := s.batchCheckItem(ctx, subject, item)
+		allowed, err := s.batchCheckItem(ctx, subject, r.Namespace, item)
 		if err != nil {
 			return nil, err
 		}
@@ -37,8 +37,9 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	return batchRes, nil
 }
 
-func (s *Server) batchCheckItem(ctx context.Context, subject string, item *authzextv1.BatchCheckItem) (bool, error) {
+func (s *Server) batchCheckItem(ctx context.Context, subject string, namespace string, item *authzextv1.BatchCheckItem) (bool, error) {
 	req := &authzv1.CheckRequest{
+		Namespace:   namespace,
 		Subject:     subject,
 		Verb:        item.GetVerb(),
 		Group:       item.GetGroup(),
