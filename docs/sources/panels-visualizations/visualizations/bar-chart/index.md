@@ -160,6 +160,8 @@ Enter a **Value** to change the size of the text on your bar chart.
 
 Use the following field settings to refine how your axes display.
 
+For guidance on configuring more than one y-axis, refer to [Multiple y-axes](#multiple-y-axes).
+
 Some field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 <!-- prettier-ignore-start -->
