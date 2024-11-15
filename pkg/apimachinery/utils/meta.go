@@ -283,7 +283,7 @@ func (m *grafanaMetaAccessor) SetSlug(v string) {
 	m.SetAnnotation(AnnoKeySlug, v)
 }
 
-// Lookup an old key also
+// This allows looking up a primary and secondary key -- if either exist the value will be returned
 func (m *grafanaMetaAccessor) getAnnoValue(primary, secondary string) (string, bool) {
 	v, ok := m.obj.GetAnnotations()[primary]
 	if !ok {
