@@ -43,6 +43,9 @@ export default {
       grafanaDependency: '>=7.3.0',
       grafanaVersion: '7.3',
       plugins: [],
+      extensions: {
+        exposedComponents: [],
+      },
     },
     info: {
       links: [],

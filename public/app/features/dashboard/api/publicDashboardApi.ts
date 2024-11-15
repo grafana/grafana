@@ -209,7 +209,7 @@ export const publicDashboardApi = createApi({
                 )
               : t(
                   'public-dashboard.email-sharing.success-share-type-change',
-                  'Dashboard access restricted: Only specific people can now access with the link'
+                  'Dashboard access updated: Only specific people can now access with the link'
                 );
         }
         dispatch(notifyApp(createSuccessNotification(message)));

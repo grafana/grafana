@@ -1,7 +1,8 @@
 import { ReducerID } from '@grafana/data';
 
 import { EvalFunction } from '../../alerting/state/alertDef';
-import { ClassicCondition, ExpressionQuery, ExpressionQueryType } from '../types';
+import { isReducerType } from '../guards';
+import { ClassicCondition, ExpressionQuery, ExpressionQueryType, ReducerType } from '../types';
 
 export const getDefaults = (query: ExpressionQuery) => {
   switch (query.type) {
@@ -57,3 +58,14 @@ export const defaultCondition: ClassicCondition = {
     type: EvalFunction.IsAbove,
   },
 };
+
+/**
+ * Returns the ReducerType if the value is a valid ReducerType, otherwise undefined
+ * @param value string
+ */
+export function getReducerType(value: string): ReducerType | undefined {
+  if (isReducerType(value)) {
+    return value;
+  }
+  return undefined;
+}

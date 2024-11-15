@@ -34,7 +34,7 @@ export function ScopesDashboardsTreeFolderItem({
           onFolderUpdate(folderPath, !folder.isExpanded);
         }}
       >
-        <Icon name={!folder.isExpanded ? 'angle-right' : 'angle-down'} />
+        <Icon name={!folder.isExpanded ? 'angle-right' : 'angle-down'} className={styles.icon} />
 
         {folder.title}
       </button>
@@ -56,13 +56,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5, 0),
     }),
     expand: css({
-      alignItems: 'center',
+      alignItems: 'flex-start',
       background: 'none',
       border: 0,
       display: 'flex',
       gap: theme.spacing(1),
       margin: 0,
       padding: 0,
+      textAlign: 'left',
+      wordBreak: 'break-word',
+    }),
+    icon: css({
+      marginTop: theme.spacing(0.25),
     }),
     children: css({
       paddingLeft: theme.spacing(4),

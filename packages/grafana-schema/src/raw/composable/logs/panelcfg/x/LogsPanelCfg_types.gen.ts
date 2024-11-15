@@ -10,13 +10,15 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.3.0-pre";
+export const pluginVersion = "11.4.0-pre";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   displayedFields?: Array<string>;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
+  logRowMenuIconsAfter?: unknown;
+  logRowMenuIconsBefore?: unknown;
   /**
    * TODO: figure out how to define callbacks
    */

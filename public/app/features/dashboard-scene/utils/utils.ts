@@ -1,11 +1,11 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CancelActivationHandler,
   CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -15,12 +15,9 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowActions } from '../scene/row-actions/RowActions';
-
-import { dashboardSceneGraph } from './dashboardSceneGraph';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -31,10 +28,6 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
-}
-
-export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
-  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
 }
 
 /**
@@ -221,12 +214,9 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
-    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
@@ -244,20 +234,48 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
   });
 }
 
-export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
-  const id = dashboardSceneGraph.getNextPanelId(dashboard);
-
-  return new SceneGridRow({
-    key: getVizPanelKeyForPanelId(id),
-    title: 'Row title',
-    actions: new RowActions({}),
-    y: 0,
-  });
+export function isLibraryPanel(vizPanel: VizPanel): boolean {
+  return getLibraryPanelBehavior(vizPanel) !== undefined;
 }
 
-export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
-  if (vizPanel.parent instanceof LibraryVizPanel) {
-    return vizPanel.parent;
+export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavior | undefined {
+  const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
+
+  if (behavior) {
+    return behavior;
   }
-  return;
+
+  return undefined;
 }
+
+/**
+ * Activates any inactive ancestors of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ * @returns
+ */
+export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.isActive) {
+    return cancel;
+  }
+
+  if (so.parent) {
+    parentCancel = activateSceneObjectAndParentTree(so.parent);
+  }
+
+  cancel = so.activate();
+
+  return () => {
+    parentCancel?.();
+    cancel();
+  };
+}
+
+/**
+ * @deprecated use activateSceneObjectAndParentTree instead.
+ * Activates any inactive ancestors of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ */
+export const activateInActiveParents = activateSceneObjectAndParentTree;

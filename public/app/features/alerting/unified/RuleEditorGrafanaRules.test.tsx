@@ -12,7 +12,6 @@ import { AccessControlAction } from 'app/types';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
-import { discoverFeatures } from './api/buildInfo';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { grantUserPermissions, mockDataSource } from './mocks';
 import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
@@ -44,9 +43,6 @@ jest.setTimeout(60 * 1000);
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
-  api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
-  },
 };
 
 setupMswServer();
@@ -118,7 +114,8 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    // save and check what was sent to backend
     await userEvent.click(ui.buttons.saveAndExit.get());
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
   });
 });

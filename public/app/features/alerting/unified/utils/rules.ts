@@ -9,6 +9,7 @@ import {
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
+  EditableRuleIdentifier,
   GrafanaRuleIdentifier,
   PromRuleWithLocation,
   PrometheusRuleIdentifier,
@@ -19,9 +20,9 @@ import {
   RuleNamespace,
   RuleWithLocation,
   RulesSource,
-  EditableRuleIdentifier,
 } from 'app/types/unified-alerting';
 import {
+  Annotations,
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   PostableRuleDTO,
@@ -44,7 +45,7 @@ import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { AsyncRequestState } from './redux';
-import { safeParsePrometheusDuration } from './time';
+import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -79,10 +80,6 @@ export function isGrafanaAlertingRule(rule?: RulerRuleDTO): rule is RulerGrafana
 
 export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerGrafanaRuleDTO {
   return typeof rule === 'object' && 'grafana_alert' in rule;
-}
-
-export function isGrafanaRecordingRulerRule(rule?: RulerRuleDTO) {
-  return typeof rule === 'object' && 'grafana_alert' in rule && 'record' in rule.grafana_alert;
 }
 
 export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
@@ -121,6 +118,10 @@ export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier
   return isGrafanaRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier);
 }
 
+export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
+  return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+}
+
 export function getRuleHealth(health: string): RuleHealth | undefined {
   switch (health) {
     case 'ok':
@@ -137,6 +138,40 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
   }
 }
 
+export function getPendingPeriod(rule: CombinedRule): string | undefined {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
+    return undefined;
+  }
+
+  // We prefer the for duration from the ruler rule because it is formatted as a duration string
+  // Prometheus duration is in seconds and we need to format it as a duration string
+  // Additionally, due to eventual consistency of the Prometheus endpoint the ruler data might be newer
+  if (isAlertingRulerRule(rule.rulerRule)) {
+    return rule.rulerRule.for;
+  }
+
+  if (isAlertingRule(rule.promRule)) {
+    const durationInMilliseconds = (rule.promRule.duration ?? 0) * 1000;
+    return formatPrometheusDuration(durationInMilliseconds);
+  }
+
+  return undefined;
+}
+
+export function getAnnotations(rule: CombinedRule): Annotations | undefined {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
+    return undefined;
+  }
+  return rule.annotations ?? [];
+}
 export interface RulePluginOrigin {
   pluginId: string;
 }

@@ -1,4 +1,6 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 import * as api from '../../internal/api';
 
@@ -371,47 +373,50 @@ export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
 
 export const getMock = jest
   .fn()
-  .mockImplementation((url: string, params: { parent: string; scope: string[]; query?: string }) => {
-    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
-      return {
-        items: mocksNodes.filter(
-          ({ parent, spec: { title } }) =>
-            parent === params.parent && title.toLowerCase().includes((params.query ?? '').toLowerCase())
-        ),
-      };
-    }
+  .mockImplementation(
+    (url: string, params: { parent: string; scope: string[]; query?: string } & Record<string, string | string[]>) => {
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_node_children')) {
+        return {
+          items: mocksNodes.filter(
+            ({ parent, spec: { title } }) =>
+              parent === params.parent && title.toLowerCase().includes((params.query ?? '').toLowerCase())
+          ),
+        };
+      }
 
-    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
-      const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/')) {
+        const name = url.replace('/apis/scope.grafana.app/v0alpha1/namespaces/default/scopes/', '');
 
-      return mocksScopes.find((scope) => scope.metadata.name.toLowerCase() === name.toLowerCase()) ?? {};
-    }
+        return mocksScopes.find((scope) => scope.metadata.name.toLowerCase() === name.toLowerCase()) ?? {};
+      }
 
-    if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
-      return {
-        items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
-          params.scope.includes(bindingScope)
-        ),
-      };
-    }
+      if (url.startsWith('/apis/scope.grafana.app/v0alpha1/namespaces/default/find/scope_dashboard_bindings')) {
+        return {
+          items: mocksScopeDashboardBindings.filter(({ spec: { scope: bindingScope } }) =>
+            params.scope.includes(bindingScope)
+          ),
+        };
+      }
 
-    if (url.startsWith('/api/dashboards/uid/')) {
+      if (url.startsWith('/api/dashboards/uid/')) {
+        return {};
+      }
+
+      if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
+        return {
+          metadata: {
+            name: '1',
+          },
+        };
+      }
+
       return {};
     }
-
-    if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
-      return {
-        metadata: {
-          name: '1',
-        },
-      };
-    }
-
-    return {};
-  });
+  );
 
 const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
   metadata: { name: `${dashboardTitle}-name` },
@@ -448,3 +453,39 @@ export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = gene
   'With root folder and other folder',
   ['', 'Folder 3']
 );
+
+export const getDatasource = async (ref: DataSourceRef) => {
+  if (ref.uid === '-- Grafana --') {
+    return {
+      id: 1,
+      uid: '-- Grafana --',
+      name: 'grafana',
+      type: 'grafana',
+      meta: {
+        id: 'grafana',
+      },
+    };
+  }
+
+  return {
+    meta: {
+      id: 'grafana-testdata-datasource',
+    },
+    name: 'grafana-testdata-datasource',
+    type: 'grafana-testdata-datasource',
+    uid: 'gdev-testdata',
+    getRef: () => {
+      return { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' };
+    },
+  };
+};
+
+export const getInstanceSettings = () => ({
+  id: 1,
+  uid: 'gdev-testdata',
+  name: 'testDs1',
+  type: 'grafana-testdata-datasource',
+  meta: {
+    id: 'grafana-testdata-datasource',
+  },
+});

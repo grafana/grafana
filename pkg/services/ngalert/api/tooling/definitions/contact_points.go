@@ -56,7 +56,7 @@ type EmailIntegration struct {
 type GooglechatIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL string `json:"url" yaml:"url" hcl:"url"`
+	URL Secret `json:"url" yaml:"url" hcl:"url"`
 
 	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
 	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
@@ -85,17 +85,26 @@ type LineIntegration struct {
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
 }
 
+type TLSConfig struct {
+	InsecureSkipVerify   *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+	TLSCACertificate     *Secret `json:"caCertificate,omitempty" yaml:"caCertificate,omitempty" hcl:"ca_certificate"`
+	TLSClientCertificate *Secret `json:"clientCertificate,omitempty" yaml:"clientCertificate,omitempty" hcl:"client_certificate"`
+	TLSClientKey         *Secret `json:"clientKey,omitempty" yaml:"clientKey,omitempty" hcl:"client_key"`
+}
+
 type MqttIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	BrokerURL          *string `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
-	ClientID           *string `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
-	Topic              *string `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
-	Message            *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	MessageFormat      *string `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
-	Username           *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
-	Password           *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
-	InsecureSkipVerify *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+	BrokerURL     *string    `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
+	ClientID      *string    `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
+	Topic         *string    `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
+	Message       *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat *string    `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
+	Username      *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Password      *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
+	QoS           *int64     `json:"qos,omitempty" yaml:"qos,omitempty" hcl:"qos"`
+	Retain        *bool      `json:"retain,omitempty" yaml:"retain,omitempty" hcl:"retain"`
+	TLSConfig     *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tls_config,block"`
 }
 
 type OnCallIntegration struct {
@@ -183,11 +192,11 @@ type SensugoIntegration struct {
 }
 
 type SigV4Config struct {
-	Region    string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
-	AccessKey string `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
-	SecretKey string `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
-	Profile   string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
-	RoleARN   string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
+	Region    *string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
+	AccessKey *Secret `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
+	SecretKey *Secret `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
+	Profile   *string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
+	RoleARN   *string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
 }
 
 type SnsIntegration struct {
@@ -280,14 +289,15 @@ type WebhookIntegration struct {
 
 	URL string `json:"url" yaml:"url" hcl:"url"`
 
-	HTTPMethod               *string `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
-	MaxAlerts                *int64  `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
-	AuthorizationScheme      *string `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
-	AuthorizationCredentials *Secret `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
-	User                     *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
-	Password                 *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
-	Title                    *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	Message                  *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	HTTPMethod               *string    `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty" hcl:"http_method"`
+	MaxAlerts                *int64     `json:"maxAlerts,omitempty" yaml:"maxAlerts,omitempty" hcl:"max_alerts"`
+	AuthorizationScheme      *string    `json:"authorization_scheme,omitempty" yaml:"authorization_scheme,omitempty" hcl:"authorization_scheme"`
+	AuthorizationCredentials *Secret    `json:"authorization_credentials,omitempty" yaml:"authorization_credentials,omitempty" hcl:"authorization_credentials"`
+	User                     *string    `json:"username,omitempty" yaml:"username,omitempty" hcl:"basic_auth_user"`
+	Password                 *Secret    `json:"password,omitempty" yaml:"password,omitempty" hcl:"basic_auth_password"`
+	Title                    *string    `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	Message                  *string    `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	TLSConfig                *TLSConfig `json:"tlsConfig,omitempty" yaml:"tlsConfig,omitempty" hcl:"tlsConfig,block"`
 }
 
 type WecomIntegration struct {

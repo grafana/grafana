@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -125,6 +127,10 @@ func (pc *FakePluginClient) IsDecommissioned() bool {
 	return pc.decommissioned
 }
 
+func (pc *FakePluginClient) Target() backendplugin.Target {
+	return "test-target"
+}
+
 func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if pc.CollectMetricsHandlerFunc != nil {
 		return pc.CollectMetricsHandlerFunc(ctx, req)
@@ -231,7 +237,7 @@ type FakePluginRepo struct {
 	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
 	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
-	PluginVersionFunc         func(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
+	PluginVersionFunc         func(_ context.Context, pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -260,11 +266,19 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 	return &repo.PluginArchiveInfo{}, nil
 }
 
-func (r *FakePluginRepo) PluginVersion(pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
+func (r *FakePluginRepo) PluginVersion(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (repo.VersionData, error) {
 	if r.PluginVersionFunc != nil {
-		return r.PluginVersionFunc(pluginID, version, compatOpts)
+		return r.PluginVersionFunc(ctx, pluginID, version, compatOpts)
 	}
 	return repo.VersionData{}, nil
+}
+
+type fakeTracerProvider struct {
+	noop.TracerProvider
+}
+
+func InitializeNoopTracerForTest() trace.Tracer {
+	return fakeTracerProvider{}.Tracer("test")
 }
 
 type FakePluginStorage struct {
@@ -340,7 +354,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ trace.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
@@ -635,4 +649,8 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+func (p *FakeBackendPlugin) Target() backendplugin.Target {
+	return "test-target"
 }

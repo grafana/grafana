@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
@@ -6,7 +6,21 @@ import { NodeGraphSuggestionsSupplier } from './suggestions';
 import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
+  .useFieldConfig({
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
+  })
   .setPanelOptions((builder, context) => {
+    builder.addSelect({
+      name: 'Zoom mode',
+      path: 'zoomMode',
+      defaultValue: 'cooperative',
+      settings: {
+        options: [
+          { value: 'cooperative', label: 'Cooperative', description: 'Lets you scroll the page normally' },
+          { value: 'greedy', label: 'Greedy', description: 'Reacts to all zoom gestures' },
+        ],
+      },
+    });
     builder.addNestedOptions({
       category: ['Nodes'],
       path: 'nodes',

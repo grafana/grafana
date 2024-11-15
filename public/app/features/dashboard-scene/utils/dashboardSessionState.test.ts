@@ -1,5 +1,5 @@
 import { config, locationService } from '@grafana/runtime';
-import { CustomVariable, getUrlSyncManager } from '@grafana/scenes';
+import { CustomVariable, UrlSyncManager } from '@grafana/scenes';
 import { DashboardDataDTO } from 'app/types';
 
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -51,7 +51,8 @@ describe('dashboardSessionState', () => {
       const variable = scene.state.$variables!.getByName('customVar') as CustomVariable;
       const timeRange = scene.state.$timeRange;
 
-      getUrlSyncManager().initSync(scene);
+      const urlSyncManager = new UrlSyncManager();
+      urlSyncManager.initSync(scene);
 
       expect(variable!.state!.value).toEqual(['b']);
       expect(variable!.state!.text).toEqual(['b']);

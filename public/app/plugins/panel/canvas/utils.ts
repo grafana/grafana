@@ -1,6 +1,7 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
+import { AppEvents, getFieldDisplayName, PluginState, SelectableValue } from '@grafana/data';
+import { DataFrame, Field } from '@grafana/data/';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels, config } from 'app/core/config';
 import {
@@ -293,3 +294,37 @@ export const getParent = (scene: Scene) => {
   }
   return scene.div;
 };
+
+export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
+  const fields = new Set<Field>();
+  const cfg = opts.config ?? {};
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      const name = getFieldDisplayName(field, frame, frames);
+
+      // (intentional fall-through)
+      switch (name) {
+        // General element config
+        case opts.background?.color?.field:
+        case opts.background?.image?.field:
+        case opts.border?.color?.field:
+        // Text config
+        case cfg.text?.field:
+        case cfg.color?.field:
+        // Icon config
+        case cfg.path?.field:
+        case cfg.fill?.field:
+        // Server config
+        case cfg.blinkRate?.field:
+        case cfg.statusColor?.field:
+        case cfg.bulbColor?.field:
+        // Wind turbine config (maybe remove / not support this?)
+        case cfg.rpm?.field:
+          fields.add(field);
+      }
+    });
+  });
+
+  return [...fields];
+}

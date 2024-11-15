@@ -1,4 +1,4 @@
-import { AnnotationQuery, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -51,11 +51,23 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public onNew = () => {
+  public getDataSourceRefForAnnotation = () => {
+    // get current default datasource ref from instance settings
+    // null is passed to get the default datasource
+    const defaultInstanceDS = getDataSourceSrv().getInstanceSettings(null);
+    // check for an annotation flag in the plugin json to see if it supports annotations
+    if (!defaultInstanceDS || !defaultInstanceDS.meta.annotations) {
+      console.error('Default datasource does not support annotations');
+      return undefined;
+    }
+    return getDataSourceRef(defaultInstanceDS);
+  };
+
+  public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
       name: newAnnotationName,
       enable: true,
-      datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
     };
 
@@ -69,7 +81,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     data.addAnnotationLayer(newAnnotation);
-
     this.setState({ editIndex: data.state.annotationLayers.length - 1 });
   };
 

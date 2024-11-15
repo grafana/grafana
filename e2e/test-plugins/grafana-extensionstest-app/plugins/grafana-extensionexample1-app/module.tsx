@@ -4,7 +4,6 @@ import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 import { testIds } from '../../testIds';
 
 import { App } from './components/App';
-import pluginJson from './plugin.json';
 
 export const plugin = new AppPlugin<{}>()
   .setRootPage(App)
@@ -24,5 +23,11 @@ export const plugin = new AppPlugin<{}>()
     title: 'Basic link',
     description: '...',
     targets: [LINKS_EXTENSION_POINT_ID],
-    path: `/a/${pluginJson.id}/`,
+    path: '/a/grafana-extensionexample1-app/',
+  })
+  .addLink({
+    title: 'Go to A',
+    description: 'Navigating to pluging A',
+    targets: [LINKS_EXTENSION_POINT_ID],
+    path: '/a/grafana-extensionexample1-app/',
   });

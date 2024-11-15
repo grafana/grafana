@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { components, MultiValueRemoveProps } from 'react-select';
 
-import { escapeStringForRegex, GrafanaTheme2 } from '@grafana/data';
+import { escapeStringForRegex, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -28,9 +28,9 @@ export interface Props {
   width?: number;
 }
 
-const filterOption = (option: any, searchQuery: string) => {
+const filterOption = (option: SelectableValue<string>, searchQuery: string) => {
   const regex = RegExp(escapeStringForRegex(searchQuery), 'i');
-  return regex.test(option.value);
+  return Boolean(option.value && regex.test(option.value));
 };
 
 export const TagFilter = ({
@@ -124,8 +124,8 @@ export const TagFilter = ({
     formatCreateLabel,
     defaultOptions: true,
     filterOption,
-    getOptionLabel: (i: any) => i.label,
-    getOptionValue: (i: any) => i.value,
+    getOptionLabel: (i: SelectableValue<string>) => i.label,
+    getOptionValue: (i: SelectableValue<string>) => i.value,
     inputId,
     isMulti: true,
     onChange: onTagChange,

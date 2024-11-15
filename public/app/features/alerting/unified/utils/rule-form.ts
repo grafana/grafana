@@ -43,11 +43,22 @@ import {
 type KVObject = { key: string; value: string };
 
 import { EvalFunction } from '../../state/alertDef';
-import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
+import {
+  AlertManagerManualRouting,
+  ContactPoint,
+  RuleFormType,
+  RuleFormValues,
+  SimplifiedEditor,
+} from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
-import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import {
+  DataSourceType,
+  getDefaultOrFirstCompatibleDataSource,
+  GRAFANA_RULES_SOURCE_NAME,
+  isGrafanaRulesSource,
+} from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isAlertingRulerRule,
@@ -62,6 +73,7 @@ import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+export const SIMPLIFIED_QUERY_EDITOR_KEY = 'grafana.alerting.simplifiedQueryEditor';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
@@ -98,6 +110,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
+    editorSettings: getDefaultEditorSettings(),
 
     // cortex / loki
     namespace: '',
@@ -118,6 +131,18 @@ export const getDefautManualRouting = () => {
   const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
+
+function getDefaultEditorSettings() {
+  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+  if (!editorSettingsEnabled) {
+    return undefined;
+  }
+  //then, check in local storage if the user has saved last rule with simplified query editor
+  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  return {
+    simplifiedQueryEditor: queryEditorSettings !== 'false',
+  };
+}
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
@@ -202,7 +227,11 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
-
+function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
+  return {
+    simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+  };
+}
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -222,6 +251,9 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   }
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+  const metadata = values.editorSettings
+    ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
+    : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
@@ -241,6 +273,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         no_data_state: noDataState,
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
+        metadata,
       },
       annotations,
       labels,
@@ -307,6 +340,23 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   return routingSettings;
 }
 
+function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
+  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
+  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
+    return undefined;
+  }
+
+  if (ga.metadata?.editor_settings) {
+    return {
+      simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+    };
+  }
+
+  return {
+    simplifiedQueryEditor: false,
+  };
+}
+
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
 
@@ -353,6 +403,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
           contactPoints: routingSettings,
           manualRouting: Boolean(routingSettings),
+
+          editorSettings: getEditorSettingsFromDTO(ga),
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');
@@ -450,14 +502,16 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (): AlertQuery[] => {
+export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
-
   if (!dataSource) {
-    return [...getDefaultExpressions('A', 'B')];
+    const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
+    return [...expressions];
   }
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
+  const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
+  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
   return [
     {
       refId: 'A',
@@ -466,9 +520,10 @@ export const getDefaultQueries = (): AlertQuery[] => {
       relativeTimeRange,
       model: {
         refId: 'A',
+        instant: isLokiOrPrometheus ? true : undefined,
       },
     },
-    ...getDefaultExpressions('B', 'C'),
+    ...expressions,
   ];
 };
 
@@ -489,7 +544,6 @@ export const getDefaultRecordingRulesQueries = (
     },
   ];
 };
-
 const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
@@ -565,6 +619,46 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
       datasourceUid: ExpressionDatasourceUID,
       queryType: '',
       model: thresholdExpression,
+    },
+  ];
+};
+const getDefaultExpressionsForRecording = (refOne: string): AlertQuery[] => {
+  const reduceExpression: ExpressionQuery = {
+    refId: refOne,
+    type: ExpressionQueryType.reduce,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refOne],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    reducer: 'last',
+    expression: 'A',
+  };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: '',
+      model: reduceExpression,
     },
   ];
 };
@@ -810,4 +904,25 @@ export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormVal
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+}
+
+export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
+  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
+  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+    if ('instant' in model) {
+      return model.instant;
+    } else {
+      if ('queryType' in model) {
+        return model.queryType === 'instant';
+      } else {
+        return undefined;
+      }
+    }
+  }
+  // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
+  const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
+  const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
+
+  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  return isInstant;
 }

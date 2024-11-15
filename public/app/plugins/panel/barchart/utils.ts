@@ -18,7 +18,6 @@ import {
   AxisColorMode,
   AxisPlacement,
   FieldColorModeId,
-  GraphGradientMode,
   GraphThresholdsStyleMode,
   GraphTransform,
   ScaleDistribution,
@@ -52,7 +51,7 @@ interface BarSeries {
 
 export function prepSeries(
   frames: DataFrame[],
-  fieldConfig: FieldConfigSource<any>,
+  fieldConfig: FieldConfigSource,
   stacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,
@@ -230,9 +229,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
   } else {
     const hasPerBarColor = frame.fields.some((f) => {
-      const fromThresholds =
-        f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
-        f.config.color?.mode === FieldColorModeId.Thresholds;
+      const fromThresholds = f.config.color?.mode === FieldColorModeId.Thresholds;
 
       return (
         fromThresholds ||
@@ -422,6 +419,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
       log: customConfig.scaleDistribution?.log,
+      decimals: field.config.decimals,
     });
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
@@ -448,6 +446,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
+        decimals: field.config.decimals,
       };
 
       if (customConfig.axisBorderShow) {

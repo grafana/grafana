@@ -30,6 +30,6 @@ function setup() {
 describe('SupportSnapshot', () => {
   it('Can render', async () => {
     setup();
-    expect(await screen.findByRole('button', { name: /Dashboard \([\d\.]+ KiB\)/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Download snapshot \([\d\.]+ KiB\)/ })).toBeInTheDocument();
   });
 });

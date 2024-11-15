@@ -306,6 +306,7 @@ export const CandlestickPanel = ({
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}

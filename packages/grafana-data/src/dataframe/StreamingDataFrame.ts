@@ -550,8 +550,11 @@ export function parseLabelsFromField(str: string): Labels {
  * @internal // not exported in yet
  */
 export function getLastStreamingDataFramePacket(frame: DataFrame) {
-  const pi = (frame as StreamingDataFrame).packetInfo;
-  return pi?.action ? pi : undefined;
+  if (frame instanceof StreamingDataFrame) {
+    const pi = frame.packetInfo;
+    return pi.action;
+  }
+  return undefined;
 }
 
 // mutable circular push

@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -23,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 var (
@@ -130,6 +131,10 @@ type rowsWrapper struct {
 	err error
 }
 
+func (a *dashboardSqlAccess) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (r *rowsWrapper) Close() error {
 	if r.rows == nil {
 		return nil
@@ -193,6 +198,10 @@ func (r *rowsWrapper) Namespace() string {
 // ResourceVersion implements resource.ListIterator.
 func (r *rowsWrapper) ResourceVersion() int64 {
 	return r.row.RV
+}
+
+func (r *rowsWrapper) Folder() string {
+	return r.row.FolderUID
 }
 
 // Value implements resource.ListIterator.
@@ -347,10 +356,11 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 // SaveDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
 	created := false
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, created, err
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return nil, created, fmt.Errorf("no user found in context")
 	}
+
 	if dash.Name != "" {
 		dash.Spec.Set("uid", dash.Name)
 
@@ -371,8 +381,10 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 
 	var userID int64
-	if user.IsIdentityType(claims.TypeUser) {
-		userID, err = user.GetInternalID()
+	idClaims := user.GetIdentity()
+	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
+		var err error
+		userID, err = identity.UserIdentifier(idClaims.Subject())
 		if err != nil {
 			return nil, false, err
 		}

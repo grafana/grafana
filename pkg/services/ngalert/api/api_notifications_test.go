@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -326,7 +327,7 @@ func TestRouteGetReceiversResponses(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"secureFields":{"url":true}}]}`
+			expectedRedactedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","use_discord_username":true},"secureFields":{"url":true}}]}`
 			expectedDecryptedResponse := `{"name":"multiple integrations","grafana_managed_receiver_configs":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","name":"multiple integrations","type":"prometheus-alertmanager","disableResolveMessage":true,"settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"secureFields":{"basicAuthPassword":true}},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","name":"multiple integrations","type":"discord","disableResolveMessage":false,"settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"secureFields":{"url":true}}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
@@ -374,6 +375,8 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 		env.secrets,
 		env.xact,
 		env.log,
+		fakes.NewFakeReceiverPermissionsService(),
+		tracing.InitializeTracerForTest(),
 	)
 	return NotificationSrv{
 		logger:          env.log,

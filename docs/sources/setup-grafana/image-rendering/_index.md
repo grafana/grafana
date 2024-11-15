@@ -26,7 +26,7 @@ While an image is being rendered, the PNG image is temporarily written to the fi
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
 
-You can also render a PNG by hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
+You can also render a PNG by hovering over the panel to display the actions menu in the top-right corner, and then clicking **Share > Share link**. The **Render image** option is displayed in the link settings.
 
 ## Alerting and render limits
 
@@ -35,10 +35,16 @@ Alert notifications can include images, but rendering many images at the same ti
 ## Install Grafana Image Renderer plugin
 
 {{% admonition type="note" %}}
-Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
+All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{% /admonition %}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
+
+### Memory requirements
+
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Grafana recommends a minimum of 16GB of free memory on the system rendering images.
+
+Rendering multiple images in parallel requires an even bigger memory footprint. You can use the remote rendering service in order to render images on a remote system, so your local system resources are not affected.
 
 ## Configuration
 
@@ -82,8 +88,10 @@ AUTH_TOKEN=-
 
 ```json
 {
-  "security": {
-    "authToken": "-"
+  "service": {
+    "security": {
+      "authToken": "-"
+    }
   }
 }
 ```

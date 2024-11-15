@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { History, Location } from 'history';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { RouteDescriptor } from 'app/core/navigation/types';
 import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
@@ -14,6 +12,11 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasPermissionInMetadata: () => false,
   },
+}));
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: () => ({ id: '1' }),
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
@@ -28,16 +31,6 @@ const setup = (propOverrides: Partial<Props>) => {
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
     isLoading: false,
-    match: {
-      params: { id: '1' },
-      isExact: true,
-      path: '/org/serviceaccounts/1',
-      url: 'http://localhost:3000/org/serviceaccounts/1',
-    },
-    history: {} as History,
-    location: {} as Location,
-    queryParams: {},
-    route: {} as RouteDescriptor,
     timezone: '',
     createServiceAccountToken: createServiceAccountTokenMock,
     deleteServiceAccount: deleteServiceAccountMock,
@@ -68,6 +61,7 @@ const setup = (propOverrides: Partial<Props>) => {
 
 const getDefaultServiceAccount = (): ServiceAccountDTO => ({
   id: 42,
+  uid: 'aaaaa',
   name: 'Data source scavenger',
   login: 'sa-data-source-scavenger',
   orgId: 1,
@@ -171,6 +165,6 @@ describe('ServiceAccountPage tests', () => {
     await userEvent.click(screen.getByLabelText(/Delete service account token/));
     await user.click(screen.getByRole('button', { name: /^Delete$/ }));
 
-    expect(deleteServiceAccountTokenMock).toHaveBeenCalledWith(42, 142);
+    expect(deleteServiceAccountTokenMock).toHaveBeenCalledWith('aaaaa', 142);
   });
 });

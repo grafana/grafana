@@ -3,7 +3,6 @@ package v0alpha1
 import (
 	"fmt"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 )
 
 // FeatureResourceInfo represents each feature that may have a toggle
-var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var FeatureResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"features", "feature", "Feature",
 	func() runtime.Object { return &Feature{} },
 	func() runtime.Object { return &FeatureList{} },
@@ -42,7 +41,7 @@ var FeatureResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 )
 
 // TogglesResourceInfo represents the actual configuration
-var TogglesResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var TogglesResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"featuretoggles", "featuretoggle", "FeatureToggles",
 	func() runtime.Object { return &FeatureToggles{} },
 	func() runtime.Object { return &FeatureTogglesList{} },

@@ -1,6 +1,7 @@
 // Libraries
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
@@ -20,14 +21,15 @@ export interface Props extends GrafanaRouteComponentProps<DashboardPageRoutePara
 /**
  * Used for iframe embedding and image rendering of single panels
  */
-export function SoloPanelPage({ match, queryParams }: Props) {
+export function SoloPanelPage({ queryParams }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard } = stateManager.useState();
+  const { uid = '' } = useParams();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid: match.params.uid!, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
     return () => stateManager.clearState();
-  }, [stateManager, match, queryParams]);
+  }, [stateManager, queryParams, uid]);
 
   if (!queryParams.panelId) {
     return <EntityNotFound entity="Panel" />;

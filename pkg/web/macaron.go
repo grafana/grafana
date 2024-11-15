@@ -142,7 +142,7 @@ func mwFromHandler(handler Handler) Middleware {
 // a convenience function that is provided for users of contexthandler package (standalone apiservers)
 // who have an implicit dependency on Macron in context but don't want to take a dependency on
 // router additionally
-func EmptyMacronMiddleware(next http.Handler) http.Handler {
+func EmptyMacaronMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		m := New()
 		c := m.createContext(writer, request)

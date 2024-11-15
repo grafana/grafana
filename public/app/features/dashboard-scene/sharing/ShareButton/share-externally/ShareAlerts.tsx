@@ -10,6 +10,7 @@ import {
 import { AccessControlAction } from 'app/types';
 
 import { NoUpsertPermissionsAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/NoUpsertPermissionsAlert';
+import { PublicDashboardAlert } from '../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';
 import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 import { useUnsupportedDatasources } from '../../public-dashboards/hooks';
 
@@ -29,6 +30,7 @@ export default function ShareAlerts({ publicDashboard }: { publicDashboard?: Pub
       {publicDashboard?.share === PublicDashboardShareType.EMAIL && isEmailSharingEnabled() && (
         <EmailSharingPricingAlert />
       )}
+      {publicDashboard?.share === PublicDashboardShareType.PUBLIC && <PublicDashboardAlert />}
     </>
   );
 }

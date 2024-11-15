@@ -17,35 +17,75 @@ func setSectionKeyValues(section *setting.DynamicSection, m map[string]string) {
 	}
 }
 
-func newTestSectionGetter(m map[string]string) *sectionGetter {
+func newTestConfGetter(m map[string]string, keyPrefix string) confGetter {
 	section := setting.NewCfg().SectionWithEnvOverrides("entity_api")
 	setSectionKeyValues(section, m)
 
-	return &sectionGetter{
-		DynamicSection: section,
-	}
+	return newConfGetter(section, keyPrefix)
 }
 
 func TestSectionGetter(t *testing.T) {
 	t.Parallel()
 
 	var (
-		key = "the key"
-		val = string(invalidUTF8ByteSequence)
+		key          = "the key"
+		keyBoolTrue  = "I'm true"
+		keyBoolFalse = "not me!"
+		prefix       = "this is some prefix"
+		val          = string(invalidUTF8ByteSequence)
 	)
 
-	g := newTestSectionGetter(map[string]string{
-		key: val,
+	t.Run("with prefix", func(t *testing.T) {
+		t.Parallel()
+
+		g := newTestConfGetter(map[string]string{
+			prefix + key:          val,
+			prefix + keyBoolTrue:  "YES",
+			prefix + keyBoolFalse: "0",
+		}, prefix)
+
+		require.False(t, g.Bool("whatever bool"))
+		require.NoError(t, g.Err())
+
+		require.False(t, g.Bool(keyBoolFalse))
+		require.NoError(t, g.Err())
+
+		require.True(t, g.Bool(keyBoolTrue))
+		require.NoError(t, g.Err())
+
+		require.Empty(t, g.String("whatever string"))
+		require.NoError(t, g.Err())
+
+		require.Empty(t, g.String(key))
+		require.Error(t, g.Err())
+		require.ErrorIs(t, g.Err(), errInvalidUTF8Sequence)
 	})
 
-	v := g.String("whatever")
-	require.Empty(t, v)
-	require.NoError(t, g.Err())
+	t.Run("without prefix", func(t *testing.T) {
+		t.Parallel()
 
-	v = g.String(key)
-	require.Empty(t, v)
-	require.Error(t, g.Err())
-	require.ErrorIs(t, g.Err(), errInvalidUTF8Sequence)
+		g := newTestConfGetter(map[string]string{
+			key:          val,
+			keyBoolTrue:  "true",
+			keyBoolFalse: "f",
+		}, "")
+
+		require.False(t, g.Bool("whatever bool"))
+		require.NoError(t, g.Err())
+
+		require.False(t, g.Bool(keyBoolFalse))
+		require.NoError(t, g.Err())
+
+		require.True(t, g.Bool(keyBoolTrue))
+		require.NoError(t, g.Err())
+
+		require.Empty(t, g.String("whatever string"))
+		require.NoError(t, g.Err())
+
+		require.Empty(t, g.String(key))
+		require.Error(t, g.Err())
+		require.ErrorIs(t, g.Err(), errInvalidUTF8Sequence)
+	})
 }
 
 func TestMakeDSN(t *testing.T) {

@@ -42,6 +42,7 @@ const renderMenuItems = (
           : undefined
       }
       url={link.href}
+      target={link.target}
       className={styles.menuItem}
     />
   ));
@@ -82,27 +83,25 @@ export const SpanLinksMenu = ({ links, datasourceType, color }: SpanLinksProps) 
   );
 };
 
-const getStyles = (color: string) => {
-  return {
-    wrapper: css`
-      border: none;
-      background: ${color}10;
-      border-bottom: 1px solid ${color}CF;
-      padding-right: 4px;
-    `,
-    button: css`
-      background: transparent;
-      border: none;
-      padding: 0;
-    `,
-    icon: css`
-      background: transparent;
-      border: none;
-      padding: 0;
-    `,
-    menuItem: css`
-      max-width: 60ch;
-      overflow: hidden;
-    `,
-  };
-};
+const getStyles = (color: string) => ({
+  wrapper: css({
+    border: 'none',
+    background: `${color}10`,
+    borderBottom: `1px solid ${color}CF`,
+    paddingRight: '4px',
+  }),
+  button: css({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+  }),
+  icon: css({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+  }),
+  menuItem: css({
+    maxWidth: '60ch',
+    overflow: 'hidden',
+  }),
+});

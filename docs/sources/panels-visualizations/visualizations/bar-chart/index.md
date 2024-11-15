@@ -41,31 +41,57 @@ refs:
 
 # Bar chart
 
-Bar charts allow you to graph categorical data.
+A bar chart is a visual representation that uses rectangular bars, where the length of each bar represents each value.
+You can use the bar chart visualization when you want to compare values over different categories or time periods. The visualization can display the bars horizontally or vertically, and can be customized to group or stack bars for more complex data analysis.
 
-{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
+{{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" alt="Bar chart" >}}
+
+You can use the bar chart visualization if you need to show:
+
+- Population distribution by age or location
+- CPU usage per application
+- Sales per division
+- Server cost distribution
+
+## Configure a bar chart
+
+The following video shows you how to create and configure a bar chart visualization:
+
+{{< youtube id="qyKE9-71KkE" >}}
 
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
 
 ## Supported data formats
 
-Only one data frame is supported and it must have at least one string field that will be used as the category for an X or Y axis and one or more numerical fields.
+To create a bar chart visualization, you need a dataset containing one string or time field (or column) and at least one numeric field, though preferably more than one to make best use of the visualization.
 
-Example:
+The text or time field is used to label the bars or values in each row of data and the numeric fields are represented by proportionally sized bars.
 
-| Browser | Market share |
-| ------- | ------------ |
-| Chrome  | 50           |
-| IE      | 17.5         |
+### Example 1
 
-If you have more than one numerical field the visualization will show grouped bars.
+| Group | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| uno   | 5      | 3      | 2      |
 
-### Visualizing time series or multiple result sets
+![Bar chart single row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example1.png 'Bar chart single row example')
 
-If you have multiple time series or tables you first need to join them using a join or reduce transform. For example if you
-have multiple time series and you want to compare their last and max value add the **Reduce** transform and specify **Max** and **Last** as options under **Calculations**.
+If you have more than one text or time field, by default, the visualization uses the first one, but you can change this in the x-axis option as described in the [Bar chart options](#bar-chart-options) section.
 
-{{< figure src="/static/img/docs/bar-chart-panel/bar-chart-time-series-v8-0.png" max-width="1025px" caption="Bar chart time series example" >}}
+### Example 2
+
+If your dataset contains multiple rows, the visualization displays multiple bar chart groups where each group contains multiple bars representing all the numeric values for a row.
+
+| Group | Value1 | Value2 | Value3 |
+| ----- | ------ | ------ | ------ |
+| uno   | 5      | 3      | 2      |
+| dos   | 10     | 6      | 4      |
+| tres  | 20     | 8      | 2      |
+
+![Bar chart multiple row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example2.png 'Bar chart multiple row example')
+
+While the first field can be time-based and you can use a bar chart to plot time-series data, for large amounts of time-series data, we recommend that you use the [time series visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) and configure it to be displayed as bars.
+
+We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
 ## Panel options
 
@@ -74,6 +100,10 @@ have multiple time series and you want to compare their last and max value add t
 ## Bar chart options
 
 Use these options to refine your visualization.
+
+### X Axis
+
+Specify which field is used for the x-axis.
 
 ### Orientation
 

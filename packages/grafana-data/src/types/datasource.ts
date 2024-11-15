@@ -114,7 +114,7 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setComponentsFromLegacyExports(pluginExports: any) {
+  setComponentsFromLegacyExports(pluginExports: System.Module) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
     this.components.QueryCtrl = pluginExports.QueryCtrl;
@@ -142,6 +142,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  multiValueFilterOperators?: boolean;
 }
 
 interface PluginMetaQueryOptions {

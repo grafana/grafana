@@ -1,25 +1,22 @@
 import { PluginPage, usePluginLinks } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 
+import { ActionButton } from '../components/ActionButton';
 import { testIds } from '../testIds';
 
 export const LINKS_EXTENSION_POINT_ID = 'plugins/grafana-extensionstest-app/use-plugin-links/v1';
 
 export function AddedLinks() {
-  const { links, isLoading } = usePluginLinks({ extensionPointId: LINKS_EXTENSION_POINT_ID });
+  const { links } = usePluginLinks({ extensionPointId: LINKS_EXTENSION_POINT_ID });
 
   return (
     <PluginPage>
-      <div data-testid={testIds.addedLinksPage.container}>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          links.map(({ id, title, path, onClick }) => (
-            <a href={path} title={title} key={id} onClick={onClick}>
-              {title}
-            </a>
-          ))
-        )}
-      </div>
+      <Stack direction={'column'} gap={4} data-testid={testIds.addedLinksPage.container}>
+        <section data-testid={testIds.addedLinksPage.section1}>
+          <h3>Link extensions defined with addLink and retrieved using usePluginLinks</h3>
+          <ActionButton extensions={links} />
+        </section>
+      </Stack>
     </PluginPage>
   );
 }

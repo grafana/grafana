@@ -2,6 +2,7 @@ import { forwardRef, useRef, HTMLProps } from 'react';
 
 import { escapeStringForRegex, unEscapeStringFromRegex } from '@grafana/data';
 
+import { Trans } from '../../utils/i18n';
 import { useCombinedRefs } from '../../utils/useCombinedRefs';
 import { Button } from '../Button';
 import { Icon } from '../Icon/Icon';
@@ -31,7 +32,7 @@ export const FilterInput = forwardRef<HTMLInputElement, Props>(
             e.stopPropagation();
           }}
         >
-          Clear
+          <Trans i18nKey="grafana-ui.filter-input.clear">Clear</Trans>
         </Button>
       ) : null;
 

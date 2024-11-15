@@ -4,11 +4,17 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { CustomScrollbar, FieldValidationMessage, Input, Portal, useTheme2 } from '@grafana/ui';
+import { FieldValidationMessage, Portal, ScrollContainer, TextArea, useTheme2 } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
+import { Input } from '@grafana/ui/src/components/Input/Input';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
+
+export enum HTMLElementType {
+  InputElement = 'input',
+  TextAreaElement = 'textarea',
+}
 
 interface SuggestionsInputProps {
   value?: string | number;
@@ -18,6 +24,9 @@ interface SuggestionsInputProps {
   invalid?: boolean;
   error?: string;
   width?: number;
+  type?: HTMLElementType;
+  style?: React.CSSProperties;
+  autoFocus?: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -45,10 +54,14 @@ export const SuggestionsInput = ({
   placeholder,
   error,
   invalid,
+  type = HTMLElementType.InputElement,
+  style,
+  autoFocus = false,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [variableValue, setVariableValue] = useState<string>(value.toString());
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
   const [startPos, setStartPos] = useState<number>(0);
@@ -56,7 +69,11 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>();
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, scrollTop);
+  }, [scrollTop]);
 
   // the order of middleware is important!
   const middleware = [
@@ -79,7 +96,7 @@ export const SuggestionsInput = ({
   });
 
   const handleRef = useCallback(
-    (ref: HTMLInputElement) => {
+    (ref: HTMLInputElement | HTMLTextAreaElement) => {
       refs.setReference(ref);
 
       inputRef.current = ref;
@@ -101,7 +118,7 @@ export const SuggestionsInput = ({
       if (x[startPos - 1] === '$') {
         input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
       } else {
-        input.value = x.slice(0, startPos) + '$' + item.value + x.slice(curPos);
+        input.value = x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
       }
 
       setVariableValue(input.value);
@@ -148,12 +165,12 @@ export const SuggestionsInput = ({
     [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
   );
 
-  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement>) => {
+  const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setVariableValue(event.currentTarget.value);
   }, []);
 
   const onBlur = React.useCallback(
-    (event: FormEvent<HTMLInputElement>) => {
+    (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       onChange(event.currentTarget.value);
     },
     [onChange]
@@ -163,15 +180,24 @@ export const SuggestionsInput = ({
     setInputHeight(inputRef.current!.clientHeight);
   }, []);
 
+  const inputProps = {
+    placeholder,
+    invalid,
+    value: variableValue,
+    onChange: onValueChanged,
+    onBlur: onBlur,
+    onKeyDown: onKeyDown,
+  };
+
   return (
-    <div className={styles.inputWrapper}>
+    <div className={styles.inputWrapper} style={style ?? {}}>
       {showingSuggestions && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.suggestionsWrapper}>
-            <CustomScrollbar
-              scrollTop={scrollTop}
-              autoHeightMax="300px"
-              setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+            <ScrollContainer
+              maxHeight="300px"
+              onScroll={(event) => setScrollTop(event.currentTarget.scrollTop ?? 0)}
+              ref={scrollRef}
             >
               {/* This suggestion component has a specialized name,
                     but is rather generalistic in implementation,
@@ -184,7 +210,7 @@ export const SuggestionsInput = ({
                 onClose={() => setShowingSuggestions(false)}
                 activeIndex={suggestionsIndex}
               />
-            </CustomScrollbar>
+            </ScrollContainer>
           </div>
         </Portal>
       )}
@@ -193,15 +219,16 @@ export const SuggestionsInput = ({
           <FieldValidationMessage>{error}</FieldValidationMessage>
         </div>
       )}
-      <Input
-        placeholder={placeholder}
-        invalid={invalid}
-        ref={handleRef}
-        value={variableValue}
-        onChange={onValueChanged}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
-      />
+      {type === HTMLElementType.InputElement ? (
+        <Input {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLInputElement>} autoFocus={autoFocus} />
+      ) : (
+        <TextArea
+          {...inputProps}
+          ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>}
+          autoFocus={autoFocus}
+          rows={5}
+        />
+      )}
     </div>
   );
 };

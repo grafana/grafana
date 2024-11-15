@@ -348,7 +348,7 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ResourceIndex_Read_FullMethodName    = "/resource.ResourceIndex/Read"
+	ResourceIndex_Search_FullMethodName  = "/resource.ResourceIndex/Search"
 	ResourceIndex_History_FullMethodName = "/resource.ResourceIndex/History"
 	ResourceIndex_Origin_FullMethodName  = "/resource.ResourceIndex/Origin"
 )
@@ -360,7 +360,7 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
-	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -375,10 +375,10 @@ func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
 	return &resourceIndexClient{cc}
 }
 
-func (c *resourceIndexClient) Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error) {
+func (c *resourceIndexClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReadResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_Read_FullMethodName, in, out, cOpts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_Search_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +412,7 @@ func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opt
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
-	Read(context.Context, *ReadRequest) (*ReadResponse, error)
+	Search(context.Context, *SearchRequest) (*SearchResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -423,8 +423,8 @@ type ResourceIndexServer interface {
 type UnimplementedResourceIndexServer struct {
 }
 
-func (UnimplementedResourceIndexServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedResourceIndexServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
@@ -444,20 +444,20 @@ func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServe
 	s.RegisterService(&ResourceIndex_ServiceDesc, srv)
 }
 
-func _ResourceIndex_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadRequest)
+func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ResourceIndexServer).Read(ctx, in)
+		return srv.(ResourceIndexServer).Search(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ResourceIndex_Read_FullMethodName,
+		FullMethod: ResourceIndex_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Read(ctx, req.(*ReadRequest))
+		return srv.(ResourceIndexServer).Search(ctx, req.(*SearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -506,8 +506,8 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ResourceIndexServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Read",
-			Handler:    _ResourceIndex_Read_Handler,
+			MethodName: "Search",
+			Handler:    _ResourceIndex_Search_Handler,
 		},
 		{
 			MethodName: "History",
@@ -516,6 +516,139 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Origin",
 			Handler:    _ResourceIndex_Origin_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "resource.proto",
+}
+
+const (
+	BlobStore_PutBlob_FullMethodName = "/resource.BlobStore/PutBlob"
+	BlobStore_GetBlob_FullMethodName = "/resource.BlobStore/GetBlob"
+)
+
+// BlobStoreClient is the client API for BlobStore service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BlobStoreClient interface {
+	// Upload a blob that will be saved in a resource
+	PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error)
+}
+
+type blobStoreClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBlobStoreClient(cc grpc.ClientConnInterface) BlobStoreClient {
+	return &blobStoreClient{cc}
+}
+
+func (c *blobStoreClient) PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutBlobResponse)
+	err := c.cc.Invoke(ctx, BlobStore_PutBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *blobStoreClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBlobResponse)
+	err := c.cc.Invoke(ctx, BlobStore_GetBlob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BlobStoreServer is the server API for BlobStore service.
+// All implementations should embed UnimplementedBlobStoreServer
+// for forward compatibility
+type BlobStoreServer interface {
+	// Upload a blob that will be saved in a resource
+	PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
+	// Get blob contents.  When possible, this will return a signed URL
+	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error)
+}
+
+// UnimplementedBlobStoreServer should be embedded to have forward compatible implementations.
+type UnimplementedBlobStoreServer struct {
+}
+
+func (UnimplementedBlobStoreServer) PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutBlob not implemented")
+}
+func (UnimplementedBlobStoreServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlob not implemented")
+}
+
+// UnsafeBlobStoreServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlobStoreServer will
+// result in compilation errors.
+type UnsafeBlobStoreServer interface {
+	mustEmbedUnimplementedBlobStoreServer()
+}
+
+func RegisterBlobStoreServer(s grpc.ServiceRegistrar, srv BlobStoreServer) {
+	s.RegisterService(&BlobStore_ServiceDesc, srv)
+}
+
+func _BlobStore_PutBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobStoreServer).PutBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlobStore_PutBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobStoreServer).PutBlob(ctx, req.(*PutBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BlobStore_GetBlob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBlobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobStoreServer).GetBlob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BlobStore_GetBlob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobStoreServer).GetBlob(ctx, req.(*GetBlobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BlobStore_ServiceDesc is the grpc.ServiceDesc for BlobStore service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BlobStore_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.BlobStore",
+	HandlerType: (*BlobStoreServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PutBlob",
+			Handler:    _BlobStore_PutBlob_Handler,
+		},
+		{
+			MethodName: "GetBlob",
+			Handler:    _BlobStore_GetBlob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

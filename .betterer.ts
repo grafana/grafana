@@ -1,15 +1,14 @@
 import { BettererFileTest } from '@betterer/betterer';
-import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
-import path from 'path';
-import { glob } from 'glob';
+import { promises as fs } from 'fs';
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
-  'public/app/angular', // will be removed in Grafana 11
-  'public/app/plugins/panel/graph', // will be removed alongside angular
-  'public/app/plugins/panel/table-old', // will be removed alongside angular
+  'packages/grafana-ui/src/graveyard', // will be removed alongside angular in Grafana 12
+  'public/app/angular', // will be removed in Grafana 12
+  'public/app/plugins/panel/graph', // will be removed alongside angular in Grafana 12
+  'public/app/plugins/panel/table-old', // will be removed alongside angular in Grafana 12
   'e2e/test-plugins',
 ];
 
@@ -21,10 +20,9 @@ export default {
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
   'no gf-form usage': () =>
-    regexp(
-      /gf-form/gm,
-      'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.'
-    ).include('**/*.{ts,tsx,html}'),
+    regexp(/gf-form/gm, 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.')
+      .include('**/*.{ts,tsx,html}')
+      .exclude(new RegExp('packages/grafana-ui/src/themes/GlobalStyles')),
 };
 
 function countUndocumentedStories() {
@@ -82,14 +80,8 @@ function countEslintErrors() {
     }
 
     const { baseDirectory } = resolver;
-    const cli = new ESLint({ cwd: baseDirectory });
-
-    // Get the base config to set up parsing etc correctly
-    // this is by far the slowest part of this code. It takes eslint about 2 seconds just to find the config
-    const baseConfig = await cli.calculateConfigForFile(filePaths[0]);
 
     const baseRules: Partial<Linter.RulesRecord> = {
-      '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
       'no-restricted-imports': [
@@ -106,57 +98,52 @@ function countEslintErrors() {
       ],
     };
 
-    const config: Linter.Config = {
-      ...baseConfig,
-      rules: baseRules,
-
-      // Be careful when specifying overrides for the same rules as in baseRules - it will... override
-      // the same rule, not merge them with different configurations
-      overrides: [
-        {
-          files: ['**/*.{ts,tsx}'],
-          excludedFiles: ['*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
-          rules: {
-            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-          },
+    const config: Linter.Config[] = [
+      {
+        files: ['**/*.{js,jsx,ts,tsx}'],
+        rules: baseRules,
+      },
+      {
+        files: ['**/*.{ts,tsx}'],
+        ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+        rules: {
+          '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
         },
-
-        {
-          files: ['public/app/**/*.{ts,tsx}'],
-          rules: {
-            'no-barrel-files/no-barrel-files': 'error',
-          },
+      },
+      {
+        files: ['public/app/**/*.{ts,tsx}'],
+        rules: {
+          'no-barrel-files/no-barrel-files': 'error',
         },
-        {
-          files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
-          excludedFiles: [
-            'public/app/plugins/**',
-            '*.story.tsx',
-            '*.{test,spec}.{ts,tsx}',
-            '**/__mocks__/**',
-            'public/test/**',
-          ],
-          rules: {
-            '@grafana/no-untranslated-strings': 'error',
-          },
+      },
+      {
+        files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
+        ignores: [
+          'public/app/plugins/**',
+          '**/*.story.tsx',
+          '**/*.{test,spec}.{ts,tsx}',
+          '**/__mocks__/',
+          'public/test',
+        ],
+        rules: {
+          '@grafana/no-untranslated-strings': 'error',
         },
-      ],
-    };
+      },
+    ];
 
     const runner = new ESLint({
-      baseConfig: config,
-      useEslintrc: false,
+      overrideConfig: config,
       cwd: baseDirectory,
+      warnIgnored: false,
     });
 
     const lintResults = await runner.lintFiles(Array.from(filePaths));
-    lintResults
-      .filter((lintResult) => lintResult.source)
-      .forEach(({ messages, filePath }) => {
-        const file = fileTestResult.addFile(filePath, '');
-        messages.forEach((message, index) => {
-          file.addIssue(0, 0, message.message, `${index}`);
-        });
+
+    lintResults.forEach(({ messages, filePath }) => {
+      const file = fileTestResult.addFile(filePath, '');
+      messages.forEach((message, index) => {
+        file.addIssue(0, 0, message.message, `${index}`);
       });
+    });
   });
 }

@@ -197,6 +197,18 @@ func (a *AlertRuleMutators) WithUniqueID() AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryAndExpressionsSection(enabled bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = enabled
+	}
+}
+
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedNotificationsSection(enabled bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Metadata.EditorSettings.SimplifiedNotificationsSection = enabled
+	}
+}
+
 func (a *AlertRuleMutators) WithGroupIndex(groupIndex int) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.RuleGroupIndex = groupIndex
@@ -578,6 +590,14 @@ func GenerateRuleKey(orgID int64) AlertRuleKey {
 	return AlertRuleKey{
 		OrgID: orgID,
 		UID:   util.GenerateShortUID(),
+	}
+}
+
+// GenerateRuleKeyWithGroup generates a random alert rule key with group
+func GenerateRuleKeyWithGroup(orgID int64) AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{
+		AlertRuleKey: GenerateRuleKey(orgID),
+		RuleGroup:    util.GenerateShortUID(),
 	}
 }
 

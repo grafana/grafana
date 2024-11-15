@@ -14,15 +14,18 @@ import {
   PluginContextProvider,
   PluginExtensionLink,
   PanelMenuItem,
+  PluginExtensionAddedLinkConfig,
+  urlUtil,
 } from '@grafana/data';
+import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
-export function logWarning(message: string) {
-  console.warn(`[Plugin Extensions] ${message}`);
-}
+import { ExtensionsLog, log } from './logs/log';
+import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
 export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
@@ -42,26 +45,27 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-// Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
+export function createOpenModalFunction(pluginId: string): PluginExtensionEventHelpers['openModal'] {
+  return async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(pluginId, getModalWrapper({ title, body, width, height })),
+        component: wrapWithPluginContext<ModalWrapperProps>(
+          pluginId,
+          getModalWrapper({ title, body, width, height }),
+          log
+        ),
       })
     );
   };
-
-  return { openModal, context };
 }
 
 type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,
@@ -74,12 +78,15 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
     }
 
     if (error) {
-      logWarning(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`);
+      log.error(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
       return null;
     }
 
     if (!pluginMeta) {
-      logWarning(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
+      log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
@@ -155,8 +162,8 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
   return Object.freeze(clonedValue);
 }
 
-export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
-  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
+export function generateExtensionId(pluginId: string, extensionPointId: string, title: string): string {
+  const str = `${pluginId}${extensionPointId}${title}`;
 
   return Array.from(str)
     .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
@@ -218,11 +225,10 @@ export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
 
-export function createExtensionLinkConfig<T extends object>(
-  config: Omit<PluginExtensionLinkConfig<T>, 'type'>
-): PluginExtensionLinkConfig {
-  const linkConfig: PluginExtensionLinkConfig<T> = {
-    type: PluginExtensionTypes.link,
+export function createAddedLinkConfig<T extends object>(
+  config: PluginExtensionAddedLinkConfig<T>
+): PluginExtensionAddedLinkConfig {
+  const linkConfig: PluginExtensionAddedLinkConfig<T> = {
     ...config,
   };
   assertLinkConfig(linkConfig);
@@ -230,12 +236,8 @@ export function createExtensionLinkConfig<T extends object>(
 }
 
 function assertLinkConfig<T extends object>(
-  config: PluginExtensionLinkConfig<T>
-): asserts config is PluginExtensionLinkConfig {
-  if (config.type !== PluginExtensionTypes.link) {
-    throw Error('config is not a extension link');
-  }
-}
+  config: PluginExtensionAddedLinkConfig<T>
+): asserts config is PluginExtensionAddedLinkConfig {}
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
@@ -294,3 +296,128 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
 
   return subMenu;
 }
+
+export function getLinkExtensionOverrides(
+  pluginId: string,
+  config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
+  context?: object
+) {
+  try {
+    const overrides = config.configure?.(context);
+
+    // Hiding the extension
+    if (overrides === undefined) {
+      return undefined;
+    }
+
+    let {
+      title = config.title,
+      description = config.description,
+      path = config.path,
+      icon = config.icon,
+      category = config.category,
+      ...rest
+    } = overrides;
+
+    assertIsNotPromise(
+      overrides,
+      `The configure() function for "${config.title}" returned a promise, skipping updates.`
+    );
+
+    path && assertLinkPathIsValid(pluginId, path);
+    assertStringProps({ title, description }, ['title', 'description']);
+
+    if (Object.keys(rest).length > 0) {
+      log.warning(
+        `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
+          ', '
+        )} which will be ignored.`
+      );
+    }
+
+    return {
+      title,
+      description,
+      path,
+      icon,
+      category,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      log.error(`Failed to configure link with title "${config.title}"`, {
+        stack: error.stack ?? '',
+        message: error.message,
+      });
+    }
+
+    // If there is an error, we hide the extension
+    // (This seems to be safest option in case the extension is doing something wrong.)
+    return undefined;
+  }
+}
+
+export function getLinkExtensionOnClick(
+  pluginId: string,
+  extensionPointId: string,
+  config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
+  context?: object
+): ((event?: React.MouseEvent) => void) | undefined {
+  const { onClick } = config;
+
+  if (!onClick) {
+    return;
+  }
+
+  return function onClickExtensionLink(event?: React.MouseEvent) {
+    try {
+      reportInteraction('ui_extension_link_clicked', {
+        pluginId: pluginId,
+        extensionPointId,
+        title: config.title,
+        category: config.category,
+      });
+
+      const helpers: PluginExtensionEventHelpers = {
+        context,
+        openModal: createOpenModalFunction(pluginId),
+      };
+
+      log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
+      const result = onClick(event, helpers);
+
+      if (isPromise(result)) {
+        result.catch((error) => {
+          if (error instanceof Error) {
+            log.error(error.message, {
+              message: error.message,
+              stack: error.stack ?? '',
+            });
+          }
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        log.error(error.message, {
+          message: error.message,
+          stack: error.stack ?? '',
+        });
+      }
+    }
+  };
+}
+
+export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+  return urlUtil.appendQueryToUrl(
+    path,
+    urlUtil.toUrlParams({
+      uel_pid: pluginId,
+      uel_epid: extensionPointId,
+    })
+  );
+}
+
+// Comes from the `app_mode` setting in the Grafana config (defaults to "development")
+// Can be set with the `GF_DEFAULT_APP_MODE` environment variable
+export const isGrafanaDevMode = () => config.buildInfo.env === 'development';

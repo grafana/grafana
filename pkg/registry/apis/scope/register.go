@@ -3,12 +3,9 @@ package scope
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -18,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -113,13 +109,9 @@ func (b *ScopeAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(scope.SchemeGroupVersion)
 }
 
-func (b *ScopeAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(scope.GROUP, scheme, metav1.ParameterCodec, codecs)
+func (b *ScopeAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	scheme := opts.Scheme
+	optsGetter := opts.OptsGetter
 
 	scopeResourceInfo := scope.ScopeResourceInfo
 	scopeDashboardResourceInfo := scope.ScopeDashboardBindingResourceInfo
@@ -129,20 +121,20 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 
 	scopeStorage, err := newScopeStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeResourceInfo.StoragePath()] = scopeStorage
 
 	scopeDashboardStorage, scopedDashboardStatusStorage, err := newScopeDashboardBindingStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeDashboardResourceInfo.StoragePath()] = scopeDashboardStorage
 	storage[scopeDashboardResourceInfo.StoragePath()+"/status"] = scopedDashboardStatusStorage
 
 	scopeNodeStorage, err := newScopeNodeStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[scopeNodeResourceInfo.StoragePath()] = scopeNodeStorage
 
@@ -157,7 +149,7 @@ func (b *ScopeAPIBuilder) GetAPIGroupInfo(
 	storage["scope_dashboard_bindings"] = &findScopeDashboardsREST{scopeDashboardStorage: scopeDashboardStorage}
 
 	apiGroupInfo.VersionedResourcesStorageMap[scope.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *ScopeAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

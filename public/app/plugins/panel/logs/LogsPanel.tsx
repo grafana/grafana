@@ -20,7 +20,7 @@ import {
   toUtc,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, usePanelContext, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
@@ -38,6 +38,7 @@ import {
   isOnClickFilterString,
   isOnClickHideField,
   isOnClickShowField,
+  isReactNodeArray,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -67,6 +68,12 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
    * onClickHideField?: (key: string) => void;
+   *
+   * Passed to the LogRowMenuCell component to be rendered before the default actions in the menu.
+   * logRowMenuIconsBefore?: ReactNode[];
+   *
+   * Passed to the LogRowMenuCell component to be rendered after the default actions in the menu.
+   * logRowMenuIconsAfter?: ReactNode[];
    */
 }
 interface LogsPermalinkUrlState {
@@ -96,6 +103,8 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    logRowMenuIconsBefore,
+    logRowMenuIconsAfter,
     ...options
   },
   id,
@@ -110,6 +119,10 @@ export const LogsPanel = ({
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
   let closeCallback = useRef<() => void>();
+
+  useEffect(() => {
+    scrollElement?.scrollTo(0, scrollTop);
+  }, [scrollElement, scrollTop]);
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -347,11 +360,7 @@ export const LogsPanel = ({
           getLogRowContextUi={getLogRowContextUi}
         />
       )}
-      <CustomScrollbar
-        autoHide
-        scrollTop={scrollTop}
-        scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
-      >
+      <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
         <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
@@ -389,10 +398,12 @@ export const LogsPanel = ({
             displayedFields={displayedFields}
             onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
             onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
+            logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
+            logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
     </>
   );
 };

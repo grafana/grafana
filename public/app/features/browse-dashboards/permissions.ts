@@ -3,15 +3,12 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDTO) {
-  // Only some permissions are assigned in the root folder (aka "general" folder), so we can ignore them in most cases
-  return folderDTO && folderDTO.uid !== 'general'
-    ? contextSrv.hasPermissionInMetadata(action, folderDTO)
-    : contextSrv.hasPermission(action);
+  return folderDTO ? contextSrv.hasPermissionInMetadata(action, folderDTO) : contextSrv.hasPermission(action);
 }
 
 function checkCanCreateFolders(folderDTO?: FolderDTO) {
   // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
-  if (folderDTO && !config.featureToggles.nestedFolders) {
+  if (folderDTO && folderDTO.uid !== 'general' && !config.featureToggles.nestedFolders) {
     return false;
   }
 
@@ -25,9 +22,7 @@ function checkCanCreateFolders(folderDTO?: FolderDTO) {
     );
   }
 
-  return folderDTO
-    ? contextSrv.hasPermissionInMetadata(AccessControlAction.FoldersCreate, folderDTO)
-    : contextSrv.hasPermission(AccessControlAction.FoldersCreate);
+  return checkFolderPermission(AccessControlAction.FoldersCreate, folderDTO);
 }
 
 export function getFolderPermissions(folderDTO?: FolderDTO) {

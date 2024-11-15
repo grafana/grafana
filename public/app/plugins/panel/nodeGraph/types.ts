@@ -2,7 +2,7 @@ import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
 
 import { DataFrame, Field, IconName } from '@grafana/data';
 
-export { Options as NodeGraphOptions, ArcOption } from './panelcfg.gen';
+export type { Options as NodeGraphOptions, ArcOption, ZoomMode } from './panelcfg.gen';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;

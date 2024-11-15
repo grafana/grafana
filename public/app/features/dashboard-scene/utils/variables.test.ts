@@ -26,6 +26,14 @@ import { NEW_LINK } from '../settings/links/utils';
 
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot } from './variables';
 
+// mock getDataSourceSrv.getInstanceSettings()
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: jest.fn(),
+  }),
+}));
+
 describe('when creating variables objects', () => {
   it('should migrate custom variable', () => {
     const variable: CustomVariableModel = {
@@ -243,6 +251,7 @@ describe('when creating variables objects', () => {
       isMulti: true,
       description: null,
       hide: 0,
+      defaultOptionEnabled: false,
     });
   });
 
@@ -425,6 +434,7 @@ describe('when creating variables objects', () => {
       datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
+      supportsMultiValueOperators: false,
     });
   });
 
@@ -508,6 +518,7 @@ describe('when creating variables objects', () => {
         },
       ],
       useQueriesAsFilterForOptions: true,
+      supportsMultiValueOperators: false,
     });
   });
 
@@ -663,6 +674,49 @@ describe('when creating variables objects', () => {
       type: 'datasource',
       value: '',
       isMulti: true,
+      defaultOptionEnabled: false,
+    });
+  });
+
+  it('should handle datasource variable with default selected', () => {
+    // @ts-expect-error
+    const variable: TypedVariableModel = {
+      id: 'query1',
+      current: {
+        text: 'default',
+        value: 'default',
+        selected: true,
+      },
+      name: 'query1',
+      type: 'datasource',
+      global: false,
+      regex: '/^gdev/',
+      options: [],
+      query: 'prometheus',
+      multi: true,
+      includeAll: true,
+      refresh: 1,
+      allValue: 'Custom all',
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+    const { key, ...rest } = migrated.state;
+
+    expect(migrated).toBeInstanceOf(DataSourceVariable);
+    expect(rest).toEqual({
+      allValue: 'Custom all',
+      defaultToAll: true,
+      includeAll: true,
+      label: undefined,
+      name: 'query1',
+      options: [],
+      pluginId: 'prometheus',
+      regex: '/^gdev/',
+      text: 'default',
+      type: 'datasource',
+      value: 'default',
+      isMulti: true,
+      defaultOptionEnabled: true,
     });
   });
 });
