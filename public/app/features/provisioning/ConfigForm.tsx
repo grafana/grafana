@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Field, Combobox, SecretInput, Input, Button, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -20,6 +22,7 @@ export function ConfigForm() {
     formState: { errors, isDirty },
     setValue,
     watch,
+    getValues,
   } = useForm({
     defaultValues: {
       type: '',
@@ -35,8 +38,52 @@ export function ConfigForm() {
 
   const watchType = watch('type');
 
+  useEffect(() => {
+    const appEvents = getAppEvents();
+    if (request.isSuccess) {
+      const formData = getValues();
+
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Repository settings saved'],
+      });
+      reset(formData);
+    }
+  }, [request.isSuccess, reset, getValues]);
+
   const onSubmit = (data: unknown) => {
     console.log('d', data);
+    const dataToSpec = (data: unknown) => {
+      switch (data.type) {
+        case 'github':
+          return {
+            github: {
+              branchWorkflow: data.branchWorkflow,
+              generateDashboardPreviews: data.generateDashboardPreviews,
+              owner: data.owner,
+              repository: data.repository,
+            },
+            type: watchType,
+          };
+        case 'local':
+          return {
+            local: {
+              path: data.path,
+            },
+          };
+        case 's3':
+          return {
+            s3: {
+              bucket: data.bucket,
+              region: data.region,
+            },
+          };
+        default:
+          return {};
+      }
+    };
+    const spec = dataToSpec(data);
+    submitData({ metadata: { generateName: 'test' }, spec });
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 600 }}>
@@ -99,6 +146,23 @@ export function ConfigForm() {
           </Field>
           <Field label={'Show dashboard previews'}>
             <Switch {...register('generateDashboardPreviews')} />
+          </Field>
+        </>
+      )}
+
+      {watchType === 'local' && (
+        <Field label={'Local path'} error={errors?.path?.message} invalid={!!errors?.path}>
+          <Input {...register('path', { required: 'This field is required.' })} placeholder={'/path/to/repo'} />
+        </Field>
+      )}
+
+      {watchType === 's3' && (
+        <>
+          <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
+            <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
+          </Field>
+          <Field label={'S3 region'} error={errors?.region?.message} invalid={!!errors?.region}>
+            <Input {...register('region', { required: 'This field is required.' })} placeholder={'us-west-2'} />
           </Field>
         </>
       )}

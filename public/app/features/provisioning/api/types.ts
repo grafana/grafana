@@ -22,7 +22,6 @@ export type RepositorySpec = {
   github?: GitHubRepositoryConfig;
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
-  title: string;
   type: 'github' | 'local' | 's3';
 };
 
@@ -36,6 +35,7 @@ export interface RequestArg {
   name: string;
 }
 
+export type RepositoryForCreate = ResourceForCreate<RepositorySpec>;
 export interface UpdateRequestArg extends RequestArg {
   /** RepositorySpec */
   body: ResourceForCreate<RepositorySpec>;

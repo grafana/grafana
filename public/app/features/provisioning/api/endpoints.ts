@@ -1,5 +1,12 @@
 import { baseAPI as api } from './baseAPI';
-import { RepositorySpec, RepositoryList, RepositoryResource, RequestArg, UpdateRequestArg, HelloWorld } from './types';
+import {
+  RepositoryList,
+  RepositoryResource,
+  RequestArg,
+  UpdateRequestArg,
+  HelloWorld,
+  RepositoryForCreate,
+} from './types';
 
 const BASE_PATH = '/repositories';
 
@@ -20,11 +27,11 @@ const injectedRtkApi = api.injectEndpoints({
     }),
 
     // Mutations
-    createRepository: build.mutation<void, { body: RepositorySpec }>({
-      query: ({ body }) => ({
+    createRepository: build.mutation<void, RepositoryForCreate>({
+      query: (resource) => ({
         url: BASE_PATH,
         method: 'POST',
-        body,
+        body: resource,
       }),
     }),
     updateRepository: build.mutation<void, UpdateRequestArg>({
