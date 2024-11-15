@@ -51,7 +51,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 	}
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.DownloadOpts) error {
 	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		m.installing.Delete(pluginID)
 	}()
 
-	archive, err := m.install(ctx, pluginID, version, compatOpts)
+	archive, err := m.install(ctx, pluginID, version, opts.URL(), compatOpts)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
+func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
@@ -144,7 +144,11 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		}
 	} else {
 		var err error
-		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		if url != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +201,7 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID, pluginVersion st
 	return p, true
 }
 
-func RepoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
+func RepoCompatOpts(opts plugins.DownloadOpts) (repo.CompatOpts, error) {
 	os := opts.OS()
 	arch := opts.Arch()
 	if len(os) == 0 || len(arch) == 0 {

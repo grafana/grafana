@@ -29,7 +29,7 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", ""},
+		"grafana-lokiexplore-app": {"grafana-lokiexplore-app", "", ""},
 	}
 )
 
@@ -59,10 +59,15 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 			parts := strings.Split(plugin, "@")
 			id := parts[0]
 			v := ""
-			if len(parts) == 2 {
+			u := ""
+			if len(parts) > 1 {
 				v = parts[1]
+				if len(parts) > 2 {
+					u = parts[2]
+				}
 			}
-			preinstallPlugins[id] = InstallPlugin{id, v}
+
+			preinstallPlugins[id] = InstallPlugin{id, v, u}
 		}
 		// Remove from the list the plugins that have been disabled
 		for _, disabledPlugin := range cfg.DisablePlugins {

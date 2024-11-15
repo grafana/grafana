@@ -352,6 +352,6 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 	return p
 }
 
-func testCompatOpts() plugins.CompatOpts {
-	return plugins.NewCompatOpts("10.0.0", runtime.GOOS, runtime.GOARCH)
+func testCompatOpts() plugins.DownloadOpts {
+	return plugins.NewDownloadOpts("10.0.0", runtime.GOOS, runtime.GOARCH, "")
 }

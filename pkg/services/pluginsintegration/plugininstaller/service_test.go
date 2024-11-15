@@ -131,7 +131,7 @@ func TestService_Run(t *testing.T) {
 				},
 				pluginstore.New(preg, &fakes.FakeLoader{}),
 				&fakes.FakePluginInstaller{
-					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.CompatOpts) error {
+					AddFunc: func(ctx context.Context, pluginID string, version string, opts plugins.DownloadOpts) error {
 						for _, plugin := range tt.pluginsToFail {
 							if plugin == pluginID {
 								return errors.New("Failed to install plugin")
