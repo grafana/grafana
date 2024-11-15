@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,7 +53,6 @@ func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// fallback to the standard authorizer
 			return authorizer.DecisionNoOpinion, "", nil
 		})
-	}
 }
 
 func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -89,6 +89,9 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[v0alpha1.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: repositoryStorage,
 	}
+	storage[v0alpha1.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
+		getter: repositoryStorage,
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
 	return nil
 }
@@ -106,8 +109,10 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	oas.Info.Description = "Grafana Git UI Sync"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
+
 	// TODO: we might want to register some extras for subresources here.
-	sub := oas.Paths.Paths[root+"namespaces/{namespace}/repositories/{name}/hello"]
+	sub := oas.Paths.Paths[repoprefix+"/hello"]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Description = "Get a nice hello :)"
 		sub.Get.Parameters = []*spec3.Parameter{
@@ -117,6 +122,32 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 					In:          "query",
 					Example:     "World!",
 					Description: "Who should get the nice greeting?",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/webhook"]
+	if sub != nil && sub.Get != nil {
+		sub.Post.Description = "Currently only supports github webhooks"
+	}
+
+	// hide the version with no path
+	delete(oas.Paths.Paths, repoprefix+"/read")
+
+	// update the version with a path
+	sub = oas.Paths.Paths[repoprefix+"/read/{path}"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Description = "Read value from upstream repository"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "commit",
+					In:          "query",
+					Example:     "ca171cc730",
+					Description: "optional commit hash for the requested file",
 					Schema:      spec.StringProperty(),
 					Required:    false,
 				},

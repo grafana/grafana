@@ -80,6 +80,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&RepositoryList{},
 		&HelloWorld{},
 		&WebhookResponse{},
+		&ResourceWrapper{},
 	)
 	return nil
 }
