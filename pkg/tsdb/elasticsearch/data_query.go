@@ -77,8 +77,16 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		// We are returning error containing the source that was added through errorsource.Middleware
+		if backend.IsDownstreamHTTPError(err) {
+			return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, errorsource.DownstreamError(err, false)), nil
+		}
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
+	}
+
+	if res.Status%100 != 2 {
+		status := backend.ErrorSourceFromHTTPStatus(res.Status)
+		errWithSource := errorsource.SourceError(status, fmt.Errorf("unexpected status code %d", res.Status), false)
+		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, errWithSource), nil
 	}
 
 	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.keepLabelsInResponse, e.logger)

@@ -17,6 +17,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
@@ -178,7 +179,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		status := "error"
-		if errors.Is(err, context.Canceled) {
+		if backend.IsDownstreamError(err) {
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
@@ -192,6 +193,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		c.logger.Error("Error received from Elasticsearch", lp...)
 		return nil, err
 	}
+
 	res := clientRes
 	defer func() {
 		if err := res.Body.Close(); err != nil {
