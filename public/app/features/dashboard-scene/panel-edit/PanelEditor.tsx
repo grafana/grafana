@@ -75,6 +75,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       if (layoutElement instanceof DashboardGridItem) {
+        console.log('AAA', this.state.isDirty, this._changesHaveBeenMade);
         layoutElement.editingCompleted(this.state.isDirty || this._changesHaveBeenMade);
       }
       if (deactivateParents) {
@@ -266,7 +267,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ isDirty: false });
 
     // Remember that we have done changes
-    this._changesHaveBeenMade = false;
+    this._changesHaveBeenMade = true;
   }
 
   public onSaveLibraryPanel = () => {
