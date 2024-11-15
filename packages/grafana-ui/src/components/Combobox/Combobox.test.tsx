@@ -116,14 +116,14 @@ describe('Combobox', () => {
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
   });
 
-  it('should handle an option with an empty string as value', async () => {
+  it.each(['', 0])('should handle an option with %p as a value', async (val) => {
     const options = [
       { label: 'Second option', value: '2' },
-      { label: 'Default', value: '' },
+      { label: 'Default', value: val },
     ];
 
     const ControlledCombobox = () => {
-      const [value, setValue] = React.useState<string | null>(null);
+      const [value, setValue] = React.useState<string | number | null>(null);
 
       return (
         <Combobox
