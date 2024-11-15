@@ -9,6 +9,8 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from '../../core/components/Select/FolderPicker';
 
 import { useCreateRepositoryMutation } from './api';
+import { RepositoryFormData } from './types';
+import { dataToSpec } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 
@@ -23,9 +25,9 @@ export function ConfigForm() {
     setValue,
     watch,
     getValues,
-  } = useForm({
+  } = useForm<RepositoryFormData>({
     defaultValues: {
-      type: '',
+      type: 'github',
       token: '',
       owner: '',
       repository: '',
@@ -51,37 +53,7 @@ export function ConfigForm() {
     }
   }, [request.isSuccess, reset, getValues]);
 
-  const onSubmit = (data: unknown) => {
-    console.log('d', data);
-    const dataToSpec = (data: unknown) => {
-      switch (data.type) {
-        case 'github':
-          return {
-            github: {
-              branchWorkflow: data.branchWorkflow,
-              generateDashboardPreviews: data.generateDashboardPreviews,
-              owner: data.owner,
-              repository: data.repository,
-            },
-            type: watchType,
-          };
-        case 'local':
-          return {
-            local: {
-              path: data.path,
-            },
-          };
-        case 's3':
-          return {
-            s3: {
-              bucket: data.bucket,
-              region: data.region,
-            },
-          };
-        default:
-          return {};
-      }
-    };
+  const onSubmit = (data: RepositoryFormData) => {
     const spec = dataToSpec(data);
     submitData({ metadata: { generateName: 'test' }, spec });
   };

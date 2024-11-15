@@ -3,8 +3,9 @@ import { Resource, ResourceForCreate, ResourceList } from '../../apiserver/types
 export type GitHubRepositoryConfig = {
   branchWorkflow?: boolean;
   generateDashboardPreviews?: boolean;
-  owner?: string;
-  repository?: string;
+  owner: string;
+  repository: string;
+  token?: string;
 };
 
 export type LocalRepositoryConfig = {
