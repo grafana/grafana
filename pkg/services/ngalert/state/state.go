@@ -83,8 +83,6 @@ func (a *State) Copy() *State {
 	maps.Copy(annotationsCopy, a.Annotations)
 	labelsCopy := make(data.Labels, len(a.Labels))
 	maps.Copy(labelsCopy, a.Labels)
-	valuesCopy := make(map[string]float64, len(a.Values))
-	maps.Copy(valuesCopy, a.Values)
 	return &State{
 		OrgID:                a.OrgID,
 		AlertRuleUID:         a.AlertRuleUID,
