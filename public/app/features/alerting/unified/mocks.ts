@@ -64,11 +64,7 @@ import {
 
 import { DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
-import {
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
-} from './components/rule-editor/query-and-alert-condition/SimpleCondition';
+import { SimpleConditionIdentifier } from './components/rule-editor/query-and-alert-condition/SimpleCondition';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 
 let nextDataSourceId = 1;
@@ -855,29 +851,29 @@ export function mockDashboardDto(
 }
 
 export const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_QUERY_ID,
+  refId: SimpleConditionIdentifier.queryId,
   datasourceUid: 'abc123',
   queryType: '',
-  model: { refId: SIMPLE_CONDITION_QUERY_ID },
+  model: { refId: SimpleConditionIdentifier.queryId },
 };
 
 export const reduceExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_REDUCER_ID,
+  refId: SimpleConditionIdentifier.reducerId,
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.reduce,
-    refId: SIMPLE_CONDITION_REDUCER_ID,
+    refId: SimpleConditionIdentifier.reducerId,
     settings: { mode: ReducerMode.Strict },
     reducer: ReducerID.last,
   },
 };
 export const thresholdExpression: AlertQuery<ExpressionQuery> = {
-  refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  refId: SimpleConditionIdentifier.thresholdId,
   queryType: 'expression',
   datasourceUid: '__expr__',
   model: {
     type: ExpressionQueryType.threshold,
-    refId: SIMPLE_CONDITION_THRESHOLD_ID,
+    refId: SimpleConditionIdentifier.thresholdId,
   },
 };

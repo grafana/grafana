@@ -53,7 +53,12 @@ import {
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
-import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import {
+  DataSourceType,
+  getDefaultOrFirstCompatibleDataSource,
+  GRAFANA_RULES_SOURCE_NAME,
+  isGrafanaRulesSource,
+} from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
   isAlertingRulerRule,
@@ -499,7 +504,6 @@ export function recordingRulerRuleToRuleForm(
 
 export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
-
   if (!dataSource) {
     const expressions = isRecordingRule ? getDefaultExpressionsForRecording('A') : getDefaultExpressions('A', 'B');
     return [...expressions];
@@ -507,6 +511,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
+  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
   return [
     {
       refId: 'A',
@@ -515,6 +520,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
       relativeTimeRange,
       model: {
         refId: 'A',
+        instant: isLokiOrPrometheus ? true : undefined,
       },
     },
     ...expressions,
@@ -898,4 +904,25 @@ export const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormVal
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+}
+
+export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
+  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
+  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
+    if ('instant' in model) {
+      return model.instant;
+    } else {
+      if ('queryType' in model) {
+        return model.queryType === 'instant';
+      } else {
+        return undefined;
+      }
+    }
+  }
+  // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
+  const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
+  const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
+
+  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  return isInstant;
 }

@@ -1,5 +1,3 @@
-// QueryAndExpressionsStep.test.tsx
-
 import { produce } from 'immer';
 
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
@@ -24,7 +22,7 @@ describe('areQueriesTransformableToSimpleCondition', () => {
     expect(result).toBe(false);
   });
 
-  it('should return false if the dataQuery refId does not match SIMPLE_CONDITION_QUERY_ID', () => {
+  it('should return false if the dataQuery refId does not match SimpleConditionIdentifier.queryId', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [
       { refId: 'notSimpleCondition', datasourceUid: 'abc123', queryType: '', model: { refId: 'notSimpleCondition' } },
     ];

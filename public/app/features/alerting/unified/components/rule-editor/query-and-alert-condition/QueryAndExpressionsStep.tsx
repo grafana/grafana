@@ -54,13 +54,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import {
-  getSimpleConditionFromExpressions,
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
-  SimpleConditionEditor,
-} from './SimpleCondition';
+import { getSimpleConditionFromExpressions, SimpleConditionEditor, SimpleConditionIdentifier } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
@@ -68,6 +62,7 @@ import {
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
+  optimizeReduceExpression,
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
@@ -90,19 +85,21 @@ export function areQueriesTransformableToSimpleCondition(
   if (dataQueries.length !== 1) {
     return false;
   }
+  const singleReduceExpressionInInstantQuery =
+    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2) {
+  if (expressionQueries.length !== 2 && !singleReduceExpressionInInstantQuery) {
     return false;
   }
 
   const query = dataQueries[0];
 
-  if (query.refId !== SIMPLE_CONDITION_QUERY_ID) {
+  if (query.refId !== SimpleConditionIdentifier.queryId) {
     return false;
   }
 
   const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const reduceExpression = expressionQueries.at(reduceExpressionIndex);
   const reduceOk =
@@ -112,13 +109,16 @@ export function areQueriesTransformableToSimpleCondition(
       reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdOk =
-    thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
-  return Boolean(reduceOk) && Boolean(thresholdOk);
+  const thresholdIndexOk = singleReduceExpressionInInstantQuery
+    ? thresholdExpressionIndex === 0
+    : thresholdExpressionIndex === 1;
+  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
+  return (Boolean(reduceOk) || Boolean(singleReduceExpressionInInstantQuery)) && Boolean(thresholdOk);
 }
 
 interface Props {
@@ -200,8 +200,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (!isAdvancedMode) {
-        setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
-        runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
+        setValue('condition', SimpleConditionIdentifier.thresholdId);
+        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
@@ -285,6 +285,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule) {
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -294,7 +300,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
