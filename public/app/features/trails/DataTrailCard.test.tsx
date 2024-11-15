@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { url } from 'inspector';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
