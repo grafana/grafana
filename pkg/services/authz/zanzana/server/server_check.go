@@ -25,7 +25,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	return s.checkGeneric(ctx, r, storeInf)
 }
 
-// checkNamespace() checks if subject has access through namespace
+// checkNamespace checks if subject has access through namespace
 func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, storeInf *storeInfo) (*authzv1.CheckResponse, error) {
 	relation := common.VerbMapping[r.GetVerb()]
 
