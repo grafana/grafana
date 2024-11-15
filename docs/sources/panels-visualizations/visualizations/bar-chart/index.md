@@ -134,9 +134,9 @@ Set the mode of the gradient fill. Fill gradient is based on the line color. To 
 - **None** - No gradient fill. This is the default setting.
 - **Opacity** - Transparency of the gradient is calculated based on the values on the y-axis. Opacity of the fill is increasing with the values on the Y-axis.
 - **Hue** - Gradient color is generated based on the hue of the line color.
-- **Scheme gradient mode** - The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
+- **Scheme** - The bar receives a gradient color defined by the **Standard options > Color scheme** selection.
 
-  - **From thresholds** - If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
+  - **From thresholds** - If the **Color scheme** selection is **From thresholds (by value)**, then each bar is the color of the defined threshold.
 
     {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-colors-by-thresholds-v11.3.png" alt="Color scheme From thresholds" caption="Color scheme: From thresholds" >}}
 
