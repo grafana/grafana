@@ -2,9 +2,8 @@ name: golangci-lint
 on:
   push:
     paths:
-      - apps/**
       - pkg/**
-      - .github/workflows/go_lint.yml
+      - .github/workflows/go-lint.yml
       - go.*
     branches:
       - main
