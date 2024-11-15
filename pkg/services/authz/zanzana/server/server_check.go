@@ -21,7 +21,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 }
 
 func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 }
 
 func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
