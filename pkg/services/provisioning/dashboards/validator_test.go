@@ -93,6 +93,9 @@ func TestDuplicatesValidator(t *testing.T) {
 		const folderName = "duplicates-validator-folder"
 
 		fakeStore := &fakeDashboardStore{}
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&folder.Folder{}, nil).Times(1)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(2)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(2)
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore, featuremgmt.WithFeatures(), fakeFoldersService)
 		require.NoError(t, err)
 		_, folderUID, err := r.getOrCreateFolder(context.Background(), cfg, fakeService, folderName)
