@@ -244,7 +244,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 func (s *ServiceImpl) handleQuerySingleDatasource(ctx context.Context, user identity.Requester, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.pluginRequestValidator.Validate(ds, nil); err != nil {
+	if err := s.pluginRequestValidator.Validate(ds, setting.SecureSocksDSProxySettings{}, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 

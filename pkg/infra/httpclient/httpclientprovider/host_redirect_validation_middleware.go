@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const HostRedirectValidationMiddlewareName = "host-redirect-validation"
@@ -28,7 +29,7 @@ func RedirectLimitMiddleware(reqValidator validations.PluginRequestValidator) sd
 					return nil, locationErr
 				}
 
-				if validationErr := reqValidator.Validate(&datasources.DataSource{URL: location.String()}, nil); validationErr != nil {
+				if validationErr := reqValidator.Validate(&datasources.DataSource{URL: location.String()}, setting.SecureSocksDSProxySettings{}, nil); validationErr != nil {
 					return nil, validationErr
 				}
 			}

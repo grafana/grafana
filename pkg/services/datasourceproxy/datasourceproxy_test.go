@@ -14,6 +14,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,6 +132,6 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 type fakePluginRequestValidator struct{}
 
-func (rv *fakePluginRequestValidator) Validate(_ *datasources.DataSource, _ *http.Request) error {
+func (rv *fakePluginRequestValidator) Validate(_ *datasources.DataSource, _ setting.SecureSocksDSProxySettings, _ *http.Request) error {
 	return nil
 }

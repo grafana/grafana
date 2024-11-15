@@ -62,7 +62,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	err = hs.PluginRequestValidator.Validate(ds, c.Req)
+	err = hs.PluginRequestValidator.Validate(ds, hs.Cfg.SecureSocksDSProxy, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
