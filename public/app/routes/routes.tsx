@@ -536,13 +536,13 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/provisioning',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "RepositoryListPage"*/ '../features/provisioning/RepositoryListPage')
+        () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/RepositoryListPage')
       ),
     },
     {
       path: '/admin/provisioning/new',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NewRepositoryPage"*/ '../features/provisioning/NewRepositoryPage')
+        () => import(/* webpackChunkName: "NewRepositoryPage"*/ 'app/features/provisioning/NewRepositoryPage')
       ),
     },
     ...getPluginCatalogRoutes(),
