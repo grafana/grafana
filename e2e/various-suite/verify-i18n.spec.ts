@@ -20,6 +20,7 @@ describe('Verify i18n', () => {
     cy.visit('/profile');
 
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
+      // TODO investigate why we need to wait for 6 (SIX!) calls to the preferences API
       cy.wait('@preferences');
       cy.wait('@preferences');
       cy.wait('@preferences');
