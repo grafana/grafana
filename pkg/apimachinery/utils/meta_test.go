@@ -340,7 +340,7 @@ func TestMetaAccessor(t *testing.T) {
 		info, err := meta.GetRepositoryInfo()
 		require.NoError(t, err)
 		require.Equal(t, "test", info.Name)
-		require.Equal(t, "a/b/b", info.Path)
+		require.Equal(t, "a/b/c", info.Path)
 		require.Equal(t, "zzz", info.Hash)
 	})
 
