@@ -1,5 +1,7 @@
 import memoize from 'micro-memoize';
 
+import { routingTreeApi } from 'app/features/alerting/unified/api/notificationPoliciesApi';
+import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/components/notification-policies/PolicyUpdateErrorAlert';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -8,13 +10,12 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree,
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
-  generatedRoutesApi,
 } from '../../openapi/routesApi.gen';
 import { K8sAnnotations, PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, getK8sNamespace, shouldUseK8sApi } from '../../utils/k8s/utils';
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 
-const { useListNamespacedRoutingTreeQuery, useReplaceNamespacedRoutingTreeMutation } = generatedRoutesApi;
+const { useListNamespacedRoutingTreeQuery, useReplaceNamespacedRoutingTreeMutation } = routingTreeApi;
 
 const {
   useUpdateAlertmanagerConfigurationMutation,
@@ -65,8 +66,8 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
 
   async function updateUsingK8sApi({ newRoute }: { newRoute: Route }) {
     const namespace = getK8sNamespace();
-    const { routes, ...rest } = newRoute;
-    const { provenance, ...defaults } = rest;
+    const { routes, _metadata, ...defaults } = newRoute;
+    // Remove provenance so we don't send it to API
     // Convert Route to K8s compatible format
     const k8sRoute: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec = {
       defaults: {
@@ -77,10 +78,11 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
       routes: newRoute.routes?.map(routeToK8sSubRoute) || [],
     };
 
-    // TODO Add a check to see if not updated in the meantime
-
     // Create the K8s route object
-    const routeObject = { spec: k8sRoute, metadata: { name: ROOT_ROUTE_NAME } };
+    const routeObject: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree = {
+      spec: k8sRoute,
+      metadata: { name: ROOT_ROUTE_NAME, resourceVersion: _metadata?.resourceVersion },
+    };
 
     return updatedNamespacedRoute({
       name: ROOT_ROUTE_NAME,
@@ -95,9 +97,7 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
     const configChangedInMeantime = JSON.stringify(oldRoute) !== JSON.stringify(lastConfig.alertmanager_config.route);
 
     if (configChangedInMeantime) {
-      throw new Error(
-        'A newer Alertmanager configuration is available. Please reload the page and try again to not overwrite recent changes.'
-      );
+      throw new Error(ERROR_NEWER_CONFIGURATION);
     }
 
     const newConfig = {
@@ -123,8 +123,12 @@ function k8sRoutesToRoutes(routes: ComGithubGrafanaGrafanaPkgApisAlertingNotific
     const provenance = getAnnotation(route, K8sAnnotations.Provenance) || PROVENANCE_NONE;
     return {
       ...route.spec.defaults,
-      provenance,
       routes: route.spec.routes?.map(k8sSubRouteToRoute),
+      provenance,
+      _metadata: {
+        resourceVersion: route.metadata.resourceVersion,
+        name: route.metadata.name,
+      },
     };
   });
 }
@@ -149,10 +153,11 @@ function k8sSubRouteToRoute(route: ComGithubGrafanaGrafanaPkgApisAlertingNotific
 }
 
 function routeToK8sSubRoute(route: Route): ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Route {
+  const { object_matchers, ...rest } = route;
   return {
-    ...route,
+    ...rest,
     receiver: route.receiver ?? undefined,
-    matchers: route.object_matchers?.map(([label, type, value]) => ({
+    matchers: object_matchers?.map(([label, type, value]) => ({
       label,
       type,
       value,

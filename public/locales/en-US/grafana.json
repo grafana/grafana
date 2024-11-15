@@ -254,6 +254,7 @@
       "new-child": "New child policy",
       "new-policy": "Add new policy",
       "no-matchers": "No matchers",
+      "reload-policies": "Reload policies",
       "update-errors": {
         "conflict": "The notification policy tree has been updated by another user.",
         "error-code": "Error message: \"{{error}}\"",
