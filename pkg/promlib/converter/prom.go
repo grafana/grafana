@@ -39,7 +39,7 @@ func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.Da
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
-			return rspErr(fmt.Errorf("response from prometheus couldn't parsed. it is non-json"))
+			return rspErr(fmt.Errorf("response from prometheus couldn't parsed. it is non-json: %w", err))
 		}
 		switch l1Field {
 		case "status":
