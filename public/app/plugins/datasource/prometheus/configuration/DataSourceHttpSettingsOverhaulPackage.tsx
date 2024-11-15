@@ -1,22 +1,17 @@
 import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
-import { DataSourceSettings } from '@grafana/data';
 import { Auth, ConnectionSettings, convertLegacyAuthProps, AuthMethod } from '@grafana/experimental';
-import { PromOptions, docsTip, overhaulStyles } from '@grafana/prometheus';
+import { docsTip, overhaulStyles } from '@grafana/prometheus';
 import { Alert, SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 // NEED TO EXPORT THIS FROM GRAFANA/UI FOR EXTERNAL DS
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import type { AzureCredentials } from './AzureCredentials';
-
-interface PromOptionsWithCloudAuth extends PromOptions {
-  azureCredentials?: AzureCredentials;
-}
+import { AzurePromDataSourceSettings } from './AzureCredentialsConfig';
 
 type Props = {
-  options: DataSourceSettings<PromOptionsWithCloudAuth, {}>;
-  onOptionsChange: (options: DataSourceSettings<PromOptionsWithCloudAuth, {}>) => void;
+  options: AzurePromDataSourceSettings;
+  onOptionsChange: (options: AzurePromDataSourceSettings) => void;
   azureAuthSettings: AzureAuthSettings;
   sigV4AuthToggleEnabled: boolean | undefined;
   renderSigV4Editor: React.ReactNode;

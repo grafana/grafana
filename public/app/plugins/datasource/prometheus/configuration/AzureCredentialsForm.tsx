@@ -1,11 +1,10 @@
 import { cx } from '@emotion/css';
-import { ChangeEvent, useEffect, useMemo, useReducer, useState } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 
+import { AzureAuthType, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { InlineFormLabel, Button, Select, Input } from '@grafana/ui';
-
-import { AzureAuthType, AzureCredentials, isCredentialsComplete } from './AzureCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -22,15 +21,10 @@ export const AzureCredentialsForm = (props: Props) => {
     credentials,
     azureCloudOptions,
     onCredentialsChange,
-    getSubscriptions,
     disabled,
     managedIdentityEnabled,
     workloadIdentityEnabled,
   } = props;
-  const hasRequiredFields = isCredentialsComplete(credentials);
-
-  const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
-  const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
 
   const authTypeOptions = useMemo(() => {
     let opts: Array<SelectableValue<AzureAuthType>> = [
@@ -56,42 +50,7 @@ export const AzureCredentialsForm = (props: Props) => {
     return opts;
   }, [managedIdentityEnabled, workloadIdentityEnabled]);
 
-  useEffect(() => {
-    if (!getSubscriptions || !hasRequiredFields) {
-      updateSubscriptions([]);
-      return;
-    }
-    let canceled = false;
-    getSubscriptions().then((result) => {
-      if (!canceled) {
-        updateSubscriptions(result, loadSubscriptionsClicked);
-      }
-    });
-    return () => {
-      canceled = true;
-    };
-    // This effect is intended to be called only once initially and on Load Subscriptions click
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSubscriptionsClicked]);
-
-  const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
-    setSubscriptions(received);
-    if (getSubscriptions) {
-      if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
-        // Selecting the default subscription if subscriptions received but no default subscription selected
-        onSubscriptionChange(received[0]);
-      } else if (credentials.defaultSubscriptionId) {
-        const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
-        if (!found) {
-          // Unselecting the default subscription if it isn't found among the received subscriptions
-          onSubscriptionChange(undefined);
-        }
-      }
-    }
-  };
-
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
-    setSubscriptions([]);
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled
@@ -100,18 +59,15 @@ export const AzureCredentialsForm = (props: Props) => {
     const updated: AzureCredentials = {
       ...credentials,
       authType: selected.value || defaultAuthType,
-      defaultSubscriptionId: undefined,
     };
     onCredentialsChange(updated);
   };
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     if (credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -119,11 +75,9 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -131,11 +85,9 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -143,11 +95,9 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -155,23 +105,14 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretReset = () => {
     if (credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
   };
 
-  const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
-    const updated: AzureCredentials = {
-      ...credentials,
-      defaultSubscriptionId: selected?.value,
-    };
-    onCredentialsChange(updated);
-  };
   const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
 
   return (
@@ -281,42 +222,6 @@ export const AzureCredentialsForm = (props: Props) => {
               </div>
             </div>
           )}
-        </>
-      )}
-      {getSubscriptions && (
-        <>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
-              <div className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-25')}>
-                <Select
-                  value={
-                    credentials.defaultSubscriptionId
-                      ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
-                      : undefined
-                  }
-                  options={subscriptions}
-                  onChange={onSubscriptionChange}
-                  isDisabled={disabled}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="max-width-30 gf-form-inline">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  onClick={onLoadSubscriptions}
-                  disabled={!hasRequiredFields}
-                >
-                  Load Subscriptions
-                </Button>
-              </div>
-            </div>
-          </div>
         </>
       )}
     </div>
