@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -14,6 +16,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { Icon, Text, Tooltip } from '@grafana/ui';
 
 import { config } from '../../../../core/config';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -173,7 +176,29 @@ export function getInsightsScenes() {
     controls: [
       new SceneReactObject({
         component: SectionSubheader,
-        props: { children: <div>Monitor the status of your system.</div> },
+        props: {
+          children: (
+            <React.Fragment>
+              <Text>
+                {' '}
+                Monitor the status of your system{' '}
+                <Tooltip
+                  content={
+                    <div>
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                      <br />
+                      <br />
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </div>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Text>
+            </React.Fragment>
+          ),
+        },
       }),
       new SceneControlsSpacer(),
       new SceneTimePicker({}),
