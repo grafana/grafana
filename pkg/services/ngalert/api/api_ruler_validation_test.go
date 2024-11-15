@@ -301,6 +301,36 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 				require.Contains(t, err.Error(), apiModel.Rules[0].GrafanaManagedAlert.UID)
 			},
 		},
+		{
+			name: "fail with 4xx if rule contains only panelID",
+			group: func() *apimodels.PostableRuleGroupConfig {
+				r1 := validRule()
+				panelId := int64(42)
+				r1.Annotations = map[string]string{
+					models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
+				}
+				g := validGroup(cfg, r1)
+				return &g
+			},
+			assert: func(t *testing.T, apiModel *apimodels.PostableRuleGroupConfig, err error) {
+				require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			},
+		},
+		{
+			name: "fail with 4xx if rule contains only dashboardUID",
+			group: func() *apimodels.PostableRuleGroupConfig {
+				r1 := validRule()
+				dashboardUid := "oinwerfgiuac"
+				r1.Annotations = map[string]string{
+					models.DashboardUIDAnnotation: dashboardUid,
+				}
+				g := validGroup(cfg, r1)
+				return &g
+			},
+			assert: func(t *testing.T, apiModel *apimodels.PostableRuleGroupConfig, err error) {
+				require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -1042,6 +1072,36 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestValidateRuleNodeEditorSettings(t *testing.T) {
+	cfg := config(t)
+	limits := makeLimits(cfg)
+
+	editorSettings := models.EditorSettings{
+		SimplifiedQueryAndExpressionsSection: true,
+		SimplifiedNotificationsSection:       true,
+	}
+
+	testCases := []struct {
+		name           string
+		editorSettings models.EditorSettings
+	}{
+		{
+			name:           "valid editor settings",
+			editorSettings: editorSettings,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			r := validRule()
+			r.GrafanaManagedAlert.Metadata = AlertRuleMetadataFromModelMetadata(models.AlertRuleMetadata{EditorSettings: tt.editorSettings})
+			newRule, err := validateRuleNode(&r, util.GenerateShortUID(), cfg.BaseInterval*time.Duration(rand.Int63n(10)+1), rand.Int63(), randFolder().UID, limits)
+			require.NoError(t, err)
+			require.Equal(t, tt.editorSettings, newRule.Metadata.EditorSettings)
 		})
 	}
 }
