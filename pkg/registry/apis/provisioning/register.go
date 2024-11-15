@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -55,6 +56,11 @@ func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		})
 }
 
+func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	fmt.Printf("Admission validation: %v // %v", a, o)
+	return nil
+}
+
 func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return provisioning.SchemeGroupVersion
 }
@@ -76,12 +82,12 @@ func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
+	resourceInfo := provisioning.RepositoryResourceInfo
+	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, resourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
-	resourceInfo := provisioning.RepositoryResourceInfo
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = repositoryStorage
 	storage[resourceInfo.StoragePath("hello")] = &helloWorldSubresource{
