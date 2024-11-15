@@ -179,8 +179,20 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 			break
 		}
 
-		if _, ok := res.Items[d.UID]; ok {
-			result = append(result, d)
+		kind := zanzana.KindDashboards
+		if d.IsFolder {
+			kind = zanzana.KindFolders
+		}
+		resourceInfo, ok := zanzana.TranslateResource(kind)
+		if !ok {
+			continue
+		}
+
+		groupPrefix := zanzana.FormatGroupResource(resourceInfo.Group, resourceInfo.Resource)
+		if group, ok := res.Groups[groupPrefix]; ok {
+			if allowed := group.Items[d.UID]; allowed {
+				result = append(result, d)
+			}
 		}
 	}
 

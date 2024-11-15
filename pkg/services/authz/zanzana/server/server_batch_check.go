@@ -14,7 +14,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	defer span.End()
 
 	batchRes := &authzextv1.BatchCheckResponse{
-		Items: make(map[string]bool, len(r.Items)),
+		Groups: make(map[string]*authzextv1.BatchCheckGroup),
 	}
 
 	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
@@ -24,12 +24,18 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	subject := r.GetSubject()
 
 	for _, item := range r.Items {
+		groupPrefix := common.FormatGroupResource(item.GetGroup(), item.GetResource())
 		allowed, err := s.batchCheckItem(ctx, storeInf, subject, item)
 		if err != nil {
 			return nil, err
 		}
 
-		batchRes.Items[item.GetName()] = allowed
+		if _, ok := batchRes.Groups[groupPrefix]; !ok {
+			batchRes.Groups[groupPrefix] = &authzextv1.BatchCheckGroup{
+				Items: make(map[string]bool),
+			}
+		}
+		batchRes.Groups[groupPrefix].Items[item.GetName()] = allowed
 	}
 
 	return batchRes, nil
