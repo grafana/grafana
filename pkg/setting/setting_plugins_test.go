@@ -151,6 +151,16 @@ func Test_readPluginSettings(t *testing.T) {
 				disableAsync: true,
 				expected:     append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", ""}),
 			},
+			{
+				name:     "should parse a plugin with version and URL",
+				rawInput: "plugin1@1.0.1@https://example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "1.0.1", "https://example.com/plugin1.tar.gz"}),
+			},
+			{
+				name:     "should parse a plugin with URL",
+				rawInput: "plugin1@@https://example.com/plugin1.tar.gz",
+				expected: append(defaultPreinstallPluginsList, InstallPlugin{"plugin1", "", "https://example.com/plugin1.tar.gz"}),
+			},
 		}
 		for _, tc := range tests {
 			t.Run(tc.name, func(t *testing.T) {

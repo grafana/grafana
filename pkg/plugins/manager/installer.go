@@ -118,7 +118,7 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url st
 		if url != "" {
 			pluginArchive, err = m.updateFromURL(ctx, pluginID, plugin.Info.Version, url, compatOpts)
 		} else {
-			pluginArchive, err = m.updateFromRepo(ctx, pluginID, plugin.Info.Version, version, compatOpts)
+			pluginArchive, err = m.updateFromCatalog(ctx, pluginID, plugin.Info.Version, version, compatOpts)
 		}
 		if err != nil {
 			return nil, err
@@ -156,7 +156,7 @@ func (m *PluginInstaller) updateFromURL(ctx context.Context, pluginID, oldVersio
 	return m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
 }
 
-func (m *PluginInstaller) updateFromRepo(ctx context.Context, pluginID, oldVersion, newVersion string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
+func (m *PluginInstaller) updateFromCatalog(ctx context.Context, pluginID, oldVersion, newVersion string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
 	// get plugin update information to confirm if target update is possible
 	pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, newVersion, compatOpts)
 	if err != nil {
