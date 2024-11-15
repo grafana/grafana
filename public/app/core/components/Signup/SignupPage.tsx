@@ -4,6 +4,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
@@ -113,9 +114,11 @@ export const SignupPage = ({ queryParams }: Props) => {
           </Field>
 
           <Stack>
-            <Button type="submit">Submit</Button>
+            <Button type="submit">
+              <Trans i18nKey="sign-up.submit-button">Submit</Trans>
+            </Button>
             <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
-              Back to login
+              <Trans i18nKey="sign-up.back-button">Back to login</Trans>
             </LinkButton>
           </Stack>
         </form>

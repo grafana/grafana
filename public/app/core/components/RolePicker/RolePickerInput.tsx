@@ -5,6 +5,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, getInputStyles, sharedInputStyle, Tooltip, Icon, Spinner } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { Trans } from 'app/core/internationalization';
 
 import { Role } from '../../../types';
 
@@ -125,7 +126,11 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
           }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
+        !showBuiltInRole && (
+          <ValueContainer>
+            <Trans i18nKey="role-picker.input.no-roles">No roles assigned</Trans>
+          </ValueContainer>
+        )
       )}
     </>
   );

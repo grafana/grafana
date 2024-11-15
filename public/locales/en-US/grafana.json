@@ -14,6 +14,9 @@
     "permission-list": {
       "permission": "Permission"
     },
+    "permission-list-item": {
+      "inherited": "Inherited from folder"
+    },
     "permissions": {
       "add-label": "Add a permission",
       "no-permissions": "There are no permissions",
@@ -347,6 +350,17 @@
       "message": "No API keys found"
     }
   },
+  "app-chrome": {
+    "skip-content-button": "Skip to main content",
+    "top-bar": {
+      "sign-in": "Sign in"
+    }
+  },
+  "app-notification": {
+    "item": {
+      "trace-id": "Trace ID: {{traceId}}"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "It looks like you haven’t created any bookmarks yet",
@@ -418,6 +432,7 @@
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
+      "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
@@ -859,6 +874,12 @@
       "time-range-label": "Lock time range"
     }
   },
+  "empty-list-cta": {
+    "pro-tip": "ProTip: {{proTip}}"
+  },
+  "entity-not-found": {
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
+  },
   "errors": {
     "dashboard-settings": {
       "annotations": {
@@ -1079,8 +1100,28 @@
       "export-as-json-tooltip": "Export"
     }
   },
+  "folder-filter": {
+    "clear-folder-button": "Clear folders"
+  },
   "folder-picker": {
+    "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
+  },
+  "forgot-password": {
+    "back-button": "Back to login",
+    "change-password": {
+      "skip-button": "Skip",
+      "submit-button": "Submit"
+    },
+    "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
+    "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
+    "reset-password-header": "Reset password",
+    "send-email-button": "Send reset email"
+  },
+  "form-prompt": {
+    "continue-button": "Continue editing",
+    "description": "Changes that you made may not be saved.",
+    "discard-button": "Discard unsaved changes"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -1451,6 +1492,9 @@
     }
   },
   "login": {
+    "divider": {
+      "connecting-text": "or"
+    },
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
@@ -1477,6 +1521,9 @@
       "username-required": "Email or username is required",
       "verify-email-label": "Send a verification email",
       "verify-email-loading-label": "Sending email..."
+    },
+    "layout": {
+      "update-password": "Update your password"
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
@@ -2123,6 +2170,9 @@
     "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
+  "panel-type-filter": {
+    "clear-button": "Clear types"
+  },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
     "form": {
@@ -2216,6 +2266,10 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "plugin-help": {
+      "error": "An error occurred when loading help.",
+      "not-found": "No query help could be found."
     }
   },
   "profile": {
@@ -2503,6 +2557,19 @@
     "dismissable-button": "Close"
   },
   "role-picker": {
+    "built-in": {
+      "basic-roles": "Basic roles"
+    },
+    "input": {
+      "no-roles": "No roles assigned"
+    },
+    "menu": {
+      "clear-button": "Clear all",
+      "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
+    },
+    "sub-menu": {
+      "clear-button": "Clear"
+    },
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -2782,6 +2849,17 @@
     },
     "title": "Preferences"
   },
+  "sign-up": {
+    "back-button": "Back to login",
+    "submit-button": "Submit",
+    "verify": {
+      "back-button": "Back to login",
+      "complete-button": "Complete signup",
+      "header": "Verify email",
+      "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
+      "send-button": "Send verification email"
+    }
+  },
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -2834,6 +2912,7 @@
     "view-button": "View"
   },
   "tag-filter": {
+    "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
@@ -2953,6 +3032,13 @@
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
     }
+  },
+  "upgrade-box": {
+    "discovery-text": "You’ve discovered a Pro feature!",
+    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
+    "get-started": "Get started with {{featureName}}",
+    "learn-more": "Learn more",
+    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",
