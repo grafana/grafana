@@ -1,6 +1,8 @@
 package v2alpha1
 
 import (
+	"fmt"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -139,10 +141,13 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		if err != nil {
 			return err
 		}
-		storage[dash.StoragePath()], err = dualWriteBuilder(dash.GroupResource(), legacyStore, store)
-		if err != nil {
-			return err
-		}
+
+		// Force mode3 for v2alpha1
+		// write to storage, then async write to legacy with the funky wrapper
+		storage[dash.StoragePath()] = grafanarest.NewDualWriterMode3(
+			legacyStore, store, opts.MetricsRegister, dash.GroupResource().Resource)
+	} else {
+		return fmt.Errorf("dashboard v2 requires optsGetter support")
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits

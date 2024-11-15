@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
@@ -63,7 +62,9 @@ func (u *Unstructured) DeepCopy() *Unstructured {
 	}
 	out := new(Unstructured)
 	*out = *u
-	out.Object = runtime.DeepCopyJSON(u.Object)
+
+	jj, _ := json.Marshal(u.Object)
+	_ = json.Unmarshal(jj, &out.Object)
 	return out
 }
 
