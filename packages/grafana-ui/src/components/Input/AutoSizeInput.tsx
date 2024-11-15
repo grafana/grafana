@@ -24,6 +24,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     onKeyDown,
     onBlur,
     value: controlledValue,
+    placeholder,
     ...restProps
   } = props;
   // Initialize internal state
@@ -36,13 +37,16 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
   const inputWidth = useMemo(() => {
-    const valueString = typeof value === 'string' ? value : value.toString();
+    const displayValue = value || placeholder || '';
+    const valueString = typeof displayValue === 'string' ? displayValue : displayValue.toString();
+
     return getWidthFor(valueString, minWidth, maxWidth);
-  }, [value, minWidth, maxWidth]);
+  }, [placeholder, value, minWidth, maxWidth]);
 
   return (
     <Input
       {...restProps}
+      placeholder={placeholder}
       ref={ref}
       value={value.toString()}
       onChange={(event) => {
