@@ -104,7 +104,7 @@ function setSavedFromUIAnnotation(meta: Partial<ObjectMeta>) {
   if (!meta.annotations) {
     meta.annotations = {};
   }
-  meta.annotations["grafana.app/saved-from-ui"] = config.buildInfo.versionString;
+  meta.annotations['grafana.app/saved-from-ui'] = config.buildInfo.versionString;
 }
 
 export class DatasourceAPIVersions {
