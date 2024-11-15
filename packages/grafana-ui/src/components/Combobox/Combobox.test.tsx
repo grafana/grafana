@@ -49,8 +49,17 @@ describe('Combobox', () => {
     expect(onChangeHandler).toHaveBeenCalledWith(options[0]);
   });
 
-  it("shows the placeholder with the menu open when there's no value", async () => {
+  it('shows the placeholder with the menu open when value is null', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} placeholder="Select an option" />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+
+    expect(input).toHaveAttribute('placeholder', 'Select an option');
+  });
+
+  it('shows the placeholder with the menu open when value is undefined', async () => {
+    render(<Combobox options={options} value={undefined} onChange={onChangeHandler} placeholder="Select an option" />);
 
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
