@@ -1342,6 +1342,42 @@
                   "value": {
                     "string_value": "net/http"
                   }
+                },
+                {
+                  "key": "arrayAttribute",
+                  "value": {
+                    "array_value": {
+                      "values": [
+                        {
+                          "string_value": "value1"
+                        },
+                        {
+                          "string_value": "value2"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "kvlistAttribute",
+                  "value": {
+                    "kvlist_value": {
+                      "values": [
+                        {
+                          "key": "key1",
+                          "value": {
+                            "string_value": "value1"
+                          }
+                        },
+                        {
+                          "key": "key2",
+                          "value": {
+                            "string_value": "value2"
+                          }
+                        }
+                      ]
+                    }
+                  }
                 }
               ],
               "status": {}
