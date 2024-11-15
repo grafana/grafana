@@ -60,9 +60,10 @@ func getDashboardSpec(uid string) dashboardv2alpha1.DashboardSpec {
 	return dashboardv2alpha1.DashboardSpec{
 		Unstructured: v0alpha1.Unstructured{
 			Object: map[string]interface{}{
-				"title":  "Dashboard saved from v2alpha1 on " + time.Now().Format(time.DateOnly),
-				"uid":    uid,
-				"panels": []any{panel},
+				"schemaVersion": 99999, // no more schemaVersion in v2!
+				"title":         "v2alpha1 dashboard " + time.Now().Format(time.DateOnly),
+				"uid":           uid,
+				"panels":        []any{panel},
 			},
 		},
 	}
