@@ -107,10 +107,15 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	optsGetter := opts.OptsGetter
 	dualWriteBuilder := opts.DualWriteBuilder
 	dash := b.legacy.Resource
-	legacyStore, err := b.legacy.NewStore(scheme, optsGetter, b.reg)
+	tmp, err := b.legacy.NewStore(scheme, optsGetter, b.reg)
 	if err != nil {
 		return err
 	}
+
+	// This will write a dashboard into the SQL table that has a static
+	// single panel saying that this dashboard is only supported in V2
+	// We do not want to include any v2 dashboards in the dashboards SQL table
+	legacyStore := &wrapLegacyStorage{LegacyStorage: tmp}
 
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
