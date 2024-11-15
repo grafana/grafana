@@ -53,10 +53,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
   const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
-  // When AutoSizeInput is used with a suffix/prefix, the text is clipped because the suffix take up some of the
-  // specified space. This is because speci
-
-  // Specifying a width on Input controls the external size of the input, which is taken up by the text input itself,
+  // Specifying a width on Input controls the external size of the input, which is taken up by the text input itself
   // and suffix and prefix.
   // However AutoSizeInput wants to pass in a width to control the size of the text input itself, but suffix/prefix
   // eats up that space and makes the text clip
