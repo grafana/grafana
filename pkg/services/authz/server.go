@@ -15,18 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authz/legacy"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
-// func RegisterLegacyAuthZService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, db legacysql.LegacyDatabaseProvider) (*LegacyAuthZServer, error) {
-func RegisterLegacyAuthZService(handler grpcserver.Provider, db legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) {
-	server := legacy.NewService(db, log.New("authz-grpc-server"), tracer)
+func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) {
+	server := rbac.NewService(db, log.New("authz-grpc-server"), tracer)
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
