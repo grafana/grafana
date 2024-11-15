@@ -284,3 +284,7 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
   }
 }
+
+export function getProdOrDefaultOption(options: Array<{ value: string; label: string }>): string {
+  return options.find((option) => option.value.toLowerCase().indexOf('prod') > -1)?.value ?? options[0].value;
+}
