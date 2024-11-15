@@ -237,5 +237,6 @@ export interface FeatureToggles {
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
   crashDetection?: boolean;
+  jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
 }
