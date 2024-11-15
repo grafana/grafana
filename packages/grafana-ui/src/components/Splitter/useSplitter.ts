@@ -6,6 +6,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { ComponentSize } from '../../types';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface UseSplitterOptions {
@@ -21,6 +22,10 @@ export interface UseSplitterOptions {
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
+
+  // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
+  // pushing the left pane content left.
+  handleSize?: ComponentSize;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -45,7 +50,7 @@ const propsForDirection = {
 export function useSplitter(options: UseSplitterOptions) {
   const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged } = options;
 
-  const handleSize = 16;
+  const handleSize = getPixelSize(options.handleSize);
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
   const secondPaneRef = useRef<HTMLDivElement | null>(null);
@@ -412,4 +417,13 @@ function getStyles(theme: GrafanaTheme2, direction: UseSplitterOptions['directio
     }),
     panel: css({ display: 'flex', position: 'relative', flexBasis: 0 }),
   };
+}
+
+function getPixelSize(size: ComponentSize = 'md') {
+  return {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 32,
+  }[size];
 }
