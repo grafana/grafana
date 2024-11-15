@@ -40,10 +40,8 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 }
 
 func (s *Server) getOrCreateStore(ctx context.Context, namespace string) (*openfgav1.Store, error) {
-	var store *openfgav1.Store
 	var continuationToken string
 
-outer:
 	for {
 		res, err := s.openfga.ListStores(ctx, &openfgav1.ListStoresRequest{
 			PageSize:          &wrapperspb.Int32Value{Value: 100},
@@ -56,8 +54,7 @@ outer:
 
 		for _, s := range res.GetStores() {
 			if s.GetName() == namespace {
-				store = s
-				break outer
+				return s, nil
 			}
 		}
 
@@ -69,19 +66,15 @@ outer:
 		continuationToken = res.GetContinuationToken()
 	}
 
-	if store == nil {
-		res, err := s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
-		if err != nil {
-			return nil, err
-		}
-
-		store = &openfgav1.Store{
-			Id:   res.GetId(),
-			Name: res.GetName(),
-		}
+	res, err := s.openfga.CreateStore(ctx, &openfgav1.CreateStoreRequest{Name: namespace})
+	if err != nil {
+		return nil, err
 	}
 
-	return store, nil
+	return &openfgav1.Store{
+		Id:   res.GetId(),
+		Name: res.GetName(),
+	}, nil
 }
 
 func (s *Server) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
