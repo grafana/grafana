@@ -95,8 +95,8 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 			}}
 
 			p := DataSourceProxyService{
-				PluginRequestValidator: &fakePluginRequestValidator{},
-				pluginStore:            pluginStore,
+				DataSourceRequestValidator: &fakeDataSourceRequestValidator{},
+				pluginStore:                pluginStore,
 			}
 
 			responseRecorder := httptest.NewRecorder()
@@ -130,8 +130,8 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 	}
 }
 
-type fakePluginRequestValidator struct{}
+type fakeDataSourceRequestValidator struct{}
 
-func (rv *fakePluginRequestValidator) Validate(_ *datasources.DataSource, _ setting.SecureSocksDSProxySettings, _ *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(_ *datasources.DataSource, _ setting.SecureSocksDSProxySettings, _ *http.Request) error {
 	return nil
 }
