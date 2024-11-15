@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -97,4 +99,24 @@ type HelloWorld struct {
 	metav1.TypeMeta `json:",inline"`
 
 	Whom string `json:"whom,omitempty"`
+}
+
+// This is a container type for any resource type
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type ResourceWrapper struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// The commit hash (if exists)
+	Commit string `json:"commit,omitempty"`
+
+	// Resource from the upstream repository
+	Resource common.Unstructured `json:"resource"`
+}
+
+// Dummy object to return for webhooks
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type WebhookResponse struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Status string `json:"status,omitempty"`
 }
