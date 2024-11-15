@@ -28,6 +28,29 @@
       "user": "User"
     }
   },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "Cancel",
+      "save-button": "Save"
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "Add action",
+      "one-click-link": "One-click link"
+    }
+  },
+  "admin": {
+    "edit-org": {
+      "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
+      "heading": "Edit Organization",
+      "update-button": "Update",
+      "users-heading": "Organization users"
+    },
+    "feature-toggles": {
+      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
+    }
+  },
   "alert-labels": {
     "button": {
       "hide": "Hide common labels",
@@ -1242,6 +1265,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "Description",
+      "keys": "Keys"
+    },
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -2578,6 +2605,11 @@
     "basic-roles": {
       "label": "Basic Roles"
     }
+  },
+  "route-error": {
+    "description": "Grafana has likely been updated. Please try reloading the page.",
+    "reload-button": "Reload",
+    "title": "Unable to find application file"
   },
   "save-dashboards": {
     "name-exists": {

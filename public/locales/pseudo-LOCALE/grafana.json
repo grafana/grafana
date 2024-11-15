@@ -28,6 +28,29 @@
       "user": "Ůşęř"
     }
   },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "Cäŉčęľ",
+      "save-button": "Ŝävę"
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "Åđđ äčŧįőŉ",
+      "one-click-link": "Øŉę-čľįčĸ ľįŉĸ"
+    }
+  },
+  "admin": {
+    "edit-org": {
+      "access-denied": "Ÿőū đő ŉőŧ ĥävę pęřmįşşįőŉ ŧő şęę ūşęřş įŉ ŧĥįş őřģäŉįžäŧįőŉ. Ŧő ūpđäŧę ŧĥįş őřģäŉįžäŧįőŉ, čőŉŧäčŧ yőūř şęřvęř äđmįŉįşŧřäŧőř.",
+      "heading": "Ēđįŧ Øřģäŉįžäŧįőŉ",
+      "update-button": "Ůpđäŧę",
+      "users-heading": "Øřģäŉįžäŧįőŉ ūşęřş"
+    },
+    "feature-toggles": {
+      "sub-title": "Vįęŵ äŉđ ęđįŧ ƒęäŧūřę ŧőģģľęş. Ŗęäđ mőřę äþőūŧ ƒęäŧūřę ŧőģģľęş äŧ <2>ģřäƒäŉä.čőm</2>."
+    }
+  },
   "alert-labels": {
     "button": {
       "hide": "Ħįđę čőmmőŉ ľäþęľş",
@@ -1242,6 +1265,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "Đęşčřįpŧįőŉ",
+      "keys": "Ķęyş"
+    },
     "shortcuts-category": {
       "dashboard": "Đäşĥþőäřđ",
       "focused-panel": "Főčūşęđ päŉęľ",
@@ -2578,6 +2605,11 @@
     "basic-roles": {
       "label": "ßäşįč Ŗőľęş"
     }
+  },
+  "route-error": {
+    "description": "Ğřäƒäŉä ĥäş ľįĸęľy þęęŉ ūpđäŧęđ. Pľęäşę ŧřy řęľőäđįŉģ ŧĥę päģę.",
+    "reload-button": "Ŗęľőäđ",
+    "title": "Ůŉäþľę ŧő ƒįŉđ äppľįčäŧįőŉ ƒįľę"
   },
   "save-dashboards": {
     "name-exists": {
