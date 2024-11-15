@@ -87,6 +87,8 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
       For more information, refer to an [example on how to generate SAML credentials]({{< relref "../saml#generate-private-key-for-saml-authentication" >}}).
 
+      Alternatively, you can generate a new private key and certificate pair directly from the UI. Click on the `Generate key and certificate` button to open a form where you enter some information you want to be embedded into the new certificate.
+
    1. Choose which signature algorithm should be used.
 
       The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
