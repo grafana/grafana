@@ -821,78 +821,12 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 }
 
 func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) {
-	// #TODO revisit how/where we get orgID
-	ctx := c.Req.Context()
-
-	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
-	toUID := func(rawIdentifier string) string {
-		parts := strings.Split(rawIdentifier, ":")
-		if len(parts) < 2 {
-			return ""
-		}
-		return parts[1]
-	}
-
 	f, createdBy := internalfolders.UnstructuredToLegacyFolder(item, orgID)
 
-	toDTO := func(fold *folder.Folder, createdBy string, checkCanView bool) (dtos.Folder, error) {
-		g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
-		if err != nil {
-			return dtos.Folder{}, err
-		}
-
-		canEdit, _ := g.CanEdit()
-		canSave, _ := g.CanSave()
-		canAdmin, _ := g.CanAdmin()
-		canDelete, _ := g.CanDelete()
-
-		// Finding creator and last updater of the folder
-		updater, creator := anonString, anonString
-		// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
-		// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
-		if len(createdBy) > 0 {
-			creator = fk8s.getUserLogin(ctx, toUID(createdBy))
-		}
-		if len(createdBy) > 0 {
-			updater = fk8s.getUserLogin(ctx, toUID(createdBy))
-		}
-
-		acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
-
-		if checkCanView {
-			canView, _ := g.CanView()
-			if !canView {
-				return dtos.Folder{
-					UID:   REDACTED,
-					Title: REDACTED,
-				}, nil
-			}
-		}
-		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
-
-		return dtos.Folder{
-			ID:        fold.ID, // nolint:staticcheck
-			UID:       fold.UID,
-			Title:     fold.Title,
-			URL:       fold.URL,
-			HasACL:    fold.HasACL,
-			CanSave:   canSave,
-			CanEdit:   canEdit,
-			CanAdmin:  canAdmin,
-			CanDelete: canDelete,
-			CreatedBy: creator,
-			Created:   fold.Created,
-			UpdatedBy: updater,
-			Updated:   fold.Updated,
-			// #TODO version doesn't seem to be used--confirm or set it properly
-			Version:       1,
-			AccessControl: acMetadata,
-			ParentUID:     fold.ParentUID,
-		}, nil
-	}
-
+	dontCheckCanView := false
+	checkCanView := true
 	// no need to check view permission for the starting folder since it's already checked by the callers
-	folderDTO, err := toDTO(f, createdBy, false)
+	folderDTO, err := fk8s.toDTO(c, f, createdBy, dontCheckCanView)
 	if err != nil {
 		return dtos.Folder{}, err
 	}
@@ -924,7 +858,7 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 			Title: v,
 			URL:   url,
 		}
-		parentDTO, err := toDTO(&ff, "", true)
+		parentDTO, err := fk8s.toDTO(c, &ff, "", checkCanView)
 		if err != nil {
 			// #TODO should we log this error?
 			return dtos.Folder{}, err
@@ -936,6 +870,74 @@ func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item un
 	folderDTO.Parents = parents
 
 	return folderDTO, nil
+}
+
+func toUID(rawIdentifier string) string {
+	// #TODO Is there a preexisting function we can use instead, something along the lines of UserIdentifier?
+	parts := strings.Split(rawIdentifier, ":")
+	if len(parts) < 2 {
+		return ""
+	}
+	return parts[1]
+}
+
+func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Folder, createdBy string, checkCanView bool) (dtos.Folder, error) {
+	// #TODO revisit how/where we get orgID
+	ctx := c.Req.Context()
+
+	g, err := guardian.NewByFolder(c.Req.Context(), fold, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+
+	canEdit, _ := g.CanEdit()
+	canSave, _ := g.CanSave()
+	canAdmin, _ := g.CanAdmin()
+	canDelete, _ := g.CanDelete()
+
+	// Finding creator and last updater of the folder
+	updater, creator := anonString, anonString
+	// #TODO refactor the various conversions of the folder so that we either set created by in folder.Folder or
+	// we convert from unstructured to folder DTO without an intermediate conversion to folder.Folder
+	if len(createdBy) > 0 {
+		creator = fk8s.getUserLogin(ctx, toUID(createdBy))
+	}
+	if len(createdBy) > 0 {
+		updater = fk8s.getUserLogin(ctx, toUID(createdBy))
+	}
+
+	acMetadata, _ := fk8s.getFolderACMetadata(c, fold)
+
+	if checkCanView {
+		canView, _ := g.CanView()
+		if !canView {
+			return dtos.Folder{
+				UID:   REDACTED,
+				Title: REDACTED,
+			}, nil
+		}
+	}
+	metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
+
+	return dtos.Folder{
+		ID:        fold.ID, // nolint:staticcheck
+		UID:       fold.UID,
+		Title:     fold.Title,
+		URL:       fold.URL,
+		HasACL:    fold.HasACL,
+		CanSave:   canSave,
+		CanEdit:   canEdit,
+		CanAdmin:  canAdmin,
+		CanDelete: canDelete,
+		CreatedBy: creator,
+		Created:   fold.Created,
+		UpdatedBy: updater,
+		Updated:   fold.Updated,
+		// #TODO version doesn't seem to be used--confirm or set it properly
+		Version:       1,
+		AccessControl: acMetadata,
+		ParentUID:     fold.ParentUID,
+	}, nil
 }
 
 func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userUID string) string {
