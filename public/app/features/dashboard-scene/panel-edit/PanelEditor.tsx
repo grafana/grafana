@@ -266,7 +266,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ isDirty: false });
 
     // Remember that we have done changes
-    this._changesHaveBeenMade = false;
+    this._changesHaveBeenMade = true;
   }
 
   public onSaveLibraryPanel = () => {
