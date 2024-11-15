@@ -58,6 +58,23 @@ describe('AutoSizeInput', () => {
     expect(getComputedStyle(inputWrapper).width).toBe('304px');
   });
 
+  it('should use placeholder for width if input is empty', () => {
+    render(<AutoSizeInput placeholder="very very long value" />);
+
+    const inputWrapper: HTMLDivElement = screen.getByTestId('input-wrapper');
+    expect(getComputedStyle(inputWrapper).width).toBe('304px');
+  });
+
+  it('should use value for width even with a placeholder', () => {
+    render(<AutoSizeInput value="less long value" placeholder="very very long value" />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+    const inputWrapper: HTMLDivElement = screen.getByTestId('input-wrapper');
+
+    fireEvent.change(input, { target: { value: 'very very long value' } });
+    expect(getComputedStyle(inputWrapper).width).toBe('304px');
+  });
+
   it('should call onBlur if set when blurring', () => {
     const onBlur = jest.fn();
     const onCommitChange = jest.fn();
