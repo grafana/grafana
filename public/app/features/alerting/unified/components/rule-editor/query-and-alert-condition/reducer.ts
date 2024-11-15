@@ -234,6 +234,11 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(optimizeReduceExpression, (state, { payload }) => {
       const { updatedQueries, expressionQueries } = payload;
 
+      if (updatedQueries.length !== 1) {
+        // we only optimize when we have one data query
+        return;
+      }
+
       //sometimes we dont have data source in the model yet
       const getDataSourceSettingsForFirstQuery = getDataSourceSrv().getInstanceSettings(
         updatedQueries[0].datasourceUid
