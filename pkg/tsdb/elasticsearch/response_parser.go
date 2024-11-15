@@ -75,7 +75,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
-			result.Responses[target.RefID] = errorsource.Response(errorsource.PluginError(errors.New(errResult), false))
+			result.Responses[target.RefID] = errorsource.Response(errorsource.DownstreamError(errors.New(errResult), false))
 			continue
 		}
 

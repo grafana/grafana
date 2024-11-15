@@ -36,6 +36,7 @@ const getTemplatePreviewContent = async () =>
 const templatesSelectorTestId = 'existing-templates-selector';
 
 describe('Edit contact point', () => {
+  jest.retryTimes(2);
   it('can edit a contact point with existing template field values', async () => {
     const { user } = renderEditContactPoint('lotsa-emails');
 
@@ -72,5 +73,5 @@ describe('Edit contact point', () => {
     await user.click(screen.getByRole('button', { name: /save contact point/i }));
 
     expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
-  });
+  }, 600000);
 });

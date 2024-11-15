@@ -415,13 +415,16 @@
     {
       "metadata": {
         "name": "appSidecar",
-        "resourceVersion": "1722872007883",
-        "creationTimestamp": "2024-09-09T12:45:05Z"
+        "resourceVersion": "1731608393499",
+        "creationTimestamp": "2024-09-09T12:45:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 18:19:53.499798 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
         "stage": "experimental",
-        "codeowner": "@grafana/explore-squad"
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -535,6 +538,7 @@
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1722537244598",
         "creationTimestamp": "2024-03-22T15:44:37Z",
+        "deletionTimestamp": "2024-11-14T01:17:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
         }
@@ -841,18 +845,31 @@
     {
       "metadata": {
         "name": "correlations",
-        "resourceVersion": "1720021873452",
+        "resourceVersion": "1731608393499",
         "creationTimestamp": "2022-09-16T13:14:27Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-14 18:19:53.499798 +0000 UTC"
         }
       },
       "spec": {
         "description": "Correlations page",
         "stage": "GA",
-        "codeowner": "@grafana/explore-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "allowSelfServe": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "crashDetection",
+        "resourceVersion": "1730381712885",
+        "creationTimestamp": "2024-10-31T13:35:12Z"
+      },
+      "spec": {
+        "description": "Enables browser crash detection reporting to Faro.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
       }
     },
     {
@@ -2451,6 +2468,20 @@
     },
     {
       "metadata": {
+        "name": "passwordlessMagicLinkAuthentication",
+        "resourceVersion": "1730232874003",
+        "creationTimestamp": "2024-10-29T20:14:34Z"
+      },
+      "spec": {
+        "description": "Enable passwordless login via magic link authentication",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -2589,13 +2620,17 @@
     {
       "metadata": {
         "name": "preinstallAutoUpdate",
-        "resourceVersion": "1730904343525",
-        "creationTimestamp": "2024-11-06T14:45:43Z"
+        "resourceVersion": "1731581146864",
+        "creationTimestamp": "2024-11-06T14:45:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 10:45:46.864585 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables automatic updates for pre-installed plugins",
-        "stage": "experimental",
-        "codeowner": "@grafana/plugins-platform-backend"
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -2815,14 +2850,17 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1718727528075",
+        "resourceVersion": "1731609408207",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 18:36:48.207329 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Query Library feature in Explore",
         "stage": "experimental",
-        "codeowner": "@grafana/explore-squad"
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -2981,6 +3019,22 @@
     },
     {
       "metadata": {
+        "name": "reportingUseRawTimeRange",
+        "resourceVersion": "1731604692461",
+        "creationTimestamp": "2024-11-13T15:48:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 17:18:12.461446 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Uses the original report or dashboard time range instead of making an absolute transformation",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1727337187819",
         "creationTimestamp": "2024-09-26T07:53:07Z"
@@ -3034,12 +3088,15 @@
     {
       "metadata": {
         "name": "singleTopNav",
-        "resourceVersion": "1724861961030",
-        "creationTimestamp": "2024-08-29T08:48:32Z"
+        "resourceVersion": "1731664029942",
+        "creationTimestamp": "2024-08-29T08:48:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-15 09:47:09.942158 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Unifies the top search bar and breadcrumb bar into one",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }

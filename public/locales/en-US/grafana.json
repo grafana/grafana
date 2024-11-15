@@ -137,7 +137,6 @@
       "export-all": "Export all",
       "view": "View"
     },
-    "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
@@ -155,6 +154,7 @@
       },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
+      "no-contact-points-found": "No contact points found",
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
@@ -455,7 +455,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "create": "Create custom value"
+      "label": "Custom value: "
     },
     "options": {
       "no-found": "No options found."
@@ -1459,6 +1459,14 @@
     },
     "forgot-password": "Forgot your password?",
     "form": {
+      "confirmation-code": "Confirmation code is required",
+      "confirmation-code-label": "Confirmation code",
+      "confirmation-code-placeholder": "confirmation code",
+      "email-label": "Email",
+      "email-placeholder": "email",
+      "email-required": "Email is required",
+      "name-label": "Name",
+      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
@@ -1466,7 +1474,9 @@
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
       "username-placeholder": "email or username",
-      "username-required": "Email or username is required"
+      "username-required": "Email or username is required",
+      "verify-email-label": "Send a verification email",
+      "verify-email-loading-label": "Sending email..."
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
