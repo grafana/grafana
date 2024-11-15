@@ -35,7 +35,7 @@ func ProvideRegistration(
 	jwtService auth.JWTVerifierService, userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
-	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
+	features featuremgmt.FeatureToggles, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 	tracer tracing.Tracer,
@@ -101,7 +101,7 @@ func ProvideRegistration(
 	}
 
 	// FIXME (jguer): move to User package
-	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer)
+	userSync := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService, tracer, features)
 	orgSync := sync.ProvideOrgSync(userService, orgService, accessControlService, cfg, tracer)
 	authnSvc.RegisterPostAuthHook(userSync.SyncUserHook, 10)
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)

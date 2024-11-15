@@ -256,6 +256,10 @@ func (s *UserAuthTokenService) FindExternalSessions(ctx context.Context, query *
 	return s.externalSessionStore.List(ctx, query)
 }
 
+func (s *UserAuthTokenService) UpdateExternalSession(ctx context.Context, ID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	return s.externalSessionStore.Update(ctx, ID, cmd)
+}
+
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken

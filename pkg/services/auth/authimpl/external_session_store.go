@@ -150,6 +150,45 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 	return nil
 }
 
+func (s *store) Update(ctx context.Context, ID int64, update *auth.UpdateExternalSessionCommand) error {
+	ctx, span := s.tracer.Start(ctx, "externalsession.Update")
+	defer span.End()
+
+	var err error
+	externalSession := &auth.ExternalSession{}
+
+	externalSession.AccessToken, err = s.encryptAndEncode(update.Token.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	externalSession.RefreshToken, err = s.encryptAndEncode(update.Token.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	var secretIdToken string
+	if idToken, ok := update.Token.Extra("id_token").(string); ok && idToken != "" {
+		secretIdToken, err = s.encryptAndEncode(idToken)
+		if err != nil {
+			return err
+		}
+		externalSession.IDToken = secretIdToken
+	}
+
+	externalSession.ExpiresAt = update.Token.Expiry
+
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.ID(ID).Cols("access_token", "refresh_token", "id_token", "expires_at").Update(externalSession)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *store) Delete(ctx context.Context, ID int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.Delete")
 	defer span.End()
