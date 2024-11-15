@@ -241,7 +241,7 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 
 	timeoutCtx, cancel = context.WithTimeout(ctx, s.cfg.CloudMigration.FetchAccessPolicyTimeout)
 	defer cancel()
-	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, instance.RegionSlug, instance.OrgId, accessPolicyName)
+	existingAccessPolicy, err := s.findAccessPolicyByName(timeoutCtx, instance.RegionSlug, instance.OrgId, s.cfg.StackID, accessPolicyName)
 	if err != nil {
 		return cloudmigration.CreateAccessTokenResponse{}, fmt.Errorf("fetching access policy by name: name=%s %w", accessPolicyName, err)
 	}
@@ -316,12 +316,13 @@ func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessT
 	return cloudmigration.CreateAccessTokenResponse{Token: base64.StdEncoding.EncodeToString(bytes)}, nil
 }
 
-func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug string, orgId int, accessPolicyName string) (*authapi.AccessPolicy, error) {
+func (s *Service) findAccessPolicyByName(ctx context.Context, regionSlug string, orgId int, stackId string, accessPolicyName string) (*authapi.AccessPolicy, error) {
 	accessPolicies, err := s.authApiService.ListAccessPolicies(ctx, authapi.ListAccessPoliciesParams{
 		RequestID: tracing.TraceIDFromContext(ctx, false),
 		Region:    regionSlug,
 		Name:      accessPolicyName,
 		OrgId:     orgId,
+		StackID:   stackId,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("listing access policies: name=%s region=%s :%w", accessPolicyName, regionSlug, err)

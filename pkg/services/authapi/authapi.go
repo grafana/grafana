@@ -62,6 +62,7 @@ type ListAccessPoliciesParams struct {
 	Region    string
 	Name      string
 	OrgId     int
+	StackID   string
 }
 
 type ListAccessPoliciesResponse struct {
@@ -248,6 +249,8 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("X-Org-ID", strconv.Itoa(params.OrgId))
+	// TODO LND fix this, just for testing
+	request.Header.Set("X-Realms", fmt.Sprintf(`[{"type":"stack","identifier":"%s"}]`, params.StackID))
 	request.Header.Set("Accept", "application/json")
 
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
