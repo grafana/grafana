@@ -22,8 +22,11 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
-const metricNamesSearchSimple = new UFuzzy();
-const metricNamesSearch = new UFuzzy({ intraMode: 1 });
+const metricNamesSearch = {
+  // see https://github.com/leeoniya/uFuzzy?tab=readme-ov-file#how-it-works for details
+  multiInsert: new UFuzzy({ intraMode: 0 }),
+  singleError: new UFuzzy({ intraMode: 1 }),
+};
 
 interface MetricFilterOptions {
   metricNames: string[];
@@ -36,16 +39,16 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
     return metricNames.slice(0, limit);
   }
 
-  const terms = metricNamesSearch.split(inputText); // e.g. 'some_metric_name or-another' -> ['some', 'metric', 'name', 'or', 'another']
+  const terms = metricNamesSearch.multiInsert.split(inputText); // e.g. 'some_metric_name or-another' -> ['some', 'metric', 'name', 'or', 'another']
   const isComplexSearch = terms.length > 4;
 
   if (isComplexSearch) {
-    // for complex searches, prioritize performance by using substring matching
-    return metricNamesSearchSimple.filter(metricNames, inputText)?.map((idx) => metricNames[idx]) ?? [];
+    // for complex searches, prioritize performance by using MultiInsert fuzzy search
+    return metricNamesSearch.multiInsert.filter(metricNames, inputText)?.map((idx) => metricNames[idx]) ?? [];
   }
 
-  // for simple searches, prioritize flexibility by using fuzzy search
-  const fuzzyResults = metricNamesSearch.filter(metricNames, inputText);
+  // for simple searches, prioritize flexibility by using SingleError fuzzy search
+  const fuzzyResults = metricNamesSearch.singleError.filter(metricNames, inputText);
   return fuzzyResults ? fuzzyResults.slice(0, limit).map((idx) => metricNames[idx]) : [];
 }
 
