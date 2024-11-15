@@ -162,7 +162,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    if (value === undefined) {
+    if (!value) {
       return null;
     }
 
