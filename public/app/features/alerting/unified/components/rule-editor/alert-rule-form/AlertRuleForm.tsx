@@ -192,8 +192,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       existing,
       grafanaTypeRule,
       notifyApp,
-      queryParams,
       updateRuleInRuleGroup,
+      returnTo,
     ]
   );
 
