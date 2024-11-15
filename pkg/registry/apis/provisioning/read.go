@@ -75,15 +75,15 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		idx := strings.Index(r.URL.Path, "/"+name+"/read")
 		filePath := strings.TrimLeft(r.URL.Path[idx+len(name+"/read")+2:], "/")
 		if filePath == "" {
-			responder.Error(fmt.Errorf("missing path")) // TODO bad request
+			// TODO: return bad request status code
+			responder.Error(fmt.Errorf("missing path"))
 			return
 		}
 		commit := r.URL.Query().Get("commit")
 
 		owner, repoName, err := extractOwnerAndRepo(repo.Spec.GitHub.Repository)
 		if err != nil {
-			// TODO: handle
-			responder.Error(err)
+			responder.Error(fmt.Errorf("failed to extract owner and repo: %w", err))
 			return
 		}
 
@@ -91,23 +91,21 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 			Ref: commit,
 		})
 		if err != nil {
-			// TODO: handle 404
-			// QUESTION: how to implement this?
-			responder.Error(err)
+			// TODO: return bad request status code
+			responder.Error(fmt.Errorf("failed to get content: %w", err))
 			return
 		}
 
 		data, err := content.GetContent()
 		if err != nil {
-			// TODO: handle
 			responder.Error(err)
 			return
 		}
 
 		var dashboardJSON map[string]interface{}
 		if err := json.Unmarshal([]byte(data), &dashboardJSON); err != nil {
-			// TODO: handle
-			responder.Error(err)
+			// TODO: return bad request status code
+			responder.Error(fmt.Errorf("failed to unmarshal content: %w", err))
 			return
 		}
 
