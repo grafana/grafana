@@ -39,7 +39,7 @@ interface ComboboxBaseProps<T extends string | number> {
   /**
    * The onChange handler is called with `null` when clearing the Combobox.
    */
-  onChange: (option: ComboboxOption<T> | null) => void;
+  onChange: (option: ComboboxOption<T>) => void;
   /**
    * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
    * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.

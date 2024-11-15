@@ -112,9 +112,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   onThemeChanged = (value: ComboboxOption<string>) => {
-    if (!value) {
-      return;
-    }
     this.setState({ theme: value.value });
 
     if (value.value) {
