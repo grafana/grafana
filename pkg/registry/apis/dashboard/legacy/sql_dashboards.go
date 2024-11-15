@@ -10,9 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/authlib/claims"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -286,14 +287,14 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 				return nil, err
 			}
 
-			meta.SetOriginInfo(&utils.ResourceOriginInfo{
+			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name:      origin_name.String,
 				Path:      originPath,
 				Hash:      origin_hash.String,
 				Timestamp: &ts,
 			})
 		} else if plugin_id != "" {
-			meta.SetOriginInfo(&utils.ResourceOriginInfo{
+			meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 				Name: "plugin",
 				Path: plugin_id,
 			})
@@ -516,7 +517,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		meta.SetCreatedBy(p.CreatedBy)
 		meta.SetUpdatedBy(p.UpdatedBy)
 		meta.SetUpdatedTimestamp(&p.Updated)
-		meta.SetOriginInfo(&utils.ResourceOriginInfo{
+		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 			Name: "SQL",
 			Path: strconv.FormatInt(p.ID, 10),
 		})

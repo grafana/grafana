@@ -60,12 +60,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	// Read+write will verify that origin format is accurate
-	origin, err := obj.GetOriginInfo()
+	// Read+write will verify that repository format is accurate
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	obj.SetOriginInfo(origin)
+	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
@@ -115,11 +115,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
 
 	// Read+write will verify that origin format is accurate
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	obj.SetOriginInfo(origin)
+	obj.SetRepositoryInfo(repo)
 	obj.SetUpdatedBy(user.GetUID())
 	obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 

@@ -7,10 +7,7 @@
         "uid": "86ab200a-e8b0-47ce-bbc1-8c2e078b0956",
         "creationTimestamp": "2024-10-30T20:24:07Z",
         "annotations": {
-            "grafana.app/createdBy": "user:be2g71ke8yoe8b",
-            "grafana.app/originHash": "Grafana v9.2.0 (NA)",
-            "grafana.app/originName": "UI",
-            "grafana.app/originPath": "/dashboard/new"
+            "grafana.app/createdBy": "user:be2g71ke8yoe8b"
         },
         "managedFields": [
             {

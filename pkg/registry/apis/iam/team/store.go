@@ -136,7 +136,7 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo) iamv0.Team {
 	}
 	meta, _ := utils.MetaAccessor(&obj)
 	meta.SetUpdatedTimestamp(&t.Updated)
-	meta.SetOriginInfo(&utils.ResourceOriginInfo{
+	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name: "SQL",
 		Path: strconv.FormatInt(t.ID, 10),
 	})

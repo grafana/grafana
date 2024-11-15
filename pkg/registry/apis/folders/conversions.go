@@ -144,7 +144,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 
 	meta.SetUpdatedTimestamp(&v.Updated)
 	if v.ID > 0 { // nolint:staticcheck
-		meta.SetOriginInfo(&utils.ResourceOriginInfo{
+		meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 			Name:      "SQL",
 			Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
 			Timestamp: &v.Created,
@@ -187,13 +187,13 @@ func setParentUID(u *unstructured.Unstructured, parentUid string) error {
 func getLegacyID(meta utils.GrafanaMetaAccessor) (int64, error) {
 	var i int64
 
-	info, err := meta.GetOriginInfo()
+	repo, err := meta.GetRepositoryInfo()
 	if err != nil {
 		return i, err
 	}
 
-	if info != nil && info.Name == "SQL" {
-		i, err = strconv.ParseInt(info.Path, 10, 64)
+	if repo != nil && repo.Name == "SQL" {
+		i, err = strconv.ParseInt(repo.Path, 10, 64)
 		if err != nil {
 			return i, err
 		}
@@ -208,7 +208,7 @@ func getURL(meta utils.GrafanaMetaAccessor, title string) string {
 }
 
 func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
-	created, err := meta.GetOriginTimestamp()
+	created, err := meta.GetRepositoryTimestamp()
 	if err != nil {
 		return nil, err
 	}

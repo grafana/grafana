@@ -108,12 +108,12 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		UID:   name,
 		OrgID: info.OrgID,
 	}
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
 		return nil, err
 	}
-	if origin != nil && origin.Name == "SQL" {
-		dto.ID, err = strconv.ParseInt(origin.Path, 10, 64)
+	if repo != nil && repo.Name == "SQL" {
+		dto.ID, err = strconv.ParseInt(repo.Path, 10, 64)
 		if err == nil {
 			return nil, err
 		}
