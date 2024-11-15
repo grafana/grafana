@@ -5,6 +5,22 @@ import (
 	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 )
 
+const (
+	roleGrafanaAdmin = "Grafana Admin"
+	roleAdmin        = "Admin"
+	roleEditor       = "Editor"
+	roleViewer       = "Viewer"
+	roleNone         = "None"
+)
+
+var basicRolesTranslations = map[string]string{
+	roleGrafanaAdmin: "basic_grafana_admin",
+	roleAdmin:        "basic_admin",
+	roleEditor:       "basic_editor",
+	roleViewer:       "basic_viewer",
+	roleNone:         "basic_none",
+}
+
 type resourceTranslation struct {
 	typ      string
 	group    string

@@ -64,6 +64,18 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				zanzanaCollector(zanzana.ResourceRelations),
 				client,
 			),
+			newResourceReconciler(
+				"basic role permissions",
+				basicRolePermissionsCollector(store),
+				zanzanaCollector(zanzana.FolderRelations),
+				client,
+			),
+			newResourceReconciler(
+				"basic role bindings",
+				basicRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
 		},
 	}
 }
