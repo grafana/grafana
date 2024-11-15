@@ -188,7 +188,7 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 			continue
 		}
 
-		groupPrefix := zanzana.FormatGroupResource(resourceInfo.Group, resourceInfo.Resource)
+		groupResource := zanzana.FormatGroupResource(resourceInfo.Group, resourceInfo.Resource)
 		if group, ok := res.Groups[groupPrefix]; ok {
 			if allowed := group.Items[d.UID]; allowed {
 				result = append(result, d)

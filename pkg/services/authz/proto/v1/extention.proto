@@ -108,6 +108,6 @@ message BatchCheckResponse {
   map<string, BatchCheckGroup> groups = 1;
 }
 
-message BatchCheckGroup {
+message BatchCheckGroupResource {
   map<string, bool> items = 1;
 }
