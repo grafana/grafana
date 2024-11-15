@@ -14,7 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -56,57 +56,58 @@ func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return v0alpha1.SchemeGroupVersion
+	return provisioning.SchemeGroupVersion
 }
 
 func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := v0alpha1.AddToScheme(scheme)
+	err := provisioning.AddToScheme(scheme)
 	if err != nil {
 		return err
 	}
 
 	// This is required for --server-side apply
-	err = v0alpha1.AddKnownTypes(v0alpha1.InternalGroupVersion, scheme)
+	err = provisioning.AddKnownTypes(provisioning.InternalGroupVersion, scheme)
 	if err != nil {
 		return err
 	}
 
 	// Only 1 version (for now?)
-	return scheme.SetVersionPriority(v0alpha1.SchemeGroupVersion)
+	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
 
 func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, v0alpha1.RepositoryResourceInfo, opts.OptsGetter)
+	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 
+	resourceInfo := provisioning.RepositoryResourceInfo
 	storage := map[string]rest.Storage{}
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath()] = repositoryStorage
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("hello")] = &helloWorldSubresource{
+	storage[resourceInfo.StoragePath()] = repositoryStorage
+	storage[resourceInfo.StoragePath("hello")] = &helloWorldSubresource{
 		getter: repositoryStorage,
 	}
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
+	storage[resourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: repositoryStorage,
 	}
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
+	storage[resourceInfo.StoragePath("read")] = &readConnector{
 		getter: repositoryStorage,
 	}
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
 
 func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return provisioning.GetOpenAPIDefinitions
 }
 
 func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: Do we need any?
+	// TODO: this is where we could inject a non-k8s managed handler... webhook maybe?
 	return nil
 }
 
 func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	oas.Info.Description = "Grafana Git UI Sync"
+	oas.Info.Description = "Provisioning"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"

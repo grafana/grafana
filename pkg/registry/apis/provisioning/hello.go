@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -48,7 +48,7 @@ func (*helloWorldSubresource) NewConnectOptions() (runtime.Object, bool, string)
 }
 
 func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := s.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := s.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 // This only works for github right now
@@ -19,7 +19,7 @@ type webhookConnector struct {
 
 func (*webhookConnector) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() returns
-	return &v0alpha1.WebhookResponse{}
+	return &provisioning.WebhookResponse{}
 }
 
 func (*webhookConnector) Destroy() {}
@@ -37,7 +37,7 @@ func (*webhookConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (*webhookConnector) ProducesObject(verb string) any {
-	return &v0alpha1.WebhookResponse{}
+	return &provisioning.WebhookResponse{}
 }
 
 func (*webhookConnector) ConnectMethods() []string {
@@ -52,15 +52,15 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := s.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := s.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	repo, ok := obj.(*v0alpha1.Repository)
+	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository, but got %t", obj)
 	}
-	if repo.Spec.Type != v0alpha1.GithubRepositoryType {
+	if repo.Spec.Type != provisioning.GithubRepositoryType {
 		return nil, fmt.Errorf("only works for github")
 	}
 

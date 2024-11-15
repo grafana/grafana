@@ -12,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type readConnector struct {
@@ -21,7 +21,7 @@ type readConnector struct {
 
 func (*readConnector) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() returns
-	return &v0alpha1.ResourceWrapper{}
+	return &provisioning.ResourceWrapper{}
 }
 
 func (*readConnector) Destroy() {}
@@ -39,7 +39,7 @@ func (*readConnector) ProducesMIMETypes(verb string) []string {
 }
 
 func (*readConnector) ProducesObject(verb string) any {
-	return &v0alpha1.ResourceWrapper{}
+	return &provisioning.ResourceWrapper{}
 }
 
 func (*readConnector) ConnectMethods() []string {
@@ -55,7 +55,7 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 	if err != nil {
 		return nil, err
 	}
-	repo, ok := obj.(*v0alpha1.Repository)
+	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil, fmt.Errorf("expected repository, but got %t", obj)
 	}
@@ -88,7 +88,7 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		// Return the wrapped response
 		// Note we can not return it directly (using responder) because that will make sure the
 		// top level apiVersion is provisioning, not the remote resource
-		wrapper := &v0alpha1.ResourceWrapper{
+		wrapper := &provisioning.ResourceWrapper{
 			Commit: commit,
 			Resource: common.Unstructured{
 				Object: obj.Object,
