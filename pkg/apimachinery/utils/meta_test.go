@@ -326,10 +326,10 @@ func TestMetaAccessor(t *testing.T) {
 		res := &TestResource2{
 			ObjectMeta: metav1.ObjectMeta{
 				Annotations: map[string]string{
-					"grafana.app/originName": "test",
-					"grafana.app/originPath": "a/b/c",
-					"grafana.app/originHash": "zzz",
-					"grafana.app/folder":     "folderUID",
+					"grafana.app/repoName": "test",
+					"grafana.app/repoPath": "a/b/c",
+					"grafana.app/repoHash": "zzz",
+					"grafana.app/folder":   "folderUID",
 				},
 			},
 			Spec: Spec2{},
