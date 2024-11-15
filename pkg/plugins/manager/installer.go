@@ -51,7 +51,15 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 	}
 }
 
-func (m *PluginInstaller) addWithOptionalURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	return m.add(ctx, pluginID, version, "", opts)
+}
+
+func (m *PluginInstaller) AddFromURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
+	return m.add(ctx, pluginID, version, url, opts)
+}
+
+func (m *PluginInstaller) add(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
 	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
 		return err
@@ -93,14 +101,6 @@ func (m *PluginInstaller) addWithOptionalURL(ctx context.Context, pluginID, vers
 	return nil
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	return m.addWithOptionalURL(ctx, pluginID, version, "", opts)
-}
-
-func (m *PluginInstaller) AddFromURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
-	return m.addWithOptionalURL(ctx, pluginID, version, url, opts)
-}
-
 func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
@@ -114,56 +114,14 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url st
 			}
 		}
 
+		var err error
 		if url != "" {
-			m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "url", url)
-
-			// remove existing installation of plugin
-			err := m.Remove(ctx, plugin.ID, plugin.Info.Version)
-			if err != nil {
-				return nil, err
-			}
-
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
-			if err != nil {
-				return nil, err
-			}
+			pluginArchive, err = m.updateFromURL(ctx, pluginID, plugin.Info.Version, url, compatOpts)
 		} else {
-			// get plugin update information to confirm if target update is possible
-			pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
-			if err != nil {
-				return nil, err
-			}
-
-			m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
-
-			// if existing plugin version is the same as the target update version
-			if pluginArchiveInfo.Version == plugin.Info.Version {
-				return nil, plugins.DuplicateError{
-					PluginID: plugin.ID,
-				}
-			}
-
-			if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
-				return nil, fmt.Errorf("could not determine update options for %s", pluginID)
-			}
-
-			// remove existing installation of plugin
-			err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
-			if err != nil {
-				return nil, err
-			}
-
-			if pluginArchiveInfo.URL != "" {
-				pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
-				if err != nil {
-					return nil, err
-				}
-			} else {
-				pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
-				if err != nil {
-					return nil, err
-				}
-			}
+			pluginArchive, err = m.updateFromRepo(ctx, pluginID, plugin.Info.Version, version, compatOpts)
+		}
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		var err error
@@ -184,6 +142,51 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url st
 	}
 
 	return extractedArchive, nil
+}
+
+func (m *PluginInstaller) updateFromURL(ctx context.Context, pluginID, oldVersion, url string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
+	m.log.Info("Updating plugin", "pluginId", pluginID, "from", oldVersion, "url", url)
+
+	// remove existing installation of plugin
+	err := m.Remove(ctx, pluginID, oldVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
+}
+
+func (m *PluginInstaller) updateFromRepo(ctx context.Context, pluginID, oldVersion, newVersion string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
+	// get plugin update information to confirm if target update is possible
+	pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, newVersion, compatOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	m.log.Info("Updating plugin", "pluginId", pluginID, "from", oldVersion, "to", pluginArchiveInfo.Version)
+
+	// if existing plugin version is the same as the target update version
+	if pluginArchiveInfo.Version == newVersion {
+		return nil, plugins.DuplicateError{
+			PluginID: pluginID,
+		}
+	}
+
+	if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
+		return nil, fmt.Errorf("could not determine update options for %s", pluginID)
+	}
+
+	// remove existing installation of plugin
+	err = m.Remove(ctx, pluginID, oldVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	if pluginArchiveInfo.URL != "" {
+		return m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
+	}
+
+	return m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
