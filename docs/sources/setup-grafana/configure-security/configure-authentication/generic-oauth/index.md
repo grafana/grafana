@@ -454,6 +454,10 @@ To set up Generic OAuth authentication with Descope, follow these steps:
 
 ### Set up OAuth2 with Auth0
 
+{{< admonition type="note" >}}
+Support for the Auth0 "audience" feature is not currently available in Grafana. For roles and permissions, the available options are described [here]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+{{< /admonition >}}
+
 To set up Generic OAuth authentication with Auth0, follow these steps:
 
 1. Create an Auth0 application using the following parameters:
