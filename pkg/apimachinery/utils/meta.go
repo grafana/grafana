@@ -41,12 +41,14 @@ const oldAnnoKeyOriginPath = "grafana.app/originPath"
 const oldAnnoKeyOriginHash = "grafana.app/originHash"
 const oldAnnoKeyOriginTimestamp = "grafana.app/originTimestamp"
 
-// #TODO revisit keeping these folder-specific annotations once we have complete support for mode 1
+// annoKeyFullPath encodes the full path in folder resources
+// revisit keeping these folder-specific annotations once we have complete support for mode 1
 // Deprecated: this goes away when folders have a better solution
-const AnnoKeyFullPath = "grafana.app/fullPath"
+const annoKeyFullPath = "grafana.app/fullPath"
 
+// annoKeyFullPathUIDs encodes the full path in folder resources
 // Deprecated: this goes away when folders have a better solution
-const AnnoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
+const annoKeyFullPathUIDs = "grafana.app/fullPathUIDs"
 
 // ResourceRepositoryInfo is encoded into kubernetes metadata annotations.
 // This value identifies indicates the state of the resource in its provisioning source when
@@ -645,19 +647,23 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 }
 
 func (m *grafanaMetaAccessor) GetFullPath() string {
-	return m.get(AnnoKeyFullPath)
+	// nolint:staticcheck
+	return m.get(annoKeyFullPath)
 }
 
 func (m *grafanaMetaAccessor) SetFullPath(path string) {
-	m.SetAnnotation(AnnoKeyFullPath, path)
+	// nolint:staticcheck
+	m.SetAnnotation(annoKeyFullPath, path)
 }
 
 func (m *grafanaMetaAccessor) GetFullPathUIDs() string {
-	return m.get(AnnoKeyFullPathUIDs)
+	// nolint:staticcheck
+	return m.get(annoKeyFullPathUIDs)
 }
 
 func (m *grafanaMetaAccessor) SetFullPathUIDs(path string) {
-	m.SetAnnotation(AnnoKeyFullPathUIDs, path)
+	// nolint:staticcheck
+	m.SetAnnotation(annoKeyFullPathUIDs, path)
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
