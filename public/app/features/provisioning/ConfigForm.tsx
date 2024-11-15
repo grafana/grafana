@@ -110,15 +110,6 @@ export function ConfigForm() {
           <Field label={'Repository name'} error={errors?.repository?.message} invalid={!!errors?.repository}>
             <Input {...register('repository', { required: 'This field is required.' })} placeholder={'example'} />
           </Field>
-          <Field label={'Resource folder'}>
-            <Controller
-              control={control}
-              name={'folder'}
-              render={({ field: { ref, ...field } }) => {
-                return <FolderPicker {...field} />;
-              }}
-            />
-          </Field>
           <Field label={'Commit directly to main'}>
             <Switch {...register('branchWorkflow')} />
           </Field>
@@ -144,6 +135,15 @@ export function ConfigForm() {
           </Field>
         </>
       )}
+      <Field label={'Resource folder'}>
+        <Controller
+          control={control}
+          name={'folder'}
+          render={({ field: { ref, ...field } }) => {
+            return <FolderPicker {...field} />;
+          }}
+        />
+      </Field>
       <Button type={'submit'}>Save</Button>
     </form>
   );
