@@ -54,6 +54,14 @@ export const getUserDefinedRoutingTree: (
 
   const { routes, ...defaults } = route;
 
+  const spec = {
+    defaults: { ...defaults, group_by: defaults.group_by || [], receiver: defaults.receiver || '' },
+    routes:
+      routes?.map((route) => {
+        return mapRoute(route);
+      }) || [],
+  };
+
   return {
     metadata: {
       name: ROOT_ROUTE_NAME,
@@ -61,14 +69,11 @@ export const getUserDefinedRoutingTree: (
       annotations: {
         'grafana.com/provenance': 'none',
       },
+      // Resource versions are much shorter than this in reality, but this is an easy way
+      // for us to mock the concurrency logic and check if the policies have updated since the last fetch
+      resourceVersion: btoa(JSON.stringify(spec)),
     },
-    spec: {
-      defaults: { group_by: defaults.group_by || [], receiver: defaults.receiver! },
-      routes:
-        routes?.map((route) => {
-          return mapRoute(route);
-        }) || [],
-    },
+    spec,
   };
 };
 

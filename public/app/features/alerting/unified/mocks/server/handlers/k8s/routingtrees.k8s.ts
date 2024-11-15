@@ -22,11 +22,28 @@ const listNamespacedRoutingTreesHandler = () =>
     return HttpResponse.json(wrapRoutingTreeResponse(userDefinedTree));
   });
 
+const HTTP_RESPONSE_CONFLICT = {
+  kind: 'Status',
+  apiVersion: 'v1',
+  metadata: {},
+  status: 'Failure',
+  message: 'Conflict',
+  reason: 'Conflict',
+  details: {
+    uid: 'alerting.notifications.conflict',
+  },
+  code: 409,
+};
+
 const updateNamespacedRoutingTreeHandler = () =>
   http.put<{ namespace: string; name: string }, ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`,
     async ({ params: { name }, request }) => {
       const updatedRoutingTree = await request.json();
+      const existingResourceVersion = getRoutingTree(name)?.metadata.resourceVersion;
+      if (updatedRoutingTree.metadata.resourceVersion !== existingResourceVersion) {
+        return HttpResponse.json(HTTP_RESPONSE_CONFLICT, { status: 409 });
+      }
       setRoutingTree(name, updatedRoutingTree);
       return HttpResponse.json(updatedRoutingTree);
     }
