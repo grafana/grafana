@@ -36,7 +36,10 @@ interface ComboboxBaseProps<T extends string | number> {
    */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  onChange: (option?: ComboboxOption<T>) => void;
+  /**
+   * The onChange handler is called with `null` when clearing the Combobox.
+   */
+  onChange: (option: ComboboxOption<T> | null) => void;
   /**
    * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
    * have the full options loaded to match the value to, consumers may also pass in an Option with a label to display.
@@ -52,6 +55,13 @@ interface ComboboxBaseProps<T extends string | number> {
 }
 
 const RECOMMENDED_ITEMS_AMOUNT = 100_000;
+
+type ClearableConditionals<T extends number | string> =
+  | {
+      isClearable: true;
+      onChange: (option: ComboboxOption<T> | null) => void;
+    }
+  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
 
 type AutoSizeConditionals =
   | {
@@ -71,7 +81,7 @@ type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
+type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
 
 function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
   if (!item) {
@@ -114,7 +124,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     id,
     width,
     'aria-labelledby': ariaLabelledBy,
-    ...restProps
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -376,7 +385,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             <Icon name={suffixIcon} />
           </>
         }
-        {...restProps}
         {...getInputProps({
           ref: inputRef,
           /*  Empty onCall to avoid TS error
@@ -451,5 +459,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         )}
       </div>
     </div>
+  );
+};
+
+const MessageRow = ({ children }: { children: ReactNode }) => {
+  return (
+    <Box padding={2} color="secondary">
+      <Stack justifyContent="center" alignItems="center">
+        {children}
+      </Stack>
+    </Box>
   );
 };
