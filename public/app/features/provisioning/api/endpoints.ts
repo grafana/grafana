@@ -15,6 +15,7 @@ const injectedRtkApi = api.injectEndpoints({
     // Queries
     listRepository: build.query<RepositoryList, void>({
       query: () => ({ url: BASE_PATH }),
+      providesTags: ['RepositoryList'],
     }),
     getRepository: build.query<RepositoryResource, { name: string }>({
       query: ({ name }) => ({ url: `${BASE_PATH}/${name}` }),
@@ -33,6 +34,7 @@ const injectedRtkApi = api.injectEndpoints({
         method: 'POST',
         body: resource,
       }),
+      invalidatesTags: ['RepositoryList'],
     }),
     updateRepository: build.mutation<void, UpdateRequestArg>({
       query: ({ name, body }) => ({
@@ -46,6 +48,7 @@ const injectedRtkApi = api.injectEndpoints({
         url: `${BASE_PATH}/${name}`,
         method: 'DELETE',
       }),
+      invalidatesTags: ['RepositoryList'],
     }),
     patchRepository: build.mutation<void, UpdateRequestArg>({
       query: ({ name, body }) => ({
@@ -54,6 +57,7 @@ const injectedRtkApi = api.injectEndpoints({
         headers: { 'Content-Type': 'application/merge-patch+json' },
         body,
       }),
+      invalidatesTags: ['RepositoryList'],
     }),
     deleteCollectionRepository: build.mutation<void, RequestArg>({
       query: () => ({

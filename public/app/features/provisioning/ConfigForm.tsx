@@ -54,7 +54,7 @@ export function ConfigForm() {
       reset(formData);
       setTimeout(() => {
         navigate('/admin/provisioning');
-      }, 0);
+      }, 300);
     }
   }, [request.isSuccess, reset, getValues, navigate]);
 

@@ -37,4 +37,5 @@ export const baseAPI = createApi({
     baseURL: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`,
   }),
   endpoints: () => ({}),
+  tagTypes: ['RepositoryList'],
 });
