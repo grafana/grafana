@@ -50,9 +50,20 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
 
     if (nativeHistogramNameMetric) {
       // add hints:
-      // histogram_avg, histogram_count, histogram_sum, histogram_fraction, histogram_stddev, histogram_stdvar
+      // histogram_quantile, histogram_avg, histogram_count
       const label = 'Selected metric is a native histogram.';
       hints.push(
+        {
+          type: 'HISTOGRAM_QUANTILE',
+          label,
+          fix: {
+            label: 'Consider calculating aggregated quantile by adding histogram_quantile().',
+            action: {
+              type: 'ADD_HISTOGRAM_QUANTILE',
+              query,
+            },
+          },
+        },
         {
           type: 'HISTOGRAM_AVG',
           label,
@@ -71,52 +82,6 @@ export function getQueryHints(query: string, series?: unknown[], datasource?: Pr
             label: 'Consider calculating the count of observations by adding histogram_count().',
             action: {
               type: 'ADD_HISTOGRAM_COUNT',
-              query,
-            },
-          },
-        },
-        {
-          type: 'HISTOGRAM_SUM',
-          label,
-          fix: {
-            label: 'Consider calculating the sum of observations by adding histogram_sum().',
-            action: {
-              type: 'ADD_HISTOGRAM_SUM',
-              query,
-            },
-          },
-        },
-        {
-          type: 'HISTOGRAM_FRACTION',
-          label,
-          fix: {
-            label:
-              'Consider calculating the estimated fraction of observations between the provided lower and upper values by adding histogram_fraction().',
-            action: {
-              type: 'ADD_HISTOGRAM_FRACTION',
-              query,
-            },
-          },
-        },
-        {
-          type: 'HISTOGRAM_STDDEV',
-          label,
-          fix: {
-            label:
-              'Consider calculating the estimated standard deviation of observations by adding histogram_stddev().',
-            action: {
-              type: 'ADD_HISTOGRAM_STDDEV',
-              query,
-            },
-          },
-        },
-        {
-          type: 'HISTOGRAM_STDVAR',
-          label,
-          fix: {
-            label: 'Consider calculating the estimated standard variance of observations by adding histogram_stdvar().',
-            action: {
-              type: 'ADD_HISTOGRAM_STDVAR',
               query,
             },
           },
