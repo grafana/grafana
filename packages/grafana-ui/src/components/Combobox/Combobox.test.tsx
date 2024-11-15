@@ -115,6 +115,41 @@ describe('Combobox', () => {
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
   });
 
+  describe('size support', () => {
+    it('should require minWidth to be set with auto width', () => {
+      // @ts-expect-error
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" />);
+    });
+
+    it('should change width when typing things with auto width', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" minWidth={2} />);
+
+      const input = screen.getByRole('combobox');
+      const inputWrapper = screen.getByTestId('input-wrapper');
+      const initialWidth = getComputedStyle(inputWrapper).width;
+
+      fireEvent.change(input, { target: { value: 'very very long value' } });
+
+      const newWidth = getComputedStyle(inputWrapper).width;
+
+      expect(initialWidth).not.toBe(newWidth);
+    });
+
+    it('should not change width when typing things with fixed width', async () => {
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} width={2} />);
+      const input = screen.getByRole('combobox');
+
+      const inputWrapper = screen.getByTestId('input-wrapper');
+      const initialWidth = getComputedStyle(inputWrapper).width;
+
+      fireEvent.change(input, { target: { value: 'very very long value' } });
+
+      const newWidth = getComputedStyle(inputWrapper).width;
+
+      expect(initialWidth).toBe(newWidth);
+    });
+  });
+
   describe('with a value already selected', () => {
     it('shows an empty text input when opening the menu', async () => {
       const selectedValue = options[0].value;

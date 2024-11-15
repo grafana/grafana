@@ -123,6 +123,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     createCustomValue = false,
     id,
     width,
+    minWidth,
+    maxWidth,
     'aria-labelledby': ariaLabelledBy,
   } = props;
 
@@ -346,7 +348,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
-  const InputComponent = width === 'auto' ? AutoSizeInput : Input;
+  const isAutoSize = width === 'auto';
+
+  const InputComponent = isAutoSize ? AutoSizeInput : Input;
 
   const suffixIcon = asyncLoading
     ? 'spinner'
@@ -360,7 +364,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   return (
     <div>
       <InputComponent
-        width={width === 'auto' ? undefined : width}
+        width={isAutoSize ? undefined : width}
+        {...(isAutoSize ? { minWidth, maxWidth } : {})}
         className={styles.input}
         suffix={
           <>
