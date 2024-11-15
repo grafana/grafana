@@ -1,4 +1,4 @@
-package v0alpha1
+package v1alpha1
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 const (
 	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v0alpha1"
+	VERSION    = "v1alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
 

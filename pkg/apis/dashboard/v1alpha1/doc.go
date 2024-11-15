@@ -4,4 +4,4 @@
 // +k8s:conversion-gen=github.com/grafana/grafana/pkg/apis/dashboard
 // +groupName=dashboard.grafana.app
 
-package v0alpha1 // import "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+package v1alpha1 // import "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"

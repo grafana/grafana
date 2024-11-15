@@ -14,7 +14,7 @@ import (
 type Unstructured struct {
 	// Object is a JSON compatible map with string, float, int, bool, []interface{},
 	// or map[string]interface{} children.
-	Object map[string]any
+	Object map[string]interface{}
 }
 
 // Produce an API definition that represents map[string]any

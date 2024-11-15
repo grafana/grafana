@@ -2,7 +2,10 @@ package apiregistry
 
 import (
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications"
-	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardinternal "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v0alpha1"
+	dashboardv1alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v1alpha1"
+	dashboardv2alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
@@ -20,7 +23,10 @@ type Service struct{}
 // ProvideRegistryServiceSink is an entry point for each service that will force initialization
 // and give each builder the chance to register itself with the main server
 func ProvideRegistryServiceSink(
-	_ *dashboard.DashboardsAPIBuilder,
+	_ *dashboardinternal.DashboardsAPIBuilder,
+	_ *dashboardv0alpha1.DashboardsAPIBuilder,
+	_ *dashboardv1alpha1.DashboardsAPIBuilder,
+	_ *dashboardv2alpha1.DashboardsAPIBuilder,
 	_ *dashboardsnapshot.SnapshotsAPIBuilder,
 	_ *featuretoggle.FeatureFlagAPIBuilder,
 	_ *datasource.DataSourceAPIBuilder,

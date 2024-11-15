@@ -1,4 +1,4 @@
-package v0alpha1
+package dashboard
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 const (
 	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v0alpha1"
+	VERSION    = runtime.APIVersionInternal
 	APIVERSION = GROUP + "/" + VERSION
 )
 
@@ -71,19 +71,13 @@ var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 )
 
 var (
-	SchemeBuilder      runtime.SchemeBuilder
-	localSchemeBuilder = &SchemeBuilder
-	AddToScheme        = localSchemeBuilder.AddToScheme
-	schemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+	SchemeBuilder      = runtime.NewSchemeBuilder(addKnownTypes)
+	AddToScheme        = SchemeBuilder.AddToScheme
+	schemaGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )
 
-func init() {
-	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
-}
-
-// Adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(schemeGroupVersion,
+	scheme.AddKnownTypes(schemaGroupVersion,
 		&Dashboard{},
 		&DashboardList{},
 		&DashboardWithAccessInfo{},
@@ -94,10 +88,5 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
-	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
 	return nil
-}
-
-func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return RegisterDefaults(scheme)
 }

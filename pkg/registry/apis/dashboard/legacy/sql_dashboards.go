@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -38,7 +38,7 @@ type dashboardRow struct {
 	RV int64
 
 	// Dashboard resource
-	Dash *dashboardsV0.Dashboard
+	Dash *dashboard.Dashboard
 
 	// The folder UID (needed for access control checks)
 	FolderUID string
@@ -213,8 +213,8 @@ func (r *rowsWrapper) Value() []byte {
 }
 
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
-	dash := &dashboardsV0.Dashboard{
-		TypeMeta:   dashboardsV0.DashboardResourceInfo.TypeMeta(),
+	dash := &dashboard.Dashboard{
+		TypeMeta:   dashboard.DashboardResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
 	}
 	row := &dashboardRow{Dash: dash}
@@ -323,7 +323,7 @@ func getUserID(v sql.NullString, id sql.NullInt64) string {
 }
 
 // DeleteDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboard.Dashboard, bool, error) {
 	dash, _, err := a.GetDashboard(ctx, orgId, uid, 0)
 	if err != nil {
 		return nil, false, err
@@ -355,7 +355,7 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 }
 
 // SaveDashboard implements DashboardAccess.
-func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
+func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboard.Dashboard) (*dashboard.Dashboard, bool, error) {
 	created := false
 	user, ok := claims.From(ctx)
 	if !ok || user == nil {
@@ -412,7 +412,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	return dash, created, err
 }
 
-func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardsV0.LibraryPanelList, error) {
+func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboard.LibraryPanelList, error) {
 	limit := int(query.Limit)
 	query.Limit += 1 // for continue
 	if query.OrgID == 0 {
@@ -431,7 +431,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 	q := rawQuery
 
-	res := &dashboardsV0.LibraryPanelList{}
+	res := &dashboard.LibraryPanelList{}
 	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
@@ -472,16 +472,16 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 		lastID = p.ID
 
-		item := dashboardsV0.LibraryPanel{
+		item := dashboard.LibraryPanel{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              p.UID,
 				CreationTimestamp: metav1.NewTime(p.Created),
 				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
 			},
-			Spec: dashboardsV0.LibraryPanelSpec{},
+			Spec: dashboard.LibraryPanelSpec{},
 		}
 
-		status := &dashboardsV0.LibraryPanelStatus{
+		status := &dashboard.LibraryPanelStatus{
 			Missing: v0alpha1.Unstructured{},
 		}
 		err = json.Unmarshal(p.Model, &item.Spec)
