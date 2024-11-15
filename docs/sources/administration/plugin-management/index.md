@@ -135,7 +135,7 @@ If this is not possible you can go via installing a plugin using [Grafana CLI](#
 You can fetch any plugin from Grafana.com API following the download link referenced in the API.
 Here is an example based on `grafana-lokiexplore-app` plugins.
 
-1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section 
+1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section
 1. Find a `download` url which looks something like `https://grafana.com/api/plugins/grafana-lokiexplore-app/versions/1.0.2/download`
 1. Use this URL to download the plugin ZIP file, which you can then install as described above.
 
@@ -175,7 +175,6 @@ To uninstall a plugin:
 1. Click **Uninstall**.
 
 When the update is complete, a confirmation message will indicate the installation was successful.
-
 
 ## Plugin signatures
 
