@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"strings"
 	"time"
@@ -73,6 +74,36 @@ type State struct {
 	LastEvaluationString string
 	LastEvaluationTime   time.Time
 	EvaluationDuration   time.Duration
+}
+
+// Copy creates a shallow copy of the State except for labels and annotations.
+func (a *State) Copy() *State {
+	// Deep copy annotations and labels
+	annotationsCopy := make(map[string]string, len(a.Annotations))
+	maps.Copy(annotationsCopy, a.Annotations)
+	labelsCopy := make(data.Labels, len(a.Labels))
+	maps.Copy(labelsCopy, a.Labels)
+	return &State{
+		OrgID:                a.OrgID,
+		AlertRuleUID:         a.AlertRuleUID,
+		CacheID:              a.CacheID,
+		State:                a.State,
+		StateReason:          a.StateReason,
+		ResultFingerprint:    a.ResultFingerprint,
+		LatestResult:         a.LatestResult,
+		Error:                a.Error,
+		Image:                a.Image,
+		Annotations:          annotationsCopy,
+		Labels:               labelsCopy,
+		Values:               a.Values,
+		StartsAt:             a.StartsAt,
+		EndsAt:               a.EndsAt,
+		ResolvedAt:           a.ResolvedAt,
+		LastSentAt:           a.LastSentAt,
+		LastEvaluationString: a.LastEvaluationString,
+		LastEvaluationTime:   a.LastEvaluationTime,
+		EvaluationDuration:   a.EvaluationDuration,
+	}
 }
 
 func (a *State) GetRuleKey() models.AlertRuleKey {
