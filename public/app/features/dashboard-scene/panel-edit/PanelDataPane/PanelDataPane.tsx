@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Container, CustomScrollbar, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Container, ScrollContainer, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
@@ -83,11 +83,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
       </TabsBar>
-      <CustomScrollbar className={styles.scroll}>
+      <ScrollContainer backgroundColor="primary">
         <TabContent className={styles.tabContent}>
           <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
         </TabContent>
-      </CustomScrollbar>
+      </ScrollContainer>
     </div>
   );
 }
@@ -127,9 +127,6 @@ function getStyles(theme: GrafanaTheme2) {
     tabsBar: css({
       flexShrink: 0,
       paddingLeft: theme.spacing(2),
-    }),
-    scroll: css({
-      background: theme.colors.background.primary,
     }),
   };
 }
