@@ -12,8 +12,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+type DB struct {
+	inMemoryDb *memory.Database
+}
+
+func (db *DB) TablesList(rawSQL string) ([]string, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (db *DB) RunCommands(commands []string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func ConvertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Frame, error) {
+func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Frame, error) {
 	// Create a new Frame
 	frame := data.NewFrame("ResultSet")
 
@@ -36,6 +48,9 @@ func ConvertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 		// EnumType represents the ENUM type.
 		// DecimalType represents the DECIMAL type.
 		// Also the NullType (and DeferredType) ?
+
+		// case int8:
+		// 	field = data.NewField(col.Name, nil, []int64{})
 		default:
 			return nil, fmt.Errorf("unsupported type for column %s: %v", col.Name, colType)
 		}
@@ -44,7 +59,8 @@ func ConvertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 
 	// Iterate through the rows and append data to fields
 	for {
-		row, err := iter.Next()
+		// TODO: Use a more appropriate context
+		row, err := iter.Next(gomysql.NewEmptyContext())
 		if err == io.EOF {
 			break
 		}
@@ -72,20 +88,7 @@ func ConvertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 	return frame, nil
 }
 
-type DB struct {
-	inMemoryDb *memory.Database
-}
-
-func (db *DB) TablesList(rawSQL string) ([]string, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (db *DB) RunCommands(commands []string) (string, error) {
-	return "", errors.New("not implemented")
-}
-
 func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
-
 	// error if more than zero frames received
 	// TODO: Implement loading data into the database later
 	if len(frames) > 0 {
@@ -117,7 +120,7 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	// rows := sqlutil.NewRowIter(mysqlRows, nil)
 	// frame, err := sqlutil.FrameFromRows(rows, rowLimit, converters...)
 
-	f, err = ConvertToDataFrame(iter, schema)
+	f, err = convertToDataFrame(iter, schema)
 	if err != nil {
 		return err
 	}
