@@ -183,12 +183,10 @@ type ResourceInfo struct {
 	Resource string
 }
 
-func TranslateResource(kind string) (ResourceInfo, bool) {
+func TranslateToGroupResource(kind string) string {
 	translation, ok := resourceTranslations[kind]
-	info := ResourceInfo{
-		Typ:      translation.typ,
-		Group:    translation.group,
-		Resource: translation.resource,
+	if !ok {
+		return ""
 	}
-	return info, ok
+	return common.FormatGroupResource(translation.group, translation.resource)
 }
