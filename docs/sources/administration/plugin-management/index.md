@@ -113,10 +113,11 @@ The most common way to install a plugin is through the Grafana UI, but alternati
 There are also additional ways to install plugins depending on your setup.
 
 #### Install a plugin using Grafana CLI
+
 Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line. For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
-
 #### Install a plugin from a ZIP file
+
 This method is typically used for plugins not available in the Plugin Catalog or in environments without internet access.
 
 Download the archive containing the plugin assets, and install it by extracting the archive into the plugin directory. For example:
@@ -128,6 +129,7 @@ unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
 #### Install a plugin in air-gapped environment
+
 Plugin installation usually requires an internet connection. You can check which endpoints are used during the installation on your instance and add them to your instance’s allowlist.
 
 If this is not possible you can go via installing a plugin using [Grafana CLI](#install-a-plugin-using-grafana-cli) or as a [ZIP file](#install-a-plugin-from-a-zip-file).
