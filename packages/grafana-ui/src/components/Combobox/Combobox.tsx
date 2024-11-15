@@ -175,7 +175,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   }, [options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
-    if (valueProp === undefined) {
+    if (!valueProp) {
       return undefined;
     }
 
@@ -451,15 +451,5 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         )}
       </div>
     </div>
-  );
-};
-
-const MessageRow = ({ children }: { children: ReactNode }) => {
-  return (
-    <Box padding={2} color="secondary">
-      <Stack justifyContent="center" alignItems="center">
-        {children}
-      </Stack>
-    </Box>
   );
 };
