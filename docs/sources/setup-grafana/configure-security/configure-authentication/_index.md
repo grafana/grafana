@@ -17,12 +17,14 @@ weight: 200
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication methods and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-| Provider                                              | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
+| Authentication method                                 | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout |
 | :---------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
+| [Anonymous access]({{< relref "./anonymous-auth" >}}) | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
 | [Auth Proxy]({{< relref "./auth-proxy" >}})           | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
 | [Azure AD OAuth]({{< relref "./azuread" >}})          | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
+| [Basic auth]({{< relref "./grafana" >}})              | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           |
 | [Generic OAuth]({{< relref "./generic-oauth" >}})     | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
 | [GitHub OAuth]({{< relref "./github" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
 | [GitLab OAuth]({{< relref "./gitlab" >}})             | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
@@ -33,17 +35,9 @@ The following table shows all supported authentication providers and the feature
 | [LDAP]({{< relref "./ldap" >}})                       | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
 | [JWT Proxy]({{< relref "./jwt" >}})                   | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
 
-N/A = Not applicable
+Fields explanation:
 
-## Auth Proxy
-
-| Feature           | Supported? |
-| :---------------- | :--------- |
-| Multi Org Mapping | no         |
-| Enforce Sync      | N/A        |
-| Role Mapping      | yes        |
-
-**Multi Org Mapping:** Able to add a user and role map him to multiple orgs
+**Multi Org Mapping:** Able to add a user and map roles to multiple organizations
 
 **Enforce Sync:** If the information provided by the identity provider is empty, does the integration skip setting that user’s field or does it enforce a default.
 
@@ -82,15 +76,9 @@ If users want to use the same email address with multiple identity providers (fo
 
 To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
 
-## Grafana Auth
+## Login and short-lived tokens
 
-Grafana of course has a built in user authentication system with password authentication enabled by default. You can
-disable authentication by enabling anonymous access. You can also hide the login form and only allow login through an auth
-provider (listed above). There are also options for allowing self sign up.
-
-### Login and short-lived tokens
-
-> The following applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
+> The following applies when using Grafana's basic authentication, LDAP (without Auth proxy) or OAuth integration.
 
 Grafana uses short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated on an interval specified by `token_rotation_interval_minutes` for active authenticated users.
@@ -98,11 +86,6 @@ These short-lived tokens are rotated on an interval specified by `token_rotation
 Inactive authenticated users will remain logged in for a duration specified by `login_maximum_inactive_lifetime_duration`.
 This means that a user can close a Grafana window and return before `now + login_maximum_inactive_lifetime_duration` to continue their session.
 This is true as long as the time since last user login is less than `login_maximum_lifetime_duration`.
-
-#### Remote logout
-
-You can logout from other devices by removing login sessions from the bottom of your profile page. If you are
-a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
 
 ## Settings
 
@@ -130,50 +113,7 @@ api_key_max_seconds_to_live = -1
 oauth_allow_insecure_email_lookup = false
 ```
 
-### Anonymous authentication
-
-You can make Grafana accessible without any login required by enabling anonymous access in the configuration file.
-
-Example:
-
-```bash
-[auth.anonymous]
-enabled = true
-
-{{< admonition type="note" >}}
-Enabling anonymous access is a disallowed configuration setting on Hosted Grafana and not recommended due [security implications](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/#implications-of-enabling-anonymous-access-to-dashboards).
-For sharing dashboards with a wider audience, consider using the [public dashboard feature](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/) instead.
-{{< /admonition >}}
-
-# Organization name that should be used for unauthenticated users
-org_name = Main Org.
-
-# Role for unauthenticated users, other valid values are `Editor` and `Admin`
-org_role = Viewer
-```
-
-If you change your organization name in the Grafana UI, this setting needs to be updated to match the new name.
-
-### Basic authentication
-
-Basic auth is enabled by default and works with the built-in Grafana user-password authentication system and LDAP
-authentication integration.
-
-To disable basic auth:
-
-```bash
-[auth.basic]
-enabled = false
-```
-
-### Disable login form
-
-Hide the Grafana login form using the below configuration settings.
-
-```bash
-[auth]
-disable_login_form = true
-```
+## Extended authentication settings
 
 ### Enable email lookup
 
@@ -243,6 +183,11 @@ Example for Generic OAuth:
 [auth.generic_oauth]
 signout_redirect_url =
 ```
+
+### Remote logout
+
+You can log out from other devices by removing login sessions from the bottom of your profile page. If you are
+a Grafana admin user, you can also do the same for any user from the Server Admin / Edit User view.
 
 ### Protected roles
 

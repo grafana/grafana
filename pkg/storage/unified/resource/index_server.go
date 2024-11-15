@@ -76,7 +76,7 @@ func (is *IndexServer) Watch(ctx context.Context) error {
 	rtList := fetchResourceTypes()
 	for _, rt := range rtList {
 		wr := &WatchRequest{
-			Options: rt,
+			Options: rt.ListOptions,
 		}
 
 		go func() {
@@ -229,7 +229,7 @@ func getData(wr *WatchEvent_Resource) (*Data, error) {
 
 	key := &ResourceKey{
 		Group:     r.Group,
-		Resource:  r.Kind,
+		Resource:  r.Kind, // We use Kind as resource key since watch events don't have a resource name on them
 		Namespace: r.Namespace,
 		Name:      r.Name,
 	}
