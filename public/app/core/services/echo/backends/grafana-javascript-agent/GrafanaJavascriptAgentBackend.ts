@@ -17,6 +17,14 @@ import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentEchoEvent, User } from './types';
 
+function isCrossOriginIframe() {
+  try {
+    return document.location.hostname !== window.parent.location.hostname;
+  } catch (e) {
+    return true;
+  }
+}
+
 export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   buildInfo: BuildInfo;
   customEndpoint: string;
@@ -26,7 +34,15 @@ export interface GrafanaJavascriptAgentBackendOptions extends BrowserConfig {
   consoleInstrumentalizationEnabled: boolean;
   webVitalsInstrumentalizationEnabled: boolean;
   tracingInstrumentalizationEnabled: boolean;
+  ignoreUrls: RegExp[];
 }
+
+const TRACKING_URLS = [
+  /.*.google-analytics.com*.*/,
+  /.*.googletagmanager.com*.*/,
+  /frontend-metrics/,
+  /\/collect(?:\/[\w]*)?$/,
+];
 
 export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
@@ -37,10 +53,12 @@ export class GrafanaJavascriptAgentBackend
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
     const instrumentations: Instrumentation[] = [];
+    const ignoreUrls = [new RegExp(`/*${options.customEndpoint}/`), ...TRACKING_URLS, ...options.ignoreUrls];
 
-    const transports: BaseTransport[] = [new EchoSrvTransport()];
+    const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
-    if (options.customEndpoint) {
+    // If in cross origin iframe, default to writing to instance logging endpoint
+    if (options.customEndpoint && !isCrossOriginIframe()) {
       transports.push(new FetchTransport({ url: options.customEndpoint, apiKey: options.apiKey }));
     }
 
@@ -77,8 +95,9 @@ export class GrafanaJavascriptAgentBackend
         'ResizeObserver loop limit exceeded',
         'ResizeObserver loop completed',
         'Non-Error exception captured with keys',
+        'Failed sending payload to the receiver',
       ],
-      ignoreUrls: [new RegExp(`/*${options.customEndpoint}/`), /frontend-metrics/],
+      ignoreUrls,
       sessionTracking: {
         persistent: true,
       },

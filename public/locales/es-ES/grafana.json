@@ -137,9 +137,9 @@
       "export-all": "",
       "view": ""
     },
-    "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -154,6 +154,7 @@
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
+      "no-contact-points-found": "",
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
@@ -322,15 +323,15 @@
       "save-query": ""
     },
     "simpleCondition": {
-      "alertCondition": "",
-      "ofQuery": {
-        "To": ""
-      }
+      "alertCondition": ""
     },
     "templates": {
       "misconfigured-badge-text": "",
       "misconfigured-warning": "",
       "misconfigured-warning-details": ""
+    },
+    "threshold": {
+      "to": ""
     }
   },
   "annotations": {
@@ -447,11 +448,17 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": ""
+    },
     "clear": {
       "title": ""
     },
     "custom-value": {
-      "create": ""
+      "label": ""
+    },
+    "options": {
+      "no-found": ""
     }
   },
   "command-palette": {
@@ -614,8 +621,7 @@
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización",
-      "widget": "«Widget»"
+      "visualization": "Visualización"
     },
     "alert-rules-drawer": {
       "redirect-link": "Lista en Alertas de Grafana",
@@ -628,9 +634,6 @@
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
-      "add-widget-body": "Crear listas, reducciones y otros «widgets»",
-      "add-widget-button": "Añadir widget",
-      "add-widget-header": "Añadir un «widget»",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Importar un tablero",
       "import-dashboard-button": "Importar panel de control"
@@ -1049,7 +1052,15 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
-      "noMatchingValue": ""
+      "noMatchingValue": "",
+      "sortBy": ""
+    },
+    "related-logs": {
+      "docsLink": "",
+      "openExploreLogs": "",
+      "relatedLogsUnavailableAfterDocsLink": "",
+      "relatedLogsUnavailableBeforeDocsLink": "",
+      "warnExperimentalFeature": ""
     },
     "viewBy": ""
   },
@@ -1448,6 +1459,14 @@
     },
     "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Contraseña",
       "password-placeholder": "",
       "password-required": "La contraseña es obligatoria",
@@ -1455,7 +1474,9 @@
       "submit-loading-label": "Iniciando sesión...",
       "username-label": "Correo o nombre de usuario",
       "username-placeholder": "",
-      "username-required": "El correo o el nombre de usuario es obligatorio"
+      "username-required": "El correo o el nombre de usuario es obligatorio",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Iniciar sesión con {{serviceName}}"
@@ -1552,6 +1573,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1616,6 +1638,7 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
         "datasource-invalid-url": "",
         "datasource-name-conflict": "",
         "folder-name-conflict": "",
@@ -1652,6 +1675,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Panel de control",
       "datasource": "Fuente de datos",
@@ -2165,6 +2189,12 @@
         "name-header": "",
         "update-header": "",
         "update-status-text": ""
+      },
+      "versions": {
+        "confirmation-text-1": "",
+        "confirmation-text-2": "",
+        "downgrade-confirm": "",
+        "downgrade-title": ""
       }
     },
     "details": {
@@ -2174,6 +2204,7 @@
         "downloads": "",
         "from": "",
         "installedVersion": "",
+        "lastCommitDate": "",
         "latestVersion": "",
         "links": "",
         "reportAbuse": "",
@@ -2883,7 +2914,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2897,6 +2939,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",

@@ -6,16 +6,17 @@
     {
       "metadata": {
         "name": "accessActionSets",
-        "resourceVersion": "1723737724157",
+        "resourceVersion": "1731413707429",
         "creationTimestamp": "2024-04-12T16:19:25Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-08-15 16:02:04.157828 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-12 12:15:07.42916 +0000 UTC"
         }
       },
       "spec": {
         "description": "Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.",
-        "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "true"
       }
     },
     {
@@ -534,6 +535,7 @@
         "name": "autoMigrateXYChartPanel",
         "resourceVersion": "1722537244598",
         "creationTimestamp": "2024-03-22T15:44:37Z",
+        "deletionTimestamp": "2024-11-14T01:17:06Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-08-01 18:34:04.598082 +0000 UTC"
         }
@@ -809,17 +811,18 @@
     {
       "metadata": {
         "name": "cloudwatchMetricInsightsCrossAccount",
-        "resourceVersion": "1722005531805",
+        "resourceVersion": "1729265619643",
         "creationTimestamp": "2024-07-02T10:34:12Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-07-26 14:52:11.80525 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-10-18 15:33:39.643165 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enables cross account observability for Cloudwatch Metric Insights query builder",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/aws-datasources",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -851,6 +854,19 @@
         "codeowner": "@grafana/explore-squad",
         "allowSelfServe": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "crashDetection",
+        "resourceVersion": "1730381712885",
+        "creationTimestamp": "2024-10-31T13:35:12Z"
+      },
+      "spec": {
+        "description": "Enables browser crash detection reporting to Faro.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-traces-and-profiling",
+        "frontend": true
       }
     },
     {
@@ -952,6 +968,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSchemaV2",
+        "resourceVersion": "1730192092473",
+        "creationTimestamp": "2024-10-29T08:54:52Z"
+      },
+      "spec": {
+        "description": "Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {
@@ -1189,6 +1218,22 @@
     },
     {
       "metadata": {
+        "name": "enableExtensionsAdminPage",
+        "resourceVersion": "1730819353237",
+        "creationTimestamp": "2024-11-05T09:18:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-05 15:09:13.237578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the extension admin page regardless of development mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "enableNativeHTTPHistogram",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-03T18:23:55Z"
@@ -1199,6 +1244,32 @@
         "codeowner": "@grafana/grafana-backend-services-squad",
         "requiresRestart": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableSCIM",
+        "resourceVersion": "1730980484343",
+        "creationTimestamp": "2024-11-07T11:54:44Z"
+      },
+      "spec": {
+        "description": "Enables SCIM support for user and group management",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "enableScopesInMetricsExplore",
+        "resourceVersion": "1729765731452",
+        "creationTimestamp": "2024-10-24T10:28:51Z"
+      },
+      "spec": {
+        "description": "Enables the scopes usage in Metrics Explore",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1270,6 +1341,20 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreMetricsRelatedLogs",
+        "resourceVersion": "1730125602673",
+        "creationTimestamp": "2024-10-28T14:26:42Z"
+      },
+      "spec": {
+        "description": "Display Related Logs in Explore Metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1496,12 +1581,15 @@
     {
       "metadata": {
         "name": "groupAttributeSync",
-        "resourceVersion": "1725893018130",
-        "creationTimestamp": "2024-09-09T15:29:43Z"
+        "resourceVersion": "1731087176211",
+        "creationTimestamp": "2024-09-09T15:29:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-08 17:32:56.21158 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
-        "stage": "experimental",
+        "stage": "privatePreview",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
       }
@@ -1793,6 +1881,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "logQLScope",
+        "resourceVersion": "1730842404843",
+        "creationTimestamp": "2024-11-05T21:33:24Z"
+      },
+      "spec": {
+        "description": "In-development feature that will allow injection of labels into loki queries.",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/observability-logs",
+        "expression": "false"
       }
     },
     {
@@ -2349,20 +2450,6 @@
     },
     {
       "metadata": {
-        "name": "reloadDashboardsOnParamsChange",
-        "resourceVersion": "1728903221522",
-        "creationTimestamp": "2024-10-14T10:53:41Z"
-      },
-      "spec": {
-        "description": "Enables reload of dashboards on scopes, time range and variables changes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "passScopeToDashboardApi",
         "resourceVersion": "1718290335877",
         "creationTimestamp": "2024-06-20T15:49:19Z",
@@ -2372,6 +2459,20 @@
         "description": "Enables the passing of scopes to dashboards fetching in Grafana",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "passwordlessMagicLinkAuthentication",
+        "resourceVersion": "1730232874003",
+        "creationTimestamp": "2024-10-29T20:14:34Z"
+      },
+      "spec": {
+        "description": "Enable passwordless login via magic link authentication",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true
       }
@@ -2414,6 +2515,19 @@
         "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "playlistsWatcher",
+        "resourceVersion": "1730462910506",
+        "creationTimestamp": "2024-11-01T12:08:30Z"
+      },
+      "spec": {
+        "description": "Enables experimental watcher for playlists",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
       }
     },
     {
@@ -2498,6 +2612,22 @@
         "description": "Enables SRI checks for plugin assets",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
+        "name": "preinstallAutoUpdate",
+        "resourceVersion": "1731581146864",
+        "creationTimestamp": "2024-11-06T14:45:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-14 10:45:46.864585 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables automatic updates for pre-installed plugins",
+        "stage": "GA",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "true"
       }
     },
     {
@@ -2843,6 +2973,20 @@
     },
     {
       "metadata": {
+        "name": "reloadDashboardsOnParamsChange",
+        "resourceVersion": "1728903221522",
+        "creationTimestamp": "2024-10-14T10:53:41Z"
+      },
+      "spec": {
+        "description": "Enables reload of dashboards on scopes, time range and variables changes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "renderAuthJWT",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-04-03T16:53:38Z"
@@ -2956,6 +3100,19 @@
         "description": "Enables using SQL and DuckDB functions as Expressions.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "sqlQuerybuilderFunctionParameters",
+        "resourceVersion": "1718487716739",
+        "creationTimestamp": "2024-06-15T21:41:56Z"
+      },
+      "spec": {
+        "description": "Enables SQL query builder function parameters",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent",
+        "frontend": true
       }
     },
     {
@@ -3268,6 +3425,18 @@
     },
     {
       "metadata": {
+        "name": "userStorageAPI",
+        "resourceVersion": "1730204321785",
+        "creationTimestamp": "2024-10-29T12:18:41Z"
+      },
+      "spec": {
+        "description": "Enables the user storage API",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizActions",
         "resourceVersion": "1722461779830",
         "creationTimestamp": "2024-09-09T14:11:55Z"
@@ -3284,7 +3453,8 @@
       "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-06-27T10:22:13Z"
+        "creationTimestamp": "2023-06-27T10:22:13Z",
+        "deletionTimestamp": "2024-10-30T14:21:33Z"
       },
       "spec": {
         "description": "Split panels between visualizations and widgets",
@@ -3317,6 +3487,18 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "zipkinBackendMigration",
+        "resourceVersion": "1730907578997",
+        "creationTimestamp": "2024-11-06T15:39:38Z"
+      },
+      "spec": {
+        "description": "Enables querying Zipkin data source without the proxy",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
       }
     }
   ]

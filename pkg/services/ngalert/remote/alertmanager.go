@@ -150,7 +150,12 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return c.Do(req.WithContext(ctx))
 	}
 	senderLogger := log.New("ngalert.sender.external-alertmanager")
-	s, err := sender.NewExternalAlertmanagerSender(senderLogger, prometheus.NewRegistry(), sender.WithDoFunc(doFunc))
+	s, err := sender.NewExternalAlertmanagerSender(
+		senderLogger,
+		prometheus.NewRegistry(),
+		sender.WithDoFunc(doFunc),
+		sender.WithUTF8Labels(),
+	)
 	if err != nil {
 		return nil, err
 	}

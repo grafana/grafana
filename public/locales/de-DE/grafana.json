@@ -137,9 +137,9 @@
       "export-all": "",
       "view": ""
     },
-    "contact-point": "",
     "contact-points": {
       "create": "",
+      "custom-template-value": "",
       "delete-reasons": {
         "heading": "",
         "no-permissions": "",
@@ -154,6 +154,7 @@
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
+      "no-contact-points-found": "",
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
@@ -322,15 +323,15 @@
       "save-query": ""
     },
     "simpleCondition": {
-      "alertCondition": "",
-      "ofQuery": {
-        "To": ""
-      }
+      "alertCondition": ""
     },
     "templates": {
       "misconfigured-badge-text": "",
       "misconfigured-warning": "",
       "misconfigured-warning-details": ""
+    },
+    "threshold": {
+      "to": ""
     }
   },
   "annotations": {
@@ -447,11 +448,17 @@
     }
   },
   "combobox": {
+    "async": {
+      "error": ""
+    },
     "clear": {
       "title": ""
     },
     "custom-value": {
-      "create": ""
+      "label": ""
+    },
+    "options": {
+      "no-found": ""
     }
   },
   "command-palette": {
@@ -614,8 +621,7 @@
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
-      "visualization": "Visualisierung",
-      "widget": "Widget"
+      "visualization": "Visualisierung"
     },
     "alert-rules-drawer": {
       "redirect-link": "Liste in Grafana Alerting",
@@ -628,9 +634,6 @@
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
       "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
-      "add-widget-body": "Listen, Markdowns und andere Widgets erstellen",
-      "add-widget-button": "Widget hinzufügen",
-      "add-widget-header": "Widget hinzufügen",
       "import-a-dashboard-body": "",
       "import-a-dashboard-header": "Dashboard importieren",
       "import-dashboard-button": "Dashboard importieren"
@@ -1049,7 +1052,15 @@
     "breakdown": {
       "clearFilter": "",
       "labelSelect": "",
-      "noMatchingValue": ""
+      "noMatchingValue": "",
+      "sortBy": ""
+    },
+    "related-logs": {
+      "docsLink": "",
+      "openExploreLogs": "",
+      "relatedLogsUnavailableAfterDocsLink": "",
+      "relatedLogsUnavailableBeforeDocsLink": "",
+      "warnExperimentalFeature": ""
     },
     "viewBy": ""
   },
@@ -1448,6 +1459,14 @@
     },
     "forgot-password": "Passwort vergessen?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Passwort",
       "password-placeholder": "",
       "password-required": "Passwort ist erforderlich",
@@ -1455,7 +1474,9 @@
       "submit-loading-label": "Einloggen...",
       "username-label": "E-Mail oder Benutzername",
       "username-placeholder": "",
-      "username-required": "E-Mail oder Benutzername ist erforderlich"
+      "username-required": "E-Mail oder Benutzername ist erforderlich",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Mit {{serviceName}} anmelden"
@@ -1552,6 +1573,7 @@
       "title": ""
     },
     "migrated-counts": {
+      "alert_rules": "",
       "contact_points": "",
       "dashboards": "",
       "datasources": "",
@@ -1616,6 +1638,7 @@
       "dismiss-button": "",
       "error-messages": {
         "dashboard-already-managed": "",
+        "datasource-already-managed": "",
         "datasource-invalid-url": "",
         "datasource-name-conflict": "",
         "folder-name-conflict": "",
@@ -1652,6 +1675,7 @@
       "unknown-datasource-type": ""
     },
     "resource-type": {
+      "alert_rule": "",
       "contact_point": "",
       "dashboard": "Dashboard",
       "datasource": "Datenquelle",
@@ -2165,6 +2189,12 @@
         "name-header": "",
         "update-header": "",
         "update-status-text": ""
+      },
+      "versions": {
+        "confirmation-text-1": "",
+        "confirmation-text-2": "",
+        "downgrade-confirm": "",
+        "downgrade-title": ""
       }
     },
     "details": {
@@ -2174,6 +2204,7 @@
         "downloads": "",
         "from": "",
         "installedVersion": "",
+        "lastCommitDate": "",
         "latestVersion": "",
         "links": "",
         "reportAbuse": "",
@@ -2883,7 +2914,18 @@
   },
   "trails": {
     "bookmarks": {
-      "empty-state": ""
+      "or-view-bookmarks": ""
+    },
+    "card": {
+      "data-source": "",
+      "date-created": "",
+      "metric": ""
+    },
+    "home": {
+      "learn-more": "",
+      "lets-start": "",
+      "start-your-metrics-exploration": "",
+      "subtitle": ""
     },
     "metric-overview": {
       "description-label": "",
@@ -2897,6 +2939,9 @@
     "metric-select": {
       "filter-by": "",
       "otel-switch": ""
+    },
+    "recent-metrics": {
+      "or-view-a-recent-exploration": ""
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "",

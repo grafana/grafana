@@ -28,7 +28,6 @@ import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -40,6 +39,7 @@ import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
+import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
@@ -301,6 +301,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   titleItems.push(new PanelNotices());
 
+  const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
+
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
@@ -311,7 +313,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     pluginVersion: panel.pluginVersion,
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
-    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    hoverHeader: !panel.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,

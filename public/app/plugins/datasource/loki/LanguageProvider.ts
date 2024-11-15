@@ -1,8 +1,8 @@
 import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
 
-import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange, ScopedVars } from '@grafana/data';
+import { BackendSrvRequest, config } from '@grafana/runtime';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
 import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
@@ -31,7 +31,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
   private labelsCache = new LRUCache<string, string[]>({ max: 10 });
+  private detectedFieldValuesCache = new LRUCache<string, string[]>({ max: 10 });
   private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
+  private detectedLabelValuesPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -42,11 +44,20 @@ export default class LokiLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
-  request = async (url: string, params?: Record<string, string | number>) => {
+  request = async (
+    url: string,
+    params?: Record<string, string | number>,
+    throwError?: boolean,
+    requestOptions?: Partial<BackendSrvRequest>
+  ) => {
     try {
-      return await this.datasource.metadataRequest(url, params);
+      return await this.datasource.metadataRequest(url, params, requestOptions);
     } catch (error) {
-      console.error(error);
+      if (throwError) {
+        throw error;
+      } else {
+        console.error(error);
+      }
     }
 
     return undefined;
@@ -236,6 +247,73 @@ export default class LokiLanguageProvider extends LanguageProvider {
   // Round nanoseconds epoch to nearest 5 minute interval
   private roundTime(nanoseconds: number): number {
     return nanoseconds ? Math.floor(nanoseconds / NS_IN_MS / 1000 / 60 / 5) : 0;
+  }
+
+  async fetchDetectedLabelValues(
+    labelName: string,
+    queryOptions?: {
+      expr?: string;
+      timeRange?: TimeRange;
+      limit?: number;
+      scopedVars?: ScopedVars;
+      throwError?: boolean;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[] | Error> {
+    const label = encodeURIComponent(this.datasource.interpolateString(labelName));
+
+    const interpolatedExpr =
+      queryOptions?.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
+        : undefined;
+
+    const url = `detected_field/${label}/values`;
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end, limit: queryOptions?.limit ?? 1000 };
+    let paramCacheKey = label;
+
+    if (interpolatedExpr) {
+      params.query = interpolatedExpr;
+      paramCacheKey += interpolatedExpr;
+    }
+
+    const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
+
+    // Values in cache, return
+    const labelValues = this.detectedFieldValuesCache.get(cacheKey);
+    if (labelValues) {
+      return labelValues;
+    }
+
+    // Promise in cache, return
+    let labelValuesPromise = this.detectedLabelValuesPromisesCache.get(cacheKey);
+    if (labelValuesPromise) {
+      return labelValuesPromise;
+    }
+
+    labelValuesPromise = new Promise(async (resolve, reject) => {
+      try {
+        const data = await this.request(url, params, queryOptions?.throwError, requestOptions);
+        if (Array.isArray(data)) {
+          const labelValues = data.slice().sort();
+          this.detectedFieldValuesCache.set(cacheKey, labelValues);
+          this.detectedLabelValuesPromisesCache.delete(cacheKey);
+          resolve(labelValues);
+        }
+      } catch (error) {
+        if (queryOptions?.throwError) {
+          reject(error);
+        } else {
+          console.error(error);
+          resolve([]);
+        }
+      }
+    });
+    this.detectedLabelValuesPromisesCache.set(cacheKey, labelValuesPromise);
+
+    return labelValuesPromise;
   }
 
   /**

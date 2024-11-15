@@ -14,14 +14,13 @@ import (
 func testCheck(t *testing.T, server *Server) {
 	newRead := func(subject, group, resource, folder, name string) *authzv1.CheckRequest {
 		return &authzv1.CheckRequest{
-			// FIXME: namespace should map to store
-			// Namespace: storeID,
-			Subject:  subject,
-			Verb:     utils.VerbGet,
-			Group:    group,
-			Resource: resource,
-			Name:     name,
-			Folder:   folder,
+			Namespace: "default",
+			Subject:   subject,
+			Verb:      utils.VerbGet,
+			Group:     group,
+			Resource:  resource,
+			Name:      name,
+			Folder:    folder,
 		}
 	}
 
@@ -92,5 +91,19 @@ func testCheck(t *testing.T, server *Server) {
 		res, err = server.Check(context.Background(), newRead("user:7", folderGroup, folderResource, "", "10"))
 		require.NoError(t, err)
 		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("user:8 should be able to read all resoruce:dashboard.grafana.app/dashboar in folder 6 through folder 5", func(t *testing.T) {
+		res, err := server.Check(context.Background(), newRead("user:8", dashboardGroup, dashboardResource, "6", "10"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:8", dashboardGroup, dashboardResource, "5", "11"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(context.Background(), newRead("user:8", folderGroup, folderResource, "4", "12"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
 	})
 }

@@ -17,7 +17,6 @@ import {
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
-
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
     getLocalPlugins(),
     getPluginVersions(id, isPublished),
@@ -36,6 +35,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     versions,
     statusContext: remote?.statusContext ?? '',
     iam: remote?.json?.iam,
+    lastCommitDate: remote?.lastCommitDate,
     changelog: remote?.changelog || localChangelog,
   };
 }
@@ -156,13 +156,19 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
   return provisionedPlugins.map((plugin) => ({ slug: plugin.type }));
 }
 
-export async function installPlugin(id: string) {
+export async function installPlugin(id: string, version?: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, undefined, {
-    // Error is displayed in the page
-    showErrorAlert: false,
-  });
+  return await getBackendSrv().post(
+    `${API_ROOT}/${id}/install`,
+    {
+      version,
+    },
+    {
+      // Error is displayed in the page
+      showErrorAlert: false,
+    }
+  );
 }
 
 export async function uninstallPlugin(id: string) {

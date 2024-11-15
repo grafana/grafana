@@ -1,5 +1,8 @@
+import 'core-js/stable/structured-clone';
+import { MemoryHistoryBuildOptions } from 'history';
+import { ComponentProps, ReactNode } from 'react';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -8,6 +11,7 @@ import {
   setOnCallFeatures,
   setOnCallIntegrations,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
+import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -15,11 +19,20 @@ import { AccessControlAction } from 'app/types';
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
 import { captureRequests } from '../../../mocks/server/events';
-import { renderWithProvider } from '../../contact-points/ContactPoints.test';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
-import 'core-js/stable/structured-clone';
+const renderWithProvider = (
+  children: ReactNode,
+  historyOptions?: MemoryHistoryBuildOptions,
+  providerProps?: Partial<ComponentProps<typeof AlertmanagerProvider>>
+) =>
+  render(
+    <AlertmanagerProvider accessType="notification" {...providerProps}>
+      {children}
+    </AlertmanagerProvider>,
+    { historyOptions }
+  );
 
 setupMswServer();
 

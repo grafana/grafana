@@ -14,13 +14,16 @@ jest.mock('uuid', () => ({
 
 const originalLog = console.log;
 const originalWarn = console.warn;
+const originalErr = console.error;
 beforeEach(() => {
-  //jest.spyOn(console, 'log').mockImplementation(() => {});
+  jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterAll(() => {
   console.log = originalLog;
   console.warn = originalWarn;
+  console.error = originalErr;
 });
 
 describe('runShardSplitQuery()', () => {
@@ -81,7 +84,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -94,7 +97,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_2_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -107,7 +110,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_4_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -119,7 +122,11 @@ describe('runShardSplitQuery()', () => {
         range: expect.any(Object),
         requestId: 'TEST_shard_0_5_1',
         targets: [
-          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
         ],
       });
     });
@@ -145,7 +152,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"}[1m])',
+            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -178,6 +185,16 @@ describe('runShardSplitQuery()', () => {
     });
   });
 
+  test('Failed requests have loading state Error', async () => {
+    jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'parse error' }, data: [] }));
+    await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
+      expect(response[0].state).toBe(LoadingState.Error);
+    });
+  });
+
   test('Does not retry on other errors', async () => {
     jest.mocked(datasource.languageProvider.fetchLabelValues).mockResolvedValue(['1']);
     jest
@@ -188,7 +205,7 @@ describe('runShardSplitQuery()', () => {
       callback();
     });
     await expect(runShardSplitQuery(datasource, request)).toEmitValuesWith((response: DataQueryResponse[]) => {
-      expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+      expect(datasource.runQuery).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -364,7 +381,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -378,7 +395,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_4',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -392,7 +409,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -406,7 +423,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_5_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -420,7 +437,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_8_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -434,7 +451,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_10_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"}[1m])',
+            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -447,7 +464,11 @@ describe('runShardSplitQuery()', () => {
         range: expect.any(Object),
         requestId: 'TEST_shard_0_11_1',
         targets: [
-          { expr: 'count_over_time({a="b", __stream_shard__=""}[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
+          {
+            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            refId: 'A',
+            direction: LokiQueryDirection.Scan,
+          },
         ],
       });
     });

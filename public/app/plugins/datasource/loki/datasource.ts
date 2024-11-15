@@ -541,7 +541,12 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data || [];
+
+    // detected_field/${label}/values has different structure then other metadata responses
+    if (!res.data && res.values) {
+      return res.values ?? [];
+    }
+    return res.data ?? [];
   }
 
   /**
@@ -1037,8 +1042,12 @@ export class LokiDatasource
     const annotations: AnnotationEvent[] = [];
     const splitKeys: string[] = tagKeys.split(',').filter((v: string) => v !== '');
 
+    const isDataplaneLog = config.featureToggles.lokiLogsDataplane;
+
     for (const frame of data) {
-      const view = new DataFrameView<{ Time: string; Line: string; labels: Labels }>(frame);
+      const view = new DataFrameView<{ timestamp: string; Time: string; body: string; Line: string; labels: Labels }>(
+        frame
+      );
 
       view.forEach((row) => {
         const { labels } = row;
@@ -1058,15 +1067,17 @@ export class LokiDatasource
 
             return true;
           })
-          .map(([key, val]) => val); // keep only the label-value
+          .map(([_, val]) => val); // keep only the label-value
 
         // remove duplicates
         const tags = Array.from(new Set(maybeDuplicatedTags));
 
+        const logLine = isDataplaneLog ? row.body : row.Line;
+
         annotations.push({
-          time: new Date(row.Time).valueOf(),
+          time: isDataplaneLog ? new Date(row.timestamp).valueOf() : new Date(row.Time).valueOf(),
           title: renderLegendFormat(titleFormat, labels),
-          text: renderLegendFormat(textFormat, labels) || row.Line,
+          text: renderLegendFormat(textFormat, labels) || logLine,
           tags,
         });
       });

@@ -271,6 +271,8 @@ type Cfg struct {
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
 
+	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
+
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
 	SSOSettingsConfigurableProviders map[string]bool
@@ -291,7 +293,7 @@ type Cfg struct {
 	DataProxyUserAgent             string
 
 	// DistributedCache
-	RemoteCacheOptions *RemoteCacheOptions
+	RemoteCacheOptions *RemoteCacheSettings
 
 	ViewersCanEdit  bool
 	EditorsCanAdmin bool
@@ -382,6 +384,7 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -531,8 +534,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
-	IndexPath      string
+	UnifiedStorage    map[string]UnifiedStorageConfig
+	IndexPath         string
+	IndexWorkers      int
+	IndexMaxBatchSize int
+	IndexListLimit    int
 }
 
 type UnifiedStorageConfig struct {
@@ -1158,6 +1164,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1243,6 +1250,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
+	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1291,19 +1299,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
 
-	cacheServer := iniFile.Section("remote_cache")
-	dbName := valueAsString(cacheServer, "type", "database")
-	connStr := valueAsString(cacheServer, "connstr", "")
-	prefix := valueAsString(cacheServer, "prefix", "")
-	encryption := cacheServer.Key("encryption").MustBool(false)
-
-	cfg.RemoteCacheOptions = &RemoteCacheOptions{
-		Name:       dbName,
-		ConnStr:    connStr,
-		Prefix:     prefix,
-		Encryption: encryption,
-	}
-
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
@@ -1317,6 +1312,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
+	cfg.readRemoteCacheSettings()
 	cfg.readDateFormats()
 	cfg.readGrafanaJavascriptAgentConfig()
 
@@ -1341,20 +1337,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
-	cfg.setIndexPath()
 
 	return nil
 }
 
 func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
 	return section.Key(keyName).MustString(defaultValue)
-}
-
-type RemoteCacheOptions struct {
-	Name       string
-	ConnStr    string
-	Prefix     string
-	Encryption bool
 }
 
 func (cfg *Cfg) readSAMLConfig() {

@@ -20,7 +20,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // @grafana/grafana-developer-enablement-squad
 	github.com/aws/aws-sdk-go v1.55.5 // @grafana/aws-datasources
 	github.com/docker/docker v27.3.1+incompatible // @grafana/grafana-developer-enablement-squad
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-developer-enablement-squad
+	github.com/drone/drone-cli v1.8.0 // @grafana/grafana-developer-enablement-squad
 	github.com/gogo/protobuf v1.3.2 // indirect; @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-developer-enablement-squad
@@ -36,33 +36,32 @@ require (
 	go.opentelemetry.io/otel/sdk v1.31.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.31.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/crypto v0.28.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.20.0 // @grafana/grafana-backend-group
+	golang.org/x/mod v0.21.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.30.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.19.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/tools v0.24.0 // indirect; @grafana/grafana-as-code
-	google.golang.org/api v0.191.0 // @grafana/grafana-backend-group
+	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
 	google.golang.org/grpc v1.67.1 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.1 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
 
 require (
-	cloud.google.com/go v0.115.0 // indirect
-	cloud.google.com/go/auth v0.8.1 // indirect
+	cloud.google.com/go v0.115.1 // indirect
+	cloud.google.com/go/auth v0.9.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.4 // indirect
 	cloud.google.com/go/compute/metadata v0.5.0 // indirect
-	cloud.google.com/go/iam v1.1.13 // indirect
-	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/bmatcuk/doublestar v1.1.1 // indirect
+	cloud.google.com/go/iam v1.2.0 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/bmatcuk/doublestar v1.3.4 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/drone-runners/drone-runner-docker v1.8.2 // indirect
+	github.com/drone-runners/drone-runner-docker v1.8.3 // indirect
 	github.com/drone/drone-go v1.7.1 // indirect
 	github.com/drone/envsubst v1.0.3 // indirect
 	github.com/drone/runner-go v1.12.0 // indirect
@@ -85,7 +84,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.31.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.26.0 // indirect
-	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect; @grafana/grafana-backend-group
+	google.golang.org/genproto v0.0.0-20240820151423-278611b39280 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -94,7 +93,7 @@ require (
 require dagger.io/dagger v0.11.8-rc.2
 
 require (
-	cloud.google.com/go/longrunning v0.5.12 // indirect
+	cloud.google.com/go/longrunning v0.6.0 // indirect
 	github.com/99designs/gqlgen v0.17.44 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Khan/genqlient v0.7.0 // indirect
@@ -111,7 +110,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.4.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.31.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
 	go.opentelemetry.io/otel/log v0.4.0 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.4.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
