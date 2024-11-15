@@ -83,7 +83,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
-	if res.Status%100 != 2 {
+	if res.Status/100 != 2 {
 		status := backend.ErrorSourceFromHTTPStatus(res.Status)
 		errWithSource := errorsource.SourceError(status, fmt.Errorf("unexpected status code %d", res.Status), false)
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, errWithSource), nil
