@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -64,7 +63,7 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstruct
 	return obj, nil
 }
 
-func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *folder.Folder {
+func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*folder.Folder, string) {
 	// #TODO reduce duplication of the different conversion functions
 	spec := item.Object["spec"].(map[string]any)
 	uid := item.GetName()
@@ -72,22 +71,24 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 
 	meta, err := utils.MetaAccessor(&item)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 
 	id, err := getLegacyID(meta)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 
 	created, err := getCreated(meta)
 	if err != nil {
-		return nil
+		return nil, ""
 	}
 
 	// avoid panic
 	var createdTime time.Time
 	if created != nil {
+		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
+		// which includes a part that represents a fraction of a second. Format should be "2024-09-12T15:37:41.09466+02:00"
 		createdTime = created.Local()
 	}
 
@@ -97,10 +98,11 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		ID:        id,
 		ParentUID: meta.GetFolder(),
 		// #TODO add created by field if necessary
-		// CreatedBy: meta.GetCreatedBy(),
-		// UpdatedBy: meta.GetCreatedBy(),
-		URL:     getURL(meta, title),
+		URL: getURL(meta, title),
+		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: createdTime,
+		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
+		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
 		Updated: createdTime,
 		OrgID:   orgID,
 
@@ -114,57 +116,10 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) *fo
 		// nolint:staticcheck
 		FullpathUIDs: meta.GetFullPathUIDs(),
 	}
-	return f
-}
-
-func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder, error) {
-	spec := item.Object["spec"].(map[string]any)
-	uid := item.GetName()
-	title := spec["title"].(string)
-
-	meta, err := utils.MetaAccessor(&item)
-	if err != nil {
-		return nil, err
-	}
-
-	id, err := getLegacyID(meta)
-	if err != nil {
-		return nil, err
-	}
-
-	created, err := getCreated(meta)
-	if err != nil {
-		return nil, err
-	}
-
-	// avoid panic
-	var createdTime time.Time
-	if created != nil {
-		// #TODO Fix this time format. The legacy time format seems to be along the lines of time.Now()
-		// which includes a part that represents a fraction of a second.
-		createdTime = created.Local()
-	}
-
-	dto := &dtos.Folder{
-		UID:       uid,
-		Title:     title,
-		ID:        id,
-		ParentUID: meta.GetFolder(),
-		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
-		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
-		// Could convert meta.GetCreatedBy() return value to a struct--id and name
-		CreatedBy: meta.GetCreatedBy(),
-		UpdatedBy: meta.GetCreatedBy(),
-		URL:       getURL(meta, title),
-		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: createdTime,
-		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
-		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: createdTime,
-
-		// #TODO figure out about adding version, parents, orgID fields
-	}
-	return dto, nil
+	// CreatedBy needs to be returned separately because it's the user UID (string) but
+	// folder.Folder expects user ID (int64).
+	return f, meta.GetCreatedBy()
+	// #TODO figure out about adding version, parents, orgID fields
 }
 
 func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
@@ -198,6 +153,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	// #TODO: turns out these get overwritten by Unified Storage (see pkg/storage/unified/apistore/prepare.go)
 	// We're going to have to align with that. For now we do need the user ID because the folder type stores it
 	// as the only user identifier
+
 	if v.CreatedByUID != "" {
 		meta.SetCreatedBy(v.UpdatedByUID)
 	}
