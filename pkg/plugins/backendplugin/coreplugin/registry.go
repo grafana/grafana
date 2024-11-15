@@ -186,8 +186,9 @@ func (l *logWrapper) Level() sdklog.Level {
 }
 
 func (l *logWrapper) With(args ...any) sdklog.Logger {
-	l.logger = l.logger.New(args...)
-	return l
+	return &logWrapper{
+		logger: l.logger.New(args...),
+	}
 }
 
 func (l *logWrapper) FromContext(ctx context.Context) sdklog.Logger {
