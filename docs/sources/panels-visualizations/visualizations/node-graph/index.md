@@ -79,17 +79,21 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Node graph options
+### Node graph options
 
 Use the following options to refine your node graph visualization.
 
 - **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
 
-## Nodes options
+### Nodes options
 
 The **Nodes** options section provides configurations for node behaviors.
 
@@ -101,12 +105,22 @@ The **Nodes** options section provides configurations for node behaviors.
 Defining arc sections overrides the automatic detection of `arc__*` and `color` fields described in the **Optional fields** section of [Nodes data frame structure](#nodes-data-frame-structure).
 {{< /admonition >}}
 
-## Edges options
+### Edges options
 
 The **Edges** options section provides configurations for node edges behaviors.
 
 - **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
 - **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
+
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+In node graphs, some data fields may have pre-configured data links. To add a different data link in those cases, use a [field override](#field-overrides).
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Data requirements
 
