@@ -13,6 +13,8 @@ import (
 type Installer interface {
 	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
+	// Add adds a new plugin from a custom URL.
+	AddFromURL(ctx context.Context, pluginID, version, url string, opts CompatOpts) error
 	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID, version string) error
 }

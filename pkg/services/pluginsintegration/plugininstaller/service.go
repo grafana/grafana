@@ -162,7 +162,12 @@ func (s *Service) installPlugins(ctx context.Context) error {
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		start := time.Now()
 		ctx = repo.WithRequestOrigin(ctx, "preinstall")
-		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
+		var err error
+		if installPlugin.URL != "" {
+			err = s.pluginInstaller.AddFromURL(ctx, installPlugin.ID, installPlugin.Version, installPlugin.URL, compatOpts)
+		} else {
+			err = s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
+		}
 		if err != nil {
 			var dupeErr plugins.DuplicateError
 			if errors.As(err, &dupeErr) {

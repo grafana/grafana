@@ -51,7 +51,7 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 	}
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+func (m *PluginInstaller) addWithOptionalURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
 	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
 		return err
@@ -65,7 +65,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		m.installing.Delete(pluginID)
 	}()
 
-	archive, err := m.install(ctx, pluginID, version, compatOpts)
+	archive, err := m.install(ctx, pluginID, version, url, compatOpts)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,15 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
+	return m.addWithOptionalURL(ctx, pluginID, version, "", opts)
+}
+
+func (m *PluginInstaller) AddFromURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
+	return m.addWithOptionalURL(ctx, pluginID, version, url, opts)
+}
+
+func (m *PluginInstaller) install(ctx context.Context, pluginID, version, url string, compatOpts repo.CompatOpts) (*storage.ExtractedPluginArchive, error) {
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
@@ -106,45 +114,64 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 			}
 		}
 
-		// get plugin update information to confirm if target update is possible
-		pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
-		if err != nil {
-			return nil, err
-		}
+		if url != "" {
+			m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "url", url)
 
-		m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
-
-		// if existing plugin version is the same as the target update version
-		if pluginArchiveInfo.Version == plugin.Info.Version {
-			return nil, plugins.DuplicateError{
-				PluginID: plugin.ID,
+			// remove existing installation of plugin
+			err := m.Remove(ctx, plugin.ID, plugin.Info.Version)
+			if err != nil {
+				return nil, err
 			}
-		}
 
-		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
-			return nil, fmt.Errorf("could not determine update options for %s", pluginID)
-		}
-
-		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
-		if err != nil {
-			return nil, err
-		}
-
-		if pluginArchiveInfo.URL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
+			// get plugin update information to confirm if target update is possible
+			pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 			if err != nil {
 				return nil, err
+			}
+
+			m.log.Info("Updating plugin", "pluginId", pluginID, "from", plugin.Info.Version, "to", pluginArchiveInfo.Version)
+
+			// if existing plugin version is the same as the target update version
+			if pluginArchiveInfo.Version == plugin.Info.Version {
+				return nil, plugins.DuplicateError{
+					PluginID: plugin.ID,
+				}
+			}
+
+			if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
+				return nil, fmt.Errorf("could not determine update options for %s", pluginID)
+			}
+
+			// remove existing installation of plugin
+			err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
+			if err != nil {
+				return nil, err
+			}
+
+			if pluginArchiveInfo.URL != "" {
+				pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	} else {
 		var err error
-		pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		if url != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
+		} else {
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
+		}
 		if err != nil {
 			return nil, err
 		}

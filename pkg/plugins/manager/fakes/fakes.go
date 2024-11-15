@@ -33,6 +33,11 @@ func (i *FakePluginInstaller) Add(ctx context.Context, pluginID, version string,
 	return nil
 }
 
+func (i *FakePluginInstaller) AddFromURL(ctx context.Context, pluginID, version, url string, opts plugins.CompatOpts) error {
+	// TBD
+	return nil
+}
+
 func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
 	if i.RemoveFunc != nil {
 		return i.RemoveFunc(ctx, pluginID, version)
