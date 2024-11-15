@@ -70,6 +70,8 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 
 		for i, val := range row {
 			switch v := val.(type) {
+			case int8:
+				frame.Fields[i].Append(int64(v))
 			case int64:
 				frame.Fields[i].Append(v)
 			case float64:
@@ -102,9 +104,6 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 		))
 
 	ctx := gomysql.NewEmptyContext()
-
-	// TODO - stop overriding the query
-	query = `SELECT 'sam' AS 'name', 40 AS 'age';`
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
