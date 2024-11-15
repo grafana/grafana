@@ -28,6 +28,7 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         dataFrames={memoizedGetNodeGraphDataFrames(data.series, options)}
         getLinks={getLinks}
         panelId={panelId}
+        zoomMode={options.zoomMode}
       />
     </div>
   );

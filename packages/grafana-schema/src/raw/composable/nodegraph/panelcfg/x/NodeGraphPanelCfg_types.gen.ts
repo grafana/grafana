@@ -21,6 +21,11 @@ export interface ArcOption {
   field?: string;
 }
 
+export enum ZoomMode {
+  Cooperative = 'cooperative',
+  Greedy = 'greedy',
+}
+
 export interface Options {
   edges?: {
     /**
@@ -46,4 +51,8 @@ export interface Options {
      */
     arcs?: Array<ArcOption>;
   };
+  /**
+   * How to handle zoom/scroll events in the node graph
+   */
+  zoomMode?: ZoomMode;
 }
