@@ -41,17 +41,19 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
   if (isComplexSearch) {
     // for complex searches, prioritize performance by using substring matching
     const matches: string[] = [];
+    const lowerTerms = terms.map((term) => term.toLowerCase());
 
-    for (const metric of metricNames) {
+    for (let i = 0; i < metricNames.length; i++) {
+      const metric = metricNames[i];
       const lowercaseMetric = metric.toLowerCase();
-      if (terms.every((term) => lowercaseMetric.includes(term))) {
+
+      if (lowerTerms.every((term) => lowercaseMetric.includes(term))) {
         matches.push(metric);
-      }
-      if (matches.length > limit) {
-        break;
+        if (matches.length >= limit) {
+          break;
+        }
       }
     }
-
     return matches;
   }
 
