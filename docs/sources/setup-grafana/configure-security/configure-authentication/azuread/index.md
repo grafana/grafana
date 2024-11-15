@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Azure AD OAuth2
-title: Configure Azure AD OAuth2 authentication
+menuTitle: Azure AD/Entra ID OAuth
+title: Configure Azure AD/Entra ID OAuth authentication
 weight: 800
 ---
 
-# Configure Azure AD OAuth2 authentication
+# Configure Azure AD/Entra ID OAuth authentication
 
 The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
@@ -27,7 +27,7 @@ If Users use the same email address in Microsoft Entra ID that they use with oth
 
 ## Create the Microsoft Entra ID application
 
-To enable the Azure AD OAuth2, register your application with Entra ID.
+To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
 1. Log in to [Azure Portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
 
@@ -181,7 +181,7 @@ Ensure that you have followed the steps in [Create the Microsoft Entra ID applic
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Azure AD/Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
