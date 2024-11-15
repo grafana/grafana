@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { forwardRef, HTMLProps, ReactNode } from 'react';
+import { forwardRef, HTMLProps, ReactNode, useContext } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,6 +7,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
 import { Spinner } from '../Spinner/Spinner';
+
+import { AutoSizeInputContext } from './AutoSizeInputContext';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -32,7 +34,17 @@ interface StyleDeps {
 }
 
 export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
+  const {
+    className,
+    addonAfter,
+    addonBefore,
+    prefix,
+    suffix: suffixProp,
+    invalid,
+    loading,
+    width = 0,
+    ...restProps
+  } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -41,13 +53,28 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
   const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
+  // When AutoSizeInput is used with a suffix/prefix, the text is clipped because the suffix take up some of the
+  // specified space. This is because speci
+
+  // Specifying a width on Input controls the external size of the input, which is taken up by the text input itself,
+  // and suffix and prefix.
+  // However AutoSizeInput wants to pass in a width to control the size of the text input itself, but suffix/prefix
+  // eats up that space and makes the text clip
+  // To fix this, we have private context that tells Input when it's being used in an AutoSizeInput and increases
+  // the width by the size of the suffix/prefix
+  const isInAutoSizeInput = useContext(AutoSizeInputContext);
+  const accessoriesWidth = (prefixRect.width || 0) + (suffixRect.width || 0);
+  const finalWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : width;
+
   const theme = useTheme2();
-  const styles = getInputStyles({ theme, invalid: !!invalid, width });
+
+  const styles = getInputStyles({ theme, invalid: !!invalid, width: finalWidth });
+
+  const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
   return (
-    <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
+    <div className={cx(styles.wrapper, className)} data-testid="input-wrapper">
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
-
       <div className={styles.inputWrapper}>
         {prefix && (
           <div className={styles.prefix} ref={prefixRef}>
@@ -65,14 +92,12 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
           }}
         />
 
-        {(suffix || loading) && (
+        {suffix && (
           <div className={styles.suffix} ref={suffixRef}>
-            {loading && <Spinner className={styles.loadingIndicator} inline={true} />}
             {suffix}
           </div>
         )}
       </div>
-
       {!!addonAfter && <div className={styles.addon}>{addonAfter}</div>}
     </div>
   );
