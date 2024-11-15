@@ -30,6 +30,7 @@ type StarDashboardCommand struct {
 }
 
 func (cmd *StarDashboardCommand) Validate() error {
+	// nolint:staticcheck
 	if (cmd.DashboardID == 0 && cmd.DashboardUID == "" && cmd.OrgID == 0) || cmd.UserID == 0 {
 		return ErrCommandValidationFailed
 	}
