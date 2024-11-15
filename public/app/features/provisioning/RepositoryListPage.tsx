@@ -42,7 +42,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
   return (
     <Stack direction={'column'} gap={3}>
       <Stack gap={2}>
-        <FilterInput placeholder="Search by name" autoFocus={true} value={query} onChange={setQuery} />
+        <FilterInput placeholder="Search" value={query} onChange={setQuery} />
         <LinkButton href={NEW_URL} variant="primary" icon={'plus'}>
           Add repository config
         </LinkButton>
@@ -57,10 +57,10 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
                   <Card.Meta>{item.spec.type}</Card.Meta>
                 </Stack>
                 <Stack>
-                  <LinkButton variant="secondary" href={`/provisioning/edit/${item.metadata.name}`}>
+                  <LinkButton variant="secondary" href={`/provisioning/edit/${item.metadata.name}`} disabled>
                     Edit
                   </LinkButton>
-                  <LinkButton variant="destructive" href={`/provisioning/delete/${item.metadata.name}`}>
+                  <LinkButton variant="destructive" href={`/provisioning/delete/${item.metadata.name}`} disabled>
                     Delete
                   </LinkButton>
                 </Stack>

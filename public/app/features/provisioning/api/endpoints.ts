@@ -59,12 +59,6 @@ const injectedRtkApi = api.injectEndpoints({
       }),
       invalidatesTags: ['RepositoryList'],
     }),
-    deleteCollectionRepository: build.mutation<void, RequestArg>({
-      query: () => ({
-        url: BASE_PATH,
-        method: 'DELETE',
-      }),
-    }),
   }),
   overrideExisting: false,
 });

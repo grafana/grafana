@@ -7,8 +7,7 @@ import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Field, Combobox, SecretInput, Input, Button, Switch } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
-
-import { FolderPicker } from '../../core/components/Select/FolderPicker';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { useCreateRepositoryMutation } from './api';
 import { RepositoryFormData } from './types';
@@ -27,17 +26,7 @@ export function ConfigForm() {
     setValue,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({
-    defaultValues: {
-      type: 'github',
-      token: '',
-      owner: '',
-      repository: '',
-      folder: '',
-      branchWorkflow: false,
-      generateDashboardPreviews: false,
-    },
-  });
+  } = useForm<RepositoryFormData>({ defaultValues: { type: 'github' } });
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const navigate = useNavigate();
   const watchType = watch('type');
