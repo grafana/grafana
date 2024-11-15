@@ -20,7 +20,7 @@ export function DataTrailsBookmarks({ onSelect, onDelete }: Props) {
   if (getTrailStore().bookmarks.length === 0) {
     return null;
   }
-  const bookmarks = getTrailStore().bookmarks;
+
   return (
     <>
       <div className={styles.horizontalLine} />
@@ -30,7 +30,7 @@ export function DataTrailsBookmarks({ onSelect, onDelete }: Props) {
         </div>
         <IconButton
           name={toggleBookmark ? 'angle-up' : 'angle-down'}
-          size="xxxl"
+          size="xl"
           aria-label="bookmarkCarrot"
           variant="secondary"
           onClick={() => setToggleBookmark(!toggleBookmark)}
