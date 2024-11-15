@@ -83,6 +83,12 @@ If a node lacks edge connections, it’s displayed on its own outside of the net
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+## Node graph options
+
+Use the following options to refine your node graph visualization.
+
+- **Zoom mode** - Choose how the node graph should handle zoom and scroll events.
+
 ## Nodes options
 
 The **Nodes** options section provides configurations for node behaviors.
