@@ -103,7 +103,7 @@ To browse for available plugins:
 
 ### Install a plugin
 
-To install a plugin you have multiple possibilities, the regular way is using Grafana UI.
+The most common way to install a plugin is through the Grafana UI, but alternative methods are also available.
 
 1. In Grafana, click **Administration > Plugins and data > Plugins** in the side navigation menu to view all plugins.
 1. Browse and find a plugin.
@@ -112,14 +112,14 @@ To install a plugin you have multiple possibilities, the regular way is using Gr
 
 There are also additional ways to install plugins depending on your setup.
 
-#### Install a plugin using grafana cli
+#### Install a plugin using Grafana CLI
 Grafana CLI allows you to install, upgrade, and manage your Grafana plugins using a command line. For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../../cli/#plugins-commands" >}}).
 
 
-#### Install a plugin from a zip file
-This way is usually used for plugins not distributed via plugins catalog or in environments without internet connection.
+#### Install a plugin from a ZIP file
+This method is typically used for plugins not available in the Plugin Catalog or in environments without internet access.
 
-Download the archive containing the plugin assets and install it by extracting the archive into  plugin directory. For example:
+Download the archive containing the plugin assets, and install it by extracting the archive into the plugin directory. For example:
 
 ```bash
 unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
@@ -128,16 +128,16 @@ unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
 The path to the plugin directory is defined in the configuration file. For more information, refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}).
 
 #### Install a plugin in air-gapped environment
-Plugin installation usually requires an internet connection, you can check which endpoints are being used on your instance when installing a plugin regularly and add them to allowlist of your instance.
+Plugin installation usually requires an internet connection. You can check which endpoints are used during the installation on your instance and add them to your instance’s allowlist.
 
-If this is not possible you can go via installing a plugin using [grafana cli](#install-a-plugin-using-grafana-cli) or as a [zip file](#install-a-plugin-from-a-zip-file).
+If this is not possible you can go via installing a plugin using [Grafana CLI](#install-a-plugin-using-grafana-cli) or as a [ZIP file](#install-a-plugin-from-a-zip-file).
 
 You can fetch any plugin from Grafana.com API following the download link referenced in the API.
 Here is an example based on `grafana-lokiexplore-app` plugins.
 
 1. Open `https://grafana.com/api/plugins/grafana-lokiexplore-app` and look for `links` section 
 1. Find a `download` url which looks something like `https://grafana.com/api/plugins/grafana-lokiexplore-app/versions/1.0.2/download`
-1. Using this URL you can fetch the plugin zip file that you can as described above.
+1. Use this URL to download the plugin ZIP file, which you can then install as described above.
 
 #### Install plugins using the Grafana Helm chart
 
@@ -152,7 +152,7 @@ plugins:
   - redis-datasource
 ```
 
-When the update is complete, you'll see a confirmation message that the installation was successful.
+When the update is complete, a confirmation message will indicate the installation was successful.
 
 ### Update a plugin
 
@@ -163,7 +163,7 @@ To update a plugin:
 1. Click the plugin's logo.
 1. Click **Update**.
 
-When the update is complete, you'll see a confirmation message that the update was successful.
+When the update is complete, a confirmation message will indicate the installation was successful.
 
 ### Uninstall a plugin
 
@@ -174,7 +174,7 @@ To uninstall a plugin:
 1. Click the **Installed** filter to show only installed plugins.
 1. Click **Uninstall**.
 
-When the update is complete, you'll see a confirmation message that the uninstall was successful.
+When the update is complete, a confirmation message will indicate the installation was successful.
 
 
 ## Plugin signatures
