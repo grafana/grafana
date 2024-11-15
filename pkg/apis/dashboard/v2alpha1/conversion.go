@@ -10,12 +10,15 @@ import (
 func Convert_v0alpha1_Unstructured_To_v2alpha1_DashboardSpec(in *common.Unstructured, out *DashboardSpec, s conversion.Scope) error {
 	out.Unstructured = *in
 
-	t := in.Object["title"]
+	t, ok := in.Object["title"]
+	if !ok {
+		return nil // skip setting the title if it's not in the unstructured object
+	}
+
 	title, ok := t.(string)
 	if !ok {
-		klog.V(5).Infof("dashboard v2alpha1 title field is not a string %s", t)
-		// do not force the title field
-		return nil
+		klog.V(5).Infof("unstructured dashboard title field is not a string %v", t)
+		return nil // skip setting the title if it's not a string in the unstructured object
 	}
 	out.Title = title
 
