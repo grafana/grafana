@@ -934,17 +934,18 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 	}
 
 	type testCase struct {
-		description    string
-		expectedCode   int
-		params         string
-		createFolders  []string
-		expectedOutput []dtos.FolderSearchHit
-		permissions    []resourcepermissions.SetResourcePermissionCommand
+		description         string
+		expectedCode        int
+		params              string
+		createFolders       []string
+		expectedOutput      []dtos.FolderSearchHit
+		permissions         []resourcepermissions.SetResourcePermissionCommand
+		requestToAnotherOrg bool
 	}
 
-	folderCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
+	folderReadAndCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
 		{
-			Actions:           []string{"folders:create"},
+			Actions:           []string{"folders:create", "folders:read"},
 			Resource:          "folders",
 			ResourceAttribute: "uid",
 			ResourceID:        "*",
@@ -968,7 +969,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 				dtos.FolderSearchHit{UID: "foo", Title: "Folder 1"},
 				dtos.FolderSearchHit{UID: "qux", Title: "Folder 3"},
 			},
-			permissions: folderCreatePermission,
+			permissions: folderReadAndCreatePermission,
 		},
 		{
 			description: "listing subfolders succeeds",
@@ -982,7 +983,32 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 			expectedOutput: []dtos.FolderSearchHit{
 				dtos.FolderSearchHit{UID: "bar", Title: "Folder 2", ParentUID: "foo"},
 			},
-			permissions: folderCreatePermission,
+			permissions: folderReadAndCreatePermission,
+		},
+		{
+			description: "listing subfolders for a parent that does not exists",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:         "?parentUid=notexists",
+			expectedCode:   http.StatusNotFound,
+			expectedOutput: []dtos.FolderSearchHit{},
+			permissions:    folderReadAndCreatePermission,
+		},
+		{
+			description: "listing folders at root level fails without the right permissions",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:              "?parentUid=notfound",
+			expectedCode:        http.StatusForbidden,
+			expectedOutput:      []dtos.FolderSearchHit{},
+			permissions:         folderReadAndCreatePermission,
+			requestToAnotherOrg: true,
 		},
 	}
 
@@ -1008,7 +1034,7 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 					},
 				})
 
-				userTest := helper.CreateUser("user", apis.Org1, org.RoleViewer, tc.permissions)
+				userTest := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
 
 				for _, f := range tc.createFolders {
 					client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -1036,23 +1062,28 @@ func TestFoldersGetAPIEndpointK8S(t *testing.T) {
 				), nil)
 				require.NoError(t, err)
 				req.Header.Set("Content-Type", "application/json")
+				if tc.requestToAnotherOrg {
+					req.Header.Set("x-grafana-org-id", "2")
+				}
 
 				resp, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
 				require.NotNil(t, resp)
 				require.Equal(t, tc.expectedCode, resp.StatusCode)
 
-				list := []dtos.FolderSearchHit{}
-				err = json.NewDecoder(resp.Body).Decode(&list)
-				require.NoError(t, err)
-				require.NoError(t, resp.Body.Close())
+				if tc.expectedCode == http.StatusOK {
+					list := []dtos.FolderSearchHit{}
+					err = json.NewDecoder(resp.Body).Decode(&list)
+					require.NoError(t, err)
+					require.NoError(t, resp.Body.Close())
 
-				// ignore IDs
-				for i := 0; i < len(list); i++ {
-					list[i].ID = 0
+					// ignore IDs
+					for i := 0; i < len(list); i++ {
+						list[i].ID = 0
+					}
+
+					require.ElementsMatch(t, tc.expectedOutput, list)
 				}
-
-				require.ElementsMatch(t, tc.expectedOutput, list)
 			})
 		}
 	}

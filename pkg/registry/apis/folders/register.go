@@ -189,8 +189,10 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
 	verb := attr.GetVerb()
 	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
-		return nil, errNoResource
+	if verb != utils.VerbList {
+		if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate) {
+			return nil, errNoResource
+		}
 	}
 
 	// require a user
@@ -214,6 +216,8 @@ func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorize
 		fallthrough
 	case utils.VerbDelete:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, scope)
+	case utils.VerbList:
+		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead)
 	default:
 		eval = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, scope)
 	}

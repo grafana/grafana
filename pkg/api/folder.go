@@ -704,6 +704,15 @@ func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 
+	// check that parent exists
+	if parentUid != "" {
+		_, err := client.Get(c.Req.Context(), c.Query("parentUid"), v1.GetOptions{})
+		if err != nil {
+			fk8s.writeError(c, err)
+			return
+		}
+	}
+
 	out, err := client.List(c.Req.Context(), v1.ListOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
