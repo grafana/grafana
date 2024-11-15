@@ -75,7 +75,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       if (layoutElement instanceof DashboardGridItem) {
-        console.log('AAA', this.state.isDirty, this._changesHaveBeenMade);
         layoutElement.editingCompleted(this.state.isDirty || this._changesHaveBeenMade);
       }
       if (deactivateParents) {
