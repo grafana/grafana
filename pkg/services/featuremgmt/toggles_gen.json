@@ -3088,12 +3088,15 @@
     {
       "metadata": {
         "name": "singleTopNav",
-        "resourceVersion": "1724861961030",
-        "creationTimestamp": "2024-08-29T08:48:32Z"
+        "resourceVersion": "1731664029942",
+        "creationTimestamp": "2024-08-29T08:48:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-15 09:47:09.942158 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Unifies the top search bar and breadcrumb bar into one",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }

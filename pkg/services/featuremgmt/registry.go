@@ -1448,7 +1448,7 @@ var (
 		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
