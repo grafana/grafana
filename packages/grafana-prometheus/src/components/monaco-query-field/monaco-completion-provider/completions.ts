@@ -22,6 +22,7 @@ type Completion = {
   triggerOnInsert?: boolean;
 };
 
+const metricNamesSearchSimple = new UFuzzy();
 const metricNamesSearch = new UFuzzy({ intraMode: 1 });
 
 interface MetricFilterOptions {
@@ -40,21 +41,7 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 
   if (isComplexSearch) {
     // for complex searches, prioritize performance by using substring matching
-    const matches: string[] = [];
-    const lowerTerms = terms.map((term) => term.toLowerCase());
-
-    for (let i = 0; i < metricNames.length; i++) {
-      const metric = metricNames[i];
-      const lowercaseMetric = metric.toLowerCase();
-
-      if (lowerTerms.every((term) => lowercaseMetric.includes(term))) {
-        matches.push(metric);
-        if (matches.length >= limit) {
-          break;
-        }
-      }
-    }
-    return matches;
+    return metricNamesSearchSimple.filter(metricNames, inputText)?.map((idx) => metricNames[idx]) ?? [];
   }
 
   // for simple searches, prioritize flexibility by using fuzzy search
