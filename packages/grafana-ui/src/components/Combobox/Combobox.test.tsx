@@ -1,5 +1,6 @@
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import { Combobox, ComboboxOption } from './Combobox';
 
@@ -113,6 +114,38 @@ describe('Combobox', () => {
 
     expect(onChangeHandler).toHaveBeenCalledWith(null);
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
+  });
+
+  it('should handle an option with an empty string as value', async () => {
+    const options = [
+      { label: 'Second option', value: '2' },
+      { label: 'Default', value: '' },
+    ];
+
+    const ControlledCombobox = () => {
+      const [value, setValue] = React.useState<string | null>(null);
+
+      return (
+        <Combobox
+          options={options}
+          value={value}
+          onChange={(opt) => {
+            setValue(opt.value);
+          }}
+        />
+      );
+    };
+
+    render(<ControlledCombobox />);
+
+    const input = screen.getByRole('combobox');
+    await userEvent.click(input);
+    await userEvent.click(screen.getByRole('option', { name: 'Default' }));
+    expect(screen.queryByDisplayValue('Default')).toBeInTheDocument();
+
+    await userEvent.click(input);
+
+    expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
   });
 
   describe('size support', () => {
