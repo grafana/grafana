@@ -340,11 +340,19 @@ You can configure organization-wide report settings in the **Settings** under **
 
 You can customize the branding options.
 
-Report branding:
+### Attachment settings
+
+#### PDF
 
 - **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 
-Email branding:
+- **Theme:** Theme of the PDF attached to the report. Defaults to **Light**. The selected theme is also applied to the PDFs generated when you click **Preview PDF** during report creation or select the **Export as PDF** option on a dashboard. If **Current** is selected, the PDF in the report will be in the Admin's instance theme, but the preview and exported PDFs will be in the user's instance theme.
+
+#### Embedded Image
+
+- **Theme:** Theme of the dashboard image embedded in the email. Defaults to **Dark**.
+
+### Email branding
 
 - **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. The maximum file size is 16 MB. Defaults to the Grafana logo.
 - **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
