@@ -8,6 +8,7 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneTimeRangeState,
+  SceneVariableSetState,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
@@ -19,16 +20,26 @@ type DataQueryWithExpr = DataQuery & { expr: string };
 const getPrometheusExploreUrl = ({
   queries,
   range,
+  variables,
 }: {
   queries?: DataQueryWithExpr[];
   range: SceneTimeRangeState;
+  variables: SceneVariableSetState;
 }): string => {
+  // In Mimir-per-group panels, replace `$rule_group` in the query expression with the actual rule group value
+  const ruleGroup = variables?.variables.find((v) => v.state.name === 'rule_group')?.getValue() || null;
+  if (ruleGroup !== null) {
+    queries = queries?.map((query) => {
+      return {
+        ...query,
+        expr: query.expr.replace('$rule_group', String(ruleGroup)),
+      };
+    });
+  }
   const urlState: ExploreUrlState = {
     datasource: (queries?.length && queries[0].datasource?.uid) || null,
     queries:
       queries?.map(({ expr, refId }, i) => {
-        console.warn('expr ', expr);
-        console.warn('refId ', refId);
         return { expr, refId };
       }) || [],
     range: toURLRange(range ? { from: range.from, to: range.to } : { from: 'now-1h', to: 'now' }),
@@ -42,11 +53,13 @@ const getPrometheusExploreUrl = ({
 const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuButton>) => {
   const data = sceneGraph.getData(model).useState();
   const timeRange = sceneGraph.getTimeRange(model).useState();
+  const variables = sceneGraph.getVariables(model).useState();
   const panel = model.state.panel;
 
   const url = getPrometheusExploreUrl({
     queries: data.data?.request?.targets as DataQueryWithExpr[],
     range: timeRange,
+    variables: variables,
   });
 
   const styles = useStyles2(getStyles);
