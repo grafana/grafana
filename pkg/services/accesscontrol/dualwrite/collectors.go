@@ -2,6 +2,7 @@ package dualwrite
 
 import (
 	"context"
+	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -152,7 +153,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			if len(p.UserUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
-				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, "member")
+				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, zanzana.RelationTeamMember)
 			} else {
 				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
 				continue
@@ -193,52 +194,6 @@ func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 	s := tuple.String()
 	tuple.Condition = c
 	return s
-}
-
-// basicRolePermissionsCollector collects permissions for basic roles
-func basicRolePermissionsCollector(store db.DB) legacyTupleCollector {
-	return func(ctx context.Context, _ int64) (map[string]map[string]*openfgav1.TupleKey, error) {
-		const query = `
-			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
-			FROM permission p
-			INNER JOIN role r ON p.role_id = r.id
-			LEFT JOIN builtin_role br ON r.id  = br.role_id
-			WHERE r.name LIKE 'basic:%'
-		`
-		type Permission struct {
-			Action     string `xorm:"action"`
-			Kind       string
-			Identifier string
-			RoleUID    string `xorm:"role_uid"`
-		}
-
-		var permissions []Permission
-		err := store.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(query).Find(&permissions)
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		tuples := make(map[string]map[string]*openfgav1.TupleKey)
-
-		for _, p := range permissions {
-			subject := zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, "assignee")
-
-			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
-			if !ok {
-				continue
-			}
-
-			if tuples[tuple.Object] == nil {
-				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
-			}
-
-			tuples[tuple.Object][tuple.String()] = tuple
-		}
-
-		return tuples, nil
-	}
 }
 
 // basicRoleBindingsCollects collects role bindings for basic roles
@@ -286,6 +241,103 @@ func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 
 		return tuples, nil
 	}
+}
+
+func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		query := `
+			SELECT t.uid AS team_uid, r.name AS role_name
+			FROM team_role tr
+			INNER JOIN team t ON tr.team_id = t.id
+			INNER JOIN role r ON tr.role_id = r.id
+			WHERE t.org_id = ?
+			AND r.name NOT LIKE 'managed:%'
+		`
+		type Binding struct {
+			TeamUID  string `xorm:"team_uid"`
+			RoleName string `xorm:"role_name"`
+		}
+
+		var bindings []Binding
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query, orgID).Find(&bindings)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, b := range bindings {
+			subject := zanzana.NewTupleEntry(zanzana.TypeTeam, b.TeamUID, zanzana.RelationTeamMember)
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(b.RoleName), ""),
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+func rolePermissionsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		var query = `
+			SELECT r.name as role_name, p.action, p.kind, p.identifier
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			LEFT JOIN builtin_role br ON r.id  = br.role_id
+			WHERE (r.org_id = 0 OR r.org_id = ?)
+			AND r.name NOT LIKE 'managed:%'
+		`
+
+		type Permission struct {
+			Action     string `xorm:"action"`
+			Kind       string
+			Identifier string
+			RoleName   string `xorm:"role_name"`
+		}
+
+		var permissions []Permission
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query, orgID).Find(&permissions)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, p := range permissions {
+			subject := zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(p.RoleName), zanzana.RelationAssignee)
+
+			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
+			if !ok {
+				continue
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
+func formatRoleName(name string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(name, ":", "_"), ".", "_")
 }
 
 func zanzanaCollector(relations []string) zanzanaTupleCollector {
