@@ -79,6 +79,37 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
+### Data requirements
+
+A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
+
+A node graph consists of _nodes_ and _edges_.
+
+- A _node_ is displayed as a circle. A node might represent an application, a service, or anything else that is relevant from an application perspective.
+- An _edge_ is displayed as a line that connects two nodes. The connection might be a request, an execution, or some other relationship between the two nodes.
+
+Both nodes and edges can have associated metadata or statistics. The data source defines what information and values is shown, so different data sources can show different type of values or not show some values.
+
+#### Nodes
+
+{{% admonition type="note" %}}
+Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+{{% /admonition %}}
+
+Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
+
+For example, you can have the percentage of errors represented by a red portion of the circle.
+Additional details can be displayed in a context menu which is displayed when you click on the node.
+There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
+
+![Node graph navigation](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-navigation.png 'Node graph navigation')
+
+#### Edges
+
+Edges can also show statistics when you hover over the edge. Similar to nodes, you can open a context menu with additional details and links by clicking on the edge.
+
+The first data source supporting this visualization is X-Ray data source for its Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -122,50 +153,19 @@ In node graphs, some data fields may have pre-configured data links. To add a di
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data requirements
-
-A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
-
-A node graph consists of _nodes_ and _edges_.
-
-- A _node_ is displayed as a circle. A node might represent an application, a service, or anything else that is relevant from an application perspective.
-- An _edge_ is displayed as a line that connects two nodes. The connection might be a request, an execution, or some other relationship between the two nodes.
-
-Both nodes and edges can have associated metadata or statistics. The data source defines what information and values is shown, so different data sources can show different type of values or not show some values.
-
-### Nodes
-
-{{% admonition type="note" %}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
-{{% /admonition %}}
-
-Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
-
-For example, you can have the percentage of errors represented by a red portion of the circle.
-Additional details can be displayed in a context menu which is displayed when you click on the node.
-There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
-
-![Node graph navigation](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-navigation.png 'Node graph navigation')
-
-### Edges
-
-Edges can also show statistics when you hover over the edge. Similar to nodes, you can open a context menu with additional details and links by clicking on the edge.
-
-The first data source supporting this visualization is X-Ray data source for its Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
-
 ## Navigating the node graph
 
-You can pan and zoom in or out a node graph.
+You can use pan, zoom, and other functions to navigate a node graph.
 
 ### Pan
 
 You can pan the view by clicking outside any node or edge and dragging your mouse.
 
-### Zoom in or out
+### Zoom
 
 Use the buttons in the upper left corner or use the mouse wheel, touchpad scroll, together with either Ctrl or Cmd key to zoom in or out.
 
-### Explore hidden nodes
+### Hidden nodes
 
 The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
 
@@ -174,8 +174,6 @@ The number of nodes shown at a given time is limited to maintain a reasonable vi
 ### Grid view
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
-
-<!-- Screenshot from v11.2 -->
 
 ![Node graph grid](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-grid-view.png 'Node graph grid')
 
