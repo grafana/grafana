@@ -37,6 +37,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
+  time-series:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
 ---
 
 # Bar chart
@@ -89,7 +94,7 @@ If your dataset contains multiple rows, the visualization displays multiple bar 
 
 ![Bar chart multiple row example](/media/docs/grafana/panels-visualizations/screenshot-grafana-11.1-barchart-example2.png 'Bar chart multiple row example')
 
-While the first field can be time-based and you can use a bar chart to plot time-series data, for large amounts of time-series data, we recommend that you use the [time series visualization](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) and configure it to be displayed as bars.
+While the first field can be time-based and you can use a bar chart to plot time-series data, for large amounts of time-series data, we recommend that you use the [time series visualization](ref:time-series) and configure it to be displayed as bars.
 
 We recommend that you only use one dataset in a bar chart because using multiple datasets can result in unexpected behavior.
 
@@ -168,7 +173,7 @@ Some field options will not affect the visualization until you click outside of 
 
 | Option | Description |
 | ------ | ----------- |
-| Placement | Select the placement of the Y-axis. Choose from: <ul><li>**Auto** - Grafana automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.</li><li>**Left** - Display all Y-axes on the left side.</li><li>**Right** - Display all Y-axes on the right side.</li><li>**Hidden** - Hide all axes. To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.</li></ul> |
+| Placement | Select the placement of the Y-axis. Choose from: <ul><li>**Auto** - Grafana automatically assigns Y-axis to the series. When there are two or more series with different units, then Grafana assigns the left axis to the first unit and right to the following units.</li><li>**Left** - Display all Y-axes on the left side.</li><li>**Right** - Display all Y-axes on the right side.</li><li>**Hidden** - Hide all axes. To selectively hide axes, [add a field override](ref:add-a-field-override) that targets specific fields.</li></ul> |
 | Label | Set a Y-axis text label. If you have more than one Y-axis, then you can assign different labels with an override. |
 | Width | Set a fixed width of the axis. By default, Grafana dynamically calculates the width of an axis.<br></br>By setting the width of the axis, data whose axes types are different can share the same display proportions. This makes it easier to compare more than one graph’s worth of data because the axes are not shifted or stretched within visual proximity of each other. |
 | Show grid lines | Set whether grid lines are displayed in the chart. Choose from: <ul><li>**Auto** - Grafana automatically determines whether grid lines are displayed.</li><li>**On** - Grid lines are always displayed.</li><li>**Off** - Grid lines are never displayed</li></ul> |
