@@ -99,6 +99,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     clear: css({
       label: 'grafana-select-clear',
       cursor: 'pointer',
+      pointerEvents: 'auto',
       '&:hover': {
         color: theme.colors.text.primary,
       },
@@ -106,6 +107,12 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     warningIcon: css({
       label: 'grafana-select-warning-icon',
       color: theme.colors.text.secondary,
+    }),
+    input: css({
+      label: 'grafana-select-input',
+      '> div > div:last-child': {
+        pointerEvents: 'none',
+      },
     }),
   };
 };

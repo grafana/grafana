@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import { ReactNode, useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
+import { logOptions } from '../../utils';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
@@ -47,6 +48,8 @@ interface ComboboxBaseProps<T extends string | number>
    * */
   width?: number | 'auto';
 }
+
+const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 
 type AutoSizeConditionals =
   | {
@@ -123,7 +126,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const setItems = useCallback(
     (items: Array<ComboboxOption<T>>, inputValue: string | undefined) => {
       let itemsToSet = items;
-
+      logOptions(itemsToSet.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabelledBy);
       if (inputValue && createCustomValue) {
         const optionMatchingInput = items.find(
           (opt) => opt.label === 'Custom value: ' + inputValue || opt.value === inputValue
@@ -146,7 +149,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
       baseSetItems(itemsToSet);
     },
-    [createCustomValue]
+    [createCustomValue, id, ariaLabelledBy]
   );
 
   const selectedItemIndex = useMemo(() => {
@@ -215,8 +218,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getMenuProps,
     getItemProps,
 
-    openMenu,
-    closeMenu,
     selectItem,
   } = useCombobox({
     menuId,
@@ -327,10 +328,6 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
-  const handleSuffixClick = useCallback(() => {
-    isOpen ? closeMenu() : openMenu();
-  }, [isOpen, openMenu, closeMenu]);
-
   const InputComponent = width === 'auto' ? AutoSizeInput : Input;
 
   const suffixIcon = asyncLoading
@@ -346,6 +343,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     <div>
       <InputComponent
         width={width === 'auto' ? undefined : width}
+        className={styles.input}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
@@ -366,11 +364,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               />
             )}
 
-            {/* When you click the input, it should just focus the text box. However, clicks on input suffix arent
-                translated to the input, so it blocks the input from being focused. So we need an additional event
-                handler here to open/close the menu. It should not have button role because we intentionally don't
-                want it in the a11y tree. */}
-            <Icon name={suffixIcon} onClick={handleSuffixClick} />
+            <Icon name={suffixIcon} />
           </>
         }
         {...restProps}
