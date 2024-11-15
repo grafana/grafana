@@ -25,7 +25,7 @@ Node graphs are useful when you need to visualize elements that are related to e
 
 Node graphs display useful information about each node, as well as the relationships between them, allowing you to visualize complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph visualization](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-node-graph.png 'Node graph')
+![Node graph visualization](screenshot-node-graph-v11.3-3.png 'Node graph')
 
 The appearance of nodes and edges can also be customized in several ways including color, borders, and line style.
 
@@ -102,7 +102,7 @@ For example, you can have the percentage of errors represented by a red portion 
 Additional details can be displayed in a context menu which is displayed when you click on the node.
 There also can be additional links in the context menu that can target either other parts of Grafana or any external link.
 
-![Node graph navigation](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-navigation.png 'Node graph navigation')
+![Node context menu](screenshot-node-links-v11.3.png 'Node context menu')
 
 #### Edges
 
@@ -175,15 +175,15 @@ The number of nodes shown at a given time is limited to maintain a reasonable vi
 
 You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
 
-![Node graph grid](/media/docs/grafana/data-sources/tempo/query-editor/node-graph-grid-view.png 'Node graph grid')
+![Node graph grid](screenshot-node-graph-grid-v11.3.png 'Node graph grid')
 
 To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
 
-![Node graph legend](/static/img/docs/node-graph/node-graph-legend-8-0.png 'Node graph legend')
+![Node graph legend](screenshot-node-graph-legend-v11.3.png 'Node graph legend')
 
 Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
 
-![Node graph grid to default](/static/img/docs/node-graph/node-graph-grid-to-default-8-0.png 'Node graph grid to default')
+![Node graph grid to default](screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
 
 ## Data API
 
