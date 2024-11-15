@@ -820,7 +820,7 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
 
-func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) { //
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, item unstructured.Unstructured, orgID int64) (dtos.Folder, error) {
 	// #TODO revisit how/where we get orgID
 	ctx := c.Req.Context()
 
