@@ -13,6 +13,7 @@ import { AlertGroupsSummary } from './AlertGroupsSummary';
 import { AmRootRouteForm } from './EditDefaultPolicyForm';
 import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 import { Matchers } from './Matchers';
+import { NotificationPoliciesErrorAlert } from './PolicyUpdateErrorAlert';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 type AddModalHook<T = undefined> = [JSX.Element, (item: T, position: InsertPosition) => void, () => void];
@@ -79,7 +80,8 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleSave: (route: Partial<FormAmRoute>) => void,
-  loading: boolean
+  loading: boolean,
+  error: string | null
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
@@ -108,6 +110,7 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
+          {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
@@ -141,7 +144,7 @@ const useEditPolicyModal = (
           )}
         </Modal>
       ),
-    [alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    [alertManagerSourceName, error, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];

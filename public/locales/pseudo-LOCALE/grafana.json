@@ -253,7 +253,14 @@
       "n-more-policies_other": "{{count}} äđđįŧįőŉäľ pőľįčįęş",
       "new-child": "Ńęŵ čĥįľđ pőľįčy",
       "new-policy": "Åđđ ŉęŵ pőľįčy",
-      "no-matchers": "Ńő mäŧčĥęřş"
+      "no-matchers": "Ńő mäŧčĥęřş",
+      "update-errors": {
+        "conflict": "Ŧĥę ŉőŧįƒįčäŧįőŉ pőľįčy ŧřęę ĥäş þęęŉ ūpđäŧęđ þy äŉőŧĥęř ūşęř.",
+        "error-code": "Ēřřőř męşşäģę: \"{{error}}\"",
+        "fallback": "Ŝőmęŧĥįŉģ ŵęŉŧ ŵřőŉģ ŵĥęŉ ūpđäŧįŉģ yőūř ŉőŧįƒįčäŧįőŉ pőľįčįęş.",
+        "suffix": "Pľęäşę řęƒřęşĥ ŧĥę päģę äŉđ ŧřy äģäįŉ.",
+        "title": "Ēřřőř şävįŉģ ŉőŧįƒįčäŧįőŉ pőľįčy"
+      }
     },
     "provisioning": {
       "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",

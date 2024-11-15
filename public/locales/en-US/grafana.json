@@ -253,7 +253,14 @@
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
-      "no-matchers": "No matchers"
+      "no-matchers": "No matchers",
+      "update-errors": {
+        "conflict": "The notification policy tree has been updated by another user.",
+        "error-code": "Error message: \"{{error}}\"",
+        "fallback": "Something went wrong when updating your notification policies.",
+        "suffix": "Please refresh the page and try again.",
+        "title": "Error saving notification policy"
+      }
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
