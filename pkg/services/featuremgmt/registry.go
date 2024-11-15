@@ -366,8 +366,9 @@ var (
 		{
 			Name:        "unifiedRequestLog",
 			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaBackendGroup,
+			Expression:  "true",
 		},
 		{
 			Name:              "renderAuthJWT",
