@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
@@ -290,6 +291,32 @@ describe.each([
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
     expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
+  });
+
+  it('allows user to reload and update policies if its been changed by another user', async () => {
+    const { user } = renderNotificationPolicies();
+
+    await getRootRoute();
+
+    const existingConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    const modifiedConfig = produce(existingConfig, (draft) => {
+      draft.alertmanager_config.route!.group_interval = '12h';
+    });
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, modifiedConfig);
+
+    await openDefaultPolicyEditModal();
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
+
+    expect(
+      await screen.findByText(/the notification policy tree has been updated by another user/i)
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /reload policies/i }));
+
+    await openDefaultPolicyEditModal();
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
+    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
   });
 
   it('Should be able to delete an empty route', async () => {
