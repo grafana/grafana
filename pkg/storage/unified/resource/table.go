@@ -538,9 +538,7 @@ func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
 			}
 			v, err := x.reader(iter)
 			//nolint:errorlint
-			if err == io.EOF {
-				err = nil
-			} else if err != nil {
+			if err != nil && err != io.EOF { // EOF is normal when jsoniter is done
 				return nil, err
 			}
 			vals = append(vals, v)

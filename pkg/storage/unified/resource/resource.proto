@@ -108,24 +108,24 @@ message ErrorDetails {
 }
 
 message ErrorCause {
-	// A machine-readable description of the cause of the error. If this value is
-	// empty there is no information available.
-	string reason = 1;
-	// A human-readable description of the cause of the error.  This field may be
-	// presented as-is to a reader.
-	// +optional
-	string message = 2;
-	// The field of the resource that has caused this error, as named by its JSON
-	// serialization. May include dot and postfix notation for nested attributes.
-	// Arrays are zero-indexed.  Fields may appear more than once in an array of
-	// causes due to fields having multiple errors.
-	// Optional.
-	//
-	// Examples:
-	//   "name" - the field "name" on the current resource
-	//   "items[0].name" - the field "name" on the first array entry in "items"
-	// +optional
-	string field = 3;
+  // A machine-readable description of the cause of the error. If this value is
+  // empty there is no information available.
+  string reason = 1;
+  // A human-readable description of the cause of the error.  This field may be
+  // presented as-is to a reader.
+  // +optional
+  string message = 2;
+  // The field of the resource that has caused this error, as named by its JSON
+  // serialization. May include dot and postfix notation for nested attributes.
+  // Arrays are zero-indexed.  Fields may appear more than once in an array of
+  // causes due to fields having multiple errors.
+  // Optional.
+  //
+  // Examples:
+  //   "name" - the field "name" on the current resource
+  //   "items[0].name" - the field "name" on the first array entry in "items"
+  // +optional
+  string field = 3;
 }
 
 // ----------------------------------
@@ -451,18 +451,18 @@ message HealthCheckResponse {
 // ResourceTable is a protobuf variation of the kubernetes Table object.
 // This format allows specifying a flexible set of columns related to a given resource
 message ResourceTable {
-	// Columns describes each column in the returned items array. The number of cells per row
-	// will always match the number of column definitions.
-	repeated ResourceTableColumnDefinition columns = 1;
+  // Columns describes each column in the returned items array. The number of cells per row
+  // will always match the number of column definitions.
+  repeated ResourceTableColumnDefinition columns = 1;
 
-	// rows is the list of items in the table.
-	repeated ResourceTableRow rows = 2;
+  // rows is the list of items in the table.
+  repeated ResourceTableRow rows = 2;
 
   // When more results exist, pass this in the next request
   string next_page_token = 3;
 
   // ResourceVersion of the list response
-	// +optional
+  // +optional
   int64 resource_version = 4;
 
   // remainingItemCount is the number of subsequent items in the list which are not included in this
@@ -517,25 +517,25 @@ message ResourceTableColumnDefinition {
     bytes default_value = 5;
   }
 
-	// name is a human readable name for the column.
-	string name = 1;
+  // name is a human readable name for the column.
+  string name = 1;
 
   // Defines the column type.  In k8s, this will resolve into both the type and format fields
-	ColumnType type = 2;
+  ColumnType type = 2;
 
   // The value is an arry of given type
   bool is_array = 3;
 
-	// description is a human readable description of this column.
-	string description = 4;
+  // description is a human readable description of this column.
+  string description = 4;
 
   // Properties about this column (helpful for indexing and search)
   Properties properties = 5;
 
-	// priority is an integer defining the relative importance of this column compared to others. Lower
-	// numbers are considered higher priority. Columns that may be omitted in limited space scenarios
-	// should be given a higher priority.
-	int32 priority = 6;
+  // priority is an integer defining the relative importance of this column compared to others. Lower
+  // numbers are considered higher priority. Columns that may be omitted in limited space scenarios
+  // should be given a higher priority.
+  int32 priority = 6;
 }
 
 // TableRow is an individual row in a table.
@@ -546,15 +546,15 @@ message ResourceTableRow {
   // The resource version for the given values
   int64 resource_version = 2;
 
-	// cells will be as wide as the column definitions array and will contain the JSON encoded
+  // cells will be as wide as the column definitions array and will contain the JSON encoded
   // byte values for the selected fields
   repeated bytes cells = 3;
 
-	// This field may contains the additional information about each object based on the request.
-	// The value will be at least a partial object metadata, and perhaps the full object metadata.
+  // This field may contains the additional information about each object based on the request.
+  // The value will be at least a partial object metadata, and perhaps the full object metadata.
   // When this value exists, it should include both the key and the resource_version otherwise
   // they may be lost in the conversion to k8s resource
-	// +optional
+  // +optional
   bytes object = 4;
 }
 

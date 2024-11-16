@@ -64,7 +64,7 @@ func TestTableFormat(t *testing.T) {
 	after, err := builder.ToK8s()
 	require.NoError(t, err)
 	jsraw, _ := json.MarshalIndent(after, "", "  ")
-	fmt.Printf("%s\n", string(jsraw))
+	// fmt.Printf("%s\n", string(jsraw))
 	require.JSONEq(t, `{
 		"metadata": {},
 		"columnDefinitions": [
@@ -317,11 +317,9 @@ func TestColumnEncoding(t *testing.T) {
 		},
 	}
 
-	//  [INT32 DATE DATE_TIME BINARY OBJECT]
-
+	// Keep track of the types that have tests
 	testedTypes := make(map[ResourceTableColumnDefinition_ColumnType]bool)
 	testedArrays := make(map[ResourceTableColumnDefinition_ColumnType]bool)
-
 	for _, test := range tests {
 		var sb strings.Builder
 		if test.def.IsArray {
@@ -387,5 +385,4 @@ func TestColumnEncoding(t *testing.T) {
 		require.Empty(t, missingTypes, "missing tests for types")
 		require.Empty(t, missingArrays, "missing array tests for types")
 	})
-
 }
