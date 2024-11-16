@@ -492,8 +492,8 @@ message ResourceTableColumnDefinition {
     DOUBLE = 6; 
     DATE = 7; 
     DATE_TIME = 8; 
+    BINARY = 10;  
     JSON = 9; 
-    // BINARY = 7;  
     // PASSWORD = 10;  
   }
 
