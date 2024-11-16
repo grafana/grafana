@@ -254,9 +254,10 @@ func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*Res
 					return nil, err
 				}
 				return time.UnixMilli(ts).UTC(), nil
-				// TODOcase jsoniter.StringValue:
+
+			default:
+				return nil, fmt.Errorf("unexpected JSON for date: %+v", nxt)
 			}
-			return nil, fmt.Errorf("unexpected: %+v", nxt)
 		}
 
 	case ResourceTableColumnDefinition_BINARY:
@@ -541,6 +542,7 @@ func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
 				return nil, err
 			}
 			v, err := x.reader(iter)
+			//nolint:errorlint
 			if err == io.EOF {
 				err = nil
 			} else if err != nil {
@@ -553,6 +555,7 @@ func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
 	}
 
 	v, err := x.reader(iter)
+	//nolint:errorlint
 	if err == io.EOF {
 		err = nil
 	} else if err != nil {
