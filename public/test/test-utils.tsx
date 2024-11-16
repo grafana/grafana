@@ -10,12 +10,32 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
-import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
+import {
+  HistoryWrapper,
+  LocationServiceProvider,
+  setAppEvents,
+  setLocationService,
+  setPluginComponentHook,
+  setPluginComponentsHook,
+  setPluginExtensionGetter,
+  setPluginExtensionsHook,
+  setPluginLinksHook,
+  setReturnToPreviousHook,
+  usePluginComponent,
+  usePluginComponents,
+  usePluginLinks,
+} from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import { GrafanaContext, GrafanaContextType, useReturnToPreviousInternal } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
+import { ExtensionRegistriesProvider } from 'app/features/plugins/extensions/ExtensionRegistriesContext';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { setupPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { createUsePluginExtensions } from 'app/features/plugins/extensions/usePluginExtensions';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types/store';
 
+// createPluginExtensionsGetter;
 interface ExtendedRenderOptions extends RenderOptions {
   /**
    * Optional store to use for rendering. If not provided, a fresh store will be generated
@@ -36,27 +56,53 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Props to pass to `createMemoryHistory`, if being used
    */
   historyOptions?: MemoryHistoryBuildOptions;
+  /**
+   * Method to return any preset plugin links that you would like to be available for the component being rendered
+   */
+  pluginLinks?: Parameters<typeof setPluginLinksHook>[0];
 }
 
-/**
- * Get a wrapper component that implements all of the providers that components
- * within the app will need
- */
-const getWrapper = ({
-  store,
-  renderWithRouter,
-  historyOptions,
-  grafanaContext,
-}: ExtendedRenderOptions & {
-  grafanaContext?: Partial<GrafanaContextType>;
-}) => {
-  const reduxStore = store || configureStore();
-
+/** Perform the same setup that we expect `app.ts` to have done when our components are rendering "for real" */
+const performAppSetup = (options: ExtendedRenderOptions) => {
+  const { historyOptions, pluginLinks } = options;
+  const store = options.store || configureStore();
   // Create a fresh location service for each test - otherwise we run the risk
   // of it being stateful in between runs
   const history = createMemoryHistory(historyOptions);
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
+  setAppEvents(appEvents);
+
+  const pluginExtensionsRegistries = setupPluginExtensionRegistries();
+  // console.log(pluginExtensionsRegistries);
+
+  setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
+  setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
+  setPluginLinksHook(usePluginLinks);
+  setPluginComponentHook(usePluginComponent);
+  setPluginComponentsHook(usePluginComponents);
+
+  setReturnToPreviousHook(useReturnToPreviousInternal);
+
+  return {
+    locationService,
+    history,
+    store,
+    pluginExtensionsRegistries,
+  };
+};
+
+/**
+ * Get a wrapper component that implements all of the providers that components
+ * within the app will need
+ */
+const getWrapper = (
+  options: ExtendedRenderOptions & {
+    grafanaContext?: Partial<GrafanaContextType>;
+  }
+) => {
+  const { renderWithRouter, grafanaContext } = options;
+  const { locationService, history, store: reduxStore, pluginExtensionsRegistries } = performAppSetup(options);
 
   /**
    * Conditional router - either a MemoryRouter or just a Fragment
@@ -80,13 +126,15 @@ const getWrapper = ({
     return (
       <Provider store={reduxStore}>
         <GrafanaContext.Provider value={context}>
-          <PotentialRouter>
-            <LocationServiceProvider service={locationService}>
-              <PotentialCompatRouter>
-                <ModalsContextProvider>{children}</ModalsContextProvider>
-              </PotentialCompatRouter>
-            </LocationServiceProvider>
-          </PotentialRouter>
+          <ExtensionRegistriesProvider registries={pluginExtensionsRegistries}>
+            <PotentialRouter>
+              <LocationServiceProvider service={locationService}>
+                <PotentialCompatRouter>
+                  <ModalsContextProvider>{children}</ModalsContextProvider>
+                </PotentialCompatRouter>
+              </LocationServiceProvider>
+            </PotentialRouter>
+          </ExtensionRegistriesProvider>
         </GrafanaContext.Provider>
       </Provider>
     );

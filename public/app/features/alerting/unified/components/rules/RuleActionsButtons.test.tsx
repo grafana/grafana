@@ -2,7 +2,7 @@ import { produce } from 'immer';
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
-import { config, setPluginLinksHook } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -52,11 +52,6 @@ const getMenuContents = async () => {
 
   return [...allMenuItems, ...allLinkItems];
 };
-
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
 
 const clickCopyLink = async () => {
   const user = userEvent.setup();

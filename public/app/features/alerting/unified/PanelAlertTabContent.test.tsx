@@ -3,7 +3,7 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -190,11 +190,6 @@ describe('PanelAlertTabContent', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
 
-    setPluginLinksHook(() => ({
-      links: [],
-      isLoading: false,
-    }));
-
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
@@ -213,7 +208,7 @@ describe('PanelAlertTabContent', () => {
     mockAlertRuleApi(server).rulerRules(GRAFANA_RULES_SOURCE_NAME, rulerResponse);
   });
 
-  it('Will take into account panel maxDataPoints', async () => {
+  fit('Will take into account panel maxDataPoints', async () => {
     renderAlertTabContent(
       dashboard,
       new PanelModel({

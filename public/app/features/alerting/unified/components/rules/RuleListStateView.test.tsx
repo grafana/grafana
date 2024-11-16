@@ -10,10 +10,10 @@ import {
 } from 'app/features/alerting/unified/mocks';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
+// setPluginLinksHook(() => ({
+//   links: [],
+//   isLoading: false,
+// }));
 
 const namespaces = [
   mockCombinedRuleNamespace({

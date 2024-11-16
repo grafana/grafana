@@ -1,7 +1,6 @@
 import { render, userEvent, screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
@@ -14,11 +13,6 @@ jest.mock('../../hooks/useAbilities');
 const mocks = {
   useAlertRuleAbility: jest.mocked(useAlertRuleAbility),
 };
-
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
 
 const ui = {
   actionButtons: {
