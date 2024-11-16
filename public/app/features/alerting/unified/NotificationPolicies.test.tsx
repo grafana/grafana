@@ -308,7 +308,7 @@ describe.each([
     await user.click(await screen.findByRole('button', { name: /update default policy/i }));
 
     expect(
-      await screen.findByText(/the notification policy tree has been updated by another user/i)
+      (await screen.findAllByText(/the notification policy tree has been updated by another user/i))[0]
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /cancel/i }));
