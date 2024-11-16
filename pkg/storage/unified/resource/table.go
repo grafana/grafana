@@ -143,7 +143,7 @@ func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) e
 			if x.ignoreUnknownColumns {
 				continue
 			}
-			return fmt.Errorf("unknown column: " + k)
+			return fmt.Errorf("unknown column")
 		}
 		b, err := column.Encode(v)
 		if err != nil {
@@ -352,7 +352,6 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(time.Time)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case *time.Time:
 						f = *typed
@@ -375,7 +374,6 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(float64)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case int:
 						f = float64(typed)
@@ -399,13 +397,10 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(int64)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case int:
 						f = int64(typed)
 					case int32:
-						f = int64(typed)
-					case int64:
 						f = int64(typed)
 					case float32:
 						f = int64(typed)
