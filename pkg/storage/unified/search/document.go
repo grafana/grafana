@@ -25,13 +25,9 @@ func ProvideBuilders() DocumentBuilderProvider {
 	return &standardDocumentProvider{}
 }
 
-type standardDocumentProvider struct {
-	_ int // sealed
-}
+type standardDocumentProvider struct{}
 
-type defaultDocumentBuilder struct {
-	_ int // sealed
-}
+type defaultDocumentBuilder struct{}
 
 var (
 	_ resource.DocumentBuilder = &defaultDocumentBuilder{}
