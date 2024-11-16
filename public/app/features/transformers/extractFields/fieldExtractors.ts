@@ -145,7 +145,7 @@ const extAuto: FieldExtractor = {
     return (v: string) => {
       for (const parse of parsers) {
         try {
-          const r = parse!(v);
+          const r = parse(v);
           if (r != null) {
             return r;
           }
