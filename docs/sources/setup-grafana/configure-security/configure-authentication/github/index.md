@@ -166,7 +166,18 @@ All other users are granted the `Viewer` role.
 role_attribute_path = contains(groups[*], '@my-github-organization/my-github-team') && 'Editor' || 'Viewer'
 ```
 
-#### Map server administrator role
+##### Map roles using multiple GitHub teams
+
+In this example, the users from GitHub teams `admins` and `devops` have been granted the `Admin` role,
+the users from GitHub teams `engineers` and `managers` have been granted the `Editor` role,
+the users from GitHub team `qa` have been granted the `Viewer` role and
+all other users are granted the `None` role.
+
+```bash
+role_attribute_path = contains(groups[*], '@my-github-organization/admins') && 'Admin' || contains(groups[*], '@my-github-organization/devops') && 'Admin' || contains(groups[*], '@my-github-organization/engineers') && 'Editor' || contains(groups[*], '@my-github-organization/managers') && 'Editor' || contains(groups[*], '@my-github-organization/qa') && 'Viewer' || 'None'
+```
+
+##### Map server administrator role
 
 In this example, the user with login `octocat` has been granted the `Admin` organization role as well as the Grafana server admin role.
 All other users are granted the `Viewer` role.
@@ -226,6 +237,10 @@ To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../
 ## Configuration options
 
 The table below describes all GitHub OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+
+{{< admonition type="note" >}}
+If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
+{{< /admonition >}}
 
 | Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Default                                       |
 | ---------------------------- | -------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
