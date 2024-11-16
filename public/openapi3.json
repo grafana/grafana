@@ -9624,6 +9624,9 @@
           "branding": {
             "$ref": "#/components/schemas/ReportBrandingOptions"
           },
+          "embeddedImageTheme": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9631,6 +9634,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "pdfTheme": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",

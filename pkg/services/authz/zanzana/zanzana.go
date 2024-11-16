@@ -73,19 +73,6 @@ const (
 	KindFolders    string = "folders"
 )
 
-const (
-	RoleGrafanaAdmin = "Grafana Admin"
-	RoleAdmin        = "Admin"
-	RoleEditor       = "Editor"
-	RoleViewer       = "Viewer"
-	RoleNone         = "None"
-
-	BasicRolePrefix    = "basic:"
-	BasicRoleUIDPrefix = "basic_"
-
-	GlobalOrgID = 0
-)
-
 var (
 	ToAuthzExtTupleKey                  = common.ToAuthzExtTupleKey
 	ToAuthzExtTupleKeys                 = common.ToAuthzExtTupleKeys
@@ -98,11 +85,11 @@ var (
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
 )
 
-// NewTupleEntry constructs new openfga entry type:id[#relation].
-// Relation allows to specify group of users (subjects) related to type:id
+// NewTupleEntry constructs new openfga entry type:name[#relation].
+// Relation allows to specify group of users (subjects) related to type:name
 // (for example, team:devs#member refers to users which are members of team devs)
-func NewTupleEntry(objectType, id, relation string) string {
-	obj := fmt.Sprintf("%s:%s", objectType, id)
+func NewTupleEntry(objectType, name, relation string) string {
+	obj := fmt.Sprintf("%s:%s", objectType, name)
 	if relation != "" {
 		obj = fmt.Sprintf("%s#%s", obj, relation)
 	}
@@ -119,6 +106,10 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	m, ok := translation.mapping[action]
 	if !ok {
 		return nil, false
+	}
+
+	if name == "*" {
+		return common.NewNamespaceResourceTuple(subject, m.relation, translation.group, translation.resource), true
 	}
 
 	if translation.typ == TypeResource {
@@ -173,4 +164,8 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	}
 
 	return req, true
+}
+
+func TranslateBasicRole(name string) string {
+	return basicRolesTranslations[name]
 }

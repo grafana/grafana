@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, getByText } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 
 import { NodeGraph } from './NodeGraph';
+import { ZoomMode } from './panelcfg.gen';
 import { makeEdgesDataFrame, makeNodesDataFrame } from './utils';
 
 jest.mock('react-use/lib/useMeasure', () => {
@@ -20,7 +21,7 @@ describe('NodeGraph', () => {
     await screen.findByText('No data');
   });
 
-  it('can zoom in and out', async () => {
+  it('can zoom in and out with zoom buttons', async () => {
     render(
       <NodeGraph
         dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
@@ -35,6 +36,42 @@ describe('NodeGraph', () => {
     expect(getScale()).toBe(1.5);
     await userEvent.click(zoomOut);
     expect(getScale()).toBe(1);
+  });
+
+  it('can zoom while pressing ctrl/command key with cooperative zoom mode', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
+        zoomMode={ZoomMode.Cooperative}
+        getLinks={() => []}
+      />
+    );
+
+    await screen.findByLabelText('Node: service:1');
+
+    scrollView({ deltaY: -2, ctrlKey: false });
+    expect(getScale()).toBe(1);
+
+    scrollView({ deltaY: -2, ctrlKey: true });
+    expect(getScale()).toBe(1.03);
+  });
+
+  it('can zoom without pressing ctrl/command key with greedy zoom mode', async () => {
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(2), makeEdgesDataFrame([{ source: '0', target: '1' }])]}
+        zoomMode={ZoomMode.Greedy}
+        getLinks={() => []}
+      />
+    );
+
+    await screen.findByLabelText('Node: service:1');
+
+    scrollView({ deltaY: -2, ctrlKey: true });
+    expect(getScale()).toBe(1.03);
+
+    scrollView({ deltaY: -2, ctrlKey: true });
+    expect(getScale()).toBe(1.06);
   });
 
   it('can pan the graph', async () => {
@@ -233,6 +270,11 @@ function panView(toPos: { x: number; y: number }) {
   fireEvent(svg, new MouseEvent('mousedown', { clientX: 0, clientY: 0 }));
   fireEvent(document, new MouseEvent('mousemove', { clientX: toPos.x, clientY: toPos.y }));
   fireEvent(document, new MouseEvent('mouseup'));
+}
+
+function scrollView({ deltaY, ctrlKey }: { deltaY: number; ctrlKey: boolean }) {
+  const svg = getSvg();
+  fireEvent.wheel(svg, { deltaY, ctrlKey });
 }
 
 function getSvg() {
