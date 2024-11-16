@@ -197,7 +197,7 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 data-testid="existing-templates-selector"
                 placeholder="Choose template"
                 aria-label="Choose template"
-                onChange={(value: SelectableValue<Template>, _) => {
+                onChange={(value: SelectableValue<Template>) => {
                   setTemplate(value);
                 }}
                 options={options}
