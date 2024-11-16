@@ -1,3 +1,5 @@
+import { ChangeEvent } from 'react';
+
 import {
   DataTransformerID,
   TransformerRegistryItem,
@@ -7,7 +9,7 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select, InlineSwitch, Input } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -50,6 +52,13 @@ export const extractFieldsTransformerEditor = ({
     onChange({
       ...options,
       jsonPaths,
+    });
+  };
+
+  const onRegexpChange = (e: ChangeEvent<HTMLInputElement>) => {
+    onChange({
+      ...options,
+      regExp: e.target.value,
     });
   };
 
@@ -96,6 +105,13 @@ export const extractFieldsTransformerEditor = ({
           />
         </InlineField>
       </InlineFieldRow>
+      {options.format === 'regexp' && (
+        <InlineFieldRow>
+          <InlineField label="RegExp">
+            <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {options.format === 'json' && <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />}
       <InlineFieldRow>
         <InlineField label={'Replace all fields'} labelWidth={16}>
