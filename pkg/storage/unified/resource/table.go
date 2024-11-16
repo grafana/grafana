@@ -2,6 +2,8 @@ package resource
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,13 +35,17 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 	columns := make([]ResourceTableColumn, columnCount)
 	table.ColumnDefinitions = make([]metav1.TableColumnDefinition, columnCount)
 	for i, c := range x.Columns {
-		columns[i] = *NewResourceTableColumn(c, i)
+		col, err := NewResourceTableColumn(c, i)
+		if err != nil {
+			return table, err
+		}
+		columns[i] = *col
 		table.ColumnDefinitions[i] = metav1.TableColumnDefinition{
 			Name:        c.Name,
 			Description: c.Description,
 			Priority:    c.Priority,
-			Type:        columns[i].OpenAPIType,
-			Format:      columns[i].OpenAPIFormat,
+			Type:        col.OpenAPIType,
+			Format:      col.OpenAPIFormat,
 		}
 	}
 
@@ -56,7 +62,8 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 		for j, v := range r.Cells {
 			row.Cells[j], err = columns[j].Decode(v)
 			if err != nil {
-				return table, fmt.Errorf("error decoding (row=%d, column=%d) %w", i, j, err)
+				col := columns[j]
+				return table, fmt.Errorf("error decoding (row=%d, column=%d, type=%s) %w", i, j, col.def.Type.String(), err)
 			}
 		}
 
@@ -98,7 +105,7 @@ type TableBuilder struct {
 	ignoreUnknownColumns bool
 }
 
-func NewTableBuilder(cols []*ResourceTableColumnDefinition) *TableBuilder {
+func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
 	table := &TableBuilder{
 		ResourceTable: ResourceTable{
 			Columns: cols,
@@ -109,14 +116,18 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) *TableBuilder {
 		// defaults
 		ignoreUnknownColumns: false,
 	}
+	var err error
 	for i, v := range cols {
 		if table.lookup[v.Name] != nil {
 			table.hasDuplicateNames = true
 			continue
 		}
-		table.lookup[v.Name] = NewResourceTableColumn(v, i)
+		table.lookup[v.Name], err = NewResourceTableColumn(v, i)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return table
+	return table, err
 }
 
 func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) error {
@@ -149,6 +160,7 @@ type ResourceTableColumn struct {
 	def   *ResourceTableColumnDefinition
 	index int
 
+	// Used for array indexing
 	reader func(iter *jsoniter.Iterator) (any, error)
 	writer func(v any, stream *jsoniter.Stream) error
 
@@ -156,12 +168,15 @@ type ResourceTableColumn struct {
 	OpenAPIFormat string
 }
 
-func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) *ResourceTableColumn {
+// nolint:gocyclo
+func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*ResourceTableColumn, error) {
 	col := &ResourceTableColumn{def: def, index: index}
 
 	// Initially ignore the array property, we wil wrap that at the end
 	switch def.Type {
-	case ResourceTableColumnDefinition_UNKNOWN_TYPE: // left as null
+	case ResourceTableColumnDefinition_UNKNOWN_TYPE:
+		return nil, fmt.Errorf("unknown column type")
+
 	case ResourceTableColumnDefinition_STRING:
 		col.OpenAPIType = "string"
 		col.reader = func(iter *jsoniter.Iterator) (any, error) {
@@ -244,7 +259,26 @@ func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) *Reso
 			return nil, fmt.Errorf("unexpected: %+v", nxt)
 		}
 
-	case ResourceTableColumnDefinition_JSON:
+	case ResourceTableColumnDefinition_BINARY:
+		col.OpenAPIType = "binary"
+		col.writer = func(v any, stream *jsoniter.Stream) error {
+			b, ok := v.([]byte)
+			if !ok {
+				return fmt.Errorf("unexpected binary type, found: %t", v)
+			}
+			str := base64.StdEncoding.EncodeToString(b)
+			stream.WriteString(str)
+			return stream.Error
+		}
+		col.reader = func(iter *jsoniter.Iterator) (any, error) {
+			str, err := iter.ReadString()
+			if err != nil {
+				return nil, err
+			}
+			return base64.StdEncoding.DecodeString(str)
+		}
+
+	case ResourceTableColumnDefinition_OBJECT:
 		col.OpenAPIType = "string"
 		col.OpenAPIFormat = "json"
 
@@ -253,30 +287,141 @@ func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) *Reso
 		}
 	}
 
-	return col
+	return col, nil
 }
 
+func (x *ResourceTableColumn) IsNotNil() bool {
+	if x.def.Properties != nil {
+		return x.def.Properties.NotNull
+	}
+	return false
+}
+
+// nolint:gocyclo
 func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 	if v == nil {
+		if x.IsNotNil() {
+			return nil, fmt.Errorf("expecting non-null value")
+		}
 		return nil, nil // no types to write
 	}
 
-	// Arrays always need JSON wrappers
+	// Arrays will always use JSON formatting
 	if !x.def.IsArray {
-		// But simple string can be raw bytes
-		if x.def.Type == ResourceTableColumnDefinition_STRING {
-			s, ok := v.(string)
-			if !ok {
-				return nil, fmt.Errorf("expecting a string field")
+		switch x.def.Type {
+		case ResourceTableColumnDefinition_STRING:
+			{
+				s, ok := v.(string)
+				if !ok {
+					return nil, fmt.Errorf("expecting a string field")
+				}
+				return []byte(s), nil
 			}
-			return []byte(s), nil
-		}
-		if x.def.Type == ResourceTableColumnDefinition_BINARY {
-			s, ok := v.([]byte)
-			if !ok {
-				return nil, fmt.Errorf("expecting a byte array")
+		case ResourceTableColumnDefinition_BINARY:
+			{
+				s, ok := v.([]byte)
+				if !ok {
+					return nil, fmt.Errorf("expecting a byte array")
+				}
+				return s, nil
 			}
-			return s, nil
+		case ResourceTableColumnDefinition_BOOLEAN:
+			{
+				b, ok := v.(bool)
+				if !ok {
+					switch typed := v.(type) {
+					case *bool:
+						b = *typed
+					case int:
+						b = typed != 0
+					case int32:
+						b = typed != 0
+					case int64:
+						b = typed != 0
+					default:
+						return nil, fmt.Errorf("unexpected input for double field: %t", v)
+					}
+				}
+				if b {
+					return []byte{1}, nil
+				}
+				return []byte{0}, nil
+			}
+		case ResourceTableColumnDefinition_DATE_TIME, ResourceTableColumnDefinition_DATE:
+			{
+				f, ok := v.(time.Time)
+				if !ok {
+					ok = true
+					switch typed := v.(type) {
+					case *time.Time:
+						f = *typed
+					case metav1.Time:
+						f = typed.Time
+					case *metav1.Time:
+						f = typed.Time
+					case int64:
+						f = time.UnixMilli(typed)
+					default:
+						return nil, fmt.Errorf("unexpected input for time field: %t", v)
+					}
+				}
+				ts := f.UnixMilli()
+				var buf bytes.Buffer
+				err := binary.Write(&buf, binary.BigEndian, ts)
+				return buf.Bytes(), err
+			}
+		case ResourceTableColumnDefinition_DOUBLE:
+			{
+				f, ok := v.(float64)
+				if !ok {
+					ok = true
+					switch typed := v.(type) {
+					case int:
+						f = float64(typed)
+					case int64:
+						f = float64(typed)
+					case float32:
+						f = float64(typed)
+					case uint64:
+						f = float64(typed)
+					case uint:
+						f = float64(typed)
+					default:
+						return nil, fmt.Errorf("unexpected input for double field: %t", v)
+					}
+				}
+				var buf bytes.Buffer
+				err := binary.Write(&buf, binary.BigEndian, f)
+				return buf.Bytes(), err
+			}
+		case ResourceTableColumnDefinition_INT64:
+			{
+				f, ok := v.(int64)
+				if !ok {
+					ok = true
+					switch typed := v.(type) {
+					case int:
+						f = int64(typed)
+					case int32:
+						f = int64(typed)
+					case int64:
+						f = int64(typed)
+					case float32:
+						f = int64(typed)
+					case uint64:
+						f = int64(typed)
+					case uint:
+						f = int64(typed)
+					default:
+						return nil, fmt.Errorf("unexpected input for int64 field: %t", v)
+					}
+				}
+				var buf bytes.Buffer
+				err := binary.Write(&buf, binary.BigEndian, f)
+				return buf.Bytes(), err
+			}
+		default:
+			// use JSON encoding below
 		}
 	}
 
@@ -339,17 +484,47 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 	return json.RawMessage(buff.Bytes()), nil
 }
 
+// nolint:gocyclo
 func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
 	if len(buff) == 0 {
 		return nil, nil
 	}
-
 	if !x.def.IsArray {
-		if x.def.Type == ResourceTableColumnDefinition_STRING {
+		switch x.def.Type {
+		case ResourceTableColumnDefinition_STRING:
 			return string(buff), nil
-		}
-		if x.def.Type == ResourceTableColumnDefinition_BINARY {
+		case ResourceTableColumnDefinition_BINARY:
 			return buff, nil
+		case ResourceTableColumnDefinition_BOOLEAN:
+			if len(buff) == 1 {
+				return buff[0] != 0, nil
+			}
+		case ResourceTableColumnDefinition_DOUBLE:
+			{
+				var f float64
+				count, err := binary.Decode(buff, binary.BigEndian, &f)
+				if count == 8 && err == nil {
+					return f, nil
+				}
+			}
+		case ResourceTableColumnDefinition_INT64:
+			{
+				var f int64
+				count, err := binary.Decode(buff, binary.BigEndian, &f)
+				if count == 8 && err == nil {
+					return f, nil
+				}
+			}
+		case ResourceTableColumnDefinition_DATE_TIME, ResourceTableColumnDefinition_DATE:
+			{
+				var f int64
+				count, err := binary.Decode(buff, binary.BigEndian, &f)
+				if count == 8 && err == nil {
+					return time.UnixMilli(f).UTC(), nil
+				}
+			}
+		default:
+			// use JSON decoding below
 		}
 	}
 

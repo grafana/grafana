@@ -3,7 +3,9 @@ package resource
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +34,8 @@ func TestTableFormat(t *testing.T) {
 	}
 
 	var err error
-	builder := NewTableBuilder(columns)
+	builder, err := NewTableBuilder(columns)
+	require.NoError(t, err)
 
 	err = builder.AddRow(&ResourceKey{
 		Namespace: "default",
@@ -137,7 +140,7 @@ func TestTableFormat(t *testing.T) {
 }
 
 func TestColumnEncoding(t *testing.T) {
-	type check struct {
+	tests := []struct {
 		// The table definition
 		def *ResourceTableColumnDefinition
 
@@ -155,16 +158,20 @@ func TestColumnEncoding(t *testing.T) {
 
 		// Expected error from decode
 		output_err error
-	}
-
-	checks := []check{
+	}{
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_STRING,
+			},
+			input: "aaa", // expects output to match
+		},
 		{
 			def: &ResourceTableColumnDefinition{
 				Type:    ResourceTableColumnDefinition_STRING,
 				IsArray: true,
 			},
-			input:  "aaa",
-			output: []any{"aaa"},
+			input:  "bbb",
+			output: []any{"bbb"},
 		},
 		{
 			def: &ResourceTableColumnDefinition{
@@ -175,38 +182,210 @@ func TestColumnEncoding(t *testing.T) {
 		},
 		{
 			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_INT64,
+				IsArray: true,
+			},
+			input:  12345,
+			output: []any{int64(12345)},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
 				Type: ResourceTableColumnDefinition_DOUBLE,
 			},
 			input:  12345,
 			output: float64(12345),
 		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_DOUBLE,
+				IsArray: true,
+			},
+			input:  12345,
+			output: []any{float64(12345)},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_BOOLEAN,
+			},
+			input: true,
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_BOOLEAN,
+				IsArray: true,
+			},
+			input: []any{true, false, true},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_FLOAT,
+			},
+			input:  23.4,
+			output: float32(23.4),
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_FLOAT,
+				IsArray: true,
+			},
+			input:  23.4,
+			output: []any{float32(23.4)},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_INT32,
+			},
+			input:  56,
+			output: int32(56),
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_INT32,
+				IsArray: true,
+			},
+			input:  56,
+			output: []any{int32(56)},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_DATE_TIME,
+			},
+			input: time.UnixMilli(946674000000).UTC(),
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_DATE_TIME,
+				IsArray: true,
+			},
+			input: time.UnixMilli(946674000000).UTC(),
+			output: []any{
+				time.UnixMilli(946674000000).UTC(),
+			},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_DATE,
+			},
+			input: time.UnixMilli(946674000000).UTC(),
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_DATE,
+				IsArray: true,
+			},
+			input: time.UnixMilli(946674000000).UTC(),
+			output: []any{
+				time.UnixMilli(946674000000).UTC(),
+			},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_BINARY,
+			},
+			input: []byte{1, 2, 3, 4},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_BINARY,
+				IsArray: true,
+			},
+			input: []any{
+				[]byte{1, 2, 3, 4},
+			},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type: ResourceTableColumnDefinition_OBJECT,
+			},
+			input: map[string]any{
+				"hello": "world",
+			},
+		},
+		{
+			def: &ResourceTableColumnDefinition{
+				Type:    ResourceTableColumnDefinition_OBJECT,
+				IsArray: true,
+			},
+			input: map[string]any{
+				"hello": "world",
+			},
+			output: []any{
+				map[string]any{
+					"hello": "world",
+				},
+			},
+		},
 	}
 
-	var err error
-	for _, tst := range checks {
-		col := NewResourceTableColumn(tst.def, 0)
+	//  [INT32 DATE DATE_TIME BINARY OBJECT]
 
-		buff := tst.raw
-		if buff == nil {
-			buff, err = col.Encode(tst.input)
-			if tst.input_err != nil {
-				require.Equal(t, tst.input_err, err)
+	testedTypes := make(map[ResourceTableColumnDefinition_ColumnType]bool)
+	testedArrays := make(map[ResourceTableColumnDefinition_ColumnType]bool)
+
+	for _, test := range tests {
+		var sb strings.Builder
+		if test.def.IsArray {
+			sb.WriteString("[]")
+			testedArrays[test.def.Type] = true
+		} else {
+			testedTypes[test.def.Type] = true
+		}
+		sb.WriteString(test.def.Type.String())
+		if test.def.Name != "" {
+			sb.WriteString("(")
+			sb.WriteString(test.def.Name)
+			sb.WriteString(")")
+		}
+		sb.WriteString("=")
+		sb.WriteString(fmt.Sprintf("%v", test.input))
+
+		t.Run(sb.String(), func(t *testing.T) {
+			t.Parallel()
+
+			col, err := NewResourceTableColumn(test.def, 0)
+			require.NoError(t, err)
+
+			buff := test.raw
+			if buff == nil {
+				buff, err = col.Encode(test.input)
+				if test.input_err != nil {
+					require.Equal(t, test.input_err, err)
+				} else {
+					require.NoError(t, err)
+				}
+			}
+
+			out, err := col.Decode(buff)
+			if test.output_err != nil {
+				require.Equal(t, test.output_err, err)
 			} else {
 				require.NoError(t, err)
 			}
-		}
 
-		out, err := col.Decode(buff)
-		if tst.output_err != nil {
-			require.Equal(t, tst.output_err, err)
-		} else {
-			require.NoError(t, err)
-		}
-
-		if tst.output != nil {
-			require.Equal(t, tst.output, out)
-		} else {
-			require.Equal(t, tst.input, out)
-		}
+			if test.output != nil {
+				require.Equal(t, test.output, out)
+			} else {
+				require.Equal(t, test.input, out)
+			}
+		})
 	}
+
+	t.Run("ensure type coverage", func(t *testing.T) {
+		missingTypes := []string{}
+		missingArrays := []string{}
+
+		// Make sure we have at least one test for each type
+		for i := ResourceTableColumnDefinition_STRING; i <= ResourceTableColumnDefinition_OBJECT; i++ {
+			if !testedTypes[i] {
+				missingTypes = append(missingTypes, i.String())
+			}
+			if !testedArrays[i] {
+				missingArrays = append(missingArrays, i.String())
+			}
+		}
+
+		require.Empty(t, missingTypes, "missing tests for types")
+		require.Empty(t, missingArrays, "missing array tests for types")
+	})
+
 }
