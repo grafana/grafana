@@ -20,7 +20,7 @@ interface NotificationPreviewProps {
   }>;
   alertQueries: AlertQuery[];
   condition: string | null;
-  folder: Folder | undefined;
+  folder?: Folder;
   alertName?: string;
   alertUid?: string;
 }
