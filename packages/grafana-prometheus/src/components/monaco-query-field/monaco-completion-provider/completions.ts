@@ -41,14 +41,10 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 
   const terms = metricNamesSearch.multiInsert.split(inputText); // e.g. 'some_metric_name or-another' -> ['some', 'metric', 'name', 'or', 'another']
   const isComplexSearch = terms.length > 4;
+  const fuzzyResults = isComplexSearch
+    ? metricNamesSearch.multiInsert.filter(metricNames, inputText) // for complex searches, prioritize performance by using MultiInsert fuzzy search
+    : metricNamesSearch.singleError.filter(metricNames, inputText); // for simple searches, prioritize flexibility by using SingleError fuzzy search
 
-  if (isComplexSearch) {
-    // for complex searches, prioritize performance by using MultiInsert fuzzy search
-    return metricNamesSearch.multiInsert.filter(metricNames, inputText)?.map((idx) => metricNames[idx]) ?? [];
-  }
-
-  // for simple searches, prioritize flexibility by using SingleError fuzzy search
-  const fuzzyResults = metricNamesSearch.singleError.filter(metricNames, inputText);
   return fuzzyResults ? fuzzyResults.slice(0, limit).map((idx) => metricNames[idx]) : [];
 }
 
