@@ -546,8 +546,9 @@ message ResourceTableRow {
   // The resource version for the given values
   int64 resource_version = 2;
 
-  // cells will be as wide as the column definitions array and will contain the JSON encoded
-  // byte values for the selected fields
+  // Cells will be as wide as the column definitions array 
+  // Numeric values will be encoded using big endian bytes
+  // All arrays will be JSON encoded
   repeated bytes cells = 3;
 
   // This field may contains the additional information about each object based on the request.
