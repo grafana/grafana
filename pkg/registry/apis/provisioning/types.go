@@ -34,7 +34,7 @@ type Repository interface {
 	Webhook() http.HandlerFunc
 }
 
-var _ Repository = (*localRepository)(nil)
+var _ Repository = (*unknownRepository)(nil)
 
 type unknownRepository struct {
 	config *provisioning.Repository

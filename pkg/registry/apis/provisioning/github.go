@@ -8,10 +8,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v66/github"
 	"golang.org/x/oauth2"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -55,7 +55,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) error {
 	return &errors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
