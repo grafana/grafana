@@ -63,7 +63,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-backend
 	github.com/golang-jwt/jwt/v4 v4.5.1 // @grafana/grafana-backend-group
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/grafana-backend-group
-	github.com/golang/mock v1.6.0 // @grafana/alerting-backend
+	github.com/golang/mock v1.7.0-rc.1 // @grafana/alerting-backend
 	github.com/golang/protobuf v1.5.4 // @grafana/grafana-backend-group
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-backend
 	github.com/google/go-cmp v0.6.0 // @grafana/grafana-backend-group
@@ -82,7 +82,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20240905221822-931a021fb06b // @grafana/grafana-backend-group
 	github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20240805133030-fdaf6a95408e // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana-app-sdk v0.23.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.25.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v0.31.3 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.2 // @grafana/partner-datasources
 	github.com/grafana/grafana-cloud-migration-snapshot v1.3.0 // @grafana/grafana-operator-experience-squad
@@ -170,27 +170,27 @@ require (
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-backend
 	go.uber.org/goleak v1.3.0 // @grafana/grafana-search-and-storage
 	gocloud.dev v0.39.0 // @grafana/grafana-app-platform-squad
-	golang.org/x/crypto v0.28.0 // @grafana/grafana-backend-group
+	golang.org/x/crypto v0.29.0 // @grafana/grafana-backend-group
 	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // @grafana/alerting-backend
 	golang.org/x/mod v0.21.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.30.0 // @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/net v0.31.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.8.0 // @grafana/alerting-backend
-	golang.org/x/text v0.19.0 // @grafana/grafana-backend-group
+	golang.org/x/sync v0.9.0 // @grafana/alerting-backend
+	golang.org/x/text v0.20.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.26.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.15.1 // @grafana/observability-metrics
 	google.golang.org/api v0.193.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.67.1 // @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.68.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.35.1 // @grafana/plugins-platform-backend
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
-	k8s.io/api v0.31.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apimachinery v0.31.1 // @grafana/grafana-app-platform-squad
-	k8s.io/apiserver v0.31.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.31.1 // @grafana/grafana-app-platform-squad
-	k8s.io/component-base v0.31.1 // @grafana/grafana-app-platform-squad
+	k8s.io/api v0.31.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.31.2 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.31.2 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.31.2 // @grafana/grafana-app-platform-squad
+	k8s.io/component-base v0.31.2 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.130.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-aggregator v0.31.1 // @grafana/grafana-app-platform-squad
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // @grafana/grafana-app-platform-squad
@@ -302,7 +302,7 @@ require (
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect; @grafana/plugins-platform-backend
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // @grafana/identity-access-team
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.23.0 // @grafana/identity-access-team
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-msgpack v1.1.5 // indirect
@@ -429,18 +429,18 @@ require (
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // @grafana/identity-access-team
-	golang.org/x/sys v0.26.0 // indirect
-	golang.org/x/term v0.25.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240716161551-93cc26a95ae9 // indirect
 	google.golang.org/genproto v0.0.0-20240820151423-278611b39280 // indirect; @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20241007155032-5fefd90f89a9 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241007155032-5fefd90f89a9 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/kms v0.31.1 // indirect
+	k8s.io/kms v0.31.2 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
@@ -504,12 +504,10 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 // indirect
 	go4.org/netipx v0.0.0-20230125063823-8449b0a6169f // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
-	k8s.io/apiextensions-apiserver v0.31.1 // indirect
+	k8s.io/apiextensions-apiserver v0.31.2 // indirect
 )
 
-require (
-	github.com/grafana/grafana/apps/secret v0.0.0-20241105090059-facca37f4d1f
-)
+require github.com/grafana/grafana/apps/secret v0.0.0-20241105090059-facca37f4d1f
 
 replace github.com/grafana/grafana/apps/secret v0.0.0-20241105090059-facca37f4d1f => ./apps/secret
 
