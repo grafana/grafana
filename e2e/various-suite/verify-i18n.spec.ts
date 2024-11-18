@@ -15,7 +15,8 @@ describe('Verify i18n', () => {
     '中文（简体）': '语言',
   };
 
-  if (process.env.NODE_ENV === 'development') {
+  // pseudo locale is not available in CI
+  if (!process.env.CI) {
     languageMap['Pseudo-locale'] = 'Ŀäŉģūäģę';
   }
 
