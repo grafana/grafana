@@ -92,6 +92,7 @@ export function MetricCombobox({
           placeholder="Select metric"
           width="auto"
           minWidth={25}
+          maxWidth={100}
           options={loadOptions}
           value={query.metric}
           onChange={onComboboxChange}
