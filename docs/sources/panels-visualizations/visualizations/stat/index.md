@@ -114,35 +114,33 @@ The panel automatically adjusts the layout depending on available width and heig
 
 Use the following options to refine how your visualization displays its values:
 
-#### Show
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Show | Display a single value per column or series, or show values for each row. Choose from: <ul><li>**Calculate** - Display a calculated value based on all rows.</li><li>**All values** - Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.</li> |
+| Calculation | This option is displayed when you select **Calculate** in the **Show** option. Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
+| Limit | This option is displayed when you select **All values** in the **Show** option. The maximum number of rows to display. Default is 5,000. |
+| Fields | Select the fields display in the visualization. |
 
-Display a single value per column or series, or show values for each row.
-
-##### Calculate
-
-Display a calculated value based on all rows.
-
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types).
-- **Fields -** Select the fields display in the visualization.
-
-##### All values
-
-Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.
-
-- **Limit -** The maximum number of rows to display. Default is 5,000.
-- **Fields -** Select the fields display in the visualization.
+<!-- prettier-ignore-end -->
 
 ### Stat styles
 
 Style your visualization.
 
-#### Orientation
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Orientation | Choose a stacking direction. Choose from: <ul><li>**Auto** - Grafana selects what it thinks is the best orientation.</li><li>**Horizontal** - Bars stretch horizontally, left to right.</li><li>**Vertical** - Bars stretch vertically, top to bottom.</li></ul> |
+| [Text mode](#text-mode) | You can use the Text mode option to control what text the visualization renders. If the value is not important, only the name and color is, then change the **Text mode** to **Name**. The value will still be used to determine color and is displayed in a tooltip. |
+| [Wide layout](#wide-layout) | Set whether wide layout is enabled or not. Wide layout is enabled by default. This option is only applicable when **Text mode** is set to **Value and name**. |
+| Color mode | Select a color mode. Choose from: <ul><li>**None** - No color applied to the value.</li><li>**Value** - Applies color to the value and graph area.</li><li>**Background Gradient** - Applies color to the value, graph area, and background, with a slight background gradient.</li><li>**Background Solid** - Applies color to the value, graph area, and background, with a solid background color.</li></ul> |
+| Graph mode | Select a graph and sparkline mode. Choose from: <ul><li>**None** - Hides the graph and only shows the value.</li><li>**Area** - Shows the area graph below the value. This requires that your query returns a time column.</li></ul> |
+| Text alignment | Choose an alignment mode. Choose from: <ul><li>**Auto** - If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.</li><li>**Center** - Stat value is centered.</li></ul> |
+| Show percent change | Set whether percent change is displayed or not. Disabled by default. This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**. |
 
-Choose a stacking direction.
-
-- **Auto -** Grafana selects what it thinks is the best orientation.
-- **Horizontal -** Bars stretch horizontally, left to right.
-- **Vertical -** Bars stretch vertically, top to bottom.
+| Percent change color mode | This option is only displayed when **Show percent change** is enabled. Choose from: <ul><li>**Standard** - Green if the percent change is positive, red if the percent change is negative.</li><li>**Inverted** - Red if the percent change is positive, green if the percent change is negative.</li><li>**Same as Value** - Use the same color as the value.</li></ul> |
+<!-- prettier-ignore-end -->
 
 #### Text mode
 
@@ -161,55 +159,14 @@ Set whether wide layout is enabled or not. Wide layout is enabled by default.
 - **On -** Wide layout is enabled.
 - **Off -** Wide layout is disabled.
 
-{{< admonition type="note" >}}
 This option is only applicable when **Text mode** is set to **Value and name**. When wide layout is enabled, the value and name are displayed side-by-side with the value on the right, if the panel is wide enough. When wide layout is disabled, the value is always rendered underneath the name.
-{{< /admonition >}}
-
-#### Color mode
-
-Select a color mode.
-
-- **None -** No color applied to the value.
-- **Value -** Applies color to the value and graph area.
-- **Background Gradient -** Applies color to the value, graph area, and background, with a slight background gradient.
-- **Background Solid -** Applies color to the value, graph area, and background, with a solid background color.
-
-#### Graph mode
-
-Select a graph and sparkline mode.
-
-- **None -** Hides the graph and only shows the value.
-- **Area -** Shows the area graph below the value. This requires that your query returns a time column.
-
-#### Text alignment
-
-Choose an alignment mode.
-
-- **Auto -** If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.
-- **Center -** Stat value is centered.
-
-#### Show percent change
-
-Set whether percent change is displayed or not. Disabled by default.
-
-{{< admonition type="note" >}}
-This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**.
-{{< /admonition >}}
-
-#### Percent change color mode
-
-This option is only displayed when **Show percent change** is enabled. Choose from:
-
-- **Standard -** Green if the percent change is positive, red if the percent change is negative.
-- **Inverted -** Red if the percent change is positive, green if the percent change is negative.
-- **Same as Value -** Use the same color as the value.
 
 ### Text size
 
 Adjust the sizes of the gauge text.
 
-- **Title -** Enter a numeric value for the gauge title size.
-- **Value -** Enter a numeric value for the gauge value size.
+- **Title** - Enter a numeric value for the gauge title size.
+- **Value** - Enter a numeric value for the gauge value size.
 
 ### Standard options
 
