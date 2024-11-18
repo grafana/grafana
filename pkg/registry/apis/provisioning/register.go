@@ -180,7 +180,6 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		}, a.GetName(), list)
 	}
 	return nil
-
 }
 
 func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
