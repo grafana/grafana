@@ -280,6 +280,10 @@
         "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
       }
     },
+    "rule-list": {
+      "configure-datasource": "Cőŉƒįģūřę",
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
+    },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
       "deleting": "Đęľęŧįŉģ",

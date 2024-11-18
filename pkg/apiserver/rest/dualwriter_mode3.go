@@ -85,6 +85,15 @@ func (d *DualWriterMode3) createOnLegacyStorage(ctx context.Context, in, storage
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("legacy create timeout"))
 	defer cancel()
 
+	accessor, err := meta.Accessor(storageObj)
+	if err != nil {
+		return err
+	}
+
+	// clear the UID and ResourceVersion from the object before sending it to the legacy storage
+	accessor.SetUID("")
+	accessor.SetResourceVersion("")
+
 	startLegacy := time.Now()
 	legacyObj, err := d.Legacy.Create(ctx, storageObj, createValidation, options)
 	d.recordLegacyDuration(err != nil, mode3Str, d.resource, method, startLegacy)
