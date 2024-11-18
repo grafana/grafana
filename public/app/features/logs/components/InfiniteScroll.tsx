@@ -46,7 +46,8 @@ export const InfiniteScroll = ({
   );
   const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
-  const debouncedSetOnEdge = debounce(setOnEdge, 300);
+  const lastEvent = useRef<WheelEvent | null>(null);
+  const debouncedSetOnEdge = debounce(setOnEdge, 400);
 
   // Reset messages when range/order/rows change
   useEffect(() => {
@@ -94,6 +95,15 @@ export const InfiniteScroll = ({
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
 
+      if (event instanceof WheelEvent) {
+        const prevEvent = lastEvent.current;
+        lastEvent.current = event;
+        // Ignore chain of events, like intertial scrolling
+        if (prevEvent && canSkipEvent(event, prevEvent)) {
+          return;
+        }
+      }
+
       // Give users a change to reach the bottom/top of the log list
       if (!scrollOnEdge(scrollElement) || scrollDirection === ScrollDirection.NoScroll) {
         return;
@@ -111,8 +121,12 @@ export const InfiniteScroll = ({
     function scrollOnEdge(scrollElement: HTMLDivElement) {
       const scrollSize = scrollElement ? scrollElement.scrollHeight - scrollElement.clientHeight : 0;
       const scrollTop = Math.round(scrollElement.scrollTop);
+      const prevScrollTop = Math.round(lastScroll.current);
       const diff = scrollSize - scrollTop;
-      debouncedSetOnEdge.cancel();
+      if (prevScrollTop !== scrollTop) {
+        debouncedSetOnEdge.cancel();
+      }
+      //console.log(prevScrollTop, scrollTop);
       if (diff <= 1 || scrollTop <= 0) {
         debouncedSetOnEdge(true);
       } else {
@@ -332,4 +346,15 @@ function canScrollBottom(
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
 function updateCurrentRange(timeRange: TimeRange, timeZone: TimeZone) {
   return isRelativeTimeRange(timeRange.raw) ? convertRawToRange(timeRange.raw, timeZone) : timeRange;
+}
+
+function canSkipEvent(event: WheelEvent, lastEvent: WheelEvent) {
+  if (event.screenX !== lastEvent.screenX || event.screenY !== lastEvent.screenY) {
+    return false;
+  }
+  const delta = event.timeStamp - lastEvent.timeStamp;
+  if (delta <= 70) {
+    return true;
+  }
+  return false;
 }
