@@ -507,6 +507,12 @@ require (
 	k8s.io/apiextensions-apiserver v0.31.1 // indirect
 )
 
+require (
+	github.com/grafana/grafana/apps/secret v0.0.0-20241105090059-facca37f4d1f
+)
+
+replace github.com/grafana/grafana/apps/secret v0.0.0-20241105090059-facca37f4d1f => ./apps/secret
+
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
