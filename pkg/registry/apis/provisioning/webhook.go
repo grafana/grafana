@@ -57,7 +57,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	if err != nil {
 		return nil, err
 	}
-	webhook := repo.Webhook()
+	webhook := repo.Webhook(responder)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{

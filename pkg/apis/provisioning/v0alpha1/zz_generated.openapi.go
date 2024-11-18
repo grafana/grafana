@@ -47,9 +47,30 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The branch to use in the repository. By default, this is the main branch.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"token": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Token for accessing the repository.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"webhookName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookName is the name of the webhook to create in Github to listen for events",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"webhookURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
