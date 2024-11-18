@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
-	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -90,10 +89,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		// set the default middlewars from the httpClientProvider
-		httpCliOpts.Middlewares = httpClientProvider.Opts.Middlewares
-		// enable experimental http client to support errors with source
-		httpCli, err := exphttpclient.New(httpCliOpts)
+		httpCli, err := httpClientProvider.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}
