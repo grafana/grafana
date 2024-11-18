@@ -92,6 +92,12 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
+		getter: repositoryStorage,
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
+		getter: repositoryStorage,
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
