@@ -51,8 +51,16 @@ function renderWithExploreStore(
   render(<Provider store={store}>{children}</Provider>, {});
 }
 
-function setupToolbarExtensionPoint({ noTimezone }: { noTimezone?: boolean } = { noTimezone: false }) {
-  return <ToolbarExtensionPoint exploreId="left" timeZone={noTimezone ? '' : 'browser'} extensionsToShow="basic" />;
+function setupToolbarExtensionPoint(
+  { noTimezone, showQuerylessApps }: { noTimezone?: boolean; showQuerylessApps?: boolean } = { noTimezone: false }
+) {
+  return (
+    <ToolbarExtensionPoint
+      exploreId="left"
+      timeZone={noTimezone ? '' : 'browser'}
+      extensionsToShow={showQuerylessApps ? 'queryless' : 'basic'}
+    />
+  );
 }
 
 describe('ToolbarExtensionPoint', () => {
@@ -244,6 +252,116 @@ describe('ToolbarExtensionPoint', () => {
       renderWithExploreStore(setupToolbarExtensionPoint());
 
       expect(screen.queryByRole('button', { name: /add to dashboard/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('with multiple queryless apps links', () => {
+    beforeAll(() => {
+      usePluginLinksMock.mockReturnValue({
+        links: [
+          {
+            pluginId: 'grafana',
+            id: '1',
+            type: PluginExtensionTypes.link,
+            title: 'Add to dashboard',
+            category: 'Dashboards',
+            description: 'Add the current query as a panel to a dashboard',
+            onClick: jest.fn(),
+          },
+          {
+            pluginId: 'grafana-ml-app',
+            id: '2',
+            type: PluginExtensionTypes.link,
+            title: 'ML: Forecast',
+            description: 'Add the query as a ML forecast',
+            path: '/a/grafana-ml-ap/forecast',
+          },
+          {
+            pluginId: 'grafana-pyroscope-app',
+            id: '3',
+            type: PluginExtensionTypes.link,
+            title: 'Explore Profiles',
+            description: 'Explore Profiles',
+            path: '/a/grafana-pyroscope-app',
+          },
+          {
+            pluginId: 'grafana-lokiexplore-app',
+            id: '4',
+            type: PluginExtensionTypes.link,
+            title: 'Explore Logs',
+            description: 'Explore Logs',
+            path: '/a/grafana-lokiexplore-app',
+          },
+        ],
+        isLoading: false,
+      });
+    });
+
+    it('should render menu with extensions without queryless apps when "Add" is clicked', async () => {
+      renderWithExploreStore(setupToolbarExtensionPoint());
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+      expect(screen.getByRole('group', { name: 'Dashboards' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Add to dashboard' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
+      expect(screen.queryByRole('menuitem', { name: 'Explore Profiles' })).not.toBeInTheDocument();
+    });
+
+    it('should render queryless apps links', async () => {
+      renderWithExploreStore(setupToolbarExtensionPoint({ showQuerylessApps: true }));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go Queryless' }));
+
+      expect(screen.queryByRole('group', { name: 'Dashboards' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Add to dashboard' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'ML: Forecast' })).not.toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Explore Profiles' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Explore Logs' })).toBeVisible();
+    });
+  });
+
+  describe('with single queryless apps link', () => {
+    beforeAll(() => {
+      usePluginLinksMock.mockReturnValue({
+        links: [
+          {
+            pluginId: 'grafana',
+            id: '1',
+            type: PluginExtensionTypes.link,
+            title: 'Add to dashboard',
+            category: 'Dashboards',
+            description: 'Add the current query as a panel to a dashboard',
+            onClick: jest.fn(),
+          },
+          {
+            pluginId: 'grafana-ml-app',
+            id: '2',
+            type: PluginExtensionTypes.link,
+            title: 'ML: Forecast',
+            description: 'Add the query as a ML forecast',
+            path: '/a/grafana-ml-ap/forecast',
+          },
+          {
+            pluginId: 'grafana-pyroscope-app',
+            id: '3',
+            type: PluginExtensionTypes.link,
+            title: 'Explore Profiles',
+            description: 'Explore Profiles',
+            path: '/a/grafana-pyroscope-app',
+          },
+        ],
+        isLoading: false,
+      });
+    });
+
+    it('should render single queryless app link', async () => {
+      renderWithExploreStore(setupToolbarExtensionPoint({ showQuerylessApps: true }));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go Queryless' }));
+
+      expect(screen.queryByRole('menuitem', { name: 'Explore Profiles' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Explore Logs' })).not.toBeInTheDocument();
     });
   });
 });
