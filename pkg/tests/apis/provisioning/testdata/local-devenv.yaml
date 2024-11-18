@@ -7,4 +7,4 @@ spec:
   description: load resources from grafana/grafana devenv folder
   type: local 
   local:
-    path: path/to/folder
+    path: /tmp/path/to/folder

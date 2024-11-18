@@ -33,6 +33,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 		},
 	})
 
+	// Scope create+get
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR: schema.GroupVersionResource{
+			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
+		},
+	})
+
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
 		resources, err := disco.ServerResourcesForGroupVersion("provisioning.grafana.app/v0alpha1")
@@ -76,14 +85,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 
 	t.Run("Check basic create and get", func(t *testing.T) {
-		// Scope create+get
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: "default", // actually org1
-			GVR: schema.GroupVersionResource{
-				Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
-			},
-		})
 		createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 
 		// Load the samples
@@ -148,17 +149,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}`, string(js))
 	})
 
-	t.Run("basic helloworld subresource", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Admin,
-			Namespace: "default", // actually org1
-			GVR: schema.GroupVersionResource{
-				Group:    "provisioning.grafana.app",
-				Version:  "v0alpha1",
-				Resource: "repositories",
-			},
-		})
+	t.Run("validation hooks", func(t *testing.T) {
+		// Add it if this is the only test that ran
+		obj, err := client.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/invalid.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.Nil(t, obj)
+		require.NoError(t, err)
+	})
 
+	t.Run("basic helloworld subresource", func(t *testing.T) {
 		// Add it if this is the only test that ran
 		_, err := client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
@@ -177,6 +178,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 			"World",
 			mustNestedString(resp.Object, "whom"))
 	})
+
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {

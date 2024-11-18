@@ -3,10 +3,15 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -100,6 +105,82 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
+}
+
+func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	obj := a.GetObject()
+	if obj == nil {
+		return fmt.Errorf("missing object for validation")
+	}
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration")
+	}
+
+	var list field.ErrorList
+	if r.Spec.Title == "" {
+		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
+	}
+
+	// Reserved names (for now)
+	reserved := []string{"classic", "SQL", "plugins", "legacy"}
+	if slices.Contains(reserved, r.Name) {
+		list = append(list, field.Invalid(field.NewPath("metadata", "name"), r.Name, "Name is reserved"))
+	}
+
+	switch r.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		if r.Spec.Local == nil || r.Spec.Local.Path == "" {
+			list = append(list, field.Required(field.NewPath("spec", "local", "path"), "a path to a local file system is required"))
+		} else {
+			// TODO... configure an allow list of paths we can read
+			if !strings.HasPrefix(r.Spec.Local.Path, "/tmp/") {
+				list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), r.Spec.Local.Path,
+					"invalid local file for provisioning"))
+			}
+		}
+	case provisioning.S3RepositoryType:
+		s3 := r.Spec.S3
+		if s3 == nil {
+			list = append(list, field.Required(field.NewPath("spec", "s3"), "an s3 config is required"))
+			break
+		}
+		if s3.Region == "" {
+			list = append(list, field.Required(field.NewPath("spec", "s3", "region"), "an s3 region is required"))
+		}
+		if s3.Bucket == "" {
+			list = append(list, field.Required(field.NewPath("spec", "s3", "bucket"), "an s3 bucket name is required"))
+		}
+	case provisioning.GithubRepositoryType:
+		gh := r.Spec.GitHub
+		if gh == nil {
+			list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
+			break
+		}
+		if gh.Owner == "" {
+			list = append(list, field.Required(field.NewPath("spec", "github", "owner"), "a github repo owner is required"))
+		}
+		if gh.Repository == "" {
+			list = append(list, field.Required(field.NewPath("spec", "github", "repository"), "a github repo name is required"))
+		}
+		if gh.Token == "" {
+			list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
+		}
+		if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
+			list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
+		}
+	default:
+		list = append(list, field.TypeInvalid(field.NewPath("spec", "type"), r.Spec.Type, "the repository type must be one of local, s3, or github"))
+	}
+
+	if len(list) > 0 {
+		return errors.NewInvalid(schema.GroupKind{
+			Group: provisioning.GROUP,
+			Kind:  "Repository", //??
+		}, a.GetName(), list)
+	}
+	return nil
+
 }
 
 func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

@@ -1,0 +1,9 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: invalid-local-devenv
+spec:
+  title: Should not allow saving this
+  type: local 
+  local:
+    path: /etc/passwords
