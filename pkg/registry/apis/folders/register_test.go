@@ -103,24 +103,6 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 					OrgID:  orgID,
 					Name:   "123",
 					Permissions: map[int64]map[string][]string{
-						orgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
-					},
-				},
-				verb: string(utils.VerbList),
-			},
-			expect: expect{
-				eval:  "folders:read",
-				allow: true,
-			},
-		},
-		{
-			name: "user without read permissions should not be able to list folders",
-			input: input{
-				user: &user.SignedInUser{
-					UserID: 1,
-					OrgID:  orgID,
-					Name:   "123",
-					Permissions: map[int64]map[string][]string{
 						orgID: {},
 					},
 				},
@@ -129,6 +111,24 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 			expect: expect{
 				eval:  "folders:read",
 				allow: false,
+			},
+		},
+		{
+			name: "user with delete permissions should be able to delete a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersDelete: {dashboards.ScopeFoldersAll}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbDelete),
+			},
+			expect: expect{
+				eval:  "folders:delete",
+				allow: true,
 			},
 		},
 	}
