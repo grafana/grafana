@@ -78,7 +78,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		if backend.IsDownstreamHTTPError(err) {
-			return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, errorsource.DownstreamError(err, false)), nil
+			err = errorsource.DownstreamError(err, false)
 		}
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
