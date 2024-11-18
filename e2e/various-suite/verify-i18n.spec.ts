@@ -23,8 +23,8 @@ describe('Verify i18n', () => {
     cy.visit('/profile');
 
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
-      // TODO investigate why we need to wait for 6 (SIX!) calls to the preferences API
-      cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
+      // TODO investigate why we need to wait for 5 (FIVE!) calls to the preferences API
+      cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
       cy.get('[id="locale-select"]').click();
       cy.get('[id="locale-select"]').type(language).type('{downArrow}{enter}');
       e2e.components.UserProfile.preferencesSaveButton().click();
