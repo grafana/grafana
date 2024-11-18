@@ -93,7 +93,8 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg)
+	// TODO: Wire the remote authz client.
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg, nil)
 	if err != nil {
 		return err
 	}
