@@ -52,6 +52,7 @@ interface ComboboxBaseProps<T extends string | number> {
   placeholder?: string;
   'aria-labelledby'?: string;
   id?: string;
+  autoFocus?: boolean;
 }
 
 const RECOMMENDED_ITEMS_AMOUNT = 100_000;
@@ -126,6 +127,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    autoFocus,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -366,6 +368,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       <InputComponent
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
+        autoFocus={autoFocus}
         className={styles.input}
         suffix={
           <>
