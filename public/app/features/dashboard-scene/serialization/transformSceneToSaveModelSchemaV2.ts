@@ -1,8 +1,8 @@
 import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import {
-  DashboardV2,
-  defaultDashboardSpec,
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
   defaultFieldConfigSource,
   PanelKind,
   PanelQueryKind,
@@ -42,63 +42,60 @@ type DeepPartial<T> = T extends object
     }
   : T;
 
-export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2> {
+export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnapshot = false): Partial<DashboardV2Spec> {
   const oldDash = scene.state;
   const timeRange = oldDash.$timeRange!.state;
 
   const controlsState = oldDash.controls?.state;
   const refreshPicker = controlsState?.refreshPicker;
 
-  const dashboardSchemaV2: DeepPartial<DashboardV2> = {
-    kind: 'Dashboard',
-    spec: {
-      //dashboard settings
-      title: oldDash.title,
-      description: oldDash.description ?? '',
-      cursorSync: getCursorSync(oldDash),
-      liveNow: getLiveNow(oldDash),
-      preload: oldDash.preload,
-      editable: oldDash.editable,
-      links: transformDashboardLinksToEnums(oldDash.links),
-      tags: oldDash.tags,
-      // EOF dashboard settings
+  const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
+    //dashboard settings
+    title: oldDash.title,
+    description: oldDash.description ?? '',
+    cursorSync: getCursorSync(oldDash),
+    liveNow: getLiveNow(oldDash),
+    preload: oldDash.preload,
+    editable: oldDash.editable,
+    links: transformDashboardLinksToEnums(oldDash.links),
+    tags: oldDash.tags,
+    // EOF dashboard settings
 
-      // time settings
-      timeSettings: {
-        timezone: timeRange.timeZone,
-        from: timeRange.from,
-        to: timeRange.to,
-        autoRefresh: refreshPicker?.state.refresh,
-        autoRefreshIntervals: refreshPicker?.state.intervals,
-        quickRanges: [], //FIXME is coming timepicker.time_options,
-        hideTimepicker: controlsState?.hideTimeControls ?? false,
-        weekStart: timeRange.weekStart,
-        fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
-        nowDelay: timeRange.UNSAFE_nowDelay,
-      },
-      // EOF time settings
-
-      // variables
-      variables: getVariables(oldDash),
-      // EOF variables
-
-      // elements
-      elements: getElements(oldDash),
-      // EOF elements
-
-      // annotations
-      annotations: [], //FIXME
-      // EOF annotations
-
-      // layout
-      layout: {
-        kind: 'GridLayout',
-        spec: {
-          items: getGridLayoutItems(oldDash),
-        },
-      },
-      // EOF layout
+    // time settings
+    timeSettings: {
+      timezone: timeRange.timeZone,
+      from: timeRange.from,
+      to: timeRange.to,
+      autoRefresh: refreshPicker?.state.refresh,
+      autoRefreshIntervals: refreshPicker?.state.intervals,
+      quickRanges: [], //FIXME is coming timepicker.time_options,
+      hideTimepicker: controlsState?.hideTimeControls ?? false,
+      weekStart: timeRange.weekStart,
+      fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
+      nowDelay: timeRange.UNSAFE_nowDelay,
     },
+    // EOF time settings
+
+    // variables
+    variables: getVariables(oldDash),
+    // EOF variables
+
+    // elements
+    elements: getElements(oldDash),
+    // EOF elements
+
+    // annotations
+    annotations: [], //FIXME
+    // EOF annotations
+
+    // layout
+    layout: {
+      kind: 'GridLayout',
+      spec: {
+        items: getGridLayoutItems(oldDash),
+      },
+    },
+    // EOF layout
   };
 
   if (isDashboardSchemaV2(dashboardSchemaV2)) {
@@ -121,7 +118,7 @@ function getLiveNow(state: DashboardSceneState) {
     undefined;
   // hack for validator
   if (liveNow === undefined) {
-    return defaultDashboardSpec().liveNow;
+    return defaultDashboardV2Spec().liveNow;
   }
   return liveNow;
 }
@@ -268,10 +265,8 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
 }
 
 export function getDataQueryKind(query: SceneDataQuery): string {
-  // FIXME kind in the query object is the datasource type?
-  // what if the datasource is not set?
-  // should we use default datasource type?
-  return query.datasource?.type ?? '';
+  // If the query has a datasource, use the datasource type, otherwise use 'default'
+  return query.datasource?.type ?? 'default';
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
@@ -373,109 +368,101 @@ function getVariables(oldDash: DashboardSceneState) {
   return variables;
 }
 
-// Function to know if the dashboard transformed is a valid DashboardV2
-function isDashboardSchemaV2(dash: any): dash is DashboardV2 {
+// Function to know if the dashboard transformed is a valid DashboardV2Spec
+function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
     return false;
   }
 
-  if (dash.kind !== 'Dashboard') {
+  if (typeof dash.title !== 'string') {
     return false;
   }
-  if (typeof dash.spec !== 'object' || dash.spec === null) {
+  if (typeof dash.description !== 'string') {
     return false;
   }
-
-  // Spec-level properties
-  if (typeof dash.spec.title !== 'string') {
+  if (typeof dash.cursorSync !== 'string') {
     return false;
   }
-  if (typeof dash.spec.description !== 'string') {
+  if (!Object.values(DashboardCursorSync).includes(dash.cursorSync)) {
     return false;
   }
-  if (typeof dash.spec.cursorSync !== 'string') {
+  if (typeof dash.liveNow !== 'boolean') {
     return false;
   }
-  if (!Object.values(DashboardCursorSync).includes(dash.spec.cursorSync)) {
+  if (typeof dash.preload !== 'boolean') {
     return false;
   }
-  if (typeof dash.spec.liveNow !== 'boolean') {
+  if (typeof dash.editable !== 'boolean') {
     return false;
   }
-  if (typeof dash.spec.preload !== 'boolean') {
+  if (!Array.isArray(dash.links)) {
     return false;
   }
-  if (typeof dash.spec.editable !== 'boolean') {
-    return false;
-  }
-  if (!Array.isArray(dash.spec.links)) {
-    return false;
-  }
-  if (!Array.isArray(dash.spec.tags)) {
+  if (!Array.isArray(dash.tags)) {
     return false;
   }
 
-  if (dash.spec.id !== undefined && typeof dash.spec.id !== 'number') {
+  if (dash.id !== undefined && typeof dash.id !== 'number') {
     return false;
   }
 
   // Time settings
-  if (typeof dash.spec.timeSettings !== 'object' || dash.spec.timeSettings === null) {
+  if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
     return false;
   }
-  if (typeof dash.spec.timeSettings.timezone !== 'string') {
+  if (typeof dash.timeSettings.timezone !== 'string') {
     return false;
   }
-  if (typeof dash.spec.timeSettings.from !== 'string') {
+  if (typeof dash.timeSettings.from !== 'string') {
     return false;
   }
-  if (typeof dash.spec.timeSettings.to !== 'string') {
+  if (typeof dash.timeSettings.to !== 'string') {
     return false;
   }
-  if (typeof dash.spec.timeSettings.autoRefresh !== 'string') {
+  if (typeof dash.timeSettings.autoRefresh !== 'string') {
     return false;
   }
-  if (!Array.isArray(dash.spec.timeSettings.autoRefreshIntervals)) {
+  if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     return false;
   }
-  if (!Array.isArray(dash.spec.timeSettings.quickRanges)) {
+  if (!Array.isArray(dash.timeSettings.quickRanges)) {
     return false;
   }
-  if (typeof dash.spec.timeSettings.hideTimepicker !== 'boolean') {
+  if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     return false;
   }
-  if (typeof dash.spec.timeSettings.weekStart !== 'string') {
+  if (typeof dash.timeSettings.weekStart !== 'string') {
     return false;
   }
-  if (typeof dash.spec.timeSettings.fiscalYearStartMonth !== 'number') {
+  if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     return false;
   }
-  if (dash.spec.timeSettings.nowDelay !== undefined && typeof dash.spec.timeSettings.nowDelay !== 'string') {
+  if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
     return false;
   }
 
   // Other sections
-  if (!Array.isArray(dash.spec.variables)) {
+  if (!Array.isArray(dash.variables)) {
     return false;
   }
-  if (typeof dash.spec.elements !== 'object' || dash.spec.elements === null) {
+  if (typeof dash.elements !== 'object' || dash.elements === null) {
     return false;
   }
-  if (!Array.isArray(dash.spec.annotations)) {
+  if (!Array.isArray(dash.annotations)) {
     return false;
   }
 
   // Layout
-  if (typeof dash.spec.layout !== 'object' || dash.spec.layout === null) {
+  if (typeof dash.layout !== 'object' || dash.layout === null) {
     return false;
   }
-  if (dash.spec.layout.kind !== 'GridLayout') {
+  if (dash.layout.kind !== 'GridLayout') {
     return false;
   }
-  if (typeof dash.spec.layout.spec !== 'object' || dash.spec.layout.spec === null) {
+  if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
     return false;
   }
-  if (!Array.isArray(dash.spec.layout.spec.items)) {
+  if (!Array.isArray(dash.layout.spec.items)) {
     return false;
   }
 
