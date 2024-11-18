@@ -1,14 +1,9 @@
 package v0alpha1
 
 import (
-	"context"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 )
 
 // When this code is changed, make sure to update the code generation.
@@ -22,79 +17,6 @@ type Repository struct {
 
 	Spec   RepositorySpec   `json:"spec,omitempty"`
 	Status RepositoryStatus `json:"status,omitempty"`
-}
-
-func (r *Repository) Canonicalize() {
-	switch r.Spec.Type {
-	case LocalRepositoryType:
-		r.Spec.GitHub = nil
-		r.Spec.S3 = nil
-	case S3RepositoryType:
-		r.Spec.GitHub = nil
-		r.Spec.Local = nil
-	case GithubRepositoryType:
-		r.Spec.S3 = nil
-		r.Spec.Local = nil
-	}
-}
-
-func (r *Repository) ValidateOnCreate(ctx context.Context) field.ErrorList {
-	var list field.ErrorList
-	if r.Spec.Title == "" {
-		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
-	}
-
-	switch r.Spec.Type {
-	case LocalRepositoryType:
-		if r.Spec.Local == nil || r.Spec.Local.Path == "" {
-			list = append(list, field.Required(field.NewPath("spec", "local", "path"), "a path to a local file system is required"))
-		}
-	case S3RepositoryType:
-		s3 := r.Spec.S3
-		if s3 == nil {
-			list = append(list, field.Required(field.NewPath("spec", "s3"), "an s3 config is required"))
-			break
-		}
-		if s3.Region == "" {
-			list = append(list, field.Required(field.NewPath("spec", "s3", "region"), "an s3 region is required"))
-		}
-		if s3.Bucket == "" {
-			list = append(list, field.Required(field.NewPath("spec", "s3", "bucket"), "an s3 bucket name is required"))
-		}
-	case GithubRepositoryType:
-		gh := r.Spec.GitHub
-		if gh == nil {
-			list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
-			break
-		}
-		if gh.Owner == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "owner"), "a github repo owner is required"))
-		}
-		if gh.Repository == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "repository"), "a github repo name is required"))
-		}
-		if gh.Token == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
-		}
-		if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
-			list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
-		}
-	default:
-		list = append(list, field.TypeInvalid(field.NewPath("spec", "type"), r.Spec.Type, "the repository type must be one of local, s3, or github"))
-	}
-	return list
-}
-
-func (r *Repository) WarningsOnCreate(ctx context.Context) []string {
-	return nil
-}
-
-func (r *Repository) ValidateOnUpdate(ctx context.Context, old runtime.Object) field.ErrorList {
-	return r.ValidateOnCreate(ctx)
-}
-
-func (r *Repository) WarningsOnUpdate(ctx context.Context, old runtime.Object) []string {
-	return nil
 }
 
 type LocalRepositoryConfig struct {
@@ -218,9 +140,3 @@ type WebhookResponse struct {
 
 	Status string `json:"status,omitempty"`
 }
-
-var (
-	_ grafanaregistry.ValidatableOnCreate = (*Repository)(nil)
-	_ grafanaregistry.ValidatableOnUpdate = (*Repository)(nil)
-	_ grafanaregistry.Canonicalizable     = (*Repository)(nil)
-)

@@ -15,20 +15,6 @@ import (
 	"sigs.k8s.io/structured-merge-diff/v4/fieldpath"
 )
 
-type ValidatableOnCreate interface {
-	ValidateOnCreate(ctx context.Context) field.ErrorList
-	WarningsOnCreate(ctx context.Context) []string
-}
-
-type ValidatableOnUpdate interface {
-	ValidateOnUpdate(ctx context.Context, old runtime.Object) field.ErrorList
-	WarningsOnUpdate(ctx context.Context, old runtime.Object) []string
-}
-
-type Canonicalizable interface {
-	Canonicalize()
-}
-
 type genericStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -77,17 +63,11 @@ func (g *genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime
 }
 
 func (g *genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	if v, ok := obj.(ValidatableOnCreate); ok {
-		return v.ValidateOnCreate(ctx)
-	}
 	return field.ErrorList{}
 }
 
 // WarningsOnCreate returns warnings for the creation of the given object.
 func (g *genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
-	if v, ok := obj.(ValidatableOnCreate); ok {
-		return v.WarningsOnCreate(ctx)
-	}
 	return nil
 }
 
@@ -99,24 +79,14 @@ func (g *genericStrategy) AllowUnconditionalUpdate() bool {
 	return true
 }
 
-func (g *genericStrategy) Canonicalize(obj runtime.Object) {
-	if c, ok := obj.(Canonicalizable); ok {
-		c.Canonicalize()
-	}
-}
+func (g *genericStrategy) Canonicalize(obj runtime.Object) {}
 
 func (g *genericStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	if v, ok := obj.(ValidatableOnUpdate); ok {
-		return v.ValidateOnUpdate(ctx, old)
-	}
 	return field.ErrorList{}
 }
 
 // WarningsOnUpdate returns warnings for the given update.
 func (g *genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
-	if v, ok := obj.(ValidatableOnUpdate); ok {
-		return v.WarningsOnUpdate(ctx, old)
-	}
 	return nil
 }
 
