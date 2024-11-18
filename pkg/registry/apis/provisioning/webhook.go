@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -14,7 +15,7 @@ import (
 
 // This only works for github right now
 type webhookConnector struct {
-	getter rest.Getter
+	getter RepoGetter
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -52,23 +53,20 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := s.getter.Get(ctx, name, &metav1.GetOptions{})
+	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return nil, fmt.Errorf("expected repository, but got %t", obj)
+	webhook := repo.Webhook()
+	if webhook == nil {
+		return nil, &errors.StatusError{
+			ErrStatus: v1.Status{
+				Message: fmt.Sprintf("webhook is not implemented for: %s", repo.Config().Spec.Type),
+				Code:    http.StatusNotImplemented,
+			},
+		}
 	}
-	if repo.Spec.Type != provisioning.GithubRepositoryType {
-		return nil, fmt.Errorf("only works for github")
-	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// really any handler
-		// get the repository from the path
-		_, _ = w.Write([]byte("TODO... handle webhook " + r.URL.Path))
-	}), nil
+	return webhook, nil
 }
 
 var (

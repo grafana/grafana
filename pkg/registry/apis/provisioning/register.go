@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,26 +22,38 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder = (*ProvisioningAPIBuilder)(nil)
+	_ RepoGetter              = (*ProvisioningAPIBuilder)(nil)
+)
 
 // This is used just so wire has something unique to return
-type ProvisioningAPIBuilder struct{}
+type ProvisioningAPIBuilder struct {
+	getter            rest.Getter
+	localFileResolver *LocalFolderResolver
+}
 
-func NewProvisioningAPIBuilder() *ProvisioningAPIBuilder {
-	return &ProvisioningAPIBuilder{}
+func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
+	return &ProvisioningAPIBuilder{
+		localFileResolver: local,
+	}
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
+	cfg *setting.Cfg,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewProvisioningAPIBuilder()
+	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
+		ProvisioningPath: cfg.ProvisioningPath,
+	})
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -86,6 +97,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
+	b.getter = repositoryStorage
 
 	helloWorld := &helloWorldSubresource{
 		getter:        repositoryStorage,
@@ -98,79 +110,74 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: repositoryStorage,
+		getter: b,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
-		getter: repositoryStorage,
+		getter: b,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
 
-func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	obj := a.GetObject()
+func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (Repository, error) {
+	return nil, nil
+}
+
+func (b *ProvisioningAPIBuilder) getRepository(ctx context.Context, obj runtime.Object) (Repository, error) {
 	if obj == nil {
-		return fmt.Errorf("missing object for validation")
+		return nil, fmt.Errorf("missing object for validation")
 	}
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
-		return fmt.Errorf("expected repository configuration")
+		return nil, fmt.Errorf("expected repository configuration")
 	}
 
-	var list field.ErrorList
-	if r.Spec.Title == "" {
+	switch r.Spec.Type {
+	case provisioning.LocalRepositoryType:
+		return newLocalRepository(r, b.localFileResolver), nil
+	case provisioning.GithubRepositoryType:
+		return newGithubRepository(r), nil
+	case provisioning.S3RepositoryType:
+		return newS3Repository(r), nil
+	default:
+	}
+	return &unknownRepository{config: r}, nil
+}
+
+func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	repo, err := b.getRepository(ctx, a.GetObject())
+	if err != nil {
+		return err
+	}
+
+	// Typed validation
+	list := repo.Validate()
+
+	cfg := repo.Config()
+
+	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
 	}
 
 	// Reserved names (for now)
 	reserved := []string{"classic", "SQL", "plugins", "legacy"}
-	if slices.Contains(reserved, r.Name) {
-		list = append(list, field.Invalid(field.NewPath("metadata", "name"), r.Name, "Name is reserved"))
+	if slices.Contains(reserved, cfg.Name) {
+		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved"))
 	}
 
-	switch r.Spec.Type {
-	case provisioning.LocalRepositoryType:
-		if r.Spec.Local == nil || r.Spec.Local.Path == "" {
-			list = append(list, field.Required(field.NewPath("spec", "local", "path"), "a path to a local file system is required"))
-		} else {
-			// TODO... configure an allow list of paths we can read
-			if !strings.HasPrefix(r.Spec.Local.Path, "/tmp/") {
-				list = append(list, field.Invalid(field.NewPath("spec", "local", "path"), r.Spec.Local.Path,
-					"invalid local file for provisioning"))
-			}
-		}
-	case provisioning.S3RepositoryType:
-		s3 := r.Spec.S3
-		if s3 == nil {
-			list = append(list, field.Required(field.NewPath("spec", "s3"), "an s3 config is required"))
-			break
-		}
-		if s3.Region == "" {
-			list = append(list, field.Required(field.NewPath("spec", "s3", "region"), "an s3 region is required"))
-		}
-		if s3.Bucket == "" {
-			list = append(list, field.Required(field.NewPath("spec", "s3", "bucket"), "an s3 bucket name is required"))
-		}
-	case provisioning.GithubRepositoryType:
-		gh := r.Spec.GitHub
-		if gh == nil {
-			list = append(list, field.Required(field.NewPath("spec", "github"), "a github config is required"))
-			break
-		}
-		if gh.Owner == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "owner"), "a github repo owner is required"))
-		}
-		if gh.Repository == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "repository"), "a github repo name is required"))
-		}
-		if gh.Token == "" {
-			list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
-		}
-		if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
-			list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
-		}
-	default:
-		list = append(list, field.TypeInvalid(field.NewPath("spec", "type"), r.Spec.Type, "the repository type must be one of local, s3, or github"))
+	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "local"),
+			cfg.Spec.GitHub, "Local config only valid when type is local"))
+	}
+
+	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.GitHub != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "github"),
+			cfg.Spec.GitHub, "Github config only valid when type is github"))
+	}
+
+	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.S3 != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "s3"),
+			cfg.Spec.GitHub, "S3 config only valid when type is s3"))
 	}
 
 	if len(list) > 0 {
