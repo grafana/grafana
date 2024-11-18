@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Routes, Route } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
@@ -86,7 +86,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
     const { user } = renderSimplifiedRuleEditor();
-    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -107,7 +106,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   it('simplified routing is not available when Grafana AM is not enabled', async () => {
     setAlertmanagerChoices(AlertmanagerChoice.External, 1);
     renderSimplifiedRuleEditor();
-    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument();
   });
@@ -117,7 +115,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
     const { user } = renderSimplifiedRuleEditor();
-    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
 
@@ -142,7 +139,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     it('allows selecting a contact point when using alerting API server', async () => {
       const { user } = renderSimplifiedRuleEditor();
-      await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
       await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
 
