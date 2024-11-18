@@ -8,13 +8,14 @@ import { byRole } from 'testing-library-selector';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
+import { buildInfoResponse } from 'app/features/alerting/unified/testSetup/featureDiscovery';
 import { DataSourceType, GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -28,7 +29,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
 
 jest.setTimeout(60 * 1000);
 
-setupMswServer();
+const server = setupMswServer();
 
 const dataSources = {
   default: mockDataSource(
@@ -44,6 +45,7 @@ const dataSources = {
     type: DataSourceType.Alertmanager,
   }),
 };
+
 setupDataSources(dataSources.default, dataSources.am);
 
 const selectFolderAndGroup = async () => {
@@ -76,6 +78,8 @@ describe('Can create a new grafana managed alert using simplified routing', () =
       AccessControlAction.AlertingNotificationsRead,
       AccessControlAction.AlertingNotificationsWrite,
     ]);
+
+    mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
   });
 
   it('cannot create new grafana managed alert when using simplified routing and not selecting a contact point', async () => {
