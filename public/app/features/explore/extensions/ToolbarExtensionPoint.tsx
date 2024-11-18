@@ -10,6 +10,7 @@ import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } 
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 import { BasicExtensions } from './toolbar/BasicExtensions';
+import { QuerylessAppsExtensions } from './toolbar/QuerylessAppsExtensions';
 
 type Props = {
   exploreId: string;
@@ -31,11 +32,19 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);
 
-  // const querylessLinks = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
+  const querylessLinks = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
   const commonLinks = links.filter((link) => !QUERYLESS_APPS.includes(link.pluginId));
 
   return (
     <>
+      <QuerylessAppsExtensions
+        links={querylessLinks}
+        noQueriesInPane={noQueriesInPane}
+        exploreId={exploreId}
+        setSelectedExtension={setSelectedExtension}
+        setIsModalOpen={setIsOpen}
+        isModalOpen={isOpen}
+      />
       <BasicExtensions
         links={commonLinks}
         noQueriesInPane={noQueriesInPane}
