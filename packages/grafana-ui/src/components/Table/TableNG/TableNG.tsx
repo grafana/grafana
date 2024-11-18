@@ -17,7 +17,7 @@ import { getTextAlign, getFooterItems } from '../utils';
 
 import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
-import { getRowHeight } from './utils';
+import { getRowHeight, shouldTextOverflow } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -222,6 +222,19 @@ export function TableNG(props: TableNGProps) {
               height={defaultRowHeight}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
+              shouldTextOverflow={() =>
+                shouldTextOverflow(
+                  key,
+                  row,
+                  columnTypes,
+                  headerCellRefs,
+                  osContext,
+                  defaultLineHeight,
+                  defaultRowHeight,
+                  DEFAULT_CELL_PADDING,
+                  textWrap
+                )
+              }
             />
           );
         },
@@ -425,17 +438,6 @@ function getComparator(sortColumnType: string): Comparator {
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
-  contextMenu: css({
-    position: 'absolute',
-    backgroundColor: '#ffffff',
-    border: '1px solid black',
-    padding: '16px',
-    listStyle: 'none',
-
-    '> li': {
-      padding: 8,
-    },
-  }),
   menuItem: css({
     maxWidth: '200px',
   }),
