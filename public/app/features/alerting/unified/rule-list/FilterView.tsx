@@ -1,6 +1,6 @@
 import { from } from 'ix/asynciterable/asynciterablex';
 import { merge } from 'ix/asynciterable/merge';
-import { filter, flatMap, map, take, tap } from 'ix/asynciterable/operators';
+import { filter, flatMap, map, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { compact, isEqual } from 'lodash';
 import memoize from 'micro-memoize';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
@@ -40,8 +40,14 @@ export function FilterView({ filterState }: FilterViewProps) {
 
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
 
+  const controller = useRef(new AbortController());
+
   const initIterator = useCallback(
-    () => getFilteredRulesIterator(filterState).pipe(tap(undefined, undefined, () => setNoMoreResults(true))),
+    () =>
+      getFilteredRulesIterator(filterState).pipe(
+        withAbort(controller.current.signal),
+        tap(undefined, undefined, () => setNoMoreResults(true))
+      ),
     [getFilteredRulesIterator, filterState]
   );
 
@@ -50,7 +56,11 @@ export function FilterView({ filterState }: FilterViewProps) {
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [noMoreResults, setNoMoreResults] = useState(false);
 
-  const [{ execute: loadNextPage }, state] = useAsync(async () => {
+  const [{ execute: loadResultPage }, state] = useAsync(async () => {
+    if (controller.current.signal.aborted) {
+      return;
+    }
+
     for await (const rule of rulesIterator.current.pipe(take(FRONTENT_PAGE_SIZE))) {
       startTransition(() => {
         setRules((rules) => rules.concat(rule));
@@ -58,17 +68,38 @@ export function FilterView({ filterState }: FilterViewProps) {
     }
   });
 
-  if (filterChanged) {
+  const resetSearchState = useCallback(() => {
+    // recreate abort controller
+    controller.current.abort();
+    controller.current = new AbortController();
+
+    // recreate rules iterator
     rulesIterator.current = initIterator();
+  }, [initIterator]);
+
+  if (filterChanged) {
+    console.log('filter changed!');
+    resetSearchState();
+
+    // reset view state
     setRules([]);
     setNoMoreResults(false);
     setPrevFilterState(filterState);
-    loadNextPage();
+
+    loadResultPage();
   }
 
   useEffect(() => {
-    loadNextPage();
-  }, [loadNextPage]);
+    loadResultPage();
+  }, [loadResultPage]);
+
+  useEffect(() => {
+    return () => {
+      // recreate abort controller
+      controller.current.abort();
+      controller.current = new AbortController();
+    };
+  }, [controller]);
 
   const loading = isLoading(state) || transitionPending;
 
@@ -88,7 +119,7 @@ export function FilterView({ filterState }: FilterViewProps) {
           <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">No more results</Trans>
         </Card>
       ) : (
-        <Button onClick={loadNextPage}>
+        <Button onClick={loadResultPage}>
           <Trans i18nKey="alerting.rule-list.filter-view.load-more">Load more...</Trans>
         </Button>
       )}
