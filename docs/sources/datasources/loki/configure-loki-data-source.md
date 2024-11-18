@@ -116,7 +116,7 @@ Each derived field consists of the following:
 
   - **Regex**: A regular expression to parse a part of the log message and capture it as the value of the new field. Can contain only one capture group.
 
-  - **Label**: A label from the selected log line. This can be any type of label - indexed, parsed or structured metadata. The label's value will be used as the value of the derived field.
+  - **Label**: A label from the selected log line. This can be any type of label - indexed, parsed or structured metadata. When using this type, the input will match as a regular expression against label keys, allowing you to match variations like `traceid` and `trace_id` with a single regex pattern like `trace[_]?id`. The value of the matched label will be used as the value of the derived field.
 
 - **URL/query** Sets the full link URL if the link is external, or a query for the target data source if the link is internal. You can interpolate the value from the field with the `${__value.raw}` macro.
 
