@@ -261,7 +261,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		}
 		return nil
 	case admission.Delete:
-		
+		deleteRules := ctx.Value("forceDeleteRules").(bool)
+		if deleteRules {
+			//todo: implement delete rules
+		}
 	}
 	return nil
 }
