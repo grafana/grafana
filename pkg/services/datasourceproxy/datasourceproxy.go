@@ -24,13 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.DataSourceRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValidator validations.DataSourceRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service, features featuremgmt.FeatureToggles) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:            dataSourceCache,
-		DataSourceRequestValidator: plugReqValidator,
+		DataSourceRequestValidator: datasourceReqValidator,
 		pluginStore:                pluginStore,
 		Cfg:                        cfg,
 		HTTPClientProvider:         httpClientProvider,
