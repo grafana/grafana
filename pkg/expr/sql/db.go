@@ -58,7 +58,7 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 	for {
 		// TODO: Use a more appropriate context
 		row, err := iter.Next(gomysql.NewEmptyContext())
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
