@@ -303,7 +303,7 @@ export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdenti
   if (isAlertingRule(rule)) {
     return (
       <AlertRuleListItem
-        name={rule.name}
+        name={`${rule.name} (${rulesSource.name})`}
         group={groupName}
         namespace={namespace.name}
         href={href}

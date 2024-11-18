@@ -10451,6 +10451,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:>=13.7.4":
+  version: 22.9.0
+  resolution: "@types/node@npm:22.9.0"
+  dependencies:
+    undici-types: "npm:~6.19.8"
+  checksum: 10/a7df3426891868b0f5fb03e46aeddd8446178233521c624a44531c92a040cf08a82d8235f7e1e02af731fd16984665d4d71f3418caf9c2788313b10f040d615d
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^18.0.0":
   version: 18.19.33
   resolution: "@types/node@npm:18.19.33"
@@ -18865,6 +18874,7 @@ __metadata:
     immutable: "npm:4.3.7"
     ini: "npm:^4.1.3"
     iter-ops: "npm:^3.5.0"
+    ix: "npm:^7.0.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.10"
@@ -20816,6 +20826,16 @@ __metadata:
     reflect.getprototypeof: "npm:^1.0.4"
     set-function-name: "npm:^2.0.1"
   checksum: 10/1a2a508d3baac121b76c834404ff552d1bb96a173b1d74ff947b2c5763840c0b1e5be01be7e2183a19b08e99e38729812668ff1f23b35f6655a366017bc32519
+  languageName: node
+  linkType: hard
+
+"ix@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "ix@npm:7.0.0"
+  dependencies:
+    "@types/node": "npm:>=13.7.4"
+    tslib: "npm:^2.6.2"
+  checksum: 10/913cfbf645e04820f831bb2bd74f51e734284aa6b64819959964aaa2d8ee88ef246460f5a1cb4d71b4bda07dab241e3098210342dfb05ff73cfd20c9b2797f51
   languageName: node
   linkType: hard
 
@@ -31708,7 +31728,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~6.19.2":
+"undici-types@npm:~6.19.2, undici-types@npm:~6.19.8":
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70

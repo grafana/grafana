@@ -1,4 +1,6 @@
-import { pipeAsync, filter, flatMap, pipe, take, onEnd } from 'iter-ops';
+import { from } from 'ix/asynciterable/asynciterablex';
+import { merge } from 'ix/asynciterable/merge';
+import { filter, flatMap, take, tap } from 'ix/asynciterable/operators';
 import { compact, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
@@ -27,6 +29,9 @@ interface FilterViewProps {
   filterState: RulesFilter;
 }
 
+const FRONTENT_PAGE_SIZE = 50;
+const API_PAGE_SIZE = 2000;
+
 export function FilterView({ filterState }: FilterViewProps) {
   const [prevFilterState, setPrevFilterState] = useState(filterState);
   const filterChanged = !isEqual(prevFilterState, filterState);
@@ -35,11 +40,7 @@ export function FilterView({ filterState }: FilterViewProps) {
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
 
   const initIterator = useCallback(
-    () =>
-      pipe(
-        getFilteredRulesIterator(filterState),
-        onEnd(() => setNoMoreResults(true))
-      ),
+    () => getFilteredRulesIterator(filterState).pipe(tap(undefined, undefined, () => setNoMoreResults(true))),
     [getFilteredRulesIterator, filterState]
   );
 
@@ -49,9 +50,7 @@ export function FilterView({ filterState }: FilterViewProps) {
   const [noMoreResults, setNoMoreResults] = useState(false);
 
   const [{ execute: loadNextPage }, state] = useAsync(async () => {
-    const pageSize = 5;
-
-    for await (const rule of pipe(rulesIterator.current, take(pageSize))) {
+    for await (const rule of rulesIterator.current.pipe(take(FRONTENT_PAGE_SIZE))) {
       startTransition(() => {
         setRules((rules) => rules.concat(rule));
       });
@@ -155,37 +154,13 @@ function useFilteredRulesIteratorProvider() {
     [fetchGroups]
   );
 
-  const getGroupsFromAllDataSources = useCallback(
-    async function* (rulesSourceNames: string[], maxGroups: number) {
-      const dsGenerators = new Map(rulesSourceNames.map((ds) => [ds, fetchRuleSourceGroups(ds, maxGroups)] as const));
-
-      const dsActiveRequests = new Map(
-        Array.from(dsGenerators.entries()).map(([ds, gen]) => [ds, getNext(gen, ds)] as const)
-      );
-
-      while (dsActiveRequests.size > 0) {
-        const { datasource, iteratorResult: iterator } = await Promise.race(dsActiveRequests.values());
-        if (iterator.done) {
-          dsActiveRequests.delete(datasource);
-        } else {
-          yield iterator.value;
-          const currentGenerator = dsGenerators.get(datasource);
-          if (currentGenerator) {
-            dsActiveRequests.set(datasource, getNext(currentGenerator, datasource));
-          }
-        }
-      }
-
-      function getNext(gen: AsyncGenerator<readonly [string, PromRuleGroupDTO], void, undefined>, rulesSource: string) {
-        return gen.next().then((iteratorResult) => ({ datasource: rulesSource, iteratorResult }));
-      }
-    },
-    [fetchRuleSourceGroups]
-  );
-
   const getFilteredRulesIterator = (filterState: RulesFilter) => {
-    return pipeAsync(
-      getGroupsFromAllDataSources(filterState.dataSourceNames, 2000),
+    const [firstGenerator, ...restGenerators] = filterState.dataSourceNames.map((ds) =>
+      fetchRuleSourceGroups(ds, API_PAGE_SIZE)
+    );
+
+    const groupsGenerator = merge(firstGenerator, ...restGenerators);
+    return from(groupsGenerator).pipe(
       filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),
       flatMap(([rulesSource, group]) => mapGroupToRules(rulesSource, group)),
       filter((r) => ruleFilter(r.rule, filterState))
