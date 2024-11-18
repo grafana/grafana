@@ -10,12 +10,17 @@ import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
-  const { orgName: name, orgId, orgRole: role } = contextSrv.user;
-  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => ({
-    label: name,
-    value: { role, orgId, name },
-    description: role,
-  }));
+  const { orgId} = contextSrv.user;
+
+  const options  = orgs.map((org) => ({
+    label: org.name,
+    description: org.role,
+    value: org,
+  }))
+
+  const selectedValue = options.find(option => option.value.orgId === orgId)
+
+  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => (selectedValue));
   const onChange = (option: SelectableValue<UserOrg>) => {
     setValue(option);
     onSelectChange(option);
@@ -28,11 +33,7 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
       value={value}
       prefix={<Icon className="prefix-icon" name="building" />}
       className={styles.select}
-      options={orgs.map((org) => ({
-        label: org.name,
-        description: org.role,
-        value: org,
-      }))}
+      options={options}
       onChange={onChange}
     />
   );
