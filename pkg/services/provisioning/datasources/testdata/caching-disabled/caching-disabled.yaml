@@ -1,0 +1,20 @@
+# config file version
+apiVersion: 1
+
+deleteDatasources:
+  - name: Graphite
+
+datasources:
+  - name: Graphite
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+    caching:
+      enabled: false
+      queriesTTL: 10s
+      resourcesTTL: 1s
+
+  - name: Snowflake
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090

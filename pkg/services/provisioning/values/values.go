@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -346,4 +347,40 @@ func getInterpolated(unmarshal func(interface{}) error) (*interpolated, error) {
 		return &interpolated{}, err
 	}
 	return &interpolated{raw: raw, value: value}, nil
+}
+
+// DurationMsValue represents a string duration value in a YAML
+// config that can be overridden by environment variables
+type DurationMsValue struct {
+	value int64
+	Raw   string
+}
+
+// UnmarshalYAML converts YAML into an *DurationValue
+func (val *DurationMsValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	interpolated, err := getInterpolated(unmarshal)
+	if err != nil {
+		return err
+	}
+	if len(interpolated.value) == 0 {
+		// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
+		return nil
+	}
+	// if interpolated.value == "" {
+	// 	// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
+	// 	return nil
+	// }
+	val.Raw = interpolated.raw
+
+	duration, err := time.ParseDuration(interpolated.value)
+	if err != nil {
+		return nil
+	}
+	val.value = duration.Milliseconds()
+	return err
+}
+
+// Value returns the wrapped duration value
+func (val *DurationMsValue) Value() int64 {
+	return val.value
 }

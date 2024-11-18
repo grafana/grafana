@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +34,9 @@ var (
 
 	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
 	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
+
+	cacheEnabledConfig  = "testdata/caching-enabled"
+	cacheDisabledConfig = "testdata/caching-disabled"
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
@@ -370,7 +374,148 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 }
 
-func TestDatasourceCacheConfig(t *testing.T) {
+func TestDatasourceCacheAsConfig(t *testing.T) {
+	t.Run("configs with cache enabled ", func(t *testing.T) {
+		reader := &configReader{log: logger, orgService: &orgtest.FakeOrgService{}}
+		configs, err := reader.readConfig(context.Background(), cacheEnabledConfig)
+		require.NoError(t, err)
+
+		require.Equal(t, len(configs[0].Datasources), 2)
+
+		require.NotNil(t, configs[0].Datasources[0].Caching)
+		require.True(t, configs[0].Datasources[0].Caching.Enabled)
+		require.Equal(t, configs[0].Datasources[0].Caching.QueriesTTL, int64(60000))
+		require.Equal(t, configs[0].Datasources[0].Caching.ResourcesTTL, int64(40000))
+		require.False(t, configs[0].Datasources[0].Caching.UseDefaultTTL)
+
+		require.NotNil(t, configs[0].Datasources[1].Caching)
+		require.True(t, configs[0].Datasources[1].Caching.Enabled)
+		require.Equal(t, configs[0].Datasources[1].Caching.QueriesTTL, int64(0))
+		require.True(t, configs[0].Datasources[1].Caching.UseDefaultTTL)
+
+		require.Equal(t, len(configs[1].Datasources), 1)
+		require.NotNil(t, configs[1].Datasources[0].Caching)
+		require.True(t, configs[1].Datasources[0].Caching.Enabled)
+		require.Equal(t, configs[1].Datasources[0].Caching.QueriesTTL, int64(62000))
+		require.Equal(t, configs[1].Datasources[0].Caching.ResourcesTTL, int64(1000))
+		require.True(t, configs[1].Datasources[0].Caching.UseDefaultTTL)
+
+	})
+
+	t.Run("configs with cache disabled ", func(t *testing.T) {
+		reader := &configReader{log: logger, orgService: &orgtest.FakeOrgService{}}
+		configs, err := reader.readConfig(context.Background(), cacheDisabledConfig)
+		require.NoError(t, err)
+
+		require.Equal(t, len(configs[0].Datasources), 2)
+		require.NotNil(t, configs[0].Datasources[0].Caching)
+		require.False(t, configs[0].Datasources[0].Caching.Enabled)
+		require.Nil(t, configs[0].Datasources[1].Caching)
+	})
+}
+
+func TestDatasourceCachingConfig(t *testing.T) {
+	t.Run("obtain delete datasource ids", func(t *testing.T) {
+		testGraphite_UID := util.GenerateShortUID()
+		testPrometheus_UID := util.GenerateShortUID()
+		testMySql_UID := util.GenerateShortUID()
+		store := &spyStore{
+			items: []*datasources.DataSource{
+				{Name: "Graphite", OrgID: 1, ID: 1, UID: testGraphite_UID},
+				{Name: "Prometheus", OrgID: 1, ID: 1, UID: testPrometheus_UID},
+				{Name: "MySql", OrgID: 1, ID: 1, UID: testMySql_UID, IsPrunable: true}},
+		}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
+
+		reader := &configReader{log: logger, orgService: &orgtest.FakeOrgService{}}
+		configs, err := reader.readConfig(context.Background(), cacheEnabledConfig)
+		require.NoError(t, err)
+
+		resDatasourcesUID := dc.getDeleteDatasourceUIDs(context.Background(), configs)
+		require.Equal(t, len(resDatasourcesUID), 3)
+
+		expectedDatasourceUIDs := []string{testGraphite_UID, testPrometheus_UID, testMySql_UID}
+		sort.Strings(resDatasourcesUID)
+		sort.Strings(expectedDatasourceUIDs)
+		require.Equal(t, resDatasourcesUID, expectedDatasourceUIDs)
+	})
+
+	t.Run("build datasource caching", func(t *testing.T) {
+		testGraphite_UID := util.GenerateShortUID()
+		testPrometheus_UID := util.GenerateShortUID()
+		expectedConfigs := []DatasourceCachingConfig{
+			{
+				DataSourceUID: testGraphite_UID,
+				Enabled:       true,
+				QueriesTTL:    int64(60000),
+				ResourcesTTL:  int64(40000),
+				UseDefaultTTL: false,
+			},
+			{
+				DataSourceUID: testPrometheus_UID,
+				Enabled:       true,
+				QueriesTTL:    int64(0),
+				ResourcesTTL:  int64(0),
+				UseDefaultTTL: true,
+			},
+		}
+		store := &spyStore{
+			items: []*datasources.DataSource{
+				{Name: "Graphite", OrgID: 1, ID: 1, UID: testGraphite_UID},
+				{Name: "Prometheus", OrgID: 1, ID: 1, UID: testPrometheus_UID}},
+		}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
+
+		reader := &configReader{log: logger, orgService: &orgtest.FakeOrgService{}}
+		configs, err := reader.readConfig(context.Background(), cacheEnabledConfig)
+		require.NoError(t, err)
+
+		resConfig := dc.buildDatasourceCachingConfigs(context.Background(), configs)
+		require.Equal(t, len(resConfig), 2)
+
+		require.ElementsMatch(t, resConfig, expectedConfigs)
+	})
+
+	t.Run("get datasource caching config", func(t *testing.T) {
+		testGraphite_UID := util.GenerateShortUID()
+		testPrometheus_UID := util.GenerateShortUID()
+		expectedConfigs := []DatasourceCachingConfig{
+			{
+				DataSourceUID: testGraphite_UID,
+				Enabled:       true,
+				QueriesTTL:    int64(60000),
+				ResourcesTTL:  int64(40000),
+				UseDefaultTTL: false,
+			},
+			{
+				DataSourceUID: testPrometheus_UID,
+				Enabled:       true,
+				QueriesTTL:    int64(0),
+				ResourcesTTL:  int64(0),
+				UseDefaultTTL: true,
+			},
+		}
+		expectedDatasourceUIDs := []string{testGraphite_UID, testPrometheus_UID}
+		store := &spyStore{
+			items: []*datasources.DataSource{
+				{Name: "Graphite", OrgID: 1, ID: 1, UID: testGraphite_UID},
+				{Name: "Prometheus", OrgID: 1, ID: 1, UID: testPrometheus_UID}},
+		}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
+
+		resCachingConfigs, err := dc.getCachingConfigs(context.Background(), cacheEnabledConfig)
+		require.NoError(t, err)
+		require.NotNil(t, resCachingConfigs)
+
+		require.Equal(t, len(resCachingConfigs.DeleteDatasourceUIDs), len(expectedDatasourceUIDs))
+		require.ElementsMatch(t, resCachingConfigs.DatasourceCachingConfigs, expectedConfigs)
+	})
 }
 
 func validateDeleteDatasources(t *testing.T, dsCfg *configs) {

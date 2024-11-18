@@ -316,8 +316,7 @@ func (dc *DatasourceProvisioner) getDeleteDatasourceUIDs(ctx context.Context, co
 	deleteDatasourceUIDsMap := make(map[string]bool)
 
 	// Add prunable provisioned datasource UIDs to the deletion map
-	prunableDatasources, err := dc.dsService.GetPrunableProvisionedDataSources(ctx)
-	if err != nil {
+	if prunableDatasources, err := dc.dsService.GetPrunableProvisionedDataSources(ctx); err == nil {
 		for _, ds := range prunableDatasources {
 			deleteDatasourceUIDsMap[ds.UID] = true
 		}

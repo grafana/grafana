@@ -60,10 +60,10 @@ type cachingConfig struct {
 }
 
 type upsertCachingConfig struct {
-	Enabled       values.BoolValue  `json:"enabled" yaml:"enabled"`
-	QueriesTTL    values.Int64Value `json:"queriesTTL" yaml:"queriesTTL"`
-	ResourcesTTL  values.Int64Value `json:"resourcesTTL" yaml:"resourcesTTL"`
-	UseDefaultTTL values.BoolValue  `json:"useDefaultTTL" yaml:"useDefaultTTL"`
+	Enabled       values.BoolValue       `json:"enabled" yaml:"enabled"`
+	QueriesTTL    values.DurationMsValue `json:"queriesTTL" yaml:"queriesTTL"`
+	ResourcesTTL  values.DurationMsValue `json:"resourcesTTL" yaml:"resourcesTTL"`
+	UseDefaultTTL values.BoolValue       `json:"useDefaultTTL" yaml:"useDefaultTTL"`
 }
 
 type configsV0 struct {

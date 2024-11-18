@@ -20,6 +20,7 @@ func TestValues(t *testing.T) {
 		t.Setenv("STRING", "test")
 		t.Setenv("EMPTYSTRING", "")
 		t.Setenv("BOOL", "true")
+		t.Setenv("DURATION", "1s")
 
 		t.Run("IntValue", func(t *testing.T) {
 			type Data struct {
@@ -294,6 +295,54 @@ func TestValues(t *testing.T) {
 				})
 			})
 		})
+
+		t.Run("DurationMsValue", func(t *testing.T) {
+			type Data struct {
+				Val DurationMsValue `yaml:"val"`
+			}
+			t.Run("Should unmarshal simple duration", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: 1s`, d)
+				require.Equal(t, d.Val.Value(), int64(1000))
+				require.Equal(t, d.Val.Raw, "1s")
+			})
+
+			t.Run("Should unmarshal env var", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: $DURATION`, d)
+				require.Equal(t, d.Val.Value(), int64(1000))
+				require.Equal(t, d.Val.Raw, "$DURATION")
+			})
+
+			t.Run("Should ignore empty value", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: `, d)
+				require.Equal(t, d.Val.Value(), int64(0))
+				require.Equal(t, d.Val.Raw, "")
+			})
+
+			t.Run("empty var should have empty value", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: $EMPTYSTRING`, d)
+				require.Equal(t, d.Val.Value(), int64(0))
+				require.Equal(t, d.Val.Raw, "")
+			})
+
+			t.Run("Should unmarshal complex duration", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: 1m2s`, d)
+				require.Equal(t, d.Val.Value(), int64(62000))
+				require.Equal(t, d.Val.Raw, "1m2s")
+			})
+
+			t.Run("Should ignore wrong string", func(t *testing.T) {
+				d := &Data{}
+				unmarshalingTest(t, `val: m1`, d)
+				require.Equal(t, d.Val.Value(), int64(0))
+				require.Equal(t, d.Val.Raw, "m1")
+			})
+		})
+
 	})
 }
 
