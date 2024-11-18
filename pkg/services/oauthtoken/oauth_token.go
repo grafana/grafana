@@ -80,21 +80,48 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwar
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
 	defer span.End()
 
-	var currentToken *oauth2.Token
+	ctxLogger := logger.FromContext(ctx)
+
+	if usr == nil || usr.IsNil() {
+		ctxLogger.Warn("Can only get OAuth tokens for existing users", "user", "nil")
+		// Not user, no token.
+		return nil
+	}
+
+	if !usr.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Warn("Can only get OAuth tokens for users", "id", usr.GetID())
+		return nil
+	}
+
+	userID, err := usr.GetInternalID()
+	if err != nil {
+		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
+		return nil
+	}
+
+	ctxLogger = ctxLogger.New("userID", userID)
+
+	if !strings.HasPrefix(usr.GetAuthenticatedBy(), "oauth_") {
+		ctxLogger.Warn("The specified user's auth provider is not oauth",
+			"authmodule", usr.GetAuthenticatedBy(), "UserID", userID)
+		return nil
+	}
+
+	var persistedToken *oauth2.Token
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 		externalSession, err := o.sessionService.GetExternalSession(ctx, usr.GetSessionToken().ExternalSessionId)
 		if err != nil {
 			if errors.Is(err, auth.ErrExternalSessionNotFound) {
 				return nil
 			}
-			logger.Error("Failed to fetch external session", "error", err)
+			ctxLogger.Error("Failed to fetch external session", "error", err)
 			return nil
 		}
 
-		currentToken = buildOAuthTokenFromExternalSession(externalSession)
+		persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 
-		if currentToken.RefreshToken == "" {
-			return currentToken
+		if persistedToken.RefreshToken == "" {
+			return persistedToken
 		}
 	} else {
 
@@ -111,10 +138,10 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwar
 			return nil
 		}
 
-		currentToken = buildOAuthTokenFromAuthInfo(authInfo)
+		persistedToken = buildOAuthTokenFromAuthInfo(authInfo)
 	}
 
-	persistedToken, refreshNeeded := needTokenRefresh(ctx, currentToken)
+	refreshNeeded := needTokenRefresh(ctx, persistedToken)
 	if !refreshNeeded {
 		return persistedToken
 	}
@@ -248,19 +275,20 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 
 		ctxLogger.Debug("Serverlock request for getting a new access token", "key", lockKey)
 
-		var currentToken *oauth2.Token
+		var persistedToken *oauth2.Token
 		var externalSession *auth.ExternalSession
 		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
 			externalSession, err = o.sessionService.GetExternalSession(ctx, usr.GetSessionToken().ExternalSessionId)
 			if err != nil {
 				if errors.Is(err, auth.ErrExternalSessionNotFound) {
+					ctxLogger.Error("External session was not found for user", "error", err)
 					return
 				}
 				ctxLogger.Error("Failed to fetch external session", "error", err)
 				return
 			}
 
-			currentToken = buildOAuthTokenFromExternalSession(externalSession)
+			persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 
 		} else {
 			authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
@@ -271,17 +299,17 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 				return
 			}
 
-			currentToken = buildOAuthTokenFromAuthInfo(authInfo)
+			persistedToken = buildOAuthTokenFromAuthInfo(authInfo)
 		}
 
-		storedToken, needRefresh := needTokenRefresh(ctx, currentToken)
+		needRefresh := needTokenRefresh(ctx, persistedToken)
 		if !needRefresh {
 			// Set the token which is returned by the outer function in case there's no need to refresh the token
-			newToken = storedToken
+			newToken = persistedToken
 			return
 		}
 
-		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, storedToken, usr, externalSession)
+		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, externalSession)
 	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", lockErr)
@@ -330,6 +358,12 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 
 	ctxLogger := logger.FromContext(ctx).New("userID", userID)
 
+	// Check if the user has a refresh token
+	if storedToken.RefreshToken == "" {
+		ctxLogger.Warn("No refresh token available", "authmodule", usr.GetAuthenticatedBy())
+		return nil, ErrNoRefreshTokenFound
+	}
+
 	// if err := checkOAuthRefreshToken(authInfo); err != nil {
 	// 	return nil, err
 	// }
@@ -340,28 +374,28 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 
 	// }
 
-	persistedToken, refreshNeeded := needTokenRefresh(ctx, storedToken)
+	refreshNeeded := needTokenRefresh(ctx, storedToken)
 	if !refreshNeeded {
-		return persistedToken, nil
+		return storedToken, nil
 	}
 
 	authProvider := usr.GetAuthenticatedBy()
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", authProvider, "error", err)
-		return persistedToken, err
+		return storedToken, err
 	}
 
 	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
-		return persistedToken, err
+		return storedToken, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(ctx, persistedToken).Token()
+	token, err := connect.TokenSource(ctx, storedToken).Token()
 	duration := time.Since(start)
 	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
 
@@ -378,7 +412,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 	}
 
 	// If the tokens are not the same, update the entry in the DB
-	if !tokensEq(persistedToken, token) {
+	if !tokensEq(storedToken, token) {
 		updateAuthCommand := &login.UpdateAuthInfoCommand{
 			UserId:     userID,
 			AuthModule: usr.GetAuthenticatedBy(),
@@ -447,7 +481,7 @@ func tokensEq(t1, t2 *oauth2.Token) bool {
 		t1IdToken == t2IdToken
 }
 
-func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) (*oauth2.Token, bool) {
+func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 	var hasAccessTokenExpired, hasIdTokenExpired bool
 
 	ctxLogger := logger.FromContext(ctx)
@@ -464,13 +498,13 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) (*oauth
 	}
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
 		ctxLogger.Debug("Neither Access nor ID Token have expired yet")
-		return persistedToken, false
+		return false
 	}
 	if hasIdTokenExpired {
 		// Force refreshing token when id token is expired
 		persistedToken.AccessToken = ""
 	}
-	return persistedToken, true
+	return true
 }
 
 func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
