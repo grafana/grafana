@@ -84,7 +84,7 @@ type AutoSizeConditionals =
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
 
 function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
-  if (!item) {
+  if (item === null || item === undefined) {
     return '';
   }
   if (item.label?.includes('Custom value: ')) {
