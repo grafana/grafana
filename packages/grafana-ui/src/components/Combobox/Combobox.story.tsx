@@ -55,17 +55,18 @@ const meta: Meta<PropsAndCustomArgs> = {
 };
 
 const BasicWithState: StoryFn<PropsAndCustomArgs> = (args) => {
+  const [value, setValue] = useState<string | null>();
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
         id="test-combobox"
         {...args}
+        value={value}
         onChange={(val: ComboboxOption | null) => {
           // TODO: Figure out how to update value on args
-          // setValue(val?.value || null);
+          setValue(val?.value || null);
           action('onChange')(val);
         }}
-        isClearable={args.isClearable}
       />
     </Field>
   );
