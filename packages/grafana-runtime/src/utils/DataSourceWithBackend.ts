@@ -358,7 +358,7 @@ class DataSourceWithBackend<
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)
       .catch((err) => {
-        let properties: Record<string, any> = {
+        let properties: Record<string, string> = {
           plugin_id: this.meta?.id || '',
           plugin_version: this.meta?.info?.version || '',
           datasource_healthcheck_status: err?.data?.status || 'error',
