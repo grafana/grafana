@@ -15,11 +15,6 @@ describe('Verify i18n', () => {
     '中文（简体）': '语言',
   };
 
-  // pseudo locale is not available in CI
-  if (!process.env.CI) {
-    languageMap['Pseudo-locale'] = 'Ŀäŉģūäģę';
-  }
-
   // basic test which loops through the defined languages in the picker
   // and verifies that the corresponding label is translated correctly
   it('loads all the languages correctly', () => {
