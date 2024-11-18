@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, ScopedVars, type TestDataSourceResponse } from '@grafana/data';
+import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv, config } from '@grafana/runtime';
 import {
@@ -18,7 +18,6 @@ import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
-import { trackHealthCheck } from './tracking';
 import { PostgresOptions } from './types';
 
 export class PostgresDatasource extends SqlDatasource {
@@ -26,19 +25,6 @@ export class PostgresDatasource extends SqlDatasource {
 
   constructor(instanceSettings: DataSourceInstanceSettings<PostgresOptions>) {
     super(instanceSettings);
-  }
-
-  testDatasource(): Promise<TestDataSourceResponse> {
-    return super
-      .testDatasource()
-      .then((res) => {
-        trackHealthCheck(res, this.meta);
-        return Promise.resolve(res);
-      })
-      .catch((ex) => {
-        trackHealthCheck(ex, this.meta);
-        return Promise.reject(ex);
-      });
   }
 
   getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): PostgresQueryModel {
