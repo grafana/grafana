@@ -48,8 +48,8 @@ setupDataSources(dataSources.default, dataSources.am);
 
 const selectFolderAndGroup = async () => {
   const user = userEvent.setup();
-  const folderInput = await ui.inputs.folder.find();
-  await clickSelectOption(folderInput, FOLDER_TITLE_HAPPY_PATH);
+  await user.click(await screen.findByRole('button', { name: /select folder/i }));
+  await user.click(await screen.findByLabelText(FOLDER_TITLE_HAPPY_PATH));
   const groupInput = await ui.inputs.group.find();
   await user.click(await byRole('combobox').find(groupInput));
   await clickSelectOption(groupInput, grafanaRulerGroup.name);
@@ -79,10 +79,9 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   it('cannot create new grafana managed alert when using simplified routing and not selecting a contact point', async () => {
-    const user = userEvent.setup();
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
-    renderSimplifiedRuleEditor();
+    const { user } = renderSimplifiedRuleEditor();
     await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
@@ -110,11 +109,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {
-    const user = userEvent.setup();
     const contactPointName = 'lotsa-emails';
     const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
 
-    renderSimplifiedRuleEditor();
+    const { user } = renderSimplifiedRuleEditor();
     await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await user.type(await ui.inputs.name.find(), 'my great new rule');
@@ -139,8 +137,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     testWithFeatureToggles(['alertingApiServer']);
 
     it('allows selecting a contact point when using alerting API server', async () => {
-      const user = userEvent.setup();
-      renderSimplifiedRuleEditor();
+      const { user } = renderSimplifiedRuleEditor();
       await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
       await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
