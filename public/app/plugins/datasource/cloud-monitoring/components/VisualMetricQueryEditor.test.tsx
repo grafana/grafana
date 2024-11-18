@@ -9,7 +9,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { PreprocessorType, MetricKind } from '../types/query';
+import { PreprocessorType, MetricKind, ValueTypes } from '../types/query';
 
 import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';
@@ -98,7 +98,11 @@ describe('VisualMetricQueryEditor', () => {
     replace = (target?: string) => target || '';
     const onChange = jest.fn();
     const query = createMockTimeSeriesList();
-    const mockMetricDescriptor = createMockMetricDescriptor({ displayName: 'metricName_test', type: 'test_type' });
+    const mockMetricDescriptor = createMockMetricDescriptor({
+      displayName: 'metricName_test',
+      type: 'test_type',
+      valueType: ValueTypes.DOUBLE,
+    });
     const datasource = createMockDatasource({
       getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
       filterMetricsByType: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
@@ -129,7 +133,56 @@ describe('VisualMetricQueryEditor', () => {
       await select(metricName, 'metricName_test', { container: document.body });
     });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
+      expect.objectContaining({
+        filters: ['metric.type', '=', mockMetricDescriptor.type],
+        crossSeriesReducer: 'REDUCE_NONE',
+      })
+    );
+  });
+
+  it('can select a metric name with DISTRIBUTION valueType', async () => {
+    replace = (target?: string) => target || '';
+    const onChange = jest.fn();
+    const query = createMockTimeSeriesList();
+    const mockMetricDescriptor = createMockMetricDescriptor({
+      displayName: 'metricName_test',
+      type: 'test_type',
+      valueType: ValueTypes.DISTRIBUTION,
+    });
+    const datasource = createMockDatasource({
+      getMetricTypes: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
+      filterMetricsByType: jest.fn().mockResolvedValue([createMockMetricDescriptor(), mockMetricDescriptor]),
+      getLabels: jest.fn().mockResolvedValue([]),
+    });
+    const range = getDefaultTimeRange();
+
+    render(
+      <VisualMetricQueryEditor
+        {...defaultProps}
+        onChange={onChange}
+        datasource={datasource}
+        query={query}
+        range={range}
+      />
+    );
+
+    const service = await screen.findByLabelText('Service');
+    openMenu(service);
+    await act(async () => {
+      await select(service, 'Srv', { container: document.body });
+    });
+    const metricName = await screen.findByLabelText('Metric name');
+    openMenu(metricName);
+    await userEvent.type(metricName, 'test');
+    await waitFor(() => expect(document.body).toHaveTextContent('metricName_test'));
+    await act(async () => {
+      await select(metricName, 'metricName_test', { container: document.body });
+    });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: ['metric.type', '=', mockMetricDescriptor.type],
+        crossSeriesReducer: 'REDUCE_MEAN',
+      })
     );
   });
 
