@@ -156,7 +156,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 			metav1.CreateOptions{},
 		)
 		require.Nil(t, obj)
-		require.NoError(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("basic helloworld subresource", func(t *testing.T) {
