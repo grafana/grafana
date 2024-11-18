@@ -1743,6 +1743,18 @@
     },
     {
       "metadata": {
+        "name": "jaegerBackendMigration",
+        "resourceVersion": "1731599633815",
+        "creationTimestamp": "2024-11-14T15:53:53Z"
+      },
+      "spec": {
+        "description": "Enables querying the Jaeger data source without the proxy",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
+      }
+    },
+    {
+      "metadata": {
         "name": "jitterAlertRulesWithinGroups",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-18T18:48:11Z"

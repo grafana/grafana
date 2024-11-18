@@ -278,6 +278,7 @@
 /pkg/tsdb/mysql/ @grafana/oss-big-tent
 /pkg/tsdb/grafana-postgresql-datasource/ @grafana/oss-big-tent
 /pkg/tsdb/zipkin/ @grafana/oss-big-tent
+/pkg/tsdb/jaeger/ @grafana/oss-big-tent
 
 # Partner Datasources backend code
 /pkg/tsdb/mssql/ @grafana/partner-datasources
@@ -385,6 +386,7 @@
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /eslint.config.js @grafana/frontend-ops
+/.betterer.eslint.config.js @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops

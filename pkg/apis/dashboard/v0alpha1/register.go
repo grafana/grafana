@@ -71,6 +71,33 @@ var LibraryPanelResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 )
 
 var (
-	// SchemeGroupVersion is group version used to register these objects
-	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
+	SchemeBuilder      runtime.SchemeBuilder
+	localSchemeBuilder = &SchemeBuilder
+	AddToScheme        = localSchemeBuilder.AddToScheme
+	schemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 )
+
+func init() {
+	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
+}
+
+// Adds the list of known types to the given scheme.
+func addKnownTypes(scheme *runtime.Scheme) error {
+	scheme.AddKnownTypes(schemeGroupVersion,
+		&Dashboard{},
+		&DashboardList{},
+		&DashboardWithAccessInfo{},
+		&DashboardVersionList{},
+		&VersionsQueryOptions{},
+		&LibraryPanel{},
+		&LibraryPanelList{},
+		&metav1.PartialObjectMetadata{},
+		&metav1.PartialObjectMetadataList{},
+	)
+	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
+	return nil
+}
+
+func addDefaultingFuncs(scheme *runtime.Scheme) error {
+	return RegisterDefaults(scheme)
+}
