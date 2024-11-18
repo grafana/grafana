@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,7 @@ func TestErrorAvgMissingField(t *testing.T) {
 
 	// FIXME: we should return the received error message
 	require.Equal(t, "unexpected status code: 400", result.response.Responses["A"].Error.Error())
+	require.Equal(t, backend.ErrorSourceDownstream, result.response.Responses["A"].ErrorSource)
 }
 
 func TestErrorAvgMissingFieldNoDetailedErrors(t *testing.T) {
