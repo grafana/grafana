@@ -43,7 +43,7 @@ refs:
 
 In Grafana, queries fetch and transform data from [data sources,](ref:data-sources) which include databases like MySQL or PostgreSQL, time series databases like Prometheus or InfluxDB, and services like Amazon CloudWatch or Azure Monitor.
 
-A query defines the specific data to be extracted from a data source, often applying filters or transformations to refine the results. The syntax of query languages varies depending on the type of data source used.
+A query specifies the data to extract from a data source, with the syntax varying based on the type of data source used.
 
 In Alerting, an alert rule defines of one or more queries and expressions that select the data you want to measure and a [condition](#alert-condition) that needs to be met before an alert rule fires.
 
