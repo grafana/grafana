@@ -121,8 +121,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
 			internal := &dashboardinternal.Dashboard{}
 			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
+			if err != nil {
+				return nil, err
+			}
 
-			scheme.Convert(obj, desiredObj, nil)
+			err = scheme.Convert(obj, desiredObj, nil)
 			return desiredObj, err
 		}),
 	}
