@@ -42,37 +42,6 @@ var (
 	tracer                  = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboards")
 )
 
-// NewFolderNameScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
-func NewFolderNameScopeResolver(folderDB folder.FolderStore, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
-	prefix := ScopeFoldersProvider.GetResourceScopeName("")
-	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
-		ctx, span := tracer.Start(ctx, "dashboards.NewFolderNameScopeResolver")
-		span.End()
-
-		if !strings.HasPrefix(scope, prefix) {
-			return nil, ac.ErrInvalidScope
-		}
-		nsName := scope[len(prefix):]
-		if len(nsName) == 0 {
-			return nil, ac.ErrInvalidScope
-		}
-		// this will fetch only root folders
-		// this is legacy code so most probably it is not used
-		folder, err := folderDB.GetFolderByTitle(ctx, orgID, nsName, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderStore)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append([]string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, result...)
-		return result, nil
-	})
-}
-
 // NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
 func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
