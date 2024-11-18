@@ -497,12 +497,13 @@ export const defaultVizConfigSpec = (): VizConfigSpec => ({
 });
 
 export interface VizConfigKind {
-	kind: "VizConfig";
+	// The kind of a VizConfigKind is the plugin ID
+	kind: string;
 	spec: VizConfigSpec;
 }
 
 export const defaultVizConfigKind = (): VizConfigKind => ({
-	kind: "VizConfig",
+	kind: "",
 	spec: defaultVizConfigSpec(),
 });
 
@@ -552,12 +553,13 @@ export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
 });
 
 export interface DataQueryKind {
-	kind: "DataQuery";
+	// The kind of a DataQueryKind is the datasource type
+	kind: string;
 	spec: Record<string, any>;
 }
 
 export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "DataQuery",
+	kind: "",
 	spec: {},
 });
 
@@ -586,12 +588,13 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 });
 
 export interface TransformationKind {
-	kind: "Transformation";
+	// The kind of a TransformationKind is the transformation ID
+	kind: string;
 	spec: DataTransformerConfig;
 }
 
 export const defaultTransformationKind = (): TransformationKind => ({
-	kind: "Transformation",
+	kind: "",
 	spec: defaultDataTransformerConfig(),
 });
 
@@ -688,7 +691,7 @@ export interface GridLayoutItemSpec {
 	width: number;
 	height: number;
 	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
-	element: ElementReferenceKind;
+	element: ElementReference;
 }
 
 export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
@@ -696,7 +699,7 @@ export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
 	y: 0,
 	width: 0,
 	height: 0,
-	element: defaultElementReferenceKind(),
+	element: defaultElementReference(),
 });
 
 export interface GridLayoutItemKind {
@@ -755,21 +758,13 @@ export const defaultPanelKind = (): PanelKind => ({
 	spec: defaultPanelSpec(),
 });
 
-export interface ElementReferenceKind {
+export interface ElementReference {
 	kind: "ElementReference";
-	spec: ElementReferenceSpec;
-}
-
-export const defaultElementReferenceKind = (): ElementReferenceKind => ({
-	kind: "ElementReference",
-	spec: defaultElementReferenceSpec(),
-});
-
-export interface ElementReferenceSpec {
 	name: string;
 }
 
-export const defaultElementReferenceSpec = (): ElementReferenceSpec => ({
+export const defaultElementReference = (): ElementReference => ({
+	kind: "ElementReference",
 	name: "",
 });
 
@@ -901,7 +896,7 @@ export enum VariableHide {
 
 export const defaultVariableHide = (): VariableHide => (VariableHide.DontHide);
 
-// Variable value option
+// FIXME: should we introduce this? --- Variable value option
 export interface VariableValueOption {
 	label: string;
 	value: VariableValueSingle;
@@ -913,14 +908,28 @@ export const defaultVariableValueOption = (): VariableValueOption => ({
 	value: defaultVariableValueSingle(),
 });
 
+// Variable option specification
+export interface VariableOption {
+	// Whether the option is selected or not
+	selected?: boolean;
+	// Text to be displayed for the option
+	text: string | string[];
+	// Value of the option
+	value: string | string[];
+}
+
+export const defaultVariableOption = (): VariableOption => ({
+	text: "",
+	value: "",
+});
+
 // Query variable specification
 export interface QueryVariableSpec {
 	name: string;
-	value: VariableValue;
-	text: VariableValue;
-	current: VariableValueOption;
+	current: VariableOption;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
+	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
 	datasource: DataSourceRef;
@@ -928,8 +937,8 @@ export interface QueryVariableSpec {
 	regex: string;
 	sort: VariableSort;
 	definition?: string;
-	options: VariableValueOption[];
-	isMulti: boolean;
+	options: VariableOption[];
+	multi: boolean;
 	includeAll: boolean;
 	allValue?: string;
 	placeholder?: string;
@@ -937,17 +946,16 @@ export interface QueryVariableSpec {
 
 export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	name: "",
-	value: defaultVariableValue(),
-	text: defaultVariableValue(),
-	current: { label: "", value: "", },
-	hide: false,
+	current: { text: "", value: "", },
+	hide: VariableHide.DontHide,
+	refresh: VariableRefresh.Never,
 	skipUrlSync: false,
 	datasource: defaultDataSourceRef(),
 	query: "",
 	regex: "",
 	sort: VariableSort.Disabled,
 	options: [],
-	isMulti: false,
+	multi: false,
 	includeAll: false,
 });
 
@@ -965,17 +973,19 @@ export const defaultQueryVariableKind = (): QueryVariableKind => ({
 // Text variable specification
 export interface TextVariableSpec {
 	name: string;
-	value: string;
+	current: VariableOption;
+	query: string;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
 	name: "",
-	value: "",
-	hide: false,
+	current: { text: "", value: "", },
+	query: "",
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -993,17 +1003,19 @@ export const defaultTextVariableKind = (): TextVariableKind => ({
 // Constant variable specification
 export interface ConstantVariableSpec {
 	name: string;
-	value: string;
+	query: string;
+	current: VariableOption;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
 	name: "",
-	value: "",
-	hide: false,
+	query: "",
+	current: { text: "", value: "", },
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1021,34 +1033,32 @@ export const defaultConstantVariableKind = (): ConstantVariableKind => ({
 // Datasource variable specification
 export interface DatasourceVariableSpec {
 	name: string;
-	value: string;
-	text: string;
 	pluginId: string;
+	refresh: VariableRefresh;
 	regex: string;
-	current: VariableValueOption;
+	current: VariableOption;
 	defaultOptionEnabled: boolean;
-	options: VariableValueOption[];
-	isMulti: boolean;
+	options: VariableOption[];
+	multi: boolean;
 	includeAll: boolean;
 	allValue?: string;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	name: "",
-	value: "",
-	text: "",
 	pluginId: "",
+	refresh: VariableRefresh.Never,
 	regex: "",
-	current: { label: "", value: "", },
+	current: { text: "", value: "", },
 	defaultOptionEnabled: false,
 	options: [],
-	isMulti: false,
+	multi: false,
 	includeAll: false,
-	hide: false,
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1066,29 +1076,29 @@ export const defaultDatasourceVariableKind = (): DatasourceVariableKind => ({
 // Interval variable specification
 export interface IntervalVariableSpec {
 	name: string;
-	value: string;
-	intervals: string[];
-	current: VariableValueOption;
-	autoEnabled: boolean;
-	autoMinInterval: string;
-	autoStepCount: number;
+	query: string;
+	current: VariableOption;
+	options: VariableOption[];
+	auto: boolean;
+	auto_min: string;
+	auto_count: number;
 	refresh: VariableRefresh;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
 	name: "",
-	value: "",
-	intervals: [],
-	current: { label: "", value: "", },
-	autoEnabled: false,
-	autoMinInterval: "",
-	autoStepCount: 0,
+	query: "",
+	current: { text: "", value: "", },
+	options: [],
+	auto: false,
+	auto_min: "",
+	auto_count: 0,
 	refresh: VariableRefresh.Never,
-	hide: false,
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1106,30 +1116,26 @@ export const defaultIntervalVariableKind = (): IntervalVariableKind => ({
 // Custom variable specification
 export interface CustomVariableSpec {
 	name: string;
-	value: VariableValue;
 	query: string;
-	text: VariableValue;
-	current: VariableValueOption;
-	options: VariableValueOption[];
-	isMulti: boolean;
+	current: VariableOption;
+	options: VariableOption[];
+	multi: boolean;
 	includeAll: boolean;
 	allValue?: string;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
 	name: "",
-	value: defaultVariableValue(),
 	query: "",
-	text: defaultVariableValue(),
-	current: { label: "", value: "", },
+	current: defaultVariableOption(),
 	options: [],
-	isMulti: false,
+	multi: false,
 	includeAll: false,
-	hide: false,
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1147,29 +1153,26 @@ export const defaultCustomVariableKind = (): CustomVariableKind => ({
 // GroupBy variable specification
 export interface GroupByVariableSpec {
 	name: string;
-	value: string;
 	datasource: DataSourceRef;
-	current?: VariableValueOption;
-	text: VariableValue;
-	options: VariableValueOption[];
-	isMulti: boolean;
+	current: VariableOption;
+	options: VariableOption[];
+	multi: boolean;
 	includeAll: boolean;
 	allValue?: string;
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	name: "",
-	value: "",
 	datasource: defaultDataSourceRef(),
-	text: defaultVariableValue(),
+	current: { text: "", value: "", },
 	options: [],
-	isMulti: false,
+	multi: false,
 	includeAll: false,
-	hide: false,
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 
@@ -1192,7 +1195,7 @@ export interface AdhocVariableSpec {
 	filters: AdHocFilterWithLabels[];
 	defaultKeys: MetricFindValue[];
 	label?: string;
-	hide: boolean;
+	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
 }
@@ -1203,7 +1206,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	baseFilters: [],
 	filters: [],
 	defaultKeys: [],
-	hide: false,
+	hide: VariableHide.DontHide,
 	skipUrlSync: false,
 });
 

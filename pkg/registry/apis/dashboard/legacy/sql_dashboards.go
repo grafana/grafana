@@ -131,6 +131,10 @@ type rowsWrapper struct {
 	err error
 }
 
+func (a *dashboardSqlAccess) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (r *rowsWrapper) Close() error {
 	if r.rows == nil {
 		return nil

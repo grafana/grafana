@@ -35,7 +35,6 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
-  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   vizActions?: boolean;
@@ -162,6 +161,7 @@ export interface FeatureToggles {
   onPremToCloudMigrationsAlerts?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  logQLScope?: boolean;
   sqlExpressions?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
@@ -199,6 +199,7 @@ export interface FeatureToggles {
   failWrongDSUID?: boolean;
   zanzana?: boolean;
   reloadDashboardsOnParamsChange?: boolean;
+  enableScopesInMetricsExplore?: boolean;
   alertingApiServer?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
@@ -225,9 +226,15 @@ export interface FeatureToggles {
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
   prometheusUsesCombobox?: boolean;
+  userStorageAPI?: boolean;
   azureMonitorDisableLogLimit?: boolean;
+  preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
+  passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
+  zipkinBackendMigration?: boolean;
+  enableSCIM?: boolean;
+  crashDetection?: boolean;
 }

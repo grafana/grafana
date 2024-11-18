@@ -1,4 +1,4 @@
-import { DashboardV2 } from './dashboard.gen';
+import { DashboardCursorSync, DashboardV2 } from './dashboard.gen';
 
 export const handyTestingSchema: DashboardV2 = {
   kind: 'Dashboard',
@@ -6,7 +6,7 @@ export const handyTestingSchema: DashboardV2 = {
     id: 1,
     title: 'Default Dashboard',
     description: 'This is a default dashboard',
-    cursorSync: 0,
+    cursorSync: DashboardCursorSync.Off,
     liveNow: false,
     preload: false,
     editable: true,
@@ -53,7 +53,7 @@ export const handyTestingSchema: DashboardV2 = {
               ],
               transformations: [
                 {
-                  kind: 'LimitTransformation',
+                  kind: 'limit',
                   spec: {
                     id: 'limit', // id is competing w/ kind
                     options: {
@@ -89,7 +89,7 @@ export const handyTestingSchema: DashboardV2 = {
           {
             kind: 'GridLayoutItem',
             spec: {
-              element: { kind: 'ElementReference', spec: { name: 'timeSeriesTest' } },
+              element: { kind: 'ElementReference', name: 'timeSeriesTest' },
               x: 0,
               y: 0,
               width: 12,

@@ -69,6 +69,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
+  data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+  compatible-data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
 ---
 
 # Configure Grafana-managed alert rules
@@ -79,6 +85,9 @@ Multiple alert instances can be created as a result of one alert rule (also know
 
 {{% admonition type="note" %}}
 For Grafana Cloud Free Forever, you can create up to 100 free Grafana-managed alert rules with each alert rule having a maximum of 1000 alert instances.
+
+For all paid tiers (Cloud Pro and Advanced), there is a soft limit of 2000 alert rules and unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](https://grafana.com/docs/grafana-cloud/account-management/support/).
+
 {{% /admonition %}}
 
 Grafana-managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
@@ -87,6 +96,13 @@ If you delete an alert resource created in the UI, you can no longer retrieve it
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 ## Before you begin
+
+If you are using Grafana OSS:
+
+1. Configure your [data sources](ref:data-sources).
+1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+
+If you are using Grafana OSS, Enterprise, or Cloud:
 
 You can use default or advanced options for Grafana-managed alert rule creation. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, use advanced options to add multiple queries and expressions.
 
