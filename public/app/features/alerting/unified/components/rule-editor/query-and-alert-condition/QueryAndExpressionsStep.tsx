@@ -272,6 +272,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -287,7 +288,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
-      if (!editingExistingRule) {
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
         dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
       }
 
@@ -300,7 +301,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
