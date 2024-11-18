@@ -14,7 +14,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 	defer span.End()
 
 	batchRes := &authzextv1.BatchCheckResponse{
-		Groups: make(map[string]*authzextv1.BatchCheckGroup),
+		Groups: make(map[string]*authzextv1.BatchCheckGroupResource),
 	}
 
 	subject := r.GetSubject()
@@ -27,7 +27,7 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		}
 
 		if _, ok := batchRes.Groups[groupPrefix]; !ok {
-			batchRes.Groups[groupPrefix] = &authzextv1.BatchCheckGroup{
+			batchRes.Groups[groupPrefix] = &authzextv1.BatchCheckGroupResource{
 				Items: make(map[string]bool),
 			}
 		}
