@@ -40,9 +40,6 @@ interface ComboboxBaseProps<T extends string | number>
    */
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-  /**
-   * The onChange handler is called with `null` when clearing the Combobox.
-   */
   onChange: (option: ComboboxOption<T>) => void;
   /**
    * Most consumers should pass value in as a scalar string | number. However, sometimes with Async because we don't
@@ -61,6 +58,9 @@ const RECOMMENDED_ITEMS_AMOUNT = 100_000;
 type ClearableConditionals<T extends number | string> =
   | {
       isClearable: true;
+      /**
+       * The onChange handler is called with `null` when clearing the Combobox.
+       */
       onChange: (option: ComboboxOption<T> | null) => void;
     }
   | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };

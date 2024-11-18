@@ -68,10 +68,11 @@ const BasicWithState: StoryFn<typeof Combobox> = (args) => {
         id="test-combobox"
         {...args}
         value={value}
-        onChange={(val) => {
+        onChange={(val: ComboboxOption) => {
           setValue(val?.value || null);
           action('onChange')(val);
         }}
+        isClearable={args.isClearable}
       />
     </Field>
   );
