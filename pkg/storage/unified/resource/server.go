@@ -394,12 +394,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
-		return nil, NewBadRequestError("invalid origin info")
+		return nil, NewBadRequestError("invalid repository info")
 	}
-	if origin != nil {
-		err = s.writeHooks.CanWriteOrigin(ctx, user, origin.Name)
+	if repo != nil {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
