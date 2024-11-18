@@ -78,7 +78,9 @@ To enable this option, refer to the [Enable email lookup](#enable-email-lookup) 
 
 ## Multi-factor authentication (MFA/2FA)
 
-Grafana and Grafana Cloud Portal do not natively support multi-factor authentication (MFA). However, you can integrate an external identity provider that offers MFA capabilities, such as Okta, Azure AD, or Google, to enable MFA for your Grafana instance.
+Grafana and the Grafana Cloud portal currently do not include built-in support for multi-factor authentication (MFA).
+
+We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Azure AD, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
 
 ## Login and short-lived tokens
 
