@@ -1,25 +1,22 @@
-import { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
 import { config, usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
 import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
-import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
-
-const AddToDashboard = lazy(() =>
-  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
-);
+import { BasicExtensions } from './toolbar/BasicExtensions';
 
 type Props = {
   exploreId: string;
   timeZone: TimeZone;
 };
+
+const QUERYLESS_APPS = ['grafana-pyroscope-app', 'grafana-lokiexplore-app', 'grafana-exploretraces-app'];
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId } = props;
@@ -32,35 +29,21 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     limitPerPlugin: 3,
   });
   const selectExploreItem = getExploreItemSelector(exploreId);
-  const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
+  const noQueriesInPane = Boolean(useSelector(selectExploreItem)?.queries?.length);
 
-  // If we only have the explore core extension point registered we show the old way of
-  // adding a query to a dashboard.
-  if (links.length <= 1) {
-    const canAddPanelToDashboard =
-      contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
-      contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
-
-    if (!canAddPanelToDashboard) {
-      return null;
-    }
-
-    return (
-      <Suspense fallback={null}>
-        <AddToDashboard exploreId={exploreId} />
-      </Suspense>
-    );
-  }
-
-  const menu = <ToolbarExtensionPointMenu extensions={links} onSelect={setSelectedExtension} />;
+  // const querylessLinks = links.filter((link) => QUERYLESS_APPS.includes(link.pluginId));
+  const commonLinks = links.filter((link) => !QUERYLESS_APPS.includes(link.pluginId));
 
   return (
     <>
-      <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
-          Add
-        </ToolbarButton>
-      </Dropdown>
+      <BasicExtensions
+        links={commonLinks}
+        noQueriesInPane={noQueriesInPane}
+        exploreId={exploreId}
+        setSelectedExtension={setSelectedExtension}
+        setIsModalOpen={setIsOpen}
+        isModalOpen={isOpen}
+      />
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
           path={selectedExtension.path}

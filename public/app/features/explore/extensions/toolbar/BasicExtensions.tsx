@@ -1,0 +1,54 @@
+import { lazy, Suspense } from 'react';
+
+import { PluginExtensionLink } from '@grafana/data';
+import { Dropdown, ToolbarButton } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
+
+import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
+
+const AddToDashboard = lazy(() =>
+  import('./../AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
+);
+
+type Props = {
+  links: PluginExtensionLink[];
+  exploreId: string;
+  setSelectedExtension: (extension: PluginExtensionLink) => void;
+  setIsModalOpen: (value: boolean) => void;
+  isModalOpen: boolean;
+  noQueriesInPane: boolean;
+};
+
+export function BasicExtensions(props: Props) {
+  const { exploreId, links, setSelectedExtension, setIsModalOpen, isModalOpen, noQueriesInPane } = props;
+  // If we only have the explore core extension point registered we show the old way of
+  // adding a query to a dashboard.
+  if (links.length <= 1) {
+    const canAddPanelToDashboard =
+      contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+      contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
+
+    if (!canAddPanelToDashboard) {
+      return null;
+    }
+
+    return (
+      <Suspense fallback={null}>
+        <AddToDashboard exploreId={exploreId} />
+      </Suspense>
+    );
+  }
+
+  const menu = <ToolbarExtensionPointMenu extensions={links} onSelect={setSelectedExtension} />;
+
+  return (
+    <>
+      <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
+        <ToolbarButton aria-label="Add" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isModalOpen}>
+          Add
+        </ToolbarButton>
+      </Dropdown>
+    </>
+  );
+}
