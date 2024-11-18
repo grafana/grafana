@@ -66,7 +66,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
       timezone: timeRange.timeZone,
       from: timeRange.from,
       to: timeRange.to,
-      autoRefresh: refreshPicker?.state.refresh,
+      autoRefresh: refreshPicker?.state.refresh || '',
       autoRefreshIntervals: refreshPicker?.state.intervals,
       quickRanges: [], //FIXME is coming timepicker.time_options,
       hideTimepicker: controlsState?.hideTimeControls ?? false,
@@ -118,9 +118,9 @@ function getLiveNow(state: DashboardSceneState) {
     undefined;
   // hack for validator
   if (liveNow === undefined) {
-    return defaultDashboardV2Spec().liveNow;
+    return Boolean(defaultDashboardV2Spec().liveNow);
   }
-  return liveNow;
+  return Boolean(liveNow);
 }
 
 function getGridLayoutItems(state: DashboardSceneState, isSnapshot?: boolean): GridLayoutItemKind[] {
