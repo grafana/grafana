@@ -1,7 +1,8 @@
 import { from } from 'ix/asynciterable/asynciterablex';
 import { merge } from 'ix/asynciterable/merge';
-import { filter, flatMap, take, tap } from 'ix/asynciterable/operators';
+import { filter, flatMap, map, take, tap } from 'ix/asynciterable/operators';
 import { compact, isEqual } from 'lodash';
+import memoize from 'micro-memoize';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -162,26 +163,30 @@ function useFilteredRulesIteratorProvider() {
     const groupsGenerator = merge(firstGenerator, ...restGenerators);
     return from(groupsGenerator).pipe(
       filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),
-      flatMap(([rulesSource, group]) => mapGroupToRules(rulesSource, group)),
-      filter((r) => ruleFilter(r.rule, filterState))
+      flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
+      filter(([_, __, rule]) => ruleFilter(rule, filterState)),
+      map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
     );
   };
 
   return { getFilteredRulesIterator };
 }
 
-function mapGroupToRules(rulesSourceName: string, group: PromRuleGroupDTO): RuleWithOrigin[] {
-  const groupKey = `${group.file}${group.name}`;
-  return group.rules.map<RuleWithOrigin>((rule) => ({
-    ruleKey: `${rulesSourceName}-${groupKey}-${hashRule(rule)}`,
+const getRulesSourceUidMemoized = memoize(getDatasourceAPIUid, { maxSize: 10 }); // 10 is totally arbitrary value
+
+function mapRuleToRuleWithOrigin(rulesSourceName: string, group: PromRuleGroupDTO, rule: PromRuleDTO): RuleWithOrigin {
+  const ruleKey = `${rulesSourceName}-${group.file}-${group.name}-${rule.name}-${rule.type}-${hashRule(rule)}`;
+
+  return {
+    ruleKey,
     rule,
     groupIdentifier: {
-      rulesSource: { name: rulesSourceName, uid: getDatasourceAPIUid(rulesSourceName) },
+      rulesSource: { name: rulesSourceName, uid: getRulesSourceUidMemoized(rulesSourceName) },
       namespace: { name: group.file },
       groupName: group.name,
       groupOrigin: 'datasource',
     },
-  }));
+  };
 }
 
 /**
