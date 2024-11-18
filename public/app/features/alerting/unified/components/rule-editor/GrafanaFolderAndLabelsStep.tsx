@@ -7,7 +7,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { FolderWithoutGroup } from './FolderWithoutGroup';
+import { FolderSelector } from './FolderSelector';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
@@ -64,7 +64,7 @@ export function GrafanaFolderAndLabelsStep() {
   return (
     <RuleEditorSection stepNo={3} title="Add folder and labels" description={<SectionDescription />}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <FolderWithoutGroup />
+        <FolderSelector />
         <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
         <LabelsEditorModal
           isOpen={showLabelsEditor}

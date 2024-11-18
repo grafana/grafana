@@ -16,7 +16,7 @@ import { RuleFormValues } from '../../types/rule-form';
 
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 
-export function FolderWithoutGroup() {
+export function FolderSelector() {
   const {
     formState: { errors },
     setValue,
