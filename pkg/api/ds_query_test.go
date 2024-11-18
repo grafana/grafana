@@ -45,7 +45,7 @@ type secretsErrorResponseBody struct {
 	Message string `json:"message"`
 }
 
-func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, secureSocksDSProxySettings setting.SecureSocksDSProxySettings, req *http.Request) error {
+func (rv *fakeDataSourceRequestValidator) Validate(ds *datasources.DataSource, req *http.Request) error {
 	return rv.err
 }
 

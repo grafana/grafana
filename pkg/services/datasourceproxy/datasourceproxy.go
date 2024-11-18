@@ -108,7 +108,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.DataSourceRequestValidator.Validate(ds, setting.SecureSocksDSProxySettings{}, c.Req)
+	err := p.DataSourceRequestValidator.Validate(ds, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
