@@ -9,7 +9,7 @@ import (
 
 type WriteAccessHooks struct {
 	// When configured, this will make sure a user is allowed to save to a given origin
-	Origin func(ctx context.Context, user claims.AuthInfo, origin string) bool
+	CanWriteValueFromRepoCheck func(ctx context.Context, user claims.AuthInfo, origin string) bool
 }
 
 type LifecycleHooks interface {
@@ -20,11 +20,11 @@ type LifecycleHooks interface {
 	Stop(context.Context) error
 }
 
-func (a *WriteAccessHooks) CanWriteOrigin(ctx context.Context, user claims.AuthInfo, uid string) error {
-	if a.Origin == nil || uid == "UI" {
+func (a *WriteAccessHooks) CanWriteValueFromRepository(ctx context.Context, user claims.AuthInfo, uid string) error {
+	if a.CanWriteValueFromRepoCheck == nil || uid == "UI" {
 		return nil // default to OK
 	}
-	if !a.Origin(ctx, user, uid) {
+	if !a.CanWriteValueFromRepoCheck(ctx, user, uid) {
 		return fmt.Errorf("not allowed to write resource at origin")
 	}
 	return nil
