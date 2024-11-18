@@ -9,9 +9,14 @@ gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
 gcp_grafanauploads = "gcp_grafanauploads"
 gcp_grafanauploads_base64 = "gcp_grafanauploads_base64"
 gcp_download_build_container_assets_key = "gcp_download_build_container_assets_key"
+
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
+
+github_app_app_id = "github-app-app-id"
+github_app_app_installation_id = "github-app-installation-id"
+github_app_private_key = "github-app-private-key"
 
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
@@ -41,6 +46,9 @@ def vault_secret(name, path, key):
 
 def secrets():
     return [
+        vault_secret(github_app_app_id, "ci/data/repo/grafana/grafana/github-app", "app-id"),
+        vault_secret(github_app_app_installation_id, "ci/data/repo/grafana/grafana/github-app", "app-installation-id"),
+        vault_secret(github_app_private_key, "ci/data/repo/grafana/grafana/github-app", "private-key"),
         vault_secret(gcp_grafanauploads, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials.json"),
         vault_secret(gcp_grafanauploads_base64, "infra/data/ci/grafana-release-eng/grafanauploads", "credentials_base64"),
         vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),

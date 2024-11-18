@@ -42,8 +42,11 @@ load(
     "rgm_destination",
     "rgm_downloads_destination",
     "rgm_gcp_key_base64",
-    "rgm_github_token",
     "rgm_storybook_destination",
+)
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
 )
 
 docs_paths = {
@@ -111,7 +114,6 @@ def rgm_env_secrets(env):
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
-    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
     env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
     env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
     env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
@@ -142,6 +144,7 @@ def rgm_run(name, script):
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
+            "export GITHUB_TOKEN=$(cat ./.github/token)",
             "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets(env),
@@ -345,6 +348,7 @@ def rgm_promotion_pipeline():
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
+            "export GITHUB_TOKEN=$(cat ./.github/token)",
             "dagger run --silent /src/grafana-build artifacts " +
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
@@ -359,9 +363,13 @@ def rgm_promotion_pipeline():
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
+    generate_token_step = github_app_generate_token_step()
     publish_step = rgm_copy("dist/*", "$${UPLOAD_TO}")
-
+    build_step["depends_on"] = [
+        generate_token_step["name"],
+    ]
     steps = [
+        generate_token_step,
         build_step,
         publish_step,
     ]

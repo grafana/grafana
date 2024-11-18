@@ -14,6 +14,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
 
 def test_frontend(trigger, ver_mode):
     """Generates the pipeline used for testing frontend code.
@@ -37,6 +41,7 @@ def test_frontend(trigger, ver_mode):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
+        steps.append(github_app_generate_token_step())
         steps.append(enterprise_setup_step())
 
     steps.append(test_step)

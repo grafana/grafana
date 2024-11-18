@@ -26,6 +26,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
 
 def integration_tests(trigger, prefix, ver_mode = "pr"):
     """Generate a pipeline for integration tests.
@@ -50,6 +54,7 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
+        init_steps.append(github_app_generate_token_step())
         init_steps.append(enterprise_setup_step())
 
     init_steps += [

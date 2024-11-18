@@ -14,6 +14,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
 
 def lint_frontend_pipeline(trigger, ver_mode):
     """Generates the pipelines used linting frontend code.
@@ -33,7 +37,10 @@ def lint_frontend_pipeline(trigger, ver_mode):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        init_steps = [enterprise_setup_step()]
+        init_steps = [
+            github_app_generate_token_step(),
+            enterprise_setup_step(),
+        ]
 
     init_steps += [
         identify_runner_step(),

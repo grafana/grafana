@@ -20,6 +20,10 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
 
 def integration_benchmarks(prefix):
     """Generate a pipeline for integration tests.
@@ -35,7 +39,10 @@ def integration_benchmarks(prefix):
     volumes = integration_test_services_volumes()
 
     # In pull requests, attempt to clone grafana enterprise.
-    init_steps = [enterprise_setup_step(isPromote = True)]
+    init_steps = [
+        github_app_generate_token_step(),
+        enterprise_setup_step(isPromote = True),
+    ]
 
     verify_step = verify_gen_cue_step()
     verify_jsonnet_step = verify_gen_jsonnet_step()

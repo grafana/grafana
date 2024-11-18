@@ -23,6 +23,10 @@ load(
     "npm_token",
     "prerelease_bucket",
 )
+load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
 
 trigger_oss = {
     "repo": [
@@ -99,22 +103,23 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         check = []
     else:
         check = [
-            'is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
     step = {
         "name": "clone-enterprise",
         "image": images["git"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
         "commands": [
             "apk add --update curl jq bash",
+            "GITHUB_TOKEN=$(cat ./.github/token)",
         ] + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
+        ],
+        "depends_on": [
+            github_app_generate_token_step()["name"],
         ],
     }
 
@@ -316,6 +321,7 @@ def e2e_tests_artifacts():
             "end-to-end-tests-panels-suite",
             "end-to-end-tests-smoke-tests-suite",
             "end-to-end-tests-various-suite",
+            github_app_generate_token_step()["name"],
         ],
         "failure": "ignore",
         "when": {
@@ -327,9 +333,9 @@ def e2e_tests_artifacts():
         "environment": {
             "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
-            "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            "GITHUB_TOKEN=$(cat ./.github/token)",
             # if no videos found do nothing
             "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
@@ -380,6 +386,7 @@ def playwright_e2e_report_post_link():
         "image": images["curl"],
         "depends_on": [
             "playwright-e2e-report-upload",
+            github_app_generate_token_step()["name"],
         ],
         "failure": "ignore",
         "when": {
@@ -388,10 +395,8 @@ def playwright_e2e_report_post_link():
                 "failure",
             ],
         },
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
         "commands": [
+            "GITHUB_TOKEN=$(cat ./.github/token)",
             # if the trace doesn't folder exists, it means that there are no failed tests.
             "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
             # if it exists, we will post a comment on the PR with the link to the report
@@ -852,7 +857,6 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
         environment = {
             "CYPRESS_CI": "true",
             "HOST": "grafana-server",
-            "GITHUB_TOKEN": from_secret("github_token"),
             "AZURE_SP_APP_ID": from_secret("azure_sp_app_id"),
             "AZURE_SP_PASSWORD": from_secret("azure_sp_app_pw"),
             "AZURE_TENANT": from_secret("azure_tenant"),
@@ -873,9 +877,14 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
         "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0",
         "depends_on": [
             "grafana-server",
+            github_app_generate_token_step()["name"],
         ],
         "environment": environment,
-        "commands": ["cd /", "./cpp-e2e/scripts/ci-run.sh {} {}".format(cloud, branch)],
+        "commands": [
+            "GITHUB_TOKEN=$(cat ./.github/token)",
+            "cd /",
+            "./cpp-e2e/scripts/ci-run.sh {} {}".format(cloud, branch),
+        ],
     }
     step = dict(step, when = when)
     return step

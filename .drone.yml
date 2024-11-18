@@ -185,8 +185,23 @@ steps:
   image: node:20.9.0-alpine
   name: betterer-frontend
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -199,9 +214,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -249,8 +263,23 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -263,9 +292,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -337,8 +365,23 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -351,9 +394,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -456,8 +498,23 @@ steps:
   image: golang:1.23.1-alpine
   name: compile-build-cmd
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -470,9 +527,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -533,6 +589,20 @@ platform:
   os: linux
 services: []
 steps:
+- commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
 - commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.20.3
@@ -736,10 +806,12 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-old-arch/various-suite
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
   depends_on:
   - grafana-server
+  - github-app-generate-token
   environment:
     AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
@@ -748,8 +820,6 @@ steps:
     AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
-    GITHUB_TOKEN:
-      from_secret: github_token
     HOST: grafana-server
   image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
@@ -795,6 +865,7 @@ steps:
     - success
     - failure
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
@@ -806,9 +877,7 @@ steps:
     \"}"'
   depends_on:
   - playwright-e2e-report-upload
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  - github-app-generate-token
   failure: ignore
   image: byrnedo/alpine-curl:0.1.8
   name: playwright-e2e-report-post-link
@@ -817,6 +886,7 @@ steps:
     - success
     - failure
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
   - apt-get update
@@ -836,12 +906,11 @@ steps:
   - end-to-end-tests-panels-suite
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
+  - github-app-generate-token
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
       from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
   failure: ignore
   image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
@@ -954,8 +1023,23 @@ services:
   name: memcached
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -968,9 +1052,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -1288,8 +1371,23 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
-  - is_fork=$(curl --retry 5 "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+  - GITHUB_TOKEN=$(cat ./.github/token)
+  - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -1302,9 +1400,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -1396,7 +1493,22 @@ services:
   name: memcached
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - apk add --update curl jq bash
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1407,9 +1519,8 @@ steps:
   - ln -s src grafana
   - cd ./grafana-enterprise
   - ./build.sh
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  depends_on:
+  - github-app-generate-token
   failure: ignore
   image: alpine/git:2.40.1
   name: clone-enterprise
@@ -1934,6 +2045,20 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.20.3
   name: identify-runner
@@ -2139,10 +2264,12 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-old-arch/various-suite
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
   depends_on:
   - grafana-server
+  - github-app-generate-token
   environment:
     AZURE_SP_APP_ID:
       from_secret: azure_sp_app_id
@@ -2151,8 +2278,6 @@ steps:
     AZURE_TENANT:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
-    GITHUB_TOKEN:
-      from_secret: github_token
     HOST: grafana-server
   image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e-13.10.0:1.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
@@ -2198,6 +2323,7 @@ steps:
     - success
     - failure
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
@@ -2209,9 +2335,7 @@ steps:
     \"}"'
   depends_on:
   - playwright-e2e-report-upload
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
+  - github-app-generate-token
   failure: ignore
   image: byrnedo/alpine-curl:0.1.8
   name: playwright-e2e-report-post-link
@@ -2220,6 +2344,7 @@ steps:
     - success
     - failure
 - commands:
+  - GITHUB_TOKEN=$(cat ./.github/token)
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
   - apt-get update
@@ -2239,12 +2364,11 @@ steps:
   - end-to-end-tests-panels-suite
   - end-to-end-tests-smoke-tests-suite
   - end-to-end-tests-various-suite
+  - github-app-generate-token
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
       from_secret: gcp_upload_artifacts_key
-    GITHUB_TOKEN:
-      from_secret: github_token
   failure: ignore
   image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
@@ -4118,6 +4242,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - cd /src && ./scripts/drone_build_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4137,8 +4262,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4192,6 +4315,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - cd /src && ./scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4211,8 +4335,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4353,6 +4475,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - cd /src && ./scripts/drone_build_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4372,8 +4495,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4589,6 +4710,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - cd /src && ./scripts/drone_build_nightly_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4608,8 +4730,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4652,8 +4772,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4718,8 +4836,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -4734,6 +4850,7 @@ steps:
   name: rgm-copy
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - cd /src && ./scripts/drone_publish_nightly_grafana.sh
   depends_on:
   - rgm-copy
@@ -4755,8 +4872,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4844,9 +4959,26 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $(/usr/bin/github-app-external-token) > ./.github/token
+  environment:
+    GITHUB_APP_ID:
+      from_secret: github-app-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: github-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: github-app-private-key
+  image: us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
+  name: github-app-generate-token
+  volumes:
+  - name: github-app
+    path: /github-app
+- commands:
+  - export GITHUB_TOKEN=$(cat ./.github/token)
   - 'dagger run --silent /src/grafana-build artifacts -a $${ARTIFACTS} --grafana-ref=$${GRAFANA_REF}
     --enterprise-ref=$${ENTERPRISE_REF} --grafana-repo=$${GRAFANA_REPO} --version=$${VERSION} '
   - --go-version=1.23.1
+  depends_on:
+  - github-app-generate-token
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4865,8 +4997,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GO_VERSION: 1.23.1
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
@@ -4906,8 +5036,6 @@ steps:
       from_secret: grafana_api_key
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
     GPG_PASSPHRASE:
       from_secret: packages_gpg_passphrase
     GPG_PRIVATE_KEY:
@@ -5471,6 +5599,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM scottyhardy/docker-wine:stable-9.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -5509,6 +5638,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
   - trivy --exit-code 1 --severity HIGH,CRITICAL scottyhardy/docker-wine:stable-9.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-global/docker-deployment-tools-prod/github-app-secret-writer:2024-11-05-v11688112090.1-83920c59
   depends_on:
   - authenticate-gcr
   environment:
@@ -5540,6 +5670,24 @@ volumes:
   name: docker
 - name: config
   temp: {}
+---
+get:
+  name: app-id
+  path: ci/data/repo/grafana/grafana/github-app
+kind: secret
+name: github-app-app-id
+---
+get:
+  name: app-installation-id
+  path: ci/data/repo/grafana/grafana/github-app
+kind: secret
+name: github-app-installation-id
+---
+get:
+  name: private-key
+  path: ci/data/repo/grafana/grafana/github-app
+kind: secret
+name: github-app-private-key
 ---
 get:
   name: credentials.json
@@ -5740,6 +5888,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bb28bcd274c9d2ce724db12659ed6e3dcc461f8a07ae0eb9385a64ca5daad4de
+hmac: 0397097334f4314adc43b293e60279f95ab1f03dea2ab9010cd918ab452c7c15
 
 ...

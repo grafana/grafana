@@ -30,6 +30,10 @@ load(
     "yarn_install_step",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step"
+)
+load(
     "scripts/drone/steps/rgm.star",
     "rgm_artifacts_step",
 )
@@ -57,6 +61,7 @@ def build_e2e(trigger, ver_mode):
 
     environment = {"EDITION": "oss"}
     init_steps = [
+        github_app_generate_token_step(),
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
