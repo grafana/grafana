@@ -96,15 +96,17 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	defer span.End()
 
 	result := make([]dashboards.DashboardSearchProjection, 0, query.Limit)
-	var page int64 = 1
+
 	query.SkipAccessControlFilter = true
 	// Remember initial query limit
 	limit := query.Limit
 	// Set limit to default to prevent pagination issues
 	query.Limit = defaultQueryLimit
+	if query.Page == 0 {
+		query.Page = 1
+	}
 
 	for len(result) < int(limit) {
-		query.Page = page
 		findRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -117,7 +119,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}
 
 		result = append(result, res...)
-		page++
+		query.Page++
 
 		// Stop when last page reached
 		if len(findRes) < defaultQueryLimit {
