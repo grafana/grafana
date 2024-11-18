@@ -102,7 +102,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
           return null;
         }
 
-        const originMeta = getRulePluginOrigin(rule);
+        const originMeta = getRulePluginOrigin(rule.promRule);
 
         return (
           <AlertRuleListItem
@@ -116,7 +116,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
             labels={rule.promRule?.labels}
             isProvisioned={isProvisioned}
             instancesCount={instancesCount}
-            namespace={rule.namespace}
+            namespace={rule.namespace.name}
             group={rule.group.name}
             actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
             origin={originMeta}

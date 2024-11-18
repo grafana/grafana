@@ -62,7 +62,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	require.NoError(t, err)
 
 	namespace := "default"
-	storeInf, err := srv.initNamespaceStore(context.Background(), namespace)
+	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
 	// seed tuples
