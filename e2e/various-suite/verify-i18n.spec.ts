@@ -5,6 +5,7 @@ describe('Verify i18n', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
+  // map between languages in the language picker and the corresponding translation of the 'Language' label
   const languageMap = {
     Deutsch: 'Sprache',
     English: 'Language',
@@ -15,21 +16,19 @@ describe('Verify i18n', () => {
     'Pseudo-locale': 'Ŀäŉģūäģę',
   };
 
+  // basic test which loops through the defined languages in the picker
+  // and verifies that the corresponding label is translated correctly
   it('loads all the languages correctly', () => {
-    cy.intercept('GET', '/api/user/preferences').as('preferences');
+    cy.intercept('/api/user/preferences').as('preferences');
     cy.visit('/profile');
 
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
       // TODO investigate why we need to wait for 6 (SIX!) calls to the preferences API
-      cy.wait('@preferences');
-      cy.wait('@preferences');
-      cy.wait('@preferences');
-      cy.wait('@preferences');
-      cy.wait('@preferences');
-      cy.wait('@preferences');
+      cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
       cy.get('[id="locale-select"]').click();
       cy.get('[id="locale-select"]').type(language).type('{downArrow}{enter}');
       e2e.components.UserProfile.preferencesSaveButton().click();
+      cy.wait('@preferences');
       cy.contains('label', label).should('be.visible');
     });
   });
