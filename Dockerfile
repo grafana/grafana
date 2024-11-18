@@ -15,6 +15,9 @@ ARG JS_SRC=js-builder
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 
+# NI fork: update base image packages
+RUN apk update && apk upgrade
+
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
@@ -40,6 +43,9 @@ RUN yarn build
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
+
+# NI fork: update base image packages
+RUN apk update && apk upgrade
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -107,6 +113,9 @@ RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
 
+# NI fork: update base image packages
+RUN apk update && apk upgrade
+
 WORKDIR /tmp/grafana
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
@@ -122,6 +131,9 @@ FROM ${JS_SRC} AS js-src
 
 # Final stage
 FROM ${BASE_IMAGE}
+
+# NI fork: update base image packages
+RUN apk update && apk upgrade
 
 LABEL maintainer="Grafana Labs <hello@grafana.com>"
 LABEL org.opencontainers.image.source="https://github.com/grafana/grafana"
