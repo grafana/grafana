@@ -80,6 +80,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                          | Yes                |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                                                          |                    |
 | `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                                                       | Yes                |
+| `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                                  | Yes                |
 
 ## Public preview feature toggles
 

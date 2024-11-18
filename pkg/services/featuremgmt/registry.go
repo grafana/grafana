@@ -1650,6 +1650,14 @@ var (
 			Owner:       grafanaSharingSquad,
 			Expression:  "false", // disabled by default
 		},
+		{
+			Name:         "alertingUIOptimizeReducer",
+			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
+		},
 	}
 )
 
