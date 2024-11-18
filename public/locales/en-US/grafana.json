@@ -280,6 +280,10 @@
         "success": "Successfully updated rule group"
       }
     },
+    "rule-list": {
+      "configure-datasource": "Configure",
+      "new-alert-rule": "New alert rule"
+    },
     "rule-state": {
       "creating": "Creating",
       "deleting": "Deleting",
