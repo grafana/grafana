@@ -14,9 +14,6 @@ export interface DashboardReloadBehaviorState extends SceneObjectState {
 
 export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBehaviorState> {
   constructor(state: DashboardReloadBehaviorState) {
-    // This is here for testing purposes and should be removed before merging
-    // state.reloadOnParamsChange = true;
-
     const shouldReload = state.reloadOnParamsChange && state.uid;
 
     super(state);
