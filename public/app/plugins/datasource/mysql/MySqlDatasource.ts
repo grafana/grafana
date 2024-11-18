@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, TimeRange, type TestDataSourceResponse } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { COMMON_FNS, DB, FuncParameter, MACRO_FUNCTIONS, SQLQuery, SqlDatasource, formatSQL } from '@grafana/sql';
@@ -9,6 +9,7 @@ import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
+import { trackHealthCheck } from './tracking';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -16,6 +17,19 @@ export class MySqlDatasource extends SqlDatasource {
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
+  }
+
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return super
+      .testDatasource()
+      .then((res) => {
+        trackHealthCheck(res, this.meta);
+        return Promise.resolve(res);
+      })
+      .catch((ex) => {
+        trackHealthCheck(ex, this.meta);
+        return Promise.reject(ex);
+      });
   }
 
   getQueryModel() {
