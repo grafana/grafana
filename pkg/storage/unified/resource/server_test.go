@@ -60,9 +60,9 @@ func TestSimpleServer(t *testing.T) {
 				"uid": "xyz",
 				"namespace": "default",
 				"annotations": {
-					"grafana.app/originName": "elsewhere",
-					"grafana.app/originPath": "path/to/item",
-					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+					"grafana.app/repoName": "elsewhere",
+					"grafana.app/repoPath": "path/to/item",
+					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
 				}
 			},
 			"spec": {
@@ -176,9 +176,9 @@ func TestSimpleServer(t *testing.T) {
 				"namespace": "default",
 				"uid": "xyz",
 				"annotations": {
-					"grafana.app/originName": "elsewhere",
-					"grafana.app/originPath": "path/to/item",
-					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+					"grafana.app/repoName": "elsewhere",
+					"grafana.app/repoPath": "path/to/item",
+					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
 				}
 			},
 			"spec": {

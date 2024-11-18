@@ -6,6 +6,7 @@ import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -49,8 +50,9 @@ const RuleListV1 = () => {
 
   const hasActiveLabelsFilter = filterState.labels.length > 0;
 
-  const queryParamView = queryParams.view as keyof typeof VIEWS;
-  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+  const queryParamView = queryParams.view;
+  const viewType = queryParamView === 'state' || queryParamView === 'groups' ? queryParamView : 'groups';
+  const view = VIEWS[viewType] ? viewType : 'groups';
 
   const ViewComponent = VIEWS[view];
 
@@ -161,7 +163,7 @@ export function CreateAlertButton() {
         icon="plus"
         onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
       >
-        New alert rule
+        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
       </LinkButton>
     );
   }

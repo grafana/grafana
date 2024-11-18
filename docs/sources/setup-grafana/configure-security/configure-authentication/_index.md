@@ -76,6 +76,12 @@ If users want to use the same email address with multiple identity providers (fo
 
 To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
 
+## Multi-factor authentication (MFA/2FA)
+
+Grafana and the Grafana Cloud portal currently do not include built-in support for multi-factor authentication (MFA).
+
+We strongly recommend integrating an external identity provider (IdP) that supports MFA, such as Okta, Azure AD, or Google Workspace. By configuring your Grafana instances to use an external IdP, you can leverage MFA to protect your accounts and resources effectively.
+
 ## Login and short-lived tokens
 
 > The following applies when using Grafana's basic authentication, LDAP (without Auth proxy) or OAuth integration.
@@ -159,10 +165,19 @@ Defaults to `false`.
 auto_login = true
 ```
 
-### Avoid automatic OAuth login
+### Avoid automatic login
 
-To sign in with a username and password and avoid automatic OAuth login, add the `disableAutoLogin` parameter to your login URL.
-For example: `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
+The `disableAutoLogin=true` URL parameter allows users to bypass the automatic login feature in scenarios where incorrect configuration changes prevent normal login functionality.
+This feature is especially helpful when you need to access the login screen to troubleshoot and fix misconfigurations.
+
+#### How to use
+
+1. Add `disableAutoLogin=true` as a query parameter to your Grafana URL.
+   - Example: `grafana.example.net/login?disableAutoLogin=true` or `grafana.example.net/login?disableAutoLogin`
+1. This will redirect you to the standard login screen, bypassing the automatic login mechanism.
+1. Fix any configuration issues and test your login setup.
+
+This feature is available for both for OAuth and SAML. Ensure that after fixing the issue, you remove the parameter or revert the configuration to re-enable the automatic login feature, if desired.
 
 ### Hide sign-out menu
 

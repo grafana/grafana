@@ -7,12 +7,13 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/dashboard"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			if !attr.IsResourceRequest() {
@@ -26,7 +27,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 
 			if attr.GetName() == "" {
 				// Discourage use of the "list" command for non super admin users
-				if attr.GetVerb() == "list" && attr.GetResource() == v0alpha1.DashboardResourceInfo.GroupResource().Resource {
+				if attr.GetVerb() == "list" && attr.GetResource() == dashboard.DashboardResourceInfo.GroupResource().Resource {
 					if !user.GetIsGrafanaAdmin() {
 						return authorizer.DecisionDeny, "list summary objects (or connect as GrafanaAdmin)", err
 					}
@@ -45,7 +46,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 
 			// expensive path to lookup permissions for a single dashboard
-			dto, err := b.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			dto, err := dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 				UID:   attr.GetName(),
 				OrgID: info.OrgID,
 			})
@@ -87,7 +88,7 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return authorizer.DecisionDeny, "can not delete dashboard", err
 				}
 			default:
-				b.log.Info("unknown verb", "verb", attr.GetVerb())
+				l.Info("unknown verb", "verb", attr.GetVerb())
 				return authorizer.DecisionNoOpinion, "unsupported verb", nil // Unknown verb
 			}
 			return authorizer.DecisionAllow, "", nil

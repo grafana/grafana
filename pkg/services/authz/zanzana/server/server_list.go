@@ -24,7 +24,7 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 }
 
 func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info common.TypeInfo) (*authzextv1.ListResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *Server) listTyped(ctx context.Context, r *authzextv1.ListRequest, info 
 }
 
 func (s *Server) listGeneric(ctx context.Context, r *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	storeInf, err := s.getNamespaceStore(ctx, r.Namespace)
+	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
 	}
