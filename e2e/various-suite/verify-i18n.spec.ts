@@ -6,15 +6,18 @@ describe('Verify i18n', () => {
   });
 
   // map between languages in the language picker and the corresponding translation of the 'Language' label
-  const languageMap = {
+  const languageMap: Record<string, string> = {
     Deutsch: 'Sprache',
     English: 'Language',
     Español: 'Idioma',
     Français: 'Langue',
     'Português Brasileiro': 'Idioma',
     '中文（简体）': '语言',
-    'Pseudo-locale': 'Ŀäŉģūäģę',
   };
+
+  if (process.env.NODE_ENV === 'development') {
+    languageMap['Pseudo-locale'] = 'Ŀäŉģūäģę';
+  }
 
   // basic test which loops through the defined languages in the picker
   // and verifies that the corresponding label is translated correctly
