@@ -214,9 +214,9 @@ function useColumns(
         label: '',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: rule }) => {
-          const rulerRule = rule.rulerRule;
+          const { promRule, rulerRule } = rule;
 
-          const originMeta = getRulePluginOrigin(rule);
+          const originMeta = getRulePluginOrigin(promRule ?? rulerRule);
           if (originMeta) {
             return <PluginOriginBadge pluginId={originMeta.pluginId} />;
           }

@@ -1,11 +1,10 @@
-import { produce } from 'immer';
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
-import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockFeatureDiscoveryApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getCloudRule,
   getGrafanaRule,
@@ -14,11 +13,13 @@ import {
   mockGrafanaRulerRule,
   mockPromAlertingRule,
 } from 'app/features/alerting/unified/mocks';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-setupMswServer();
+import { setupDataSources } from '../../testSetup/datasources';
+import { buildInfoResponse } from '../../testSetup/featureDiscovery';
+
+const server = setupMswServer();
 jest.mock('app/core/services/context_srv');
 const mockContextSrv = jest.mocked(contextSrv);
 
@@ -35,6 +36,8 @@ const grantAllPermissions = () => {
     AccessControlAction.AlertingRuleUpdate,
     AccessControlAction.AlertingRuleDelete,
     AccessControlAction.AlertingInstanceCreate,
+    AccessControlAction.AlertingRuleExternalRead,
+    AccessControlAction.AlertingRuleExternalWrite,
   ]);
   mockContextSrv.hasPermissionInMetadata.mockImplementation(() => true);
   mockContextSrv.hasPermission.mockImplementation(() => true);
@@ -58,6 +61,9 @@ setPluginLinksHook(() => ({
   isLoading: false,
 }));
 
+const mimirDs = mockDataSource({ uid: 'mimir', name: 'Mimir' });
+setupDataSources(mimirDs);
+
 const clickCopyLink = async () => {
   const user = userEvent.setup();
   await user.click(await ui.moreButton.find());
@@ -70,7 +76,7 @@ describe('RuleActionsButtons', () => {
     grantAllPermissions();
     const mockRule = getGrafanaRule();
 
-    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" showCopyLinkButton />);
+    render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
 
     await user.click(await ui.moreButton.find());
 
@@ -93,26 +99,10 @@ describe('RuleActionsButtons', () => {
   it('renders correct options for Cloud rule', async () => {
     const user = userEvent.setup();
     grantAllPermissions();
-    const mockRule = getCloudRule();
-    const dataSource = mockDataSource({ id: 1 });
+    const mockRule = getCloudRule(undefined, { rulesSource: mimirDs });
+    mockFeatureDiscoveryApi(server).discoverDsFeatures(mimirDs, buildInfoResponse.mimir);
 
-    const defaultState = configureStore().getState();
-    render(<RuleActionsButtons rule={mockRule} rulesSource={dataSource} />, {
-      preloadedState: produce(defaultState, (store) => {
-        store.unifiedAlerting.dataSources[dataSource.name] = {
-          loading: false,
-          dispatched: true,
-          result: {
-            id: 'test-ds',
-            name: dataSource.name,
-            rulerConfig: {
-              dataSourceName: dataSource.name,
-              apiVersion: 'config',
-            },
-          },
-        };
-      }),
-    });
+    render(<RuleActionsButtons rule={mockRule} rulesSource={mimirDs} />);
 
     await user.click(await ui.moreButton.find());
 
@@ -162,14 +152,16 @@ describe('RuleActionsButtons', () => {
     });
 
     it('copies correct URL for cloud rule', async () => {
-      const mockRule = getCloudRule();
+      const promDataSource = mockDataSource({ name: 'Prometheus-2' });
 
-      render(<RuleActionsButtons rule={mockRule} rulesSource="grafana" />);
+      const mockRule = getCloudRule({ name: 'pod-1-cpu-firing' });
+
+      render(<RuleActionsButtons rule={mockRule} rulesSource={promDataSource} />);
 
       await clickCopyLink();
 
       expect(await navigator.clipboard.readText()).toBe(
-        'http://localhost:3000/sub/alerting/Prometheus-2/mockRule/find'
+        'http://localhost:3000/sub/alerting/Prometheus-2/pod-1-cpu-firing/find'
       );
     });
   });

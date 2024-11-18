@@ -7,15 +7,20 @@ import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { usePagination } from '../../hooks/usePagination';
-import { AlertRuleListItem } from '../../rule-list/components/AlertRuleListItem';
-import { ListSection } from '../../rule-list/components/ListSection';
-import { createViewLink } from '../../utils/misc';
-import { hashRule } from '../../utils/rule-id';
-import { getRulePluginOrigin, isAlertingRule, isProvisionedRule } from '../../utils/rules';
-import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
+import { usePagination } from '..//hooks/usePagination';
+import { calculateTotalInstances } from '../components/rule-viewer/RuleViewer';
+import { ListSection } from '../rule-list/components/ListSection';
+import { createViewLink } from '../utils/misc';
+import { hashRule } from '../utils/rule-id';
+import {
+  getRuleGroupLocationFromCombinedRule,
+  getRulePluginOrigin,
+  isAlertingRule,
+  isGrafanaRulerRule,
+} from '../utils/rules';
 
-import { RuleActionsButtons } from './RuleActionsButtons';
+import { AlertRuleListItem } from './components/AlertRuleListItem';
+import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -23,7 +28,7 @@ interface Props {
 
 type GroupedRules = Map<PromAlertingRuleState, CombinedRule[]>;
 
-export const RuleListStateView = ({ namespaces }: Props) => {
+export const StateView = ({ namespaces }: Props) => {
   const styles = useStyles2(getStyles);
 
   const groupedRules = useMemo(() => {
@@ -71,7 +76,7 @@ const STATE_TITLES: Record<PromAlertingRuleState, string> = {
 const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) => {
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const isNotFiringState = state !== PromAlertingRuleState.Firing;
+  const isFiringState = state !== PromAlertingRuleState.Firing;
   const hasRulesMatchingState = rules.length > 0;
 
   return (
@@ -82,7 +87,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
           <Counter value={rules.length} />
         </Stack>
       }
-      collapsed={isNotFiringState || hasRulesMatchingState}
+      collapsed={isFiringState || hasRulesMatchingState}
       pagination={
         <Pagination
           currentPage={page}
@@ -95,14 +100,15 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
       {pageItems.map((rule) => {
         const { rulerRule, promRule } = rule;
 
-        const isProvisioned = rulerRule ? isProvisionedRule(rulerRule) : false;
+        const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
         const instancesCount = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : undefined;
+        const groupIdentifier = getRuleGroupLocationFromCombinedRule(rule);
 
         if (!promRule) {
           return null;
         }
 
-        const originMeta = getRulePluginOrigin(rule.promRule);
+        const originMeta = getRulePluginOrigin(promRule);
 
         return (
           <AlertRuleListItem
@@ -118,7 +124,18 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
             instancesCount={instancesCount}
             namespace={rule.namespace.name}
             group={rule.group.name}
-            actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
+            actions={
+              rule.rulerRule ? (
+                <RuleActionsButtons
+                  compact
+                  rule={rule.rulerRule}
+                  promRule={promRule}
+                  groupIdentifier={groupIdentifier}
+                />
+              ) : (
+                <ActionsLoader />
+              )
+            }
             origin={originMeta}
           />
         );

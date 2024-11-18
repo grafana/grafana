@@ -74,14 +74,12 @@ describe('RuleEditor grafana managed rules', () => {
     ]);
 
     const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: false }
-      ),
+      default: mockDataSource({
+        uid: 'mimir',
+        type: 'prometheus',
+        name: 'Mimir',
+        isDefault: true,
+      }),
     };
     setupDataSources(dataSources.default);
     setFolderResponse(mockFolder(folder));

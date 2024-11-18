@@ -2,20 +2,19 @@ import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { screen, waitForElementToBeRemoved } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
-import { discoverFeatures } from './api/buildInfo';
+import { discoverFeaturesByUid } from './api/buildInfo';
 import { fetchRulerRulesGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
-import * as config from './utils/config';
-import { DataSourceType } from './utils/datasource';
+import { grantUserPermissions, mockDataSource } from './mocks';
+import { setupDataSources } from './testSetup/datasources';
+import { DataSourceType, GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -49,10 +48,19 @@ jest.mock('./components/rule-editor/util', () => {
 });
 
 const dataSources = {
+  grafana: mockDataSource(
+    {
+      type: 'datasource',
+      uid: GRAFANA_RULES_SOURCE_NAME,
+      name: GRAFANA_DATASOURCE_NAME,
+    },
+    { alerting: true }
+  ),
   // can edit rules
   loki: mockDataSource(
     {
       type: DataSourceType.Loki,
+      uid: 'loki-with-ruler',
       name: 'loki with ruler',
     },
     { alerting: true }
@@ -61,9 +69,8 @@ const dataSources = {
     {
       type: DataSourceType.Loki,
       name: 'loki disabled for alerting',
-      jsonData: {
-        manageAlerts: false,
-      },
+      uid: 'loki-without-alerting',
+      jsonData: { manageAlerts: false },
     },
     { alerting: true }
   ),
@@ -72,6 +79,7 @@ const dataSources = {
     {
       type: DataSourceType.Prometheus,
       name: 'cortex with ruler',
+      uid: 'cortex-with-ruler',
       isDefault: true,
     },
     { alerting: true }
@@ -81,6 +89,7 @@ const dataSources = {
     {
       type: DataSourceType.Loki,
       name: 'loki with local rule store',
+      uid: 'loki-with-local-rule-store',
     },
     { alerting: true }
   ),
@@ -89,6 +98,7 @@ const dataSources = {
     {
       type: DataSourceType.Loki,
       name: 'cortex without ruler api',
+      uid: 'cortex-without-ruler-api',
     },
     { alerting: true }
   ),
@@ -97,27 +107,19 @@ const dataSources = {
     {
       type: 'splunk',
       name: 'splunk',
+      uid: 'splunk',
     },
     { alerting: true }
   ),
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    getInstanceSettings: () => dataSources.prom,
-    get: () => dataSources.prom,
-    getList: () => Object.values(dataSources),
-  })),
-}));
-
-jest.spyOn(config, 'getAllDataSources');
+setupDataSources(...Object.values(dataSources));
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
+  // getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
+    discoverFeaturesByUid: jest.mocked(discoverFeaturesByUid),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
   },
 };
@@ -147,18 +149,18 @@ describe('RuleEditor cloud: checking editable data sources', () => {
   });
 
   it('for cloud alerts, should only allow to select editable rules sources', async () => {
-    mocks.api.discoverFeatures.mockImplementation(async (dataSourceName) => {
-      if (dataSourceName === 'loki with ruler' || dataSourceName === 'cortex with ruler') {
+    mocks.api.discoverFeaturesByUid.mockImplementation(async (dataSourceUid) => {
+      if (dataSourceUid === dataSources.loki.uid || dataSourceUid === dataSources.prom.uid) {
         return getDiscoverFeaturesMock(PromApplication.Cortex, { rulerApiEnabled: true });
       }
-      if (dataSourceName === 'loki with local rule store') {
+      if (dataSourceUid === dataSources.loki_local_rule_store.uid) {
         return getDiscoverFeaturesMock(PromApplication.Cortex);
       }
-      if (dataSourceName === 'cortex without ruler api') {
+      if (dataSourceUid === dataSources.prom_no_ruler_api.uid) {
         return getDiscoverFeaturesMock(PromApplication.Cortex);
       }
 
-      throw new Error(`${dataSourceName} not handled`);
+      throw new Error(`${dataSourceUid} not handled`);
     });
 
     mocks.api.fetchRulerRulesGroup.mockImplementation(async ({ dataSourceName }) => {
@@ -179,8 +181,6 @@ describe('RuleEditor cloud: checking editable data sources', () => {
       return null;
     });
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 
     // render rule editor, select mimir/loki managed alerts
