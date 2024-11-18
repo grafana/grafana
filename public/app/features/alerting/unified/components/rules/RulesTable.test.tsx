@@ -1,4 +1,4 @@
-import { render, userEvent, screen } from 'test/test-utils';
+import { render, userEvent, screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -39,6 +39,12 @@ const user = userEvent.setup();
 setupMswServer();
 
 describe('RulesTable RBAC', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    jest.resetAllMocks();
+  });
+
   describe('Grafana rules action buttons', () => {
     const grafanaRule = getGrafanaRule({ name: 'Grafana' });
 
@@ -52,7 +58,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
+      await waitFor(() => expect(ui.actionButtons.edit.query()).not.toBeInTheDocument());
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
@@ -65,7 +71,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      await user.click(ui.actionButtons.more.get());
+      await user.click(await ui.actionButtons.more.find());
 
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
@@ -80,7 +86,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
+      expect(await ui.actionButtons.edit.find()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
@@ -93,8 +99,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[grafanaRule]} />);
 
-      expect(ui.actionButtons.more.get()).toBeInTheDocument();
-      await user.click(ui.actionButtons.more.get());
+      await user.click(await ui.actionButtons.more.find());
       expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
     });
 
@@ -159,7 +164,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      expect(ui.actionButtons.edit.query()).not.toBeInTheDocument();
+      await waitFor(() => expect(ui.actionButtons.edit.query()).not.toBeInTheDocument());
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
@@ -172,7 +177,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      await user.click(ui.actionButtons.more.get());
+      await user.click(await ui.actionButtons.more.find());
       expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
     });
 
@@ -186,7 +191,7 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      expect(ui.actionButtons.edit.get()).toBeInTheDocument();
+      expect(await ui.actionButtons.edit.find()).toBeInTheDocument();
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
@@ -199,8 +204,8 @@ describe('RulesTable RBAC', () => {
 
       render(<RulesTable rules={[cloudRule]} />);
 
-      await user.click(ui.actionButtons.more.get());
-      expect(ui.moreActionItems.delete.get()).toBeInTheDocument();
+      await user.click(await ui.actionButtons.more.find());
+      expect(await ui.moreActionItems.delete.find()).toBeInTheDocument();
     });
   });
 });
