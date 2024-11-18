@@ -1,7 +1,7 @@
 import { ReactElement, useMemo, useState } from 'react';
 
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange, getTimeZone } from '@grafana/data';
-import { config, usePluginLinks } from '@grafana/runtime';
+import { config, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
@@ -43,7 +43,12 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
           links={querylessLinks}
           noQueriesInPane={noQueriesInPane}
           exploreId={exploreId}
-          setSelectedExtension={setSelectedExtension}
+          setSelectedExtension={(extension) => {
+            setSelectedExtension(extension);
+            reportInteraction('grafana_explore_queryless_app_link_clicked', {
+              pluginId: extension.pluginId,
+            });
+          }}
           setIsModalOpen={setIsOpen}
           isModalOpen={isOpen}
         />
