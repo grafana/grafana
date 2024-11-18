@@ -169,3 +169,10 @@ func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error 
 	_, err := c.authzext.Write(ctx, req)
 	return err
 }
+
+func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
+	return c.authzext.BatchCheck(ctx, req)
+}

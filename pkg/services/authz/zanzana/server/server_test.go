@@ -49,6 +49,10 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test list", func(t *testing.T) {
 		testList(t, srv)
 	})
+
+	t.Run("test batch check", func(t *testing.T) {
+		testBatchCheck(t, srv)
+	})
 }
 
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
