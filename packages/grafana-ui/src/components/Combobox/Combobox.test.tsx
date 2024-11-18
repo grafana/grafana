@@ -116,7 +116,7 @@ describe('Combobox', () => {
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
   });
 
-  it.each(['', 0])('should handle an option with %p as a value', async (val) => {
+  it.each(['very valid value', '', 0])('should handle an option with %p as a value', async (val) => {
     const options = [
       { label: 'Second option', value: '2' },
       { label: 'Default', value: val },

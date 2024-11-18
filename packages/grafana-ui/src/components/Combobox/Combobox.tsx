@@ -173,7 +173,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       return null;
     }
 
-    if (!value) {
+    if (valueProp === undefined || valueProp === null) {
       return null;
     }
 
@@ -183,11 +183,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     }
 
     return index;
-  }, [options, value, isAsync]);
+  }, [valueProp, options, value, isAsync]);
 
   const selectedItem = useMemo(() => {
-    if (!valueProp) {
-      return undefined;
+    if (valueProp === undefined || valueProp === null) {
+      return null;
     }
 
     if (selectedItemIndex !== null && !isAsync) {
