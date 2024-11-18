@@ -9,7 +9,7 @@ import { logOptions } from '../../utils';
 import { t, Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
-import { Input } from '../Input/Input';
+import { Input, Props as InputProps } from '../Input/Input';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -26,7 +26,11 @@ export type ComboboxOption<T extends string | number = string> = {
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-interface ComboboxBaseProps<T extends string | number> {
+interface ComboboxBaseProps<T extends string | number>
+  extends Pick<
+    InputProps,
+    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+  > {
   /**
    * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
    */
@@ -49,10 +53,7 @@ interface ComboboxBaseProps<T extends string | number> {
    * Defaults to 100%. Number is a multiple of 8px. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
-  placeholder?: string;
-  'aria-labelledby'?: string;
-  id?: string;
-  autoFocus?: boolean;
+  onBlur?: () => void;
 }
 
 const RECOMMENDED_ITEMS_AMOUNT = 100_000;
@@ -128,6 +129,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
     autoFocus,
+    onBlur,
+    disabled,
+    loading,
+    invalid,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -369,6 +374,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
         autoFocus={autoFocus}
+        onBlur={onBlur}
+        disabled={disabled}
+        loading={loading}
+        invalid={invalid}
         className={styles.input}
         suffix={
           <>
