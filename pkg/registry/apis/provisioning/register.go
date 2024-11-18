@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,7 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -42,31 +43,40 @@ func RegisterAPIService(
 }
 
 func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return nil // default authorizer is fine
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+			if a.GetSubresource() == "webhook" {
+				// for now????
+				return authorizer.DecisionAllow, "", nil
+			}
+
+			// fallback to the standard authorizer
+			return authorizer.DecisionNoOpinion, "", nil
+		})
 }
 
 func (b *ProvisioningAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return v0alpha1.SchemeGroupVersion
+	return provisioning.SchemeGroupVersion
 }
 
 func (b *ProvisioningAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := v0alpha1.AddToScheme(scheme)
+	err := provisioning.AddToScheme(scheme)
 	if err != nil {
 		return err
 	}
 
 	// This is required for --server-side apply
-	err = v0alpha1.AddKnownTypes(v0alpha1.InternalGroupVersion, scheme)
+	err = provisioning.AddKnownTypes(provisioning.InternalGroupVersion, scheme)
 	if err != nil {
 		return err
 	}
 
 	// Only 1 version (for now?)
-	return scheme.SetVersionPriority(v0alpha1.SchemeGroupVersion)
+	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
 }
 
 func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, v0alpha1.RepositoryResourceInfo, opts.OptsGetter)
+	repositoryStorage, err := grafanaregistry.NewRegistryStore(opts.Scheme, provisioning.RepositoryResourceInfo, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
@@ -78,29 +88,31 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 
 	storage := map[string]rest.Storage{}
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
-	storage[v0alpha1.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
-	apiGroupInfo.VersionedResourcesStorageMap[v0alpha1.VERSION] = storage
+	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
+	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
 
 func (b *ProvisioningAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return provisioning.GetOpenAPIDefinitions
 }
 
 func (b *ProvisioningAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// TODO: Do we need any?
+	// TODO: this is where we could inject a non-k8s managed handler... webhook maybe?
 	return nil
 }
 
 func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	oas.Info.Description = "Grafana Git UI Sync"
+	oas.Info.Description = "Provisioning"
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
+
 	// TODO: we might want to register some extras for subresources here.
-	sub := oas.Paths.Paths[root+"namespaces/{namespace}/repositories/{name}/hello"]
+	sub := oas.Paths.Paths[repoprefix+"/hello"]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Description = "Get a nice hello :)"
 		sub.Get.Parameters = []*spec3.Parameter{
@@ -110,6 +122,32 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 					In:          "query",
 					Example:     "World!",
 					Description: "Who should get the nice greeting?",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/webhook"]
+	if sub != nil && sub.Get != nil {
+		sub.Post.Description = "Currently only supports github webhooks"
+	}
+
+	// hide the version with no path
+	delete(oas.Paths.Paths, repoprefix+"/read")
+
+	// update the version with a path
+	sub = oas.Paths.Paths[repoprefix+"/read/{path}"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Description = "Read value from upstream repository"
+		sub.Get.Parameters = []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "commit",
+					In:          "query",
+					Example:     "ca171cc730",
+					Description: "optional commit hash for the requested file",
 					Schema:      spec.StringProperty(),
 					Required:    false,
 				},

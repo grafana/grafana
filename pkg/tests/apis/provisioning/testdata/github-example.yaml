@@ -11,3 +11,5 @@ spec:
     repository: git-ui-sync-demo
     branchWorkflow: true
     generateDashboardPreviews: true
+    token: "github_pat_dummy"
+    webhookSecret: "dummyWebhookSecret"
