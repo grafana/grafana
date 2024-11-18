@@ -25,10 +25,7 @@ func (db *DB) RunCommands(commands []string) (string, error) {
 }
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Frame, error) {
-	// Create a new Frame
-	frame := data.NewFrame("ResultSet")
-
+func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Frame) error {
 	// Create fields based on the schema
 	for _, col := range schema {
 		var field *data.Field
@@ -52,9 +49,9 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 		// case int8:
 		// 	field = data.NewField(col.Name, nil, []int64{})
 		default:
-			return nil, fmt.Errorf("unsupported type for column %s: %v", col.Name, colType)
+			return fmt.Errorf("unsupported type for column %s: %v", col.Name, colType)
 		}
-		frame.Fields = append(frame.Fields, field)
+		f.Fields = append(f.Fields, field)
 	}
 
 	// Iterate through the rows and append data to fields
@@ -65,32 +62,39 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema) (*data.Fram
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("error reading row: %v", err)
+			return fmt.Errorf("error reading row: %v", err)
 		}
 
 		for i, val := range row {
 			switch v := val.(type) {
+			// TODO: The types listed here should be the same as that
+			// used when creating the fields. Am I using the wrong fields
+			// from the schema instance?
 			case int8:
-				frame.Fields[i].Append(int64(v))
+				f.Fields[i].Append(int64(v))
 			case int64:
-				frame.Fields[i].Append(v)
+				f.Fields[i].Append(v)
 			case float64:
-				frame.Fields[i].Append(v)
+				f.Fields[i].Append(v)
 			case string:
-				frame.Fields[i].Append(v)
+				f.Fields[i].Append(v)
 			case bool:
-				frame.Fields[i].Append(v)
+				f.Fields[i].Append(v)
 			// Add more types as needed
 			default:
-				return nil, fmt.Errorf("unsupported value type for column %s: %T", schema[i].Name, v)
+				return fmt.Errorf("unsupported value type for column %s: %T", schema[i].Name, v)
 			}
 		}
 	}
 
-	return frame, nil
+	return nil
 }
 
 func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
+	// TODO: Consider if this should be moved outside of this function
+	// or indeed into convertToDataFrame
+	f.Name = name
+
 	// error if more than zero frames received
 	// TODO: Implement loading data into the database later
 	if len(frames) > 0 {
@@ -119,7 +123,7 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	// rows := sqlutil.NewRowIter(mysqlRows, nil)
 	// frame, err := sqlutil.FrameFromRows(rows, rowLimit, converters...)
 
-	f, err = convertToDataFrame(iter, schema)
+	err = convertToDataFrame(iter, schema, f)
 	if err != nil {
 		return err
 	}

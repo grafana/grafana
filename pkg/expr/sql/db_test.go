@@ -16,15 +16,15 @@ func TestQueryFramesInto(t *testing.T) {
 		input_frames []*data.Frame
 		expected     *data.Frame
 	}{
-		// {
-		// 	name:         "valid query with no input frames, one row one column",
-		// 	query:        `SELECT '1' AS 'n';`,
-		// 	input_frames: []*data.Frame{},
-		// 	expected: data.NewFrame(
-		// 		"sqlExpressionRefId",
-		// 		data.NewField("n", nil, []string{"1"}),
-		// 	),
-		// },
+		{
+			name:         "valid query with no input frames, one row one column",
+			query:        `SELECT '1' AS 'n';`,
+			input_frames: []*data.Frame{},
+			expected: data.NewFrame(
+				"sqlExpressionRefId",
+				data.NewField("n", nil, []string{"1"}),
+			),
+		},
 		{
 			name:         "valid query with no input frames, one row two columns",
 			query:        `SELECT 'sam' AS 'name', 40 AS 'age';`,
