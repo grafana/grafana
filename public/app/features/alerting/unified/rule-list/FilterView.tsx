@@ -1,4 +1,3 @@
-import { from } from 'ix/asynciterable/asynciterablex';
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map, take, tap, withAbort } from 'ix/asynciterable/operators';
 import { compact, isEqual } from 'lodash';
@@ -38,29 +37,34 @@ export function FilterView({ filterState }: FilterViewProps) {
   const filterChanged = !isEqual(prevFilterState, filterState);
   const [transitionPending, startTransition] = useTransition();
 
-  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
+  /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
+  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider(filterState, API_PAGE_SIZE);
 
+  /* this is the abort controller that allows us to stop an AsyncIterable */
   const controller = useRef(new AbortController());
 
+  /**
+   * This function returs a iterator that we can use to populate the search results.
+   * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
+   * callback function to detect when we've exhausted the source.
+   */
   const initIterator = useCallback(
     () =>
-      getFilteredRulesIterator(filterState).pipe(
+      getFilteredRulesIterator().pipe(
         withAbort(controller.current.signal),
-        tap(undefined, undefined, () => setNoMoreResults(true))
+        onFinished(() => setNoMoreResults(true))
       ),
-    [getFilteredRulesIterator, filterState]
+    [getFilteredRulesIterator]
   );
 
+  /* This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
   const rulesIterator = useRef(initIterator());
 
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [noMoreResults, setNoMoreResults] = useState(false);
 
+  /* This function will fetch a page of results from the iterable */
   const [{ execute: loadResultPage }, state] = useAsync(async () => {
-    if (controller.current.signal.aborted) {
-      return;
-    }
-
     for await (const rule of rulesIterator.current.pipe(take(FRONTENT_PAGE_SIZE))) {
       startTransition(() => {
         setRules((rules) => rules.concat(rule));
@@ -68,6 +72,7 @@ export function FilterView({ filterState }: FilterViewProps) {
     }
   });
 
+  /* Reset the search state, called when we choose a different filter state */
   const resetSearchState = useCallback(() => {
     // recreate abort controller
     controller.current.abort();
@@ -78,7 +83,6 @@ export function FilterView({ filterState }: FilterViewProps) {
   }, [initIterator]);
 
   if (filterChanged) {
-    console.log('filter changed!');
     resetSearchState();
 
     // reset view state
@@ -89,15 +93,15 @@ export function FilterView({ filterState }: FilterViewProps) {
     loadResultPage();
   }
 
+  /* Start by loading a page of results when the component mounts */
   useEffect(() => {
     loadResultPage();
   }, [loadResultPage]);
 
+  /* When we unmount the component we make sure to abort all iterables */
   useEffect(() => {
     return () => {
-      // recreate abort controller
       controller.current.abort();
-      controller.current = new AbortController();
     };
   }, [controller]);
 
@@ -148,9 +152,13 @@ interface RuleWithOrigin {
   groupIdentifier: DataSourceRuleGroupIdentifier;
 }
 
-function useFilteredRulesIteratorProvider() {
+function useFilteredRulesIteratorProvider(filterState: RulesFilter, groupLimit: number) {
   const [fetchGroups] = useLazyGroupsQuery();
 
+  /**
+   * This async generator will continue to yield rule groups and will keep fetching backend pages as long as the consumer
+   * is iterating.
+   */
   const fetchRuleSourceGroups = useCallback(
     async function* (ruleSourceName: string, maxGroups: number) {
       const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
@@ -186,13 +194,10 @@ function useFilteredRulesIteratorProvider() {
     [fetchGroups]
   );
 
-  const getFilteredRulesIterator = (filterState: RulesFilter) => {
-    const [firstGenerator, ...restGenerators] = filterState.dataSourceNames.map((ds) =>
-      fetchRuleSourceGroups(ds, API_PAGE_SIZE)
-    );
+  const getFilteredRulesIterator = () => {
+    const [source, ...iterables] = filterState.dataSourceNames.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
 
-    const groupsGenerator = merge(firstGenerator, ...restGenerators);
-    return from(groupsGenerator).pipe(
+    return merge(source, ...iterables).pipe(
       filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),
@@ -203,6 +208,7 @@ function useFilteredRulesIteratorProvider() {
   return { getFilteredRulesIterator };
 }
 
+// TODO maybe we want infinitely large?
 const getRulesSourceUidMemoized = memoize(getDatasourceAPIUid, { maxSize: 10 }); // 10 is totally arbitrary value
 
 function mapRuleToRuleWithOrigin(rulesSourceName: string, group: PromRuleGroupDTO, rule: PromRuleDTO): RuleWithOrigin {
@@ -280,4 +286,9 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
     // Try to createa a matcher than matches all values for a given key
     return { name: matcherQuery, value: '', isRegex: true, isEqual: true };
   }
+}
+
+// simple helper function to detect the end of the source async iterable
+function onFinished<T>(fn: () => void) {
+  return tap<T>(undefined, undefined, fn);
 }
