@@ -1033,6 +1033,8 @@
       "title-with-name": "Table - {{name}}"
     },
     "toolbar": {
+      "add-to-extensions": "Add",
+      "add-to-queryless-extensions": "Go queryless",
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
       "copy-link-abs-time": "Copy absolute URL",
@@ -2437,7 +2439,6 @@
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
-      "go-queryless": "Go Queryless",
       "hide-response": "Hide response",
       "remove-query": "Remove query",
       "save-to-query-library": "Save to query library",

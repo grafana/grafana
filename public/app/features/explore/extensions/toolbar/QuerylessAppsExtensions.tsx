@@ -20,7 +20,7 @@ export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
     const link = first(links)!;
     return (
       <ToolbarButton variant="canvas" icon={link.icon} onClick={() => setSelectedExtension(link)}>
-        <Trans i18nKey="query-operation.header.go-queryless">Go Queryless</Trans>
+        <Trans i18nKey="explore.toolbar.add-to-queryless-extensions">Go queryless</Trans>
       </ToolbarButton>
     );
   }
@@ -34,7 +34,7 @@ export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
           variant="canvas"
           isOpen={isModalOpen}
         >
-          Go Queryless
+          <Trans i18nKey="explore.toolbar.add-to-queryless-extensions">Go queryless</Trans>
         </ToolbarButton>
       </Dropdown>
     </>
