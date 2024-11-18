@@ -7,6 +7,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -61,6 +62,14 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) (unstruct
 	}
 
 	return obj, nil
+}
+
+func LegacyDeleteCommandToDeleteOptions(cmd folder.DeleteFolderCommand) v1.DeleteOptions {
+	opts := v1.DeleteOptions{}
+	if cmd.ForceDeleteRules {
+
+	}
+	return opts
 }
 
 func UnstructuredToLegacyFolder(item unstructured.Unstructured, orgID int64) (*folder.Folder, string) {
