@@ -6,12 +6,17 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+// When this code is changed, make sure to update the code generation.
+// As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning
+// If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Repository struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec RepositorySpec `json:"spec,omitempty"`
+	Spec   RepositorySpec   `json:"spec,omitempty"`
+	Status RepositoryStatus `json:"status,omitempty"`
 }
 
 type LocalRepositoryConfig struct {
@@ -89,6 +94,16 @@ type RepositorySpec struct {
 	// Mutually exclusive with local and s3.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+}
+
+// The status of a Repository.
+// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
+// As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
+type RepositoryStatus struct {
+	// The Git commit we're currently synced to.
+	// A non-empty value only matters if we use a git storage backend.
+	// Useful for no-clone Git clients and if cloning Git clients ever lose their clones.
+	CurrentGitCommit string `json:"currentGitCommit,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

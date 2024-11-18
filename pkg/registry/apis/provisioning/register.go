@@ -80,17 +80,22 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 
-	resourceInfo := provisioning.RepositoryResourceInfo
+	helloWorld := &helloWorldSubresource{
+		getter:        repositoryStorage,
+		statusUpdater: repositoryStatusStorage,
+	}
+
 	storage := map[string]rest.Storage{}
-	storage[resourceInfo.StoragePath()] = repositoryStorage
-	storage[resourceInfo.StoragePath("hello")] = &helloWorldSubresource{
+	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
+	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
+	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
+	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: repositoryStorage,
 	}
-	storage[resourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: repositoryStorage,
-	}
-	storage[resourceInfo.StoragePath("read")] = &readConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
 		getter: repositoryStorage,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
