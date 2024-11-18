@@ -53,12 +53,11 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
   const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
-  // Specifying a width on Input controls the external size of the input, which is taken up by the text input itself
-  // and suffix and prefix.
-  // However AutoSizeInput wants to pass in a width to control the size of the text input itself, but suffix/prefix
-  // eats up that space and makes the text clip
-  // To fix this, we have private context that tells Input when it's being used in an AutoSizeInput and increases
-  // the width by the size of the suffix/prefix
+  // Yes, this is gross - When Input is being wrapped by AutoSizeInput, add the suffix/prefix width to the overall width
+  // so the text content is not clipped. The intention is to make all the input's text appear without overflow/clipping,
+  // which isn't normally how width is used in this component.
+  // This behaviour is not controlled via a prop so we can limit API surface, and remove this as a 'breaking change' later
+  // if a better solution is found.
   const isInAutoSizeInput = useContext(AutoSizeInputContext);
   const accessoriesWidth = (prefixRect.width || 0) + (suffixRect.width || 0);
   const finalWidth = isInAutoSizeInput && width ? width + accessoriesWidth / 8 : width;
