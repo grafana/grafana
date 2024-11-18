@@ -399,7 +399,6 @@ func TestDatasourceCacheAsConfig(t *testing.T) {
 		require.Equal(t, configs[1].Datasources[0].Caching.QueriesTTL, int64(62000))
 		require.Equal(t, configs[1].Datasources[0].Caching.ResourcesTTL, int64(1000))
 		require.True(t, configs[1].Datasources[0].Caching.UseDefaultTTL)
-
 	})
 
 	t.Run("configs with cache disabled ", func(t *testing.T) {
