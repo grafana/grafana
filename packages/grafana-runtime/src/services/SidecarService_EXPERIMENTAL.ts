@@ -94,7 +94,7 @@ export class SidecarService_EXPERIMENTAL {
     this._initialContext.next(context);
     this.memoryLocationService.push({ pathname: `/a/${pluginId}` });
 
-    reportInteraction('sidecar_service_open_app', { pluginId });
+    reportInteraction('sidecar_service_open_app', { pluginId, version: 1 });
   }
 
   /**
@@ -107,7 +107,7 @@ export class SidecarService_EXPERIMENTAL {
     }
 
     this.memoryLocationService.push({ pathname: `/a/${pluginId}${path || ''}` });
-    reportInteraction('sidecar_service_open_app_v2', { pluginId });
+    reportInteraction('sidecar_service_open_app', { pluginId, version: 2 });
   }
 
   /**
