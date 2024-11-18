@@ -1,8 +1,10 @@
+import { pipeAsync, filter, flatMap, pipe, take, onEnd } from 'iter-ops';
 import { compact, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Button, Card, Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
@@ -31,34 +33,33 @@ export function FilterView({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
-  const rulesIterator = useRef(getFilteredRulesIterator(filterState));
+
+  const initIterator = useCallback(
+    () =>
+      pipe(
+        getFilteredRulesIterator(filterState),
+        onEnd(() => setNoMoreResults(true))
+      ),
+    [getFilteredRulesIterator, filterState]
+  );
+
+  const rulesIterator = useRef(initIterator());
 
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [noMoreResults, setNoMoreResults] = useState(false);
 
   const [{ execute: loadNextPage }, state] = useAsync(async () => {
-    const pageSize = 50;
-    let fetchedRulesCount = 0;
+    const pageSize = 5;
 
-    while (fetchedRulesCount < pageSize) {
-      const { value, done } = await rulesIterator.current.next();
-      if (done) {
-        setNoMoreResults(true);
-        break;
-      }
-
-      // ⚠️ use transitions here so `setRules` doesn't cascade into a _ton_ of re-renders and blocks the entire main thread
-      // this startTransition will ensure the state updates are all batched.
+    for await (const rule of pipe(rulesIterator.current, take(pageSize))) {
       startTransition(() => {
-        setRules((rules) => rules.concat(value));
+        setRules((rules) => rules.concat(rule));
       });
-
-      fetchedRulesCount++;
     }
   });
 
   if (filterChanged) {
-    rulesIterator.current = getFilteredRulesIterator(filterState);
+    rulesIterator.current = initIterator();
     setRules([]);
     setNoMoreResults(false);
     setPrevFilterState(filterState);
@@ -83,9 +84,13 @@ export function FilterView({ filterState }: FilterViewProps) {
           <AlertRuleListItemLoader />
         </>
       ) : noMoreResults ? (
-        <Card>No more results</Card>
+        <Card>
+          <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">No more results</Trans>
+        </Card>
       ) : (
-        <Button onClick={loadNextPage}>Load more...</Button>
+        <Button onClick={loadNextPage}>
+          <Trans i18nKey="alerting.rule-list.filter-view.load-more">Load more...</Trans>
+        </Button>
       )}
     </Stack>
   );
@@ -112,14 +117,10 @@ interface RuleWithOrigin {
   groupIdentifier: DataSourceRuleGroupIdentifier;
 }
 
-interface GroupWithIdentifier extends PromRuleGroupDTO {
-  identifier: DataSourceRuleGroupIdentifier;
-}
-
 function useFilteredRulesIteratorProvider() {
   const [fetchGroups] = useLazyGroupsQuery();
 
-  const getGroups = useCallback(
+  const fetchRuleSourceGroups = useCallback(
     async function* (ruleSourceName: string, maxGroups: number) {
       const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
 
@@ -129,7 +130,7 @@ function useFilteredRulesIteratorProvider() {
       });
 
       if (response.data?.data) {
-        yield* response.data.data.groups.map((group) => mapGroupToGroupWithIdentifier(group, ruleSourceName));
+        yield* response.data.data.groups.map((group) => [ruleSourceName, group] as const);
       }
 
       let lastToken: string | undefined = undefined;
@@ -145,7 +146,7 @@ function useFilteredRulesIteratorProvider() {
         });
 
         if (response.data?.data) {
-          yield* response.data.data.groups.map((group) => mapGroupToGroupWithIdentifier(group, ruleSourceName));
+          yield* response.data.data.groups.map((group) => [ruleSourceName, group] as const);
         }
 
         lastToken = response.data?.data?.groupNextToken;
@@ -156,12 +157,10 @@ function useFilteredRulesIteratorProvider() {
 
   const getGroupsFromAllDataSources = useCallback(
     async function* (rulesSourceNames: string[], maxGroups: number) {
-      const dsGenerators = rulesSourceNames.map((ds) => [ds, getGroups(ds, maxGroups)] as const);
+      const dsGenerators = new Map(rulesSourceNames.map((ds) => [ds, fetchRuleSourceGroups(ds, maxGroups)] as const));
 
       const dsActiveRequests = new Map(
-        dsGenerators.map(
-          ([ds, gen]) => [ds, gen.next().then((iteratorResult) => ({ datasource: ds, iteratorResult }))] as const
-        )
+        Array.from(dsGenerators.entries()).map(([ds, gen]) => [ds, getNext(gen, ds)] as const)
       );
 
       while (dsActiveRequests.size > 0) {
@@ -170,88 +169,66 @@ function useFilteredRulesIteratorProvider() {
           dsActiveRequests.delete(datasource);
         } else {
           yield iterator.value;
-          const currentGenerator = dsGenerators.find(([ds]) => ds === datasource);
+          const currentGenerator = dsGenerators.get(datasource);
           if (currentGenerator) {
-            dsActiveRequests.set(
-              datasource,
-              currentGenerator[1].next().then((iteratorResult) => ({ datasource, iteratorResult }))
-            );
+            dsActiveRequests.set(datasource, getNext(currentGenerator, datasource));
           }
         }
       }
+
+      function getNext(gen: AsyncGenerator<readonly [string, PromRuleGroupDTO], void, undefined>, rulesSource: string) {
+        return gen.next().then((iteratorResult) => ({ datasource: rulesSource, iteratorResult }));
+      }
     },
-    [getGroups]
+    [fetchRuleSourceGroups]
   );
 
-  const getFilteredRules = useCallback(async function* (
-    groupsIterator: AsyncGenerator<GroupWithIdentifier, void, undefined>,
-    filter: RulesFilter
-  ): AsyncGenerator<RuleWithOrigin, void, undefined> {
-    for await (const group of groupsIterator) {
-      const filteredGroup = getFilteredGroup(group, filter);
-      if (filteredGroup) {
-        const filteredRules = mapGroupToRules(filteredGroup);
-        yield* filteredRules;
-      }
-    }
-  }, []);
-
-  const getFilteredRulesIterator = (filter: RulesFilter) => {
-    const groupsIterator = getGroupsFromAllDataSources(filter.dataSourceNames, 2000);
-    const rulesIterator = getFilteredRules(groupsIterator, filter);
-
-    return rulesIterator;
+  const getFilteredRulesIterator = (filterState: RulesFilter) => {
+    return pipeAsync(
+      getGroupsFromAllDataSources(filterState.dataSourceNames, 2000),
+      filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),
+      flatMap(([rulesSource, group]) => mapGroupToRules(rulesSource, group)),
+      filter((r) => ruleFilter(r.rule, filterState))
+    );
   };
 
   return { getFilteredRulesIterator };
 }
 
-function mapGroupToRules(group: GroupWithIdentifier): RuleWithOrigin[] {
-  const groupKey = `${group.identifier.namespace.name}${group.identifier.groupName}`;
+function mapGroupToRules(rulesSourceName: string, group: PromRuleGroupDTO): RuleWithOrigin[] {
+  const groupKey = `${group.file}${group.name}`;
   return group.rules.map<RuleWithOrigin>((rule) => ({
-    ruleKey: `${group.identifier.rulesSource.name}-${groupKey}-${hashRule(rule)}`,
+    ruleKey: `${rulesSourceName}-${groupKey}-${hashRule(rule)}`,
     rule,
-    groupIdentifier: group.identifier,
-  }));
-}
-
-function mapGroupToGroupWithIdentifier(group: PromRuleGroupDTO, ruleSourceName: string): GroupWithIdentifier {
-  return {
-    ...group,
-    identifier: {
-      rulesSource: { name: ruleSourceName, uid: getDatasourceAPIUid(ruleSourceName) },
+    groupIdentifier: {
+      rulesSource: { name: rulesSourceName, uid: getDatasourceAPIUid(rulesSourceName) },
       namespace: { name: group.file },
       groupName: group.name,
       groupOrigin: 'datasource',
     },
-  };
+  }));
 }
 
 /**
  * Returns a new group with only the rules that match the filter.
  * @returns A new group with filtered rules, or undefined if the group does not match the filter or all rules are filtered out.
  */
-function getFilteredGroup<T extends PromRuleGroupDTO>(group: T, filterState: RulesFilter): T | undefined {
-  const { name, rules, file } = group;
+function groupFilter(rulesSourceName: string, group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
+  const { name, file } = group;
 
   // TODO Add fuzzy filtering or not
   if (filterState.namespace && !file.includes(filterState.namespace)) {
-    return undefined;
+    return false;
   }
 
   if (filterState.groupName && !name.includes(filterState.groupName)) {
-    return undefined;
+    return false;
   }
 
-  const matchingRules = rules.filter((rule) => ruleMatchesFilter(rule, filterState));
-  if (matchingRules.length === 0) {
-    return undefined;
-  }
-
-  return { ...group, rules: matchingRules };
+  return true;
 }
 
-function ruleMatchesFilter(rule: PromRuleDTO, filterState: RulesFilter) {
+function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   const { name, labels = {}, health, type } = rule;
 
   if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => name.includes(word))) {

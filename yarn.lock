@@ -18864,6 +18864,7 @@ __metadata:
     immer: "npm:10.1.1"
     immutable: "npm:4.3.7"
     ini: "npm:^4.1.3"
+    iter-ops: "npm:^3.5.0"
     jest: "npm:29.7.0"
     jest-canvas-mock: "npm:2.5.2"
     jest-date-mock: "npm:1.0.10"
@@ -20795,6 +20796,13 @@ __metadata:
     html-escaper: "npm:^2.0.0"
     istanbul-lib-report: "npm:^3.0.0"
   checksum: 10/1fc20a133f6dbd846e7bf3dc6d85edf2b3c047c47142cd796c38717aef976195d2c0fb0399dd609c3ffac2ca43244dc15ce4ac34064d21e2d34d387df747dafb
+  languageName: node
+  linkType: hard
+
+"iter-ops@npm:^3.5.0":
+  version: 3.5.0
+  resolution: "iter-ops@npm:3.5.0"
+  checksum: 10/fdf682548d2e177f3369e04b25dc8c137f4d44d5503f29f0c2d952d50b763610986173c3d3936ede4b8ffca9c250ebb0ca468b9e141d969a456b1c9cae08e40d
   languageName: node
   linkType: hard
 

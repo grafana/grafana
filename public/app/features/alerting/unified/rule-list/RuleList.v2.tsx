@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, PropsWithChildren, ReactNode, useMemo, useState } from 'react';
+import { memo, PropsWithChildren, ReactNode, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -30,9 +30,7 @@ import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
-import { EditCloudGroupModal } from '../components/rules/EditRuleGroupModal';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { ReorderCloudGroupModal } from '../components/rules/ReorderRuleGroupModal';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
@@ -181,8 +179,6 @@ interface RuleGroupListItemProps {
 }
 
 function RuleGroupListItem({ group, ruleSourceName, namespaceId }: RuleGroupListItemProps) {
-  const [groupAction, setGroupAction] = useState<'edit' | 'reorder' | undefined>(undefined);
-
   return (
     <ListGroup
       key={group.name}
