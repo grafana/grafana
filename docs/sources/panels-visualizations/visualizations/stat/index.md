@@ -40,7 +40,7 @@ A stat visualization displays your data in single values of interest&mdash;such 
 
 For example, if you're monitoring the utilization of various services, you can use a stat visualization to show their latest usage:
 
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
+![A stat panel showing latest usage of various services](/media/docs/grafana/panels-visualizations/screenshot-stat-visualization-v11.3.png)
 
 The panel automatically adjusts the layout depending on available width and height in the dashboard. It automatically hides the graph (sparkline) if the panel becomes too small.
 
@@ -84,7 +84,7 @@ The following tables are examples of the type of data you need for a stat visual
 
 The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#value-options):
 
-{{< figure src="/static/img/docs/stat-panel/stat_panel_single.png" max-width="1025px" alt="A stat panel showing the latest number of high priority bugs" >}}
+![A stat panel showing the latest number of high priority bugs](/media/docs/grafana/panels-visualizations/screenshot-stat-single-value-v11.3.png)
 
 #### Time-series data
 
@@ -98,7 +98,7 @@ The data is visualized as follows, with the last value displayed, along with a s
 
 The data is visualized as follows, with the mean value displayed for each room, along with the room name, sparkline, and unit of measurement:
 
-{{< figure src="/static/img/docs/stat-panel/stat_panel_multiple.png" max-width="1025px" alt="A stat panel showing some statistics for each room in square meters" >}}
+![A stat panel showing some statistics for each room in square meters](/media/docs/grafana/panels-visualizations/screenshot-stat-multiple-values-v11.3.png)
 
 By default, a stat displays one of the following:
 
