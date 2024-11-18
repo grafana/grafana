@@ -65,18 +65,17 @@ const RuleViewer = () => {
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+  const { annotations, promRule, rulerRule } = rule;
 
-  const { annotations, promRule } = rule;
-  const hasError = isErrorHealth(rule.promRule?.health);
-
+  const hasError = isErrorHealth(promRule?.health);
   const isAlertType = isAlertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+  const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
 
   const showError = hasError && !isPaused;
-  const ruleOrigin = getRulePluginOrigin(rule);
+  const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
 
   const summary = annotations[Annotation.summary];
 
@@ -90,12 +89,12 @@ const RuleViewer = () => {
           name={title}
           paused={isPaused}
           state={isAlertType ? promRule.state : undefined}
-          health={rule.promRule?.health}
-          ruleType={rule.promRule?.type}
+          health={promRule?.health}
+          ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
+      actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
@@ -327,7 +326,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
 
-  const { annotations, promRule } = rule;
+  const { annotations, promRule, rulerRule } = rule;
 
   const summary = annotations[Annotation.summary];
   const isAlertType = isAlertingRule(promRule);
@@ -336,8 +335,8 @@ function usePageNav(rule: CombinedRule) {
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
-  const isGrafanaAlertRule = isGrafanaRulerRule(rule.rulerRule) && isAlertType;
-  const isRecordingRuleType = isRecordingRule(rule.promRule);
+  const isGrafanaAlertRule = isGrafanaRulerRule(rulerRule) && isAlertType;
+  const isRecordingRuleType = isRecordingRule(promRule);
 
   const pageNav: NavModelItem = {
     ...defaultPageNav,
