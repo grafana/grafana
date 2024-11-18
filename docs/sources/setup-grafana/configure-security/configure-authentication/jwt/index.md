@@ -187,7 +187,7 @@ key_id = my-key-id
 
 By default, only `"exp"`, `"nbf"` and `"iat"` claims are validated.
 
-You might also want to validate that other claims are really what you expect them to be, which you can do by setting the `expect_claims` configuration option.
+Consider validating that other claims match your expectations by using the `expect_claims` configuration option.
 Token claims will need to match the values set here exactly.
 
 ```ini
