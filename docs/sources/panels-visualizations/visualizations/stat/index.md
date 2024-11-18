@@ -23,6 +23,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  create-dashboard:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/create-dashboard/
 ---
 
 # Stat
@@ -37,6 +42,10 @@ For example, if you're monitoring the utilization of various services, you can u
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" alt="A stat panel showing latest usage of various services" >}}
 
+The panel automatically adjusts the layout depending on available width and height in the dashboard. It automatically hides the graph (sparkline) if the panel becomes too small.
+
+<!-- should this be here-->
+
 Use a stat visualization when you need to:
 
 - Monitor key metrics at a glance, such as the latest health of your application, number of high priority bugs in your application, or total number of sales.
@@ -47,7 +56,7 @@ Use a stat visualization when you need to:
 
 ## Configure a stat visualization
 
-Once you've [created a dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/), the following video shows you how to configure a stat visualization:
+Once you've [created a dashboard](ref:create-dashboard), the following video shows you how to configure a stat visualization:
 
 {{< youtube id="yNRnLyVntUw" start="1048" >}}
 
@@ -73,7 +82,7 @@ The following tables are examples of the type of data you need for a stat visual
 | 59                           |
 | 40                           |
 
-The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#show-percent-change):
+The data is visualized as follows, with the last value displayed, along with a sparkline and [percentage change](#value-options):
 
 {{< figure src="/static/img/docs/stat-panel/stat_panel_single.png" max-width="1025px" alt="A stat panel showing the latest number of high priority bugs" >}}
 
@@ -97,10 +106,6 @@ By default, a stat displays one of the following:
 - Both the value and name for multiple series or fields.
 
 You can use the [**Text mode**](#text-mode) to control how the text is displayed.
-
-## Automatic layout adjustment
-
-The panel automatically adjusts the layout depending on available width and height in the dashboard. It automatically hides the graph (sparkline) if the panel becomes too small.
 
 ## Configuration options
 
@@ -138,7 +143,6 @@ Style your visualization.
 | Graph mode | Select a graph and sparkline mode. Choose from: <ul><li>**None** - Hides the graph and only shows the value.</li><li>**Area** - Shows the area graph below the value. This requires that your query returns a time column.</li></ul> |
 | Text alignment | Choose an alignment mode. Choose from: <ul><li>**Auto** - If only a single value is shown (no repeat), then the value is centered. If multiple series or rows are shown, then the value is left-aligned.</li><li>**Center** - Stat value is centered.</li></ul> |
 | Show percent change | Set whether percent change is displayed or not. Disabled by default. This option is not applicable when the **Show** setting, under **Value options**, is set to **All values**. |
-
 | Percent change color mode | This option is only displayed when **Show percent change** is enabled. Choose from: <ul><li>**Standard** - Green if the percent change is positive, red if the percent change is negative.</li><li>**Inverted** - Red if the percent change is positive, green if the percent change is negative.</li><li>**Same as Value** - Use the same color as the value.</li></ul> |
 <!-- prettier-ignore-end -->
 
