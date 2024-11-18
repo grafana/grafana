@@ -15,12 +15,13 @@ import { QuerylessAppsExtensions } from './toolbar/QuerylessAppsExtensions';
 type Props = {
   exploreId: string;
   timeZone: TimeZone;
+  extensionsToShow: 'queryless' | 'basic';
 };
 
 const QUERYLESS_APPS = ['grafana-pyroscope-app', 'grafana-lokiexplore-app', 'grafana-exploretraces-app'];
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId } = props;
+  const { exploreId, extensionsToShow } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -37,22 +38,26 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 
   return (
     <>
-      <QuerylessAppsExtensions
-        links={querylessLinks}
-        noQueriesInPane={noQueriesInPane}
-        exploreId={exploreId}
-        setSelectedExtension={setSelectedExtension}
-        setIsModalOpen={setIsOpen}
-        isModalOpen={isOpen}
-      />
-      <BasicExtensions
-        links={commonLinks}
-        noQueriesInPane={noQueriesInPane}
-        exploreId={exploreId}
-        setSelectedExtension={setSelectedExtension}
-        setIsModalOpen={setIsOpen}
-        isModalOpen={isOpen}
-      />
+      {extensionsToShow === 'queryless' && (
+        <QuerylessAppsExtensions
+          links={querylessLinks}
+          noQueriesInPane={noQueriesInPane}
+          exploreId={exploreId}
+          setSelectedExtension={setSelectedExtension}
+          setIsModalOpen={setIsOpen}
+          isModalOpen={isOpen}
+        />
+      )}
+      {extensionsToShow === 'basic' && (
+        <BasicExtensions
+          links={commonLinks}
+          noQueriesInPane={noQueriesInPane}
+          exploreId={exploreId}
+          setSelectedExtension={setSelectedExtension}
+          setIsModalOpen={setIsOpen}
+          isModalOpen={isOpen}
+        />
+      )}
       {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
           path={selectedExtension.path}
