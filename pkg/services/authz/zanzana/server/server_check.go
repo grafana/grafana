@@ -20,6 +20,31 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	return s.checkGeneric(ctx, r)
 }
 
+// checkNamespace checks if subject has access through namespace
+func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	relation := common.VerbMapping[r.GetVerb()]
+
+	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+		StoreId:              storeInf.Id,
+		AuthorizationModelId: storeInf.AuthorizationModelId,
+		TupleKey: &openfgav1.CheckRequestTupleKey{
+			User:     r.GetSubject(),
+			Relation: relation,
+			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+}
+
 func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
 	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
 	if err != nil {
@@ -47,20 +72,12 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 	}
 
 	// 2. check if subject has access through namespace
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
+	nsRes, err := s.checkNamespace(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
-	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+	return &authzv1.CheckResponse{Allowed: nsRes.GetAllowed()}, nil
 }
 
 func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
@@ -96,21 +113,12 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 	}
 
 	// 2. check if subject has access through namespace
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
-			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
-		},
-	})
-
+	nsRes, err := s.checkNamespace(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
-	if res.GetAllowed() {
+	if nsRes.GetAllowed() {
 		return &authzv1.CheckResponse{Allowed: true}, nil
 	}
 
