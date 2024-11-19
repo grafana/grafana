@@ -13,7 +13,7 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
-export class K8sDashboardAPI implements DashboardAPI<DashboardDataDTO> {
+export class K8sDashboardAPI implements DashboardAPI<DashboardDTO> {
   private client: ResourceClient<DashboardDataDTO>;
 
   constructor() {
@@ -79,7 +79,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDataDTO> {
 
   async getDashboardDTO(uid: string) {
     const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
-    const result: DashboardDTO<DashboardDataDTO> = {
+
+    const result: DashboardDTO = {
       meta: {
         ...dash.access,
         isNew: false,
@@ -87,7 +88,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDataDTO> {
         uid: dash.metadata.name,
         k8s: dash.metadata,
       },
-      dashboard: dash,
+      dashboard: dash.spec,
     };
 
     return result;

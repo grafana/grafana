@@ -4,6 +4,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { DashboardSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -13,6 +14,8 @@ import { DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 import { getDashboardAPI } from '../api/dashboard_api';
+import { DashboardWithAccessInfo } from '../api/types';
+import { getDashboardsApiVersion, isDashboardResource } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -40,9 +43,9 @@ export class DashboardLoaderSrv {
     slug: string | undefined,
     uid: string | undefined,
     params?: UrlQueryMap
-  ): Promise<DashboardDTO> {
+  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>> {
     const stateManager = getDashboardScenePageStateManager();
-    let promise;
+    let promise: Promise<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>>;
 
     if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
@@ -87,12 +90,16 @@ export class DashboardLoaderSrv {
         }
       }
 
-      promise = getDashboardAPI()
+      promise = getDashboardAPI(getDashboardsApiVersion())
         .getDashboardDTO(uid, params)
         .then((result) => {
-          if (result.meta.isFolder) {
-            appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
-            throw new Error('Dashboard not found');
+          if (isDashboardResource(result)) {
+            // TODO[schema]: handle v2
+          } else {
+            if (result.meta.isFolder) {
+              appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
+              throw new Error('Dashboard not found');
+            }
           }
           return result;
         })
@@ -105,9 +112,13 @@ export class DashboardLoaderSrv {
       throw new Error('Dashboard uid or slug required');
     }
 
-    promise.then((result: DashboardDTO) => {
-      if (result.meta.dashboardNotFound !== true) {
-        impressionSrv.addDashboardImpression(result.dashboard.uid);
+    promise.then((result) => {
+      if (isDashboardResource(result)) {
+        // TODO[schema]: handle v2
+      } else {
+        if (result.meta.dashboardNotFound !== true) {
+          impressionSrv.addDashboardImpression(result.dashboard.uid);
+        }
       }
 
       return result;
@@ -116,7 +127,7 @@ export class DashboardLoaderSrv {
     return promise;
   }
 
-  _loadScriptedDashboard(file: string) {
+  _loadScriptedDashboard(file: string): Promise<DashboardDTO> {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()

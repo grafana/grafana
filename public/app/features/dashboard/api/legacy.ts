@@ -2,13 +2,13 @@ import { UrlQueryMap } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { DashboardDataDTO, SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
+import { SaveDashboardResponseDTO, DashboardDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { DashboardAPI } from './types';
 
-export class LegacyDashboardAPI implements DashboardAPI<DashboardDataDTO> {
+export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO> {
   constructor() {}
 
   saveDashboard(options: SaveDashboardCommand): Promise<SaveDashboardResponseDTO> {
