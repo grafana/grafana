@@ -417,7 +417,7 @@ export function isGrafanaAlertingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.grafana;
 }
 
-export function isGrafanaRecordingRuleByType(type: RuleFormType) {
+export function isGrafanaRecordingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.grafanaRecording;
 }
 
@@ -429,14 +429,14 @@ export function isCloudRecordingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.cloudRecording;
 }
 
-export function isGrafanaManagedRuleByType(type: RuleFormType) {
+export function isGrafanaManagedRuleByType(type?: RuleFormType) {
   return isGrafanaAlertingRuleByType(type) || isGrafanaRecordingRuleByType(type);
 }
 
-export function isRecordingRuleByType(type: RuleFormType) {
+export function isRecordingRuleByType(type?: RuleFormType) {
   return isGrafanaRecordingRuleByType(type) || isCloudRecordingRuleByType(type);
 }
 
-export function isDataSourceManagedRuleByType(type: RuleFormType) {
+export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
 }

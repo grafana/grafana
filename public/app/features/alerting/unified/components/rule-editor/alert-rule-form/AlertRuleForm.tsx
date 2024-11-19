@@ -13,6 +13,8 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
   isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
@@ -60,7 +62,8 @@ import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -296,23 +299,24 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
             {showDataSourceDependantStep && (
               <>
                 {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
+
+                {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
+
+                {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
+
+                {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehavior
+                  <GrafanaEvaluationBehaviorStep
                     evaluateEvery={evaluateEvery}
                     setEvaluateEvery={setEvaluateEvery}
                     existing={Boolean(existing)}
                     enableProvisionedGroups={false}
                   />
                 )}
-
-                {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
-
-                {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
-
-                {/* Step 4 & 5 */}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />
-                {/* Annotations only for cloud and Grafana */}
+                {/* Annotations only for alerting rules */}
                 {!isRecordingRuleByType(type) && <AnnotationsStep />}
               </>
             )}
