@@ -53,8 +53,6 @@ describe('Verify i18n', () => {
     const LANGUAGE_SELECTOR = '[id="locale-select"]';
     cy.intercept('/api/user/preferences').as('preferences');
     cy.visit('/profile');
-    // wait for all the preferences calls to settle before interacting with the UI
-    cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
 
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string], index) => {
       cy.get(LANGUAGE_SELECTOR).click();
