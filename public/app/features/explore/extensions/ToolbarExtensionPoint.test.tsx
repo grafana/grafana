@@ -311,7 +311,7 @@ describe('ToolbarExtensionPoint', () => {
     it('should render queryless apps links', async () => {
       renderWithExploreStore(setupToolbarExtensionPoint({ showQuerylessApps: true }));
 
-      await userEvent.click(screen.getByRole('button', { name: 'Go Queryless' }));
+      await userEvent.click(screen.getByRole('button', { name: /go queryless/i }));
 
       expect(screen.queryByRole('group', { name: 'Dashboards' })).not.toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: 'Add to dashboard' })).not.toBeInTheDocument();
@@ -358,7 +358,7 @@ describe('ToolbarExtensionPoint', () => {
     it('should render single queryless app link', async () => {
       renderWithExploreStore(setupToolbarExtensionPoint({ showQuerylessApps: true }));
 
-      await userEvent.click(screen.getByRole('button', { name: 'Go Queryless' }));
+      await userEvent.click(screen.getByRole('button', { name: /go queryless/i }));
 
       expect(screen.queryByRole('menuitem', { name: 'Explore Profiles' })).not.toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: 'Explore Logs' })).not.toBeInTheDocument();
