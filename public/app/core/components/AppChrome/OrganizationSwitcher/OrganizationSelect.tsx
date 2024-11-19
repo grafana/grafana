@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Icon, Select, useStyles2 } from '@grafana/ui';
@@ -12,11 +12,13 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
   const styles = useStyles2(getStyles);
   const { orgId} = contextSrv.user;
 
-  const options  = orgs.map((org) => ({
-    label: org.name,
-    description: org.role,
-    value: org,
-  }))
+  const options = useMemo(() =>
+      orgs.map((org) => ({
+        label: org.name,
+        description: org.role,
+        value: org,
+      })),
+    [orgs]);
 
   const selectedValue = options.find(option => option.value.orgId === orgId)
 
