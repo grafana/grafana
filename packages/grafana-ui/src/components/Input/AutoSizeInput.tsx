@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import { measureText } from '../../utils/measureText';
@@ -28,12 +28,8 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     placeholder,
     ...restProps
   } = props;
-  const isControlledRef = useRef(controlledValue !== undefined);
-
-  // Initialize internal state
-  const [internalValue, setInternalValue] = React.useState(controlledValue);
-
-  const inputValue = (isControlledRef.current ? controlledValue : internalValue) || defaultValue;
+  const [inputState, setInputValue] = useControlledState(controlledValue);
+  const inputValue = inputState || defaultValue;
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
   const inputWidth = useMemo(() => {
@@ -54,9 +50,8 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
           if (onChange) {
             onChange(event);
           }
-          if (isControlledRef.current) {
-            setInternalValue(event.currentTarget.value);
-          }
+
+          setInputValue(event.currentTarget.value);
         }}
         width={inputWidth}
         onBlur={(event) => {
@@ -99,3 +94,33 @@ function getWidthFor(value: string, minWidth: number, maxWidth: number | undefin
 }
 
 AutoSizeInput.displayName = 'AutoSizeInput';
+
+/**
+ * Hook to abstract away state management for controlled and uncontrolled inputs.
+ * If the initial value is not undefined, then the value will be controlled by the parent
+ * for the lifetime of the component and calls to setState will be ignored.
+ */
+function useControlledState<T>(controlledValue: T): [T, (newValue: T) => void] {
+  const isControlledNow = controlledValue !== undefined;
+  const isControlledRef = useRef(isControlledNow); // set the initial value - we never change this
+
+  const hasLoggedControlledWarning = useRef(false);
+  if (isControlledNow !== isControlledRef.current && !hasLoggedControlledWarning.current) {
+    console.warn(
+      'An AutoSizeInput is changing from an uncontrolled to a controlled input. If you want to control the input, the empty value should be an empty string.'
+    );
+    hasLoggedControlledWarning.current = true;
+  }
+
+  const [internalValue, setInternalValue] = React.useState(controlledValue);
+
+  const handleChange = useCallback((newValue: T) => {
+    if (!isControlledRef.current) {
+      setInternalValue(newValue);
+    }
+  }, []);
+
+  const value = isControlledRef.current ? controlledValue : internalValue;
+
+  return [value, handleChange];
+}
