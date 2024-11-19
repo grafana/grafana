@@ -639,6 +639,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "packages/grafana-ui/src/components/Table/Cells/DataLinksCell.tsx:5381": [
+      [0, 0, 0, "There should be no empty line within import group", "0"]
+    ],
     "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -650,6 +653,18 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Table/TableNG/Cells/TableCellNG.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/Filter.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/FilterPopup.tsx:5381": [
+      [0, 0, 0, "There should be at least one empty line between import groups", "0"],
+      [0, 0, 0, "There should be no empty line within import group", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Table/TableNG/Filter/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/Table/TableNG/TableNG.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -663,6 +678,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Table/TableNG/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-ui/src/components/Table/TableRT/ExpandedRow.tsx:5381": [
+      [0, 0, 0, "There should be at least one empty line between import groups", "0"],
+      [0, 0, 0, "\`../utils\` import should occur before import of \`./Table\`", "1"]
+    ],
     "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -674,7 +693,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/Table/TableRT/HeaderRow.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "There should be no empty line within import group", "0"],
+      [0, 0, 0, "There should be at least one empty line between import groups", "1"],
+      [0, 0, 0, "\`../types\` import should occur before import of \`./Filter\`", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/Table/TableRT/Table.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],

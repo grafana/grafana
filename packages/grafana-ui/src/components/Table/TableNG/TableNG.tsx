@@ -17,6 +17,7 @@ import { getTextAlign, getFooterItems } from '../utils';
 
 import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
+import { Filter } from './Filter/Filter';
 import { getRowHeight } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
@@ -32,6 +33,7 @@ interface TableColumn extends Column<TableRow> {
 
 interface HeaderCellProps {
   column: Column<any>;
+  field: Field;
   onSort: (columnKey: string, direction: SortDirection) => void;
   direction: SortDirection | undefined;
   justifyContent?: Property.JustifyContent;
@@ -137,7 +139,7 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
-  const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
     const headerRef = useRef(null);
 
     const handleSort = () => {
@@ -163,6 +165,7 @@ export function TableNG(props: TableNGProps) {
         </button>
 
         {/* put the filter button here */}
+        <Filter column={column} field={field} />
       </div>
     );
   };
@@ -233,6 +236,7 @@ export function TableNG(props: TableNGProps) {
         renderHeaderCell: ({ column, sortDirection }) => (
           <HeaderCell
             column={column}
+            field={field}
             onSort={handleSort}
             direction={sortDirection}
             justifyContent={justifyColumnContent}
