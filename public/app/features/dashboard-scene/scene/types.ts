@@ -13,10 +13,6 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   editModeChanged(isEditing: boolean): void;
   /**
-   * Not sure we will need this in the long run, we should be able to handle this inside internally
-   */
-  getNextPanelId(): number;
-  /**
    * Remove an element / panel
    * @param element
    */
