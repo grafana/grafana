@@ -88,23 +88,9 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newGrpcLegacyClient(authCfg)
-}
-
-// ProvideCloudAuthZClient provides a standalone AuthZ client for Cloud.
-// You need to provide a remote address in the configuration
-func ProvideCloudAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
-) (Client, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
+	if cfg.StackID == "" {
+		return newGrpcLegacyClient(authCfg)
 	}
-
-	authCfg, err := ReadCfg(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	return newCloudLegacyClient(authCfg)
 }
 
