@@ -78,7 +78,11 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
                     value={groupOption.value}
                     isSelected={groupSelected(groupOption.value) || groupPartiallySelected(groupOption.value)}
                     partiallySelected={groupPartiallySelected(groupOption.value)}
-                    disabled={groupOption.options?.every(isNotDelegatable)}
+                    disabled={groupOption.options?.every(
+                      (option) =>
+                        isNotDelegatable(option) ||
+                        selectedOptions.find((opt) => opt.uid === option.uid && opt.mappedGroupUIDs)
+                    )}
                     onChange={onGroupChange}
                     onOpenSubMenu={onOpenSubMenu}
                     onCloseSubMenu={onCloseSubMenu}
@@ -102,6 +106,9 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
                     key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}
                     disabled={isNotDelegatable(option)}
+                    mapped={
+                      !!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mappedGroupUIDs))
+                    }
                     onChange={onRoleChange}
                     hideDescription
                   />
