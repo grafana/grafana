@@ -1,4 +1,4 @@
-// Almost identical to CorsWorker.ts. Main difference being it creates a SharedWorker in runtime if browser supports it
+// Almost identical to CorsWorker.ts. Main difference being it allows loading a SharedWorker if browser supports it
 
 export function sharedWorkersSupported() {
   return typeof window.SharedWorker !== 'undefined';
