@@ -6,20 +6,20 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { createFolder } from 'app/features/manage-dashboards/state/actions';
+import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
 
 import { Trans } from '../../../../../core/internationalization/index';
-import { RuleFormValues } from '../../types/rule-form';
-
-import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { Folder, RuleFormValues } from '../../types/rule-form';
 
 export function FolderSelector() {
   const {
     formState: { errors },
     setValue,
+    watch,
   } = useFormContext<RuleFormValues>();
 
   const resetGroup = useCallback(() => {
@@ -28,6 +28,7 @@ export function FolderSelector() {
   const styles = useStyles2(getStyles);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const folder = watch('folder');
 
   const onOpenFolderCreationModal = () => setIsCreatingFolder(true);
 
@@ -57,13 +58,18 @@ export function FolderSelector() {
                   <Controller
                     render={({ field: { ref, ...field } }) => (
                       <div style={{ width: 420 }}>
-                        <RuleFolderPicker
-                          inputId="folder"
+                        <NestedFolderPicker
+                          showRootFolder={false}
                           invalid={!!errors.folder?.message}
                           {...field}
-                          enableReset={true}
-                          onChange={({ title, uid }) => {
-                            field.onChange({ title, uid });
+                          value={folder?.uid}
+                          onChange={(uid, title) => {
+                            if (uid && title) {
+                              setValue('folder', { title, uid });
+                            } else {
+                              setValue('folder', undefined);
+                            }
+
                             resetGroup();
                           }}
                         />
@@ -115,22 +121,20 @@ function FolderCreationModal({
   onCreate: (folder: Folder) => void;
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
-  const appNotification = useAppNotification();
-
+  const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
+  const [createFolder] = useNewFolderMutation();
+
   const onSubmit = async () => {
-    const newFolder = await createFolder({ title: title });
-    if (!newFolder.uid) {
-      appNotification.error('Folder could not be created');
-      return;
+    const { data, error } = await createFolder({ title });
+
+    if (error) {
+      notifyApp.error('Failed to create folder');
+    } else if (data) {
+      onCreate({ title: data.title, uid: data.uid });
+      notifyApp.success('Folder created');
     }
-
-    const folder: Folder = { title: newFolder.title, uid: newFolder.uid };
-    onCreate(folder);
-    appNotification.success('Folder created');
   };
-
-  const error = containsSlashes(title);
 
   return (
     <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
@@ -141,15 +145,7 @@ function FolderCreationModal({
       </div>
 
       <form onSubmit={onSubmit}>
-        <Field
-          label={
-            <Label htmlFor="folder">
-              <Trans i18nKey="alerting.rule-form.folder.folder-name">Folder name</Trans>
-            </Label>
-          }
-          error={"The folder name can't contain slashes"}
-          invalid={error}
-        >
+        <Field label={<Label htmlFor="folder">Folder name</Label>}>
           <Input
             data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
@@ -167,7 +163,7 @@ function FolderCreationModal({
           </Button>
           <Button
             type="submit"
-            disabled={!title || error}
+            disabled={!title}
             data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
           >
             <Trans i18nKey="alerting.rule-form.folder.create">Create</Trans>
