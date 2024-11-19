@@ -62,8 +62,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public constructor(state: PanelEditorState) {
     super(state);
 
-    const panmel = this.state.panelRef.resolve();
-    const layoutItem = panmel.parent;
+    const panel = this.state.panelRef.resolve();
+    const layoutItem = panel.parent;
     if (!layoutItem || !isDashboardLayoutItem(layoutItem)) {
       throw new Error('Panel must have a parent of type DashboardLayoutItem');
     }
