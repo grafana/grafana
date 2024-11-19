@@ -237,14 +237,8 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 	newCfg := r.config.Spec.GitHub
 	oldCfg := oldRepo.Config().Spec.GitHub
 
-	urlUpdated := newCfg.WebhookURL != oldCfg.WebhookURL
-	secretChanged := newCfg.WebhookSecret != oldCfg.WebhookSecret
-	nothingChanged := !urlUpdated && !secretChanged
-
 	switch {
-	case nothingChanged:
-		return nil, nil
-	case urlUpdated:
+	case newCfg.WebhookURL != oldCfg.WebhookURL:
 		// In this case we cannot find out out which webhook to update, so we delete the old one and create a new one
 		if err := r.createWebhook(ctx); err != nil {
 			return nil, fmt.Errorf("create new webhook: %w", err)
@@ -254,6 +248,9 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 			if err := r.deleteWebhook(ctx); err != nil {
 				return fmt.Errorf("revert create new webhook: %w", err)
 			}
+
+			r.logger.Info("create new webhook reverted", "url", newCfg.WebhookURL)
+
 			return nil
 		})
 
@@ -266,35 +263,30 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 				return fmt.Errorf("revert delete old webhook: %w", err)
 			}
 
+			r.logger.Info("delete old webhook reverted", "url", oldCfg.WebhookURL)
+
 			return nil
 		})
 
 		return undoFunc, nil
-	default:
+	case newCfg.WebhookSecret != oldCfg.WebhookSecret:
 		for _, hook := range hooks {
 			if *hook.Config.URL == oldCfg.WebhookURL {
-				updateFn := func(ctx context.Context, cfg *provisioning.GitHubRepositoryConfig) error {
-					hook.Config.URL = github.String(cfg.WebhookURL)
-					hook.Config.Secret = github.String(cfg.WebhookSecret)
-
-					if _, _, err := r.githubClient.Repositories.EditHook(ctx, owner, repoName, *hook.ID, hook); err != nil {
-						return nil
-					}
-
-					return nil
+				hook.Config.Secret = github.String(newCfg.WebhookSecret)
+				_, _, err := r.githubClient.Repositories.EditHook(ctx, owner, repoName, *hook.ID, hook)
+				if err != nil {
+					return nil, fmt.Errorf("update webhook secret: %w", err)
 				}
 
-				if err := updateFn(ctx, newCfg); err != nil {
-					return nil, fmt.Errorf("update webhook: %w", err)
-				}
-
-				r.logger.Info("webhook updated", "url", r.config.Spec.GitHub.WebhookURL)
+				r.logger.Info("webhook secret updated", "url", newCfg.WebhookURL)
 
 				return func(ctx context.Context) error {
-					if err := updateFn(ctx, oldCfg); err != nil {
-						return fmt.Errorf("revert update webhook: %w", err)
+					hook.Config.Secret = github.String(oldCfg.WebhookSecret)
+					if _, _, err := r.githubClient.Repositories.EditHook(ctx, owner, repoName, *hook.ID, hook); err != nil {
+						return fmt.Errorf("revert webhook secret: %w", err)
 					}
 
+					r.logger.Info("webhook secret reverted", "url", oldCfg.WebhookURL)
 					return nil
 				}, nil
 
@@ -302,6 +294,8 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 		}
 
 		return nil, errors.New("webhook not found")
+	default:
+		return nil, nil
 	}
 }
 
