@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -95,8 +96,8 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		write := r.URL.Query().Get("list")
 		if write != "" {
 			client, err := s.parent.client.Resource(schema.GroupVersionKind{
-				Group:   "dashboards.grafana.app",
-				Version: "v0alpha1",
+				Group:   v1alpha1.GROUP,   // dashboard.grafana.app
+				Version: v1alpha1.VERSION, // "v0alpha1",
 				Kind:    "Dashboard",
 			})
 			if err != nil {
