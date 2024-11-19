@@ -565,7 +565,7 @@ func TestCreateAlertRule(t *testing.T) {
 				models.DashboardUIDAnnotation: dashboardUid,
 				models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 			require.NoError(t, err)
 		})
 		t.Run("return 4xx error when missing dashboard uid", func(t *testing.T) {
@@ -574,7 +574,7 @@ func TestCreateAlertRule(t *testing.T) {
 			rule.Annotations = map[string]string{
 				models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 		t.Run("return 4xx error when missing panel id", func(t *testing.T) {
@@ -583,7 +583,7 @@ func TestCreateAlertRule(t *testing.T) {
 			rule.Annotations = map[string]string{
 				models.DashboardUIDAnnotation: dashboardUid,
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 	})
