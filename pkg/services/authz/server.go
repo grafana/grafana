@@ -30,8 +30,6 @@ func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDa
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
 	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
-	// TODO (gamab): health check?
-	// TODO (gamab): reflection service?
 }
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
