@@ -32,10 +32,10 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 	}
 
 	columnCount := len(x.Columns)
-	columns := make([]ResourceTableColumn, columnCount)
+	columns := make([]resourceTableColumn, columnCount)
 	table.ColumnDefinitions = make([]metav1.TableColumnDefinition, columnCount)
 	for i, c := range x.Columns {
-		col, err := NewResourceTableColumn(c, i)
+		col, err := newResourceTableColumn(c, i)
 		if err != nil {
 			return table, err
 		}
@@ -96,13 +96,10 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 type TableBuilder struct {
 	ResourceTable
 
-	lookup map[string]*ResourceTableColumn
+	lookup map[string]*resourceTableColumn
 
 	// Just keep track of it
 	hasDuplicateNames bool
-
-	// When add row gets a colum
-	ignoreUnknownColumns bool
 }
 
 func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
@@ -111,10 +108,7 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 			Columns: cols,
 		},
 
-		lookup: make(map[string]*ResourceTableColumn, len(cols)),
-
-		// defaults
-		ignoreUnknownColumns: false,
+		lookup: make(map[string]*resourceTableColumn, len(cols)),
 	}
 	var err error
 	for i, v := range cols {
@@ -122,7 +116,7 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 			table.hasDuplicateNames = true
 			continue
 		}
-		table.lookup[v.Name], err = NewResourceTableColumn(v, i)
+		table.lookup[v.Name], err = newResourceTableColumn(v, i)
 		if err != nil {
 			return nil, err
 		}
@@ -140,10 +134,7 @@ func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) e
 	for k, v := range vals {
 		column, ok := x.lookup[k]
 		if !ok {
-			if x.ignoreUnknownColumns {
-				continue
-			}
-			return fmt.Errorf("unknown column: " + k)
+			return fmt.Errorf("unknown column: %s", k)
 		}
 		b, err := column.Encode(v)
 		if err != nil {
@@ -156,7 +147,7 @@ func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) e
 	return nil
 }
 
-type ResourceTableColumn struct {
+type resourceTableColumn struct {
 	def   *ResourceTableColumnDefinition
 	index int
 
@@ -169,8 +160,8 @@ type ResourceTableColumn struct {
 }
 
 // nolint:gocyclo
-func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*ResourceTableColumn, error) {
-	col := &ResourceTableColumn{def: def, index: index}
+func newResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*resourceTableColumn, error) {
+	col := &resourceTableColumn{def: def, index: index}
 
 	// Initially ignore the array property, we wil wrap that at the end
 	switch def.Type {
@@ -291,7 +282,7 @@ func NewResourceTableColumn(def *ResourceTableColumnDefinition, index int) (*Res
 	return col, nil
 }
 
-func (x *ResourceTableColumn) IsNotNil() bool {
+func (x *resourceTableColumn) IsNotNil() bool {
 	if x.def.Properties != nil {
 		return x.def.Properties.NotNull
 	}
@@ -299,7 +290,7 @@ func (x *ResourceTableColumn) IsNotNil() bool {
 }
 
 // nolint:gocyclo
-func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
+func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 	if v == nil {
 		if x.IsNotNil() {
 			return nil, fmt.Errorf("expecting non-null value")
@@ -352,7 +343,6 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(time.Time)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case *time.Time:
 						f = *typed
@@ -375,7 +365,6 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(float64)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case int:
 						f = float64(typed)
@@ -399,13 +388,10 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 			{
 				f, ok := v.(int64)
 				if !ok {
-					ok = true
 					switch typed := v.(type) {
 					case int:
 						f = int64(typed)
 					case int32:
-						f = int64(typed)
-					case int64:
 						f = int64(typed)
 					case float32:
 						f = int64(typed)
@@ -486,7 +472,7 @@ func (x *ResourceTableColumn) Encode(v any) ([]byte, error) {
 }
 
 // nolint:gocyclo
-func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
+func (x *resourceTableColumn) Decode(buff []byte) (any, error) {
 	if len(buff) == 0 {
 		return nil, nil
 	}
@@ -543,9 +529,7 @@ func (x *ResourceTableColumn) Decode(buff []byte) (any, error) {
 			}
 			v, err := x.reader(iter)
 			//nolint:errorlint
-			if err == io.EOF {
-				err = nil
-			} else if err != nil {
+			if err != nil && err != io.EOF { // EOF is normal when jsoniter is done
 				return nil, err
 			}
 			vals = append(vals, v)

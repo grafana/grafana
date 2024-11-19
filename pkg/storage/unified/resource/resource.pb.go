@@ -2651,8 +2651,9 @@ type ResourceTableRow struct {
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// The resource version for the given values
 	ResourceVersion int64 `protobuf:"varint,2,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
-	// cells will be as wide as the column definitions array and will contain the JSON encoded
-	// byte values for the selected fields
+	// Cells will be as wide as the column definitions array
+	// Numeric values will be encoded using big endian bytes
+	// All arrays will be JSON encoded
 	Cells [][]byte `protobuf:"bytes,3,rep,name=cells,proto3" json:"cells,omitempty"`
 	// This field may contains the additional information about each object based on the request.
 	// The value will be at least a partial object metadata, and perhaps the full object metadata.

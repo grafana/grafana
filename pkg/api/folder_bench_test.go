@@ -478,7 +478,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn, fStore, nil,
+		folderServiceWithFlagOn, fStore, nil, zanzana.NewNoopClient(),
 	)
 	require.NoError(b, err)
 

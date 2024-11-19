@@ -3,12 +3,41 @@ package resource
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// AssertTableSnapshot will match a ResourceTable vs the saved value
+func AssertTableSnapshot(t *testing.T, path string, table *ResourceTable) {
+	t.Helper()
+
+	k8sTable, err := table.ToK8s()
+	require.NoError(t, err, "unable to create table response", path)
+	actual, err := json.MarshalIndent(k8sTable, "", "  ")
+	require.NoError(t, err, "unable to write table json", path)
+
+	// Safe to disable, this is a test.
+	// nolint:gosec
+	expected, err := os.ReadFile(path)
+	if err != nil || len(expected) < 1 {
+		assert.Fail(t, "missing file")
+	} else if assert.JSONEq(t, string(expected), string(actual)) {
+		return // everything is OK
+	}
+
+	// Write the snapshot
+	// Safe to disable, this is a test.
+	// nolint:gosec
+	err = os.WriteFile(path, actual, 0600)
+	require.NoError(t, err)
+	fmt.Printf("Updated table snapshot: %s\n", path)
+}
 
 func TestTableFormat(t *testing.T) {
 	columns := []*ResourceTableColumnDefinition{
@@ -61,82 +90,8 @@ func TestTableFormat(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	after, err := builder.ToK8s()
-	require.NoError(t, err)
-	jsraw, _ := json.MarshalIndent(after, "", "  ")
-	fmt.Printf("%s\n", string(jsraw))
-	require.JSONEq(t, `{
-		"metadata": {},
-		"columnDefinitions": [
-			{
-				"name": "title",
-				"type": "string",
-				"format": "",
-				"description": "",
-				"priority": 0
-			},
-			{
-				"name": "stats.count",
-				"type": "number",
-				"format": "int64",
-				"description": "",
-				"priority": 0
-			},
-			{
-				"name": "number",
-				"type": "number",
-				"format": "double",
-				"description": "float64 value",
-				"priority": 0
-			},
-			{
-				"name": "tags",
-				"type": "string",
-				"format": "",
-				"description": "",
-				"priority": 0
-			}
-		],
-		"rows": [
-			{
-				"cells": [
-					"AAA",
-					null,
-					12345,
-					[
-						"one"
-					]
-				],
-				"object": {
-					"metadata": {
-						"name": "aaa",
-						"namespace": "default",
-						"resourceVersion": "10",
-						"creationTimestamp": null
-					}
-				}
-			},
-			{
-				"cells": [
-					"BBB",
-					12345,
-					null,
-					[
-						"one",
-						"two"
-					]
-				],
-				"object": {
-					"metadata": {
-						"name": "bbb",
-						"namespace": "default",
-						"resourceVersion": "10",
-						"creationTimestamp": null
-					}
-				}
-			}
-		]
-	}`, string(jsraw))
+	// Check the snapshot
+	AssertTableSnapshot(t, filepath.Join("testdata", "simple-table.json"), &builder.ResourceTable)
 }
 
 func TestColumnEncoding(t *testing.T) {
@@ -317,11 +272,9 @@ func TestColumnEncoding(t *testing.T) {
 		},
 	}
 
-	//  [INT32 DATE DATE_TIME BINARY OBJECT]
-
+	// Keep track of the types that have tests
 	testedTypes := make(map[ResourceTableColumnDefinition_ColumnType]bool)
 	testedArrays := make(map[ResourceTableColumnDefinition_ColumnType]bool)
-
 	for _, test := range tests {
 		var sb strings.Builder
 		if test.def.IsArray {
@@ -342,7 +295,7 @@ func TestColumnEncoding(t *testing.T) {
 		t.Run(sb.String(), func(t *testing.T) {
 			t.Parallel()
 
-			col, err := NewResourceTableColumn(test.def, 0)
+			col, err := newResourceTableColumn(test.def, 0)
 			require.NoError(t, err)
 
 			buff := test.raw
@@ -387,5 +340,4 @@ func TestColumnEncoding(t *testing.T) {
 		require.Empty(t, missingTypes, "missing tests for types")
 		require.Empty(t, missingArrays, "missing array tests for types")
 	})
-
 }
