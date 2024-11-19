@@ -50,7 +50,7 @@ interface DashboardWithAccessInfo extends Resource<DashboardDataDTO, 'DashboardW
   access: Object; // TODO...
 }
 
-// Implemented using /apis/dashboards.grafana.app/*
+// Implemented using /apis/dashboard.grafana.app/*
 class K8sDashboardAPI implements DashboardAPI {
   private client: ResourceClient<DashboardDataDTO>;
 
