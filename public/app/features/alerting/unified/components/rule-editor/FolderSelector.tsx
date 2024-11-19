@@ -39,7 +39,7 @@ export function FolderSelector() {
   };
 
   return (
-    <div className={styles.container}>
+    <>
       <Stack alignItems="center">
         {
           <Field
@@ -109,7 +109,7 @@ export function FolderSelector() {
       {isCreatingFolder && (
         <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
       )}
-    </div>
+    </>
   );
 }
 
