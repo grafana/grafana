@@ -70,12 +70,12 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const switchMode =
     isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
       ? {
-        isAdvancedMode: !manualRouting,
-        setAdvancedMode: (isAdvanced: boolean) => {
-          setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
-          setValue('manualRouting', !isAdvanced);
-        },
-      }
+          isAdvancedMode: !manualRouting,
+          setAdvancedMode: (isAdvanced: boolean) => {
+            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
+            setValue('manualRouting', !isAdvanced);
+          },
+        }
       : undefined;
   const title = isRecordingRuleByType(type)
     ? 'Add labels'
@@ -129,9 +129,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           <ManualAndAutomaticRouting alertUid={alertUid} />
         )
       ) : // when simplified routing is not enabled, render the notification preview as we did before
-        shouldRenderpreview ? (
-          <AutomaticRooting alertUid={alertUid} />
-        ) : null}
+      shouldRenderpreview ? (
+        <AutomaticRooting alertUid={alertUid} />
+      ) : null}
     </RuleEditorSection>
   );
 };
@@ -195,33 +195,11 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
  */
 function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
   const { watch } = useFormContext<RuleFormValues>();
-  // const styles = useStyles2(getStyles);
 
   const [manualRouting] = watch(['manualRouting']);
-  // manualRoutingInForm is the value of the manualRouting field in the form, that taking in account precondition it should be the value the advancedMode should have
-  // const advancedMode = !manualRouting;
-
-  // // const routingOptions = [
-  // //   { label: 'Select contact point', value: RoutingOptions.ContactPoint },
-  // //   { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
-  // // ];
-
-  // const onRoutingOptionChange = (option: RoutingOptions) => {
-  //   setValue('manualRouting', option === RoutingOptions.ContactPoint);
-  // };
 
   return (
     <Stack direction="column" gap={2}>
-      {/* <Stack direction="column">
-        <RadioButtonGroup
-          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
-          options={routingOptions}
-          value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
-          onChange={onRoutingOptionChange}
-          className={styles.routingOptions}
-        />
-      </Stack> */}
-
       <RoutingOptionDescription manualRouting={manualRouting} />
 
       {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
