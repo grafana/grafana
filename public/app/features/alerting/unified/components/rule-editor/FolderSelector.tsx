@@ -25,7 +25,6 @@ export function FolderSelector() {
   const resetGroup = useCallback(() => {
     setValue('group', '');
   }, [setValue]);
-  const styles = useStyles2(getStyles);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const folder = watch('folder');
@@ -48,7 +47,6 @@ export function FolderSelector() {
                 <Trans i18nKey="alerting.rule-form.folder.label">Folder</Trans>
               </Label>
             }
-            className={styles.formInput}
             error={errors.folder?.message}
             data-testid="folder-picker"
           >
@@ -157,7 +155,6 @@ function FolderCreationModal({
             placeholder="Enter a name"
             value={title}
             onChange={(e) => setTitle(e.currentTarget.value)}
-            className={styles.formInput}
           />
         </Field>
 
@@ -185,9 +182,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'baseline',
     maxWidth: `${theme.breakpoints.values.lg}px`,
     justifyContent: 'space-between',
-  }),
-  formInput: css({
-    flexGrow: 1,
   }),
   modal: css({
     width: `${theme.breakpoints.values.sm}px`,
