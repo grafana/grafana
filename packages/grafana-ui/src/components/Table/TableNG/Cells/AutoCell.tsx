@@ -3,18 +3,15 @@ import { useState, useRef } from 'react';
 
 import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../../../themes';
+import { useStyles2 } from '../../../../themes';
 import { CellNGProps } from '../types';
 
 export default function AutoCell({ value, field, justifyContent, shouldTextOverflow }: CellNGProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
 
-  // const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
   const divRef = useRef<HTMLDivElement>(null);
-
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
@@ -56,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'break-spaces',
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.medium}`,
-    zIndex: 999,
+    zIndex: `${theme.zIndex.activePanel}`,
     position: 'relative',
   }),
 });
