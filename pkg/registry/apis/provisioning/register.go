@@ -52,9 +52,8 @@ func NewProvisioningAPIBuilder(local *LocalFolderResolver, cfg *clientrest.Confi
 	return &ProvisioningAPIBuilder{
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
-		client: &resourceClient{
-			config: cfg,
-		}}
+		client:            newResourceClient(cfg),
+	}
 }
 
 func RegisterAPIService(

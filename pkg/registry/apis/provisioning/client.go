@@ -18,6 +18,13 @@ type resourceClient struct {
 	mutex   sync.Mutex
 }
 
+func newResourceClient(config *rest.Config) *resourceClient {
+	return &resourceClient{
+		config:  config,
+		clients: make(map[schema.GroupVersionKind]dynamic.NamespaceableResourceInterface),
+	}
+}
+
 func (c *resourceClient) Resource(gvk schema.GroupVersionKind) (dynamic.NamespaceableResourceInterface, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
