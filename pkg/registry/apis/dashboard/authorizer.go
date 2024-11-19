@@ -28,6 +28,10 @@ func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) a
 			if attr.GetName() == "" {
 				// Discourage use of the "list" command for non super admin users
 				if attr.GetVerb() == "list" && attr.GetResource() == dashboard.DashboardResourceInfo.GroupResource().Resource {
+					// TODO: is this okay for provisioning? You likely want to validate more than this
+					if user.GetIdentityType() == claims.TypeProvisioning {
+						return authorizer.DecisionAllow, "list currently allowed to provisioning", nil
+					}
 					if !user.GetIsGrafanaAdmin() {
 						return authorizer.DecisionDeny, "list summary objects (or connect as GrafanaAdmin)", err
 					}

@@ -524,7 +524,7 @@ func (s *service) GetDirectRestConfigForRequester(requester identity.Requester) 
 				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
-				ctx := identity.WithRequester(req.Context(), requester)
+				ctx := identity.WithRequester(context.Background(), requester)
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},
