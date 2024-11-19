@@ -3667,7 +3667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.12.1, @grafana/faro-web-sdk@npm:^1.12.0, @grafana/faro-web-sdk@npm:^1.3.6":
+"@grafana/faro-web-sdk@npm:1.12.1, @grafana/faro-web-sdk@npm:^1.12.1, @grafana/faro-web-sdk@npm:^1.3.6":
   version: 1.12.1
   resolution: "@grafana/faro-web-sdk@npm:1.12.1"
   dependencies:
@@ -3679,10 +3679,10 @@ __metadata:
   linkType: hard
 
 "@grafana/faro-web-tracing@npm:^1.8.2":
-  version: 1.12.0
-  resolution: "@grafana/faro-web-tracing@npm:1.12.0"
+  version: 1.12.1
+  resolution: "@grafana/faro-web-tracing@npm:1.12.1"
   dependencies:
-    "@grafana/faro-web-sdk": "npm:^1.12.0"
+    "@grafana/faro-web-sdk": "npm:^1.12.1"
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/context-zone": "npm:1.26.0"
     "@opentelemetry/core": "npm:^1.26.0"
@@ -3694,7 +3694,7 @@ __metadata:
     "@opentelemetry/resources": "npm:^1.26.0"
     "@opentelemetry/sdk-trace-web": "npm:^1.26.0"
     "@opentelemetry/semantic-conventions": "npm:^1.27.0"
-  checksum: 10/287df82d928846ec35b5947a776fa066c76ccd1bceee57b68276825f3f2dffd05e003460668340bde3a0b163f420db74285bebff32cf33f954accf3a594c1702
+  checksum: 10/3635d15bf22bf210d9758dfc0ac0562101ff50cccb18d006bbff282e219486e02847a6d2475e2bf76ca509a4862c533fce84c528134dfceef92a4d7985e0e746
   languageName: node
   linkType: hard
 
@@ -16951,8 +16951,8 @@ __metadata:
   linkType: hard
 
 "eslint-plugin-unicorn@npm:^56.0.0":
-  version: 56.0.0
-  resolution: "eslint-plugin-unicorn@npm:56.0.0"
+  version: 56.0.1
+  resolution: "eslint-plugin-unicorn@npm:56.0.1"
   dependencies:
     "@babel/helper-validator-identifier": "npm:^7.24.7"
     "@eslint-community/eslint-utils": "npm:^4.4.0"
@@ -16972,7 +16972,7 @@ __metadata:
     strip-indent: "npm:^3.0.0"
   peerDependencies:
     eslint: ">=8.56.0"
-  checksum: 10/142c66c65b2fd53136727a434b0fc77e9a9f9614aebe09330aeab83b021c842c3a5f9dafe3130c0f39fbd3562e91aadcc55a9de4312639e70fe7efb475cd358e
+  checksum: 10/59e13ded0e6bf4eff96018f3156829044d6edc37f66d25bc8ca99ed2b44e0cd3e9959587cf5a111498ff2d267a92bed49ade4f4dad98dcd8544e9edd9f6642b2
   languageName: node
   linkType: hard
 
