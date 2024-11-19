@@ -194,6 +194,40 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		}))
 	})
 
+	t.Run("with dual write (unified storage, mode 2)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode2,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 3)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode3,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
 	t.Run("with dual write (unified-grpc, mode 0)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    true,
@@ -220,6 +254,40 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folderv0alpha1.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified-grpc, mode 2)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified-grpc",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode2,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified-grpc, mode 3)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified-grpc",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode3,
 				},
 			},
 			EnableFeatureToggles: []string{
@@ -336,7 +404,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
@@ -363,7 +431,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		}
 		slices.Sort(uids) // make list compare stable
 
-		// Check all playlists
+		// Check all folders
 		for _, uid := range uids {
 			getFromBothAPIs(t, helper, client, uid, nil)
 		}
