@@ -113,7 +113,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	return cfg.GRPCServer.ProcessAddress()
 }
 
-func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet, withTLSFlags bool) {
+func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Enabled, "grpc-server-enabled", false, "Enable gRPC server")
 	fs.StringVar(&c.Network, "grpc-server-network", "tcp", "Network type for the gRPC server (tcp, unix)")
 	fs.StringVar(&c.Address, "grpc-server-address", "", "Address for the gRPC server")
@@ -121,10 +121,8 @@ func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet, withTLSFlags bool) {
 	fs.IntVar(&c.MaxRecvMsgSize, "grpc-server-max-recv-msg-size", 0, "Maximum size of a gRPC request message in bytes")
 	fs.IntVar(&c.MaxSendMsgSize, "grpc-server-max-send-msg-size", 0, "Maximum size of a gRPC response message in bytes")
 
-	// Internal flags
-	if withTLSFlags {
-		fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")
-		fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
-		fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
-	}
+	// Internal flags, we need to call ProcessTLSConfig
+	fs.BoolVar(&c.useTLS, "grpc-server-use-tls", false, "Enable TLS for the gRPC server")
+	fs.StringVar(&c.certFile, "grpc-server-cert-file", "", "Path to the certificate file for the gRPC server")
+	fs.StringVar(&c.keyFile, "grpc-server-key-file", "", "Path to the certificate key file for the gRPC server")
 }
