@@ -410,12 +410,15 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Configure team sync
+### Configure group synchronization
 
-To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
+Group synchronization allows you to map user groups from an identity provider to Grafana teams and roles.
+
+To use SAML group synchronization, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups.
+Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.
 
 {{% admonition type="note" %}}
-Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
+Team sync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
 {{% /admonition %}}
 
 Given the following partial SAML assertion:
@@ -445,12 +448,12 @@ The configuration would look like this:
 assertion_attribute_groups = groups
 ```
 
-The following `External Group ID`s would be valid for input in the desired team's _External group sync_ tab:
+The following `External Group ID`s would be valid for configuring team sync or role sync in Grafana:
 
 - `admins_group`
 - `division_1`
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 ### Configure role sync
 
