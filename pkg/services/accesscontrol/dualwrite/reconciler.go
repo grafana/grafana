@@ -82,6 +82,12 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
+			newResourceReconciler(
+				"user role bindings",
+				userRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
 		},
 	}
 }

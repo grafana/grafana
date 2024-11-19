@@ -289,6 +289,52 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	}
 }
 
+func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
+	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
+		query := `
+			SELECT u.uid AS user_uid, r.name AS role_name
+			FROM user_role ur
+			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
+			INNER JOIN role r ON ur.role_id = r.id
+			WHERE (ur.org_id = 0 OR ur.org_id = ?)
+			AND r.name NOT LIKE 'managed:%'
+		`
+		type Binding struct {
+			UserUID  string `xorm:"user_uid"`
+			RoleName string `xorm:"role_name"`
+		}
+
+		var bindings []Binding
+		err := store.WithDbSession(ctx, func(sess *db.Session) error {
+			return sess.SQL(query, orgID).Find(&bindings)
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		tuples := make(map[string]map[string]*openfgav1.TupleKey)
+
+		for _, b := range bindings {
+			subject := zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, "")
+
+			tuple := &openfgav1.TupleKey{
+				User:     subject,
+				Relation: zanzana.RelationAssignee,
+				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(b.RoleName), ""),
+			}
+
+			if tuples[tuple.Object] == nil {
+				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
+			}
+
+			tuples[tuple.Object][tuple.String()] = tuple
+		}
+
+		return tuples, nil
+	}
+}
+
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
