@@ -2,6 +2,7 @@ import saveAs from 'file-saver';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -10,6 +11,7 @@ import { shareDashboardType } from 'app/features/dashboard/components/ShareModal
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -19,6 +21,7 @@ import { SceneShareTabState, ShareView } from './types';
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
+  isViewingJSONSchemaV2?: boolean;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
@@ -51,6 +54,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     });
   };
 
+  public onViewJSONSchemaV2 = () => {
+    this.setState({
+      isViewingJSONSchemaV2: !this.state.isViewingJSONSchemaV2,
+    });
+  };
+
   public getClipboardText() {
     return;
   }
@@ -70,6 +79,23 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       : saveModel;
 
     return exportable;
+  };
+
+  public getExportableDashboardJsonSchemaV2 = async () => {
+    // const { isSharingExternally } = this.state;
+    const saveModel = transformSceneToSaveModelSchemaV2(getDashboardSceneFor(this));
+
+    // const exportable = isSharingExternally
+    //   ? await this._exporter.makeExportable(
+    //     new DashboardModel(saveModel, undefined, {
+    //       getVariablesFromState: () => {
+    //         return getVariablesCompatibility(window.__grafanaSceneContext);
+    //       },
+    //     })
+    //   )
+    //   : saveModel;
+
+    return saveModel;
   };
 
   public onSaveAsFile = async () => {
@@ -94,8 +120,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
-
+  const { isSharingExternally, isViewingJSON, modalRef, isViewingJSONSchemaV2 } = model.useState();
+  // use dashboardSchemaV2 to show new button, this is for internal testing
+  const shouldShowNewSchemaV2Button = config.featureToggles.dashboardSchemaV2 ?? false;
   const dashboardJson = useAsync(async () => {
     if (isViewingJSON) {
       const json = await model.getExportableDashboardJson();
@@ -105,11 +132,20 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
     return '';
   }, [isViewingJSON]);
 
+  const dashboardJsonSchemaV2 = useAsync(async () => {
+    if (isViewingJSONSchemaV2) {
+      const json = await model.getExportableDashboardJsonSchemaV2();
+      console.log('json v2', json);
+      return JSON.stringify(json, null, 2);
+    }
+    return '';
+  }, [isViewingJSONSchemaV2]);
+
   const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
   return (
     <>
-      {!isViewingJSON && (
+      {!isViewingJSON && !isViewingJSONSchemaV2 && (
         <>
           <p>
             <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
@@ -137,13 +173,17 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
               <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
             </Button>
+            {shouldShowNewSchemaV2Button && (
+              <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSONSchemaV2}>
+                <Trans i18nKey="share-modal.export.view-button-schemav2">View JSON SchemaV2</Trans>
+              </Button>
+            )}
             <Button variant="primary" icon="save" onClick={() => model.onSaveAsFile()}>
               <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
             </Button>
           </Modal.ButtonRow>
         </>
       )}
-
       {isViewingJSON && (
         <>
           <AutoSizer disableHeight>
@@ -161,7 +201,12 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               }
 
               if (dashboardJson.loading) {
-                return <div>Loading...</div>;
+                return (
+                  <div>
+                    {' '}
+                    <Trans i18nKey="share-modal.export.loading">Loading...</Trans>
+                  </div>
+                );
               }
 
               return null;
@@ -170,6 +215,52 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
 
           <Modal.ButtonRow>
             <Button variant="secondary" fill="outline" onClick={model.onViewJSON} icon="arrow-left">
+              <Trans i18nKey="share-modal.export.back-button">Back to export config</Trans>
+            </Button>
+            <ClipboardButton
+              variant="secondary"
+              icon="copy"
+              disabled={dashboardJson.loading}
+              getText={() => dashboardJson.value ?? ''}
+            >
+              <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
+            </ClipboardButton>
+            <Button variant="primary" icon="save" disabled={dashboardJson.loading} onClick={() => model.onSaveAsFile()}>
+              <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
+            </Button>
+          </Modal.ButtonRow>
+        </>
+      )}
+      {isViewingJSONSchemaV2 && (
+        <>
+          <AutoSizer disableHeight>
+            {({ width }) => {
+              if (dashboardJsonSchemaV2.value) {
+                return (
+                  <CodeEditor
+                    value={dashboardJsonSchemaV2.value ?? ''}
+                    language="json"
+                    showMiniMap={false}
+                    height="500px"
+                    width={width}
+                  />
+                );
+              }
+
+              if (dashboardJsonSchemaV2.loading) {
+                return (
+                  <div>
+                    <Trans i18nKey="share-modal.export.loading">Loading...</Trans>
+                  </div>
+                );
+              }
+
+              return null;
+            }}
+          </AutoSizer>
+
+          <Modal.ButtonRow>
+            <Button variant="secondary" fill="outline" onClick={model.onViewJSONSchemaV2} icon="arrow-left">
               <Trans i18nKey="share-modal.export.back-button">Back to export config</Trans>
             </Button>
             <ClipboardButton
