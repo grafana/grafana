@@ -131,6 +131,24 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 				allow: true,
 			},
 		},
+		{
+			name: "user without delete permissions should NOT be able to delete a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbDelete),
+			},
+			expect: expect{
+				eval:  "folders:delete",
+				allow: false,
+			},
+		},
 	}
 
 	b := &FolderAPIBuilder{
