@@ -50,11 +50,10 @@ describe('Verify i18n', () => {
   // basic test which loops through the defined languages in the picker
   // and verifies that the corresponding label is translated correctly
   it('loads all the languages correctly', () => {
-    const LANGUAGE_SELECTOR = '[id="locale-select"]';
-    cy.intercept('/api/user/preferences').as('preferences');
     cy.visit('/profile');
+    const LANGUAGE_SELECTOR = '[id="locale-select"]';
 
-    cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string], index) => {
+    cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
       cy.get(LANGUAGE_SELECTOR).click();
       cy.get(LANGUAGE_SELECTOR).clear().type(language).type('{downArrow}{enter}');
       e2e.components.UserProfile.preferencesSaveButton().click();
