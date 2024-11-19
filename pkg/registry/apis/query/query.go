@@ -136,7 +136,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				refID = refError.refId
 			}
 
-			qdr := &query.QueryDataResponse{
+			specificQdr := &query.QueryDataResponse{
 				QueryDataResponse: backend.QueryDataResponse{
 					Responses: backend.Responses{
 						refID: {
@@ -147,9 +147,9 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				},
 			}
 
-			b.log.Debug("Error parsing query", "err", err, "qdr", qdr)
+			b.log.Debug("Error parsing query", "err", err, "specificQdr", specificQdr)
 
-			responder.Object(statusCode, qdr)
+			responder.Object(statusCode, specificQdr)
 			return
 		}
 
