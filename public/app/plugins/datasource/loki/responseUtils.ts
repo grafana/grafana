@@ -122,7 +122,7 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
   // Find first level-like label
   for (let labels of labelsArray) {
     const label = Object.keys(labels).find(
-      (label) => label === 'detected_level' || label === 'level' || label === 'lvl' || label.includes('level')
+      (label) => label === 'level' || label === 'detected_level' || label === 'lvl' || label.includes('level')
     );
     if (label) {
       levelLikeLabel = label;
