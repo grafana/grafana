@@ -18,11 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -258,8 +258,11 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Logout(ctx context.Context, user user.SessionAwareIdentityRequester) (*authn.Redirect, bool) {
-	token := c.oauthService.GetCurrentOAuthToken(ctx, user)
+func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, bool) {
+	// import cycle
+	// reqCtx := contexthandler.FromContext(ctx)
+
+	token := c.oauthService.GetCurrentOAuthToken(ctx, user, sessionToken)
 
 	userID, err := identity.UserIdentifier(user.GetID())
 	if err != nil {
@@ -269,7 +272,7 @@ func (c *OAuth) Logout(ctx context.Context, user user.SessionAwareIdentityReques
 
 	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, user); err != nil {
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
 		ctxLogger.Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
 	}
 

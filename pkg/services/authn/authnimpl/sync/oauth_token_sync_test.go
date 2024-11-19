@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,9 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
@@ -85,7 +87,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester, _ *auth.UserToken) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},
@@ -118,7 +120,10 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 			}
 
-			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
+			ctx := context.Background()
+			reqCtx := context.WithValue(ctx, ctxkey.Key{}, &contextmodel.ReqContext{UserToken: nil})
+
+			err := sync.SyncOauthTokenHook(reqCtx, tt.identity, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.Equal(t, tt.expectTryRefreshTokenCalled, tryRefreshCalled)
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)

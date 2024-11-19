@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
@@ -47,6 +48,9 @@ type OAuthTokenSync struct {
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	ctx, span := s.tracer.Start(ctx, "oauth.sync.SyncOauthTokenHook")
 	defer span.End()
+
+	// Works
+	reqCtx := contexthandler.FromContext(ctx)
 
 	// only perform oauth token check if identity is a user
 	if !id.IsIdentityType(claims.TypeUser) {
@@ -83,7 +87,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 		updateCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 
-		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id)
+		token, refreshErr := s.service.TryTokenRefresh(updateCtx, id, reqCtx.UserToken)
 		if refreshErr != nil {
 			if errors.Is(refreshErr, context.Canceled) {
 				return nil, nil

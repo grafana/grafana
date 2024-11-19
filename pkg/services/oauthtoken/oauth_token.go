@@ -53,11 +53,11 @@ var _ OAuthTokenService = (*Service)(nil)
 
 //go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, user.SessionAwareIdentityRequester) *oauth2.Token
+	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
-	TryTokenRefresh(context.Context, user.SessionAwareIdentityRequester) (*oauth2.Token, error)
-	InvalidateOAuthTokens(context.Context, user.SessionAwareIdentityRequester) error
+	TryTokenRefresh(context.Context, identity.Requester, *auth.UserToken) (*oauth2.Token, error)
+	InvalidateOAuthTokens(context.Context, identity.Requester, *auth.UserToken) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
@@ -76,9 +76,12 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwareIdentityRequester) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) *oauth2.Token {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
 	defer span.End()
+
+	// import cycle
+	// reqCtx := contexthandler.FromContext(ctx)
 
 	ctxLogger := logger.FromContext(ctx)
 
@@ -109,7 +112,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwar
 
 	var persistedToken *oauth2.Token
 	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		externalSession, err := o.sessionService.GetExternalSession(ctx, usr.GetSessionToken().ExternalSessionId)
+		externalSession, err := o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
 		if err != nil {
 			if errors.Is(err, auth.ErrExternalSessionNotFound) {
 				return nil
@@ -124,7 +127,6 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwar
 			return persistedToken
 		}
 	} else {
-
 		authInfo, ok, _ := o.HasOAuthEntry(ctx, usr)
 		if !ok {
 			return nil
@@ -146,7 +148,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwar
 		return persistedToken
 	}
 
-	currentToken, err := o.TryTokenRefresh(ctx, usr)
+	currentToken, err := o.TryTokenRefresh(ctx, usr, sessionToken)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
 			return currentToken
@@ -205,7 +207,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
-func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
+func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.TryTokenRefresh")
 	defer span.End()
 
@@ -278,7 +280,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 		var persistedToken *oauth2.Token
 		var externalSession *auth.ExternalSession
 		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			externalSession, err = o.sessionService.GetExternalSession(ctx, usr.GetSessionToken().ExternalSessionId)
+			externalSession, err = o.sessionService.GetExternalSession(ctx, sessionToken.ExternalSessionId)
 			if err != nil {
 				if errors.Is(err, auth.ErrExternalSessionNotFound) {
 					ctxLogger.Error("External session was not found for user", "error", err)
@@ -289,7 +291,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 			}
 
 			persistedToken = buildOAuthTokenFromExternalSession(externalSession)
-
 		} else {
 			authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
 			if !exists {
@@ -309,7 +310,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 			return
 		}
 
-		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, externalSession)
+		newToken, cmdErr = o.tryGetOrRefreshOAuthToken(ctx, persistedToken, usr, sessionToken)
 	}, retryOpt)
 	if lockErr != nil {
 		ctxLogger.Error("Failed to obtain token refresh lock", "error", lockErr)
@@ -325,18 +326,26 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIden
 }
 
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
-func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr user.SessionAwareIdentityRequester) error {
-	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		// TODO: Revoke tokens here ???
-	}
-
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Requester, sessionToken *auth.UserToken) error {
 	userID, err := usr.GetInternalID()
 	if err != nil {
 		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
 		return err
 	}
 
-	// TODO: This should run regardless of the feature flag?
+	ctxLogger := logger.FromContext(ctx).New("userID", userID)
+
+	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+		err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
+			Token: &oauth2.Token{},
+		})
+		if err != nil {
+			ctxLogger.Error("Failed to update external session", "error", err)
+			return err
+		}
+	}
+
+	// TODO: Should this run regardless of the feature flag?
 	return o.AuthInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthModule: usr.GetAuthenticatedBy(),
@@ -344,7 +353,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr user.SessionAwa
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oauth2.Token, usr user.SessionAwareIdentityRequester, externalSession *auth.ExternalSession) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oauth2.Token, usr identity.Requester, sessionToken *auth.UserToken) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken")
 	defer span.End()
 
@@ -404,8 +413,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 			"provider", usr.GetAuthenticatedBy(), "userID", userID, "error", err)
 
 		// token refresh failed, invalidate the old token
-		if err := o.InvalidateOAuthTokens(ctx, usr); err != nil {
-			ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", externalSession.UserAuthID, "error", err)
+		if err := o.InvalidateOAuthTokens(ctx, usr, sessionToken); err != nil {
+			ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", usr.GetAuthID(), "error", err)
 		}
 
 		return nil, err
@@ -430,7 +439,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 		}
 
 		if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-			if err := o.sessionService.UpdateExternalSession(ctx, externalSession.ID, &auth.UpdateExternalSessionCommand{
+			if err := o.sessionService.UpdateExternalSession(ctx, sessionToken.ExternalSessionId, &auth.UpdateExternalSessionCommand{
 				Token: token,
 			}); err != nil {
 				ctxLogger.Error("Failed to update external session during token refresh", "error", err)

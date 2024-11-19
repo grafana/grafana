@@ -18,10 +18,7 @@ import (
 
 const GlobalOrgID = int64(0)
 
-var (
-	_ identity.Requester                 = (*Identity)(nil)
-	_ user.SessionAwareIdentityRequester = (*Identity)(nil)
-)
+var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
@@ -81,11 +78,6 @@ type Identity struct {
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
 
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
-}
-
-// GetSessionToken implements SessionAwareIdentityRequester.
-func (i *Identity) GetSessionToken() *usertoken.UserToken {
-	return i.SessionToken
 }
 
 // Access implements claims.AuthInfo.
