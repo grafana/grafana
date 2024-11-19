@@ -270,8 +270,8 @@
         "create": "Create",
         "create-folder": "Create a new folder to store your alert rule in.",
         "creating-new-folder": "Creating new folder",
-        "folder-name": "Folder name",
         "label": "Folder",
+        "name": "Folder name",
         "new-folder": "New folder",
         "new-folder-or": "or"
       },
