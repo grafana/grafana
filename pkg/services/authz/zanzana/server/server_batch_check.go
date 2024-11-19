@@ -49,24 +49,15 @@ func (s *Server) batchCheckItem(
 	store *storeInfo,
 	groupResourceAccess map[string]bool,
 ) (*authzv1.CheckResponse, error) {
-	req := &authzv1.CheckRequest{
-		Subject:     r.GetSubject(),
-		Verb:        item.GetVerb(),
-		Group:       item.GetGroup(),
-		Resource:    item.GetResource(),
-		Name:        item.GetName(),
-		Folder:      item.GetFolder(),
-		Subresource: item.GetSubresource(),
-	}
 
 	var (
 		relation      = common.VerbMapping[item.GetVerb()]
-		groupResource = common.FormatGroupResource(req.GetGroup(), req.GetResource())
+		groupResource = common.FormatGroupResource(item.GetGroup(), item.GetResource())
 	)
 
 	allowed, ok := groupResourceAccess[groupResource]
 	if !ok {
-		res, err := s.checkNamespace(ctx, req, store, relation)
+		res, err := s.checkNamespace(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), store)
 		if err != nil {
 			return nil, err
 		}
@@ -78,8 +69,8 @@ func (s *Server) batchCheckItem(
 	}
 
 	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
-		return s.checkTyped(ctx, req, info, store, relation)
+		return s.checkTyped(ctx, r.GetSubject(), relation, item.GetName(), info, store)
 	}
-	return s.checkGeneric(ctx, req, store, relation)
+	return s.checkGeneric(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), item.GetName(), item.GetFolder(), store)
 
 }

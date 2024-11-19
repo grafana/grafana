@@ -22,7 +22,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	relation := common.VerbMapping[r.GetVerb()]
 
 	// Check if subject has access through namespace
-	res, err := s.checkNamespace(ctx, r, store, relation)
+	res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 	if err != nil {
 		return nil, err
 	}
@@ -32,20 +32,21 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	}
 
 	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.checkTyped(ctx, r, info, store, relation)
+		return s.checkTyped(ctx, r.GetSubject(), relation, r.GetName(), info, store)
 	}
-	return s.checkGeneric(ctx, r, store, relation)
+	return s.checkGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), r.GetName(), r.GetFolder(), store)
 }
 
-// checkNamespace checks if subject has access through namespace
-func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
+// checkTyped performes check on the root "namespace". If subject has access through the namespace they have access to
+// every resource for that "GroupResource".
+func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
+			User:     subject,
 			Relation: relation,
-			Object:   common.NewNamespaceResourceIdent(r.GetGroup(), r.GetResource()),
+			Object:   common.NewNamespaceResourceIdent(group, resource),
 		},
 	})
 	if err != nil {
@@ -55,15 +56,16 @@ func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, st
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 }
 
-func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
+// checkTyped performes checks on our typed resources e.g. folder.
+func (s *Server) checkTyped(ctx context.Context, subject, relation, name string, info common.TypeInfo, store *storeInfo) (*authzv1.CheckResponse, error) {
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
+			User:     subject,
 			Relation: relation,
-			Object:   common.NewTypedIdent(info.Type, r.GetName()),
+			Object:   common.NewTypedIdent(info.Type, name),
 		},
 	})
 	if err != nil {
@@ -77,20 +79,22 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
-func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
+// checkGeneric check our generic "resource" type.
+func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
+	groupResource := structpb.NewStringValue(common.FormatGroupResource(group, resource))
 
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
+			User:     subject,
 			Relation: relation,
-			Object:   common.NewResourceIdent(r.GetGroup(), r.GetResource(), r.GetName()),
+			Object:   common.NewResourceIdent(group, resource, name),
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
+				"requested_group": groupResource,
 			},
 		},
 	})
@@ -103,7 +107,7 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, stor
 		return &authzv1.CheckResponse{Allowed: true}, nil
 	}
 
-	if r.Folder == "" {
+	if folder == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
@@ -112,13 +116,13 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, stor
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     r.GetSubject(),
+			User:     subject,
 			Relation: common.FolderResourceRelation(relation),
-			Object:   common.NewFolderIdent(r.GetFolder()),
+			Object:   common.NewFolderIdent(folder),
 		},
 		Context: &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"requested_group": structpb.NewStringValue(common.FormatGroupResource(r.GetGroup(), r.GetResource())),
+				"requested_group": groupResource,
 			},
 		},
 	})
