@@ -88,10 +88,10 @@ export function FilterView({ filterState }: FilterViewProps) {
   }, [controller]);
 
   const loading = isLoading(state) || transitionPending;
-  const noRules = rules.length === 0;
+  const noRulesFound = rules.length === 0 && !loading;
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
-  if (noRules && doneSearching) {
+  if (noRulesFound && doneSearching) {
     return (
       <EmptyState variant="not-found" message="No matching rules found">
         No alert- or recording rules matched your current set of filters.
@@ -104,18 +104,18 @@ export function FilterView({ filterState }: FilterViewProps) {
       {rules.map(({ ruleKey, rule, groupIdentifier }) => (
         <AlertRuleLoader key={ruleKey} rule={rule} groupIdentifier={groupIdentifier} />
       ))}
-      {loading ? (
+      {loading && (
         <>
           <AlertRuleListItemLoader />
           <AlertRuleListItemLoader />
         </>
-      ) : doneSearching ? (
+      )}
+      {doneSearching && !noRulesFound && (
         <Card>
           <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">No more results</Trans>
         </Card>
-      ) : (
-        <LoadMoreHelper handleLoad={loadResultPage} />
       )}
+      {!doneSearching && <LoadMoreHelper handleLoad={loadResultPage} />}
     </Stack>
   );
 }
