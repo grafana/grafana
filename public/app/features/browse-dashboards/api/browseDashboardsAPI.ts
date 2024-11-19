@@ -4,9 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -125,14 +123,12 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
           await contextSrv.fetchUserPermissions();
-          dispatch(notifyApp(createSuccessNotification('Folder created')));
           dispatch(
             refetchChildren({
               parentUID: parentUid,
               pageSize: PAGE_SIZE,
             })
           );
-          locationService.push(locationUtil.stripBaseFromUrl(folder.url));
         });
       },
     }),

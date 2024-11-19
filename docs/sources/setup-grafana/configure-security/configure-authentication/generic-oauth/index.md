@@ -369,6 +369,10 @@ Payload:
 
 The following table outlines the various Generic OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
 
+{{< admonition type="note" >}}
+If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
+{{< /admonition >}}
+
 | Setting                      | Required | Supported on Cloud | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Default         |
 | ---------------------------- | -------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `enabled`                    | No       | Yes                | Enables Generic OAuth authentication.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`         |
@@ -449,6 +453,10 @@ To set up Generic OAuth authentication with Descope, follow these steps:
    ```
 
 ### Set up OAuth2 with Auth0
+
+{{< admonition type="note" >}}
+Support for the Auth0 "audience" feature is not currently available in Grafana. For roles and permissions, the available options are described [here]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+{{< /admonition >}}
 
 To set up Generic OAuth authentication with Auth0, follow these steps:
 

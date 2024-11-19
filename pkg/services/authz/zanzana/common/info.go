@@ -11,14 +11,14 @@ type TypeInfo struct {
 }
 
 var typedResources = map[string]TypeInfo{
-	NewNamespaceResourceIdent(
+	FormatGroupResource(
 		folderalpha1.FolderResourceInfo.GroupResource().Group,
 		folderalpha1.FolderResourceInfo.GroupResource().Resource,
 	): {Type: "folder"},
 }
 
 func GetTypeInfo(group, resource string) (TypeInfo, bool) {
-	info, ok := typedResources[NewNamespaceResourceIdent(group, resource)]
+	info, ok := typedResources[FormatGroupResource(group, resource)]
 	return info, ok
 }
 
