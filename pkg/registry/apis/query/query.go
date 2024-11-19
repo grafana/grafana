@@ -147,6 +147,8 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				},
 			}
 
+			b.log.Debug("Error parsing query", "err", err, "qdr", qdr)
+
 			responder.Object(statusCode, qdr)
 			return
 		}
