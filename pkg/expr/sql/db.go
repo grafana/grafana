@@ -91,13 +91,7 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 	return nil
 }
 
-// TODO: Rename `name` to `tableName`?
-func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
-	// TODO: Consider if this should be moved outside of this function
-	// or indeed into convertToDataFrame
-	f.Name = name
-
-	// TODO: Extract this into a function
+func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 	// TODO: Check these details:
 	// - Do we need a primary key?
 	// - Can we omit `Nullable` and `Source`?
@@ -113,7 +107,22 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	if err != nil {
 		return fmt.Errorf("error inserting row: %v", err)
 	}
-	// END TODO: extract
+
+	return nil
+}
+
+// TODO: Rename `name` to `tableName`?
+func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
+	// TODO: Consider if this should be moved outside of this function
+	// or indeed into convertToDataFrame
+	f.Name = name
+
+	for _, frame := range frames {
+		err := db.writeDataframeToDb(name, frame)
+		if err != nil {
+			return err
+		}
+	}
 
 	engine := sqle.NewDefault(
 		gomysql.NewDatabaseProvider(
