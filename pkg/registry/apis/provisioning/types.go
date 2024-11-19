@@ -7,12 +7,26 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type RepoGetter interface {
 	GetRepository(ctx context.Context, name string) (Repository, error)
+}
+
+// UndoFunc is a function that can be called to undo a previous operation
+type UndoFunc func(context.Context) error
+
+// Chain is a helper function to chain UndoFuncs together
+func (f UndoFunc) Chain(ctx context.Context, next UndoFunc) UndoFunc {
+	return func(ctx context.Context) error {
+		if err := f(ctx); err != nil {
+			return err
+		}
+		return next(ctx)
+	}
 }
 
 type Repository interface {
@@ -31,7 +45,12 @@ type Repository interface {
 	Read(ctx context.Context, path string, commit string) ([]byte, error)
 
 	// For repositories that support webhooks
-	Webhook() http.HandlerFunc
+	Webhook(responder rest.Responder) http.HandlerFunc
+
+	// Hooks called after the repository has been created, updated or deleted
+	AfterCreate(ctx context.Context) error
+	BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error)
+	AfterDelete(ctx context.Context) error
 }
 
 var _ Repository = (*unknownRepository)(nil)
@@ -77,7 +96,19 @@ func (r *unknownRepository) Read(ctx context.Context, path string, commit string
 }
 
 // Webhook implements provisioning.Repository.
-func (r *unknownRepository) Webhook() http.HandlerFunc {
+func (r *unknownRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
+	return nil
+}
+
+func (r *unknownRepository) AfterCreate(ctx context.Context) error {
+	return nil
+}
+
+func (r *unknownRepository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+	return nil, nil
+}
+
+func (r *unknownRepository) AfterDelete(ctx context.Context) error {
 	return nil
 }

@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"slices"
 
@@ -20,6 +21,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -36,11 +40,13 @@ var (
 type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
+	logger            *slog.Logger
 }
 
 func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		localFileResolver: local,
+		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 	}
 }
 
@@ -99,6 +105,12 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+
+	repositoryStorage.AfterCreate = b.afterCreate
+	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
+	repositoryStorage.BeginUpdate = b.beginUpdate
+	repositoryStorage.AfterDelete = b.afterDelete
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
@@ -127,10 +139,10 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 	if err != nil {
 		return nil, err
 	}
-	return b.asRepository(obj)
+	return b.asRepository(ctx, obj)
 }
 
-func (b *ProvisioningAPIBuilder) asRepository(obj runtime.Object) (Repository, error) {
+func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
@@ -143,12 +155,86 @@ func (b *ProvisioningAPIBuilder) asRepository(obj runtime.Object) (Repository, e
 	case provisioning.LocalRepositoryType:
 		return newLocalRepository(r, b.localFileResolver), nil
 	case provisioning.GithubRepositoryType:
-		return newGithubRepository(r), nil
+		return newGithubRepository(ctx, r), nil
 	case provisioning.S3RepositoryType:
 		return newS3Repository(r), nil
 	default:
+		return &unknownRepository{config: r}, nil
 	}
-	return &unknownRepository{config: r}, nil
+}
+
+func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
+	cfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		b.logger.Error("object is not *provisioning.Repository")
+		return
+	}
+
+	ctx := context.Background()
+	repo, err := b.asRepository(ctx, cfg)
+	if err != nil {
+		b.logger.Error("failed to get repository", "error", err)
+		return
+	}
+
+	if err := repo.AfterCreate(ctx); err != nil {
+		b.logger.Error("failed to run after create", "error", err)
+		return
+	}
+}
+
+func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, opts *metav1.UpdateOptions) (registry.FinishFunc, error) {
+	objCfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("new object is not *provisioning.Repository")
+	}
+	oldCfg, ok := old.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("old object is not *provisioning.Repository")
+	}
+
+	repo, err := b.asRepository(ctx, objCfg)
+	if err != nil {
+		return nil, fmt.Errorf("get new repository: %w", err)
+	}
+
+	oldRepo, err := b.asRepository(ctx, oldCfg)
+	if err != nil {
+		return nil, fmt.Errorf("get old repository: %w", err)
+	}
+
+	undo, err := repo.BeginUpdate(ctx, oldRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(ctx context.Context, success bool) {
+		if !success && undo != nil {
+			if err := undo(ctx); err != nil {
+				b.logger.Error("failed to undo failed update", "error", err)
+			}
+		}
+	}, nil
+}
+
+func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.DeleteOptions) {
+	ctx := context.Background()
+	cfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		b.logger.Error("object is not *provisioning.Repository")
+		return
+	}
+
+	repo, err := b.asRepository(ctx, cfg)
+	if err != nil {
+		b.logger.Error("failed to get repository", "error", err)
+		return
+	}
+
+	if err := repo.AfterDelete(ctx); err != nil {
+		b.logger.Error("failed to run after delete", "error", err)
+		return
+	}
 }
 
 func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -157,15 +243,26 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		return nil // This is normal for sub-resource
 	}
 
-	repo, err := b.asRepository(obj)
+	repo, err := b.asRepository(ctx, obj)
 	if err != nil {
 		return err
 	}
 
 	// Typed validation
 	list := repo.Validate()
-
 	cfg := repo.Config()
+
+	if a.GetOperation() == admission.Update {
+		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
+		if err != nil {
+			return fmt.Errorf("get old repository for update: %w", err)
+		}
+
+		if cfg.Spec.Type != oldRepo.Config().Spec.Type {
+			list = append(list, field.Invalid(field.NewPath("spec", "type"),
+				cfg.Spec.Type, "Changing repository type is not supported"))
+		}
+	}
 
 	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
