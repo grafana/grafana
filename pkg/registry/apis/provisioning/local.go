@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -112,13 +113,21 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadResource(ctx context.Context, path string, commit string) (*provisioning.ResourceWrapper, error) {
-	return nil, &errors.StatusError{
-		ErrStatus: v1.Status{
-			Message: "read resource is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+func (r *localRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
+	if commit != "" {
+		return nil, errors.NewBadRequest("local repository does not support commits")
 	}
+	if r.path == "" {
+		return nil, &errors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	//nolint:gosec
+	return os.ReadFile(filepath.Join(r.path, path))
 }
 
 // Webhook implements provisioning.Repository.

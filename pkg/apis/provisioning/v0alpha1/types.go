@@ -126,6 +126,9 @@ type HelloWorld struct {
 type ResourceWrapper struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// Path to the remote file
+	Path string `json:"path,omitempty"`
+
 	// The commit hash (if exists)
 	Commit string `json:"commit,omitempty"`
 

@@ -329,6 +329,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Format:      "",
 						},
 					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path to the remote file",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"commit": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The commit hash (if exists)",

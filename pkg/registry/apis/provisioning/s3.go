@@ -50,7 +50,7 @@ func (r *s3Repository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *s3Repository) ReadResource(ctx context.Context, path string, commit string) (*provisioning.ResourceWrapper, error) {
+func (r *s3Repository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: v1.Status{
 			Message: "read resource is not yet implemented",

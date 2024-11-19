@@ -27,8 +27,8 @@ type Repository interface {
 	// Called to check if all connection information actually works
 	Test(ctx context.Context) error
 
-	// Read a resource from settings
-	ReadResource(ctx context.Context, path string, commit string) (*provisioning.ResourceWrapper, error)
+	// Read a file from the resource
+	Read(ctx context.Context, path string, commit string) ([]byte, error)
 
 	// For repositories that support webhooks
 	Webhook() http.HandlerFunc
@@ -67,7 +67,7 @@ func (r *unknownRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *unknownRepository) ReadResource(ctx context.Context, path string, commit string) (*provisioning.ResourceWrapper, error) {
+func (r *unknownRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: v1.Status{
 			Message: "read resource is not yet implemented",
