@@ -1,6 +1,8 @@
 package secret
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,7 +28,8 @@ func NewSecretAPIBuilder(store secretstore.SecureValueStore, manager secretstore
 	return &SecretAPIBuilder{store, manager}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles,
+func RegisterAPIService(
+	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	store secretstore.SecureValueStore,
 	manager secretstore.SecretManager,
@@ -40,10 +43,12 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	return builder
 }
 
+// GetGroupVersion returns the tuple of `group` and `version` for the API which uniquely identifies it.
 func (b *SecretAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return secret.SecureValuesResourceInfo.GroupVersion()
+	return secret.SchemeGroupVersion
 }
 
+// InstallSchema is called by the `apiserver` which exposes the defined kinds.
 func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	secret.AddKnownTypes(scheme, secret.VERSION)
 
@@ -52,44 +57,72 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	// "no kind is registered for the type"
 	secret.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
+	// Internal Kubernetes metadata API. Presumably to display the available APIs?
+	// e.g. http://localhost:3000/apis/secret.grafana.app/v0alpha1
 	metav1.AddToGroupVersion(scheme, secret.SchemeGroupVersion)
-	return scheme.SetVersionPriority(secret.SchemeGroupVersion)
-}
 
-func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	resource := secret.SecureValuesResourceInfo
-	storage := map[string]rest.Storage{}
-	storage[resource.StoragePath()] = &secretStorage{
-		store:          b.store,
-		resource:       resource,
-		tableConverter: resource.TableConverter(),
-	}
-	storage[resource.StoragePath("decrypt")] = &secretDecrypt{
-		store: b.store,
-	}
-	storage[resource.StoragePath("history")] = &secretHistory{
-		store: b.store,
+	// This sets the priority in case we have multiple versions.
+	// By default Kubernetes will only let you use `kubectl get <resource>` with one version.
+	// In case there are multiple versions, we'd need to pass the full path with the `--raw` flag.
+	if err := scheme.SetVersionPriority(secret.SchemeGroupVersion); err != nil {
+		return fmt.Errorf("scheme set version priority: %w", err)
 	}
 
-	err := b.manager.InitStorage(opts.Scheme, storage, opts.OptsGetter)
-	if err != nil {
-		return nil
-	}
-
-	apiGroupInfo.VersionedResourcesStorageMap[secret.VERSION] = storage
 	return nil
 }
 
+// UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
+func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	securevalueResource := secret.SecureValuesResourceInfo
+
+	// rest.Storage is a generic interface for RESTful storage services.
+	// The constructors need to at least implement this interface, but will most likely implement
+	// other interfaces that equal to different operations like `get`, `list` and so on.
+	securevalueStorage := map[string]rest.Storage{
+		// Default path for `securevalue`.
+		// The `secretStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
+		securevalueResource.StoragePath(): &secretStorage{
+			store:          b.store,
+			resource:       securevalueResource,
+			tableConverter: securevalueResource.TableConverter(),
+		},
+
+		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
+		// Not yet supported by grafana-app-sdk or unified storage.
+		securevalueResource.StoragePath("decrypt"): &secretDecrypt{
+			store: b.store,
+		},
+
+		// This is a subresrouce from `securevalue`. It gets accessed like `securevalue/xyz/history`.
+		// Not yet supported by grafana-app-sdk or unified storage.
+		securevalueResource.StoragePath("history"): &secretHistory{
+			store: b.store,
+		},
+	}
+
+	// This does not do anything here.
+	err := b.manager.InitStorage(opts.Scheme, securevalueStorage, opts.OptsGetter)
+	if err != nil {
+		return fmt.Errorf("secret manager init storage: %w", err)
+	}
+
+	apiGroupInfo.VersionedResourcesStorageMap[secret.VERSION] = securevalueStorage
+	return nil
+}
+
+// GetOpenAPIDefinitions, is this only for documentation?
 func (b *SecretAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return secret.GetOpenAPIDefinitions
 }
 
+// GetAuthorizer: [TODO] who can create secrets? must be multi-tenant first
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// TODO... who can create secrets? must be multi-tenant first
+	// This is TBD being defined with IAM.
+
 	return nil // start with the default authorizer
 }
 
-// Register additional routes with the server
+// Register additional routes with the server.
 func (b *SecretAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }
