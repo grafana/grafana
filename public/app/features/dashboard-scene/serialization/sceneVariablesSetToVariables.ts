@@ -410,7 +410,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       };
       variables.push(adhocVariable);
     } else {
-      throw new Error('Unsupported variable type');
+      throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
