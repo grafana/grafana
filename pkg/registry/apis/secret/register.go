@@ -14,21 +14,24 @@ import (
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	secretstore "github.com/grafana/grafana/pkg/storage/secret"
 )
 
 var _ builder.APIGroupBuilder = (*SecretAPIBuilder)(nil)
 
 type SecretAPIBuilder struct {
+	config  *setting.Cfg
 	store   secretstore.SecureValueStore
 	manager secretstore.SecretManager
 }
 
-func NewSecretAPIBuilder(store secretstore.SecureValueStore, manager secretstore.SecretManager) *SecretAPIBuilder {
-	return &SecretAPIBuilder{store, manager}
+func NewSecretAPIBuilder(config *setting.Cfg, store secretstore.SecureValueStore, manager secretstore.SecretManager) *SecretAPIBuilder {
+	return &SecretAPIBuilder{config, store, manager}
 }
 
 func RegisterAPIService(
+	config *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	store secretstore.SecureValueStore,
@@ -38,7 +41,7 @@ func RegisterAPIService(
 		return nil // skip registration unless opting into experimental apis
 	}
 
-	builder := NewSecretAPIBuilder(store, manager)
+	builder := NewSecretAPIBuilder(config, store, manager)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -90,7 +93,8 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
 		// Not yet supported by grafana-app-sdk or unified storage.
 		securevalueResource.StoragePath("decrypt"): &secretDecrypt{
-			store: b.store,
+			config: b.config,
+			store:  b.store,
 		},
 
 		// This is a subresrouce from `securevalue`. It gets accessed like `securevalue/xyz/history`.
