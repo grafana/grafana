@@ -14,12 +14,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
+var _ auth.UserTokenService = (*FakeUserAuthTokenService)(nil)
+
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider                 func(ctx context.Context, cmd *auth.CreateTokenCommand) (*auth.UserToken, error)
 	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
 	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
 	FindExternalSessionsProvider        func(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error)
+	UpdateExternalSessionProvider       func(ctx context.Context, extSessionID int64, cmd *auth.UpdateExternalSessionCommand) error
 	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
@@ -96,6 +99,10 @@ func (s *FakeUserAuthTokenService) GetExternalSession(ctx context.Context, exter
 
 func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	return s.FindExternalSessionsProvider(context.Background(), query)
+}
+
+func (s *FakeUserAuthTokenService) UpdateExternalSession(ctx context.Context, extSessionID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	return s.UpdateExternalSessionProvider(context.Background(), extSessionID, cmd)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {

@@ -11,7 +11,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
@@ -85,7 +85,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			)
 
 			service := &oauthtokentest.MockOauthTokenService{
-				TryTokenRefreshFunc: func(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
+				TryTokenRefreshFunc: func(ctx context.Context, usr user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
 					tryRefreshCalled = true
 					return nil, tt.expectedTryRefreshErr
 				},
