@@ -9,6 +9,7 @@ import (
 	"github.com/dolthub/go-mysql-server/memory"
 	gomysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/information_schema"
+	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -90,16 +91,29 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 	return nil
 }
 
+// TODO: Rename `name` to `tableName`?
 func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
 	// TODO: Consider if this should be moved outside of this function
 	// or indeed into convertToDataFrame
 	f.Name = name
 
-	// error if more than zero frames received
-	// TODO: Implement loading data into the database later
-	if len(frames) > 0 {
-		return errors.New("not implemented")
+	// TODO: Extract this into a function
+	// TODO: Check these details:
+	// - Do we need a primary key?
+	// - Can we omit `Nullable` and `Source`?
+	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(gomysql.Schema{
+		// https://pkg.go.dev/github.com/dolthub/go-mysql-server/sql#Column
+		{Name: "name", Type: types.Text, Nullable: false, Source: name},
+		{Name: "profession", Type: types.Text, Nullable: false, Source: name},
+	}), nil)
+
+	db.inMemoryDb.AddTable(name, table)
+	// TODO: Use a more appropriate context
+	err := table.Insert(gomysql.NewEmptyContext(), gomysql.NewRow("sam", "engineer"))
+	if err != nil {
+		return fmt.Errorf("error inserting row: %v", err)
 	}
+	// END TODO: extract
 
 	engine := sqle.NewDefault(
 		gomysql.NewDatabaseProvider(
