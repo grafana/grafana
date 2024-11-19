@@ -114,7 +114,7 @@ Each derived field consists of the following:
 
 - **Type** - Defines the type of the derived field. It can be either:
 
-{{% admonition type="note" %}}
+{{% admonition type="caution" %}}
 Using complex regular expressions in either type can impact browser performance when processing large volumes of logs. Consider using simpler patterns when possible.
 {{% /admonition %}}
 
