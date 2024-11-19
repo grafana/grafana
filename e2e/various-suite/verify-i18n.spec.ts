@@ -54,6 +54,7 @@ describe('Verify i18n', () => {
     const LANGUAGE_SELECTOR = '[id="locale-select"]';
 
     cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
+      cy.get(LANGUAGE_SELECTOR).should('not.be.disabled');
       cy.get(LANGUAGE_SELECTOR).click();
       cy.get(LANGUAGE_SELECTOR).clear().type(language).type('{downArrow}{enter}');
       e2e.components.UserProfile.preferencesSaveButton().click();

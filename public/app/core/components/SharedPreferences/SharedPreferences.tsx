@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import { PropsWithChildren, PureComponent } from 'react';
+import { PureComponent } from 'react';
 import * as React from 'react';
-import Skeleton from 'react-loading-skeleton';
 
 import { FeatureState, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,9 +17,7 @@ import {
   FeatureBadge,
   Combobox,
   ComboboxOption,
-  useStyles2,
 } from '@grafana/ui';
-import { skeletonAnimation } from '@grafana/ui/src/unstable';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
@@ -162,28 +159,22 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const styles = getStyles();
     const languages = getLanguageOptions();
     const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
-    const themeId = 'shared-preferences-theme-select';
-    const homeDashboardId = 'home-dashboard-select';
-    const timezoneId = 'shared-preferences-timezone-picker';
-    const weekStartId = 'shared-preferences-week-start-picker';
-    const languageId = 'locale-select';
 
     return (
       <form onSubmit={this.onSubmitForm} className={styles.form}>
         <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-          <Field htmlFor={themeId} label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
-            <FieldSkeletonLoader isLoading={isLoading}>
-              <Combobox
-                options={this.themeOptions}
-                value={currentThemeOption.value}
-                onChange={this.onThemeChanged}
-                id={themeId}
-              />
-            </FieldSkeletonLoader>
+          <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
+            <Combobox
+              loading={isLoading}
+              disabled={isLoading}
+              options={this.themeOptions}
+              value={currentThemeOption.value}
+              onChange={this.onThemeChanged}
+              id="shared-preferences-theme-select"
+            />
           </Field>
 
           <Field
-            htmlFor={homeDashboardId}
             label={
               <Label htmlFor="home-dashboard-select">
                 <span className={styles.labelText}>
@@ -193,45 +184,44 @@ export class SharedPreferences extends PureComponent<Props, State> {
             }
             data-testid="User preferences home dashboard drop down"
           >
-            <FieldSkeletonLoader isLoading={isLoading}>
-              <DashboardPicker
-                value={homeDashboardUID}
-                onChange={(v) => this.onHomeDashboardChanged(v?.uid ?? '')}
-                defaultOptions={true}
-                isClearable={true}
-                placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}
-                inputId={homeDashboardId}
-              />
-            </FieldSkeletonLoader>
+            <DashboardPicker
+              isLoading={isLoading}
+              disabled={isLoading}
+              value={homeDashboardUID}
+              onChange={(v) => this.onHomeDashboardChanged(v?.uid ?? '')}
+              defaultOptions={true}
+              isClearable={true}
+              placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}
+              inputId="home-dashboard-select"
+            />
           </Field>
 
           <Field
-            htmlFor={timezoneId}
             label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
             data-testid={selectors.components.TimeZonePicker.containerV2}
           >
-            <FieldSkeletonLoader isLoading={isLoading}>
-              <TimeZonePicker
-                includeInternal={true}
-                value={timezone}
-                onChange={this.onTimeZoneChanged}
-                inputId={timezoneId}
-              />
-            </FieldSkeletonLoader>
+            <TimeZonePicker
+              disabled={isLoading}
+              includeInternal={true}
+              value={timezone}
+              onChange={this.onTimeZoneChanged}
+              inputId="shared-preferences-timezone-picker"
+            />
           </Field>
 
           <Field
-            htmlFor={weekStartId}
             label={t('shared-preferences.fields.week-start-label', 'Week start')}
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
-            <FieldSkeletonLoader isLoading={isLoading}>
-              <WeekStartPicker value={weekStart || ''} onChange={this.onWeekStartChanged} inputId={weekStartId} />
-            </FieldSkeletonLoader>
+            <WeekStartPicker
+              disabled={isLoading}
+              value={weekStart || ''}
+              onChange={this.onWeekStartChanged}
+              inputId="shared-preferences-week-start-picker"
+            />
           </Field>
 
           <Field
-            htmlFor={languageId}
             label={
               <Label htmlFor="locale-select">
                 <span className={styles.labelText}>
@@ -242,15 +232,15 @@ export class SharedPreferences extends PureComponent<Props, State> {
             }
             data-testid="User preferences language drop down"
           >
-            <FieldSkeletonLoader isLoading={isLoading}>
-              <Combobox
-                value={languages.find((lang) => lang.value === language)?.value || ''}
-                onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
-                options={languages}
-                placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-                id={languageId}
-              />
-            </FieldSkeletonLoader>
+            <Combobox
+              loading={isLoading}
+              disabled={isLoading}
+              value={languages.find((lang) => lang.value === language)?.value || ''}
+              onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
+              options={languages}
+              placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
+              id="locale-select"
+            />
           </Field>
         </FieldSet>
         <Button type="submit" variant="primary" data-testid={selectors.components.UserProfile.preferencesSaveButton}>
@@ -260,27 +250,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
     );
   }
 }
-
-const FieldSkeletonLoader = ({
-  children,
-  isLoading,
-}: PropsWithChildren<{
-  isLoading: boolean;
-}>) => {
-  const styles = useStyles2(getSkeletonStyles);
-  return isLoading ? (
-    <Skeleton height={32} containerClassName={styles.skeletonContainer} style={skeletonAnimation} />
-  ) : (
-    children
-  );
-};
-
-const getSkeletonStyles = () => ({
-  skeletonContainer: css({
-    display: 'block',
-    lineHeight: 1,
-  }),
-});
 
 export default SharedPreferences;
 
