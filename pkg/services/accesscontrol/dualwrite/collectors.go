@@ -266,7 +266,6 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
-
 			tuple := &openfgav1.TupleKey{
 				User:     zanzana.NewTupleEntry(zanzana.TypeTeam, b.TeamUID, zanzana.RelationTeamMember),
 				Relation: zanzana.RelationAssignee,
