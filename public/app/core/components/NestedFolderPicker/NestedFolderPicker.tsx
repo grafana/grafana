@@ -46,6 +46,9 @@ export interface NestedFolderPickerProps {
 
   /* Whether the picker should be clearable */
   clearable?: boolean;
+
+  /* Users get the opportunity to create a new folder */
+  createFolder?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -70,6 +73,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = PermissionLevelString.Edit,
   onChange,
+  createFolder = false
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -374,17 +378,38 @@ export function NestedFolderPicker({
     );
   };
 
+   /*
+  *  <Field
+        label={t('browse-dashboards.folder-picker.input-label-create-new-folder', 'Enter a new folder name')}
+        // invalid={!!errors.folderName}
+        // error={errors.folderName && errors.folderName.message}
+      >
+        <Input
+          id="folder-name-input"
+          // defaultValue={initialFormModel.folderName}
+          // {...register('folderName', {
+          //   required: t('browse-dashboards.folder-picker.new-folder-name-required-phrase', 'Folder name is required.'),
+          //   validate: async (v) => await validateFolderName(v),
+          // })}
+        />
+      </Field>
+  * */
+
   return (
     <>
-      <RadioButtonGroup
-        options={optionsToPickFolder}
-        value={chooseExistingFolder}
-        onChange={(value) => setChooseExistingFolder(value!)}
-        fullWidth={true}
-      />
-      <Space v={1} />
-      {chooseExistingFolder && pickExistingFolder()}
+      {createFolder && (
+        <>
+          <RadioButtonGroup
+            options={optionsToPickFolder}
+            value={chooseExistingFolder}
+            onChange={(value) => setChooseExistingFolder(value!)}
+            fullWidth={true}
+          />
+          <Space v={1} />
+        </>
+      )}
       {!chooseExistingFolder && pickNewFolder()}
+      {chooseExistingFolder && pickExistingFolder()}
     </>
   );
 }

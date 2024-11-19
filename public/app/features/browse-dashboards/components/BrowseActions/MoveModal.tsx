@@ -51,7 +51,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
+        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} createFolder={true} />
       </Field>
 
       <Modal.ButtonRow>
