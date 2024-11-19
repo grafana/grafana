@@ -1448,7 +1448,7 @@ var (
 		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
@@ -1638,11 +1638,25 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "jaegerBackendMigration",
+			Description: "Enables querying the Jaeger data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:        "reportingUseRawTimeRange",
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Expression:  "false", // disabled by default
+		},
+		{
+			Name:         "alertingUIOptimizeReducer",
+			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
 		},
 	}
 )

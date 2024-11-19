@@ -21,7 +21,7 @@ const Namespace = ({ children, name, href, application }: NamespaceProps) => {
     <li className={styles.namespaceWrapper} role="treeitem" aria-selected="false">
       <div className={styles.namespaceTitle}>
         <Stack alignItems={'center'} gap={1}>
-          <NamespaceIcon application={application} />
+          <DataSourceIcon application={application} />
           {href ? (
             <WithReturnButton
               title="Alert rules"
@@ -49,7 +49,7 @@ interface NamespaceIconProps {
   application?: RulesSourceApplication;
 }
 
-const NamespaceIcon = ({ application }: NamespaceIconProps) => {
+export const DataSourceIcon = ({ application }: NamespaceIconProps) => {
   switch (application) {
     case PromApplication.Prometheus:
       return (
@@ -64,11 +64,11 @@ const NamespaceIcon = ({ application }: NamespaceIconProps) => {
       return (
         <img width={16} height={16} src="public/app/plugins/datasource/prometheus/img/mimir_logo.svg" alt="Mimir" />
       );
-    case 'loki':
+    case 'Loki':
       return <img width={16} height={16} src="public/app/plugins/datasource/loki/img/loki_icon.svg" alt="Loki" />;
     case 'grafana':
     default:
-      return <Icon name="folder" />;
+      return <Icon name="grafana" />;
   }
 };
 
@@ -101,10 +101,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   namespaceTitle: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
-    background: theme.colors.background.secondary,
+    // background: theme.colors.background.secondary,
 
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
+    // border: `solid 1px ${theme.colors.border.weak}`,
+    // borderRadius: theme.shape.radius.default,
   }),
 });
 
