@@ -306,9 +306,9 @@ describe('getProdOrDefaultOption', () => {
     expect(getProdOrDefaultOption(options)).toBe('PROD2');
   });
 
-  it('should return the first option value if the options array is empty', () => {
+  it('should return null if the options array is empty', () => {
     const options: Array<{ value: string; label: string }> = [];
-    expect(() => getProdOrDefaultOption(options)).toThrow();
+    expect(getProdOrDefaultOption(options)).toBeNull();
   });
 
   it('should return the first option value if the options array has one element', () => {
