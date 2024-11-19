@@ -238,4 +238,5 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
+  alertingUIOptimizeReducer?: boolean;
 }

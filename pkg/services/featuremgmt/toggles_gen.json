@@ -316,6 +316,23 @@
     },
     {
       "metadata": {
+        "name": "alertingUIOptimizeReducer",
+        "resourceVersion": "1731923458730",
+        "creationTimestamp": "2024-11-18T09:06:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-18 09:50:58.730825 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertmanagerRemoteOnly",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-10-30T16:27:08Z"

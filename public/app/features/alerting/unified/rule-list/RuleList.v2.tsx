@@ -1,216 +1,370 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
-import { useAsyncFn, useInterval, useMeasure } from 'react-use';
+import { PropsWithChildren, ReactNode, useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, LinkButton, LoadingBar, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { GrafanaTheme2 } from '@grafana/data';
+import {
+  Dropdown,
+  Icon,
+  IconButton,
+  LinkButton,
+  Menu,
+  Pagination,
+  Stack,
+  Text,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
+import { Rule, RuleGroupIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
+import { RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
-import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
-import { logInfo, LogMessages, trackRuleListNavigation } from '../Analytics';
+import { alertRuleApi } from '../api/alertRuleApi';
+import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import RulesFilter from '../components/rules/Filter/RulesFilter.v1';
-import { NoRulesSplash } from '../components/rules/NoRulesCTA';
-import { INSTANCES_DISPLAY_LIMIT } from '../components/rules/RuleDetails';
-import { RuleListErrors } from '../components/rules/RuleListErrors';
-import { RuleStats } from '../components/rules/RuleStats';
-import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
-import { useFilteredRules, useRulesFilter } from '../hooks/useFilteredRules';
-import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from '../state/actions';
-import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
-import { getAllRulesSourceNames, getApplicationFromRulesSource, getRulesSourceUniqueKey } from '../utils/datasource';
-import { makeFolderAlertsLink } from '../utils/misc';
+import { Spacer } from '../components/Spacer';
+import { WithReturnButton } from '../components/WithReturnButton';
+import RulesFilter from '../components/rules/Filter/RulesFilter';
+import { getAllRulesSources, isGrafanaRulesSource } from '../utils/datasource';
+import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
+import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
+import { createRelativeUrl } from '../utils/url';
 
-import { EvaluationGroupWithRules } from './components/EvaluationGroupWithRules';
-import Namespace from './components/Namespace';
+import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
+import { ListGroup } from './components/ListGroup';
+import { ListSection } from './components/ListSection';
+import { DataSourceIcon } from './components/Namespace';
+import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';
+import { LoadingIndicator } from './components/RuleGroup';
 
-// make sure we ask for 1 more so we show the "show x more" button
-const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+const noop = () => {};
+const { usePrometheusRuleNamespacesQuery, useGetRuleGroupForNamespaceQuery } = alertRuleApi;
 
 const RuleList = withErrorBoundary(
   () => {
-    const dispatch = useDispatch();
-    const styles = useStyles2(getStyles);
-    const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
-    const [expandAll, setExpandAll] = useState(false);
-
-    const onFilterCleared = useCallback(() => setExpandAll(false), []);
-
-    const { filterState, hasActiveFilters } = useRulesFilter();
-
-    const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-    const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
-    const loading = rulesDataSourceNames.some(
-      (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-    );
-
-    const promRequests = Object.entries(promRuleRequests);
-    const rulerRequests = Object.entries(rulerRuleRequests);
-
-    const allPromLoaded = promRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-    const allRulerLoaded = rulerRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-
-    const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
-
-    const allRulerEmpty = rulerRequests.every(([_, state]) => {
-      const rulerRules = Object.entries(state?.result ?? {});
-      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-      return noRules && state.dispatched;
-    });
-
-    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
-    // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
-    const [_, fetchRules] = useAsyncFn(async () => {
-      if (!loading) {
-        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-      }
-    }, [loading, limitAlerts, dispatch]);
-
-    useEffect(() => {
-      trackRuleListNavigation().catch(() => {});
-    }, []);
-
-    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
-    useEffect(() => {
-      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-    }, [dispatch, limitAlerts]);
-    useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
-
-    // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet =
-      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
-    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
-
-    const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-
-    const sortedNamespaces = filteredNamespaces.sort((a: CombinedRuleNamespace, b: CombinedRuleNamespace) =>
-      a.name.localeCompare(b.name)
-    );
+    const ruleSources = getAllRulesSources();
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-        <RuleListErrors />
-        <RulesFilter onClear={onFilterCleared} />
-        {hasAlertRulesCreated && (
-          <>
-            <div className={styles.break} />
-            <div className={styles.buttonsContainer}>
-              <div className={styles.statsContainer}>
-                {hasActiveFilters && (
-                  <Button
-                    className={styles.expandAllButton}
-                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                    variant="secondary"
-                    onClick={() => setExpandAll(!expandAll)}
-                  >
-                    {expandAll ? 'Collapse all' : 'Expand all'}
-                  </Button>
-                )}
-                <RuleStats namespaces={filteredNamespaces} />
-              </div>
-            </div>
-          </>
-        )}
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && (
-          <>
-            <LoadingIndicator visible={loading} />
-            <ul className={styles.rulesTree} role="tree" aria-label="List of alert rules">
-              {sortedNamespaces.map((namespace) => {
-                const { rulesSource, uid } = namespace;
-
-                const application = getApplicationFromRulesSource(rulesSource);
-                const href = application === 'grafana' && uid ? makeFolderAlertsLink(uid, namespace.name) : undefined;
-
-                return (
-                  <Namespace
-                    key={getRulesSourceUniqueKey(rulesSource) + namespace.name}
-                    href={href}
-                    name={namespace.name}
-                    application={application}
-                  >
-                    {namespace.groups
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((group) => (
-                        <EvaluationGroupWithRules key={group.name} group={group} rulesSource={rulesSource} />
-                      ))}
-                  </Namespace>
-                );
-              })}
-            </ul>
-          </>
-        )}
+      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={null}>
+        <RulesFilter onClear={() => {}} />
+        <Stack direction="column" gap={1}>
+          {ruleSources.map((ruleSource) => {
+            if (isGrafanaRulesSource(ruleSource)) {
+              return <GrafanaDataSourceLoader key={ruleSource} />;
+            } else {
+              return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
+            }
+          })}
+        </Stack>
       </AlertingPageWrapper>
     );
   },
   { style: 'page' }
 );
 
-const LoadingIndicator = ({ visible = false }) => {
-  const [measureRef, { width }] = useMeasure<HTMLDivElement>();
-  return <div ref={measureRef}>{visible && <LoadingBar width={width} />}</div>;
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
+interface DataSourceLoaderProps {
+  name: string;
+  uid: string;
+}
+
+const GrafanaDataSourceLoader = () => {
+  return <DataSourceSection name="Grafana" application="grafana" isLoading={true}></DataSourceSection>;
+};
+
+const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
+  const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
+
+  if (isLoading) {
+    return <DataSourceSection loader={<Skeleton width={250} height={16} />} />;
+  }
+
+  // 2. grab prometheus rule groups with max_groups if supported
+  if (dataSourceInfo) {
+    const rulerEnabled = Boolean(dataSourceInfo.rulerConfig);
+
+    return (
+      <PaginatedDataSourceLoader
+        ruleSourceName={dataSourceInfo.name}
+        rulerEnabled={rulerEnabled}
+        uid={uid}
+        name={name}
+        application={dataSourceInfo.application}
+      />
+    );
+  }
+
+  return null;
+};
+
+interface PaginatedDataSourceLoaderProps extends Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'> {
+  ruleSourceName: string;
+  rulerEnabled?: boolean;
+}
+
+function PaginatedDataSourceLoader({
+  ruleSourceName,
+  rulerEnabled = false,
+  name,
+  uid,
+  application,
+}: PaginatedDataSourceLoaderProps) {
+  const { data: ruleNamespaces = [], isLoading } = usePrometheusRuleNamespacesQuery({
+    ruleSourceName,
+    maxGroups: 25,
+    limitAlerts: 0,
+    excludeAlerts: true,
+  });
+
+  return (
+    <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
+      <Stack direction="column" gap={1}>
+        {ruleNamespaces.map((namespace) => (
+          <ListSection
+            key={namespace.name}
+            title={
+              <Stack direction="row" gap={1} alignItems="center">
+                <Icon name="folder" /> {namespace.name}
+              </Stack>
+            }
+          >
+            {namespace.groups.map((group) => (
+              <ListGroup
+                key={group.name}
+                name={group.name}
+                isOpen={false}
+                actions={
+                  <>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item label="Edit" icon="pen" data-testid="edit-group-action" />
+                          <Menu.Item label="Re-order rules" icon="flip" />
+                          <Menu.Divider />
+                          <Menu.Item label="Export" icon="download-alt" />
+                          <Menu.Item label="Delete" icon="trash-alt" destructive />
+                        </Menu>
+                      }
+                    >
+                      <IconButton name="ellipsis-h" aria-label="rule group actions" />
+                    </Dropdown>
+                  </>
+                }
+              >
+                {group.rules.map((rule) => {
+                  const groupIdentifier: RuleGroupIdentifier = {
+                    dataSourceName: ruleSourceName,
+                    groupName: group.name,
+                    namespaceName: namespace.name,
+                  };
+
+                  return (
+                    <AlertRuleLoader
+                      key={hashRule(rule)}
+                      rule={rule}
+                      groupIdentifier={groupIdentifier}
+                      rulerEnabled={rulerEnabled}
+                    />
+                  );
+                })}
+              </ListGroup>
+            ))}
+          </ListSection>
+        ))}
+        {!isLoading && <Pagination currentPage={1} numberOfPages={0} onNavigate={noop} />}
+      </Stack>
+    </DataSourceSection>
+  );
+}
+
+interface AlertRuleLoaderProps {
+  rule: Rule;
+  groupIdentifier: RuleGroupIdentifier;
+  rulerEnabled?: boolean;
+}
+
+function AlertRuleLoader({ rule, groupIdentifier, rulerEnabled = false }: AlertRuleLoaderProps) {
+  const { dataSourceName, namespaceName, groupName } = groupIdentifier;
+
+  const ruleIdentifier = fromRule(dataSourceName, namespaceName, groupName, rule);
+  const href = createViewLinkFromIdentifier(ruleIdentifier);
+  const originMeta = getRulePluginOrigin(rule);
+
+  // @TODO work with context API to propagate rulerConfig and such
+  const { data: dataSourceInfo } = useDiscoverDsFeaturesQuery({ rulesSourceName: dataSourceName });
+
+  // @TODO refactor this to use a separate hook (useRuleWithLocation() and useCombinedRule() seems to introduce infinite loading / recursion)
+  const {
+    isLoading,
+    data: rulerRuleGroup,
+    // error,
+  } = useGetRuleGroupForNamespaceQuery(
+    {
+      namespace: namespaceName,
+      group: groupName,
+      rulerConfig: dataSourceInfo?.rulerConfig!,
+    },
+    { skip: !dataSourceInfo?.rulerConfig }
+  );
+
+  const rulerRule = useMemo(() => {
+    if (!rulerRuleGroup) {
+      return;
+    }
+
+    return rulerRuleGroup.rules.find((rule) =>
+      equal(fromRulerRule(dataSourceName, namespaceName, groupName, rule), ruleIdentifier)
+    );
+  }, [dataSourceName, groupName, namespaceName, ruleIdentifier, rulerRuleGroup]);
+
+  // 1. get the rule from the ruler API with "ruleWithLocation"
+  // 1.1 skip this if this datasource does not have a ruler
+  //
+  // 2.1 render action buttons
+  // 2.2 render provisioning badge and contact point metadata, etc.
+
+  const actions = useMemo(() => {
+    if (!rulerEnabled) {
+      return null;
+    }
+
+    if (isLoading) {
+      return <ActionsLoader />;
+    }
+
+    if (rulerRule) {
+      return <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />;
+    }
+
+    return null;
+  }, [groupIdentifier, isLoading, rule, rulerEnabled, rulerRule]);
+
+  if (isAlertingRule(rule)) {
+    return (
+      <AlertRuleListItem
+        name={rule.name}
+        href={href}
+        summary={rule.annotations?.summary}
+        state={rule.state}
+        health={rule.health}
+        error={rule.lastError}
+        labels={rule.labels}
+        isProvisioned={undefined}
+        instancesCount={undefined}
+        actions={actions}
+        origin={originMeta}
+      />
+    );
+  }
+
+  if (isRecordingRule(rule)) {
+    return (
+      <RecordingRuleListItem
+        name={rule.name}
+        href={href}
+        health={rule.health}
+        error={rule.lastError}
+        labels={rule.labels}
+        isProvisioned={undefined}
+        actions={null}
+        origin={originMeta}
+      />
+    );
+  }
+
+  return <UnknownRuleListItem rule={rule} groupIdentifier={groupIdentifier} />;
+}
+
+function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+  const paramId = encodeURIComponent(stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(identifier.ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+interface DataSourceSectionProps extends PropsWithChildren {
+  uid?: string;
+  name?: string;
+  loader?: ReactNode;
+  application?: RulesSourceApplication;
+  isLoading?: boolean;
+  description?: ReactNode;
+}
+
+const DataSourceSection = ({
+  uid,
+  name,
+  application,
+  children,
+  loader,
+  isLoading = false,
+  description = null,
+}: DataSourceSectionProps) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Stack direction="column" gap={1}>
+      <Stack direction="column" gap={0}>
+        {isLoading && <LoadingIndicator />}
+        <div className={styles.dataSourceSectionTitle}>
+          {loader ?? (
+            <Stack alignItems="center">
+              {application && <DataSourceIcon application={application} />}
+              {name && (
+                <Text variant="body" weight="bold">
+                  {name}
+                </Text>
+              )}
+              {description && (
+                <>
+                  {'·'}
+                  {description}
+                </>
+              )}
+              <Spacer />
+              {uid && (
+                <WithReturnButton
+                  title="alert rules"
+                  component={
+                    <LinkButton variant="secondary" size="sm" href={`/connections/datasources/edit/${uid}`}>
+                      <Trans i18nKey="alerting.rule-list.configure-datasource">Configure</Trans>
+                    </LinkButton>
+                  }
+                />
+              )}
+            </Stack>
+          )}
+        </div>
+      </Stack>
+      <div className={styles.itemsWrapper}>{children}</div>
+    </Stack>
+  );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  rulesTree: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
+  itemsWrapper: css({
+    position: 'relative',
+    marginLeft: theme.spacing(1.5),
+
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      height: '100%',
+
+      marginLeft: `-${theme.spacing(1.5)}`,
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
   }),
-  break: css({
-    width: '100%',
-    height: 0,
-    marginBottom: theme.spacing(2),
-    borderBottom: `solid 1px ${theme.colors.border.medium}`,
-  }),
-  buttonsContainer: css({
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'space-between',
-  }),
-  statsContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  }),
-  expandAllButton: css({
-    marginRight: theme.spacing(1),
+  dataSourceSectionTitle: css({
+    background: theme.colors.background.secondary,
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
   }),
 });
 
 export default RuleList;
-
-export function CreateAlertButton() {
-  const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
-  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
-
-  const location = useLocation();
-
-  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
-
-  const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
-
-  if (canCreateGrafanaRules || canCreateCloudRules) {
-    return (
-      <LinkButton
-        href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}
-        icon="plus"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      >
-        New alert rule
-      </LinkButton>
-    );
-  }
-  return null;
-}
