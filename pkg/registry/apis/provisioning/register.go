@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"slices"
 
@@ -16,7 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -40,11 +40,13 @@ var (
 type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
+	logger            *slog.Logger
 }
 
 func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		localFileResolver: local,
+		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 	}
 }
 
@@ -164,19 +166,19 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
 	cfg, ok := obj.(*provisioning.Repository)
 	if !ok {
-		klog.ErrorS(nil, "object is not *provisioning.Repository")
+		b.logger.Error("object is not *provisioning.Repository")
 		return
 	}
 
 	ctx := context.Background()
 	repo, err := b.asRepository(ctx, cfg)
 	if err != nil {
-		klog.ErrorS(err, "failed to get repository")
+		b.logger.Error("failed to get repository", "error", err)
 		return
 	}
 
 	if err := repo.AfterCreate(ctx); err != nil {
-		klog.ErrorS(err, "failed to run after create")
+		b.logger.Error("failed to run after create", "error", err)
 		return
 	}
 }
@@ -209,9 +211,8 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 	return func(ctx context.Context, success bool) {
 		if !success && undo != nil {
 			if err := undo(ctx); err != nil {
-				klog.ErrorS(err, "failed to undo failed update")
+				b.logger.Error("failed to undo failed update", "error", err)
 			}
-			return
 		}
 	}, nil
 }
@@ -220,18 +221,18 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 	ctx := context.Background()
 	cfg, ok := obj.(*provisioning.Repository)
 	if !ok {
-		klog.ErrorS(nil, "object is not *provisioning.Repository")
+		b.logger.Error("object is not *provisioning.Repository")
 		return
 	}
 
 	repo, err := b.asRepository(ctx, cfg)
 	if err != nil {
-		klog.ErrorS(err, "failed to get repository")
+		b.logger.Error("failed to get repository", "error", err)
 		return
 	}
 
 	if err := repo.AfterDelete(ctx); err != nil {
-		klog.ErrorS(err, "failed to run after delete")
+		b.logger.Error("failed to run after delete", "error", err)
 		return
 	}
 }

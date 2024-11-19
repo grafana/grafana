@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/google/go-github/v66/github"
@@ -12,12 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type githubRepository struct {
+	logger       *slog.Logger
 	config       *provisioning.Repository
 	githubClient *github.Client
 }
@@ -29,7 +30,12 @@ func newGithubRepository(ctx context.Context, config *provisioning.Repository) *
 	tokenClient := oauth2.NewClient(ctx, tokenSrc)
 	githubClient := github.NewClient(tokenClient)
 
-	return &githubRepository{config: config, githubClient: githubClient}
+	return &githubRepository{
+		config:       config,
+		githubClient: githubClient,
+		logger:       slog.Default().With("logger", "github-repository"),
+	}
+
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -158,7 +164,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 	beforeRef := event.GetBefore()
 
 	for _, commit := range event.Commits {
-		klog.InfoS("process commit", "commit", commit.GetID(), "message", commit.GetMessage())
+		r.logger.Info("process commit", "commit", commit.GetID(), "message", commit.GetMessage())
 
 		for _, file := range commit.Added {
 			resource, err := r.Read(ctx, file, commit.GetID())
@@ -166,7 +172,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read added resource: %w", err)
 			}
 
-			klog.InfoS("added file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("added file", "file", file, "resource", resource, "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Modified {
@@ -175,7 +181,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read modified resource: %w", err)
 			}
 
-			klog.InfoS("modified file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("modified file", "file", file, "resource", resource, "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Removed {
@@ -184,7 +190,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read removed resource: %w", err)
 			}
 
-			klog.InfoS("removed file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("removed file", "file", file, "resource", resource, "commit", commit.GetID())
 		}
 
 		beforeRef = commit.GetID()
@@ -209,7 +215,7 @@ func (r *githubRepository) createWebhook(ctx context.Context) error {
 		return err
 	}
 
-	klog.InfoS("webhook created", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+	r.logger.Info("webhook created", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
 
 	return nil
 }
@@ -276,7 +282,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 					return nil, fmt.Errorf("update webhook: %w", err)
 				}
 
-				klog.InfoS("webhook updated", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+				r.logger.Info("webhook updated", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
 
 				return func(ctx context.Context) error {
 					if err := updateFn(ctx, oldCfg); err != nil {
@@ -310,7 +316,7 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		}
 	}
 
-	klog.InfoS("webhook deleted", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+	r.logger.Info("webhook deleted", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
 	return nil
 }
 
