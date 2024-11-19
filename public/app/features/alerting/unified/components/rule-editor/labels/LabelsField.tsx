@@ -56,9 +56,7 @@ export type LabelsSubformValues = {
 export interface LabelsSubFormProps {
   dataSourceName: string;
   initialLabels: Array<{ key: string; value: string }>;
-  onClose: (
-    labelsToUodate?: KBObjectArray
-  ) => void;
+  onClose: (labelsToUodate?: KBObjectArray) => void;
 }
 
 export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: LabelsSubFormProps) {
@@ -422,9 +420,9 @@ function getLabelText(type: RuleFormType) {
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
     : t(
-      'alerting.alertform.labels.alerting',
-      'Add labels to your rule for searching, silencing, or routing to a notification policy.'
-    );
+        'alerting.alertform.labels.alerting',
+        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+      );
   return text;
 }
 

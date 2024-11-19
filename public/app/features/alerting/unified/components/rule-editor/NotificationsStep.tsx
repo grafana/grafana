@@ -53,9 +53,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const shouldAllowSimplifiedRouting =
     type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
 
-  function onCloseLabelsEditor(
-    labelsToUpdate?: KBObjectArray
-  ) {
+  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }
@@ -72,7 +70,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
     ? 'Add labels'
     : isGrafanaManaged
       ? 'Configure notifications'
-      : 'Configure labels and notifications'
+      : 'Configure labels and notifications';
 
   return (
     <RuleEditorSection
@@ -117,9 +115,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
         <ManualAndAutomaticRouting alertUid={alertUid} />
       ) : // when simplified routing is not enabled, render the notification preview as we did before
-        shouldRenderpreview ? (
-          <AutomaticRooting alertUid={alertUid} />
-        ) : null}
+      shouldRenderpreview ? (
+        <AutomaticRooting alertUid={alertUid} />
+      ) : null}
     </RuleEditorSection>
   );
 };

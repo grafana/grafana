@@ -94,11 +94,11 @@ export function FolderSelector() {
                   </Button>
                 </>
               )) || (
-                  <div>
-                    <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder</Trans>
-                    {'...'}
-                  </div>
-                )}
+                <div>
+                  <Trans i18nKey="alerting.rule-form.folder.creating-new-folder">Creating new folder</Trans>
+                  {'...'}
+                </div>
+              )}
             </Stack>
           </Field>
         }
@@ -144,11 +144,13 @@ function FolderCreationModal({
         </Text>
 
         <form onSubmit={onSubmit}>
-          <Field label={<Label htmlFor="folder">
-            <Trans i18nKey="alerting.rule-form.folder.name">
-              Folder name
-            </Trans>
-          </Label>}>
+          <Field
+            label={
+              <Label htmlFor="folder">
+                <Trans i18nKey="alerting.rule-form.folder.name">Folder name</Trans>
+              </Label>
+            }
+          >
             <Input
               data-testid={selectors.components.AlertRules.newFolderNameField}
               autoFocus={true}

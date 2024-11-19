@@ -19,9 +19,7 @@ export function GrafanaFolderAndLabelsStep() {
   const { setValue, getValues } = useFormContext<RuleFormValues>();
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
-  function onCloseLabelsEditor(
-    labelsToUpdate?: KBObjectArray
-  ) {
+  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }

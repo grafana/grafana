@@ -10,9 +10,7 @@ export interface LabelsEditorModalProps {
     key: string;
     value: string;
   }>;
-  onClose: (
-    labelsToUodate?: KBObjectArray
-  ) => void;
+  onClose: (labelsToUodate?: KBObjectArray) => void;
   dataSourceName: string;
 }
 export function LabelsEditorModal({ isOpen, onClose, dataSourceName, initialLabels }: LabelsEditorModalProps) {

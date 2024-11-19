@@ -40,7 +40,6 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-
 import { EvalFunction } from '../../state/alertDef';
 import {
   AlertManagerManualRouting,
