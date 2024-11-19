@@ -52,7 +52,7 @@ export function transformDashboardLinksToEnums(links: DashboardLinkV1[]): Dashbo
     };
   });
 }
-export function transformVariableRefreshToEnum(refresh: VariableRefreshV1): VariableRefresh {
+export function transformVariableRefreshToEnum(refresh?: VariableRefreshV1): VariableRefresh {
   switch (refresh) {
     case 0:
       return VariableRefresh.Never;
