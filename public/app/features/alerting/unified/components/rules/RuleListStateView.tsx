@@ -135,9 +135,7 @@ const RulesByState = ({ state, rules }: { state: PromAlertingRuleState; rules: C
 };
 
 function useDataSourcesLoadingState() {
-  const dsConfigs = useUnifiedAlertingSelector((state) => state.dataSources);
   const promRules = useUnifiedAlertingSelector((state) => state.promRules);
-
   const rulesDataSources = useMemo(getRulesDataSources, []);
 
   const grafanaLoading = useUnifiedAlertingSelector((state) => {
@@ -147,9 +145,7 @@ function useDataSourcesLoadingState() {
     return promLoading || rulerLoading;
   });
 
-  const externalDataSourcesLoading = rulesDataSources.some(
-    (ds) => isAsyncRequestStatePending(promRules[ds.name]) || isAsyncRequestStatePending(dsConfigs[ds.name])
-  );
+  const externalDataSourcesLoading = rulesDataSources.some((ds) => isAsyncRequestStatePending(promRules[ds.name]));
 
   const loading = grafanaLoading || externalDataSourcesLoading;
 
