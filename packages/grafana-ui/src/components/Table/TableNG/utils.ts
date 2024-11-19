@@ -43,6 +43,10 @@ export function getCellHeight(
       }
     }
 
+    if (lines.length === 1) {
+      return defaultRowHeight;
+    }
+
     // TODO: double padding to adjust osContext.measureText() results
     const height = lines.length * lineHeight + PADDING * 2;
 
@@ -95,4 +99,32 @@ export function getRowHeight(
 
 function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
   return columnTypes[key] === FieldType.string;
+}
+
+export function shouldTextOverflow(
+  key: string,
+  row: Record<string, string>,
+  columnTypes: Record<string, string>,
+  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
+  osContext: OffscreenCanvasRenderingContext2D | null,
+  lineHeight: number,
+  defaultRowHeight: number,
+  padding: number,
+  textWrap: boolean
+): boolean {
+  if (textWrap) {
+    return false;
+  }
+
+  if (isTextCell(key, columnTypes)) {
+    const cellWidth = headerCellRefs.current[key].offsetWidth;
+    const cellText = row[key];
+    const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+
+    if (newCellHeight > defaultRowHeight) {
+      return true;
+    }
+  }
+
+  return false;
 }
