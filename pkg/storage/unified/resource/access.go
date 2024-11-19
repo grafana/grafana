@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"log/slog"
+	"time"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
@@ -25,7 +27,7 @@ func (c *staticAuthzClient) Compile(ctx context.Context, id claims.AuthInfo, req
 
 var _ authz.AccessClient = &staticAuthzClient{}
 
-type resourceGroup map[string]map[string]interface{}
+type groupResource map[string]map[string]interface{}
 
 // authzLimitedClient is a client that enforces RBAC for the limited number of groups and resources.
 // This is a temporary solution until the authz service is fully implemented.
@@ -34,26 +36,37 @@ type resourceGroup map[string]map[string]interface{}
 type authzLimitedClient struct {
 	client authz.AccessChecker
 	// whitelist is a map of group to resources that are compatible with RBAC.
-	whitelist resourceGroup
+	whitelist groupResource
+	logger    *slog.Logger
 }
 
 // NewAuthzLimitedClient creates a new authzLimitedClient.
 func NewAuthzLimitedClient(client authz.AccessChecker) authz.AccessClient {
+	logger := slog.Default().With("logger", "limited-authz-client")
 	return &authzLimitedClient{
 		client: client,
-		whitelist: resourceGroup{
+		whitelist: groupResource{
 			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
 			"folder.grafana.app":    map[string]interface{}{"folders": nil},
 		},
+		logger: logger,
 	}
 }
 
 // Check implements authz.AccessClient.
 func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
+		c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "rbac", false, "allowed", true)
 		return authz.CheckResponse{Allowed: true}, nil
 	}
-	return c.client.Check(ctx, id, req)
+	t := time.Now()
+	resp, err := c.client.Check(ctx, id, req)
+	if err != nil {
+		c.logger.Error("Check", "group", req.Group, "resource", req.Resource, "rbac", true, "error", err, "duration", time.Since(t))
+		return resp, err
+	}
+	c.logger.Debug("Check", "group", req.Group, "resource", req.Resource, "rbac", true, "allowed", resp.Allowed, "duration", time.Since(t))
+	return resp, nil
 }
 
 // Compile implements authz.AccessClient.
@@ -61,8 +74,10 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	return func(namespace string, name, folder string) bool {
 		// TODO: Implement For now we perform the check for each item.
 		if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
+			c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "rbac", false, "allowed", true)
 			return true
 		}
+		t := time.Now()
 		r, err := c.client.Check(ctx, id, authz.CheckRequest{
 			Verb:      "get",
 			Group:     req.Group,
@@ -72,8 +87,10 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			Folder:    folder,
 		})
 		if err != nil {
+			c.logger.Error("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "rbac", true, "error", err, "duration", time.Since(t))
 			return false
 		}
+		c.logger.Debug("Compile.Check", "group", req.Group, "resource", req.Resource, "namespace", namespace, "name", name, "folder", folder, "rbac", true, "allowed", r.Allowed, "duration", time.Since(t))
 		return r.Allowed
 	}, nil
 }
