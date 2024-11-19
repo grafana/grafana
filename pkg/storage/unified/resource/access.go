@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
@@ -64,7 +63,6 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 			return true
 		}
-		fmt.Println("TODO: Implement authzLimitedClient.Compile")
 		r, err := c.client.Check(ctx, id, authz.CheckRequest{
 			Verb:      "get",
 			Group:     req.Group,
