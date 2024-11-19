@@ -1,11 +1,15 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
 import { useState } from 'react';
 
-import { IconButton } from '../IconButton/IconButton';
+import { useStyles2 } from '../../themes';
+import { Checkbox } from '../Forms/Checkbox';
+import { Portal } from '../Portal/Portal';
 
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
+import { ValuePill } from './ValuePill';
+import { getComboboxStyles } from './getComboboxStyles';
+import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 
-//import { useStyles2 } from '../../themes';
 //import { getComboboxStyles } from './getComboboxStyles';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
@@ -16,13 +20,15 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
 type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
-  const { options } = props;
+  const { options, placeholder } = props;
 
-  //const styles = useStyles2(getComboboxStyles);
+  const styles = useStyles2(getComboboxStyles);
+  const multiStyles = useStyles2(getMultiComboboxStyles);
 
   const isAsync = typeof options === 'function';
 
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
+  const [isOpen, setIsOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>([]);
 
   const [inputValue, setInputValue] = useState('');
@@ -46,7 +52,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   const {
-    isOpen,
     //getToggleButtonProps,
     //getLabelProps,
     getMenuProps,
@@ -55,20 +60,29 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     getItemProps,
     //selectedItem,
   } = useCombobox({
+    isOpen,
     items,
     itemToString,
     inputValue,
     //defaultHighlightedIndex: 0,
     selectedItem: null,
+
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
-        case useCombobox.stateChangeTypes.InputBlur:
         case useCombobox.stateChangeTypes.ItemClick:
           if (newSelectedItem) {
-            setSelectedItems([...selectedItems, newSelectedItem]);
-            setInputValue('');
+            const isAlreadySelected = selectedItems.some((opt) => opt.value === newSelectedItem.value);
+            if (!isAlreadySelected) {
+              setSelectedItems([...selectedItems, newSelectedItem]);
+              break;
+            }
+            removeSelectedItem(newSelectedItem);
           }
+          break;
+        case useCombobox.stateChangeTypes.InputBlur:
+          setIsOpen(false);
+          setInputValue('');
           break;
         case useCombobox.stateChangeTypes.InputChange:
           setInputValue(newInputValue ?? '');
@@ -80,37 +94,45 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   return (
-    <div>
-      <span>
+    <div className={multiStyles.wrapper}>
+      <span className={multiStyles.pillWrapper}>
         {selectedItems.map((item, index) => (
-          <span key={`${item.value}${index}`} {...getSelectedItemProps({ selectedItem: item, index })}>
+          <ValuePill
+            onRemove={() => {
+              removeSelectedItem(item);
+            }}
+            key={`${item.value}${index}`}
+            {...getSelectedItemProps({ selectedItem: item, index })}
+          >
             {itemToString(item)}
-            <IconButton
-              name="times"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeSelectedItem(item);
-              }}
-              aria-label={`Remove ${itemToString(item)}`}
-            />
-          </span>
+          </ValuePill>
         ))}
       </span>
-      <input {...getInputProps(getDropdownProps({ preventKeyAction: isOpen }))} />
+      <input
+        className={multiStyles.input}
+        {...getInputProps(getDropdownProps({ preventKeyAction: isOpen, placeholder, onFocus: () => setIsOpen(true) }))}
+      />
       <div {...getMenuProps()}>
-        {isOpen && (
-          <div>
-            {items.map((item, index) => (
-              <div
-                key={`${item.value}${index}`}
-                {...getItemProps({ item, index })}
-                style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
-              >
-                {itemToString(item)}
-              </div>
-            ))}
-          </div>
-        )}
+        <Portal>
+          {isOpen && (
+            <div>
+              {items.map((item, index) => {
+                const itemProps = getItemProps({ item, index });
+                const isSelected = selectedItems.some((opt) => opt.value === item.value);
+                return (
+                  <Checkbox
+                    //className={styles.optionBody}
+                    key={`${item.value}${index}`}
+                    style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
+                    {...itemProps}
+                    checked={isSelected}
+                    label={itemToString(item)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </Portal>
       </div>
     </div>
   );
