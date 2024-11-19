@@ -3,8 +3,10 @@ import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
+import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
+import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
 
@@ -30,6 +32,10 @@ interface GrafanaCrashReport extends BaseStateReport {
 }
 
 export function initializeCrashDetection() {
+  if (!sharedWorkersSupported()) {
+    return;
+  }
+
   initCrashDetection<GrafanaCrashReport>({
     id: nanoid(5),
 
