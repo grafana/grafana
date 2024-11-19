@@ -107,7 +107,7 @@ export const extractFieldsTransformerEditor = ({
       </InlineFieldRow>
       {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
-          <InlineField label="RegExp" interactive={true} tooltip="Example: /(?<NewField>.*)/">
+          <InlineField label="RegExp" labelWidth={16} interactive={true} tooltip="Example: /(?<NewField>.*)/">
             <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
           </InlineField>
         </InlineFieldRow>
