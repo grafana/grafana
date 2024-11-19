@@ -4,7 +4,7 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
-import LanguageProvider from './language_provider';
+import LanguageProvider, { utf8Support } from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
@@ -120,7 +120,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         `/api/v1/labels`,
@@ -145,7 +151,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         '/api/v1/series',
@@ -174,7 +186,13 @@ describe('Language completion provider', () => {
 
       const labelName = 'job';
       const labelValue = 'grafana';
-      getSeriesLabels(`{${labelName}="${labelValue}"}`, [{ name: labelName, value: labelValue, op: '=' }] as Label[]);
+      getSeriesLabels(`{${labelName}="${labelValue}"}`, [
+        {
+          name: labelName,
+          value: labelValue,
+          op: '=',
+        },
+      ] as Label[]);
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
         `/api/v1/labels`,
@@ -647,6 +665,15 @@ describe('Language completion provider', () => {
           ],
         });
       });
+    });
+  });
+
+  describe('utf8 support', () => {
+    it('should return utf8 labels wrapped in quotes', () => {
+      const labels = ['metric_label', 'utf8 label with space 🤘'];
+      const expected = ['metric_label', `"utf8 label with space 🤘"`];
+      const supportedLabels = labels.map(utf8Support);
+      expect(supportedLabels).toEqual(expected);
     });
   });
 });
