@@ -115,7 +115,7 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id
+			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id, br.role as basic_role_name
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN user_role ur ON r.id = ur.role_id
@@ -128,11 +128,12 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			AND p.kind = ?
 		`
 		type Permission struct {
-			Action     string `xorm:"action"`
-			Kind       string
-			Identifier string
-			UserUID    string `xorm:"user_uid"`
-			TeamUID    string `xorm:"team_uid"`
+			Action        string `xorm:"action"`
+			Kind          string
+			Identifier    string
+			UserUID       string `xorm:"user_uid"`
+			TeamUID       string `xorm:"team_uid"`
+			BasicRoleName string `xorm:"basic_role_name"`
 		}
 
 		var permissions []Permission
@@ -153,8 +154,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			} else if len(p.TeamUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, zanzana.RelationTeamMember)
 			} else {
-				// FIXME(kalleep): Unsuported role binding (org role). We need to have basic roles in place
-				continue
+				subject = zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(p.BasicRoleName), zanzana.RelationAssignee)
 			}
 
 			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
