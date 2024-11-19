@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -78,7 +79,19 @@ func (r *s3Repository) Delete(ctx context.Context, path string, comment string) 
 }
 
 // Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook() http.HandlerFunc {
+func (r *s3Repository) Webhook(responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
+	return nil
+}
+
+func (r *s3Repository) AfterCreate(ctx context.Context) error {
+	return nil
+}
+
+func (r *s3Repository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+	return func(ctx context.Context) error { return nil }, nil
+}
+
+func (r *s3Repository) AfterDelete(ctx context.Context) error {
 	return nil
 }

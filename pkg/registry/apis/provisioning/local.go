@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -157,7 +158,19 @@ func (r *localRepository) Delete(ctx context.Context, path string, comment strin
 }
 
 // Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook() http.HandlerFunc {
+func (r *localRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
+	return nil
+}
+
+func (r *localRepository) AfterCreate(ctx context.Context) error {
+	return nil
+}
+
+func (r *localRepository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+	return nil, nil
+}
+
+func (r *localRepository) AfterDelete(ctx context.Context) error {
 	return nil
 }
