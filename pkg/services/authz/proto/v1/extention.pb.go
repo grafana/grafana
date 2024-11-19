@@ -402,7 +402,6 @@ type ReadRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Use namespace instead of store id. It will be handled on the server side
 	Namespace         string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	TupleKey          *ReadRequestTupleKey   `protobuf:"bytes,2,opt,name=tuple_key,json=tupleKey,proto3" json:"tuple_key,omitempty"`
 	PageSize          *wrapperspb.Int32Value `protobuf:"bytes,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
@@ -676,7 +675,6 @@ type WriteRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Use namespace instead of store id. It will be handled on the server side
 	Namespace string               `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Writes    *WriteRequestWrites  `protobuf:"bytes,2,opt,name=writes,proto3" json:"writes,omitempty"`
 	Deletes   *WriteRequestDeletes `protobuf:"bytes,3,opt,name=deletes,proto3" json:"deletes,omitempty"`

@@ -55,7 +55,6 @@ message RelationshipCondition {
 }
 
 message ReadRequest {
-  // Use namespace instead of store id. It will be handled on the server side
   string namespace = 1;
   ReadRequestTupleKey tuple_key = 2;
   google.protobuf.Int32Value page_size = 3;
@@ -73,14 +72,15 @@ message ReadResponse {
   string continuation_token = 2;
 }
 
-message WriteRequestWrites { repeated TupleKey tuple_keys = 1; }
+message WriteRequestWrites {
+  repeated TupleKey tuple_keys = 1;
+}
 
 message WriteRequestDeletes {
   repeated TupleKeyWithoutCondition tuple_keys = 1;
 }
 
 message WriteRequest {
-  // Use namespace instead of store id. It will be handled on the server side
   string namespace = 1;
   WriteRequestWrites writes = 2;
   WriteRequestDeletes deletes = 3;
@@ -103,9 +103,13 @@ message BatchCheckItem {
   string folder = 6;
 }
 
-message BatchCheckResponse { map<string, BatchCheckGroupResource> groups = 1; }
+message BatchCheckResponse {
+  map<string, BatchCheckGroupResource> groups = 1;
+}
 
-message BatchCheckGroupResource { map<string, bool> items = 1; }
+message BatchCheckGroupResource {
+  map<string, bool> items = 1;
+}
 
 message CapabilitiesRequest {
   string subject = 1;
@@ -118,4 +122,6 @@ message CapabilitiesRequest {
   string subresource = 8;
 }
 
-message CapabilitiesResponse { repeated string capabilities = 1; }
+message CapabilitiesResponse {
+  repeated string capabilities = 1;
+}
