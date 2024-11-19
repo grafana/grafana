@@ -7,7 +7,7 @@ INSERT INTO "secure_value" (
     "created", "created_by",
     "updated", "updated_by",
     "annotations", "labels", 
-    "apis"
+    "audiences"
   )
   VALUES (
     'abc',

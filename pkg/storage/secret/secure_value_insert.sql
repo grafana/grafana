@@ -7,7 +7,7 @@ INSERT INTO {{ .Ident "secure_value" }} (
     "created", "created_by",
     "updated", "updated_by",
     "annotations", "labels", 
-    "apis"
+    "audiences"
   )
   VALUES (
     {{ .Arg .Row.UID }},
@@ -18,6 +18,6 @@ INSERT INTO {{ .Ident "secure_value" }} (
     {{ .Arg .Row.Created }}, {{ .Arg .Row.CreatedBy }},
     {{ .Arg .Row.Updated }}, {{ .Arg .Row.UpdatedBy }},
     {{ .Arg .Row.Annotations }}, {{ .Arg .Row.Labels }},
-    {{ .Arg .Row.APIs }}
+    {{ .Arg .Row.Audiences }}
   )
 ;

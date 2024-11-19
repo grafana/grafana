@@ -33,7 +33,7 @@ type SecureValueSpec struct {
 	// NOTE: this value is only expected on write
 	Path string `json:"path,omitempty"`
 
-	// The APIs that are allowed to decrypt this secret
+	// The Audiences that are allowed to decrypt this secret
 	// Support and behavior is still TBD, but could likely look like:
 	// * testdata.grafana.app/{name1}
 	// * testdata.grafana.app/{name2}
@@ -41,7 +41,8 @@ type SecureValueSpec struct {
 	// Rather than a string pattern, we may want a more explicit object:
 	// [{ group:"testdata.grafana.app", name="name1"},
 	//  { group:"runner.k6.grafana.app"}]
-	APIs []string `json:"apis"`
+	// +listType=atomic
+	Audiences []string `json:"audiences"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

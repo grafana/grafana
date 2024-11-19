@@ -4,7 +4,7 @@ UPDATE {{ .Ident "secure_value" }} SET
  "updated_by"={{ .Arg .Row.UpdatedBy }},
  "labels"={{ .Arg .Row.Labels }}, 
  "annotations"={{ .Arg .Row.Annotations }},
- "apis"={{ .Arg .Row.APIs }}
+ "audiences"={{ .Arg .Row.Audiences }}
 WHERE "uid"={{ .Arg .Row.UID }}
   AND "namespace"={{ .Arg .Row.Namespace }}
   AND "name"={{ .Arg .Row.Name }}
