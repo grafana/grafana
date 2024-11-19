@@ -1,7 +1,7 @@
 import { take, tap, withAbort } from 'ix/asynciterable/operators';
-import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
+import { useDeepCompareEffect } from 'react-use';
 
 import { Card, EmptyState, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -24,8 +24,6 @@ const FRONTENT_PAGE_SIZE = 100;
 const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
-  const [prevFilterState, setPrevFilterState] = useState(filterState);
-  const filterChanged = !isEqual(prevFilterState, filterState);
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
@@ -39,7 +37,7 @@ export function FilterView({ filterState }: FilterViewProps) {
    * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
    * callback function to detect when we've exhausted the source.
    */
-  const initIterator = useCallback(
+  const createNewIterator = useCallback(
     () =>
       getFilteredRulesIterator().pipe(
         withAbort(controller.current.signal),
@@ -49,7 +47,7 @@ export function FilterView({ filterState }: FilterViewProps) {
   );
 
   /* This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-  const rulesIterator = useRef(initIterator());
+  const rulesIterator = useRef(createNewIterator());
 
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [doneSearching, setDoneSearching] = useState(false);
@@ -63,31 +61,24 @@ export function FilterView({ filterState }: FilterViewProps) {
     }
   });
 
+  /* Start by loading a page of results when the component mounts */
+  useEffect(() => {
+    loadResultPage();
+  }, [loadResultPage]);
+
   /* Reset the search state, called when we choose a different filter state */
-  const resetSearchState = useCallback(() => {
+  useDeepCompareEffect(() => {
     // recreate abort controller
     controller.current.abort();
     controller.current = new AbortController();
 
     // recreate rules iterator
-    rulesIterator.current = initIterator();
-  }, [initIterator]);
-
-  if (filterChanged) {
-    resetSearchState();
+    rulesIterator.current = createNewIterator();
 
     // reset view state
     setRules([]);
     setDoneSearching(false);
-    setPrevFilterState(filterState);
-
-    loadResultPage();
-  }
-
-  /* Start by loading a page of results when the component mounts */
-  useEffect(() => {
-    loadResultPage();
-  }, [loadResultPage]);
+  }, [filterState]);
 
   /* When we unmount the component we make sure to abort all iterables */
   useEffect(() => {
