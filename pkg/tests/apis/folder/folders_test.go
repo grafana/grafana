@@ -154,9 +154,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
 			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -190,9 +189,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
 			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -226,9 +224,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
 			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		}))
 	})
 
@@ -278,9 +275,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			},
 			EnableFeatureToggles: []string{
 				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
 			},
-			// Not including featuremgmt.FlagKubernetesFolders because we refer to the k8s client directly in doFolderTests().
-			// This allows us to access the legacy api (which gets bypassed by featuremgmt.FlagKubernetesFolders).
 		})
 
 		// Clear the collection before starting (etcd)
