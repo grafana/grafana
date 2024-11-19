@@ -29,7 +29,9 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-const ViewOptions: SelectableValue[] = [
+export type SupportedView = 'list' | 'grouped';
+
+const ViewOptions: Array<SelectableValue<SupportedView>> = [
   {
     icon: 'folder',
     label: 'Grouped',
@@ -39,11 +41,6 @@ const ViewOptions: SelectableValue[] = [
     icon: 'list-ul',
     label: 'List',
     value: 'list',
-  },
-  {
-    icon: 'heart-rate',
-    label: 'State',
-    value: 'state',
   },
 ];
 
@@ -75,7 +72,6 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const [queryParams, updateQueryParams] = useURLSearchParams();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
@@ -140,11 +136,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     onClear();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
-  };
-
-  const handleViewChange = (view: string) => {
-    updateQueryParams({ view });
-    trackRulesListViewChange({ view });
   };
 
   const handleContactPointChange = (contactPoint: string) => {
@@ -318,11 +309,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           </form>
           <div>
             <Label>View as</Label>
-            <RadioButtonGroup
-              options={ViewOptions}
-              value={queryParams.get('view') ?? ViewOptions[0].value}
-              onChange={handleViewChange}
-            />
+            <SelectedViewComponent />
           </div>
         </Stack>
         {hasActiveFilters && (
@@ -336,6 +323,26 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     </Stack>
   );
 };
+
+function SelectedViewComponent() {
+  const [queryParams, updateQueryParams] = useURLSearchParams();
+  const { hasActiveFilters } = useRulesFilter();
+  const wantsListView = queryParams.get('view') === 'list';
+
+  const selectedViewOption = hasActiveFilters || wantsListView ? 'list' : 'grouped';
+
+  /* If we change to the grouped view, we just remove the "list" and "search" params */
+  const handleViewChange = (view: SupportedView) => {
+    if (view === 'list') {
+      updateQueryParams({ view });
+      trackRulesListViewChange({ view });
+    } else {
+      updateQueryParams({ view: undefined, search: undefined });
+    }
+  };
+
+  return <RadioButtonGroup options={ViewOptions} value={selectedViewOption} onChange={handleViewChange} />;
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

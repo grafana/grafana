@@ -15,7 +15,7 @@ import { prometheusApi } from '../api/prometheusApi';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../utils/alertmanager';
-import { getDatasourceAPIUid } from '../utils/datasource';
+import { getAllRulesSourceNames, getDatasourceAPIUid } from '../utils/datasource';
 import { parseMatcher } from '../utils/matchers';
 import { hashRule } from '../utils/rule-id';
 import { isAlertingRule } from '../utils/rules';
@@ -154,6 +154,7 @@ interface RuleWithOrigin {
 
 function useFilteredRulesIteratorProvider(filterState: RulesFilter, groupLimit: number) {
   const [fetchGroups] = useLazyGroupsQuery();
+  const allRuleSourceNames = getAllRulesSourceNames();
 
   /**
    * This async generator will continue to yield rule groups and will keep fetching backend pages as long as the consumer
@@ -195,7 +196,10 @@ function useFilteredRulesIteratorProvider(filterState: RulesFilter, groupLimit: 
   );
 
   const getFilteredRulesIterator = () => {
-    const [source, ...iterables] = filterState.dataSourceNames.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
+    const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
+      ? filterState.dataSourceNames
+      : allRuleSourceNames;
+    const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
 
     return merge(source, ...iterables).pipe(
       filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),

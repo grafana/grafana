@@ -31,6 +31,7 @@ import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { Spacer } from '../components/Spacer';
 import { WithReturnButton } from '../components/WithReturnButton';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
+import { SupportedView } from '../components/rules/Filter/RulesFilter.v1';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
@@ -39,7 +40,6 @@ import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/r
 import { createRelativeUrl } from '../utils/url';
 
 import { FilterView } from './FilterView';
-import { StateView } from './StateView';
 import { AlertRuleListItem, RecordingRuleListItem, UnknownRuleListItem } from './components/AlertRuleListItem';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
@@ -55,11 +55,11 @@ const GROUP_PAGE_SIZE = 10;
 const RuleList = withErrorBoundary(
   () => {
     const [queryParams] = useURLSearchParams();
-    const ruleSources = getAllRulesSources();
-
-    const view = queryParams.get('view') ?? 'groups';
-
     const { filterState, hasActiveFilters } = useRulesFilter();
+
+    const ruleSources = getAllRulesSources();
+    const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
+    const showListView = hasActiveFilters || view === 'list';
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
@@ -67,9 +67,7 @@ const RuleList = withErrorBoundary(
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={null}>
         <RulesFilter onClear={() => {}} />
         <Stack direction="column" gap={1}>
-          {view === 'state' ? (
-            <StateView namespaces={[]} />
-          ) : hasActiveFilters ? (
+          {showListView ? (
             <FilterView filterState={filterState} />
           ) : (
             <>
