@@ -306,6 +306,10 @@
         "success": "Successfully updated rule group"
       }
     },
+    "rule-list": {
+      "configure-datasource": "Configure",
+      "new-alert-rule": "New alert rule"
+    },
     "rule-state": {
       "creating": "Creating",
       "deleting": "Deleting",
@@ -2744,9 +2748,11 @@
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
+      "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-schemav2": "View JSON SchemaV2"
     },
     "library": {
       "info": "Create library panel."

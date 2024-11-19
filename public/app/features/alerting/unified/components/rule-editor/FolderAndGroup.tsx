@@ -4,26 +4,26 @@ import * as React from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
-import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { createFolder } from 'app/features/manage-dashboards/state/actions';
+import { useNewFolderMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { AccessControlAction } from 'app/types';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
-import { RuleFormValues } from '../../types/rule-form';
+import { Folder, RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRecordingRuleByType, isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
-import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 
 export const MAX_GROUP_RESULTS = 1000;
 
@@ -164,13 +164,18 @@ export function FolderAndGroup({
                   <Controller
                     render={({ field: { ref, ...field } }) => (
                       <div style={{ width: 420 }}>
-                        <RuleFolderPicker
-                          inputId="folder"
+                        <NestedFolderPicker
+                          showRootFolder={false}
                           invalid={!!errors.folder?.message}
                           {...field}
-                          enableReset={true}
-                          onChange={({ title, uid }) => {
-                            field.onChange({ title, uid });
+                          value={folder?.uid}
+                          onChange={(uid, title) => {
+                            if (uid && title) {
+                              setValue('folder', { title, uid });
+                            } else {
+                              setValue('folder', undefined);
+                            }
+
                             resetGroup();
                           }}
                         />
@@ -288,31 +293,27 @@ function FolderCreationModal({
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
 
+  const notifyApp = useAppNotification();
   const [title, setTitle] = useState('');
+  const [createFolder] = useNewFolderMutation();
+
   const onSubmit = async () => {
-    const newFolder = await createFolder({ title: title });
-    if (!newFolder.uid) {
-      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
-      return;
+    const { data, error } = await createFolder({ title });
+
+    if (error) {
+      notifyApp.error('Failed to create folder');
+    } else if (data) {
+      onCreate({ title: data.title, uid: data.uid });
+      notifyApp.success('Folder created');
     }
-
-    const folder: Folder = { title: newFolder.title, uid: newFolder.uid };
-    onCreate(folder);
-    appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
   };
-
-  const error = containsSlashes(title);
 
   return (
     <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
       <div className={styles.modalTitle}>Create a new folder to store your rule</div>
 
       <form onSubmit={onSubmit}>
-        <Field
-          label={<Label htmlFor="folder">Folder name</Label>}
-          error={"The folder name can't contain slashes"}
-          invalid={error}
-        >
+        <Field label={<Label htmlFor="folder">Folder name</Label>}>
           <Input
             data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
@@ -330,7 +331,7 @@ function FolderCreationModal({
           </Button>
           <Button
             type="submit"
-            disabled={!title || error}
+            disabled={!title}
             data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
           >
             Create

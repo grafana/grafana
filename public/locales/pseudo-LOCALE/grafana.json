@@ -306,6 +306,10 @@
         "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
       }
     },
+    "rule-list": {
+      "configure-datasource": "Cőŉƒįģūřę",
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
+    },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
       "deleting": "Đęľęŧįŉģ",
@@ -2744,9 +2748,11 @@
       "back-button": "ßäčĸ ŧő ęχpőřŧ čőŉƒįģ",
       "cancel-button": "Cäŉčęľ",
       "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
+      "loading": "Ŀőäđįŉģ...",
       "save-button": "Ŝävę ŧő ƒįľę",
       "share-externally-label": "Ēχpőřŧ ƒőř şĥäřįŉģ ęχŧęřŉäľľy",
-      "view-button": "Vįęŵ ĴŜØŃ"
+      "view-button": "Vįęŵ ĴŜØŃ",
+      "view-button-schemav2": "Vįęŵ ĴŜØŃ ŜčĥęmäV2"
     },
     "library": {
       "info": "Cřęäŧę ľįþřäřy päŉęľ."

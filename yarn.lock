@@ -2934,14 +2934,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/ecma402-abstract@npm:2.2.3":
-  version: 2.2.3
-  resolution: "@formatjs/ecma402-abstract@npm:2.2.3"
+"@formatjs/ecma402-abstract@npm:2.2.4":
+  version: 2.2.4
+  resolution: "@formatjs/ecma402-abstract@npm:2.2.4"
   dependencies:
     "@formatjs/fast-memoize": "npm:2.2.3"
-    "@formatjs/intl-localematcher": "npm:0.5.7"
+    "@formatjs/intl-localematcher": "npm:0.5.8"
     tslib: "npm:2"
-  checksum: 10/d39e9f0d36c296a635f52aa35e07a67b6aa90383a30a046a0508e5d730676399fd0e67188eff463fe2a4d5febc9f567af45788fdf881e070910be7eb9294dd8c
+  checksum: 10/f7ab8be1e93f417a4a62c7be645618fec5652d412e55beffeeeada2b74660ad86b1876e3617ef0725f1454b193255dbb37ae779d8bb17ea71643e611e7edab02
   languageName: node
   linkType: hard
 
@@ -2985,13 +2985,13 @@ __metadata:
   linkType: hard
 
 "@formatjs/intl-durationformat@npm:^0.6.0":
-  version: 0.6.3
-  resolution: "@formatjs/intl-durationformat@npm:0.6.3"
+  version: 0.6.4
+  resolution: "@formatjs/intl-durationformat@npm:0.6.4"
   dependencies:
-    "@formatjs/ecma402-abstract": "npm:2.2.3"
-    "@formatjs/intl-localematcher": "npm:0.5.7"
+    "@formatjs/ecma402-abstract": "npm:2.2.4"
+    "@formatjs/intl-localematcher": "npm:0.5.8"
     tslib: "npm:2"
-  checksum: 10/1adc77b06e2f5791aef526cc3041de339cf99bc7e68cce81490066e0b1b0124d5cbe03d9f28b6a46bdd9ba22a0363315ccb20b9d1859ee0bcea7f79e9365844a
+  checksum: 10/aa7c045e94322f0a5723584e79dd1395b3c08e5d1d79432748ae98c0b0c1727059bd1aa5c04090df916ff1aea768336184a2d09ecfd2ece2fb090c472bbd8250
   languageName: node
   linkType: hard
 
@@ -3004,12 +3004,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formatjs/intl-localematcher@npm:0.5.7":
-  version: 0.5.7
-  resolution: "@formatjs/intl-localematcher@npm:0.5.7"
+"@formatjs/intl-localematcher@npm:0.5.8":
+  version: 0.5.8
+  resolution: "@formatjs/intl-localematcher@npm:0.5.8"
   dependencies:
     tslib: "npm:2"
-  checksum: 10/52201f12212e7e9cba1a4f99020da587b13e44e06e03c4ccd4e5ac0829b411e73dfe0904a9039ef81eeabeea04ed8cfae9e727e6791acd0230745b7bd3ad059e
+  checksum: 10/760fa292762d68904c133faa5d2900167fac03ee825e04e005438ae6e979facccbb4d12bba04906193feafd705348f191e4c3079c7bf54e0b66956a1199ad1df
   languageName: node
   linkType: hard
 
@@ -3657,17 +3657,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.12.0, @grafana/faro-core@npm:^1.3.6":
-  version: 1.12.0
-  resolution: "@grafana/faro-core@npm:1.12.0"
+"@grafana/faro-core@npm:^1.12.0, @grafana/faro-core@npm:^1.12.1, @grafana/faro-core@npm:^1.3.6":
+  version: 1.12.1
+  resolution: "@grafana/faro-core@npm:1.12.1"
   dependencies:
     "@opentelemetry/api": "npm:^1.9.0"
     "@opentelemetry/otlp-transformer": "npm:^0.53.0"
-  checksum: 10/beb747ad360263737e3576ad8d0dccab0828e538797032cf97eed4a3e1c31232750285afb4c3840de80bc25b17defb3ab75976c59622778131311548ebd86100
+  checksum: 10/02502bc34723377f06a24ed89e4589654dd5fbeab7e9c31a19291fa088a1237de081f99ba7c5a2032d77d12a686281d16af55064cbf69fad9e52cf8a29d7c000
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.12.0, @grafana/faro-web-sdk@npm:^1.12.0, @grafana/faro-web-sdk@npm:^1.3.6":
+"@grafana/faro-web-sdk@npm:1.12.0":
   version: 1.12.0
   resolution: "@grafana/faro-web-sdk@npm:1.12.0"
   dependencies:
@@ -3675,6 +3675,17 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
   checksum: 10/220c31d90b18150e42ab69ace544a10ca8bc3710f95d44d95dd5ea8d8318dc6938daec67a5ab0c288b0470edda373a796ea32f231c71c6fb1f248d1f8632b397
+  languageName: node
+  linkType: hard
+
+"@grafana/faro-web-sdk@npm:^1.12.0, @grafana/faro-web-sdk@npm:^1.3.6":
+  version: 1.12.1
+  resolution: "@grafana/faro-web-sdk@npm:1.12.1"
+  dependencies:
+    "@grafana/faro-core": "npm:^1.12.1"
+    ua-parser-js: "npm:^1.0.32"
+    web-vitals: "npm:^4.0.1"
+  checksum: 10/7a352846946e1cb240ff405ef88b71e710eb049f307740a1acbf64e879422a9a44956bc2c5fa6b73c8ac742090f6c96e64254470209e476653d5d4649808a7d0
   languageName: node
   linkType: hard
 
@@ -4259,7 +4270,7 @@ __metadata:
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
     react-dom: "npm:18.2.0"
-    react-dropzone: "npm:14.2.10"
+    react-dropzone: "npm:14.3.5"
     react-highlight-words: "npm:0.20.0"
     react-hook-form: "npm:^7.49.2"
     react-i18next: "npm:^14.0.0"
@@ -12383,7 +12394,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"attr-accept@npm:^2.2.2, attr-accept@npm:^2.2.4":
+"attr-accept@npm:^2.2.4":
   version: 2.2.5
   resolution: "attr-accept@npm:2.2.5"
   checksum: 10/474b1c53e62c5b881c745d1f098196f190c8b493245e95d4b0fea9298d3acb56f551868fc12806885277e55e9d8ad3c5963e92d93456f4e4081dfc5190977bfd
@@ -17593,15 +17604,6 @@ __metadata:
   version: 2.0.5
   resolution: "file-saver@npm:2.0.5"
   checksum: 10/fbba443d9b682fec0be6676c048a7ac688b9bd33b105c02e8e1a1cb3e354ed441198dc1f15dcbc137fa044bea73f8a7549f2617e3a952fa7d96390356d54a7c3
-  languageName: node
-  linkType: hard
-
-"file-selector@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "file-selector@npm:0.6.0"
-  dependencies:
-    tslib: "npm:^2.4.0"
-  checksum: 10/6add4098ae07fd1e9050b1e8d3fd9f128680c1d6648c0676af54ace4586e6e5bfcb8fdfa45b69e9131ffd8175bf630d54a445a5facf9be244f85b99ce309183e
   languageName: node
   linkType: hard
 
@@ -27109,20 +27111,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:14.2.10":
-  version: 14.2.10
-  resolution: "react-dropzone@npm:14.2.10"
-  dependencies:
-    attr-accept: "npm:^2.2.2"
-    file-selector: "npm:^0.6.0"
-    prop-types: "npm:^15.8.1"
-  peerDependencies:
-    react: ">= 16.8 || 18.0.0"
-  checksum: 10/39ba14b2b34d6784164955f201bd7168b6a4b7a0b1625de743054667e5e04b8113fca565c347661adcb90de29e9b40a6036a5a4719939a80ac8999bc42779561
-  languageName: node
-  linkType: hard
-
-"react-dropzone@npm:^14.2.3":
+"react-dropzone@npm:14.3.5, react-dropzone@npm:^14.2.3":
   version: 14.3.5
   resolution: "react-dropzone@npm:14.3.5"
   dependencies:
