@@ -13,12 +13,7 @@ import { groupIdentifier } from '../groupIdentifier';
 import { ListSection } from '../rule-list/components/ListSection';
 import { createViewLink } from '../utils/misc';
 import { hashRule } from '../utils/rule-id';
-import {
-  getRuleGroupLocationFromCombinedRule,
-  getRulePluginOrigin,
-  isAlertingRule,
-  isGrafanaRulerRule,
-} from '../utils/rules';
+import { getRulePluginOrigin, isAlertingRule, isGrafanaRulerRule } from '../utils/rules';
 
 import { AlertRuleListItem } from './components/AlertRuleListItem';
 import { ActionsLoader, RuleActionsButtons } from './components/RuleActionsButtons.V2';

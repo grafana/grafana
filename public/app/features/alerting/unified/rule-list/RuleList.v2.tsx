@@ -245,7 +245,6 @@ function LazyPagination({ canMoveForward, canMoveBackward, nextPage, previousPag
 interface AlertRuleLoaderProps {
   rule: Rule;
   groupIdentifier: DataSourceRuleGroupIdentifier;
-  // rulerEnabled?: boolean;
 }
 
 export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdentifier }: AlertRuleLoaderProps) {
@@ -303,7 +302,9 @@ export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdenti
   if (isAlertingRule(rule)) {
     return (
       <AlertRuleListItem
-        name={`${rule.name} (${rulesSource.name})`}
+        name={rule.name}
+        rulesSource={rulesSource}
+        application={dataSourceInfo?.application}
         group={groupName}
         namespace={namespace.name}
         href={href}
@@ -324,6 +325,8 @@ export const AlertRuleLoader = memo(function AlertRuleLoader({ rule, groupIdenti
     return (
       <RecordingRuleListItem
         name={rule.name}
+        rulesSource={rulesSource}
+        application={dataSourceInfo?.application}
         group={groupName}
         namespace={namespace.name}
         href={href}

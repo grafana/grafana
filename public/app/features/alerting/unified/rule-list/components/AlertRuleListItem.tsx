@@ -3,10 +3,16 @@ import pluralize from 'pluralize';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { GrafanaRulesSourceSymbol, Rule, RuleGroupIdentifierV2, RuleHealth } from 'app/types/unified-alerting';
-import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import {
+  GrafanaRulesSourceSymbol,
+  Rule,
+  RuleGroupIdentifierV2,
+  RuleHealth,
+  RulesSourceIdentifier,
+} from 'app/types/unified-alerting';
+import { Labels, PromAlertingRuleState, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
 import { MetaText } from '../../components/MetaText';
@@ -18,6 +24,7 @@ import { createContactPointSearchLink } from '../../utils/misc';
 import { RulePluginOrigin } from '../../utils/rules';
 
 import { ListItem } from './ListItem';
+import { DataSourceIcon } from './Namespace';
 import { RuleListIcon } from './RuleListIcon';
 import { calculateNextEvaluationEstimate } from './util';
 
@@ -36,6 +43,8 @@ interface AlertRuleListItemProps {
   instancesCount?: number;
   namespace?: string;
   group?: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
   // used for alert rules that use simplified routing
   contactPoint?: string;
   actions?: ReactNode;
@@ -57,6 +66,8 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     instancesCount = 0,
     namespace,
     group,
+    rulesSource,
+    application,
     contactPoint,
     labels,
     origin,
@@ -67,7 +78,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   if (namespace && group) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} />
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
       </Text>
     );
   }
@@ -144,6 +155,8 @@ export function RecordingRuleListItem({
   name,
   namespace,
   group,
+  rulesSource,
+  application,
   href,
   health,
   isProvisioned,
@@ -156,7 +169,7 @@ export function RecordingRuleListItem({
   if (namespace && group) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
-        <RuleLocation namespace={namespace} group={group} />
+        <RuleLocation namespace={namespace} group={group} rulesSource={rulesSource} application={application} />
       </Text>
     );
   }
@@ -280,11 +293,23 @@ export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListIt
 interface RuleLocationProps {
   namespace: string;
   group: string;
+  rulesSource?: RulesSourceIdentifier;
+  application?: RulesSourceApplication;
 }
 
-export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
+// @TODO make the datasource / namespace / group click-able to allow further filtering of the list
+export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => (
   <Stack direction="row" alignItems="center" gap={0.5}>
-    <Icon size="xs" name="folder" />
+    {!(rulesSource && application) ? null : application === 'grafana' ? (
+      <Icon size="xs" name="folder" />
+    ) : (
+      <Tooltip content={rulesSource.name}>
+        <span>
+          <DataSourceIcon application={application} size={14} />
+        </span>
+      </Tooltip>
+    )}
+
     <Stack direction="row" alignItems="center" gap={0}>
       {namespace}
       <Icon size="sm" name="angle-right" />

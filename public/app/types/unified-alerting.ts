@@ -202,7 +202,7 @@ export interface GrafanaRuleGroupIdentifier {
 }
 
 export interface DataSourceRuleGroupIdentifier {
-  rulesSource: { uid: string; name: string };
+  rulesSource: RulesSourceIdentifier;
   groupName: string;
   namespace: DataSourceNamespaceIdentifier;
   groupOrigin: 'datasource';
