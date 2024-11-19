@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -191,7 +192,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 
 	type testCase struct {
 		desc          string
-		identity      user.SessionAwareIdentityRequester
+		identity      identity.Requester
 		setup         func(env *environment)
 		expectedToken *oauth2.Token
 		expectedErr   error

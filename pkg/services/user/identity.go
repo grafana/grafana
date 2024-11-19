@@ -9,22 +9,13 @@ import (
 	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 )
 
 const (
 	GlobalOrgID = int64(0)
 )
 
-type SessionAwareIdentityRequester interface {
-	identity.Requester
-	GetSessionToken() *usertoken.UserToken
-}
-
-var (
-	_ identity.Requester            = &SignedInUser{}
-	_ SessionAwareIdentityRequester = &SignedInUser{}
-)
+var _ identity.Requester = &SignedInUser{}
 
 type SignedInUser struct {
 	UserID        int64  `xorm:"user_id"`
@@ -41,7 +32,6 @@ type SignedInUser struct {
 	// AuthenticatedBy be set if user signed in using external method
 	AuthenticatedBy string
 	Namespace       string
-	UserToken       *usertoken.UserToken
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -65,11 +55,6 @@ type SignedInUser struct {
 // Access implements claims.AuthInfo.
 func (u *SignedInUser) GetAccess() claims.AccessClaims {
 	return &identity.IDClaimsWrapper{Source: u}
-}
-
-// GetSessionToken implements SessionAwareIdentityRequester.
-func (u *SignedInUser) GetSessionToken() *usertoken.UserToken {
-	return u.UserToken
 }
 
 // Identity implements claims.AuthInfo.

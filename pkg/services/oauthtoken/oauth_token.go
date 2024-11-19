@@ -47,11 +47,11 @@ type Service struct {
 
 //go:generate mockery --name OAuthTokenService --structname MockService --outpkg oauthtokentest --filename service_mock.go --output ./oauthtokentest/
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, user.SessionAwareIdentityRequester) *oauth2.Token
+	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
 	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
-	TryTokenRefresh(context.Context, user.SessionAwareIdentityRequester) (*oauth2.Token, error)
-	InvalidateOAuthTokens(context.Context, user.SessionAwareIdentityRequester) error
+	TryTokenRefresh(context.Context, identity.Requester) (*oauth2.Token, error)
+	InvalidateOAuthTokens(context.Context, identity.Requester) error
 }
 
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
@@ -68,7 +68,7 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr user.SessionAwareIdentityRequester) *oauth2.Token {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
 	defer span.End()
 
@@ -172,7 +172,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful
 // It uses a server lock to prevent getting the Refresh Token multiple times for a given User
-func (o *Service) TryTokenRefresh(ctx context.Context, usr user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
+func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.TryTokenRefresh")
 	defer span.End()
 
@@ -306,7 +306,7 @@ func checkOAuthRefreshToken(authInfo *login.UserAuth) error {
 }
 
 // InvalidateOAuthTokens invalidates the OAuth tokens (access_token, refresh_token) and sets the Expiry to default/zero
-func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr user.SessionAwareIdentityRequester) error {
+func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Requester) error {
 	userID, err := usr.GetInternalID()
 	if err != nil {
 		logger.Error("Failed to convert user id to int", "id", usr.GetID(), "error", err)
@@ -320,7 +320,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr user.SessionAwa
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr identity.Requester) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken")
 	defer span.End()
 
