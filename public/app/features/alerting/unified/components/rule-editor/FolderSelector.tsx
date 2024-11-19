@@ -136,58 +136,49 @@ function FolderCreationModal({
 
   return (
     <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
-      <div className={styles.modalTitle}>
-        <Trans i18nKey="alerting.rule-form.folder.create-folder">
-          Create a new folder to store your alert rule in.
-        </Trans>
-      </div>
-
-      <form onSubmit={onSubmit}>
-        <Field label={<Label htmlFor="folder">
-          <Trans i18nKey="alerting.rule-form.folder.name">
-            Folder name
+      <Stack direction="column" gap={2}>
+        <Text color="secondary">
+          <Trans i18nKey="alerting.rule-form.folder.create-folder">
+            Create a new folder to store your alert rule in.
           </Trans>
-        </Label>}>
-          <Input
-            data-testid={selectors.components.AlertRules.newFolderNameField}
-            autoFocus={true}
-            id="folderName"
-            placeholder="Enter a name"
-            value={title}
-            onChange={(e) => setTitle(e.currentTarget.value)}
-          />
-        </Field>
+        </Text>
 
-        <Modal.ButtonRow>
-          <Button variant="secondary" type="button" onClick={onClose}>
-            <Trans i18nKey="alerting.rule-form.folder.cancel">Cancel</Trans>
-          </Button>
-          <Button
-            type="submit"
-            disabled={!title}
-            data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
-          >
-            <Trans i18nKey="alerting.rule-form.folder.create">Create</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </form>
+        <form onSubmit={onSubmit}>
+          <Field label={<Label htmlFor="folder">
+            <Trans i18nKey="alerting.rule-form.folder.name">
+              Folder name
+            </Trans>
+          </Label>}>
+            <Input
+              data-testid={selectors.components.AlertRules.newFolderNameField}
+              autoFocus={true}
+              id="folderName"
+              placeholder="Enter a name"
+              value={title}
+              onChange={(e) => setTitle(e.currentTarget.value)}
+            />
+          </Field>
+
+          <Modal.ButtonRow>
+            <Button variant="secondary" type="button" onClick={onClose}>
+              <Trans i18nKey="alerting.rule-form.folder.cancel">Cancel</Trans>
+            </Button>
+            <Button
+              type="submit"
+              disabled={!title}
+              data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
+            >
+              <Trans i18nKey="alerting.rule-form.folder.create">Create</Trans>
+            </Button>
+          </Modal.ButtonRow>
+        </form>
+      </Stack>
     </Modal>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'baseline',
-    maxWidth: `${theme.breakpoints.values.lg}px`,
-    justifyContent: 'space-between',
-  }),
   modal: css({
     width: `${theme.breakpoints.values.sm}px`,
-  }),
-  modalTitle: css({
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing(2),
   }),
 });
