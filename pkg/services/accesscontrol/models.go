@@ -73,15 +73,16 @@ func (r Role) MarshalJSON() ([]byte, error) {
 
 // swagger:ignore
 type RoleDTO struct {
-	Version     int64        `json:"version"`
-	UID         string       `xorm:"uid" json:"uid"`
-	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName,omitempty"`
-	Description string       `json:"description"`
-	Group       string       `xorm:"group_name" json:"group"`
-	Permissions []Permission `json:"permissions,omitempty"`
-	Delegatable *bool        `json:"delegatable,omitempty"`
-	Hidden      bool         `json:"hidden,omitempty"`
+	Version         int64        `json:"version"`
+	UID             string       `xorm:"uid" json:"uid"`
+	Name            string       `json:"name"`
+	DisplayName     string       `json:"displayName,omitempty"`
+	Description     string       `json:"description"`
+	Group           string       `xorm:"group_name" json:"group"`
+	Permissions     []Permission `json:"permissions,omitempty"`
+	Delegatable     *bool        `json:"delegatable,omitempty"`
+	MappedGroupUIDs []string     `json:"mappedGroupUIDs,omitempty"`
+	Hidden          bool         `json:"hidden,omitempty"`
 
 	ID    int64 `json:"-" xorm:"pk autoincr 'id'"`
 	OrgID int64 `json:"-" xorm:"org_id"`
