@@ -60,7 +60,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "org-2",
@@ -74,7 +74,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "org-2",
@@ -88,7 +88,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "org-2",
@@ -106,7 +106,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Namespace: "org-2",
 			},
@@ -131,7 +131,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Name:      "dash1",
 				Namespace: "org-2",
 			},
@@ -141,7 +141,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			name: "should return error when verb is not set",
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "org-2",
@@ -152,7 +152,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			name: "should return error when subject is not set",
 			req: &authzv1.CheckRequest{
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "org-2",
@@ -164,7 +164,7 @@ func Test_legacyServer_Check(t *testing.T) {
 			req: &authzv1.CheckRequest{
 				Subject:   "user:1",
 				Verb:      "get",
-				Group:     "dashboards.grafana.app",
+				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Name:      "dash1",
 				Namespace: "stacks-2",

@@ -10,7 +10,6 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { RulesSource } from 'app/types/unified-alerting';
-import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -23,6 +22,8 @@ import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
+
+export type RulesSourceIdentifier = { rulesSourceName: string } | { uid: string };
 
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
@@ -41,12 +42,15 @@ export interface AlertManagerDataSource {
 export const RulesDataSourceTypes: string[] = [DataSourceType.Loki, DataSourceType.Prometheus];
 
 export function getRulesDataSources() {
-  if (!contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)) {
+  const hasReadPermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead);
+  const hasWritePermission = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
+  if (!hasReadPermission && !hasWritePermission) {
     return [];
   }
 
   return getAllDataSources()
-    .filter((ds) => RulesDataSourceTypes.includes(ds.type) && ds.jsonData.manageAlerts !== false)
+    .filter((ds) => RulesDataSourceTypes.includes(ds.type))
+    .filter((ds) => isDataSourceManagingAlerts(ds))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -56,6 +60,10 @@ export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
 
 export function getRulesDataSource(rulesSourceName: string) {
   return getRulesDataSources().find((x) => x.name === rulesSourceName);
+}
+
+export function getRulesDataSourceByUID(uid: string) {
+  return getRulesDataSources().find((x) => x.uid === uid);
 }
 
 export function getAlertManagerDataSources() {
@@ -207,7 +215,7 @@ export function getAllRulesSources(): RulesSource[] {
   const availableRulesSources: RulesSource[] = getRulesDataSources();
 
   if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead)) {
-    availableRulesSources.push(GRAFANA_RULES_SOURCE_NAME);
+    availableRulesSources.unshift(GRAFANA_RULES_SOURCE_NAME);
   }
 
   return availableRulesSources;
@@ -246,6 +254,10 @@ export function getDataSourceByName(name: string): DataSourceInstanceSettings<Da
   return getAllDataSources().find((source) => source.name === name);
 }
 
+export function getDataSourceByUid(dsUid: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
+  return getAllDataSources().find((source) => source.uid === dsUid);
+}
+
 export function getAlertmanagerDataSourceByName(name: string) {
   return getAllDataSources()
     .filter(isAlertmanagerDataSourceInstance)
@@ -281,6 +293,22 @@ export function getDatasourceAPIUid(dataSourceName: string) {
   return ds.uid;
 }
 
+export function getDataSourceUID(rulesSourceIdentifier: RulesSourceIdentifier) {
+  if ('uid' in rulesSourceIdentifier) {
+    return rulesSourceIdentifier.uid;
+  }
+
+  if (rulesSourceIdentifier.rulesSourceName === GRAFANA_RULES_SOURCE_NAME) {
+    return GRAFANA_RULES_SOURCE_NAME;
+  }
+
+  const ds = getRulesDataSource(rulesSourceIdentifier.rulesSourceName);
+  if (!ds) {
+    return undefined;
+  }
+  return ds.uid;
+}
+
 export function getFirstCompatibleDataSource(): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getDataSourceSrv().getList({ alerting: true })[0];
 }
@@ -294,21 +322,4 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
   return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
-}
-
-export function getApplicationFromRulesSource(rulesSource: RulesSource): RulesSourceApplication {
-  if (isGrafanaRulesSource(rulesSource)) {
-    return 'grafana';
-  }
-
-  // @TODO use buildinfo
-  if ('prometheusType' in rulesSource.jsonData) {
-    return rulesSource.jsonData?.prometheusType ?? PromApplication.Prometheus;
-  }
-
-  if (rulesSource.type === 'loki') {
-    return 'loki';
-  }
-
-  return PromApplication.Prometheus; // assume Prometheus if nothing matches
 }

@@ -45,7 +45,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
   }
 
   const timeNanosecondField = cache.getFieldByName('tsNs') ?? null;
-  const severityField = cache.getFieldByName('detected_level') ?? cache.getFieldByName('level') ?? null;
+  const severityField = cache.getFieldByName('level') ?? cache.getFieldByName('detected_level') ?? null;
   const idField = cache.getFieldByName('id') ?? null;
 
   // extracting the labels is done very differently for old-loki-style and simple-style

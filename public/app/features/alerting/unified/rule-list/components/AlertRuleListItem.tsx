@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
-import { CombinedRule, CombinedRuleNamespace, RuleHealth } from 'app/types/unified-alerting';
+import { Rule, RuleGroupIdentifier, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../Analytics';
@@ -35,7 +34,7 @@ interface AlertRuleListItemProps {
   evaluationInterval?: string;
   labels?: Labels;
   instancesCount?: number;
-  namespace?: CombinedRuleNamespace;
+  namespace?: string;
   group?: string;
   // used for alert rules that use simplified routing
   contactPoint?: string;
@@ -91,7 +90,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     }
   }
 
-  if (!isEmpty(labels)) {
+  if (labelsSize(labels) > 0) {
     metadata.push(
       <MetaText icon="tag-alt">
         <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
@@ -138,6 +137,39 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     />
   );
 };
+
+type RecordingRuleListItemProps = Omit<AlertRuleListItemProps, 'summary' | 'state' | 'instancesCount' | 'contactPoint'>;
+
+export function RecordingRuleListItem({
+  name,
+  href,
+  health,
+  isProvisioned,
+  error,
+  isPaused,
+  origin,
+}: RecordingRuleListItemProps) {
+  return (
+    <ListItem
+      title={
+        <Stack direction="row" alignItems="center">
+          <TextLink href={href} inline={false}>
+            {name}
+          </TextLink>
+          {origin && <PluginOriginBadge pluginId={origin.pluginId} size="sm" />}
+          {/* show provisioned badge only when it also doesn't have plugin origin */}
+          {isProvisioned && !origin && <ProvisioningBadge />}
+          {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
+          {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
+        </Stack>
+      }
+      description={<Summary error={error} />}
+      icon={<RuleListIcon recording={true} health={health} isPaused={isPaused} />}
+      actions={null}
+      meta={[]}
+    />
+  );
+}
 
 interface SummaryProps {
   content?: string;
@@ -203,13 +235,14 @@ function EvaluationMetadata({ lastEvaluation, evaluationInterval, state }: Evalu
 }
 
 interface UnknownRuleListItemProps {
-  rule: CombinedRule;
+  rule: Rule;
+  groupIdentifier: RuleGroupIdentifier;
 }
 
-export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
+export const UnknownRuleListItem = ({ rule, groupIdentifier }: UnknownRuleListItemProps) => {
   const styles = useStyles2(getStyles);
 
-  const ruleContext = { namespace: rule.namespace.name, group: rule.group.name, name: rule.name };
+  const ruleContext = { ...groupIdentifier, name: rule.name };
   logError(new Error('unknown rule type'), ruleContext);
 
   return (
@@ -219,7 +252,7 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
           <Trans i18nKey="alerting.alert-rules.rule-definition">Rule definition</Trans>
         </summary>
         <pre>
-          <code>{JSON.stringify(rule.rulerRule, null, 2)}</code>
+          <code>{JSON.stringify(rule, null, 2)}</code>
         </pre>
       </details>
     </Alert>
@@ -227,7 +260,7 @@ export const UnknownRuleListItem = ({ rule }: UnknownRuleListItemProps) => {
 };
 
 interface RuleLocationProps {
-  namespace: CombinedRuleNamespace;
+  namespace: string;
   group: string;
 }
 
@@ -235,7 +268,7 @@ export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
   <Stack direction="row" alignItems="center" gap={0.5}>
     <Icon size="xs" name="folder" />
     <Stack direction="row" alignItems="center" gap={0}>
-      {namespace.name}
+      {namespace}
       <Icon size="sm" name="angle-right" />
       {group}
     </Stack>
