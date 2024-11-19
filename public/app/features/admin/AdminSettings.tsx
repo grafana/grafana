@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 import { getBackendSrv } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 
 import { AdminSettingsTable } from './AdminSettingsTable';
 
@@ -15,8 +16,10 @@ function AdminSettings() {
     <Page navId="server-settings">
       <Page.Contents>
         <Alert severity="info" title="">
-          These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change
-          these you currently need to restart Grafana.
+          <Trans i18nKey="admin.settings.info-description">
+            These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change
+            these you currently need to restart Grafana.
+          </Trans>
         </Alert>
 
         {loading && <AdminSettingsTable.Skeleton />}

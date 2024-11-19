@@ -41,6 +41,9 @@
     }
   },
   "admin": {
+    "anon-users": {
+      "not-found": "No anonymous users found."
+    },
     "edit-org": {
       "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
       "heading": "Edit Organization",
@@ -49,6 +52,117 @@
     },
     "feature-toggles": {
       "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
+    },
+    "get-enterprise": {
+      "contact-us": "Contact us and get a free trial",
+      "description": "You can use the trial version for free for 30 days. We will remind you about it five days before the trial period ends.",
+      "features-heading": "Enhanced functionality",
+      "included-description": "Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.",
+      "included-heading": "Also included:",
+      "service-title": "At your service",
+      "team-sync-details": "LDAP, GitHub OAuth, Auth Proxy, Okta",
+      "title": "Get Grafana Enterprise"
+    },
+    "ldap": {
+      "test-mapping-heading": "Test user mapping",
+      "test-mapping-run-button": "Run"
+    },
+    "ldap-permissions": {
+      "active": "<0></0> Active",
+      "admin": "<0></0> Yes",
+      "inactive": "<0></0> Inactive"
+    },
+    "ldap-status": {
+      "title": "LDAP Connection"
+    },
+    "ldap-sync": {
+      "debug-button": "Debug LDAP Mapping",
+      "external-sync-description": "User synced via LDAP. Some changes must be done in LDAP or mappings.",
+      "external-sync-label": "External sync",
+      "next-sync-label": "Next scheduled synchronization",
+      "not-enabled": "Not enabled",
+      "sync-button": "Sync user",
+      "title": "LDAP Synchronisation"
+    },
+    "ldap-sync-info": {
+      "title": "LDAP Synchronization"
+    },
+    "ldap-user-groups": {
+      "no-org-found": "No match <2><0></0></2>"
+    },
+    "ldap-user-info": {
+      "no-team": "No teams found via LDAP"
+    },
+    "org-uers": {
+      "last-seen-never": "Never"
+    },
+    "org-users": {
+      "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
+    },
+    "orgs": {
+      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
+      "id-header": "ID",
+      "name-header": "Name",
+      "new-org-button": "New org"
+    },
+    "server-settings": {
+      "alerts-button": "Manage alerts",
+      "dashboards-button": "Manage dashboards",
+      "data-sources-button": "Manage data sources",
+      "not-found": "No stats found.",
+      "title": "Instance statistics",
+      "users-button": "Manage users"
+    },
+    "settings": {
+      "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+    },
+    "upgrade-info": {
+      "title": "Enterprise license"
+    },
+    "user-orgs": {
+      "add-button": "Add user to organization",
+      "change-role-button": "Change role",
+      "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "remove-button": "Remove from organization",
+      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "title": "Organizations"
+    },
+    "user-orgs-modal": {
+      "add-button": "Add to organization",
+      "cancel-button": "Cancel"
+    },
+    "user-permissions": {
+      "change-button": "Change",
+      "grafana-admin-key": "Grafana Admin",
+      "grafana-admin-no": "No",
+      "grafana-admin-yes": "Yes",
+      "title": "Permissions"
+    },
+    "user-profile": {
+      "delete-button": "Delete user",
+      "disable-button": "Disable user",
+      "edit-button": "Edit",
+      "enable-button": "Enable user",
+      "title": "User information"
+    },
+    "user-sessions": {
+      "browser-column": "Browser and OS",
+      "force-logout-all-button": "Force logout from all devices",
+      "force-logout-button": "Force logout",
+      "ip-column": "IP address",
+      "last-seen-column": "Last seen",
+      "logged-on-column": "Logged on",
+      "title": "Sessions"
+    },
+    "users-create": {
+      "create-button": "Create user"
+    },
+    "users-list": {
+      "create-button": "New user"
+    },
+    "users-table": {
+      "last-seen-never": "Never",
+      "no-licensed-role": "Not assigned <2><0></0></2>"
     }
   },
   "alert-labels": {
@@ -2493,6 +2607,10 @@
     "modal": {
       "dashboard-modal-title": "Public dashboards",
       "shared-dashboard-modal-title": "Shared dashboards"
+    },
+    "table-body": {
+      "dashboard-count_one": "{{count}} dashboards",
+      "dashboard-count_other": "{{count}} dashboards"
     },
     "table-header": {
       "activated-label": "Activated",

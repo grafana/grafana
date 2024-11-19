@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { Trans } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { OrgUnits } from './OrgUnits';
@@ -101,10 +102,12 @@ export const UsersTable = ({
               cell: ({ cell: { value } }: Cell<'licensedRole'>) => {
                 return value === 'None' ? (
                   <Text color={'disabled'}>
-                    Not assigned{' '}
-                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                      <Icon name="question-circle" />
-                    </Tooltip>
+                    <Trans i18nKey="admin.users-table.no-licensed-role">
+                      Not assigned{' '}
+                      <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                        <Icon name="question-circle" />
+                      </Tooltip>
+                    </Trans>
                   </Text>
                 ) : (
                   value
@@ -121,7 +124,21 @@ export const UsersTable = ({
           iconName: 'question-circle',
         },
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+          return (
+            <>
+              {value && (
+                <>
+                  {value === '10 years' ? (
+                    <Text color={'disabled'}>
+                      <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
+                    </Text>
+                  ) : (
+                    value
+                  )}
+                </>
+              )}
+            </>
+          );
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
