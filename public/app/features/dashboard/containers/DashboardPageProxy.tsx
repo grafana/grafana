@@ -40,6 +40,12 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
       return null;
     }
 
+    if (params.type === 'provisioning') {
+      
+      
+
+    }
+
     return stateManager.fetchDashboard({ route: props.route.routeName as DashboardRoutes, uid: params.uid ?? '' });
   }, [params.uid, props.route.routeName]);
 

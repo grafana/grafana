@@ -16,12 +16,17 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/client-go/dynamic"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -36,11 +41,16 @@ var (
 type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
+	client            *resourceClient
 }
 
-func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
+func NewProvisioningAPIBuilder(local *LocalFolderResolver, cfg *clientrest.Config) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		localFileResolver: local,
+		client: &resourceClient{
+			config:  cfg,
+			clients: make(map[schema.GroupVersionKind]dynamic.NamespaceableResourceInterface),
+		},
 	}
 }
 
@@ -49,14 +59,23 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	cfg *setting.Cfg,
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
+
+	// The service user.. TODO, this should be real
+	serviceUser := &identity.StaticRequester{
+		Type:           claims.TypeProvisioning,
+		IsGrafanaAdmin: true,
+		Namespace:      "*",
+	}
+
 	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
-	})
+	}, clientConfigProvider.GetDirectRestConfigForRequester(serviceUser))
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -105,6 +124,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	helloWorld := &helloWorldSubresource{
 		getter:        repositoryStorage,
 		statusUpdater: repositoryStatusStorage,
+		parent:        b,
 	}
 
 	storage := map[string]rest.Storage{}

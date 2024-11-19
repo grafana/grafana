@@ -8,6 +8,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -16,6 +17,8 @@ import (
 type helloWorldSubresource struct {
 	getter        rest.Getter
 	statusUpdater rest.Updater
+	// for our hacky test access right now
+	parent *ProvisioningAPIBuilder
 }
 
 func (*helloWorldSubresource) New() runtime.Object {
@@ -87,6 +90,27 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 			}
 			repo = obj.(*v0alpha1.Repository)
 			slog.InfoContext(ctx, "the conspicuous boolean", "bool", b)
+		}
+
+		write := r.URL.Query().Get("list")
+		if write != "" {
+			client, err := s.parent.client.Resource(schema.GroupVersionKind{
+				Group:   "dashboards.grafana.app",
+				Version: "v0alpha1",
+				Kind:    "Dashboard",
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			ttt, err := client.List(ctx, metav1.ListOptions{})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			responder.Object(200, ttt) // proxy the list
+			return
 		}
 
 		slog.InfoContext(ctx, "Got a repository",
