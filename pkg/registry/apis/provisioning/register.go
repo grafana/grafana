@@ -9,7 +9,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -136,7 +135,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 }
 
 func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -445,6 +444,36 @@ spec:
 	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+
+	for _, sub := range oas.Paths.Paths {
+		paramsOrNil := func(o *spec3.Operation) []*spec3.Parameter {
+			if o == nil {
+				return nil
+			}
+			return o.Parameters
+		}
+		for _, params := range [][]*spec3.Parameter{
+			sub.Parameters,
+			paramsOrNil(sub.Get),
+			paramsOrNil(sub.Delete),
+			paramsOrNil(sub.Post),
+			paramsOrNil(sub.Patch),
+			paramsOrNil(sub.Put),
+			paramsOrNil(sub.Trace),
+			paramsOrNil(sub.Head),
+			paramsOrNil(sub.Options),
+		} {
+			if params == nil {
+				continue
+			}
+
+			for _, p := range params {
+				if p.ParameterProps.Name == "namespace" && p.Schema.Default == nil {
+					p.Schema.Default = "default"
+				}
+			}
+		}
 	}
 
 	return oas, nil
