@@ -317,23 +317,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
-    const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
-      editPanel: null,
-      editview: null,
-      inspect: null,
-      inspectTab: null,
-      shareView: null,
-    });
+    // const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
+    //   editPanel: null,
+    //   editview: null,
+    //   inspect: null,
+    //   inspectTab: null,
+    //   shareView: null,
+    // });
 
-    locationService.replace(locationUtil.stripBaseFromUrl(url));
+    // locationService.replace(locationUtil.stripBaseFromUrl(url));
 
-    if (restoreInitialState) {
-      //  Restore initial state and disable editing
-      this.setState({ ...this._initialState, isEditing: false });
-    } else {
-      // Do not restore
-      this.setState({ isEditing: false });
-    }
+    // if (restoreInitialState) {
+    //   //  Restore initial state and disable editing
+    //   this.setState({ ...this._initialState, isEditing: false });
+    // } else {
+    //   // Do not restore
+    this.setState({ isEditing: false });
+    // }
 
     // if we are in edit panel, we need to onDiscard()
     // so the useEffect cleanup comes later and

@@ -23,7 +23,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public addNewRow(): void {
     this.setState({
-      rows: [...this.state.rows, new RowItem({ layout: ResponsiveGridLayoutManager.createEmpty() })],
+      rows: [
+        ...this.state.rows,
+        new RowItem({
+          title: 'New row',
+          layout: ResponsiveGridLayoutManager.createEmpty(),
+        }),
+      ],
     });
   }
 

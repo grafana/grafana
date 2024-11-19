@@ -82,18 +82,6 @@ function getStyles(theme: GrafanaTheme2) {
       border: 'none',
       gap: theme.spacing(1),
     }),
-    rowTitle: css({}),
-    rowActions: css({
-      display: 'flex',
-      opacity: 0,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'opacity 200ms ease-in',
-      },
-
-      '&:hover, &:focus-within': {
-        opacity: 1,
-      },
-    }),
   };
 }
 
