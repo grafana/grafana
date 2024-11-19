@@ -25,6 +25,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
+  // TODO: Pull it up to avoid calling it twice
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
     context: context,
