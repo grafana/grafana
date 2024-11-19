@@ -47,6 +47,25 @@ const (
 	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
 )
 
+var ResourceRelations = []string{
+	RelationRead,
+	RelationWrite,
+	RelationCreate,
+	RelationDelete,
+	RelationPermissionsRead,
+	RelationPermissionsWrite,
+}
+
+var FolderRelations = append(
+	ResourceRelations,
+	RelationFolderResourceRead,
+	RelationFolderResourceWrite,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+	RelationFolderResourcePermissionsRead,
+	RelationFolderResourcePermissionsWrite,
+)
+
 func FolderResourceRelation(relation string) string {
 	return fmt.Sprintf("%s_%s", TypeResource, relation)
 }

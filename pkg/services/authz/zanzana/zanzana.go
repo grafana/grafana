@@ -49,23 +49,9 @@ const (
 	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
 )
 
-var ResourceRelations = []string{
-	RelationRead,
-	RelationWrite,
-	RelationCreate,
-	RelationDelete,
-	RelationPermissionsRead,
-	RelationPermissionsWrite,
-}
-
-var FolderRelations = append(
-	ResourceRelations,
-	RelationFolderResourceRead,
-	RelationFolderResourceWrite,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
-	RelationFolderResourcePermissionsRead,
-	RelationFolderResourcePermissionsWrite,
+var (
+	FolderRelations   = common.FolderRelations
+	ResourceRelations = common.ResourceRelations
 )
 
 const (

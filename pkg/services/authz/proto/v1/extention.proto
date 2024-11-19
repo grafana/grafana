@@ -11,6 +11,7 @@ import "google/protobuf/wrappers.proto";
 service AuthzExtentionService {
   rpc List(ListRequest) returns (ListResponse);
   rpc BatchCheck(BatchCheckRequest) returns (BatchCheckResponse);
+  rpc Capabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
 
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
@@ -72,9 +73,7 @@ message ReadResponse {
   string continuation_token = 2;
 }
 
-message WriteRequestWrites {
-  repeated TupleKey tuple_keys = 1;
-}
+message WriteRequestWrites { repeated TupleKey tuple_keys = 1; }
 
 message WriteRequestDeletes {
   repeated TupleKeyWithoutCondition tuple_keys = 1;
@@ -104,10 +103,19 @@ message BatchCheckItem {
   string folder = 6;
 }
 
-message BatchCheckResponse {
-  map<string, BatchCheckGroupResource> groups = 1;
+message BatchCheckResponse { map<string, BatchCheckGroupResource> groups = 1; }
+
+message BatchCheckGroupResource { map<string, bool> items = 1; }
+
+message CapabilitiesRequest {
+  string subject = 1;
+  string group = 2;
+  string namespace = 3;
+  string resource = 4;
+  string name = 5;
+  string folder = 6;
+  string path = 7;
+  string subresource = 8;
 }
 
-message BatchCheckGroupResource {
-  map<string, bool> items = 1;
-}
+message CapabilitiesResponse { repeated string capabilities = 1; }
