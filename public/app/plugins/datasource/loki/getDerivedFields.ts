@@ -30,10 +30,11 @@ export function getDerivedFields(dataFrame: DataFrame, derivedFieldConfigs: Deri
       if (derivedFieldsGrouped[field.name][0].matcherType === 'label' && labelFields) {
         const label = labelFields.values[i];
         if (label) {
-          // Find the key that matches both, the `matcherRegex` and the label key
-          const intersectingKey = Object.keys(label).find(
-            (key) => derivedFieldsGrouped[field.name][0].matcherRegex === key
-          );
+          // Find the key that matches the regex pattern in `matcherRegex`
+          const intersectingKey = Object.keys(label).find((key) => {
+            const regex = new RegExp(derivedFieldsGrouped[field.name][0].matcherRegex);
+            return regex.test(key);
+          });
 
           if (intersectingKey) {
             field.values.push(label[intersectingKey]);
