@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -32,6 +33,7 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
+	authzc authz.Client,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
@@ -95,7 +97,7 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer, reg)
+		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer, reg, authzc)
 		if err != nil {
 			return nil, err
 		}
