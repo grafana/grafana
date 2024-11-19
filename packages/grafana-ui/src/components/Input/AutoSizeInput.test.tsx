@@ -68,11 +68,9 @@ describe('AutoSizeInput', () => {
   it('should use value for width even with a placeholder', () => {
     render(<AutoSizeInput value="less long value" placeholder="very very long value" />);
 
-    const input: HTMLInputElement = screen.getByTestId('autosize-input');
     const inputWrapper: HTMLDivElement = screen.getByTestId('input-wrapper');
 
-    fireEvent.change(input, { target: { value: 'very very long value' } });
-    expect(getComputedStyle(inputWrapper).width).toBe('304px');
+    expect(getComputedStyle(inputWrapper).width).toBe('234px');
   });
 
   it('should call onBlur if set when blurring', () => {
