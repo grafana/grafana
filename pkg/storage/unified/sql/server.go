@@ -7,7 +7,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -18,53 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
-
-var _ authzlib.AccessClient = &authzClient{}
-
-type resourceGroup map[string]map[string]interface{}
-type authzClient struct {
-	client                  authz.Client
-	supportedGroupResources resourceGroup
-}
-
-// Check implements authz.AccessClient.
-func (c authzClient) Check(ctx context.Context, id claims.AuthInfo, req authzlib.CheckRequest) (authzlib.CheckResponse, error) {
-	if !c.EnforeRBAC(req.Group, req.Resource) {
-		return authzlib.CheckResponse{Allowed: true}, nil
-	}
-	return c.client.Check(ctx, id, req)
-}
-
-// Compile implements authz.AccessClient.
-func (c authzClient) Compile(ctx context.Context, id claims.AuthInfo, req authzlib.ListRequest) (authzlib.ItemChecker, error) {
-	return func(namespace string, name, folder string) bool {
-		// TODO: Implement For now we perform the check for each item.
-		if !c.EnforeRBAC(req.Group, req.Resource) {
-			return true
-		}
-		r, err := c.client.Check(ctx, id, authzlib.CheckRequest{
-			Verb:      "get",
-			Group:     req.Group,
-			Resource:  req.Resource,
-			Namespace: namespace,
-			Name:      name,
-			Folder:    folder,
-		})
-		if err != nil {
-			return false
-		}
-		return r.Allowed
-	}, nil
-}
-
-func (c authzClient) EnforeRBAC(group, resource string) bool {
-	if _, ok := c.supportedGroupResources[group]; ok {
-		if _, ok := c.supportedGroupResources[group][resource]; ok {
-			return true
-		}
-	}
-	return false
-}
 
 // Creates a new ResourceServer
 func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
@@ -77,17 +29,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		Reg: reg,
 	}
 	if ac != nil {
-		opts.AccessClient = authzClient{
-			client: ac,
-			supportedGroupResources: resourceGroup{
-				"dashboard.grafana.app": map[string]interface{}{
-					"dashboards": nil,
-				},
-				"folder.grafana.app": map[string]interface{}{
-					"folders": nil,
-				},
-			},
-		}
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac)
 	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
