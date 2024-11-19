@@ -22,43 +22,7 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
-    // const spec: DashboardSpec = {
-    //   annotations: [],
-    //   cursorSync: DashboardCursorSync.Off,
-    //   title: 'Random dash',
-    //   description: '',
-    //   elements: {},
-    //   layout: {
-    //     kind: 'GridLayout',
-    //     spec: {
-    //       items: [],
-    //     },
-    //   },
-    //   links: [],
-    //   variables: [],
-    //   preload: false,
-    //   // @ts-ignore
-    //   timeSettings: {
-    //     from: 'now-6h',
-    //     to: 'now',
-    //   },
-    // };
-    // const resultResource: DashboardWithAccessInfo<DashboardSpec> = {
-    //   kind: 'DashboardWithAccessInfo',
-    //   apiVersion: 'dashboard.grafana.app/v2alpha1',
-    //   spec,
-    //   metadata: {
-    //     name: uid,
-    //     namespace: 'default',
-    //     resourceVersion: '24600000004',
-    //     creationTimestamp: '2024-03-20T16:41:16Z',
-    //   },
-    //   // will be provided by the subresource call
-    //   access: { url: 'whatever for now, just testing' },
-    // };
-    // return resultResource;
-    // throw new Error('Method not implemented.');
-    return {} as DashboardWithAccessInfo<DashboardSpec>;
+    return await this.client.subresource<DashboardWithAccessInfo<DashboardSpec>>(uid, 'dto');
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
