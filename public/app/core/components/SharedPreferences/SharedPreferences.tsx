@@ -163,10 +163,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
     return (
       <form onSubmit={this.onSubmitForm} className={styles.form}>
         <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-          <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
+          <Field
+            loading={isLoading}
+            disabled={isLoading}
+            label={t('shared-preferences.fields.theme-label', 'Interface theme')}
+          >
             <Combobox
-              loading={isLoading}
-              disabled={isLoading}
               options={this.themeOptions}
               value={currentThemeOption.value}
               onChange={this.onThemeChanged}
@@ -175,6 +177,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="home-dashboard-select">
                 <span className={styles.labelText}>
@@ -185,8 +189,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid="User preferences home dashboard drop down"
           >
             <DashboardPicker
-              isLoading={isLoading}
-              disabled={isLoading}
               value={homeDashboardUID}
               onChange={(v) => this.onHomeDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
@@ -197,11 +199,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-dashboard.fields.timezone-label', 'Timezone')}
             data-testid={selectors.components.TimeZonePicker.containerV2}
           >
             <TimeZonePicker
-              disabled={isLoading}
               includeInternal={true}
               value={timezone}
               onChange={this.onTimeZoneChanged}
@@ -210,11 +213,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            loading={isLoading}
+            disabled={isLoading}
             label={t('shared-preferences.fields.week-start-label', 'Week start')}
             data-testid={selectors.components.WeekStartPicker.containerV2}
           >
             <WeekStartPicker
-              disabled={isLoading}
               value={weekStart || ''}
               onChange={this.onWeekStartChanged}
               inputId="shared-preferences-week-start-picker"
@@ -222,6 +226,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
           </Field>
 
           <Field
+            loading={isLoading}
+            disabled={isLoading}
             label={
               <Label htmlFor="locale-select">
                 <span className={styles.labelText}>
@@ -233,8 +239,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid="User preferences language drop down"
           >
             <Combobox
-              loading={isLoading}
-              disabled={isLoading}
               value={languages.find((lang) => lang.value === language)?.value || ''}
               onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={languages}
