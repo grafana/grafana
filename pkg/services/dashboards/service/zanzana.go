@@ -3,8 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -308,14 +306,10 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	} else {
 		return nil, dashboards.ErrUserIsNotSignedInToOrg
 	}
-	// dashboard:<orgId>-
-	prefix := fmt.Sprintf("%s:%d-", kind, orgId)
 
 	resourceUIDs := make([]string, 0)
-	for _, d := range res.Items {
-		if uid, found := strings.CutPrefix(d, prefix); found {
-			resourceUIDs = append(resourceUIDs, uid)
-		}
+	for _, uid := range res.Items {
+		resourceUIDs = append(resourceUIDs, uid)
 	}
 
 	return resourceUIDs, nil
