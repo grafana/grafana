@@ -289,8 +289,8 @@ func (dr *DashboardServiceImpl) findFoldersZanzanaList(ctx context.Context, quer
 }
 
 func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, kind, action string) ([]string, error) {
-	ns := query.SignedInUser.GetNamespace()
-	req, ok := zanzana.TranslateToListRequest(ns, action, kind)
+	namespace := query.SignedInUser.GetNamespace()
+	req, ok := zanzana.TranslateToListRequest(namespace, action, kind)
 	if !ok {
 		return nil, errors.New("resource type not supported")
 	}
@@ -298,13 +298,6 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	res, err := dr.zclient.List(ctx, query.SignedInUser, req)
 	if err != nil {
 		return nil, err
-	}
-
-	orgId := query.OrgId
-	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
-		orgId = query.SignedInUser.GetOrgID()
-	} else {
-		return nil, dashboards.ErrUserIsNotSignedInToOrg
 	}
 
 	resourceUIDs := make([]string, 0)
