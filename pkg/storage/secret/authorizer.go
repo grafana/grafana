@@ -10,6 +10,7 @@ type authorizer struct {
 	// TODO!!!
 }
 
+// TODO: why not `CanCreate`?
 func (a *authorizer) OnCreate(ctx context.Context, auth claims.AuthInfo, namespace string, name string) error {
 	return nil
 }
@@ -22,6 +23,7 @@ func (a *authorizer) OnDelete(ctx context.Context, auth claims.AuthInfo, row *se
 	return nil
 }
 
+// Can view the securevalue exists at all, and does not include the raw value, see `CanDecrypt`.
 func (a *authorizer) CanView(ctx context.Context, auth claims.AuthInfo, row *secureValueRow) bool {
 	return true
 }

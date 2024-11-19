@@ -37,6 +37,7 @@ type SecureValueStore interface {
 	History(ctx context.Context, ns string, name string, continueToken string) (*secret.SecureValueActivityList, error)
 }
 
+// ProvideSecureValueStore is used in the wiring.
 func ProvideSecureValueStore(db db.DB, manager SecretManager, cfg *setting.Cfg) (SecureValueStore, error) {
 	err := migrateSecretSQL(context.Background(), db.GetEngine(), cfg)
 	if err != nil {
@@ -52,6 +53,7 @@ func ProvideSecureValueStore(db db.DB, manager SecretManager, cfg *setting.Cfg) 
 	}, nil
 }
 
+// TODO: should this be here?
 func CleanAnnotations(anno map[string]string) map[string]string {
 	copy := make(map[string]string)
 	for k, v := range anno {
@@ -75,6 +77,7 @@ var (
 	}
 )
 
+// Secure Value Store Database Implementation. Includes securevalues + "history" subresource models, and decryption.
 type secureStore struct {
 	manager SecretManager
 	db      *session.SessionDB
@@ -82,6 +85,7 @@ type secureStore struct {
 	authz   *authorizer
 }
 
+// secureValueRow is a representation of the row in the `secure_value` table.
 type secureValueRow struct {
 	UID         string
 	Namespace   string
@@ -104,6 +108,7 @@ type secureValueRow struct {
 	EncryptedValue    string
 }
 
+// secureValueEvent is a representation of the row in the "secure_value_history" table.
 type secureValueEvent struct {
 	Timestamp int64
 	Namespace string
@@ -113,6 +118,7 @@ type secureValueEvent struct {
 	Details   string // the fields that changed (for update)
 }
 
+// toEvent will take a row and create an event for historical/auditing purposes.
 func (v *secureValueRow) toEvent(auth claims.AuthInfo, action string) *secureValueEvent {
 	return &secureValueEvent{
 		Timestamp: time.Now().UnixMilli(),
@@ -123,7 +129,7 @@ func (v *secureValueRow) toEvent(auth claims.AuthInfo, action string) *secureVal
 	}
 }
 
-// Convert everything (except the value!) to a flat row structure
+// Convert everything (except the value!) from k8s representation to a flat row structure.
 func toSecureValueRow(sv *secret.SecureValue) (*secureValueRow, error) {
 	meta, err := utils.MetaAccessor(sv)
 	if err != nil {
@@ -184,7 +190,7 @@ func toSecureValueRow(sv *secret.SecureValue) (*secureValueRow, error) {
 	return row, nil
 }
 
-// Create implements SecureValueStore.
+// Convert everything (except the value!) from row structure to k8s representation.
 func (v *secureValueRow) toK8s() (*secret.SecureValue, error) {
 	val := &secret.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
@@ -206,6 +212,8 @@ func (v *secureValueRow) toK8s() (*secret.SecureValue, error) {
 			return nil, err
 		}
 	}
+
+	// TODO: Do we need to clean the annotations here just in case?
 	if v.Annotations != "" {
 		err := json.Unmarshal([]byte(v.Annotations), &val.Annotations)
 		if err != nil {
@@ -246,6 +254,8 @@ func (s *secureStore) Create(ctx context.Context, v *secret.SecureValue) (*secre
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: do we want to support folders? what does it mean in practice?
 	if meta.GetFolder() != "" {
 		return nil, fmt.Errorf("folders are not yet supported")
 	}
@@ -267,10 +277,16 @@ func (s *secureStore) Create(ctx context.Context, v *secret.SecureValue) (*secre
 	row.Updated = time.Now().UnixMilli() // full precision
 	row.Path = v.Spec.Path
 
+	// So far we only implement a simple manager, which base64 encodes the secret.
+	// TODO: do we want the raw secret to exist up until this layer?
+	// Maybe it makes sense to move this up, and the persistence layer only deals with the encrypted value?
+	// But how would we deal with decryption then?
 	keeper, err := s.manager.GetKeeper(ctx, row.Namespace, v.Spec.Manager)
 	if err != nil {
 		return nil, err
 	}
+
+	// This mixes a DB persistence and just going to a secret manager to read the value from.
 	if v.Spec.Path != "" {
 		v, err := keeper.ReadValue(ctx, v.Spec.Path)
 		if err != nil {
@@ -282,10 +298,13 @@ func (s *secureStore) Create(ctx context.Context, v *secret.SecureValue) (*secre
 	} else if v.Spec.Value == "" {
 		return nil, fmt.Errorf("must specify a value or a path")
 	} else {
+		// We specify a manager without a path but a value, and encrypt it (for now base64 encode it).
 		encrypted, err := keeper.Encrypt(ctx, v.Spec.Value)
 		if err != nil {
 			return nil, err
 		}
+
+		// TODO: should this be another table? Maybe simpler to keep it here, but for secrets that are fully managed by 3rdparty.
 		row.EncryptedProvider = encrypted.Provider
 		row.EncryptedKID = encrypted.KID
 		row.EncryptedValue = encrypted.Value
@@ -302,7 +321,7 @@ func (s *secureStore) Create(ctx context.Context, v *secret.SecureValue) (*secre
 		return nil, fmt.Errorf("insert template %q: %w", q, err)
 	}
 
-	// Add the value and
+	// Add the value and record an event in the "secure_value_history" table.
 	err = s.db.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		res, err := tx.Exec(ctx, q, req.GetArgs()...)
 		if err != nil {
@@ -324,6 +343,7 @@ func (s *secureStore) Create(ctx context.Context, v *secret.SecureValue) (*secre
 	return row.toK8s()
 }
 
+// encryptValue only updates the "encrypted_*" columns in the row table. Must be run inside a transaction.
 func (s *secureStore) encryptValue(ctx context.Context, tx *session.SessionTx, row *secureValueRow, value string) error {
 	if row.Path != "" {
 		return fmt.Errorf("do not encrypt values referenced by path")
@@ -361,6 +381,7 @@ func (s *secureStore) encryptValue(ctx context.Context, tx *session.SessionTx, r
 	return fmt.Errorf("error saving encrypted values")
 }
 
+// writeEvent creates a new record in the "secure_value_history" table with a certain `action`.
 func (s *secureStore) writeEvent(ctx context.Context, tx *session.SessionTx, e *secureValueEvent) error {
 	req := &writeEvent{
 		SQLTemplate: sqltemplate.New(s.dialect),
@@ -385,7 +406,7 @@ func (s *secureStore) writeEvent(ctx context.Context, tx *session.SessionTx, e *
 	return nil
 }
 
-// Get implements SecureValueStore.
+// Read the `securevalue` which does NOT output the raw decrypted `value`.
 func (s *secureStore) Read(ctx context.Context, ns string, name string) (*secret.SecureValue, error) {
 	authInfo, ok := claims.From(ctx)
 	if !ok {
@@ -407,10 +428,13 @@ func (s *secureStore) Update(ctx context.Context, obj *secret.SecureValue) (*sec
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
 	}
+
 	existing, err := s.get(ctx, obj.Namespace, obj.Name)
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: use `err` and return directly since we will create a new error for `not found`.
 	if existing == nil {
 		return nil, fmt.Errorf("not found")
 	}
@@ -441,6 +465,9 @@ func (s *secureStore) Update(ctx context.Context, obj *secret.SecureValue) (*sec
 			Value:    existing.EncryptedValue,
 		})
 		if oldvalue == value && err == nil {
+			// We don't necessarily need to clean this because `obj` is no longer used after `toSecureValueRow`.
+			// Can we enforce that somehow? Could we "consume" the `obj` after that function and make sure it is `nil`?
+			// For extra safety.
 			obj.Spec.Value = "" // no not return it
 			value = ""
 		} else {
@@ -450,6 +477,7 @@ func (s *secureStore) Update(ctx context.Context, obj *secret.SecureValue) (*sec
 
 	// Resource specifies a path
 	if obj.Spec.Path != "" {
+		// TODO: do we want to support converting from value to path?
 		if existing.Path == "" {
 			return nil, fmt.Errorf("can not convert from value to path based secret (yet?)")
 		}
@@ -487,6 +515,8 @@ func (s *secureStore) Update(ctx context.Context, obj *secret.SecureValue) (*sec
 	if existing.Title != row.Title {
 		changed = append(changed, "title")
 	}
+
+	// TODO: do we want to support changing manager?
 	if existing.Manager != row.Manager {
 		return nil, fmt.Errorf("can not change manager (yet??)")
 	}
@@ -558,8 +588,11 @@ func (s *secureStore) Delete(ctx context.Context, ns string, name string) (*secr
 		return nil, false, err
 	}
 
+	// TODO: maybe we always return `true`, when there's no error?
 	deleted := false
+
 	err = s.db.WithTransaction(ctx, func(tx *session.SessionTx) error {
+		// TODO: this should be in a template as well?
 		res, err := tx.Exec(ctx, "DELETE FROM secure_value WHERE uid=?", existing.UID)
 		if err != nil {
 			return err
@@ -756,5 +789,7 @@ func (s *secureStore) get(ctx context.Context, ns string, name string) (*secureV
 		)
 		return row, err
 	}
+
+	// TODO: return a proper error here that can be used in the caller for handling.
 	return nil, fmt.Errorf("not found")
 }

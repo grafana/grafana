@@ -36,6 +36,7 @@ type createSecureValue struct {
 	Row *secureValueRow
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r createSecureValue) Validate() error {
 	return nil // TODO
 }
@@ -46,6 +47,7 @@ type updateSecureValue struct {
 	Row *secureValueRow
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r updateSecureValue) Validate() error {
 	return nil // TODO
 }
@@ -58,6 +60,7 @@ type encryptSecureValue struct {
 	Timestamp int64
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r encryptSecureValue) Validate() error {
 	return nil // TODO
 }
@@ -68,6 +71,7 @@ type writeEvent struct {
 	Event *secureValueEvent
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r writeEvent) Validate() error {
 	return nil // TODO
 }
@@ -78,6 +82,7 @@ type listSecureValues struct {
 	Request secureValueRow
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r listSecureValues) Validate() error {
 	return nil // TODO
 }
@@ -90,6 +95,7 @@ type readHistory struct {
 	Continue  int64
 }
 
+// Validate is only used if we use `dbutil` from `unifiedstorage`. TODO: remove?
 func (r readHistory) Validate() error {
 	return nil // TODO
 }
