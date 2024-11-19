@@ -61,12 +61,10 @@ export function FilterView({ filterState }: FilterViewProps) {
     }
   });
 
-  /* Start by loading a page of results when the component mounts */
-  useEffect(() => {
-    loadResultPage();
-  }, [loadResultPage]);
-
-  /* Reset the search state, called when we choose a different filter state */
+  /**
+   * When the filter state is updated, reset the AbortController and re-create the iterator.
+   * Then reset the state of the component
+   */
   useDeepCompareEffect(() => {
     // recreate abort controller
     controller.current.abort();
@@ -78,6 +76,9 @@ export function FilterView({ filterState }: FilterViewProps) {
     // reset view state
     setRules([]);
     setDoneSearching(false);
+
+    // fetch a new page
+    loadResultPage();
   }, [filterState]);
 
   /* When we unmount the component we make sure to abort all iterables */
