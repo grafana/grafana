@@ -29,10 +29,6 @@ func newLegacyServer(
 	authnSvc authn.Service, ac accesscontrol.AccessControl, folderSvc folder.Service,
 	features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider, tracer tracing.Tracer, cfg *Cfg,
 ) (*legacyServer, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
-
 	l := &legacyServer{
 		ac:        ac.WithoutResolvers(), // We want to skip the folder tree resolution as it's done by the service
 		authnSvc:  authnSvc,

@@ -34,10 +34,6 @@ func ProvideAuthZClient(
 	authnSvc authn.Service, folderSvc folder.Service, grpcServer grpcserver.Provider,
 	tracer tracing.Tracer,
 ) (Client, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
-
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
@@ -79,10 +75,6 @@ func ProvideAuthZClient(
 func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (Client, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
-	}
-
 	authCfg, err := ReadCfg(cfg)
 	if err != nil {
 		return nil, err
