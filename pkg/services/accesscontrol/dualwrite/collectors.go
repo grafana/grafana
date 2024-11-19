@@ -2,7 +2,6 @@ package dualwrite
 
 import (
 	"context"
-	"strings"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
@@ -129,7 +128,6 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			AND p.kind = ?
 		`
 		type Permission struct {
-			RoleName   string `xorm:"role_name"`
 			Action     string `xorm:"action"`
 			Kind       string
 			Identifier string
@@ -246,7 +244,7 @@ func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT t.uid AS team_uid, r.name AS role_name
+			SELECT t.uid AS team_uid, r.uid AS role_uid
 			FROM team_role tr
 			INNER JOIN team t ON tr.team_id = t.id
 			INNER JOIN role r ON tr.role_id = r.id
@@ -254,8 +252,8 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 			AND r.name NOT LIKE 'managed:%'
 		`
 		type Binding struct {
-			TeamUID  string `xorm:"team_uid"`
-			RoleName string `xorm:"role_name"`
+			TeamUID string `xorm:"team_uid"`
+			RoleUID string `xorm:"role_uid"`
 		}
 
 		var bindings []Binding
@@ -275,7 +273,7 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 			tuple := &openfgav1.TupleKey{
 				User:     subject,
 				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(b.RoleName), ""),
+				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, b.RoleUID, ""),
 			}
 
 			if tuples[tuple.Object] == nil {
@@ -292,7 +290,7 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT u.uid AS user_uid, r.name AS role_name
+			SELECT u.uid AS user_uid, r.uid AS role_uid
 			FROM user_role ur
 			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
 			INNER JOIN role r ON ur.role_id = r.id
@@ -300,8 +298,8 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 			AND r.name NOT LIKE 'managed:%'
 		`
 		type Binding struct {
-			UserUID  string `xorm:"user_uid"`
-			RoleName string `xorm:"role_name"`
+			UserUID string `xorm:"user_uid"`
+			RoleUID string `xorm:"role_uid"`
 		}
 
 		var bindings []Binding
@@ -321,7 +319,7 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 			tuple := &openfgav1.TupleKey{
 				User:     subject,
 				Relation: zanzana.RelationAssignee,
-				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(b.RoleName), ""),
+				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, b.RoleUID, ""),
 			}
 
 			if tuples[tuple.Object] == nil {
@@ -338,7 +336,7 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
-			SELECT r.name as role_name, p.action, p.kind, p.identifier
+			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -350,7 +348,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			Action     string `xorm:"action"`
 			Kind       string
 			Identifier string
-			RoleName   string `xorm:"role_name"`
+			RoleUID    string `xorm:"role_uid"`
 		}
 
 		var permissions []Permission
@@ -364,7 +362,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, p := range permissions {
-			subject := zanzana.NewTupleEntry(zanzana.TypeRole, formatRoleName(p.RoleName), zanzana.RelationAssignee)
+			subject := zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee)
 
 			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
 			if !ok {
@@ -380,10 +378,6 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 
 		return tuples, nil
 	}
-}
-
-func formatRoleName(name string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(name, ":", "_"), ".", "_")
 }
 
 func zanzanaCollector(relations []string) zanzanaTupleCollector {
