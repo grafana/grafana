@@ -3,20 +3,23 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -42,16 +45,16 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	client            *resourceClient
+	logger            *slog.Logger
 }
 
 func NewProvisioningAPIBuilder(local *LocalFolderResolver, cfg *clientrest.Config) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		localFileResolver: local,
+		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		client: &resourceClient{
-			config:  cfg,
-			clients: make(map[schema.GroupVersionKind]dynamic.NamespaceableResourceInterface),
-		},
-	}
+			config: cfg,
+		}}
 }
 
 func RegisterAPIService(
@@ -118,6 +121,12 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	if err != nil {
 		return fmt.Errorf("failed to create repository storage: %w", err)
 	}
+
+	repositoryStorage.AfterCreate = b.afterCreate
+	// AfterUpdate doesn't have the old object, so we have to use BeginUpdate
+	repositoryStorage.BeginUpdate = b.beginUpdate
+	repositoryStorage.AfterDelete = b.afterDelete
+
 	repositoryStatusStorage := grafanaregistry.NewRegistryStatusStore(opts.Scheme, repositoryStorage)
 	b.getter = repositoryStorage
 
@@ -135,7 +144,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("file")] = &readConnector{
 		getter: b,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -147,10 +156,10 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 	if err != nil {
 		return nil, err
 	}
-	return b.asRepository(obj)
+	return b.asRepository(ctx, obj)
 }
 
-func (b *ProvisioningAPIBuilder) asRepository(obj runtime.Object) (Repository, error) {
+func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
@@ -163,12 +172,86 @@ func (b *ProvisioningAPIBuilder) asRepository(obj runtime.Object) (Repository, e
 	case provisioning.LocalRepositoryType:
 		return newLocalRepository(r, b.localFileResolver), nil
 	case provisioning.GithubRepositoryType:
-		return newGithubRepository(r), nil
+		return newGithubRepository(ctx, r), nil
 	case provisioning.S3RepositoryType:
 		return newS3Repository(r), nil
 	default:
+		return &unknownRepository{config: r}, nil
 	}
-	return &unknownRepository{config: r}, nil
+}
+
+func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.CreateOptions) {
+	cfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		b.logger.Error("object is not *provisioning.Repository")
+		return
+	}
+
+	ctx := context.Background()
+	repo, err := b.asRepository(ctx, cfg)
+	if err != nil {
+		b.logger.Error("failed to get repository", "error", err)
+		return
+	}
+
+	if err := repo.AfterCreate(ctx); err != nil {
+		b.logger.Error("failed to run after create", "error", err)
+		return
+	}
+}
+
+func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, opts *metav1.UpdateOptions) (registry.FinishFunc, error) {
+	objCfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("new object is not *provisioning.Repository")
+	}
+	oldCfg, ok := old.(*provisioning.Repository)
+	if !ok {
+		return nil, fmt.Errorf("old object is not *provisioning.Repository")
+	}
+
+	repo, err := b.asRepository(ctx, objCfg)
+	if err != nil {
+		return nil, fmt.Errorf("get new repository: %w", err)
+	}
+
+	oldRepo, err := b.asRepository(ctx, oldCfg)
+	if err != nil {
+		return nil, fmt.Errorf("get old repository: %w", err)
+	}
+
+	undo, err := repo.BeginUpdate(ctx, oldRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(ctx context.Context, success bool) {
+		if !success && undo != nil {
+			if err := undo(ctx); err != nil {
+				b.logger.Error("failed to undo failed update", "error", err)
+			}
+		}
+	}, nil
+}
+
+func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.DeleteOptions) {
+	ctx := context.Background()
+	cfg, ok := obj.(*provisioning.Repository)
+	if !ok {
+		b.logger.Error("object is not *provisioning.Repository")
+		return
+	}
+
+	repo, err := b.asRepository(ctx, cfg)
+	if err != nil {
+		b.logger.Error("failed to get repository", "error", err)
+		return
+	}
+
+	if err := repo.AfterDelete(ctx); err != nil {
+		b.logger.Error("failed to run after delete", "error", err)
+		return
+	}
 }
 
 func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -177,15 +260,26 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		return nil // This is normal for sub-resource
 	}
 
-	repo, err := b.asRepository(obj)
+	repo, err := b.asRepository(ctx, obj)
 	if err != nil {
 		return err
 	}
 
 	// Typed validation
 	list := repo.Validate()
-
 	cfg := repo.Config()
+
+	if a.GetOperation() == admission.Update {
+		oldRepo, err := b.asRepository(ctx, a.GetOldObject())
+		if err != nil {
+			return fmt.Errorf("get old repository for update: %w", err)
+		}
+
+		if cfg.Spec.Type != oldRepo.Config().Spec.Type {
+			list = append(list, field.Invalid(field.NewPath("spec", "type"),
+				cfg.Spec.Type, "Changing repository type is not supported"))
+		}
+	}
 
 	if cfg.Spec.Title == "" {
 		list = append(list, field.Required(field.NewPath("spec", "title"), "a repository title must be given"))
@@ -260,11 +354,11 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	}
 
 	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/read")
+	delete(oas.Paths.Paths, repoprefix+"/file")
 
 	// update the version with a path
-	sub = oas.Paths.Paths[repoprefix+"/read/{path}"]
-	if sub != nil && sub.Get != nil {
+	sub = oas.Paths.Paths[repoprefix+"/file/{path}"]
+	if sub != nil {
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{
 			{
@@ -278,6 +372,89 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 				},
 			},
 		}
+
+		// Add message to the OpenAPI spec
+		comment := []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "message",
+					In:          "query",
+					Example:     "My commit message",
+					Description: "for git properties this will be in the commit message",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+		sub.Delete.Parameters = comment
+		sub.Post.Parameters = comment
+		sub.Put.Parameters = comment
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"dashboard": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": map[string]interface{}{
+													"hello": "dashboard",
+												},
+											},
+										},
+									},
+								},
+								"playlist": {
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": map[string]interface{}{
+													"hello": "playlist",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"application/x-yaml": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"dashboard": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: dashboards.grafana.app/v0alpha1
+kind: Dashboard
+spec:
+  title: Sample dashboard
+`},
+								},
+								"playlist": {
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+spec:
+  title: Playlist from provisioning
+  interval: 5m
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests
+`},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		// POST and put have the same request
+		sub.Put.RequestBody = sub.Post.RequestBody
 	}
 
 	// The root API discovery list

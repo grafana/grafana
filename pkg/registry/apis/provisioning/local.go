@@ -2,14 +2,17 @@ package provisioning
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -104,7 +107,7 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 
 // Test implements provisioning.Repository.
 func (r *localRepository) Test(ctx context.Context) error {
-	return &errors.StatusError{
+	return &apierrors.StatusError{
 		ErrStatus: v1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
@@ -115,10 +118,10 @@ func (r *localRepository) Test(ctx context.Context) error {
 // ReadResource implements provisioning.Repository.
 func (r *localRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	if commit != "" {
-		return nil, errors.NewBadRequest("local repository does not support commits")
+		return nil, apierrors.NewBadRequest("local repository does not support commits")
 	}
 	if r.path == "" {
-		return nil, &errors.StatusError{
+		return nil, &apierrors.StatusError{
 			ErrStatus: v1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
@@ -130,8 +133,67 @@ func (r *localRepository) Read(ctx context.Context, path string, commit string) 
 	return os.ReadFile(filepath.Join(r.path, path))
 }
 
+func (r *localRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+	if r.path == "" {
+		return &apierrors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	path = filepath.Join(r.path, path)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return os.WriteFile(filepath.Join(r.path, path), data, 0600)
+	}
+	return fmt.Errorf("file already exists")
+}
+
+func (r *localRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+	if r.path == "" {
+		return &apierrors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	path = filepath.Join(r.path, path)
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("file does not exist")
+	}
+	return os.WriteFile(path, data, 0600)
+}
+
+func (r *localRepository) Delete(ctx context.Context, path string, comment string) error {
+	if r.path == "" {
+		return &apierrors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	return os.Remove(filepath.Join(r.path, path))
+}
+
 // Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook() http.HandlerFunc {
+func (r *localRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
+	return nil
+}
+
+func (r *localRepository) AfterCreate(ctx context.Context) error {
+	return nil
+}
+
+func (r *localRepository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+	return nil, nil
+}
+
+func (r *localRepository) AfterDelete(ctx context.Context) error {
 	return nil
 }

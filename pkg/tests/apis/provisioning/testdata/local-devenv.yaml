@@ -5,6 +5,10 @@ metadata:
 spec:
   title: Load devenv dashboards
   description: load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards
+  editing:
+    create: true
+    update: true
+    delete: true
   type: local 
   local:
     path: devenv/dev-dashboards

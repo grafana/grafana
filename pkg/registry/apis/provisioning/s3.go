@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -42,7 +43,7 @@ func (r *s3Repository) Validate() (list field.ErrorList) {
 // Test implements provisioning.Repository.
 func (r *s3Repository) Test(ctx context.Context) error {
 	return &errors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
@@ -52,15 +53,54 @@ func (r *s3Repository) Test(ctx context.Context) error {
 // ReadResource implements provisioning.Repository.
 func (r *s3Repository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	return nil, &errors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}
 }
 
+func (r *s3Repository) Create(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *s3Repository) Update(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *s3Repository) Delete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "delete file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook() http.HandlerFunc {
+func (r *s3Repository) Webhook(responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
+	return nil
+}
+
+func (r *s3Repository) AfterCreate(ctx context.Context) error {
+	return nil
+}
+
+func (r *s3Repository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+	return func(ctx context.Context) error { return nil }, nil
+}
+
+func (r *s3Repository) AfterDelete(ctx context.Context) error {
 	return nil
 }
