@@ -1,8 +1,40 @@
 import { e2e } from '../utils';
+import { fromBaseUrl } from '../utils/support/url';
 
 describe('Verify i18n', () => {
-  beforeEach(() => {
+  const I18N_USER = 'i18n-test';
+  const I18N_PASSWORD = 'i18n-test';
+
+  // create a new user to isolate the language changes from other tests
+  before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    cy.request({
+      method: 'POST',
+      url: fromBaseUrl('/api/admin/users'),
+      body: {
+        email: I18N_USER,
+        login: I18N_USER,
+        name: I18N_USER,
+        password: I18N_PASSWORD,
+      },
+    }).then((response) => {
+      cy.wrap(response.body.uid).as('uid');
+    });
+  });
+
+  // remove the user created in the before hook
+  after(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    cy.get('@uid').then((uid) => {
+      cy.request({
+        method: 'DELETE',
+        url: fromBaseUrl(`/api/admin/users/${uid}`),
+      });
+    });
+  });
+
+  beforeEach(() => {
+    e2e.flows.login(I18N_USER, I18N_PASSWORD);
   });
 
   // map between languages in the language picker and the corresponding translation of the 'Language' label
