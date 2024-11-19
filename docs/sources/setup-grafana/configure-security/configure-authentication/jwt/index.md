@@ -188,7 +188,7 @@ key_id = my-key-id
 By default, only `"exp"`, `"nbf"` and `"iat"` claims are validated.
 
 Consider validating that other claims match your expectations by using the `expect_claims` configuration option.
-Token claims will need to match the values set here exactly.
+Token claims must match exactly the values set here.
 
 ```ini
 # This can be seen as a required "subset" of a JWT Claims Set.
