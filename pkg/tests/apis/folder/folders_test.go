@@ -293,78 +293,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		doFolderTests(t, helper)
 	})
-
-	t.Run("with dual write (unified storage, mode 1, create nested folders)", func(t *testing.T) {
-		doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("with dual write (unified storage, mode 1, create existing folder)", func(t *testing.T) {
-		doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("when creating a folder it should trim leading and trailing spaces", func(t *testing.T) {
-		doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
-
-	t.Run("with dual write (unified storage, mode 1, create circular reference folder)", func(t *testing.T) {
-		doCreateCircularReferenceFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folderv0alpha1.RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode1,
-				},
-			},
-			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
-				featuremgmt.FlagNestedFolders,
-				featuremgmt.FlagKubernetesFolders,
-			},
-		}))
-	})
 }
 
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -463,6 +391,126 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 	})
+	t.Run("create a nested folder", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		parentPayload := `{
+			"title": "Test/parent",
+			"uid": ""
+			}`
+		parentCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(parentPayload),
+		}, &folder.Folder{})
+		require.NotNil(t, parentCreate.Result)
+		// creating a folder without providing a parent should default to the empty parent folder
+		require.Empty(t, parentCreate.Result.ParentUID)
+
+		parentUID := parentCreate.Result.UID
+		require.NotEmpty(t, parentUID)
+
+		childPayload := fmt.Sprintf(`{
+				"title": "Test/child",
+				"uid": "",
+				"parentUid": "%s"
+				}`, parentUID)
+		childCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(childPayload),
+		}, &dtos.Folder{})
+		require.NotNil(t, childCreate.Result)
+		childUID := childCreate.Result.UID
+		require.NotEmpty(t, childUID)
+		require.Equal(t, "Test/child", childCreate.Result.Title)
+		require.Equal(t, 1, len(childCreate.Result.Parents))
+
+		parent := childCreate.Result.Parents[0]
+		// creating a folder with a known parent should succeed
+		require.Equal(t, parentUID, childCreate.Result.ParentUID)
+		require.Equal(t, parentUID, parent.UID)
+		require.Equal(t, "Test\\/parent", parent.Title)
+		require.Equal(t, parentCreate.Result.URL, parent.URL)
+	})
+
+	t.Run("create a duplicated folder", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		payload := `{
+			"title": "Test",
+			"uid": ""
+			}`
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(payload),
+		}, &folder.Folder{})
+		require.NotNil(t, create.Result)
+		parentUID := create.Result.UID
+		require.NotEmpty(t, parentUID)
+
+		create2 := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(payload),
+		}, &folder.Folder{})
+		require.NotEmpty(t, create2.Response)
+		require.Equal(t, 200, create2.Response.StatusCode) // it is OK
+	})
+
+	t.Run("title is trimmed when creating a folder", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		payload := `{
+		"title": "  my folder  ",
+		"uid": ""
+		}`
+
+		// When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(payload),
+		}, &folder.Folder{})
+		require.NotNil(t, create.Result)
+		require.Equal(t, "my folder", create.Result.Title)
+	})
+
+	t.Run("create a circular reference folder", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		payload := `{
+			"title": "Test",
+			"uid": "newFolder",
+			"parentUid: "newFolder",
+			}`
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(payload),
+		}, &folder.Folder{})
+		require.NotEmpty(t, create.Response)
+		require.Equal(t, 400, create.Response.StatusCode)
+	})
 	return helper
 }
 
@@ -505,127 +553,6 @@ func getFromBothAPIs(t *testing.T,
 		}
 	}
 	return found
-}
-
-func doNestedCreateTest(t *testing.T, helper *apis.K8sTestHelper) {
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  gvr,
-	})
-
-	parentPayload := `{
-		"title": "Test/parent",
-		"uid": ""
-		}`
-	parentCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(parentPayload),
-	}, &folder.Folder{})
-	require.NotNil(t, parentCreate.Result)
-	// creating a folder without providing a parent should default to the empty parent folder
-	require.Empty(t, parentCreate.Result.ParentUID)
-
-	parentUID := parentCreate.Result.UID
-	require.NotEmpty(t, parentUID)
-
-	childPayload := fmt.Sprintf(`{
-			"title": "Test/child",
-			"uid": "",
-			"parentUid": "%s"
-			}`, parentUID)
-	childCreate := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(childPayload),
-	}, &dtos.Folder{})
-	require.NotNil(t, childCreate.Result)
-	childUID := childCreate.Result.UID
-	require.NotEmpty(t, childUID)
-	require.Equal(t, "Test/child", childCreate.Result.Title)
-	require.Equal(t, 1, len(childCreate.Result.Parents))
-
-	parent := childCreate.Result.Parents[0]
-	// creating a folder with a known parent should succeed
-	require.Equal(t, parentUID, childCreate.Result.ParentUID)
-	require.Equal(t, parentUID, parent.UID)
-	require.Equal(t, "Test\\/parent", parent.Title)
-	require.Equal(t, parentCreate.Result.URL, parent.URL)
-}
-
-func doCreateDuplicateFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  gvr,
-	})
-
-	payload := `{
-		"title": "Test",
-		"uid": ""
-		}`
-	create := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(payload),
-	}, &folder.Folder{})
-	require.NotNil(t, create.Result)
-	parentUID := create.Result.UID
-	require.NotEmpty(t, parentUID)
-
-	create2 := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(payload),
-	}, &folder.Folder{})
-	require.NotEmpty(t, create2.Response)
-	require.Equal(t, 200, create2.Response.StatusCode) // it is OK
-}
-
-func doCreateEnsureTitleIsTrimmedTest(t *testing.T, helper *apis.K8sTestHelper) {
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  gvr,
-	})
-
-	payload := `{
-		"title": "  my folder  ",
-		"uid": ""
-		}`
-
-	// When creating a folder it should trim leading and trailing spaces in both dashboard and folder tables
-	create := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(payload),
-	}, &folder.Folder{})
-	require.NotNil(t, create.Result)
-	require.Equal(t, "my folder", create.Result.Title)
-}
-
-func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelper) {
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  gvr,
-	})
-
-	payload := `{
-		"title": "Test",
-		"uid": "newFolder",
-		"parentUid: "newFolder",
-		}`
-	create := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodPost,
-		Path:   "/api/folders",
-		Body:   []byte(payload),
-	}, &folder.Folder{})
-	require.NotEmpty(t, create.Response)
-	require.Equal(t, 400, create.Response.StatusCode)
 }
 
 func TestIntegrationFolderCreatePermissions(t *testing.T) {
