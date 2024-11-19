@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
-import { LogMessages, logInfo } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
@@ -23,7 +23,7 @@ import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
@@ -275,7 +275,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         />
       )}
       {isEditingGroup && (
-        <EditCloudGroupModal
+        <EditRuleGroupModal
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
