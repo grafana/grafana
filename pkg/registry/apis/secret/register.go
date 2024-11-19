@@ -37,8 +37,10 @@ func RegisterAPIService(
 	store secretstore.SecureValueStore,
 	manager secretstore.SecretManager,
 ) *SecretAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+		return nil
 	}
 
 	builder := NewSecretAPIBuilder(config, store, manager)

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -38,7 +39,19 @@ type SecureValueStore interface {
 }
 
 // ProvideSecureValueStore is used in the wiring.
-func ProvideSecureValueStore(db db.DB, manager SecretManager, cfg *setting.Cfg) (SecureValueStore, error) {
+func ProvideSecureValueStore(
+	db db.DB,
+	manager SecretManager,
+	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+) (SecureValueStore, error) {
+	// This makes sure that migrations are not ran and creates temporary tables we are using for development,
+	// only in case both feature toggles are enabled.
+	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
+		return &noopStore{}, nil
+	}
+
 	err := migrateSecretSQL(context.Background(), db.GetEngine(), cfg)
 	if err != nil {
 		return nil, err
