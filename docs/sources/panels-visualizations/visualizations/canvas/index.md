@@ -65,7 +65,14 @@ Elements are the basic building blocks of a canvas and they help you visualize d
 Element snapping and alignment only works when the canvas is not zoomed in.
 {{% /admonition %}}
 
-When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following sections describe the different elements available.
+### Element types
+
+When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following section describes the different elements available.
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+
+<!-- prettier-ignore-end -->
 
 ### Basic shapes
 
@@ -127,7 +134,7 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 {{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
 
-## Add custom images to elements
+### Add custom images to elements
 
 You can add custom background images to all elements except **Button** by referencing an image URL.
 The image must be hosted at a URL that allows requests from your Grafana instance.
@@ -178,26 +185,6 @@ You can edit your canvas inline while in the context of dashboard mode.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
 
-### Pan and zoom
-
-You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
-
-{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
-
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
-
-#### Infinite panning
-
-You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
-
-{{% admonition type="note" %}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{% /admonition %}}
-
-<!-- TODO: Add gif -->
-
 ### Context menu
 
 The context menu lets you perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
@@ -210,15 +197,7 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
-## Canvas options
-
-### Inline editing
-
-The inline editing toggle lets you lock or unlock the canvas. When turned off the canvas becomes “locked”, freezing elements in place and preventing unintended modifications.
-
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
-
-### Data links
+## Data links
 
 Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
 
@@ -238,7 +217,7 @@ Canvases support [data links](ref:data-links) for all elements except drone and 
 
 If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
 
-#### One-click data link
+### One-click data link
 
 You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
 
@@ -253,22 +232,66 @@ The first data link in the list will be configured as your one-click data link. 
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Standard options
+### Canvas options
+
+#### Inline editing
+
+The inline editing toggle lets you lock or unlock the canvas. When turned off the canvas becomes “locked”, freezing elements in place and preventing unintended modifications.
+
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
+
+#### Experimental Element types
+
+<!-- TBA -->
+
+#### Pan and zoom
+
+You can enable panning and zooming in a canvas. This allows you to both create and navigate more complex designs.
+
+{{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
+
+{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+
+##### Infinite panning
+
+You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
+
+{{% admonition type="note" %}}
+Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
+{{% /admonition %}}
+
+<!-- TODO: Add gif -->
+
+### Layer options
+
+<!-- TBA -->
+
+### Selected element options
+
+<!-- TBA -->
+
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
-
-{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Thresholds
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
