@@ -40,8 +40,8 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 // checkNamespace checks if subject has access through namespace
 func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              store.Id,
-		AuthorizationModelId: store.AuthorizationModelId,
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -58,8 +58,8 @@ func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, st
 func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              store.Id,
-		AuthorizationModelId: store.AuthorizationModelId,
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -81,8 +81,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, stor
 
 	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              store.Id,
-		AuthorizationModelId: store.AuthorizationModelId,
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -109,8 +109,8 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, stor
 
 	// Check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              store.Id,
-		AuthorizationModelId: store.AuthorizationModelId,
+		StoreId:              store.ID,
+		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: common.FolderResourceRelation(relation),
