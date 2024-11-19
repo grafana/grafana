@@ -3,6 +3,7 @@ import { DashboardDTO } from 'app/types';
 
 import { LegacyDashboardAPI } from './legacy';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { getDashboardsApiVersion } from './utils';
 import { K8sDashboardAPI } from './v0';
 import { K8sDashboardV2APIStub } from './v2';
 
@@ -14,7 +15,10 @@ export interface ApiVersionDTO {
   v2: DashboardWithAccessInfo<DashboardV2Spec>;
 }
 
-type DashboardAPIClients = Record<keyof ApiVersionDTO, DashboardAPI<unknown>>;
+type DashboardAPIClients = Record<
+  keyof ApiVersionDTO,
+  DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>>
+>;
 
 let clients: Partial<DashboardAPIClients> | undefined;
 
@@ -25,7 +29,7 @@ export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefin
   clients = override;
 }
 
-export function getDashboardAPI<V extends keyof ApiVersionDTO = 'legacy'>(v?: V): DashboardAPI<ApiVersionDTO[V]> {
+export function getDashboardAPI(): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>> {
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),
@@ -34,13 +38,13 @@ export function getDashboardAPI<V extends keyof ApiVersionDTO = 'legacy'>(v?: V)
     };
   }
 
-  if (!v) {
-    v = 'legacy' as V;
-  }
+  const v = getDashboardsApiVersion();
+
+  console.log('Dashboard API version:', v);
 
   if (!clients[v]) {
     throw new Error(`Unknown Dashboard API version: ${v}`);
   }
 
-  return clients[v] as DashboardAPI<ApiVersionDTO[V]>;
+  return clients[v];
 }
