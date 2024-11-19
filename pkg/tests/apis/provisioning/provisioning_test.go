@@ -49,7 +49,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		// fmt.Printf("%s", string(v1Disco))
+		//fmt.Printf("%s", string(v1Disco))
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
@@ -74,9 +74,39 @@ func TestIntegrationProvisioning(t *testing.T) {
 				{
 					"name": "repositories/hello",
 					"singularName": "",
-					"kind": "HelloWorld",
 					"namespaced": true,
+					"kind": "HelloWorld",
 					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "repositories/read",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "ResourceWrapper",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "repositories/status",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "Repository",
+					"verbs": [
+						"get",
+						"patch",
+						"update"
+					]
+				},
+				{
+					"name": "repositories/webhook",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "WebhookResponse",
+					"verbs": [
+						"create",
 						"get"
 					]
 				}
@@ -89,12 +119,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		// Load the samples
 		_, err := client.Resource.Create(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
-			createOptions,
-		)
-		require.NoError(t, err)
-
-		_, err = client.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			createOptions,
 		)
@@ -129,14 +153,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 				"title": "Github Example",
 				"type": "github"
 			},
-			"local-devenv": {
-				"description": "load resources from grafana/grafana devenv folder",
-				"local": {
-					"path": "path/to/folder"
-				},
-				"title": "Local devenv files",
-				"type": "local"
-			},
 			"s3-example": {
 				"description": "load resources from an S3 bucket",
 				"s3": {
@@ -162,7 +178,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	t.Run("basic helloworld subresource", func(t *testing.T) {
 		// Add it if this is the only test that ran
 		_, err := client.Resource.Update(ctx,
-			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
@@ -172,7 +188,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Error(t, err) // "test" not found
 		require.Nil(t, resp)  // "test" not found
 
-		resp, err = client.Resource.Get(ctx, "local-devenv", metav1.GetOptions{}, "hello")
+		resp, err = client.Resource.Get(ctx, "github-example", metav1.GetOptions{}, "hello")
 		require.NoError(t, err)
 		require.Equal(t,
 			"World",

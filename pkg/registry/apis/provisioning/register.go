@@ -7,6 +7,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -120,12 +121,16 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 }
 
 func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (Repository, error) {
-	return nil, nil
+	obj, err := b.getter.Get(ctx, name, &v1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return b.asRepository(obj)
 }
 
-func (b *ProvisioningAPIBuilder) getRepository(ctx context.Context, obj runtime.Object) (Repository, error) {
+func (b *ProvisioningAPIBuilder) asRepository(obj runtime.Object) (Repository, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("missing object for validation")
+		return nil, fmt.Errorf("missing repository object")
 	}
 	r, ok := obj.(*provisioning.Repository)
 	if !ok {
@@ -145,7 +150,12 @@ func (b *ProvisioningAPIBuilder) getRepository(ctx context.Context, obj runtime.
 }
 
 func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	repo, err := b.getRepository(ctx, a.GetObject())
+	obj := a.GetObject()
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	repo, err := b.asRepository(a.GetObject())
 	if err != nil {
 		return err
 	}
@@ -170,12 +180,12 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
-	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.GitHub != nil {
+	if cfg.Spec.Type != provisioning.GithubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}
 
-	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.S3 != nil {
+	if cfg.Spec.Type != provisioning.S3RepositoryType && cfg.Spec.S3 != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "s3"),
 			cfg.Spec.GitHub, "S3 config only valid when type is s3"))
 	}

@@ -1,0 +1,10 @@
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Repository
+metadata:
+  name: local-conf-provisioning-sample
+spec:
+  title: Config provisioning files
+  description: load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample
+  type: local 
+  local:
+    path: provisioning/sample
