@@ -37,8 +37,8 @@ type Server struct {
 }
 
 type storeInfo struct {
-	Id                   string
-	AuthorizationModelId string
+	ID      string
+	ModelID string
 }
 
 type ServerOption func(s *Server)

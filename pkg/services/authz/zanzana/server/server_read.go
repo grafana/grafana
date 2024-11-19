@@ -19,7 +19,7 @@ func (s *Server) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authze
 	}
 
 	res, err := s.openfga.Read(ctx, &openfgav1.ReadRequest{
-		StoreId: storeInf.Id,
+		StoreId: storeInf.ID,
 		TupleKey: &openfgav1.ReadRequestTupleKey{
 			User:     req.GetTupleKey().GetUser(),
 			Relation: req.GetTupleKey().GetRelation(),

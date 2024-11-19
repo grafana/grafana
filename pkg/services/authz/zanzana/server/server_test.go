@@ -71,8 +71,8 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 
 	// seed tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				common.NewResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),

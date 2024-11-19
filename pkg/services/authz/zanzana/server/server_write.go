@@ -29,8 +29,8 @@ func (s *Server) Write(ctx context.Context, req *authzextv1.WriteRequest) (*auth
 	}
 
 	writeReq := &openfgav1.WriteRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 	}
 	if len(writeTuples) > 0 {
 		writeReq.Writes = &openfgav1.WriteRequestWrites{
