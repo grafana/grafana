@@ -105,14 +105,16 @@ export const extractFieldsTransformerEditor = ({
           />
         </InlineField>
       </InlineFieldRow>
-      {options.format === 'regexp' && (
+      {options.format === FieldExtractorID.RegExp && (
         <InlineFieldRow>
           <InlineField label="RegExp">
             <Input placeholder="/(?<NewField>.*)/" value={options.regExp} onChange={onRegexpChange} />
           </InlineField>
         </InlineFieldRow>
       )}
-      {options.format === 'json' && <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />}
+      {options.format === FieldExtractorID.JSON && (
+        <JSONPathEditor options={options.jsonPaths ?? []} onChange={onJSONPathsChange} />
+      )}
       <InlineFieldRow>
         <InlineField label={'Replace all fields'} labelWidth={16}>
           <InlineSwitch value={options.replace ?? false} onChange={onToggleReplace} />
