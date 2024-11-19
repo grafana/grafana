@@ -302,6 +302,9 @@
     },
     "rule-list": {
       "configure-datasource": "Configure",
+      "filter-view": {
+        "no-more-results": "No more results – showing {{numberOfRules}} rules"
+      },
       "new-alert-rule": "New alert rule"
     },
     "rule-state": {

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useDeepCompareEffect } from 'react-use';
 
-import { Card, EmptyState, Stack } from '@grafana/ui';
+import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { isLoading, useAsync } from '../hooks/useAsync';
@@ -89,7 +89,8 @@ export function FilterView({ filterState }: FilterViewProps) {
   }, [controller]);
 
   const loading = isLoading(state) || transitionPending;
-  const noRulesFound = rules.length === 0 && !loading;
+  const numberOfRules = rules.length;
+  const noRulesFound = numberOfRules === 0 && !loading;
 
   /* If we don't have any rules and have exhausted all sources, show a EmptyState */
   if (noRulesFound && doneSearching) {
@@ -113,7 +114,11 @@ export function FilterView({ filterState }: FilterViewProps) {
       )}
       {doneSearching && !noRulesFound && (
         <Card>
-          <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">No more results</Trans>
+          <Text color="secondary">
+            <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">
+              No more results – showing {{ numberOfRules }} rules
+            </Trans>
+          </Text>
         </Card>
       )}
       {!doneSearching && <LoadMoreHelper handleLoad={loadResultPage} />}
