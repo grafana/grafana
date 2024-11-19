@@ -131,9 +131,10 @@ export type Route = {
   mute_time_intervals?: string[];
   /** Times when the route should be active. This is the opposite of `mute_time_intervals` */
   active_time_intervals?: string[];
+  /** only the root policy might have a provenance field defined */
+  provenance?: string;
   _metadata?: {
-    /** only the root policy might have a provenance field defined */
-    provenance?: string;
+    provisioned?: boolean;
     resourceVersion?: string;
     name?: string;
   };

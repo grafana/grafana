@@ -219,9 +219,16 @@
     "policies": {
       "default-policy": {
         "description": "Åľľ äľęřŧ įŉşŧäŉčęş ŵįľľ þę ĥäŉđľęđ þy ŧĥę đęƒäūľŧ pőľįčy įƒ ŉő őŧĥęř mäŧčĥįŉģ pőľįčįęş äřę ƒőūŉđ.",
-        "title": "Đęƒäūľŧ pőľįčy"
+        "title": "Đęƒäūľŧ pőľįčy",
+        "update": "Ůpđäŧę đęƒäūľŧ pőľįčy"
+      },
+      "delete": {
+        "confirm": "Ÿęş, đęľęŧę pőľįčy",
+        "warning-1": "Đęľęŧįŉģ ŧĥįş ŉőŧįƒįčäŧįőŉ pőľįčy ŵįľľ pęřmäŉęŉŧľy řęmővę įŧ.",
+        "warning-2": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş pőľįčy?"
       },
       "generated-policies": "Åūŧő-ģęŉęřäŧęđ pőľįčįęş",
+      "matchers": "Mäŧčĥęřş",
       "metadata": {
         "active-time": "Åčŧįvę ŵĥęŉ",
         "delivered-to": "Đęľįvęřęđ ŧő",
@@ -255,6 +262,12 @@
       "new-policy": "Åđđ ŉęŵ pőľįčy",
       "no-matchers": "Ńő mäŧčĥęřş",
       "reload-policies": "Ŗęľőäđ pőľįčįęş",
+      "save-policy": "Ŝävę pőľįčy",
+      "update": {
+        "please-wait": "Pľęäşę ŵäįŧ ŵĥįľę ŵę ūpđäŧę yőūř ŉőŧįƒįčäŧįőŉ pőľįčįęş.",
+        "update-policy": "Ůpđäŧę pőľįčy",
+        "updating": "Ůpđäŧįŉģ..."
+      },
       "update-errors": {
         "conflict": "Ŧĥę ŉőŧįƒįčäŧįőŉ pőľįčy ŧřęę ĥäş þęęŉ ūpđäŧęđ þy äŉőŧĥęř ūşęř.",
         "error-code": "Ēřřőř męşşäģę: \"{{error}}\"",
