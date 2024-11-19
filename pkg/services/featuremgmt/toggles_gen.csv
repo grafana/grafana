@@ -220,3 +220,4 @@ enableSCIM,experimental,@grafana/identity-access-team,false,false,false
 crashDetection,experimental,@grafana/observability-traces-and-profiling,false,false,true
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
 reportingUseRawTimeRange,preview,@grafana/sharing-squad,false,false,false
+alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
