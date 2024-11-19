@@ -6,6 +6,8 @@ spec:
   title: Github Example
   description: load resources from github
   type: github
+  editing:
+    enabled: true
   github:
     owner: grafana
     repository: git-ui-sync-demo

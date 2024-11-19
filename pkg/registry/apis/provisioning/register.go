@@ -283,7 +283,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 							Schema:  spec.MapProperty(nil),
 							Example: &unstructured.Unstructured{},
 							Examples: map[string]*spec3.Example{
-								"dashboard": &spec3.Example{
+								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
@@ -294,7 +294,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 										},
 									},
 								},
-								"playlist": &spec3.Example{
+								"playlist": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
@@ -313,7 +313,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 							Schema:  spec.MapProperty(nil),
 							Example: &unstructured.Unstructured{},
 							Examples: map[string]*spec3.Example{
-								"dashboard": &spec3.Example{
+								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
 										Value: `apiVersion: dashboards.grafana.app/v0alpha1
 kind: Dashboard
@@ -321,7 +321,7 @@ spec:
   title: Sample dashboard
 `},
 								},
-								"playlist": &spec3.Example{
+								"playlist": {
 									ExampleProps: spec3.ExampleProps{
 										Value: `apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
