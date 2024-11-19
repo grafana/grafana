@@ -10,18 +10,18 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
+  Drawer,
   Dropdown,
   FieldSet,
+  InlineField,
   Input,
   LinkButton,
   Menu,
-  useStyles2,
   Stack,
   useSplitter,
-  Drawer,
-  InlineField,
-  Box,
+  useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -93,8 +93,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
   const appNotification = useAppNotification();
 
-  const createNewTemplate = useCreateNotificationTemplate({ alertmanager });
-  const updateTemplate = useUpdateNotificationTemplate({ alertmanager });
+  const [createNewTemplate] = useCreateNotificationTemplate({ alertmanager });
+  const [updateTemplate] = useUpdateNotificationTemplate({ alertmanager });
   const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager, originalTemplate });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
@@ -149,9 +149,9 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 
     try {
       if (!originalTemplate) {
-        await createNewTemplate({ templateValues: values });
+        await createNewTemplate.execute({ templateValues: values });
       } else {
-        await updateTemplate({ template: originalTemplate, patch: values });
+        await updateTemplate.execute({ template: originalTemplate, patch: values });
       }
       appNotification.success('Template saved', `Template ${values.title} has been saved`);
       locationService.push(returnLink);

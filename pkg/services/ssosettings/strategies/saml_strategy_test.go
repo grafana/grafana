@@ -15,6 +15,7 @@ var (
 	iniSAMLContent = `
 	[auth.saml]
 	enabled = true
+	entity_id = custom-entity-id
 	single_logout = true
 	name = "SAML Test"
 	allow_sign_up = true
@@ -54,6 +55,7 @@ var (
 
 	expectedSAMLInfo = map[string]any{
 		"enabled":                    true,
+		"entity_id":                  "custom-entity-id",
 		"single_logout":              true,
 		"allow_sign_up":              true,
 		"auto_login":                 true,

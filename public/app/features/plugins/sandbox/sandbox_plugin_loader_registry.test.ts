@@ -7,6 +7,7 @@ import {
   shouldLoadPluginInFrontendSandbox,
   setSandboxEnabledCheck,
   isPluginFrontendSandboxEnabled,
+  isPluginFrontendSandboxEligible,
 } from './sandbox_plugin_loader_registry';
 
 jest.mock('@grafana/runtime', () => ({
@@ -87,6 +88,13 @@ describe('Sandbox eligibility checks', () => {
     config.enableFrontendSandboxForPlugins = ['test-plugin'];
     const result = await shouldLoadPluginInFrontendSandbox({ pluginId: 'test-plugin' });
     expect(customCheck).toHaveBeenCalledWith({ pluginId: 'test-plugin' });
+    expect(result).toBe(false);
+  });
+
+  test('isPluginFrontendSandboxEligible returns false for plugins with internal signature', async () => {
+    //@ts-expect-error We don't publicly export the internal signature
+    getPluginSettingsMock.mockResolvedValue({ ...fakePlugin, signature: 'internal' });
+    const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
     expect(result).toBe(false);
   });
 });

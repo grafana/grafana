@@ -35,7 +35,6 @@ export interface FeatureToggles {
   autoMigratePiechartPanel?: boolean;
   autoMigrateWorldmapPanel?: boolean;
   autoMigrateStatPanel?: boolean;
-  autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   vizActions?: boolean;
@@ -232,8 +231,13 @@ export interface FeatureToggles {
   preinstallAutoUpdate?: boolean;
   dashboardSchemaV2?: boolean;
   playlistsWatcher?: boolean;
+  passwordlessMagicLinkAuthentication?: boolean;
   exploreMetricsRelatedLogs?: boolean;
   enableExtensionsAdminPage?: boolean;
   zipkinBackendMigration?: boolean;
   enableSCIM?: boolean;
+  crashDetection?: boolean;
+  jaegerBackendMigration?: boolean;
+  reportingUseRawTimeRange?: boolean;
+  alertingUIOptimizeReducer?: boolean;
 }
