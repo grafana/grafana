@@ -1,9 +1,7 @@
 package provisioning
 
 import (
-	"bufio"
 	"context"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -115,7 +113,7 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadResource(ctx context.Context, path string, commit string) (io.Reader, error) {
+func (r *localRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	if commit != "" {
 		return nil, errors.NewBadRequest("local repository does not support commits")
 	}
@@ -129,11 +127,7 @@ func (r *localRepository) ReadResource(ctx context.Context, path string, commit 
 	}
 
 	//nolint:gosec
-	file, err := os.Open(filepath.Join(r.path, path))
-	if err != nil {
-		return nil, err
-	}
-	return bufio.NewReader(file), nil
+	return os.ReadFile(filepath.Join(r.path, path))
 }
 
 // Webhook implements provisioning.Repository.

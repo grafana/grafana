@@ -1,8 +1,9 @@
 package provisioning
 
 import (
+	"bytes"
 	"context"
-	"io"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -62,43 +63,28 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 			responder.Error(errors.NewBadRequest("missing path"))
 			return
 		}
-		commit := r.URL.Query().Get("commit")
 
-		reader, err := repo.ReadResource(ctx, filePath, commit)
+		commit := r.URL.Query().Get("commit")
+		data, err := repo.Read(ctx, filePath, commit)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		obj, _, err := LoadYAMLOrJSON(reader)
+		obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(data))
 		if err != nil {
-			// Reset the buffer and try reading a dashboard
-			var data []byte
-			rr, ok := reader.(io.Seeker)
-			if ok {
-				_, err = rr.Seek(0, io.SeekStart)
-			}
-			if err != nil {
-				// Try reading again
-				reader, err = repo.ReadResource(ctx, filePath, commit)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-			}
-			data, err = io.ReadAll(reader)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			obj, _, err = FallbackResourceLoader(data)
+			obj, gvk, err = FallbackResourceLoader(data)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 		}
 
+		// TODO? dry run??? and add validation errors/warnings?
+		fmt.Printf("TODO, dryrun... %+v\n", gvk)
+
 		responder.Object(200, &provisioning.ResourceWrapper{
+			Path:   filePath,
 			Commit: commit,
 			Resource: v0alpha1.Unstructured{
 				Object: obj.Object,

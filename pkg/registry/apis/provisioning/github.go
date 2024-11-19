@@ -1,10 +1,8 @@
 package provisioning
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -82,7 +80,7 @@ func extractOwnerAndRepo(repoURL string) (string, string, error) {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *githubRepository) ReadResource(ctx context.Context, filePath string, commit string) (io.Reader, error) {
+func (r *githubRepository) Read(ctx context.Context, filePath string, commit string) ([]byte, error) {
 	tokenSrc := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: r.config.Spec.GitHub.Token},
 	)
@@ -106,7 +104,7 @@ func (r *githubRepository) ReadResource(ctx context.Context, filePath string, co
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewReader([]byte(data)), nil
+	return []byte(data), nil
 }
 
 // Webhook implements provisioning.Repository.
