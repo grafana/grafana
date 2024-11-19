@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/v66/github"
 	"golang.org/x/oauth2"
@@ -66,6 +67,14 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.WebhookURL == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "webhookURL"), "a webhook URL is required"))
+	}
+	if gh.WebhookSecret == "" {
+		list = append(list, field.Required(field.NewPath("spec", "github", "webhookSecret"), "a webhook secret is required"))
+	}
+
+	_, err := url.Parse(gh.WebhookURL)
+	if err != nil {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "webhookURL"), gh.WebhookURL, "invalid URL"))
 	}
 
 	return list

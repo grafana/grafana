@@ -9,7 +9,10 @@ spec:
   github:
     owner: grafana
     repository: git-ui-sync-demo
+    branch: dummy-branch
     branchWorkflow: true
     generateDashboardPreviews: true
     token: "github_pat_dummy"
+    webhookName: "dummyWebhookName"
+    webhookUrl: "https://dummyWebhookUrl/api/v1/provisioning/repositories/github-example/webhook"
     webhookSecret: "dummyWebhookSecret"
