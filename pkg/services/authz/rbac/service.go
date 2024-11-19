@@ -1,11 +1,8 @@
 package rbac
 
 import (
-	"context"
-
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -30,9 +27,11 @@ func NewService(sql legacysql.LegacyDatabaseProvider, logger log.Logger, tracer 
 	}
 }
 
-func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	ns := req.GetNamespace()
-	ctx = request.WithNamespace(ctx, ns)
+// TODO: Implement Check
+// func (s *Service) Check(ctx context.Context, req *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
+// This needs to be done for the database provider
+// 	ns := req.GetNamespace()
+// 	ctx = request.WithNamespace(ctx, ns)
 
-	return nil, nil
-}
+// 	return nil, nil
+// }
