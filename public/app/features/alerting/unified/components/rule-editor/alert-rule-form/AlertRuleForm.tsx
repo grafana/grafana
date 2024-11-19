@@ -176,6 +176,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         targetRuleGroupIdentifier,
         evaluateEvery
       );
+
     }
 
     const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
@@ -184,13 +185,21 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
       locationService.push(returnToUrl);
       return;
-    }
+    } else { // we stay in the same page
 
-    // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
-    // After successful update we need to update the URL to avoid displaying 404 errors
-    if (isCloudRulerRule(ruleDefinition)) {
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+      // After successful update we need to update the URL to avoid displaying 404 errors
+      if (isCloudRulerRule(ruleDefinition)) {
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      } else {
+        // For Grafana managed rules we need to update the existing property with the new rule definition
+        const identifier = ruleId.tryParse(uidFromParams, true);
+        if (identifier) {
+          const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
+          locationService.replace(editURL);
+        }
+      }
     }
   };
 
