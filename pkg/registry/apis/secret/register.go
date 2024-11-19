@@ -76,41 +76,41 @@ func (b *SecretAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 // UpdateAPIGroupInfo is called when creating a generic API server for this group of kinds.
 func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	securevalueResource := secret.SecureValuesResourceInfo
+	secureValueResource := secret.SecureValuesResourceInfo
 
 	// rest.Storage is a generic interface for RESTful storage services.
 	// The constructors need to at least implement this interface, but will most likely implement
 	// other interfaces that equal to different operations like `get`, `list` and so on.
-	securevalueStorage := map[string]rest.Storage{
+	secureValueStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `restStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
-		securevalueResource.StoragePath(): &secureValueRESTStorage{
+		secureValueResource.StoragePath(): &secureValueRESTStorage{
 			store:          b.store,
-			resource:       securevalueResource,
-			tableConverter: securevalueResource.TableConverter(),
+			resource:       secureValueResource,
+			tableConverter: secureValueResource.TableConverter(),
 		},
 
 		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
 		// Not yet supported by grafana-app-sdk or unified storage.
-		securevalueResource.StoragePath("decrypt"): &secretDecrypt{
+		secureValueResource.StoragePath("decrypt"): &secretDecrypt{
 			config: b.config,
 			store:  b.store,
 		},
 
 		// This is a subresrouce from `securevalue`. It gets accessed like `securevalue/xyz/history`.
 		// Not yet supported by grafana-app-sdk or unified storage.
-		securevalueResource.StoragePath("history"): &secretHistory{
+		secureValueResource.StoragePath("history"): &secretHistory{
 			store: b.store,
 		},
 	}
 
 	// This does not do anything here. Shouldn't it also use the keymanager resource? TODO!
-	err := b.manager.InitStorage(opts.Scheme, securevalueStorage, opts.OptsGetter)
+	err := b.manager.InitStorage(opts.Scheme, secureValueStorage, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("secret manager init storage: %w", err)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[secret.VERSION] = securevalueStorage
+	apiGroupInfo.VersionedResourcesStorageMap[secret.VERSION] = secureValueStorage
 	return nil
 }
 

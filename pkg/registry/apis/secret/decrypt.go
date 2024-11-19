@@ -13,16 +13,19 @@ import (
 	secretstore "github.com/grafana/grafana/pkg/storage/secret"
 )
 
-type secretDecrypt struct {
-	config *setting.Cfg
-	store  secretstore.SecureValueStore
-}
-
 var (
-	_ rest.Storage         = (*secretHistory)(nil)
+	_ rest.Storage         = (*secretDecrypt)(nil)
+	_ rest.Scoper          = (*secretHistory)(nil)
 	_ rest.Connecter       = (*secretDecrypt)(nil)
 	_ rest.StorageMetadata = (*secretDecrypt)(nil)
 )
+
+type secretDecrypt struct {
+	config *setting.Cfg
+
+	// TODO: we can use composition and only expose the `Decrypt` method this uses.
+	store secretstore.SecureValueStore
+}
 
 // New returns an empty `*SecureValue` that is required to be implemented by any storage.
 func (r *secretDecrypt) New() runtime.Object {
@@ -31,6 +34,11 @@ func (r *secretDecrypt) New() runtime.Object {
 
 // Destroy is a no-op.
 func (r *secretDecrypt) Destroy() {}
+
+// NamespaceScoped returns `true` because the storage is namespaced (== org).
+func (r *secretDecrypt) NamespaceScoped() bool {
+	return true
+}
 
 // ConnectMethods returns the list of HTTP methods we accept for this subresource.
 func (r *secretDecrypt) ConnectMethods() []string {
