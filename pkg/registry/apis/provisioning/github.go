@@ -62,9 +62,6 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
 		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
 	}
-	if gh.WebhookName == "" {
-		list = append(list, field.Required(field.NewPath("spec", "github", "webhookName"), "a webhook name is required"))
-	}
 	if gh.WebhookURL == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "webhookURL"), "a webhook URL is required"))
 	}
@@ -210,7 +207,6 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 
 func (r *githubRepository) createWebhook(ctx context.Context) error {
 	hook := &github.Hook{
-		Name: github.String(r.config.Spec.GitHub.WebhookName),
 		Config: &github.HookConfig{
 			URL:         github.String(r.config.Spec.GitHub.WebhookURL),
 			ContentType: github.String("json"),
@@ -224,13 +220,16 @@ func (r *githubRepository) createWebhook(ctx context.Context) error {
 		return err
 	}
 
-	r.logger.Info("webhook created", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+	r.logger.Info("webhook created", "url", r.config.Spec.GitHub.WebhookURL)
 
 	return nil
 }
 
 func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRepository) (UndoFunc, error) {
-	hooks, _, err := r.githubClient.Repositories.ListHooks(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Owner, nil)
+	owner := r.config.Spec.GitHub.Owner
+	repoName := r.config.Spec.GitHub.Repository
+
+	hooks, _, err := r.githubClient.Repositories.ListHooks(ctx, owner, repoName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("list existing webhooks: %w", err)
 	}
@@ -238,15 +237,14 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 	newCfg := r.config.Spec.GitHub
 	oldCfg := oldRepo.Config().Spec.GitHub
 
-	nameUpdated := newCfg.WebhookName != oldCfg.WebhookName
 	urlUpdated := newCfg.WebhookURL != oldCfg.WebhookURL
 	secretChanged := newCfg.WebhookSecret != oldCfg.WebhookSecret
-	nothingChanged := !nameUpdated && !urlUpdated && !secretChanged
+	nothingChanged := !urlUpdated && !secretChanged
 
 	switch {
 	case nothingChanged:
 		return nil, nil
-	case nameUpdated && urlUpdated:
+	case urlUpdated:
 		// In this case we cannot find out out which webhook to update, so we delete the old one and create a new one
 		if err := r.createWebhook(ctx); err != nil {
 			return nil, fmt.Errorf("create new webhook: %w", err)
@@ -274,13 +272,12 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 		return undoFunc, nil
 	default:
 		for _, hook := range hooks {
-			if *hook.Name == oldCfg.WebhookName && *hook.Config.URL == oldCfg.WebhookURL {
+			if *hook.Config.URL == oldCfg.WebhookURL {
 				updateFn := func(ctx context.Context, cfg *provisioning.GitHubRepositoryConfig) error {
-					hook.Name = github.String(cfg.WebhookName)
 					hook.Config.URL = github.String(cfg.WebhookURL)
 					hook.Config.Secret = github.String(cfg.WebhookSecret)
 
-					if _, _, err := r.githubClient.Repositories.EditHook(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, *hook.ID, hook); err != nil {
+					if _, _, err := r.githubClient.Repositories.EditHook(ctx, owner, repoName, *hook.ID, hook); err != nil {
 						return nil
 					}
 
@@ -291,7 +288,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 					return nil, fmt.Errorf("update webhook: %w", err)
 				}
 
-				r.logger.Info("webhook updated", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+				r.logger.Info("webhook updated", "url", r.config.Spec.GitHub.WebhookURL)
 
 				return func(ctx context.Context) error {
 					if err := updateFn(ctx, oldCfg); err != nil {
@@ -325,7 +322,7 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		}
 	}
 
-	r.logger.Info("webhook deleted", "url", r.config.Spec.GitHub.WebhookURL, "name", r.config.Spec.GitHub.WebhookName)
+	r.logger.Info("webhook deleted", "url", r.config.Spec.GitHub.WebhookURL)
 	return nil
 }
 

@@ -43,9 +43,6 @@ type GitHubRepositoryConfig struct {
 	// Token for accessing the repository.
 	// TODO: this should be part of secrets and a simple reference.
 	Token string `json:"token,omitempty"`
-	// WebhookName is the name of the webhook to create in Github
-	// to listen for events
-	WebhookName string `json:"webhookName,omitempty"`
 	// WebhookURL is the URL to send webhooks events to.
 	// By default, the system will generate a URL for you but you can use this one to run
 	// grafana locally and test the webhooks.

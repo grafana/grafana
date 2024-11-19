@@ -61,13 +61,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
-					"webhookName": {
-						SchemaProps: spec.SchemaProps{
-							Description: "WebhookName is the name of the webhook to create in Github to listen for events",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"webhookURL": {
 						SchemaProps: spec.SchemaProps{
 							Description: "WebhookURL is the URL to send webhooks events to. By default, the system will generate a URL for you but you can use this one to run grafana locally and test the webhooks.",

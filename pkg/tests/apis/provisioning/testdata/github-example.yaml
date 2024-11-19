@@ -13,6 +13,5 @@ spec:
     branchWorkflow: true
     generateDashboardPreviews: true
     token: "github_pat_dummy"
-    webhookName: "dummyWebhookName"
-    webhookUrl: "https://dummyWebhookUrl/api/v1/provisioning/repositories/github-example/webhook"
+    webhookUrl: "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
     webhookSecret: "dummyWebhookSecret"

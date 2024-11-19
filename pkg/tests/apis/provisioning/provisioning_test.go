@@ -161,8 +161,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"owner": "grafana",
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy",
-					"webhookName": "dummyWebhookName",
-					"webhookURL": "https://dummyWebhookUrl",
+					"webhookURL": "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook",
 					"webhookSecret": "dummyWebhookSecret"
 				},
 				"title": "Github Example",
