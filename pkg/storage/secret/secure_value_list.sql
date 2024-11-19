@@ -1,7 +1,7 @@
 SELECT "uid", 
   "namespace", "name", "title",
   "manager", "path",
-  "encrypted_kid", "encrypted_salt", "encrypted_value", 
+  "encrypted_provider", "encrypted_kid", "encrypted_salt", "encrypted_value",
   "created", "created_by",
   "updated", "updated_by",
   "annotations", "labels", 
