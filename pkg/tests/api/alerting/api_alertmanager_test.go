@@ -704,7 +704,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		ViewersCanEdit:        true,
 		AppModeProduction:     true,
 		APIServerStorageType:  options.StorageTypeLegacy,
-		// EnableFeatureToggles:  []string{featuremgmt.FlagKubernetesFolders},
 	}
 
 	// Setup Grafana and its Database
