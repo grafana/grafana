@@ -98,9 +98,8 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	r.reconcile(ctx)
 
 	// FIXME:
-	// 1. We should be a bit graceful about reconciliations so we are not hammering dbs
-	// 2. We should be able to configure reconciliation interval
-	ticker := time.NewTicker(1 * time.Hour)
+	// We should be a bit graceful about reconciliations so we are not hammering dbs
+	ticker := time.NewTicker(r.cfg.RBAC.ZanzanaReconciliationInterval)
 	for {
 		select {
 		case <-ticker.C:
