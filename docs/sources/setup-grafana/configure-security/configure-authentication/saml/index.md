@@ -412,7 +412,7 @@ auto_login = true
 
 ### Configure group synchronization
 
-Group synchronization allows you to map user groups from an identity provider to Grafana teams and role-based access control roles.
+Group synchronization allows you to map user groups from an identity provider to Grafana teams and roles.
 
 To use SAML group synchronization, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups.
 Then Grafana will use attribute values extracted from SAML assertion to add user to Grafana teams and grant them roles.

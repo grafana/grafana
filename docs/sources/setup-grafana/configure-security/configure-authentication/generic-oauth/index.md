@@ -334,7 +334,7 @@ org_mapping = org_foo:org_foo:Viewer org_bar:org_bar:Editor *:org_baz:Editor
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Grafana supports synchronization of OAuth2 groups with Grafana teams and role-based access control roles. This allows automatically assigning users to the appropriate teams or automatically granting them the mapped roles.
+Grafana supports synchronization of OAuth2 groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or automatically granting them the mapped roles.
 Teams and roles get synchronized when the user logs in.
 
 Generic OAuth groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.

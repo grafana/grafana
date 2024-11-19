@@ -355,7 +355,7 @@ auto_login = true
 
 ### Group sync (Enterprise only)
 
-With group sync you can map your Entra ID groups to teams and role-based access control roles in Grafana. This allows users to automatically be added to
+With group sync you can map your Entra ID groups to teams and roles in Grafana. This allows users to automatically be added to
 the correct teams and be granted the correct roles in Grafana.
 
 You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.

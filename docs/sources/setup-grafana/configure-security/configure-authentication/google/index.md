@@ -171,7 +171,7 @@ auto_login = true
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Grafana supports syncing users to teams and role-based access control roles based on their Google groups.
+Grafana supports syncing users to teams and roles based on their Google groups.
 
 To set up group sync for Google OAuth:
 

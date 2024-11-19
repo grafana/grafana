@@ -30,8 +30,8 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 ## LDAP group synchronization
 
-With enhanced LDAP integration, you can set up synchronization between LDAP groups and Grafana teams and role-based access control roles. This enables LDAP users that are members
-of certain LDAP groups to be automatically added to teams and granted roles in Grafana.
+With enhanced LDAP integration, you can set up synchronization between LDAP groups and Grafana teams and roles. This enables users that are members
+of certain LDAP groups to automatically be added to teams and gain roles in Grafana.
 
 The below example shows an LDAP group member mapped to a Grafana team.
 

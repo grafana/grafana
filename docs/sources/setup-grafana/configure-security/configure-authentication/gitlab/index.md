@@ -248,7 +248,7 @@ use_refresh_token = true
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-Grafana supports synchronization of GitLab groups with Grafana teams and role-based access control roles. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
+Grafana supports synchronization of GitLab groups with Grafana teams and roles. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
 Teams and roles get synchronized when the user logs in.
 
 GitLab groups are referenced by the group name. For example, `developers`. To reference a subgroup `frontend`, use `developers/frontend`.

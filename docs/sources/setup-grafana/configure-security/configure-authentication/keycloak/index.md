@@ -112,7 +112,7 @@ viewer
 Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 {{< /admonition >}}
 
-By using group synchronization, you can link your Keycloak groups to teams and role-based access control roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
+By using group synchronization, you can link your Keycloak groups to teams and roles within Grafana. This allows automatically assigning users to the appropriate teams or granting them the mapped roles.
 This is useful if you want to give your users access to specific resources based on their group membership.
 Teams and roles get synchronized when the user logs in.
 
