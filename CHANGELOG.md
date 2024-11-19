@@ -1,3 +1,25 @@
+<!-- 11.0.8 START -->
+
+# 11.0.8 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96131](https://github.com/grafana/grafana/pull/96131), [@fayzal-g](https://github.com/fayzal-g)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95487](https://github.com/grafana/grafana/pull/95487), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Anonymous User:** Adds validator service for anonymous users [#95151](https://github.com/grafana/grafana/pull/95151), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95152](https://github.com/grafana/grafana/pull/95152), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95244](https://github.com/grafana/grafana/pull/95244), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95906](https://github.com/grafana/grafana/pull/95906), [@aangelisc](https://github.com/aangelisc)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95229](https://github.com/grafana/grafana/pull/95229), [@kalleep](https://github.com/kalleep)
+- **Prometheus:** Fix interpolating adhoc filters with template variables [#95986](https://github.com/grafana/grafana/pull/95986), [@cazeaux](https://github.com/cazeaux)
+- **ServerLock:** Fix pg concurrency/locking issue [#95932](https://github.com/grafana/grafana/pull/95932), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94971](https://github.com/grafana/grafana/pull/94971), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.0.8 END -->
 <!-- 10.4.13 START -->
 
 # 10.4.13 (2024-11-19)
