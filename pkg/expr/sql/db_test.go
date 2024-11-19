@@ -35,6 +35,22 @@ func TestQueryFramesInto(t *testing.T) {
 				data.NewField("age", nil, []int64{40}),
 			),
 		},
+		{
+			// TODO: Also ORDER BY to ensure the order is preserved
+			name:  "query all rows from single input frame",
+			query: `SELECT * FROM inputFrameRefId LIMIT 1;`,
+			input_frames: []*data.Frame{
+				data.NewFrame(
+					"inputFrameRefId",
+					//nolint:misspell
+					data.NewField("OSS Projects with Typos", nil, []string{"Garfana", "Pormetheus"}),
+				),
+			},
+			expected: data.NewFrame(
+				"sqlExpressionRefId",
+				data.NewField("OSS Projects with Typos", nil, []string{"Garfana"}),
+			),
+		},
 	}
 
 	for _, tt := range tests {

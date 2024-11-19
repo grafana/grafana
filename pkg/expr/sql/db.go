@@ -91,24 +91,80 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 	return nil
 }
 
-func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
-	// TODO: Check these details:
-	// - Do we need a primary key?
-	// - Can we omit `Nullable` and `Source`?
-	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(gomysql.Schema{
-		// https://pkg.go.dev/github.com/dolthub/go-mysql-server/sql#Column
-		{Name: "name", Type: types.Text, Nullable: false, Source: name},
-		{Name: "profession", Type: types.Text, Nullable: false, Source: name},
-	}), nil)
+// func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
+// 	// TODO: Check these details:
+// 	// - Do we need a primary key?
+// 	// - Can we omit `Nullable` and `Source`?
+// 	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(gomysql.Schema{
+// 		// https://pkg.go.dev/github.com/dolthub/go-mysql-server/sql#Column
+// 		{Name: "name", Type: types.Text, Nullable: false, Source: name},
+// 		{Name: "profession", Type: types.Text, Nullable: false, Source: name},
+// 	}), nil)
 
+// 	db.inMemoryDb.AddTable(name, table)
+// 	// TODO: Use a more appropriate context
+// 	err := table.Insert(gomysql.NewEmptyContext(), gomysql.NewRow("sam", "engineer"))
+// 	if err != nil {
+// 		return fmt.Errorf("error inserting row: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
+	if frame == nil {
+		return fmt.Errorf("input frame is nil")
+	}
+
+	// Create schema based on frame fields
+	schema := make(gomysql.Schema, len(frame.Fields))
+	for i, field := range frame.Fields {
+		schema[i] = &gomysql.Column{
+			Name:     field.Name,
+			Type:     convertDataType(field.Type()),
+			Nullable: true,
+			Source:   name,
+		}
+	}
+
+	// Create table with the dynamic schema
+	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(schema), nil)
 	db.inMemoryDb.AddTable(name, table)
-	// TODO: Use a more appropriate context
-	err := table.Insert(gomysql.NewEmptyContext(), gomysql.NewRow("sam", "engineer"))
-	if err != nil {
-		return fmt.Errorf("error inserting row: %v", err)
+
+	// Insert data from the frame
+	ctx := gomysql.NewEmptyContext()
+	for i := 0; i < frame.Rows(); i++ {
+		row := make(gomysql.Row, len(frame.Fields))
+		for j, field := range frame.Fields {
+			row[j] = field.At(i)
+		}
+		err := table.Insert(ctx, row)
+		if err != nil {
+			return fmt.Errorf("error inserting row %d: %v", i, err)
+		}
 	}
 
 	return nil
+}
+
+// Helper function to convert data.FieldType to types.Type
+func convertDataType(fieldType data.FieldType) gomysql.Type {
+	switch fieldType {
+	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64:
+		return types.Int64
+	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
+		return types.Uint64
+	case data.FieldTypeFloat32, data.FieldTypeFloat64:
+		return types.Float64
+	case data.FieldTypeString:
+		return types.Text
+	case data.FieldTypeBool:
+		return types.Boolean
+	case data.FieldTypeTime:
+		return types.Timestamp
+	default:
+		return types.JSON
+	}
 }
 
 // TODO: Rename `name` to `tableName`?
