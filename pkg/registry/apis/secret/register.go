@@ -80,8 +80,8 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	// other interfaces that equal to different operations like `get`, `list` and so on.
 	securevalueStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
-		// The `secretStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
-		securevalueResource.StoragePath(): &secretStorage{
+		// The `restStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
+		securevalueResource.StoragePath(): &secureValueRESTStorage{
 			store:          b.store,
 			resource:       securevalueResource,
 			tableConverter: securevalueResource.TableConverter(),
@@ -100,7 +100,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		},
 	}
 
-	// This does not do anything here.
+	// This does not do anything here. Shouldn't it also use the keymanager resource? TODO!
 	err := b.manager.InitStorage(opts.Scheme, securevalueStorage, opts.OptsGetter)
 	if err != nil {
 		return fmt.Errorf("secret manager init storage: %w", err)
