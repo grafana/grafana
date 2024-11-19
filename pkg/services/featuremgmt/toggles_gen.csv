@@ -99,6 +99,7 @@ kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,fals
 kubernetesDashboardsAPI,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 grafanaAPIServerTestingWithExperimentalAPIs,experimental,@grafana/search-and-storage,false,false,false
+secretsManagementAppPlatform,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
