@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { createTheme, LogLevel } from '@grafana/data';
+import { IconButton } from '@grafana/ui';
 
 import { LogRowMessageDisplayedFields, Props } from './LogRowMessageDisplayedFields';
 import { createLogRow } from './__mocks__/logRow';
@@ -43,5 +45,26 @@ describe('LogRowMessageDisplayedFields', () => {
     expect(screen.queryByText('Logs are wonderful')).not.toBeInTheDocument();
     expect(screen.getByText(/place=Earth/)).toBeInTheDocument();
     expect(screen.getByText(/planet=Mars/)).toBeInTheDocument();
+  });
+
+  describe('With custom buttons', () => {
+    it('supports custom buttons before and after the default options', async () => {
+      const onBefore = jest.fn();
+      const logRowMenuIconsBefore = [
+        <IconButton name="eye-slash" onClick={onBefore} tooltip="Addon before" aria-label="Addon before" key={1} />,
+      ];
+      const onAfter = jest.fn();
+      const logRowMenuIconsAfter = [
+        <IconButton name="rss" onClick={onAfter} tooltip="Addon after" aria-label="Addon after" key={1} />,
+      ];
+
+      const { row } = setup({ logRowMenuIconsBefore, logRowMenuIconsAfter });
+
+      await userEvent.click(screen.getByLabelText('Addon before'));
+      await userEvent.click(screen.getByLabelText('Addon after'));
+
+      expect(onBefore).toHaveBeenCalledWith(expect.anything(), row);
+      expect(onAfter).toHaveBeenCalledWith(expect.anything(), row);
+    });
   });
 });
