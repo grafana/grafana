@@ -178,7 +178,6 @@ func TestIntegrationProvisioning(t *testing.T) {
 			"World",
 			mustNestedString(resp.Object, "whom"))
 	})
-
 }
 
 func mustNestedString(obj map[string]interface{}, fields ...string) string {
