@@ -75,7 +75,7 @@ You can use the **Search** query builder's user interface to select options to s
 These selections generate a TraceQL query.
 Any query generated using **Search** query builder can be transferred to the **TraceQL** query editor, where you can edit the query directly.
 
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/<GRAFANA_VERSION>/traceql).
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
 
 ## Choose a query editing mode
 
@@ -131,7 +131,7 @@ For more information about the service graph, refer to [Service graph](../servic
 
 To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/traces/).
 
-To learn more about Grafana dashboards, refer to the [Use dashboards documentation](../../../dashboards/use-dashboards/).
+To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
 
 ## Set options for query builder and editor
 
