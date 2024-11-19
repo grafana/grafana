@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -109,7 +110,7 @@ type Service interface {
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
-	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
+	Logout(ctx context.Context, user user.SessionAwareIdentityRequester, sessionToken *usertoken.UserToken) (*Redirect, error)
 	// RegisterPreLogoutHook registers a hook that is called before a logout request.
 	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
 	// ResolveIdentity resolves an identity from orgID and typedID.
@@ -178,7 +179,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user user.SessionAwareIdentityRequester) (*Redirect, bool)
 }
 
 type SSOSettingsAwareClient interface {

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Service an OAuth token service suitable for tests.
@@ -21,7 +22,7 @@ func ProvideService() *Service {
 	return &Service{}
 }
 
-func (s *Service) GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token {
+func (s *Service) GetCurrentOAuthToken(context.Context, user.SessionAwareIdentityRequester) *oauth2.Token {
 	return s.Token
 }
 
@@ -33,10 +34,10 @@ func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.Use
 	return nil, false, nil
 }
 
-func (s *Service) TryTokenRefresh(context.Context, identity.Requester) (*oauth2.Token, error) {
+func (s *Service) TryTokenRefresh(context.Context, user.SessionAwareIdentityRequester) (*oauth2.Token, error) {
 	return s.Token, nil
 }
 
-func (s *Service) InvalidateOAuthTokens(context.Context, *login.UserAuth) error {
+func (s *Service) InvalidateOAuthTokens(context.Context, user.SessionAwareIdentityRequester) error {
 	return nil
 }

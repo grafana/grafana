@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -71,10 +71,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when state from ipd does not match stored state",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-other-state"),
+				},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -83,10 +84,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when pkce is configured but the cookie is not present",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -95,10 +97,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when email is empty",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -110,10 +113,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return error when email is not allowed",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -144,10 +148,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return identity for valid request",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
 			},
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			addStateCookie:   true,
@@ -182,10 +187,11 @@ func TestOAuth_Authenticate(t *testing.T) {
 		},
 		{
 			desc: "should return identity for valid request - and lookup user by email",
-			req: &authn.Request{HTTPRequest: &http.Request{
-				Header: map[string][]string{},
-				URL:    mustParseURL("http://grafana.com/?state=some-state"),
-			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{},
+					URL:    mustParseURL("http://grafana.com/?state=some-state"),
+				},
 			},
 			oauthCfg:              &social.OAuthInfo{UsePKCE: true, Enabled: true},
 			allowInsecureTakeover: true,
@@ -354,9 +360,7 @@ func TestOAuth_RedirectURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			var (
-				authCodeUrlCalled = false
-			)
+			authCodeUrlCalled := false
 
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
@@ -465,7 +469,7 @@ func TestOAuth_Logout(t *testing.T) {
 			)
 
 			mockService := &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ user.SessionAwareIdentityRequester) *oauth2.Token {
 					getTokenCalled = true
 					token := &oauth2.Token{
 						AccessToken: "some.access.token",
@@ -475,7 +479,7 @@ func TestOAuth_Logout(t *testing.T) {
 						"id_token": "some.id.token",
 					})
 				},
-				InvalidateOAuthTokensFunc: func(_ context.Context, _ *login.UserAuth) error {
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ user.SessionAwareIdentityRequester) error {
 					invalidateTokenCalled = true
 					return nil
 				},

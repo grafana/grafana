@@ -3,9 +3,9 @@ package authntest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
@@ -104,7 +104,7 @@ func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.R
 	return f.ExpectedRedirect, f.ExpectedErr
 }
 
-func (f *FakeService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
+func (f *FakeService) Logout(_ context.Context, _ user.SessionAwareIdentityRequester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
 }
 

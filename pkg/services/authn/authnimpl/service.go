@@ -282,7 +282,7 @@ func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uin
 	s.preLogoutHooks.insert(hook, priority)
 }
 
-func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+func (s *Service) Logout(ctx context.Context, user user.SessionAwareIdentityRequester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
 

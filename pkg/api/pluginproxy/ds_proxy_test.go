@@ -557,7 +557,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		var routes []*plugins.Route
 		proxy, err := setupDSProxyTest(t, ctx, ds, routes, "/path/to/folder/", func(proxy *DataSourceProxy) {
 			proxy.oAuthTokenService = &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ user.SessionAwareIdentityRequester) *oauth2.Token {
 					return (&oauth2.Token{
 						AccessToken:  "testtoken",
 						RefreshToken: "testrefreshtoken",
