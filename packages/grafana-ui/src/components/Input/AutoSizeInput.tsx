@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import { measureText } from '../../utils/measureText';
@@ -28,37 +28,37 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     placeholder,
     ...restProps
   } = props;
-  // Initialize internal state
-  const [value, setValue] = React.useState(controlledValue ?? defaultValue);
+  const isControlledRef = useRef(controlledValue !== undefined);
 
-  // Update internal state when controlled `value` prop changes
-  useEffect(() => {
-    setValue(controlledValue ?? defaultValue);
-  }, [controlledValue, defaultValue]);
+  // Initialize internal state
+  const [internalValue, setInternalValue] = React.useState(controlledValue);
+
+  const inputValue = (isControlledRef.current ? controlledValue : internalValue) || defaultValue;
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
   const inputWidth = useMemo(() => {
-    const displayValue = value || placeholder || '';
+    const displayValue = inputValue || placeholder || '';
     const valueString = typeof displayValue === 'string' ? displayValue : displayValue.toString();
 
     return getWidthFor(valueString, minWidth, maxWidth);
-  }, [placeholder, value, minWidth, maxWidth]);
+  }, [placeholder, inputValue, minWidth, maxWidth]);
 
   return (
-    // Used to tell Input to increase the width properly of the input to fit the text.
-    // See comment in Input.tsx for more details
     <AutoSizeInputContext.Provider value={true}>
       <Input
         {...restProps}
         placeholder={placeholder}
         ref={ref}
-        value={value.toString()}
+        value={inputValue.toString()}
         onChange={(event) => {
           if (onChange) {
             onChange(event);
           }
-          setValue(event.currentTarget.value);
+          if (isControlledRef.current) {
+            setInternalValue(event.currentTarget.value);
+          }
         }}
+        width={inputWidth}
         onBlur={(event) => {
           if (onBlur) {
             onBlur(event);
@@ -73,8 +73,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
             onCommitChange(event);
           }
         }}
-        width={inputWidth}
-        data-testid="autosize-input"
+        data-testid={'autosize-input'}
       />
     </AutoSizeInputContext.Provider>
   );
