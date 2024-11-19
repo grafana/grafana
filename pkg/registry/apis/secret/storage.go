@@ -27,6 +27,7 @@ var (
 	_ rest.Creater              = (*secretStorage)(nil)
 	_ rest.Updater              = (*secretStorage)(nil)
 	_ rest.GracefulDeleter      = (*secretStorage)(nil)
+	_ rest.CollectionDeleter    = (*secretStorage)(nil)
 )
 
 type secretStorage struct {
