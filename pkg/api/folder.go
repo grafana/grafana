@@ -778,8 +778,7 @@ func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	ctx := context.WithValue(c.Req.Context(), "forceDeleteRules", c.QueryBool("forceDeleteRules"))
-	err := client.Delete(ctx, uid, v1.DeleteOptions{})
+	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return

@@ -233,38 +233,29 @@ var folderValidationRules = struct {
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
-	switch a.GetOperation() {
-	case admission.Create:
-		id := a.GetName()
-		for _, invalidName := range folderValidationRules.invalidNames {
-			if id == invalidName {
-				return dashboards.ErrFolderInvalidUID
-			}
+	id := a.GetName()
+	for _, invalidName := range folderValidationRules.invalidNames {
+		if id == invalidName {
+			return dashboards.ErrFolderInvalidUID
+		}
+	}
+
+	obj := a.GetObject()
+
+	for i := 1; i <= folderValidationRules.maxDepth; i++ {
+		parent := getParent(obj)
+		if parent == "" {
+			break
+		}
+		if i == folderValidationRules.maxDepth {
+			return folder.ErrMaximumDepthReached
 		}
 
-		obj := a.GetObject()
-
-		for i := 1; i <= folderValidationRules.maxDepth; i++ {
-			parent := getParent(obj)
-			if parent == "" {
-				break
-			}
-			if i == folderValidationRules.maxDepth {
-				return folder.ErrMaximumDepthReached
-			}
-
-			parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			obj = parentObj
+		parentObj, err := b.storage.Get(ctx, parent, &metav1.GetOptions{})
+		if err != nil {
+			return err
 		}
-		return nil
-	case admission.Delete:
-		deleteRules := ctx.Value("forceDeleteRules").(bool)
-		if deleteRules {
-			//todo: implement delete rules
-		}
+		obj = parentObj
 	}
 	return nil
 }

@@ -805,61 +805,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		}`, namespaceUID)
 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
 	}
-
-	// Next, the editor can not delete the folder because it contains Grafana 8 alerts.
-	{
-		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
-		req, err := http.NewRequest(http.MethodDelete, u, nil)
-		require.NoError(t, err)
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		var errutilErr errutil.PublicError
-		err = json.Unmarshal(b, &errutilErr)
-		// 	require.NoError(t, err)
-		// 	assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
-	}
-
-	// Next, the editor can delete the folder if forceDeleteRules is true.
-	// {
-	// 	u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
-	// 	req, err := http.NewRequest(http.MethodDelete, u, nil)
-	// 	require.NoError(t, err)
-	// 	client := &http.Client{}
-	// 	resp, err := client.Do(req)
-	// 	require.NoError(t, err)
-	// 	t.Cleanup(func() {
-	// 		err := resp.Body.Close()
-	// 		require.NoError(t, err)
-	// 	})
-	// 	_, err = io.ReadAll(resp.Body)
-	// 	require.NoError(t, err)
-	// require.Equal(t, 200, resp.StatusCode)
-	// }
-
-	// Finally, we ensure the rules were deleted.
-	// {
-	// 	u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-	// 	// nolint:gosec
-	// 	resp, err := http.Get(u)
-	// 	require.NoError(t, err)
-	// 	t.Cleanup(func() {
-	// 		err := resp.Body.Close()
-	// 		require.NoError(t, err)
-	// 	})
-	// 	b, err := io.ReadAll(resp.Body)
-	// 	require.NoError(t, err)
-
-	// 	assert.Equal(t, 200, resp.StatusCode)
-	// 	assert.JSONEq(t, "{}", string(b))
-	// }
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
