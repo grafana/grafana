@@ -271,6 +271,8 @@ type Cfg struct {
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
 
+	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
+
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
 	SSOSettingsConfigurableProviders map[string]bool
@@ -1248,6 +1250,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
+	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}

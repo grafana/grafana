@@ -8,13 +8,13 @@ import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/grafanaRulerApi';
+import { Folder } from '../../../types/rule-form';
 import * as dataSource from '../../../utils/datasource';
 import {
   AlertManagerDataSource,
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
