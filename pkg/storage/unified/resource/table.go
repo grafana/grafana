@@ -100,9 +100,6 @@ type TableBuilder struct {
 
 	// Just keep track of it
 	hasDuplicateNames bool
-
-	// When add row gets a colum
-	ignoreUnknownColumns bool
 }
 
 func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
@@ -112,9 +109,6 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 		},
 
 		lookup: make(map[string]*resourceTableColumn, len(cols)),
-
-		// defaults
-		ignoreUnknownColumns: false,
 	}
 	var err error
 	for i, v := range cols {
@@ -140,10 +134,7 @@ func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) e
 	for k, v := range vals {
 		column, ok := x.lookup[k]
 		if !ok {
-			if x.ignoreUnknownColumns {
-				continue
-			}
-			return fmt.Errorf("unknown column")
+			return fmt.Errorf("unknown column: %s", k)
 		}
 		b, err := column.Encode(v)
 		if err != nil {
