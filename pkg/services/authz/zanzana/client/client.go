@@ -142,16 +142,16 @@ func newItemChecker(res *authzextv1.ListResponse) authz.ItemChecker {
 	}
 }
 
-func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
+func (c *Client) List(ctx context.Context, id claims.AuthInfo, req *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
 	defer span.End()
 
 	return c.authzext.List(ctx, &authzextv1.ListRequest{
 		Subject:   id.GetUID(),
-		Group:     req.Group,
-		Verb:      utils.VerbList,
-		Resource:  req.Resource,
-		Namespace: req.Namespace,
+		Group:     req.GetGroup(),
+		Verb:      req.GetVerb(),
+		Resource:  req.GetResource(),
+		Namespace: req.GetNamespace(),
 	})
 }
 

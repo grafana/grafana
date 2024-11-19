@@ -9,8 +9,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/authz"
-
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -263,15 +261,9 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	}
 
 	ns := query.SignedInUser.GetNamespace()
-	listReq, ok := zanzana.TranslateToListRequest(ns, action, resourceType)
+	req, ok := zanzana.TranslateToListRequest(ns, action, resourceType)
 	if !ok {
 		return nil, errors.New("resource type not supported")
-	}
-
-	req := authz.ListRequest{
-		Namespace: listReq.GetNamespace(),
-		Group:     listReq.GetGroup(),
-		Resource:  listReq.GetResource(),
 	}
 
 	res, err := dr.zclient.List(ctx, query.SignedInUser, req)

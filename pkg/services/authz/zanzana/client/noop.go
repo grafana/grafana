@@ -25,7 +25,7 @@ func (nc *NoopClient) Compile(ctx context.Context, id claims.AuthInfo, req authz
 	return nil, nil
 }
 
-func (nc *NoopClient) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
+func (nc *NoopClient) List(ctx context.Context, id claims.AuthInfo, req *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
 	return nil, nil
 }
 
