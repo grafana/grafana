@@ -9,7 +9,7 @@ import { t } from 'app/core/internationalization';
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
-import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
@@ -57,10 +57,7 @@ export interface LabelsSubFormProps {
   dataSourceName: string;
   initialLabels: Array<{ key: string; value: string }>;
   onClose: (
-    labelsToUodate?: Array<{
-      key: string;
-      value: string;
-    }>
+    labelsToUodate?: KBObjectArray
   ) => void;
 }
 
@@ -425,9 +422,9 @@ function getLabelText(type: RuleFormType) {
   const text = isRecordingRule
     ? t('alerting.alertform.labels.recording', 'Add labels to your rule.')
     : t(
-        'alerting.alertform.labels.alerting',
-        'Add labels to your rule for searching, silencing, or routing to a notification policy.'
-      );
+      'alerting.alertform.labels.alerting',
+      'Add labels to your rule for searching, silencing, or routing to a notification policy.'
+    );
   return text;
 }
 

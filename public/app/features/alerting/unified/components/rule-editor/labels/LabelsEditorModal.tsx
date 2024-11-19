@@ -1,5 +1,7 @@
 import { Modal } from '@grafana/ui';
 
+import { KBObjectArray } from '../../../types/rule-form';
+
 import { LabelsSubForm } from './LabelsField';
 
 export interface LabelsEditorModalProps {
@@ -9,10 +11,7 @@ export interface LabelsEditorModalProps {
     value: string;
   }>;
   onClose: (
-    labelsToUodate?: Array<{
-      key: string;
-      value: string;
-    }>
+    labelsToUodate?: KBObjectArray
   ) => void;
   dataSourceName: string;
 }

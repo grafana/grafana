@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { Stack, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { RuleFormValues } from '../../types/rule-form';
+import { KBObjectArray, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { FolderSelector } from './FolderSelector';
@@ -20,10 +20,7 @@ export function GrafanaFolderAndLabelsStep() {
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   function onCloseLabelsEditor(
-    labelsToUpdate?: Array<{
-      key: string;
-      value: string;
-    }>
+    labelsToUpdate?: KBObjectArray
   ) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
