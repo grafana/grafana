@@ -1,3 +1,26 @@
+<!-- 11.1.9 START -->
+
+# 11.1.9 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96132](https://github.com/grafana/grafana/pull/96132), [@fayzal-g](https://github.com/fayzal-g)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95488](https://github.com/grafana/grafana/pull/95488), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Alerting:** Force refetch prom rules when refreshing panel [#96123](https://github.com/grafana/grafana/pull/96123), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Anonymous User:** Adds validator service for anonymous users [#94992](https://github.com/grafana/grafana/pull/94992), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95153](https://github.com/grafana/grafana/pull/95153), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95245](https://github.com/grafana/grafana/pull/95245), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95907](https://github.com/grafana/grafana/pull/95907), [@aangelisc](https://github.com/aangelisc)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95230](https://github.com/grafana/grafana/pull/95230), [@kalleep](https://github.com/kalleep)
+- **Prometheus:** Fix interpolating adhoc filters with template variables [#95977](https://github.com/grafana/grafana/pull/95977), [@cazeaux](https://github.com/cazeaux)
+- **ServerLock:** Fix pg concurrency/locking issue [#95933](https://github.com/grafana/grafana/pull/95933), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94969](https://github.com/grafana/grafana/pull/94969), [@scottlepp](https://github.com/scottlepp)
+
+<!-- 11.1.9 END -->
 <!-- 11.0.8 START -->
 
 # 11.0.8 (2024-11-19)
