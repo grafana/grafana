@@ -28,7 +28,7 @@ export interface SimplifiedEditor {
 }
 
 export type KVObject = { key: string; value: string };
-export type KBObjectArray= KVObject[];
+export type KBObjectArray = KVObject[];
 
 export interface RuleFormValues {
   // common
