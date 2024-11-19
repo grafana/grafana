@@ -14,8 +14,8 @@ import (
 type GRPCServerSettings struct {
 	Enabled        bool
 	Network        string
-	Address        string      // with flags, call ProcessAddress to fill this field
-	TLSConfig      *tls.Config // with flags, call ProcessTLSConfig to fill this field
+	Address        string      // with flags, call Process to fill this field defaults
+	TLSConfig      *tls.Config // with flags, call Process to fill this field
 	EnableLogging  bool        // log request and response of each unary gRPC call
 	MaxRecvMsgSize int
 	MaxSendMsgSize int
