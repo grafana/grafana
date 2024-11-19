@@ -12,7 +12,6 @@ import (
 	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -114,9 +113,18 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, commit str
 	return []byte(data), nil
 }
 
-func (r *githubRepository) Write(ctx context.Context, path string, data []byte, comment string) error {
-	return &errors.StatusError{
-		ErrStatus: v1.Status{
+func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *githubRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
@@ -124,8 +132,8 @@ func (r *githubRepository) Write(ctx context.Context, path string, data []byte, 
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
-	return &errors.StatusError{
-		ErrStatus: v1.Status{
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},

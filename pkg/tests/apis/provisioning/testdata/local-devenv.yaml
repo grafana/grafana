@@ -6,8 +6,9 @@ spec:
   title: Load devenv dashboards
   description: load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards
   editing:
-    enabled: true
-    allowDeletion: true
+    create: true
+    update: true
+    delete: true
   type: local 
   local:
     path: devenv/dev-dashboards

@@ -7,7 +7,9 @@ spec:
   description: load resources from github
   type: github
   editing:
-    enabled: true
+    create: true
+    update: true
+    delete: true
   github:
     owner: grafana
     repository: git-ui-sync-demo
@@ -15,5 +17,5 @@ spec:
     branchWorkflow: true
     generateDashboardPreviews: true
     token: "github_pat_dummy"
-    webhookUrl: "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
+    webhookURL: "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
     webhookSecret: "dummyWebhookSecret"

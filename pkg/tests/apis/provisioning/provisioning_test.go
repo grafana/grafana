@@ -50,7 +50,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
 		// fmt.Printf("%s", string(v1Disco))
-		require.JSONEq(t, `
+		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
 			"groupVersion": "provisioning.grafana.app/v0alpha1",
@@ -79,7 +79,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"verbs": [
 						"create",
 						"delete",
-						"get"
+						"get",
+						"update"
 					]
 				},
 				{
@@ -156,6 +157,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
+				"editing": {
+					"create": true,
+					"delete": true,
+					"update": true
+				},
 				"github": {
 					"branch": "dummy-branch",
 					"branchWorkflow": true,
@@ -163,14 +169,19 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"owner": "grafana",
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy",
-					"webhookURL": "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook",
-					"webhookSecret": "dummyWebhookSecret"
+					"webhookSecret": "dummyWebhookSecret",
+					"webhookURL": "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
 				},
 				"title": "Github Example",
 				"type": "github"
 			},
 			"local-conf-provisioning-sample": {
 				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
+				"editing": {
+					"create": true,
+					"delete": true,
+					"update": true
+				},
 				"local": {
 					"path": "provisioning/sample"
 				},
@@ -179,6 +190,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 			"local-devenv": {
 				"description": "load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards",
+				"editing": {
+					"create": true,
+					"delete": true,
+					"update": true
+				},
 				"local": {
 					"path": "devenv/dev-dashboards"
 				},
@@ -187,6 +203,11 @@ func TestIntegrationProvisioning(t *testing.T) {
 			},
 			"s3-example": {
 				"description": "load resources from an S3 bucket",
+				"editing": {
+					"create": false,
+					"delete": false,
+					"update": false
+				},
 				"s3": {
 					"bucket": "my-bucket",
 					"region": "us-west-1"

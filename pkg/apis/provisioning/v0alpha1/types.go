@@ -108,11 +108,12 @@ type RepositorySpec struct {
 }
 
 type EditingOptions struct {
-	// When disabled, the repository is read-only
-	Enabled bool `json:"enabled"`
-
-	// Allow deleting remote files
-	AllowDeletion bool `json:"allowDeletion"`
+	// End users can create new files in the remote file system
+	Create bool `json:"create"`
+	// End users can update existing files in the remote file system
+	Update bool `json:"update"`
+	// End users can delete existing files in the remote file system
+	Delete bool `json:"delete"`
 }
 
 // The status of a Repository.

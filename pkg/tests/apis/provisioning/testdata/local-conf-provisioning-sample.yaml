@@ -7,7 +7,8 @@ spec:
   description: load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample
   type: local 
   editing:
-    enabled: true
-    allowDeletion: true
+    create: true
+    update: true
+    delete: true
   local:
     path: provisioning/sample

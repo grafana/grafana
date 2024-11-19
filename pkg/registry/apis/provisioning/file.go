@@ -3,6 +3,7 @@ package provisioning
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -48,7 +49,7 @@ func (*readConnector) ProducesObject(verb string) any {
 }
 
 func (*readConnector) ConnectMethods() []string {
-	return []string{http.MethodGet, http.MethodPost, http.MethodDelete}
+	return []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete}
 }
 
 func (*readConnector) NewConnectOptions() (runtime.Object, bool, string) {
@@ -90,7 +91,9 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		case http.MethodGet:
 			obj, err = s.doRead(r.Context(), repo, filePath, commit)
 		case http.MethodPost:
-			obj, err = s.doWrite(r.Context(), repo, filePath, message, r)
+			obj, err = s.doWrite(r.Context(), true, repo, filePath, message, r)
+		case http.MethodPut:
+			obj, err = s.doWrite(r.Context(), false, repo, filePath, message, r)
 		case http.MethodDelete:
 			obj, err = s.doDelete(r.Context(), repo, filePath, message)
 		default:
@@ -140,10 +143,12 @@ func (s *readConnector) doRead(ctx context.Context, repo Repository, path string
 	}, nil
 }
 
-func (s *readConnector) doWrite(ctx context.Context, repo Repository, path string, message string, req *http.Request) (runtime.Object, error) {
+func (s *readConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, message string, req *http.Request) (runtime.Object, error) {
 	settings := repo.Config().Spec.Editing
-	if !settings.Enabled {
-		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "editing is not enabled", nil)
+	if update && !settings.Update {
+		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
+	} else if !settings.Create {
+		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
 	}
 
 	defer req.Body.Close()
@@ -158,9 +163,9 @@ func (s *readConnector) doWrite(ctx context.Context, repo Repository, path strin
 	}
 
 	switch filepath.Ext(path) {
-	// JSON marshal
+	// JSON pretty print
 	case ".json":
-		data, err = obj.MarshalJSON()
+		data, err = json.MarshalIndent(obj, "", "  ")
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +184,11 @@ func (s *readConnector) doWrite(ctx context.Context, repo Repository, path strin
 		return nil, fmt.Errorf("unexpected format")
 	}
 
-	err = repo.Write(ctx, path, data, message)
+	if update {
+		err = repo.Update(ctx, path, data, message)
+	} else {
+		err = repo.Create(ctx, path, data, message)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -191,14 +200,17 @@ func (s *readConnector) doWrite(ctx context.Context, repo Repository, path strin
 
 func (s *readConnector) doDelete(ctx context.Context, repo Repository, path string, message string) (runtime.Object, error) {
 	settings := repo.Config().Spec.Editing
-	if !settings.Enabled {
-		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "editing is not enabled", nil)
-	}
-	if !settings.AllowDeletion {
+	if !settings.Delete {
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
 	}
 
 	err := repo.Delete(ctx, path, message)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("TODO! trigger sync for this file we just deleted... %s\n", path)
+
 	return nil, err
 }
 

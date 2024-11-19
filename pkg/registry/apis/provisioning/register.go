@@ -372,6 +372,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		}
 		sub.Delete.Parameters = comment
 		sub.Post.Parameters = comment
+		sub.Put.Parameters = comment
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{
@@ -436,6 +437,8 @@ spec:
 				},
 			},
 		}
+		// POST and put have the same request
+		sub.Put.RequestBody = sub.Post.RequestBody
 	}
 
 	// The root API discovery list

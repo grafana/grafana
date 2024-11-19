@@ -34,24 +34,32 @@ func schema_pkg_apis_provisioning_v0alpha1_EditingOptions(ref common.ReferenceCa
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"enabled": {
+					"create": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When disabled, the repository is read-only",
+							Description: "End users can create new files in the remote file system",
 							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
-					"allowDeletion": {
+					"update": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Allow deleting remote files",
+							Description: "End users can update existing files in the remote file system",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"delete": {
+						SchemaProps: spec.SchemaProps{
+							Description: "End users can delete existing files in the remote file system",
 							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"enabled", "allowDeletion"},
+				Required: []string{"create", "update", "delete"},
 			},
 		},
 	}
