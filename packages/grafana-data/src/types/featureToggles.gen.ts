@@ -158,6 +158,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
+  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;

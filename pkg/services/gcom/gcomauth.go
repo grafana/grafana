@@ -1,184 +1,57 @@
-// Package authapi contains the connector for Grafana internal auth service. This can be used instead of the GCOM service
-// to create access policies and access tokens
-package authapi
+package gcom
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/authapi"
 )
 
-const LogPrefix = "auth-api.service"
+// this will be removed when service in authapi is fully enabled
 
-var ErrTokenNotFound = errors.New("auth-api: token not found")
-
-type Service interface {
-	CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error)
-	ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error)
-	DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error)
-	ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error)
-	CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error)
-	DeleteToken(ctx context.Context, params DeleteTokenParams) error
-}
-
-type CreateAccessPolicyParams struct {
-	RequestID string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
-}
-
-type CreateAccessPolicyPayload struct {
-	Name        string   `json:"name"`
-	DisplayName string   `json:"displayName"`
-	Realms      []Realm  `json:"realms"`
-	Scopes      []string `json:"scopes"`
-}
-
-type Realm struct {
-	Identifier    string        `json:"identifier"`
-	LabelPolicies []LabelPolicy `json:"labelPolicies"`
-	Type          string        `json:"type"`
-}
-
-type LabelPolicy struct {
-	Selector string `json:"selector"`
-}
-
-type createAccessPolicyResponse struct {
-	Data AccessPolicy `json:"data"`
-}
-
-type AccessPolicy struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type ListAccessPoliciesParams struct {
-	RequestID string
-	Name      string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
+type listTokensResponse struct {
+	Items []authapi.TokenView `json:"items"`
 }
 
 type listAccessPoliciesResponse struct {
-	Data []AccessPolicy `json:"data"`
+	Items []authapi.AccessPolicy `json:"items"`
 }
 
-type DeleteAccessPolicyParams struct {
-	RequestID      string
-	AccessPolicyID string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
-}
+var _ authapi.Service = (*GcomClient)(nil)
 
-type ListTokenParams struct {
-	RequestID        string
-	AccessPolicyName string
-	TokenName        string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
-}
-
-type CreateTokenParams struct {
-	RequestID string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
-}
-
-type CreateTokenPayload struct {
-	AccessPolicyID string    `json:"accessPolicyId"`
-	DisplayName    string    `json:"displayName"`
-	Name           string    `json:"name"`
-	ExpiresAt      time.Time `json:"expiresAt"`
-}
-
-type createTokenResponse struct {
-	Data Token `json:"data"`
-}
-
-// Token returned by gcom api when a token gets created.
-type Token struct {
-	ID             string `json:"id"`
-	AccessPolicyID string `json:"accessPolicyId"`
-	Name           string `json:"name"`
-	Token          string `json:"token"`
-}
-
-type DeleteTokenParams struct {
-	RequestID string
-	TokenID   string
-	// this is needed until we fully migrate from gcom to authapi
-	Region string
-}
-
-// TokenView returned by gcom api for a GET token request.
-type TokenView struct {
-	ID             string `json:"id"`
-	AccessPolicyID string `json:"accessPolicyId"`
-	Name           string `json:"name"`
-	DisplayName    string `json:"displayName"`
-	ExpiresAt      string `json:"expiresAt"`
-	FirstUsedAt    string `json:"firstUsedAt"`
-	LastUsedAt     string `json:"lastUsedAt"`
-	CreatedAt      string `json:"createdAt"`
-}
-
-type listTokensResponse struct {
-	Data []TokenView `json:"data"`
-}
-
-var _ Service = (*AuthApiClient)(nil)
-
-type AuthApiClient struct {
-	log        log.Logger
-	cfg        Config
-	httpClient *http.Client
-}
-
-type Config struct {
-	ApiURL string
-	Token  string
-}
-
-func New(cfg Config, httpClient *http.Client) Service {
-	return &AuthApiClient{
-		log:        log.New(LogPrefix),
-		cfg:        cfg,
-		httpClient: httpClient,
-	}
-}
-
-func (client *AuthApiClient) CreateAccessPolicy(ctx context.Context, params CreateAccessPolicyParams, payload CreateAccessPolicyPayload) (AccessPolicy, error) {
+func (client *GcomClient) CreateAccessPolicy(ctx context.Context, params authapi.CreateAccessPolicyParams, payload authapi.CreateAccessPolicyPayload) (authapi.AccessPolicy, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies")
 	if err != nil {
-		return AccessPolicy{}, fmt.Errorf("building gcom access policy url: %w", err)
+		return authapi.AccessPolicy{}, fmt.Errorf("building gcom access policy url: %w", err)
 	}
 
 	body, err := json.Marshal(&payload)
 	if err != nil {
-		return AccessPolicy{}, fmt.Errorf("marshaling request body: %w", err)
+		return authapi.AccessPolicy{}, fmt.Errorf("marshaling request body: %w", err)
 	}
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
-		return AccessPolicy{}, fmt.Errorf("creating http request: %w", err)
+		return authapi.AccessPolicy{}, fmt.Errorf("creating http request: %w", err)
 	}
 
+	query := url.Values{}
+	query.Set("region", params.Region)
+
+	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Content-Type", "application/json")
+
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
 
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return AccessPolicy{}, fmt.Errorf("sending http request to create access policy: %w", err)
+		return authapi.AccessPolicy{}, fmt.Errorf("sending http request to create access policy: %w", err)
 	}
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -188,18 +61,18 @@ func (client *AuthApiClient) CreateAccessPolicy(ctx context.Context, params Crea
 
 	if response.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(response.Body)
-		return AccessPolicy{}, fmt.Errorf("unexpected response when creating access policy: code=%d body=%s", response.StatusCode, body)
+		return authapi.AccessPolicy{}, fmt.Errorf("unexpected response when creating access policy: code=%d body=%s", response.StatusCode, body)
 	}
 
-	var capResp createAccessPolicyResponse
-	if err := json.NewDecoder(response.Body).Decode(&capResp); err != nil {
-		return AccessPolicy{}, fmt.Errorf("unmarshaling response body: %w", err)
+	var accessPolicy authapi.AccessPolicy
+	if err := json.NewDecoder(response.Body).Decode(&accessPolicy); err != nil {
+		return accessPolicy, fmt.Errorf("unmarshaling response body: %w", err)
 	}
 
-	return capResp.Data, nil
+	return accessPolicy, nil
 }
 
-func (client *AuthApiClient) DeleteAccessPolicy(ctx context.Context, params DeleteAccessPolicyParams) (bool, error) {
+func (client *GcomClient) DeleteAccessPolicy(ctx context.Context, params authapi.DeleteAccessPolicyParams) (bool, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies/", params.AccessPolicyID)
 	if err != nil {
 		return false, fmt.Errorf("building gcom access policy url: %w", err)
@@ -210,6 +83,10 @@ func (client *AuthApiClient) DeleteAccessPolicy(ctx context.Context, params Dele
 		return false, fmt.Errorf("creating http request: %w", err)
 	}
 
+	query := url.Values{}
+	query.Set("region", params.Region)
+
+	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
 
@@ -235,7 +112,7 @@ func (client *AuthApiClient) DeleteAccessPolicy(ctx context.Context, params Dele
 	return false, fmt.Errorf("unexpected response when deleting access policy: code=%d body=%s", response.StatusCode, body)
 }
 
-func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params ListAccessPoliciesParams) ([]AccessPolicy, error) {
+func (client *GcomClient) ListAccessPolicies(ctx context.Context, params authapi.ListAccessPoliciesParams) ([]authapi.AccessPolicy, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/accesspolicies")
 	if err != nil {
 		return nil, fmt.Errorf("building gcom access policy url: %w", err)
@@ -247,10 +124,12 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 	}
 
 	query := url.Values{}
+	query.Set("region", params.Region)
 	query.Set("name", params.Name)
 	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Accept", "application/json")
+
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
 
 	response, err := client.httpClient.Do(request)
@@ -268,14 +147,15 @@ func (client *AuthApiClient) ListAccessPolicies(ctx context.Context, params List
 		return nil, fmt.Errorf("unexpected response when listing access policies: code=%d body=%s", response.StatusCode, body)
 	}
 
-	var lapResp listAccessPoliciesResponse
-	if err := json.NewDecoder(response.Body).Decode(&lapResp); err != nil {
-		return lapResp.Data, fmt.Errorf("unmarshaling response body: %w", err)
+	var responseBody listAccessPoliciesResponse
+	if err := json.NewDecoder(response.Body).Decode(&responseBody); err != nil {
+		return responseBody.Items, fmt.Errorf("unmarshaling response body: %w", err)
 	}
-	return lapResp.Data, nil
+
+	return responseBody.Items, nil
 }
 
-func (client *AuthApiClient) ListTokens(ctx context.Context, params ListTokenParams) ([]TokenView, error) {
+func (client *GcomClient) ListTokens(ctx context.Context, params authapi.ListTokenParams) ([]authapi.TokenView, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {
 		return nil, fmt.Errorf("building gcom tokens url: %w", err)
@@ -287,12 +167,14 @@ func (client *AuthApiClient) ListTokens(ctx context.Context, params ListTokenPar
 	}
 
 	query := url.Values{}
+	query.Set("region", params.Region)
 	query.Set("accessPolicyName", params.AccessPolicyName)
 	query.Set("name", params.TokenName)
 
 	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Content-Type", "application/json")
+
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
 
 	response, err := client.httpClient.Do(request)
@@ -314,25 +196,30 @@ func (client *AuthApiClient) ListTokens(ctx context.Context, params ListTokenPar
 	if err := json.NewDecoder(response.Body).Decode(&body); err != nil {
 		return nil, fmt.Errorf("unmarshaling response body: %w", err)
 	}
-	return body.Data, nil
+
+	return body.Items, nil
 }
 
-func (client *AuthApiClient) CreateToken(ctx context.Context, params CreateTokenParams, payload CreateTokenPayload) (Token, error) {
+func (client *GcomClient) CreateToken(ctx context.Context, params authapi.CreateTokenParams, payload authapi.CreateTokenPayload) (authapi.Token, error) {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens")
 	if err != nil {
-		return Token{}, fmt.Errorf("building gcom tokens url: %w", err)
+		return authapi.Token{}, fmt.Errorf("building gcom tokens url: %w", err)
 	}
 
 	body, err := json.Marshal(&payload)
 	if err != nil {
-		return Token{}, fmt.Errorf("marshaling request body: %w", err)
+		return authapi.Token{}, fmt.Errorf("marshaling request body: %w", err)
 	}
 
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
-		return Token{}, fmt.Errorf("creating http request: %w", err)
+		return authapi.Token{}, fmt.Errorf("creating http request: %w", err)
 	}
 
+	query := url.Values{}
+	query.Set("region", params.Region)
+
+	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Content-Type", "application/json")
 
@@ -340,7 +227,7 @@ func (client *AuthApiClient) CreateToken(ctx context.Context, params CreateToken
 
 	response, err := client.httpClient.Do(request)
 	if err != nil {
-		return Token{}, fmt.Errorf("sending http request to create access token: %w", err)
+		return authapi.Token{}, fmt.Errorf("sending http request to create access token: %w", err)
 	}
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -350,18 +237,18 @@ func (client *AuthApiClient) CreateToken(ctx context.Context, params CreateToken
 
 	if response.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(response.Body)
-		return Token{}, fmt.Errorf("unexpected response when creating access token: code=%d body=%s", response.StatusCode, body)
+		return authapi.Token{}, fmt.Errorf("unexpected response when creating access token: code=%d body=%s", response.StatusCode, body)
 	}
 
-	var ctResp createTokenResponse
-	if err := json.NewDecoder(response.Body).Decode(&ctResp); err != nil {
-		return Token{}, fmt.Errorf("unmarshaling response body: %w", err)
+	var token authapi.Token
+	if err := json.NewDecoder(response.Body).Decode(&token); err != nil {
+		return token, fmt.Errorf("unmarshaling response body: %w", err)
 	}
 
-	return ctResp.Data, nil
+	return token, nil
 }
 
-func (client *AuthApiClient) DeleteToken(ctx context.Context, params DeleteTokenParams) error {
+func (client *GcomClient) DeleteToken(ctx context.Context, params authapi.DeleteTokenParams) error {
 	endpoint, err := url.JoinPath(client.cfg.ApiURL, "/v1/tokens", params.TokenID)
 	if err != nil {
 		return fmt.Errorf("building gcom tokens url: %w", err)
@@ -372,6 +259,10 @@ func (client *AuthApiClient) DeleteToken(ctx context.Context, params DeleteToken
 		return fmt.Errorf("creating http request: %w", err)
 	}
 
+	query := url.Values{}
+	query.Set("region", params.Region)
+
+	request.URL.RawQuery = query.Encode()
 	request.Header.Set("x-request-id", params.RequestID)
 	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.cfg.Token))
 
