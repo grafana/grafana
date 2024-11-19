@@ -8,7 +8,7 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
@@ -54,12 +54,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const shouldAllowSimplifiedRouting =
     type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
 
-  function onCloseLabelsEditor(
-    labelsToUpdate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) {
+  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }
@@ -75,24 +70,23 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const switchMode =
     isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
       ? {
-          isAdvancedMode: !manualRouting,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
-            setValue('manualRouting', !isAdvanced);
-          },
-        }
+        isAdvancedMode: !manualRouting,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
+          setValue('manualRouting', !isAdvanced);
+        },
+      }
       : undefined;
+  const title = isRecordingRuleByType(type)
+    ? 'Add labels'
+    : isGrafanaManaged
+      ? 'Configure notifications'
+      : 'Configure labels and notifications';
 
   return (
     <RuleEditorSection
       stepNo={step}
-      title={
-        isRecordingRuleByType(type)
-          ? 'Add labels'
-          : isGrafanaManaged
-            ? 'Select notification recipient'
-            : 'Configure labels and notifications'
-      }
+      title={title}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
@@ -135,9 +129,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           <ManualAndAutomaticRouting alertUid={alertUid} />
         )
       ) : // when simplified routing is not enabled, render the notification preview as we did before
-      shouldRenderpreview ? (
-        <AutomaticRooting alertUid={alertUid} />
-      ) : null}
+        shouldRenderpreview ? (
+          <AutomaticRooting alertUid={alertUid} />
+        ) : null}
     </RuleEditorSection>
   );
 };

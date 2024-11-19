@@ -12,9 +12,9 @@ import {
   BigValueJustifyMode,
   BigValueTextMode,
   LoadingPlaceholder,
+  ScrollContainer,
   useStyles2,
 } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { config } from 'app/core/config';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';

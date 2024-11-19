@@ -107,7 +107,6 @@
       "export-all": "Ēχpőřŧ äľľ",
       "view": "Vįęŵ"
     },
-    "contact-point": "Cőŉŧäčŧ Pőįŉŧ",
     "contact-points": {
       "create": "Cřęäŧę čőŉŧäčŧ pőįŉŧ",
       "custom-template-value": "Cūşŧőm ŧęmpľäŧę väľūę",
@@ -125,6 +124,7 @@
       },
       "last-delivery-attempt": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ",
       "last-delivery-failed": "Ŀäşŧ đęľįvęřy äŧŧęmpŧ ƒäįľęđ",
+      "no-contact-points-found": "Ńő čőŉŧäčŧ pőįŉŧş ƒőūŉđ",
       "no-delivery-attempts": "Ńő đęľįvęřy äŧŧęmpŧş",
       "no-integrations": "Ńő įŉŧęģřäŧįőŉş čőŉƒįģūřęđ",
       "only-firing": "Đęľįvęřįŉģ <1>őŉľy ƒįřįŉģ</1> ŉőŧįƒįčäŧįőŉş",
@@ -247,7 +247,7 @@
           "alerting": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş äľęřŧ řūľę.",
           "recording": "Ŧūřŉ őŉ ŧő päūşę ęväľūäŧįőŉ ƒőř ŧĥįş řęčőřđįŉģ řūľę."
         },
-        "select-folder-before": "Ŝęľęčŧ ƒőľđęř þęƒőřę şęŧŧįŉģ ęväľūäŧįőŉ ģřőūp äŉđ įŉŧęřväľ"
+        "select-folder-before": "Ŝęľęčŧ ä ƒőľđęř þęƒőřę şęŧŧįŉģ ęväľūäŧįőŉ ģřőūp äŉđ įŉŧęřväľ"
       },
       "evaluation-behaviour": {
         "description": {
@@ -268,23 +268,19 @@
       "folder": {
         "cancel": "Cäŉčęľ",
         "create": "Cřęäŧę",
-        "create-folder": "Cřęäŧę ä ŉęŵ ƒőľđęř ŧő şŧőřę yőūř řūľę",
+        "create-folder": "Cřęäŧę ä ŉęŵ ƒőľđęř ŧő şŧőřę yőūř äľęřŧ řūľę įŉ.",
         "creating-new-folder": "Cřęäŧįŉģ ŉęŵ ƒőľđęř",
-        "folder-name": "Főľđęř ŉämę",
         "label": "Főľđęř",
+        "name": "Főľđęř ŉämę",
         "new-folder": "Ńęŵ ƒőľđęř",
         "new-folder-or": "őř"
       },
-      "folder-and-labels": "Øřģäŉįžę yőūř řūľę ŵįŧĥ ä ƒőľđęř äŉđ ä şęŧ őƒ ľäþęľş.",
+      "folder-and-labels": "Øřģäŉįžę yőūř äľęřŧ řūľę ŵįŧĥ ä ƒőľđęř äŉđ şęŧ őƒ ľäþęľş.",
       "folders": {
         "help-info": "Főľđęřş äřę ūşęđ ƒőř şŧőřįŉģ äľęřŧ řūľęş. Ÿőū čäŉ ęχŧęŉđ ŧĥę äččęşş přővįđęđ þy ä řőľę ŧő äľęřŧ řūľęş äŉđ äşşįģŉ pęřmįşşįőŉş ŧő įŉđįvįđūäľ ƒőľđęřş."
       },
       "labels": {
         "help-info": "Ŀäþęľş äřę ūşęđ ŧő đįƒƒęřęŉŧįäŧę äŉ äľęřŧ ƒřőm äľľ őŧĥęř äľęřŧş.Ÿőū čäŉ ūşę ŧĥęm ƒőř şęäřčĥįŉģ, şįľęŉčįŉģ, äŉđ řőūŧįŉģ ŉőŧįƒįčäŧįőŉş."
-      },
-      "notifications-step": {
-        "contact-point": "Ńőŧįƒįčäŧįőŉş ƒőř ƒįřįŉģ äľęřŧş äřę řőūŧęđ ŧő ä şęľęčŧęđ čőŉŧäčŧ pőįŉŧ.",
-        "notification-policy": "Ńőŧįƒįčäŧįőŉş ƒőř ƒįřįŉģ äľęřŧş äřę řőūŧęđ ŧő čőŉŧäčŧ pőįŉŧş þäşęđ őŉ mäŧčĥįŉģ ľäþęľş."
       },
       "pause": {
         "label": "Päūşę ęväľūäŧįőŉ"
@@ -303,6 +299,10 @@
       "update": {
         "success": "Ŝūččęşşƒūľľy ūpđäŧęđ řūľę ģřőūp"
       }
+    },
+    "rule-list": {
+      "configure-datasource": "Cőŉƒįģūřę",
+      "new-alert-rule": "Ńęŵ äľęřŧ řūľę"
     },
     "rule-state": {
       "creating": "Cřęäŧįŉģ",
@@ -479,7 +479,7 @@
       "title": "Cľęäř väľūę"
     },
     "custom-value": {
-      "create": "Cřęäŧę čūşŧőm väľūę"
+      "label": "Cūşŧőm väľūę: "
     },
     "options": {
       "no-found": "Ńő őpŧįőŉş ƒőūŉđ."
@@ -1483,6 +1483,14 @@
     },
     "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
     "form": {
+      "confirmation-code": "Cőŉƒįřmäŧįőŉ čőđę įş řęqūįřęđ",
+      "confirmation-code-label": "Cőŉƒįřmäŧįőŉ čőđę",
+      "confirmation-code-placeholder": "čőŉƒįřmäŧįőŉ čőđę",
+      "email-label": "Ēmäįľ",
+      "email-placeholder": "ęmäįľ",
+      "email-required": "Ēmäįľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "ŉämę",
       "password-label": "Päşşŵőřđ",
       "password-placeholder": "päşşŵőřđ",
       "password-required": "Päşşŵőřđ įş řęqūįřęđ",
@@ -1490,7 +1498,9 @@
       "submit-loading-label": "Ŀőģģįŉģ įŉ...",
       "username-label": "Ēmäįľ őř ūşęřŉämę",
       "username-placeholder": "ęmäįľ őř ūşęřŉämę",
-      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
+      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ",
+      "verify-email-label": "Ŝęŉđ ä vęřįƒįčäŧįőŉ ęmäįľ",
+      "verify-email-loading-label": "Ŝęŉđįŉģ ęmäįľ..."
     },
     "services": {
       "sing-in-with-prefix": "Ŝįģŉ įŉ ŵįŧĥ {{serviceName}}"
@@ -2659,9 +2669,11 @@
       "back-button": "ßäčĸ ŧő ęχpőřŧ čőŉƒįģ",
       "cancel-button": "Cäŉčęľ",
       "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
+      "loading": "Ŀőäđįŉģ...",
       "save-button": "Ŝävę ŧő ƒįľę",
       "share-externally-label": "Ēχpőřŧ ƒőř şĥäřįŉģ ęχŧęřŉäľľy",
-      "view-button": "Vįęŵ ĴŜØŃ"
+      "view-button": "Vįęŵ ĴŜØŃ",
+      "view-button-schemav2": "Vįęŵ ĴŜØŃ ŜčĥęmäV2"
     },
     "library": {
       "info": "Cřęäŧę ľįþřäřy päŉęľ."

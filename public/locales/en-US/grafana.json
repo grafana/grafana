@@ -107,7 +107,6 @@
       "export-all": "Export all",
       "view": "View"
     },
-    "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
@@ -125,6 +124,7 @@
       },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
+      "no-contact-points-found": "No contact points found",
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
@@ -247,7 +247,7 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select folder before setting evaluation group and interval"
+        "select-folder-before": "Select a folder before setting evaluation group and interval"
       },
       "evaluation-behaviour": {
         "description": {
@@ -268,23 +268,19 @@
       "folder": {
         "cancel": "Cancel",
         "create": "Create",
-        "create-folder": "Create a new folder to store your rule",
+        "create-folder": "Create a new folder to store your alert rule in.",
         "creating-new-folder": "Creating new folder",
-        "folder-name": "Folder name",
         "label": "Folder",
+        "name": "Folder name",
         "new-folder": "New folder",
         "new-folder-or": "or"
       },
-      "folder-and-labels": "Organize your rule with a folder and a set of labels.",
+      "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
       "folders": {
         "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
       },
       "labels": {
         "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
-      },
-      "notifications-step": {
-        "contact-point": "Notifications for firing alerts are routed to a selected contact point.",
-        "notification-policy": "Notifications for firing alerts are routed to contact points based on matching labels."
       },
       "pause": {
         "label": "Pause evaluation"
@@ -303,6 +299,10 @@
       "update": {
         "success": "Successfully updated rule group"
       }
+    },
+    "rule-list": {
+      "configure-datasource": "Configure",
+      "new-alert-rule": "New alert rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -479,7 +479,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "create": "Create custom value"
+      "label": "Custom value: "
     },
     "options": {
       "no-found": "No options found."
@@ -1483,6 +1483,14 @@
     },
     "forgot-password": "Forgot your password?",
     "form": {
+      "confirmation-code": "Confirmation code is required",
+      "confirmation-code-label": "Confirmation code",
+      "confirmation-code-placeholder": "confirmation code",
+      "email-label": "Email",
+      "email-placeholder": "email",
+      "email-required": "Email is required",
+      "name-label": "Name",
+      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
@@ -1490,7 +1498,9 @@
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
       "username-placeholder": "email or username",
-      "username-required": "Email or username is required"
+      "username-required": "Email or username is required",
+      "verify-email-label": "Send a verification email",
+      "verify-email-loading-label": "Sending email..."
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
@@ -2659,9 +2669,11 @@
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
+      "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-schemav2": "View JSON SchemaV2"
     },
     "library": {
       "info": "Create library panel."

@@ -139,7 +139,7 @@ export const LogsMetaRow = memo(
         {
           label: '',
           value: (
-            <Button variant="secondary" size="sm" onClick={clearDetectedFields}>
+            <Button variant="primary" fill="outline" size="sm" onClick={clearDetectedFields}>
               Show original line
             </Button>
           ),

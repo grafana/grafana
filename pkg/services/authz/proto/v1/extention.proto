@@ -10,6 +10,8 @@ import "google/protobuf/wrappers.proto";
 
 service AuthzExtentionService {
   rpc List(ListRequest) returns (ListResponse);
+  rpc BatchCheck(BatchCheckRequest) returns (BatchCheckResponse);
+
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
 }
@@ -86,3 +88,26 @@ message WriteRequest {
 }
 
 message WriteResponse {}
+
+message BatchCheckRequest {
+  string subject = 1;
+  string namespace = 2;
+  repeated BatchCheckItem items = 3;
+}
+
+message BatchCheckItem {
+  string verb = 1;
+  string group = 2;
+  string resource = 3;
+  string name = 4;
+  string subresource = 5;
+  string folder = 6;
+}
+
+message BatchCheckResponse {
+  map<string, BatchCheckGroupResource> groups = 1;
+}
+
+message BatchCheckGroupResource {
+  map<string, bool> items = 1;
+}
