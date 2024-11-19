@@ -44,7 +44,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			// Who made this when
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
-			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV
+			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
 			{Name: "updated_by", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// JSON map[string]string
