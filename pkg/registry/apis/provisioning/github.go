@@ -113,6 +113,33 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, commit str
 	return []byte(data), nil
 }
 
+func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *githubRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "delete file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements provisioning.Repository.
 func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {

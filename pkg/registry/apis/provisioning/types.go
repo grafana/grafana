@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -42,7 +42,19 @@ type Repository interface {
 	Test(ctx context.Context) error
 
 	// Read a file from the resource
+	// This data will be parsed and validated before it is shown to end users
 	Read(ctx context.Context, path string, commit string) ([]byte, error)
+
+	// Write a file to the repository.
+	// The data has already been validated and is ready for save
+	Create(ctx context.Context, path string, data []byte, comment string) error
+
+	// Update a file in the remote repository
+	// The data has already been validated and is ready for save
+	Update(ctx context.Context, path string, data []byte, comment string) error
+
+	// Delete a file in the remote repository
+	Delete(ctx context.Context, path string, comment string) error
 
 	// For repositories that support webhooks
 	Webhook(responder rest.Responder) http.HandlerFunc
@@ -78,7 +90,7 @@ func (r *unknownRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 func (r *unknownRepository) Test(ctx context.Context) error {
 	return &errors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
@@ -88,8 +100,35 @@ func (r *unknownRepository) Test(ctx context.Context) error {
 // ReadResource implements provisioning.Repository.
 func (r *unknownRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
 	return nil, &errors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) Delete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "delete file not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}
