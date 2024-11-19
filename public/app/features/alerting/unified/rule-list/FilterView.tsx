@@ -126,7 +126,6 @@ export function FilterView({ filterState }: FilterViewProps) {
         <>
           <AlertRuleListItemLoader />
           <AlertRuleListItemLoader />
-          <AlertRuleListItemLoader />
         </>
       ) : noMoreResults ? (
         <Card>
