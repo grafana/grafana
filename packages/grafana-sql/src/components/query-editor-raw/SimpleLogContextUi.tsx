@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
+import { useToggle } from 'react-use';
 import { css } from '@emotion/css';
 
 import { applyQueryDefaults, SqlDatasource }from '@grafana/sql';
 import { GrafanaTheme2, LogRowModel, TimeRange } from '@grafana/data';
-import {  useStyles2 } from '@grafana/ui';
+import {  useStyles2, Collapse } from '@grafana/ui';
 
 import { SQLQuery, QueryRowFilter } from '../../types';
 import { haveColumns } from '../../utils/sql.utils';
@@ -32,6 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
 export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
   const { sqlDataSource, orignQuery, range, cachedSql, runContextQuery } = props;
   const styles = useStyles2(getStyles);
+  const [isOpen, toggleOpen] = useToggle(false);
   const queryWithDefaults = applyQueryDefaults(orignQuery);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql?.whereString,
@@ -40,7 +42,7 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
     preview: true,
   });
   const [queryToValidate, setQueryToValidate] = useState(queryWithDefaults);
-
+  const [displayLabel, setDisplayLabel] = useState("");
   const isQueryValid = (q: SQLQuery) => {
     return Boolean(q.rawSql);
   };
@@ -50,6 +52,7 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
       if (isQueryValid(q) && runContextQuery) {
         cachedSql.splice(0, cachedSql.length);
         cachedSql.push(q);
+        setDisplayLabel(q.rawSql || "");
         runContextQuery();
       }
     },
@@ -77,15 +80,22 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
 
   return (
     <div className={styles.wrapper}>
-      <RawEditor
-        db={sqlDataSource.db}
-        query={orignQuery}
-        queryToValidate={queryToValidate}
-        onChange={onChange}
-        onRunQuery={() => runContextQuery?.()}
-        onValidate={onValidate}
-        range={range}
-     />
+      <Collapse
+        collapsible={true}
+        isOpen={isOpen}
+        onToggle={toggleOpen}
+        label={<div>{displayLabel || orignQuery.rawSql}</div>}
+      >
+        <RawEditor
+          db={sqlDataSource.db}
+          query={orignQuery}
+          queryToValidate={queryToValidate}
+          onChange={onChange}
+          onRunQuery={() => runContextQuery?.()}
+          onValidate={onValidate}
+          range={range}
+        />
+      </Collapse>
     </div>
   );
 }
