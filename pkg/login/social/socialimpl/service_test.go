@@ -221,6 +221,7 @@ auto_login = true
 client_authentication = test_client_authentication
 client_id = test_client_id
 managed_identity_client_id = test_managed_identity_client_id
+audience = test_audience
 client_secret = test_client_secret
 scopes = ["openid", "profile", "email"]
 empty_scopes = false
@@ -267,7 +268,8 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 		ClientAuthentication:    "test_client_authentication",
 		ClientId:                "test_client_id",
 		ClientSecret:            "test_client_secret",
-		ManagedIdentityClientID: "managed_identity_client_id",
+		ManagedIdentityClientID: "test_managed_identity_client_id",
+		Audience:                "test_audience",
 		Scopes:                  []string{"openid", "profile", "email"},
 		EmptyScopes:             false,
 		EmailAttributeName:      "email:primary",
