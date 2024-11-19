@@ -5,7 +5,7 @@ SELECT "uid",
   "created", "created_by",
   "updated", "updated_by",
   "annotations", "labels", 
-  "apis"
+  "audiences"
 FROM {{ .Ident "secure_value" }}
 WHERE 1 = 1
 {{ if .Request.Namespace }}

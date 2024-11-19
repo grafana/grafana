@@ -97,7 +97,7 @@ type secureValueRow struct {
 	UpdatedBy   string
 	Annotations string // map[string]string
 	Labels      string // map[string]string
-	APIs        string // []string
+	Audiences   string // []string
 
 	// Used to decode the value
 	Manager           string
@@ -157,12 +157,12 @@ func toSecureValueRow(sv *secret.SecureValue) (*secureValueRow, error) {
 		}
 		row.Labels = string(v)
 	}
-	if len(sv.Spec.APIs) > 0 {
-		v, err := json.Marshal(sv.Spec.APIs)
+	if len(sv.Spec.Audiences) > 0 {
+		v, err := json.Marshal(sv.Spec.Audiences)
 		if err != nil {
 			return row, err
 		}
-		row.APIs = string(v)
+		row.Audiences = string(v)
 	}
 	if len(sv.Annotations) > 0 {
 		anno := CleanAnnotations(sv.Annotations)
@@ -183,8 +183,8 @@ func toSecureValueRow(sv *secret.SecureValue) (*secureValueRow, error) {
 		if strings.Contains(row.Labels, sv.Spec.Value) {
 			return nil, fmt.Errorf("raw secret found in labels")
 		}
-		if strings.Contains(row.APIs, sv.Spec.Value) {
-			return nil, fmt.Errorf("raw secret found in apis")
+		if strings.Contains(row.Audiences, sv.Spec.Value) {
+			return nil, fmt.Errorf("raw secret found in audiences")
 		}
 	}
 	return row, nil
@@ -206,8 +206,8 @@ func (v *secureValueRow) toK8s() (*secret.SecureValue, error) {
 		},
 	}
 
-	if v.APIs != "" {
-		err := json.Unmarshal([]byte(v.APIs), &val.Spec.APIs)
+	if v.Audiences != "" {
+		err := json.Unmarshal([]byte(v.Audiences), &val.Spec.Audiences)
 		if err != nil {
 			return nil, err
 		}
@@ -506,8 +506,8 @@ func (s *secureStore) Update(ctx context.Context, obj *secret.SecureValue) (*sec
 	if existing.Annotations != row.Annotations {
 		changed = append(changed, "annotations")
 	}
-	if existing.APIs != row.APIs {
-		changed = append(changed, "apis")
+	if existing.Audiences != row.Audiences {
+		changed = append(changed, "audiences")
 	}
 	if existing.Labels != row.Labels {
 		changed = append(changed, "labels")
@@ -651,7 +651,7 @@ func (s *secureStore) List(ctx context.Context, ns string, options *internalvers
 			&row.Created, &row.CreatedBy,
 			&row.Updated, &row.UpdatedBy,
 			&row.Annotations, &row.Labels,
-			&row.APIs,
+			&row.Audiences,
 		)
 		if err != nil {
 			return nil, err
@@ -785,7 +785,7 @@ func (s *secureStore) get(ctx context.Context, ns string, name string) (*secureV
 			&row.Created, &row.CreatedBy,
 			&row.Updated, &row.UpdatedBy,
 			&row.Annotations, &row.Labels,
-			&row.APIs,
+			&row.Audiences,
 		)
 		return row, err
 	}

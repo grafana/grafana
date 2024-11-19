@@ -55,9 +55,9 @@ func initSecretStore(mg *migrator.Migrator) string {
 			// JSON map[string]string
 			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
 
-			// TODO GE: This is intended to represent potential audiences, so let's make it audiences throughout
+			// This is intended to represent potential audiences that can decrypt the securevalue.
 			// JSON []string
-			{Name: "apis", Type: migrator.DB_Text, Nullable: true},
+			{Name: "audiences", Type: migrator.DB_Text, Nullable: true},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
