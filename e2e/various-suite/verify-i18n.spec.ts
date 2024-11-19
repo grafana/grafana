@@ -50,16 +50,18 @@ describe('Verify i18n', () => {
   // basic test which loops through the defined languages in the picker
   // and verifies that the corresponding label is translated correctly
   it('loads all the languages correctly', () => {
+    const LANGUAGE_SELECTOR = '[id="locale-select"]';
     cy.intercept('/api/user/preferences').as('preferences');
     cy.visit('/profile');
+    // wait for all the preferences calls to settle before interacting with the UI
+    cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
 
-    cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string]) => {
-      // TODO investigate why we need to wait for 6 (SIX!) calls to the preferences API
-      cy.wait(['@preferences', '@preferences', '@preferences', '@preferences', '@preferences', '@preferences']);
-      cy.get('[id="locale-select"]').click();
-      cy.get('[id="locale-select"]').clear().type(language).type('{downArrow}{enter}');
+    cy.wrap(Object.entries(languageMap)).each(([language, label]: [string, string], index) => {
+      cy.get(LANGUAGE_SELECTOR).click();
+      cy.get(LANGUAGE_SELECTOR).clear().type(language).type('{downArrow}{enter}');
       e2e.components.UserProfile.preferencesSaveButton().click();
       cy.contains('label', label).should('be.visible');
+      cy.get(LANGUAGE_SELECTOR).should('have.value', language);
     });
   });
 });
