@@ -30,7 +30,16 @@ func gRPCServerSettingsError(msg string, args ...interface{}) error {
 	return fmt.Errorf("grpc_server: "+msg, args...)
 }
 
-func (c *GRPCServerSettings) ProcessTLSConfig() error {
+func (c *GRPCServerSettings) Process() error {
+	err := c.processTLSConfig()
+	if err != nil {
+		return err
+	}
+
+	return c.processAddress()
+}
+
+func (c *GRPCServerSettings) processTLSConfig() error {
 	if !c.useTLS {
 		return nil
 	}
@@ -45,7 +54,7 @@ func (c *GRPCServerSettings) ProcessTLSConfig() error {
 	return nil
 }
 
-func (c *GRPCServerSettings) ProcessAddress() error {
+func (c *GRPCServerSettings) processAddress() error {
 	switch c.Network {
 	case "unix":
 		if c.Address != "" {
@@ -100,7 +109,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.certFile = server.Key("cert_file").String()
 	cfg.GRPCServer.keyFile = server.Key("cert_key").String()
 
-	if err := cfg.GRPCServer.ProcessTLSConfig(); err != nil {
+	if err := cfg.GRPCServer.processTLSConfig(); err != nil {
 		return err
 	}
 
@@ -110,7 +119,7 @@ func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.GRPCServer.MaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
 	cfg.GRPCServer.MaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
 
-	return cfg.GRPCServer.ProcessAddress()
+	return cfg.GRPCServer.processAddress()
 }
 
 func (c *GRPCServerSettings) AddFlags(fs *pflag.FlagSet) {
