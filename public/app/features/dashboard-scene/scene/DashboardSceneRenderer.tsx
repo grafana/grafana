@@ -19,8 +19,18 @@ import { PanelSearchLayout } from './PanelSearchLayout';
 import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
-    model.useState();
+  const {
+    controls,
+    overlay,
+    editview,
+    editPanel,
+    isEmpty,
+    meta,
+    viewPanelScene,
+    panelSearch,
+    panelsPerRow,
+    isEditing,
+  } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const location = useLocation();
@@ -76,6 +86,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     body = [emptyState, withPanels];
   } else if (panelSearch || panelsPerRow) {
     body = <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
+  }
+
+  function renderCanvas() {
+    if (isEditing) {
+    }
   }
 
   return (

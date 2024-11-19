@@ -1,8 +1,17 @@
 import { SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneCSSGridLayout,
+  sceneGraph,
+  SceneLayout,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Button, Field, Select } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
@@ -18,6 +27,14 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  public constructor(state: ResponsiveGridLayoutManagerState) {
+    super(state);
+
+    this.state.layout.isDraggable = () => true;
+    //@ts-ignore
+    this.state.layout.getDragClass = () => 'grid-item-drag-handle';
+  }
+
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {
@@ -110,9 +127,56 @@ export class ResponsiveGridLayoutManager
     });
   }
 
+  toSaveModel?() {
+    throw new Error('Method not implemented.');
+  }
+
+  activateRepeaters?(): void {
+    throw new Error('Method not implemented.');
+  }
+
+  public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
+    const target = evt.target as HTMLElement;
+    const isPanel = target.closest('.grid-item-drag-handle');
+
+    if (!isPanel) {
+      return;
+    }
+
+    const panelKey = target.closest('[data-viz-panel-key]');
+    if (!panelKey) {
+      return;
+    }
+
+    const key = panelKey.getAttribute('data-viz-panel-key');
+    if (!key) {
+      return;
+    }
+
+    const panel = sceneGraph.findByKey(this, key);
+    if (panel instanceof VizPanel) {
+      const gridItem = panel.parent;
+      if (gridItem instanceof ResponsiveGridItem) {
+        this.toggleSelection(gridItem);
+      }
+    }
+  };
+
+  private toggleSelection(item: ResponsiveGridItem) {
+    for (const child of this.state.layout.state.children) {
+      if (child instanceof ResponsiveGridItem) {
+        if (child.state.isSelected && child !== item) {
+          child.setState({ isSelected: false });
+        }
+      }
+    }
+
+    item.setState({ isSelected: !item.state.isSelected });
+  }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return (
-      <LayoutEditChrome layoutManager={model}>
+      <LayoutEditChrome layoutManager={model} onClick={model.onClick}>
         <model.state.layout.Component model={model.state.layout} />
       </LayoutEditChrome>
     );

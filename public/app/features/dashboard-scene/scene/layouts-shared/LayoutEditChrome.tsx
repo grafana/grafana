@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Field, Select } from '@grafana/ui';
@@ -11,9 +12,10 @@ import { layoutRegistry } from './layoutRegistry';
 interface Props {
   layoutManager: DashboardLayoutManager;
   children: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function LayoutEditChrome({ layoutManager, children }: Props) {
+export function LayoutEditChrome({ layoutManager, children, onClick }: Props) {
   const styles = useStyles2(getStyles);
   const { isEditing } = getDashboardSceneFor(layoutManager).useState();
 
@@ -27,7 +29,7 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
   const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} onClick={onClick}>
       {isEditing && (
         <div className={styles.editHeader}>
           <Field label="Layout type">
