@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -54,6 +55,7 @@ func RegisterAPIService(
 	}
 	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
+		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	})
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -155,7 +157,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 		return nil // This is normal for sub-resource
 	}
 
-	repo, err := b.asRepository(a.GetObject())
+	repo, err := b.asRepository(obj)
 	if err != nil {
 		return err
 	}

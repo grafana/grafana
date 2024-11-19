@@ -16,6 +16,9 @@ import (
 type LocalFolderResolver struct {
 	// Local path to data directory
 	ProvisioningPath string
+
+	// Path to development environment
+	DevenvPath string
 }
 
 func (r *LocalFolderResolver) LocalPath(path string) string {
@@ -24,7 +27,7 @@ func (r *LocalFolderResolver) LocalPath(path string) string {
 		return ""
 	}
 
-	parts := strings.SplitN(path, "/", 1)
+	parts := strings.SplitN(path, "/", 2)
 	if len(parts) != 2 {
 		return ""
 	}
@@ -35,9 +38,11 @@ func (r *LocalFolderResolver) LocalPath(path string) string {
 		}
 		return filepath.Join(r.ProvisioningPath, parts[1])
 
-	// Can we support pointing to files in devenv
 	case "devenv":
-		return ""
+		if r.DevenvPath == "" {
+			return "" // not allowed
+		}
+		return filepath.Join(r.DevenvPath, parts[1])
 	}
 	return ""
 }

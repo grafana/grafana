@@ -119,6 +119,18 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 		// Load the samples
 		_, err := client.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/local-conf-provisioning-sample.yaml"),
+			createOptions,
+		)
+		require.NoError(t, err)
+
+		_, err = client.Resource.Create(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/local-devenv.yaml"),
+			createOptions,
+		)
+		require.NoError(t, err)
+
+		_, err = client.Resource.Create(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			createOptions,
 		)
@@ -152,6 +164,22 @@ func TestIntegrationProvisioning(t *testing.T) {
 				},
 				"title": "Github Example",
 				"type": "github"
+			},
+			"local-conf-provisioning-sample": {
+				"description": "load resources from https://github.com/grafana/grafana/tree/main/conf/provisioning/sample",
+				"local": {
+					"path": "provisioning/sample"
+				},
+				"title": "Config provisioning files",
+				"type": "local"
+			},
+			"local-devenv": {
+				"description": "load https://github.com/grafana/grafana/tree/main/devenv/dev-dashboards",
+				"local": {
+					"path": "devenv/dev-dashboards"
+				},
+				"title": "Load devenv dashboards",
+				"type": "local"
 			},
 			"s3-example": {
 				"description": "load resources from an S3 bucket",
