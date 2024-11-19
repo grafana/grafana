@@ -66,6 +66,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             url: '',
             title: correlation.label || correlation.target.name,
             origin: DataLinkConfigOrigin.Correlations,
+            targetBlank: true,
             meta: {
               transformations: correlation.config.transformations,
             },
@@ -76,6 +77,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             url: externalTarget.url,
             title: correlation.label || 'External URL',
             origin: DataLinkConfigOrigin.Correlations,
+            targetBlank: true,
             meta: { transformations: correlation.config?.transformations },
           });
         }

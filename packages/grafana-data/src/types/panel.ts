@@ -10,6 +10,7 @@ import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
 import { LoadingState, PreferredVisualisationType } from './data';
 import { DataFrame, FieldType } from './dataFrame';
+import { VariableInterpolation } from './dataLink';
 import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
 import { FieldConfigSource } from './fieldOverrides';
 import { IconName } from './icon';
@@ -18,7 +19,19 @@ import { PluginMeta } from './plugin';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { DataTransformerConfig } from './transformations';
 
-export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
+export type InterpolateFunction = (
+  value: string,
+  scopedVars?: ScopedVars,
+  format?: string | Function,
+  interpolations?: VariableInterpolation[]
+) => string;
+
+export type EnhancedInterpolateFunction = (
+  value: string,
+  scopedVars?: ScopedVars,
+  format?: string | Function,
+  interpolations?: VariableInterpolation[]
+) => { replaceStr: string; variables: VariableInterpolation[]; allFound: boolean };
 
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */

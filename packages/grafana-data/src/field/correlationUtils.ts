@@ -1,7 +1,21 @@
 import logfmt from 'logfmt';
 
-import { ScopedVars, DataLinkTransformationConfig, SupportedTransformationType } from '@grafana/data';
-import { safeStringifyValue } from 'app/core/utils/explore';
+import { ScopedVars } from '../types/ScopedVars';
+import { DataLinkTransformationConfig, SupportedTransformationType } from '../types/dataLink';
+
+export const safeStringifyValue = (value: unknown, space?: number) => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(value, null, space);
+  } catch (error) {
+    console.error(error);
+  }
+
+  return '';
+};
 
 export const getTransformationVars = (
   transformation: DataLinkTransformationConfig,
@@ -34,3 +48,20 @@ export const getTransformationVars = (
 
   return transformationScopedVars;
 };
+
+// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+export const builtInVariables = [
+  '__from',
+  '__to',
+  '__interval',
+  '__interval_ms',
+  '__org',
+  '__user',
+  '__range',
+  '__rate_interval',
+  '__timeFilter',
+  'timeFilter',
+  // These are only applicable in dashboards so should not affect this for Explore
+  // '__dashboard',
+  //'__name',
+];

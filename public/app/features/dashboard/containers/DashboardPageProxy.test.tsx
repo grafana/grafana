@@ -4,6 +4,7 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { config, locationService } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
@@ -63,6 +64,7 @@ jest.mock('@grafana/runtime', () => ({
     get: jest.fn().mockResolvedValue({}),
   }),
   useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => backendSrv,
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
