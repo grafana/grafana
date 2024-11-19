@@ -5,7 +5,7 @@ import memoize from 'micro-memoize';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Button, Card, Stack } from '@grafana/ui';
+import { Button, Card, EmptyState, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -31,6 +31,9 @@ interface FilterViewProps {
 
 const FRONTENT_PAGE_SIZE = 50;
 const API_PAGE_SIZE = 2000;
+
+// @TODO fix "no more results" paddings
+// @TODO fix the "load more" button
 
 export function FilterView({ filterState }: FilterViewProps) {
   const [prevFilterState, setPrevFilterState] = useState(filterState);
@@ -106,6 +109,15 @@ export function FilterView({ filterState }: FilterViewProps) {
   }, [controller]);
 
   const loading = isLoading(state) || transitionPending;
+
+  /* If we don't have any rules and have exhausted all sources, show a EmptyState */
+  if (rules.length === 0 && noMoreResults) {
+    return (
+      <EmptyState variant="not-found" message="No matching rules found">
+        No alert- or recording rules matched your current set of filters.
+      </EmptyState>
+    );
+  }
 
   return (
     <Stack direction="column" gap={0}>
