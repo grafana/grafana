@@ -222,10 +222,8 @@ func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
-			subject := zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, "")
-
 			tuple := &openfgav1.TupleKey{
-				User:     subject,
+				User:     zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, ""),
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(b.OrgRole), ""),
 			}
@@ -268,10 +266,9 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
-			subject := zanzana.NewTupleEntry(zanzana.TypeTeam, b.TeamUID, zanzana.RelationTeamMember)
 
 			tuple := &openfgav1.TupleKey{
-				User:     subject,
+				User:     zanzana.NewTupleEntry(zanzana.TypeTeam, b.TeamUID, zanzana.RelationTeamMember),
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, b.RoleUID, ""),
 			}
@@ -314,10 +311,8 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
-			subject := zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, "")
-
 			tuple := &openfgav1.TupleKey{
-				User:     subject,
+				User:     zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, ""),
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, b.RoleUID, ""),
 			}
@@ -362,9 +357,12 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, p := range permissions {
-			subject := zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee)
-
-			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
+			tuple, ok := zanzana.TranslateToResourceTuple(
+				zanzana.NewTupleEntry(zanzana.TypeRole, p.RoleUID, zanzana.RelationAssignee),
+				p.Action,
+				p.Kind,
+				p.Identifier,
+			)
 			if !ok {
 				continue
 			}
