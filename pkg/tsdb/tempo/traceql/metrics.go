@@ -12,9 +12,9 @@ import (
 )
 
 func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
-	// prealloc frames
-	frames := make([]*data.Frame, len(resp.Series))
-	for i, series := range resp.Series {
+	var frames []*data.Frame
+	var exemplarFrames []*data.Frame
+	for _, series := range resp.Series {
 		labels := make(data.Labels)
 		for _, label := range series.Labels {
 			labels[label.GetKey()] = metricsValueToString(label.GetValue())
@@ -42,7 +42,7 @@ func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
 
 		frame := &data.Frame{
 			RefID: name,
-			Name:  "Trace",
+			Name:  name,
 			Fields: []*data.Field{
 				timeField,
 				valueField,
@@ -56,9 +56,40 @@ func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
 			frame.AppendRow(time.UnixMilli(sample.GetTimestampMs()), sample.GetValue())
 		}
 
-		frames[i] = frame
+		exFrame := transformExemplarToFrame(name, series.Exemplars)
+		exemplarFrames = append(exemplarFrames, exFrame)
+
+		frames = append(frames, frame)
 	}
-	return frames
+	return append(frames, exemplarFrames...)
+}
+
+func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar) *data.Frame {
+	timeField := data.NewField("Time", nil, []time.Time{})
+	valueField := data.NewField("Value", nil, []float64{})
+	traceIdField := data.NewField("traceId", nil, []string{})
+
+	frame := &data.Frame{
+		RefID: name,
+		Name:  "exemplar",
+		Fields: []*data.Field{
+			timeField,
+			valueField,
+			traceIdField,
+		},
+		Meta: &data.FrameMeta{
+			DataTopic: "annotations",
+		},
+	}
+
+	for _, exemplar := range exemplars {
+		labels := make(data.Labels)
+		for _, label := range exemplar.Labels {
+			labels[label.GetKey()] = metricsValueToString(label.GetValue())
+		}
+		frame.AppendRow(time.UnixMilli(exemplar.GetTimestampMs()), exemplar.GetValue(), labels["trace:id"])
+	}
+	return frame
 }
 
 func metricsValueToString(value *v1.AnyValue) string {
