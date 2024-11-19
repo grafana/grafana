@@ -39,6 +39,14 @@ var (
 	errAzureADMissingGroups = &SocialError{"either the user does not have any group membership or the groups claim is missing from the token."}
 )
 
+// List of supported audiences in Azure
+var supportedAudiences = []string{
+	"api://AzureADTokenExchange",      // Public
+	"api://AzureADTokenExchangeUSGov", // US Gov
+	"api://AzureADTokenExchangeChina", // Mooncake
+	"api://AzureADTokenExchangeUSNat", // USNat
+	"api://AzureADTokenExchangeUSSec"} // USSec
+
 var _ social.SocialConnector = (*SocialAzureAD)(nil)
 var _ ssosettings.Reloadable = (*SocialAzureAD)(nil)
 
@@ -174,97 +182,66 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 	s.reloadMutex.RLock()
 	defer s.reloadMutex.RUnlock()
 
-	oauthCfg := s.GetOAuthInfo()
+	oauthCfg := s.info
 
-	// Handle client authentication types
 	switch oauthCfg.ClientAuthentication {
-	case social.ClientSecretJWT:
-		var clientAssertion string
-		var err error
-
-		// Generate client assertion based on ManagedIdentityClientID
-		if oauthCfg.ManagedIdentityClientID != "" {
-			clientAssertion, err = s.ManagedIdentityCallback(ctx)
-		} else {
-			clientAssertion, err = createJWT(*oauthCfg)
-		}
+	case social.ManagedIdentity:
+		// Generate client assertion
+		clientAssertion, err := s.ManagedIdentityCallback(ctx, *oauthCfg)
 		if err != nil {
 			return nil, err
 		}
 
+		// Set client assertion parameters
 		authOptions = append(authOptions,
 			oauth2.SetAuthURLParam("client_assertion", clientAssertion),
 			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
 		)
 
-		// Remove client_secret to avoid sending it in the request
+		// Clear client_secret to avoid including it in the request
 		s.Config.ClientSecret = ""
 
 	case social.ClientSecretPost:
-		// Use default behavior for ClientSecretPost, no additional setup needed
+		// Default behavior for ClientSecretPost, no additional setup needed
 
 	default:
 		return nil, fmt.Errorf("invalid client authentication method: %s", oauthCfg.ClientAuthentication)
 	}
 
-	// Default exchange method
+	// Default token exchange
 	return s.Config.Exchange(ctx, code, authOptions...)
 }
 
-// Creates and signs a JWT token using the shared client secret. Based on OIDC specification for client_secret_jwt.
-func createJWT(oauthCfg social.OAuthInfo) (string, error) {
-	now := time.Now().UTC()
-	claims := jwt.Claims{
-		Issuer:    oauthCfg.ClientId,
-		Subject:   oauthCfg.ClientId,
-		Audience:  jwt.Audience{oauthCfg.TokenUrl},
-		ID:        uuid.New().String(),
-		Expiry:    jwt.NewNumericDate(now.Add(5 * time.Minute)),
-		NotBefore: jwt.NewNumericDate(now),
-		IssuedAt:  jwt.NewNumericDate(now),
-	}
-
-	sharedSecret := oauthCfg.ClientSecret
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte(sharedSecret)}, nil)
-	if err != nil {
-		return "", err
-	}
-	jwt, err := jwt.Signed(signer).Claims(claims).CompactSerialize()
-	if err != nil {
-		return "", err
-	}
-
-	return jwt, nil
-}
-
 // ManagedIdentityCallback retrieves a token using the managed identity credential of the Azure service.
-func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context) (string, error) {
-	// exchange auth code to a valid token
-	managedIdentityClientID := s.GetOAuthInfo().ManagedIdentityClientID
-	azScopes := []string{"api://AzureADTokenExchange/.default"}
-
-	mic, err := azidentity.NewManagedIdentityCredential(
-		&azidentity.ManagedIdentityCredentialOptions{
-			ID: azidentity.ClientID(managedIdentityClientID),
-		},
-	)
-	if err != nil {
-		// return nil, errOAuthTokenExchange.Errorf("error constructing managed identity credential: %w", err)
+func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context, oauthCfg social.OAuthInfo) (string, error) {
+	// Validate required fields for Managed Identity authentication
+	if oauthCfg.ManagedIdentityClientID == "" {
+		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
+	}
+	if oauthCfg.Audience == "" {
+		return "", fmt.Errorf("Audience is required for Managed Identity authentication")
+	}
+	if err := validateAudience(oauthCfg.Audience); err != nil {
 		return "", err
 	}
 
-	getAssertion := func(ctx context.Context) (string, error) {
-		tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{Scopes: azScopes})
-		return tk.Token, err
-	}
-
-	micToken, err := getAssertion(context.Background())
+	// Prepare Managed Identity Credential
+	mic, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
+		ID: azidentity.ClientID(oauthCfg.ManagedIdentityClientID),
+	})
 	if err != nil {
-		// return nil, errOAuthTokenExchange.Errorf("error getting managed identity token: %w", err)
-		return "", err
+		return "", fmt.Errorf("error constructing managed identity credential: %w", err)
 	}
 
-	return micToken, nil
+	// Request token and return
+	tk, err := mic.GetToken(context.Background(), policy.TokenRequestOptions{
+		Scopes: []string{fmt.Sprintf("%s/.default", oauthCfg.Audience)},
+	})
+	if err != nil {
+		return "", fmt.Errorf("error getting managed identity token: %w", err)
+	}
+
+	return tk.Token, nil
 }
 
 func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
@@ -378,6 +355,15 @@ func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *ht
 	s.log.Warn("AzureAD OAuth: signing key not found", "kid", keyID)
 
 	return nil, &SocialError{"AzureAD OAuth: signing key not found"}
+}
+
+func validateAudience(audience string) error {
+	for _, supportedAudience := range supportedAudiences {
+		if audience == supportedAudience {
+			return nil
+		}
+	}
+	return fmt.Errorf("audience %s is not supported", audience)
 }
 
 func (claims *azureClaims) extractEmail() string {
