@@ -23,8 +23,10 @@ func TestIntegrationSecretsOSS(t *testing.T) {
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
+		// Required to start the example service
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagSecretsManagementAppPlatform,
 		},
 	})
 
