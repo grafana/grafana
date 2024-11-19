@@ -30,7 +30,6 @@ func gRPCServerSettingsError(msg string, args ...interface{}) error {
 	return fmt.Errorf("grpc_server: "+msg, args...)
 }
 
-// TODO(gamab) is there a better way to do that with flags
 func (c *GRPCServerSettings) ProcessTLSConfig() error {
 	if !c.useTLS {
 		return nil
@@ -46,7 +45,6 @@ func (c *GRPCServerSettings) ProcessTLSConfig() error {
 	return nil
 }
 
-// TODO(gamab) is there a better way to do that with flags
 func (c *GRPCServerSettings) ProcessAddress() error {
 	switch c.Network {
 	case "unix":
