@@ -17,30 +17,40 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzextv1.BatchCheckRequest
 		Groups: make(map[string]*authzextv1.BatchCheckGroupResource),
 	}
 
-	subject := r.GetSubject()
+	store, err := s.getStoreInfo(ctx, r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
 
-	for _, item := range r.Items {
-		groupPrefix := common.FormatGroupResource(item.GetGroup(), item.GetResource())
-		allowed, err := s.batchCheckItem(ctx, subject, r.Namespace, item)
+	groupResourceAccess := make(map[string]bool)
+
+	for _, item := range r.GetItems() {
+		res, err := s.batchCheckItem(ctx, r, item, store, groupResourceAccess)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, ok := batchRes.Groups[groupPrefix]; !ok {
-			batchRes.Groups[groupPrefix] = &authzextv1.BatchCheckGroupResource{
+		groupResource := common.FormatGroupResource(item.GetGroup(), item.GetResource())
+		if _, ok := batchRes.Groups[groupResource]; !ok {
+			batchRes.Groups[groupResource] = &authzextv1.BatchCheckGroupResource{
 				Items: make(map[string]bool),
 			}
 		}
-		batchRes.Groups[groupPrefix].Items[item.GetName()] = allowed
+		batchRes.Groups[groupResource].Items[item.GetName()] = res.GetAllowed()
 	}
 
 	return batchRes, nil
 }
 
-func (s *Server) batchCheckItem(ctx context.Context, subject string, namespace string, item *authzextv1.BatchCheckItem) (bool, error) {
+func (s *Server) batchCheckItem(
+	ctx context.Context,
+	r *authzextv1.BatchCheckRequest,
+	item *authzextv1.BatchCheckItem,
+	store *storeInfo,
+	groupResourceAccess map[string]bool,
+) (*authzv1.CheckResponse, error) {
 	req := &authzv1.CheckRequest{
-		Namespace:   namespace,
-		Subject:     subject,
+		Subject:     r.GetSubject(),
 		Verb:        item.GetVerb(),
 		Group:       item.GetGroup(),
 		Resource:    item.GetResource(),
@@ -49,16 +59,27 @@ func (s *Server) batchCheckItem(ctx context.Context, subject string, namespace s
 		Subresource: item.GetSubresource(),
 	}
 
-	var res *authzv1.CheckResponse
-	var err error
-	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
-		res, err = s.checkTyped(ctx, req, info)
-	} else {
-		res, err = s.checkGeneric(ctx, req)
-	}
-	if err != nil {
-		return false, err
+	var (
+		relation      = common.VerbMapping[item.GetVerb()]
+		groupResource = common.FormatGroupResource(req.GetGroup(), req.GetResource())
+	)
+
+	allowed, ok := groupResourceAccess[groupResource]
+	if !ok {
+		res, err := s.checkNamespace(ctx, req, store, relation)
+		if err != nil {
+			return nil, err
+		}
+		groupResourceAccess[groupResource] = res.GetAllowed()
 	}
 
-	return res.Allowed, nil
+	if allowed {
+		return &authzv1.CheckResponse{Allowed: true}, nil
+	}
+
+	if info, ok := common.GetTypeInfo(item.GetGroup(), item.GetResource()); ok {
+		return s.checkTyped(ctx, req, info, store, relation)
+	}
+	return s.checkGeneric(ctx, req, store, relation)
+
 }

@@ -14,24 +14,34 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	ctx, span := tracer.Start(ctx, "authzServer.Check")
 	defer span.End()
 
-	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
-		return s.checkTyped(ctx, r, info)
-	}
-	return s.checkGeneric(ctx, r)
-}
-
-// checkNamespace checks if subject has access through namespace
-func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
+	// Check if subject has access through namespace
+	store, err := s.getStoreInfo(ctx, r.GetNamespace())
 	if err != nil {
 		return nil, err
 	}
 
 	relation := common.VerbMapping[r.GetVerb()]
 
+	res, err := s.checkNamespace(ctx, r, store, relation)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.GetAllowed() {
+		return res, nil
+	}
+
+	if info, ok := common.GetTypeInfo(r.GetGroup(), r.GetResource()); ok {
+		return s.checkTyped(ctx, r, info, store, relation)
+	}
+	return s.checkGeneric(ctx, r, store, relation)
+}
+
+// checkNamespace checks if subject has access through namespace
+func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              store.Id,
+		AuthorizationModelId: store.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -45,18 +55,11 @@ func (s *Server) checkNamespace(ctx context.Context, r *authzv1.CheckRequest) (*
 	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
 }
 
-func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	relation := common.VerbMapping[r.GetVerb()]
-
-	// 1. check if subject has direct access to resource
+func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info common.TypeInfo, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
+	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              store.Id,
+		AuthorizationModelId: store.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -71,26 +74,15 @@ func (s *Server) checkTyped(ctx context.Context, r *authzv1.CheckRequest, info c
 		return &authzv1.CheckResponse{Allowed: true}, nil
 	}
 
-	// 2. check if subject has access through namespace
-	nsRes, err := s.checkNamespace(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &authzv1.CheckResponse{Allowed: nsRes.GetAllowed()}, nil
+	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
-func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.CheckResponse, error) {
-	storeInf, err := s.getStoreInfo(ctx, r.Namespace)
-	if err != nil {
-		return nil, err
-	}
+func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest, store *storeInfo, relation string) (*authzv1.CheckResponse, error) {
 
-	relation := common.VerbMapping[r.GetVerb()]
-	// 1. check if subject has direct access to resource
+	// Check if subject has direct access to resource
 	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              store.Id,
+		AuthorizationModelId: store.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: relation,
@@ -104,7 +96,6 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 	})
 
 	if err != nil {
-		// FIXME: wrap error
 		return nil, err
 	}
 
@@ -112,24 +103,14 @@ func (s *Server) checkGeneric(ctx context.Context, r *authzv1.CheckRequest) (*au
 		return &authzv1.CheckResponse{Allowed: true}, nil
 	}
 
-	// 2. check if subject has access through namespace
-	nsRes, err := s.checkNamespace(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-
-	if nsRes.GetAllowed() {
-		return &authzv1.CheckResponse{Allowed: true}, nil
-	}
-
 	if r.Folder == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	// 3. check if subject has access as a sub resource for the folder
+	// Check if subject has access as a sub resource for the folder
 	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              store.Id,
+		AuthorizationModelId: store.AuthorizationModelId,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
 			User:     r.GetSubject(),
 			Relation: common.FolderResourceRelation(relation),
