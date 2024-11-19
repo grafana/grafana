@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/authlib/authz"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
-	"github.com/grafana/authlib/authz"
-
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -163,6 +163,33 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		Resource:  translation.resource,
 		Name:      name,
 		Folder:    folder,
+	}
+
+	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authzextv1.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	m, ok := translation.mapping[action]
+	if !ok {
+		return nil, false
+	}
+
+	verb, ok := common.RelationToVerbMapping[m.relation]
+	if !ok {
+		return nil, false
+	}
+
+	req := &authzextv1.ListRequest{
+		Namespace: namespace,
+		Verb:      verb,
+		Group:     translation.group,
+		Resource:  translation.resource,
 	}
 
 	return req, true

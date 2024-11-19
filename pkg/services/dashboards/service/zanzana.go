@@ -2,9 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/authlib/authz"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -194,4 +199,101 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 	}
 
 	return result, nil
+}
+
+// findDashboardsZanzanaList implements "List, then search" strategy. It first retrieve a list of resources
+// with given type available to the user and then passes that list as a filter to the search query.
+func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	// Always use "search, then check" if dashboard or folder UIDs provided. Otherwise we should make intersection
+	// of user's resources and provided UIDs which might not be correct if ListObjects() request is limited by OpenFGA.
+	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 || len(query.FolderUIDs) > 0 {
+		return dr.findDashboardsZanzanaCheck(ctx, query)
+	}
+
+	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
+	defer span.End()
+
+	var result []dashboards.DashboardSearchProjection
+
+	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.KindFolders)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allowedFolders) > 0 {
+		// Find dashboards in folders that user has access to
+		query.SkipAccessControlFilter = true
+		query.FolderUIDs = allowedFolders
+		result, err = dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// skip if limit reached
+	rest := query.Limit - int64(len(result))
+	if rest <= 0 {
+		return result, nil
+	}
+
+	// Run second query to find dashboards with direct permission assignments
+	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.KindDashboards)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allowedDashboards) > 0 {
+		query.FolderUIDs = []string{}
+		query.DashboardUIDs = allowedDashboards
+		query.Limit = rest
+		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, dashboardRes...)
+	}
+
+	return result, err
+}
+
+func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
+	action := dashboards.ActionDashboardsRead
+	if resourceType == zanzana.KindFolders {
+		action = dashboards.ActionFoldersRead
+	}
+
+	ns := query.SignedInUser.GetNamespace()
+	listReq, ok := zanzana.TranslateToListRequest(ns, action, resourceType)
+	if !ok {
+		return nil, errors.New("resource type not supported")
+	}
+
+	req := authz.ListRequest{
+		Namespace: listReq.GetNamespace(),
+		Group:     listReq.GetGroup(),
+		Resource:  listReq.GetResource(),
+	}
+
+	res, err := dr.zclient.List(ctx, query.SignedInUser, req)
+	if err != nil {
+		return nil, err
+	}
+
+	orgId := query.OrgId
+	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
+		orgId = query.SignedInUser.GetOrgID()
+	} else {
+		return nil, dashboards.ErrUserIsNotSignedInToOrg
+	}
+	// dashboard:<orgId>-
+	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
+
+	resourceUIDs := make([]string, 0)
+	for _, d := range res.Items {
+		if uid, found := strings.CutPrefix(d, prefix); found {
+			resourceUIDs = append(resourceUIDs, uid)
+		}
+	}
+
+	return resourceUIDs, nil
 }
