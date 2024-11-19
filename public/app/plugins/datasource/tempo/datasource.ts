@@ -601,10 +601,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const request = { ...options, targets: validTargets };
     return super.query(request).pipe(
       map((response) => {
-        if (response.error) {
-          return response;
-        }
         return response;
+      }),
+      catchError((err) => {
+        return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
       })
     );
   };

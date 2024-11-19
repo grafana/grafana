@@ -71,3 +71,63 @@ func TestCreateMetricsQuery_URLParseError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, req)
 }
+
+func TestEmptyQueryString_ReturnsFalse(t *testing.T) {
+	result := isMetricsQuery("")
+	assert.False(t, result)
+}
+
+func TestQueryWithoutMetricsFunction_ReturnsFalse(t *testing.T) {
+	result := isMetricsQuery("{.some = \"random query\"} && {} >> {}")
+	assert.False(t, result)
+}
+
+func TestQueryWithRateFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | rate(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithAvgOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | avg_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithCountOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | count_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithMaxOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | max_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithMinOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | min_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithQuantileOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | quantile_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithHistogramOverTimeFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | histogram_over_time(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithCompareFunction_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | compare(foo)")
+	assert.True(t, result)
+}
+
+func TestQueryWithMultipleFunctions_ReturnsTrue(t *testing.T) {
+	result := isMetricsQuery("{} | rate(foo) | avg_over_time(bar)")
+	assert.True(t, result)
+}
+
+func TestQueryWithInvalidFunction_ReturnsFalse(t *testing.T) {
+	result := isMetricsQuery("{} | invalid_function(foo)")
+	assert.False(t, result)
+}
