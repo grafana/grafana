@@ -276,6 +276,10 @@
         "success": ""
       }
     },
+    "rule-list": {
+      "configure-datasource": "",
+      "new-alert-rule": ""
+    },
     "rule-state": {
       "creating": "",
       "deleting": "",

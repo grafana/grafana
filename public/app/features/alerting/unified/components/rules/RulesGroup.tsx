@@ -7,7 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
-import { LogMessages, logInfo } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
@@ -22,7 +23,7 @@ import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
 
 import { ActionIcon } from './ActionIcon';
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
@@ -36,8 +37,12 @@ interface Props {
   viewMode: ViewMode;
 }
 
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
+  const rulesSourceName = getRulesSourceName(rulesSource);
+
   const [deleteRuleGroup] = useDeleteRuleGroup();
   const styles = useStyles2(getStyles);
 
@@ -54,6 +59,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   }, [expandAll]);
 
   const { hasRuler, rulerRulesLoaded } = useHasRuler(namespace.rulesSource);
+  const { currentData: dsFeatures } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
@@ -268,7 +275,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         />
       )}
       {isEditingGroup && (
-        <EditCloudGroupModal
+        <EditRuleGroupModal
           namespace={namespace}
           group={group}
           onClose={() => closeEditModal()}
@@ -276,12 +283,13 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           folderUid={folderUID}
         />
       )}
-      {isReorderingGroup && (
+      {isReorderingGroup && dsFeatures?.rulerConfig && (
         <ReorderCloudGroupModal
           group={group}
           folderUid={folderUID}
           namespace={namespace}
           onClose={() => setIsReorderingGroup(false)}
+          rulerConfig={dsFeatures.rulerConfig}
         />
       )}
       <ConfirmModal

@@ -36,3 +36,7 @@ func (nc NoopClient) Read(ctx context.Context, req *authzextv1.ReadRequest) (*au
 func (nc NoopClient) Write(ctx context.Context, req *authzextv1.WriteRequest) error {
 	return nil
 }
+
+func (nc NoopClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	return nil, nil
+}
