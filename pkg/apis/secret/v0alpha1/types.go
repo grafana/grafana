@@ -6,21 +6,25 @@ import (
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SecureValue struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// This is the actual secure value schema.
 	Spec SecureValueSpec `json:"spec,omitempty"`
 }
 
 type SecureValueSpec struct {
-	// Visible title for this secret
+	// Visible title for this secret.
 	Title string `json:"title"`
 
-	// Name of the manager
-	// This is only supported in enterprise
+	// Name of the manager. This is only supported in enterprise.
 	Manager string `json:"manager,omitempty"`
 
-	// The raw value is only valid for write.  Read/List will always be empty
+	// The raw value is only valid for write. Read/List will always be empty
 	// Writing with an empty value will always fail
 	Value string `json:"value,omitempty"`
 
@@ -43,16 +47,26 @@ type SecureValueSpec struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SecureValueList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// Standard list's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
+	// Slice containing all secure values. This will NOT output decrypted values.
 	Items []SecureValue `json:"items,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type KeyManager struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+	// +optional
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// This is the actual key manager schema.
 	Spec KeyManagerSpec `json:"spec,omitempty"`
 }
 
@@ -68,7 +82,8 @@ const (
 	HashiCorpVaultProvider KeyManagementProvider = "hashivault"
 )
 
-// Enterprise only key managers
+// Enterprise only key managers.
+// TODO: this is probably not the schema we want.
 type KeyManagerSpec struct {
 	// User visible title for the key manager
 	Title string `json:"title"`
@@ -77,23 +92,24 @@ type KeyManagerSpec struct {
 	Provider KeyManagementProvider `json:"provider"`
 
 	// Used when provider == gcpkms
+	// +optional
 	GCPKMS *GCPKMSConfig `json:"gcpkms,omitempty"`
 
 	// Used when provider == awskms
+	// +optional
 	AWSKMS *AWSKMSConfig `json:"awskms,omitempty"`
 
 	// Used when provider == azurekeyvault
+	// +optional
 	AzureKeyVault *AzureKeyVaultConfig `json:"azurekeyvault,omitempty"`
 
 	// Used when provider == hashivault
+	// +optional
 	HashiCorpVault *HashiCorpVaultConfig `json:"hashivault,omitempty"`
 }
 
 type GCPKMSConfig struct {
-	// "gcpkms://projects/MYPROJECT/"+
-	//  "locations/MYLOCATION/"+
-	//  "keyRings/MYKEYRING/"+
-	//  "cryptoKeys/MYKEY"
+	// gcpkms://projects/MYPROJECT/locations/MYLOCATION/keyRings/MYKEYRING/cryptoKeys/MYKEY
 	URL string `json:"url"`
 }
 
@@ -128,6 +144,10 @@ type SecureValueActivityList struct {
 	Items []SecureValueActivity `json:"items,omitempty"`
 }
 
+// TODO: Because this is a subresource, it doesn't need:
+// - metav1.TypeMeta `json:",inline"`
+// - metav1.ObjectMeta `json:"metadata,omitempty"`
+// ?
 type SecureValueActivity struct {
 	Timestamp int64  `json:"timestamp"`
 	Action    string `json:"action"` // CREATE, UPDATE, DELETE, etc

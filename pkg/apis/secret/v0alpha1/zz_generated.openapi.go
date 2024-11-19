@@ -79,7 +79,7 @@ func schema_pkg_apis_secret_v0alpha1_GCPKMSConfig(ref common.ReferenceCallback) 
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "\"gcpkms://projects/MYPROJECT/\"+\n \"locations/MYLOCATION/\"+\n \"keyRings/MYKEYRING/\"+\n \"cryptoKeys/MYKEY\"",
+							Description: "gcpkms://projects/MYPROJECT/locations/MYLOCATION/keyRings/MYKEYRING/cryptoKeys/MYKEY",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -134,14 +134,16 @@ func schema_pkg_apis_secret_v0alpha1_KeyManager(ref common.ReferenceCallback) co
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Description: "Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Default:     map[string]interface{}{},
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeyManagerSpec"),
+							Description: "This is the actual key manager schema.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeyManagerSpec"),
 						},
 					},
 				},
@@ -203,7 +205,7 @@ func schema_pkg_apis_secret_v0alpha1_KeyManagerSpec(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Enterprise only key managers",
+				Description: "Enterprise only key managers.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"title": {
@@ -278,14 +280,16 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Description: "Standard object's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Default:     map[string]interface{}{},
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec"),
+							Description: "This is the actual secure value schema.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec"),
 						},
 					},
 				},
@@ -300,7 +304,8 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueActivity(ref common.ReferenceCal
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "- metav1.TypeMeta `json:\",inline\"` - metav1.ObjectMeta `json:\"metadata,omitempty\"` ?",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"timestamp": {
 						SchemaProps: spec.SchemaProps{
@@ -407,13 +412,15 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueList(ref common.ReferenceCallbac
 					},
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Description: "Standard list's metadata. It can only be one of `metav1.ObjectMeta` or `metav1.ListMeta`. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+							Default:     map[string]interface{}{},
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Slice containing all secure values. This will NOT output decrypted values.",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -440,7 +447,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Visible title for this secret",
+							Description: "Visible title for this secret.",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -448,14 +455,14 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"manager": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the manager This is only supported in enterprise",
+							Description: "Name of the manager. This is only supported in enterprise.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"value": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw value is only valid for write.  Read/List will always be empty Writing with an empty value will always fail",
+							Description: "The raw value is only valid for write. Read/List will always be empty Writing with an empty value will always fail",
 							Type:        []string{"string"},
 							Format:      "",
 						},
