@@ -1,9 +1,10 @@
 package provisioning
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -82,7 +82,7 @@ func extractOwnerAndRepo(repoURL string) (string, string, error) {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *githubRepository) ReadResource(ctx context.Context, filePath string, commit string) (*provisioning.ResourceWrapper, error) {
+func (r *githubRepository) ReadResource(ctx context.Context, filePath string, commit string) (io.Reader, error) {
 	tokenSrc := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: r.config.Spec.GitHub.Token},
 	)
@@ -106,23 +106,7 @@ func (r *githubRepository) ReadResource(ctx context.Context, filePath string, co
 	if err != nil {
 		return nil, err
 	}
-
-	var dashboardJSON map[string]interface{}
-	if err := json.Unmarshal([]byte(data), &dashboardJSON); err != nil {
-		// TODO: return bad request status code
-		return nil, fmt.Errorf("failed to unmarshal content: %w", err)
-	}
-
-	// TODO: validate the object is a valid dashboard
-	// Return the wrapped response
-	// Note we can not return it directly (using responder) because that will make sure the
-	// top level apiVersion is provisioning, not the remote resource
-	return &provisioning.ResourceWrapper{
-		Commit: commit,
-		Resource: common.Unstructured{
-			Object: dashboardJSON,
-		},
-	}, nil
+	return bytes.NewReader([]byte(data)), nil
 }
 
 // Webhook implements provisioning.Repository.

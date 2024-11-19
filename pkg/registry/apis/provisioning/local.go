@@ -1,8 +1,11 @@
 package provisioning
 
 import (
+	"bufio"
 	"context"
+	"io"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -112,13 +115,25 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadResource(ctx context.Context, path string, commit string) (*provisioning.ResourceWrapper, error) {
-	return nil, &errors.StatusError{
-		ErrStatus: v1.Status{
-			Message: "read resource is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+func (r *localRepository) ReadResource(ctx context.Context, path string, commit string) (io.Reader, error) {
+	if commit != "" {
+		return nil, errors.NewBadRequest("local repository does not support commits")
 	}
+	if r.path == "" {
+		return nil, &errors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	//nolint:gosec
+	file, err := os.Open(filepath.Join(r.path, path))
+	if err != nil {
+		return nil, err
+	}
+	return bufio.NewReader(file), nil
 }
 
 // Webhook implements provisioning.Repository.
