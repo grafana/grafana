@@ -70,6 +70,9 @@ export enum AlertmanagerAction {
   UpdateMuteTiming = 'update-mute-timing',
   DeleteMuteTiming = 'delete-mute-timing',
   ExportMuteTimings = 'export-mute-timings',
+
+  // Alert groups
+  ViewAlertGroups = 'view-alert-groups',
 }
 
 // this enum lists all of the available actions we can take on a single alert rule
@@ -334,6 +337,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
     [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    [AlertmanagerAction.ViewAlertGroups]: toAbility(AlwaysSupported, instancePermissions.read),
   };
 
   return abilities;
