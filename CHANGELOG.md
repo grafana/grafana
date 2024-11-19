@@ -1,3 +1,28 @@
+<!-- 11.2.4 START -->
+
+# 11.2.4 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96133](https://github.com/grafana/grafana/pull/96133), [@fayzal-g](https://github.com/fayzal-g)
+- **MigrationAssistant:** Restrict dashboards, folders and datasources by the org id of the signed in user [#96344](https://github.com/grafana/grafana/pull/96344), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Transformations:** Add 'transpose' transform [#95076](https://github.com/grafana/grafana/pull/95076), [@jmdane](https://github.com/jmdane)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95489](https://github.com/grafana/grafana/pull/95489), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Alerting:** Force refetch prom rules when refreshing panel [#96124](https://github.com/grafana/grafana/pull/96124), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Anonymous User:** Adds validator service for anonymous users [#94993](https://github.com/grafana/grafana/pull/94993), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95154](https://github.com/grafana/grafana/pull/95154), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95246](https://github.com/grafana/grafana/pull/95246), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95908](https://github.com/grafana/grafana/pull/95908), [@aangelisc](https://github.com/aangelisc)
+- **Folders:** Add admin permissions upon creation of a folder w. SA [#95416](https://github.com/grafana/grafana/pull/95416), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95231](https://github.com/grafana/grafana/pull/95231), [@kalleep](https://github.com/kalleep)
+- **ServerLock:** Fix pg concurrency/locking issue [#95934](https://github.com/grafana/grafana/pull/95934), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94959](https://github.com/grafana/grafana/pull/94959), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.2.4 END -->
 <!-- 11.1.9 START -->
 
 # 11.1.9 (2024-11-19)
