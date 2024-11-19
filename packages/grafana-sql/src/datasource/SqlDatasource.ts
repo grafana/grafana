@@ -41,6 +41,7 @@ import {
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
+import { SimpleLogContextUi } from '../components/query-editor-raw/SimpleLogContextUi';
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
@@ -55,6 +56,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interval: string;
   db: DB;
   preconfiguredDatabase: string;
+  cachedSql: SQLQuery[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<SQLOptions>,
@@ -67,6 +69,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
     this.db = this.getDB();
+    // this is used to store the sql queries that are used to get the log row context
+    this.cachedSql = [];
     /*
       The `settingsData.database` will be defined if a default database has been defined in either
       1) the ConfigurationEditor.tsx, OR 2) the provisioning config file, either under `jsondata.database`, or simply `database`.
@@ -85,7 +89,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const fieldCache = new FieldCache(row.dataFrame);
     const tsField = fieldCache.getFirstFieldOfType(FieldType.time);
     if (tsField === undefined) {
-      throw new Error('loki: data frame missing time-field, should never happen');
+      throw new Error('SQL DataSoure: data frame missing time-field, should never happen');
     }
     const tsValue = tsField.values[row.rowIndex];
     const timestamp = toUtc(tsValue);
@@ -114,17 +118,23 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const interval = rangeUtil.calculateInterval(range, 1);
 
     const duplicate: Labels = JSON.parse(JSON.stringify(row.labels));
-    const scopedVars: ScopedVars = {}
-    this.templateSrv.getVariables().map(v => {
-      if (v.name in duplicate) {
-        scopedVars[v.name] = { text: `'${duplicate[v.name]}'`, value: `'${duplicate[v.name]}'` };
-        delete duplicate[v.name];
-      }
-    });
+    const scopedVars: ScopedVars = this.prepareScopeVars(duplicate);
 
     let sqlExpress: SQLQuery[] = []
-    if (orinQuery) {
-      sqlExpress = this.prepareSqlExpress(duplicate, row, orinQuery)
+    // cachedSql is used whit LogRowContextUi, but it has two http requests for log context. so
+    // we must replace ordered keyword, e.g. ASC, DESC
+    if (this.cachedSql.length > 0) {
+      let sql: SQLQuery = JSON.parse(JSON.stringify(this.cachedSql[0]));
+      if (direction === LogRowContextQueryDirection.Forward) {
+        sql.rawSql = this.processOrderByClause(sql.rawSql || "", 'ASC');
+      } else {
+        sql.rawSql = this.processOrderByClause(sql.rawSql || "", 'DESC');
+      }
+      sqlExpress.push(sql);
+    } else {
+      if (orinQuery) {
+        sqlExpress.push(this.prepareSqlExpress(duplicate, row, orinQuery))
+      }
     }
 
     const contextRequest: DataQueryRequest<SQLQuery> = {
@@ -142,29 +152,39 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return contextRequest;
   }
 
-  prepareSqlExpress(duplicate: Labels, row: LogRowModel, orinQuery: SQLQuery): SQLQuery[] {
-    let whereClause = "";
-    const query = JSON.parse(JSON.stringify(orinQuery));
-    Object.entries(duplicate).forEach(([k, v]) => {
-      if (typeof v === 'string') {
-        whereClause += `${k} = '${v}' AND `;
-      } else {
-        whereClause += `${k} = ${v} AND `;
+  prepareScopeVars(duplicate: Labels) {
+    const scopedVars: ScopedVars = {}
+    this.templateSrv.getVariables().map(v => {
+      if (v.name in duplicate) {
+        scopedVars[v.name] = { text: `'${duplicate[v.name]}'`, value: `'${duplicate[v.name]}'` };
+        delete duplicate[v.name];
       }
     });
+    return scopedVars;
+  }
+
+  prepareSqlExpress(duplicate: Labels, row: LogRowModel, orinQuery: SQLQuery): SQLQuery {
+    const query = JSON.parse(JSON.stringify(orinQuery));
+    let whereClause = 'WHERE ';
     const whereLiteral = this.getWhereLiteral(query.rawSql || "")
     if (whereLiteral.length > 0) {
-      query.rawSql = query.rawSql?.replace(whereLiteral, whereLiteral + " " + whereClause);
+      query.rawSql = query.rawSql?.replace(whereLiteral, whereClause);
     } else {
       const table = this.getTablename(query.rawSql || "");
       if (table.length > 0) {
-        whereClause = table + " WHERE " + whereClause + "1=1";
+        whereClause = table + whereClause + "1=1";
         query.rawSql = query.rawSql?.replace(table, whereClause);
       }
     }
-    const targetQuery: SQLQuery[] = []
-    targetQuery.push(query);
-    return targetQuery;
+    return query;
+  }
+
+  processOrderByClause(sql: string, keyword: 'ASC' | 'DESC'): string {
+    const orderByRegex = /order\s+by\s+([\w.,\s]+?)(\s+asc|\s+desc)?(\s+|$)/i;
+    if (!orderByRegex.test(sql)) {
+      return sql; // not exist order by clause
+    }
+    return sql.replace(orderByRegex, (_, columns) => `ORDER BY ${columns.trim()} ${keyword} `);
   }
 
   getWhereLiteral(sql: string): string {
@@ -202,6 +222,34 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     );
   }
 
+  getLogRowContextUi(row: LogRowModel, runContextQuery?: () => void, orignQuery?: SQLQuery): React.ReactNode {
+    if (orignQuery === undefined) {
+      return null;
+    }
+    const duplicate: Labels = JSON.parse(JSON.stringify(row.labels));
+    const scopedVars: ScopedVars = this.prepareScopeVars(duplicate);
+    const sqlExpress: SQLQuery = this.prepareSqlExpress(duplicate, row, orignQuery)
+    sqlExpress.rawSql = this.templateSrv.replace(sqlExpress.rawSql, scopedVars, this.interpolateVariable);
+    //sqlExpress.rawSql = sqlExpress.rawSql.replace(/\r?\n|\r/g, '');
+    // we need to cache this function so that it doesn't get recreated on every render
+    const onContextClose = (() => {
+        console.log("clear cached sql, set empty.");
+        this.cachedSql = [];
+      });
+
+    return SimpleLogContextUi(
+      {
+        sqlDataSource: this,
+        row,
+        orignQuery: sqlExpress,
+        cachedSql: this.cachedSql,
+        range: undefined,
+        onContextClose,
+        runContextQuery,
+      }
+    );
+  }
+
   abstract getDB(dsID?: number): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
@@ -232,7 +280,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     if (Array.isArray(value)) {
-      const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
+      const quotedValues = value.filter((v) => v !== null && v !== undefined)
+              .map((v) => this.getQueryModel().quoteLiteral(v));
       return quotedValues.join(',');
     }
 
