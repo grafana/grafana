@@ -536,3 +536,12 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	require.NoError(t, err)
 	return u
 }
+
+func ContainsFeatureToggle(featureToggles []string, item string) bool {
+	for _, element := range featureToggles {
+		if element == item {
+			return true
+		}
+	}
+	return false
+}
