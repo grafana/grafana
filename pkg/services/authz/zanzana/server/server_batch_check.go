@@ -49,7 +49,6 @@ func (s *Server) batchCheckItem(
 	store *storeInfo,
 	groupResourceAccess map[string]bool,
 ) (*authzv1.CheckResponse, error) {
-
 	var (
 		relation      = common.VerbMapping[item.GetVerb()]
 		groupResource = common.FormatGroupResource(item.GetGroup(), item.GetResource())
@@ -72,5 +71,4 @@ func (s *Server) batchCheckItem(
 		return s.checkTyped(ctx, r.GetSubject(), relation, item.GetName(), info, store)
 	}
 	return s.checkGeneric(ctx, r.GetSubject(), relation, item.GetGroup(), item.GetResource(), item.GetName(), item.GetFolder(), store)
-
 }
