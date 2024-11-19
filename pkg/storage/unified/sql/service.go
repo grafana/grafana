@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -93,8 +94,13 @@ func ProvideUnifiedStorageGrpcService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	// TODO: Wire the remote authz client.
-	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg, nil)
+
+	authzClient, err := authz.ProvideCloudAuthZClient(s.cfg, s.features, s.tracing)
+	if err != nil {
+		return err
+	}
+
+	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, s.tracing, s.reg, authzClient)
 	if err != nil {
 		return err
 	}
