@@ -5,7 +5,7 @@ import memoize from 'micro-memoize';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { Button, Card, EmptyState, Stack } from '@grafana/ui';
+import { Card, EmptyState, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
@@ -20,6 +20,7 @@ import { parseMatcher } from '../utils/matchers';
 import { hashRule } from '../utils/rule-id';
 import { isAlertingRule } from '../utils/rules';
 
+import LoadMoreHelper from './LoadMoreHelper';
 import { AlertRuleLoader } from './RuleList.v2';
 import { ListItem } from './components/ListItem';
 import { ActionsLoader } from './components/RuleActionsButtons.V2';
@@ -29,11 +30,8 @@ interface FilterViewProps {
   filterState: RulesFilter;
 }
 
-const FRONTENT_PAGE_SIZE = 50;
+const FRONTENT_PAGE_SIZE = 100;
 const API_PAGE_SIZE = 2000;
-
-// @TODO fix "no more results" paddings
-// @TODO fix the "load more" button
 
 export function FilterView({ filterState }: FilterViewProps) {
   const [prevFilterState, setPrevFilterState] = useState(filterState);
@@ -135,9 +133,7 @@ export function FilterView({ filterState }: FilterViewProps) {
           <Trans i18nKey="alerting.rule-list.filter-view.no-more-results">No more results</Trans>
         </Card>
       ) : (
-        <Button onClick={loadResultPage}>
-          <Trans i18nKey="alerting.rule-list.filter-view.load-more">Load more...</Trans>
-        </Button>
+        <LoadMoreHelper handleLoad={loadResultPage} />
       )}
     </Stack>
   );
