@@ -1,12 +1,10 @@
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
-import { screen, waitForElementToBeRemoved } from 'test/test-utils';
+import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
-
-import { searchFolders } from '../../manage-dashboards/state/actions';
 
 import { discoverFeaturesByUid } from './api/buildInfo';
 import { fetchRulerRulesGroup } from './api/ruler';
@@ -30,7 +28,6 @@ jest.mock('./api/ruler', () => ({
   fetchRulerRulesGroup: jest.fn(),
   fetchRulerRulesNamespace: jest.fn(),
 }));
-jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
@@ -116,8 +113,6 @@ const dataSources = {
 setupDataSources(...Object.values(dataSources));
 
 const mocks = {
-  // getAllDataSources: jest.mocked(config.getAllDataSources),
-  searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeaturesByUid: jest.mocked(discoverFeaturesByUid),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -181,11 +176,8 @@ describe('RuleEditor cloud: checking editable data sources', () => {
       return null;
     });
 
-    mocks.searchFolders.mockResolvedValue([]);
-
     // render rule editor, select mimir/loki managed alerts
     const { user } = renderRuleEditor();
-    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
 
     await ui.inputs.name.find();
 

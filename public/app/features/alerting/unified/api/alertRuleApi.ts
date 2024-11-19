@@ -17,7 +17,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
+import { Folder } from '../types/rule-form';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';

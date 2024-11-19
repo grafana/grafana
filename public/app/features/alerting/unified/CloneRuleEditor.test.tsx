@@ -3,9 +3,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { selectors } from '@grafana/e2e-selectors/src';
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -18,7 +16,7 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockFeatureDiscoveryApi, mockSearchApi, setupMswServer } from './mockApi';
+import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
@@ -44,12 +42,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-// For simplicity of the test we mock the NotificationPreview component
-// Otherwise we would need to mock a few more HTTP api calls which are not relevant for these tests
-jest.mock('./components/rule-editor/notificaton-preview/NotificationPreview', () => ({
-  NotificationPreview: () => <div />,
-}));
-
 jest.spyOn(AlertingQueryRunner.prototype, 'run').mockImplementation(() => Promise.resolve());
 
 const server = setupMswServer();
@@ -58,7 +50,7 @@ const ui = {
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     expr: byTestId('expr'),
-    folderContainer: byTestId(selectors.components.FolderPicker.containerV2),
+    folderContainer: byTestId('folder-picker'),
     namespace: byTestId('namespace-picker'),
     group: byTestId('group-picker'),
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
@@ -84,14 +76,6 @@ describe('CloneRuleEditor', function () {
     it('should populate form values from the existing alert rule', async function () {
       setDataSourceSrv(new MockDataSourceSrv({}));
 
-      mockSearchApi(server).search([
-        mockDashboardSearchItem({
-          title: 'folder-one',
-          uid: grafanaRulerRule.grafana_alert.namespace_uid,
-          type: DashboardSearchItemType.DashDB,
-        }),
-      ]);
-
       render(
         <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
         { wrapper: Wrapper }
@@ -105,7 +89,7 @@ describe('CloneRuleEditor', function () {
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue(`${grafanaRulerRule.grafana_alert.title} (copy)`);
       });
-      expect(ui.inputs.folderContainer.get()).toHaveTextContent('folder-one');
+      expect(ui.inputs.folderContainer.get()).toHaveTextContent('Folder A');
       expect(ui.inputs.group.get()).toHaveTextContent(grafanaRulerRule.grafana_alert.rule_group);
       expect(
         byRole('listitem', {
@@ -146,16 +130,6 @@ describe('CloneRuleEditor', function () {
         interval: '20s',
         rules: [originRule],
       });
-
-      mockSearchApi(server).search([
-        mockDashboardSearchItem({
-          title: 'folder-one',
-          uid: '123',
-          type: DashboardSearchItemType.DashDB,
-          folderTitle: 'folder-one',
-          folderUid: '123',
-        }),
-      ]);
 
       render(
         <CloneRuleEditor
@@ -313,18 +287,3 @@ describe('CloneRuleEditor', function () {
     });
   });
 });
-
-function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
-  return {
-    title: '',
-    uid: '',
-    type: DashboardSearchItemType.DashDB,
-    url: '',
-    uri: '',
-    items: [],
-    tags: [],
-    slug: '',
-    isStarred: false,
-    ...searchItem,
-  };
-}
