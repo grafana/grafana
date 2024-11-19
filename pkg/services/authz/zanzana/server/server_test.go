@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	namespace = "default"
+
 	dashboardGroup    = "dashboard.grafana.app"
 	dashboardResource = "dashboards"
 
@@ -65,7 +67,6 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	srv, err := NewAuthz(openfga)
 	require.NoError(t, err)
 
-	namespace := "default"
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
