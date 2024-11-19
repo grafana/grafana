@@ -322,7 +322,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           regex: variable.state.regex,
           refresh: VariableRefresh.OnDashboardLoad,
           pluginId: variable.state.pluginId,
-          defaultOptionEnabled: variable.state.defaultOptionEnabled!!,
+          defaultOptionEnabled: !!variable.state.defaultOptionEnabled,
           multi: variable.state.isMulti || false,
           allValue: variable.state.allValue,
           includeAll: variable.state.includeAll || false,
