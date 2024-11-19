@@ -49,6 +49,10 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test list", func(t *testing.T) {
 		testList(t, srv)
 	})
+
+	t.Run("test batch check", func(t *testing.T) {
+		testBatchCheck(t, srv)
+	})
 }
 
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
@@ -61,10 +65,14 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	srv, err := NewAuthz(openfga)
 	require.NoError(t, err)
 
+	namespace := "default"
+	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
+	require.NoError(t, err)
+
 	// seed tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
-		StoreId:              srv.storeID,
-		AuthorizationModelId: srv.modelID,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				common.NewResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),
@@ -77,7 +85,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 				common.NewNamespaceResourceTuple("user:7", "read", folderGroup, folderResource),
 				common.NewFolderParentTuple("5", "4"),
 				common.NewFolderParentTuple("6", "5"),
-				common.NewFolderResourceTuple("user:8", "read", dashboardGroup, dashboardResource, "5"),
+				common.NewFolderResourceTuple("user:8", "view", dashboardGroup, dashboardResource, "5"),
 			},
 		},
 	})

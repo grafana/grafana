@@ -88,7 +88,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrap: css({
       width: '100%',
-      height: '100%',
+      height: '90%',
     }),
     info: css({
       paddingBottom: '30px',

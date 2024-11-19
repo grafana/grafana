@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSimpleServer(t *testing.T) {
@@ -56,11 +57,12 @@ func TestSimpleServer(t *testing.T) {
 			"kind": "Playlist",
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
+				"uid": "xyz",
 				"namespace": "default",
 				"annotations": {
-					"grafana.app/originName": "elsewhere",
-					"grafana.app/originPath": "path/to/item",
-					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+					"grafana.app/repoName": "elsewhere",
+					"grafana.app/repoPath": "path/to/item",
+					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
 				}
 			},
 			"spec": {
@@ -172,10 +174,11 @@ func TestSimpleServer(t *testing.T) {
 			"metadata": {
 				"name": "fdgsv37qslr0ga",
 				"namespace": "default",
+				"uid": "xyz",
 				"annotations": {
-					"grafana.app/originName": "elsewhere",
-					"grafana.app/originPath": "path/to/item",
-					"grafana.app/originTimestamp": "2024-02-02T00:00:00Z"
+					"grafana.app/repoName": "elsewhere",
+					"grafana.app/repoPath": "path/to/item",
+					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
 				}
 			},
 			"spec": {

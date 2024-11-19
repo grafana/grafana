@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { measureText } from '../../utils/measureText';
@@ -24,28 +24,29 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     onKeyDown,
     onBlur,
     value: controlledValue,
+    placeholder,
     ...restProps
   } = props;
-
   // Initialize internal state
   const [value, setValue] = React.useState(controlledValue ?? defaultValue);
-  const [inputWidth, setInputWidth] = React.useState(minWidth);
 
   // Update internal state when controlled `value` prop changes
   useEffect(() => {
-    if (controlledValue) {
-      setValue(controlledValue);
-    }
-  }, [controlledValue]);
+    setValue(controlledValue ?? defaultValue);
+  }, [controlledValue, defaultValue]);
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
-  useEffect(() => {
-    setInputWidth(getWidthFor(value.toString(), minWidth, maxWidth));
-  }, [value, minWidth, maxWidth]);
+  const inputWidth = useMemo(() => {
+    const displayValue = value || placeholder || '';
+    const valueString = typeof displayValue === 'string' ? displayValue : displayValue.toString();
+
+    return getWidthFor(valueString, minWidth, maxWidth);
+  }, [placeholder, value, minWidth, maxWidth]);
 
   return (
     <Input
       {...restProps}
+      placeholder={placeholder}
       ref={ref}
       value={value.toString()}
       onChange={(event) => {

@@ -133,12 +133,14 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 }
 
 export function isRetriableError(errorResponse: DataQueryResponse) {
-  const message = errorResponse.errors ? (errorResponse.errors[0].message ?? '').toLowerCase() : '';
+  const message = errorResponse.errors
+    ? (errorResponse.errors[0].message ?? '').toLowerCase()
+    : (errorResponse.error?.message ?? '');
   if (message.includes('timeout')) {
     return true;
-  } else if (message.includes('parse error') || message.includes('max entries')) {
-    // If the error is a parse error, we want to signal to stop querying.
-    throw new Error(message);
+  } else if (errorResponse.data.length > 0 && errorResponse.data[0].fields.length > 0) {
+    // Error response but we're receiving data, continue querying.
+    return false;
   }
-  return false;
+  throw new Error(message);
 }

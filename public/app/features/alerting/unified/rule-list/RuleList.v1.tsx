@@ -6,6 +6,7 @@ import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -47,8 +48,11 @@ const RuleListV1 = () => {
   const [queryParams] = useQueryParams();
   const { filterState, hasActiveFilters } = useRulesFilter();
 
-  const queryParamView = queryParams.view as keyof typeof VIEWS;
-  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+  const hasActiveLabelsFilter = filterState.labels.length > 0;
+
+  const queryParamView = queryParams.view;
+  const viewType = queryParamView === 'state' || queryParamView === 'groups' ? queryParamView : 'groups';
+  const view = VIEWS[viewType] ? viewType : 'groups';
 
   const ViewComponent = VIEWS[view];
 
@@ -77,7 +81,7 @@ const RuleListV1 = () => {
     return noRules && state.dispatched;
   });
 
-  const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+  const limitAlerts = hasActiveLabelsFilter ? undefined : LIMIT_ALERTS;
   // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
   const [_, fetchRules] = useAsyncFn(async () => {
     if (!loading) {
@@ -159,7 +163,7 @@ export function CreateAlertButton() {
         icon="plus"
         onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
       >
-        New alert rule
+        <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
       </LinkButton>
     );
   }

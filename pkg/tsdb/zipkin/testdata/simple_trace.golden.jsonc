@@ -1,0 +1,247 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "traceFormat": "zipkin"
+//      },
+//      "preferredVisualisationType": "trace"
+//  }
+//  Name: test
+//  Dimensions: 10 Fields by 3 Rows
+//  +----------------------------------+------------------+--------------------+---------------------+-------------------+-----------------------------------------------------------------------------------------------------+-----------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+
+//  | Name: traceID                    | Name: spanID     | Name: parentSpanID | Name: operationName | Name: serviceName | Name: serviceTags                                                                                   | Name: startTime | Name: duration  | Name: logs                                                                                                                                                                  | Name: tags                                                                                    |
+//  | Labels:                          | Labels:          | Labels:            | Labels:             | Labels:           | Labels:                                                                                             | Labels:         | Labels:         | Labels:                                                                                                                                                                     | Labels:                                                                                       |
+//  | Type: []string                   | Type: []string   | Type: []*string    | Type: []string      | Type: []string    | Type: []json.RawMessage                                                                             | Type: []float64 | Type: []float64 | Type: []json.RawMessage                                                                                                                                                     | Type: []json.RawMessage                                                                       |
+//  +----------------------------------+------------------+--------------------+---------------------+-------------------+-----------------------------------------------------------------------------------------------------+-----------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+
+//  | 000000000000007b00000000000001c8 | 0000000000000001 | null               | span 1              | service 1         | [{"key":"ipv4","value":"1.0.0.1"},{"key":"port","value":42},{"key":"endpointType","value":"local"}] | 0.001           | 0.01            | [{"Timestamp":2,"Fields":[{"key":"annotation","value":"annotation text"}],"Name":""},{"Timestamp":6,"Fields":[{"key":"annotation","value":"annotation text 3"}],"Name":""}] | [{"key":"kind","value":"CLIENT"},{"key":"tag2","value":"val2"},{"key":"tag1","value":"val1"}] |
+//  | 000000000000007b00000000000001c8 | 0000000000000002 | 0000000000000001   | span 2              | service 2         | [{"key":"ipv4","value":"1.0.0.1"},{"key":"endpointType","value":"local"}]                           | 0.004           | 0.005           | []                                                                                                                                                                          | [{"key":"error","value":true},{"key":"errorValue","value":"404"}]                             |
+//  | 000000000000007b00000000000001c8 | 0000000000000003 | 0000000000000001   | span 3              | spanstore-jdbc    | [{"key":"ipv6","value":"::1"},{"key":"endpointType","value":"remote"}]                              | 0.006           | 0.007           | []                                                                                                                                                                          | []                                                                                            |
+//  +----------------------------------+------------------+--------------------+---------------------+-------------------+-----------------------------------------------------------------------------------------------------+-----------------+-----------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "traceFormat": "zipkin"
+          },
+          "preferredVisualisationType": "trace"
+        },
+        "fields": [
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "spanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "parentSpanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "operationName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceTags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "logs",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "000000000000007b00000000000001c8",
+            "000000000000007b00000000000001c8",
+            "000000000000007b00000000000001c8"
+          ],
+          [
+            "0000000000000001",
+            "0000000000000002",
+            "0000000000000003"
+          ],
+          [
+            null,
+            "0000000000000001",
+            "0000000000000001"
+          ],
+          [
+            "span 1",
+            "span 2",
+            "span 3"
+          ],
+          [
+            "service 1",
+            "service 2",
+            "spanstore-jdbc"
+          ],
+          [
+            [
+              {
+                "key": "ipv4",
+                "value": "1.0.0.1"
+              },
+              {
+                "key": "port",
+                "value": 42
+              },
+              {
+                "key": "endpointType",
+                "value": "local"
+              }
+            ],
+            [
+              {
+                "key": "ipv4",
+                "value": "1.0.0.1"
+              },
+              {
+                "key": "endpointType",
+                "value": "local"
+              }
+            ],
+            [
+              {
+                "key": "ipv6",
+                "value": "::1"
+              },
+              {
+                "key": "endpointType",
+                "value": "remote"
+              }
+            ]
+          ],
+          [
+            0.001,
+            0.004,
+            0.006
+          ],
+          [
+            0.01,
+            0.005,
+            0.007
+          ],
+          [
+            [
+              {
+                "Timestamp": 2,
+                "Fields": [
+                  {
+                    "key": "annotation",
+                    "value": "annotation text"
+                  }
+                ],
+                "Name": ""
+              },
+              {
+                "Timestamp": 6,
+                "Fields": [
+                  {
+                    "key": "annotation",
+                    "value": "annotation text 3"
+                  }
+                ],
+                "Name": ""
+              }
+            ],
+            [],
+            []
+          ],
+          [
+            [
+              {
+                "key": "kind",
+                "value": "CLIENT"
+              },
+              {
+                "key": "tag2",
+                "value": "val2"
+              },
+              {
+                "key": "tag1",
+                "value": "val1"
+              }
+            ],
+            [
+              {
+                "key": "error",
+                "value": true
+              },
+              {
+                "key": "errorValue",
+                "value": "404"
+              }
+            ],
+            []
+          ]
+        ]
+      }
+    }
+  ]
+}

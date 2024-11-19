@@ -1,7 +1,5 @@
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
-
 export enum RuleFormType {
   grafana = 'grafana-alerting',
   grafanaRecording = 'grafana-recording',
@@ -44,7 +42,7 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: Folder | null;
+  folder: Folder | undefined;
   evaluateEvery: string;
   evaluateFor: string;
   isPaused?: boolean;
@@ -61,3 +59,5 @@ export interface RuleFormValues {
   keepFiringForTimeUnit?: string;
   expression: string;
 }
+
+export type Folder = { title: string; uid: string };
