@@ -79,6 +79,9 @@ type RepositorySpec struct {
 	// The value is a reference to the Kubernetes metadata name of the folder in the same namespace.
 	Folder string `json:"folder,omitempty"`
 
+	// Edit options within the repository
+	Editing EditingOptions `json:"editing"`
+
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
@@ -94,6 +97,14 @@ type RepositorySpec struct {
 	// Mutually exclusive with local and s3.
 	// TODO: github or just 'git'??
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+}
+
+type EditingOptions struct {
+	// When disabled, the repository is read-only
+	Enabled bool `json:"enabled"`
+
+	// Allow deleting remote files
+	AllowDeletion bool `json:"allowDeletion"`
 }
 
 // The status of a Repository.

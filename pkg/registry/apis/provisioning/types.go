@@ -28,7 +28,15 @@ type Repository interface {
 	Test(ctx context.Context) error
 
 	// Read a file from the resource
+	// This data will be parsed and validated before it is shown to end users
 	Read(ctx context.Context, path string, commit string) ([]byte, error)
+
+	// Write a file to the repository.
+	// The data has already been validated and is ready for save
+	Write(ctx context.Context, path string, data []byte, comment string) error
+
+	// Delete a file in the remote repository
+	Delete(ctx context.Context, path string, comment string) error
 
 	// For repositories that support webhooks
 	Webhook() http.HandlerFunc
@@ -71,6 +79,24 @@ func (r *unknownRepository) Read(ctx context.Context, path string, commit string
 	return nil, &errors.StatusError{
 		ErrStatus: v1.Status{
 			Message: "read resource is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) Write(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) Delete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "delete file not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}

@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -105,6 +106,24 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, commit str
 		return nil, err
 	}
 	return []byte(data), nil
+}
+
+func (r *githubRepository) Write(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "delete file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
 }
 
 // Webhook implements provisioning.Repository.

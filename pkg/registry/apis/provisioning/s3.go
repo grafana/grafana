@@ -59,6 +59,24 @@ func (r *s3Repository) Read(ctx context.Context, path string, commit string) ([]
 	}
 }
 
+func (r *s3Repository) Write(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "write file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *s3Repository) Delete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "delete file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements provisioning.Repository.
 func (r *s3Repository) Webhook() http.HandlerFunc {
 	// webhooks are not supported with local

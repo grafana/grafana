@@ -130,6 +130,32 @@ func (r *localRepository) Read(ctx context.Context, path string, commit string) 
 	return os.ReadFile(filepath.Join(r.path, path))
 }
 
+func (r *localRepository) Write(ctx context.Context, path string, data []byte, comment string) error {
+	if r.path == "" {
+		return &errors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	return os.WriteFile(filepath.Join(r.path, path), data, 0600)
+}
+
+func (r *localRepository) Delete(ctx context.Context, path string, comment string) error {
+	if r.path == "" {
+		return &errors.StatusError{
+			ErrStatus: v1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	return os.Remove(filepath.Join(r.path, path))
+}
+
 // Webhook implements provisioning.Repository.
 func (r *localRepository) Webhook() http.HandlerFunc {
 	// webhooks are not supported with local

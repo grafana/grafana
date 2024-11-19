@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -115,7 +116,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("read")] = &readConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("file")] = &readConnector{
 		getter: b,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -240,11 +241,11 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	}
 
 	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/read")
+	delete(oas.Paths.Paths, repoprefix+"/file")
 
 	// update the version with a path
-	sub = oas.Paths.Paths[repoprefix+"/read/{path}"]
-	if sub != nil && sub.Get != nil {
+	sub = oas.Paths.Paths[repoprefix+"/file/{path}"]
+	if sub != nil {
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{
 			{
@@ -255,6 +256,86 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 					Description: "optional commit hash for the requested file",
 					Schema:      spec.StringProperty(),
 					Required:    false,
+				},
+			},
+		}
+
+		// Add message to the OpenAPI spec
+		comment := []*spec3.Parameter{
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "message",
+					In:          "query",
+					Example:     "My commit message",
+					Description: "for git properties this will be in the commit message",
+					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+		}
+		sub.Delete.Parameters = comment
+		sub.Post.Parameters = comment
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"dashboard": &spec3.Example{
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": map[string]interface{}{
+													"hello": "dashboard",
+												},
+											},
+										},
+									},
+								},
+								"playlist": &spec3.Example{
+									ExampleProps: spec3.ExampleProps{
+										Value: &unstructured.Unstructured{
+											Object: map[string]interface{}{
+												"spec": map[string]interface{}{
+													"hello": "playlist",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"application/x-yaml": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema:  spec.MapProperty(nil),
+							Example: &unstructured.Unstructured{},
+							Examples: map[string]*spec3.Example{
+								"dashboard": &spec3.Example{
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: dashboards.grafana.app/v0alpha1
+kind: Dashboard
+spec:
+  title: Sample dashboard
+`},
+								},
+								"playlist": &spec3.Example{
+									ExampleProps: spec3.ExampleProps{
+										Value: `apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+spec:
+  title: Playlist from provisioning
+  interval: 5m
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests
+`},
+								},
+							},
+						},
+					},
 				},
 			},
 		}
