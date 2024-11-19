@@ -51,6 +51,8 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
     (q: SQLQuery) => {
       if (isQueryValid(q) && runContextQuery) {
         cachedSql.splice(0, cachedSql.length);
+        // add twice to cache, becasuse send two http request for log context
+        cachedSql.push(q);
         cachedSql.push(q);
         setDisplayLabel(q.rawSql || "");
         runContextQuery();
@@ -59,10 +61,8 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
     [runContextQuery]
   );
 
-  // 定义 onChange 函数
   const onChange = (query: SQLQuery, process: boolean) => {
     setQueryToValidate(query);
-    //onChange(query);
 
     if (haveColumns(query.sql?.columns) && query.sql?.columns.some((c) => c.name) && !queryRowFilter.group) {
       setQueryRowFilter({ ...queryRowFilter, group: true });
@@ -73,9 +73,15 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
     }
   };
 
-  // 定义 onValidate 函数
+  const getQueryExpress = () => {
+    if (displayLabel !== "") {
+      orignQuery.rawSql = displayLabel;
+    }
+    return orignQuery;
+  }
+
+  // do nothing of validate
   const onValidate = (isValid: boolean) => {
-    console.log("do nothing of validate");
   };
 
   return (
@@ -88,7 +94,7 @@ export function SimpleLogContextUi(props: SimpleLogContextUiProps) {
       >
         <RawEditor
           db={sqlDataSource.db}
-          query={orignQuery}
+          query={getQueryExpress()}
           queryToValidate={queryToValidate}
           onChange={onChange}
           onRunQuery={() => runContextQuery?.()}

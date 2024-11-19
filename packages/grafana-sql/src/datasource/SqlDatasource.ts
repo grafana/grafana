@@ -125,6 +125,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     // we must replace ordered keyword, e.g. ASC, DESC
     if (this.cachedSql.length > 0) {
       let sql: SQLQuery = JSON.parse(JSON.stringify(this.cachedSql[0]));
+      this.cachedSql.splice(0,1) // clean cache
       if (direction === LogRowContextQueryDirection.Forward) {
         sql.rawSql = this.processOrderByClause(sql.rawSql || "", 'ASC');
       } else {
@@ -230,12 +231,10 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     const scopedVars: ScopedVars = this.prepareScopeVars(duplicate);
     const sqlExpress: SQLQuery = this.prepareSqlExpress(duplicate, row, orignQuery)
     sqlExpress.rawSql = this.templateSrv.replace(sqlExpress.rawSql, scopedVars, this.interpolateVariable);
-    //sqlExpress.rawSql = sqlExpress.rawSql.replace(/\r?\n|\r/g, '');
+
     // we need to cache this function so that it doesn't get recreated on every render
     const onContextClose = (() => {
-        console.log("clear cached sql, set empty.");
-        this.cachedSql = [];
-      });
+    });
 
     return SimpleLogContextUi(
       {
