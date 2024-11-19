@@ -15,7 +15,7 @@ import { DashboardDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { getDashboardAPI } from '../api/dashboard_api';
 import { DashboardWithAccessInfo } from '../api/types';
-import { getDashboardsApiVersion, isDashboardResource } from '../api/utils';
+import { isDashboardResource } from '../api/utils';
 
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
@@ -90,7 +90,7 @@ export class DashboardLoaderSrv {
         }
       }
 
-      promise = getDashboardAPI(getDashboardsApiVersion())
+      promise = getDashboardAPI()
         .getDashboardDTO(uid, params)
         .then((result) => {
           if (isDashboardResource(result)) {

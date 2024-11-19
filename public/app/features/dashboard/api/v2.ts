@@ -57,7 +57,8 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
     //   access: { url: 'whatever for now, just testing' },
     // };
     // return resultResource;
-    throw new Error('Method not implemented.');
+    // throw new Error('Method not implemented.');
+    return {} as DashboardWithAccessInfo<DashboardSpec>;
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {
