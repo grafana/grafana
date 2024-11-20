@@ -1,80 +1,36 @@
-package slicesext
+package slicesext_test
 
 import (
+	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/cloudmigration/slicesext"
 )
 
-func TestChunks(t *testing.T) {
+func TestMap(t *testing.T) {
 	t.Parallel()
 
-	t.Run("chunkSize must be greater than 0", func(t *testing.T) {
+	t.Run("mapping a nil slice does nothing and returns an empty slice", func(t *testing.T) {
 		t.Parallel()
 
-		assert.PanicsWithValue(t, "chunk size must be greater than or equal to 0", func() {
-			Chunks(-1, []string{})
-		})
+		require.Empty(t, slicesext.Map[any, any](nil, nil))
 	})
 
-	t.Run("basic", func(t *testing.T) {
+	t.Run("mapping a non-nil slice with a nil function panics", func(t *testing.T) {
 		t.Parallel()
 
-		cases := []struct {
-			description string
-			chunkSize   int
-			input       []int
-			expected    [][]int
-		}{
-			{
-				description: "empty slice",
-				chunkSize:   2,
-				input:       []int{},
-				expected:    [][]int{},
-			},
-			{
-				description: "nil slice",
-				chunkSize:   2,
-				input:       nil,
-				expected:    [][]int{},
-			},
-			{
-				description: "chunk size is 0",
-				chunkSize:   0,
-				input:       []int{1, 2, 3},
-				expected:    [][]int{},
-			},
-			{
-				description: "chunk size is greater than slice length",
-				chunkSize:   3,
-				input:       []int{1},
-				expected:    [][]int{{1}},
-			},
-			{
-				description: "chunk size is 1",
-				chunkSize:   1,
-				input:       []int{1, 2, 3},
-				expected:    [][]int{{1}, {2}, {3}},
-			},
-			{
-				description: "chunk size is 2 and slice length is 3",
-				chunkSize:   2,
-				input:       []int{1, 2, 3},
-				expected:    [][]int{{1, 2}, {3}},
-			},
-			{
-				description: "chunk size is 2 and slice length is 6",
-				chunkSize:   2,
-				input:       []int{1, 2, 3, 4, 5, 6},
-				expected:    [][]int{{1, 2}, {3, 4}, {5, 6}},
-			},
-		}
+		require.Panics(t, func() { slicesext.Map[int, any]([]int{1, 2, 3}, nil) })
+	})
 
-		for _, tt := range cases {
-			t.Run(tt.description, func(t *testing.T) {
-				result := Chunks(tt.chunkSize, tt.input)
-				assert.Equal(t, tt.expected, result)
-			})
-		}
+	t.Run("mapping a non-nil slice with a non-nil function returns the mapped slice", func(t *testing.T) {
+		t.Parallel()
+
+		original := []int{1, 2, 3}
+		expected := []string{"1", "2", "3"}
+		fn := func(i int) string { return strconv.Itoa(i) }
+
+		require.ElementsMatch(t, expected, slicesext.Map(original, fn))
 	})
 }

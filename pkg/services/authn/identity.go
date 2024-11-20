@@ -44,13 +44,13 @@ type Identity struct {
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
-	// For example, "password", "apikey", "auth_ldap" or "auth_azuread".
+	// For example, "password", "apikey", "ldap" or "oauth_azuread".
 	AuthenticatedBy string
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
-	// AllowedKubernetesNamespace
-	AllowedKubernetesNamespace string
+	// Namespace
+	Namespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -64,6 +64,8 @@ type Identity struct {
 	Groups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
+	// SAMLSession is the SAML session information.
+	SAMLSession *login.SAMLSession
 	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
@@ -187,8 +189,8 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetAllowedKubernetesNamespace() string {
-	return i.AllowedKubernetesNamespace
+func (i *Identity) GetNamespace() string {
+	return i.Namespace
 }
 
 func (i *Identity) GetOrgID() int64 {
@@ -285,6 +287,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
 		FallbackType:    i.Type,
+		Namespace:       i.Namespace,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {

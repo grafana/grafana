@@ -4,7 +4,6 @@ import { map } from 'rxjs/operators';
 import {
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   FieldType,
@@ -13,18 +12,27 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import {
+  BackendSrvRequest,
+  config,
+  DataSourceWithBackend,
+  FetchResponse,
+  getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 
-import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
+
+const apiPrefix = '/api/v2';
 
 export interface ZipkinJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
 }
 
-export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData> {
+export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
   spanBar?: SpanBarOptions;
@@ -52,7 +60,10 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
     }
 
     if (target.query) {
-      const query = this.applyVariables(target, options.scopedVars);
+      if (config.featureToggles.zipkinBackendMigration && !this.nodeGraph?.enabled) {
+        return super.query(options);
+      }
+      const query = this.applyTemplateVariables(target, options.scopedVars);
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
         map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
       );
@@ -61,12 +72,20 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
   }
 
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    const res = await lastValueFrom(this.request(url, params, { hideFromInspector: true }));
+    if (config.featureToggles.zipkinBackendMigration) {
+      return await this.getResource(url, params);
+    }
+    const urlWithPrefix = `${apiPrefix}/${url}`;
+    const res = await lastValueFrom(this.request(urlWithPrefix, params, { hideFromInspector: true }));
     return res.data;
   }
 
   async testDatasource(): Promise<{ status: string; message: string }> {
-    await this.metadataRequest(`${apiPrefix}/services`);
+    if (config.featureToggles.zipkinBackendMigration) {
+      return await super.testDatasource();
+    }
+
+    await this.metadataRequest('services');
     return { status: 'success', message: 'Data source is working' };
   }
 
@@ -83,12 +102,12 @@ export class ZipkinDatasource extends DataSourceApi<ZipkinQuery, ZipkinJsonData>
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
     return {

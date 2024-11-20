@@ -81,17 +81,17 @@ func grafanaSetup(t *testing.T, opts testinfra.GrafanaOpts) string {
 	return fmt.Sprintf("http://%s:%s@%s/api/admin/stats", "grafana", "password", grafanaListedAddr)
 }
 
-func createUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
+func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) int64 {
 	t.Helper()
 
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = 1
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)

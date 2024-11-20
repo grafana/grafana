@@ -118,6 +118,10 @@ export function isEditableRuleIdentifier(identifier: RuleIdentifier): identifier
   return isGrafanaRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier);
 }
 
+export function isProvisionedRule(rulerRule: RulerRuleDTO): boolean {
+  return isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+}
+
 export function getRuleHealth(health: string): RuleHealth | undefined {
   switch (health) {
     case 'ok':
@@ -172,10 +176,12 @@ export interface RulePluginOrigin {
   pluginId: string;
 }
 
-export function getRulePluginOrigin(rule: CombinedRule): RulePluginOrigin | undefined {
-  // com.grafana.origin=plugin/<plugin-identifier>
-  // Prom and Mimir do not support dots in label names 😔
-  const origin = rule.labels[GRAFANA_ORIGIN_LABEL];
+export function getRulePluginOrigin(rule?: Rule | RulerRuleDTO): RulePluginOrigin | undefined {
+  if (!rule) {
+    return undefined;
+  }
+
+  const origin = rule.labels?.[GRAFANA_ORIGIN_LABEL];
   if (!origin) {
     return undefined;
   }
@@ -199,7 +205,7 @@ function isPluginInstalled(pluginId: string) {
   return Boolean(config.apps[pluginId]);
 }
 
-export function isPluginProvidedRule(rule: CombinedRule): boolean {
+export function isPluginProvidedRule(rule?: Rule | RulerRuleDTO): boolean {
   return Boolean(getRulePluginOrigin(rule));
 }
 
@@ -411,7 +417,7 @@ export function isGrafanaAlertingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.grafana;
 }
 
-export function isGrafanaRecordingRuleByType(type: RuleFormType) {
+export function isGrafanaRecordingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.grafanaRecording;
 }
 
@@ -423,14 +429,14 @@ export function isCloudRecordingRuleByType(type?: RuleFormType) {
   return type === RuleFormType.cloudRecording;
 }
 
-export function isGrafanaManagedRuleByType(type: RuleFormType) {
+export function isGrafanaManagedRuleByType(type?: RuleFormType) {
   return isGrafanaAlertingRuleByType(type) || isGrafanaRecordingRuleByType(type);
 }
 
-export function isRecordingRuleByType(type: RuleFormType) {
+export function isRecordingRuleByType(type?: RuleFormType) {
   return isGrafanaRecordingRuleByType(type) || isCloudRecordingRuleByType(type);
 }
 
-export function isDataSourceManagedRuleByType(type: RuleFormType) {
+export function isDataSourceManagedRuleByType(type?: RuleFormType) {
   return isCloudAlertingRuleByType(type) || isCloudRecordingRuleByType(type);
 }

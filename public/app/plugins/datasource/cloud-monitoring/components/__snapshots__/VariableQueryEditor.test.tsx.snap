@@ -18,7 +18,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
   <div>
     <div>
       <div
-        className="css-1nmqu8c-input-wrapper css-rmjxhr-SelectContainer"
+        className="css-1nmqu8c-input-wrapper css-smf98s"
         onKeyDown={[Function]}
       >
         <span
@@ -41,12 +41,12 @@ exports[`VariableQueryEditor renders correctly 1`] = `
             className="css-1q0c0d5-grafana-select-value-container"
           >
             <div
-              className="css-8nwx1l-singleValue css-upz218-SingleValue"
+              className="css-8nwx1l-singleValue css-0"
             >
               Loading...
             </div>
             <div
-              className=" css-1tkw9oc-Input"
+              className="css-1eu65zc"
               data-value=""
             >
               <input

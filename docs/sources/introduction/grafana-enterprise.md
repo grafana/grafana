@@ -34,12 +34,14 @@ Grafana Enterprise includes integrations with more ways to authenticate your use
 Supported auth providers:
 
 - [Auth Proxy]({{< relref "../setup-grafana/configure-security/configure-authentication/auth-proxy#team-sync-enterprise-only" >}})
-- [Azure AD OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread#team-sync-enterprise-only" >}})
-- [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github#configure-team-synchronization" >}})
-- [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab#configure-team-synchronization" >}})
-- [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
-- [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
-- [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#configure-team-sync" >}})
+- [Azure AD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/azuread#group-sync-enterprise-only)
+- [Generic OAuth integration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/generic-oauth#configure-group-synchronization" >}})
+- [GitHub OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/github#configure-group-synchronization)
+- [GitLab OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/gitlab#configure-group-synchronization)
+- [Google OAuth](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/google#configure-group-synchronization)
+- [LDAP](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization)
+- [Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/okta#configure-group-synchronization-enterprise-only)
+- [SAML](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/configure-security/configure-authentication/saml#configure-group-synchronization)
 
 ### Enhanced LDAP integration
 
@@ -61,7 +63,7 @@ Grafana Enterprise adds the following features:
 - [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
 - [Data source query and resource caching]({{< relref "../administration/data-source-management#query-and-resource-caching" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "../dashboards/create-reports" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whomever you choose.
-- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-dashboard-as-pdf" >}})
+- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-a-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../dashboards/assess-dashboard-usage" >}}) to understand how your Grafana instance is used.
 - [Recorded queries]({{< relref "../administration/recorded-queries" >}}) to see trends over time for your data sources.
@@ -104,7 +106,8 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Sqlyze Datasource](/grafana/plugins/grafana-odbc-datasource)
 - [SumoLogic](/grafana/plugins/grafana-sumologic-datasource)
 - [Wavefront](/grafana/plugins/grafana-wavefront-datasource)
+- [Zendesk](/grafana/plugins/grafana-zendesk-datasource)
 
 ## Try Grafana Enterprise
 
-To purchase or obtain a trial license, contact the Grafana Labs [Sales Team](/contact?about=support&topic=Grafana%20Enterprise).
+To purchase or obtain a trial license, contact the Grafana Labs [Sales Team](/contact?about=grafana-enterprise-stack).

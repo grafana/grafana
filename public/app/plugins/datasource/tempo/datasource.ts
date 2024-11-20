@@ -34,12 +34,7 @@ import {
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 
-import {
-  generateQueryFromAdHocFilters,
-  generateQueryFromFilters,
-  getTagWithoutScope,
-  interpolateFilters,
-} from './SearchTraceQLEditor/utils';
+import { generateQueryFromAdHocFilters, getTagWithoutScope, interpolateFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { SearchTableType, TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -56,12 +51,7 @@ import {
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
-import {
-  formatTraceQLMetrics,
-  formatTraceQLResponse,
-  transformFromOTLP as transformFromOTEL,
-  transformTrace,
-} from './resultTransformer';
+import { formatTraceQLResponse, transformFromOTLP as transformFromOTEL, transformTrace } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage, migrateFromSearchToTraceQLSearch } from './utils';
@@ -228,7 +218,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   // Allows to retrieve the list of tag values for ad-hoc filters
   getTagValues(options: DataSourceGetTagValuesOptions<TempoQuery>): Promise<Array<{ text: string }>> {
-    const query = generateQueryFromAdHocFilters(options.filters);
+    const query = generateQueryFromAdHocFilters(options.filters, this.languageProvider);
     return this.tagValuesQuery(options.key, query);
   }
 
@@ -359,7 +349,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
             });
-            subQueries.push(this.handleTraceQlMetricsQuery(options, queryValue));
+            subQueries.push(this.handleTraceQlMetricsQuery(options));
           } else {
             reportInteraction('grafana_traces_traceql_queried', {
               datasourceType: 'tempo',
@@ -382,9 +372,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           const target = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
           if (target) {
             const appliedQuery = this.applyVariables(target, options.scopedVars);
-            subQueries.push(
-              this.handleMetricsSummaryQuery(appliedQuery, generateQueryFromFilters(appliedQuery.filters), options)
-            );
+            const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
+            subQueries.push(this.handleMetricsSummaryQuery(appliedQuery, queryFromFilters, options));
           }
         }
 
@@ -393,22 +382,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlSearchTargets[0], options.scopedVars);
-          const queryValueFromFilters = generateQueryFromFilters(appliedQuery.filters);
+          const queryFromFilters = this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
 
           reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
-            query: queryValueFromFilters ?? '',
+            query: queryFromFilters ?? '',
             streaming: this.isStreamingSearchEnabled(),
           });
 
           if (this.isStreamingSearchEnabled()) {
-            subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryValueFromFilters));
+            subQueries.push(this.handleStreamingQuery(options, traceqlSearchTargets, queryFromFilters));
           } else {
             subQueries.push(
               this._request('/api/search', {
-                q: queryValueFromFilters,
+                q: queryFromFilters,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
                 spss: options.targets[0].spss ?? DEFAULT_SPSS,
                 start: options.range.from.unix(),
@@ -599,26 +588,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   };
 
-  handleTraceQlMetricsQuery = (
-    options: DataQueryRequest<TempoQuery>,
-    queryValue: string
-  ): Observable<DataQueryResponse> => {
-    const requestData = {
-      query: queryValue,
-      start: options.range.from.unix(),
-      end: options.range.to.unix(),
-      step: options.targets[0].step,
-    };
-
-    if (!requestData.step) {
-      delete requestData.step;
+  handleTraceQlMetricsQuery = (options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> => {
+    const validTargets = options.targets
+      .filter((t) => t.query)
+      .map(
+        (t): TempoQuery => ({ ...t, query: this.applyVariables(t, options.scopedVars).query, queryType: 'traceql' })
+      );
+    if (!validTargets.length) {
+      return EMPTY;
     }
 
-    return this._request('/api/metrics/query_range', requestData).pipe(
+    const request = { ...options, targets: validTargets };
+    return super.query(request).pipe(
       map((response) => {
-        return {
-          data: formatTraceQLMetrics(queryValue, response.data),
-        };
+        return response;
       }),
       catchError((err) => {
         return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
@@ -831,7 +814,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     const appliedQuery = this.applyVariables(query, {});
-    return generateQueryFromFilters(appliedQuery.filters);
+    return this.languageProvider.generateQueryFromFilters(appliedQuery.filters);
   }
 }
 

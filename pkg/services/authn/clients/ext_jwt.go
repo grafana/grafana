@@ -101,7 +101,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewIdentityClaims(idTokenClaims), allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
@@ -129,33 +129,34 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	// For use in service layer, allow higher privilege
-	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
+	namespace := accessTokenClaims.Rest.Namespace
 	if len(s.cfg.StackID) > 0 {
 		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
+		namespace = idTokenClaims.Rest.Namespace
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              &idTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: allowedKubernetesNamespace,
+		ID:                id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		IDTokenClaims:     &idTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
 				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
-		}}, nil
+		},
+	}, nil
 }
 
 func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims]) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := s.namespaceMapper(s.getDefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(authlib.NewAccessClaims(accessTokenClaims), allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
@@ -183,15 +184,15 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		UID:                        id,
-		Type:                       t,
-		OrgID:                      s.getDefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              nil,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
+		ID:                id,
+		UID:               id,
+		Name:              id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions:        true,
 			FetchPermissionsParams: fetchPermissionsParams,
@@ -246,12 +247,4 @@ func (s *ExtendedJWT) retrieveAuthorizationToken(httpRequest *http.Request) stri
 
 	// Strip the 'Bearer' prefix if it exists.
 	return strings.TrimPrefix(jwtToken, "Bearer ")
-}
-
-func (s *ExtendedJWT) getDefaultOrgID() int64 {
-	orgID := int64(1)
-	if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
-		orgID = int64(s.cfg.AutoAssignOrgId)
-	}
-	return orgID
 }

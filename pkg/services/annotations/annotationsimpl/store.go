@@ -20,8 +20,8 @@ type commonStore interface {
 
 type readStore interface {
 	commonStore
-	Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error)
-	GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error)
+	Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error)
+	GetTags(ctx context.Context, query annotations.TagsQuery) (annotations.FindTagsResult, error)
 }
 
 type writeStore interface {

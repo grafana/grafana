@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
+	"slices"
+	"sort"
 	"unsafe"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -48,12 +51,15 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	}
 
 	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
-	for name, tmpl := range revision.Config.TemplateFiles {
+	names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
+	sort.Strings(names)
+	for _, name := range names {
+		content := revision.Config.TemplateFiles[name]
 		tmpl := definitions.NotificationTemplate{
 			UID:             legacy_storage.NameToUid(name),
 			Name:            name,
-			Template:        tmpl,
-			ResourceVersion: calculateTemplateFingerprint(tmpl),
+			Template:        content,
+			ResourceVersion: calculateTemplateFingerprint(content),
 		}
 		provenance, ok := provenances[tmpl.ResourceID()]
 		if !ok {

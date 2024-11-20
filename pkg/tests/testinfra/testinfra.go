@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -51,6 +52,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
+
+	// Replace the placeholder in the `signing_keys_url` with the actual address
+	grpcServerAuthSection := cfg.SectionWithEnvOverrides("grpc_server_authentication")
+	signingKeysUrl := grpcServerAuthSection.Key("signing_keys_url")
+	signingKeysUrl.SetValue(strings.Replace(signingKeysUrl.String(), "<placeholder>", listener.Addr().String(), 1))
 
 	// Potentially allocate a real gRPC port for unified storage
 	runstore := false
@@ -97,7 +103,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
-		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore, env.Cfg.Logger)
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
+			env.Cfg.Logger, prometheus.NewPedanticRegistry())
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -155,6 +162,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 		dir, err := filepath.Abs(rootDir)
 		require.NoError(t, err)
+
+		// When running within an enterprise test, we need to move to the grafana directory
+		if strings.HasSuffix(dir, "grafana-enterprise") {
+			rootDir = filepath.Join(rootDir, "..", "grafana")
+			dir, err = filepath.Abs(rootDir)
+			require.NoError(t, err)
+		}
 
 		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
 		require.NoError(t, err)
@@ -287,6 +301,13 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
 	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
+	require.NoError(t, err)
+
+	grpcServerAuth, err := cfg.NewSection("grpc_server_authentication")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("signing_keys_url", "http://<placeholder>/api/signing-keys/keys")
+	require.NoError(t, err)
+	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
@@ -498,7 +519,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = 1
 	cmd.OrgID = 1
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
+	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

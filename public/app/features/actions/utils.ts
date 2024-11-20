@@ -68,25 +68,25 @@ export const getActions = (
 /** @internal */
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
   try {
-    const url = new URL(getUrl(replaceVariables(action.options.url)));
+    const url = new URL(getUrl(replaceVariables(action.fetch.url)));
 
     const requestHeaders: Record<string, string> = {};
 
     let request: BackendSrvRequest = {
       url: url.toString(),
-      method: action.options.method,
+      method: action.fetch.method,
       data: getData(action, replaceVariables),
       headers: requestHeaders,
     };
 
-    if (action.options.headers) {
-      action.options.headers.forEach(([name, value]) => {
+    if (action.fetch.headers) {
+      action.fetch.headers.forEach(([name, value]) => {
         requestHeaders[replaceVariables(name)] = replaceVariables(value);
       });
     }
 
-    if (action.options.queryParams) {
-      action.options.queryParams?.forEach(([name, value]) => {
+    if (action.fetch.queryParams) {
+      action.fetch.queryParams?.forEach(([name, value]) => {
         url.searchParams.append(replaceVariables(name), replaceVariables(value));
       });
 
@@ -139,8 +139,8 @@ const getUrl = (endpoint: string) => {
 
 /** @internal */
 const getData = (action: Action, replaceVariables: InterpolateFunction) => {
-  let data: string | undefined = action.options.body ? replaceVariables(action.options.body) : '{}';
-  if (action.options.method === HttpRequestMethod.GET) {
+  let data: string | undefined = action.fetch.body ? replaceVariables(action.fetch.body) : '{}';
+  if (action.fetch.method === HttpRequestMethod.GET) {
     data = undefined;
   }
 

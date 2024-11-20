@@ -8,15 +8,18 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+
 	"golang.org/x/exp/slices"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -57,6 +60,7 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
+	zclient              zanzana.Client
 	metrics              *dashboardsMetrics
 }
 
@@ -65,7 +69,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, r prometheus.Registerer,
+	folderSvc folder.Service, fStore folder.Store, r prometheus.Registerer, zclient zanzana.Client,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -75,13 +79,14 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
+		zclient:              zclient,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		metrics:              newDashboardsMetrics(r),
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, fStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, fStore))
 
 	if err := folderSvc.RegisterService(dashSvc); err != nil {
 		return nil, err
@@ -521,7 +526,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser) {
+	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := dto.User.GetInternalID()
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)
@@ -715,7 +720,13 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	ctx, span := tracer.Start(ctx, "dashboards.service.SearchDashboards")
 	defer span.End()
 
-	res, err := dr.FindDashboards(ctx, query)
+	var res []dashboards.DashboardSearchProjection
+	var err error
+	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
+		res, err = dr.FindDashboardsZanzana(ctx, query)
+	} else {
+		res, err = dr.FindDashboards(ctx, query)
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -47,6 +47,7 @@ export const cloudMigrationAPI = generatedAPI.enhanceEndpoints({
     },
 
     getDashboardByUid: suppressErrorsOnQuery,
+    getLibraryElementByUid: suppressErrorsOnQuery,
   },
 });
 

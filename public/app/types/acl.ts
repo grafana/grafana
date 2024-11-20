@@ -18,5 +18,4 @@ export enum PermissionLevelString {
 export enum SearchQueryType {
   Folder = 'dash-folder',
   Dashboard = 'dash-db',
-  AlertFolder = 'dash-folder-alerting',
 }

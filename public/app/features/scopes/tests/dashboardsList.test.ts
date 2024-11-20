@@ -12,7 +12,9 @@ import {
   expectDashboardInDocument,
   expectDashboardLength,
   expectDashboardNotInDocument,
+  expectDashboardsClosed,
   expectDashboardSearchValue,
+  expectDashboardsOpen,
   expectDashboardsSearch,
   expectNoDashboardsForFilter,
   expectNoDashboardsForScope,
@@ -45,9 +47,20 @@ describe('Dashboards list', () => {
     await resetScenes();
   });
 
-  it('Does not fetch dashboards list when the list is not expanded', async () => {
+  it('Opens container and fetches dashboards list when a scope is selected', async () => {
+    expectDashboardsClosed();
     await updateScopes(['mimir']);
-    expect(fetchDashboardsSpy).not.toHaveBeenCalled();
+    expectDashboardsOpen();
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
+  });
+
+  it('Closes container when no scopes are selected', async () => {
+    await updateScopes(['mimir']);
+    expectDashboardsOpen();
+    await updateScopes(['mimir', 'loki']);
+    expectDashboardsOpen();
+    await updateScopes([]);
+    expectDashboardsClosed();
   });
 
   it('Fetches dashboards list when the list is expanded', async () => {

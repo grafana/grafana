@@ -7,9 +7,16 @@ import {
   DataSourceInstanceSettings,
   TestDataSourceResponse,
   ScopedVar,
+  DataTopic,
+  PanelData,
+  DataFrame,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import {
+  activateSceneObjectAndParentTree,
+  findVizPanelByKey,
+  getVizPanelKeyForPanelId,
+} from 'app/features/dashboard-scene/utils/utils';
 
 import { DashboardQuery } from './types';
 
@@ -69,21 +76,36 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         sourceDataProvider?.setContainerWidth(500);
       }
 
-      const cleanUp = sourceDataProvider!.activate();
+      const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
         map((result) => {
           return {
-            data: result.data.series,
+            data: this.getDataFramesForQueryTopic(result.data, query),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
             key: 'source-ds-provider',
           };
         }),
-        finalize(cleanUp)
+        finalize(() => cleanUp?.())
       );
     });
+  }
+
+  private getDataFramesForQueryTopic(data: PanelData, query: DashboardQuery): DataFrame[] {
+    const annotations = data.annotations ?? [];
+    if (query.topic === DataTopic.Annotations) {
+      return annotations.map((frame) => ({
+        ...frame,
+        meta: {
+          ...frame.meta,
+          dataTopic: DataTopic.Series,
+        },
+      }));
+    } else {
+      return [...data.series, ...annotations];
+    }
   }
 
   private findSourcePanel(scene: SceneObject, panelId: number) {

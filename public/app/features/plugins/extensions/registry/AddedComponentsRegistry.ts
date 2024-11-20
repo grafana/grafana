@@ -2,20 +2,18 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import { logWarning, wrapWithPluginContext } from '../utils';
-import {
-  extensionPointEndsWithVersion,
-  isExtensionPointIdValid,
-  isGrafanaCoreExtensionPoint,
-  isReactComponent,
-} from '../validators';
+import * as errors from '../errors';
+import { isGrafanaDevMode, wrapWithPluginContext } from '../utils';
+import { isAddedComponentMetaInfoMissing } from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
+
+const logPrefix = 'Could not register component extension. Reason:';
 
 export type AddedComponentRegistryItem<Props = {}> = {
   pluginId: string;
   title: string;
-  description: string;
+  description?: string;
   component: React.ComponentType<Props>;
 };
 
@@ -39,44 +37,37 @@ export class AddedComponentsRegistry extends Registry<
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      if (!isReactComponent(config.component)) {
-        logWarning(
-          `Could not register added component with title '${config.title}'. Reason: The provided component is not a valid React component.`
-        );
-        continue;
-      }
+      const configLog = this.logger.child({
+        description: config.description,
+        title: config.title,
+        pluginId,
+      });
 
       if (!config.title) {
-        logWarning(`Could not register added component with title '${config.title}'. Reason: Title is missing.`);
+        configLog.error(`${logPrefix} ${errors.TITLE_MISSING}`);
         continue;
       }
 
-      if (!config.description) {
-        logWarning(`Could not register added component with title '${config.title}'. Reason: Description is missing.`);
+      if (
+        pluginId !== 'grafana' &&
+        isGrafanaDevMode() &&
+        isAddedComponentMetaInfoMissing(pluginId, config, configLog)
+      ) {
         continue;
       }
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
-        if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          logWarning(
-            `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
-          );
-          continue;
-        }
-
-        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          logWarning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
-          );
-        }
+        const pointIdLog = configLog.child({ extensionPointId });
 
         const result = {
           pluginId,
-          component: wrapWithPluginContext(pluginId, config.component),
+          component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
           description: config.description,
           title: config.title,
         };
+
+        pointIdLog.debug('Added component extension successfully registered');
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [result];

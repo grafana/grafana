@@ -1,8 +1,9 @@
 import { LocalValueVariable, SceneGridLayout, SceneGridRow, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { ViewPanelScene } from './ViewPanelScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -32,23 +33,25 @@ function buildScene(options?: SceneOptions) {
   });
 
   const dashboard = new DashboardScene({
-    body: new SceneGridLayout({
-      children: [
-        new SceneGridRow({
-          x: 0,
-          y: 10,
-          width: 24,
-          $variables: new SceneVariableSet({
-            variables: [new LocalValueVariable({ value: 'row-var-value' })],
-          }),
-          height: 1,
-          children: [
-            new DashboardGridItem({
-              body: panel,
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [
+          new SceneGridRow({
+            x: 0,
+            y: 10,
+            width: 24,
+            $variables: new SceneVariableSet({
+              variables: [new LocalValueVariable({ value: 'row-var-value' })],
             }),
-          ],
-        }),
-      ],
+            height: 1,
+            children: [
+              new DashboardGridItem({
+                body: panel,
+              }),
+            ],
+          }),
+        ],
+      }),
     }),
   });
 

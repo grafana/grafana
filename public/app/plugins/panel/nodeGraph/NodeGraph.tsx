@@ -13,7 +13,7 @@ import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
 import { Config, defaultConfig, useLayout } from './layout';
-import { EdgeDatumLayout, NodeDatum, NodesMarker } from './types';
+import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
@@ -23,83 +23,83 @@ import { useZoom } from './useZoom';
 import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: wrapper;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    position: relative;
-  `,
+  wrapper: css({
+    label: 'wrapper',
+    height: '100%',
+    width: '100%',
+    overflow: 'hidden',
+    position: 'relative',
+  }),
 
-  svg: css`
-    label: svg;
-    height: 100%;
-    width: 100%;
-    overflow: visible;
-    font-size: 10px;
-    cursor: move;
-  `,
+  svg: css({
+    label: 'svg',
+    height: '100%',
+    width: '100%',
+    overflow: 'visible',
+    fontSize: '10px',
+    cursor: 'move',
+  }),
 
-  svgPanning: css`
-    label: svgPanning;
-    user-select: none;
-  `,
+  svgPanning: css({
+    label: 'svgPanning',
+    userSelect: 'none',
+  }),
 
-  noDataMsg: css`
-    height: 100%;
-    width: 100%;
-    display: grid;
-    place-items: center;
-    font-size: ${theme.typography.h4.fontSize};
-    color: ${theme.colors.text.secondary};
-  `,
+  noDataMsg: css({
+    height: '100%',
+    width: '100%',
+    display: 'grid',
+    placeItems: 'center',
+    fontSize: theme.typography.h4.fontSize,
+    color: theme.colors.text.secondary,
+  }),
 
-  mainGroup: css`
-    label: mainGroup;
-    will-change: transform;
-  `,
+  mainGroup: css({
+    label: 'mainGroup',
+    willChange: 'transform',
+  }),
 
-  viewControls: css`
-    label: viewControls;
-    position: absolute;
-    left: 2px;
-    bottom: 3px;
-    right: 0;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    pointer-events: none;
-  `,
-  legend: css`
-    label: legend;
-    background: ${theme.colors.background.secondary};
-    box-shadow: ${theme.shadows.z1};
-    padding-bottom: 5px;
-    margin-right: 10px;
-  `,
-  viewControlsWrapper: css`
-    margin-left: auto;
-  `,
-  alert: css`
-    label: alert;
-    padding: 5px 8px;
-    font-size: 10px;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: ${theme.shape.radius.default};
-    align-items: center;
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: ${theme.colors.warning.main};
-    color: ${theme.colors.warning.contrastText};
-  `,
-  loadingWrapper: css`
-    label: loadingWrapper;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `,
+  viewControls: css({
+    label: 'viewControls',
+    position: 'absolute',
+    left: '2px',
+    bottom: '3px',
+    right: 0,
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    pointerEvents: 'none',
+  }),
+  legend: css({
+    label: 'legend',
+    background: theme.colors.background.secondary,
+    boxShadow: theme.shadows.z1,
+    paddingBottom: '5px',
+    marginRight: '10px',
+  }),
+  viewControlsWrapper: css({
+    marginLeft: 'auto',
+  }),
+  alert: css({
+    label: 'alert',
+    padding: '5px 8px',
+    fontSize: '10px',
+    textShadow: '0 1px 0 rgba(0, 0, 0, 0.2)',
+    borderRadius: theme.shape.radius.default,
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    background: theme.colors.warning.main,
+    color: theme.colors.warning.contrastText,
+  }),
+  loadingWrapper: css({
+    label: 'loadingWrapper',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
 });
 
 // Limits the number of visible nodes, mainly for performance reasons. Nodes above the limit are accessible by expanding
@@ -112,8 +112,9 @@ interface Props {
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
   nodeLimit?: number;
   panelId?: string;
+  zoomMode?: ZoomMode;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
+export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode }: Props) {
   const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
@@ -173,7 +174,8 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId }: Props) {
   const focusPosition = useFocusPositionOnLayout(config, nodes, focusedNodeId);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale, isMaxZoom, isMinZoom } = usePanAndZoom(
     bounds,
-    focusPosition
+    focusPosition,
+    zoomMode
   );
 
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(
@@ -392,8 +394,8 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   );
 });
 
-function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }) {
-  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom();
+function usePanAndZoom(bounds: Bounds, focus?: { x: number; y: number }, zoomMode?: ZoomMode) {
+  const { scale, onStepDown, onStepUp, ref, isMax, isMin } = useZoom({ zoomMode });
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,

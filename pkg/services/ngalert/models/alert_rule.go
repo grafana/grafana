@@ -278,6 +278,7 @@ type AlertRuleMetadata struct {
 
 type EditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -299,7 +300,8 @@ type AlertRuleWithOptionals struct {
 	AlertRule
 	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
 	// DB in case it was not sent.
-	HasPause bool
+	HasPause    bool
+	HasMetadata bool
 }
 
 // AlertsRulesBy is a function that defines the ordering of alert rules.
@@ -434,13 +436,13 @@ func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	dashUID := alertRule.Annotations[DashboardUIDAnnotation]
 	panelID := alertRule.Annotations[PanelIDAnnotation]
 	if dashUID != "" && panelID == "" || dashUID == "" && panelID != "" {
-		return fmt.Errorf("both annotations %s and %s must be specified",
+		return fmt.Errorf("%w: both annotations %s and %s must be specified", ErrAlertRuleFailedValidation,
 			DashboardUIDAnnotation, PanelIDAnnotation)
 	}
 	if dashUID != "" {
 		panelIDValue, err := strconv.ParseInt(panelID, 10, 64)
 		if err != nil {
-			return fmt.Errorf("annotation %s must be a valid integer Panel ID",
+			return fmt.Errorf("%w: annotation %s must be a valid integer Panel ID", ErrAlertRuleFailedValidation,
 				PanelIDAnnotation)
 		}
 		alertRule.DashboardUID = &dashUID
@@ -461,6 +463,11 @@ func (k AlertRuleKey) LogContext() []any {
 
 type AlertRuleKeyWithVersion struct {
 	Version      int64
+	AlertRuleKey `xorm:"extends"`
+}
+
+type AlertRuleKeyWithGroup struct {
+	RuleGroup    string
 	AlertRuleKey `xorm:"extends"`
 }
 
@@ -515,6 +522,11 @@ func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
 	return AlertRuleKey{OrgID: alertRule.OrgID, UID: alertRule.UID}
+}
+
+// GetKeyWithGroup returns the alert definitions identifier
+func (alertRule *AlertRule) GetKeyWithGroup() AlertRuleKeyWithGroup {
+	return AlertRuleKeyWithGroup{AlertRuleKey: alertRule.GetKey(), RuleGroup: alertRule.RuleGroup}
 }
 
 // GetGroupKey returns the identifier of a group the rule belongs to
@@ -611,17 +623,9 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
 
-	clearRecordingRuleIgnoredFields(rule)
+	ClearRecordingRuleIgnoredFields(rule)
 
 	return nil
-}
-
-func clearRecordingRuleIgnoredFields(rule *AlertRule) {
-	rule.NoDataState = ""
-	rule.ExecErrState = ""
-	rule.Condition = ""
-	rule.For = 0
-	rule.NotificationSettings = nil
 }
 
 func (alertRule *AlertRule) ResourceType() string {
@@ -648,6 +652,14 @@ func (alertRule *AlertRule) Type() RuleType {
 		return RuleTypeRecording
 	}
 	return RuleTypeAlerting
+}
+
+func ClearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -795,6 +807,13 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if !ruleToPatch.HasMetadata {
+		ruleToPatch.Metadata = existingRule.Metadata
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -878,4 +897,12 @@ func (r *Record) Fingerprint() data.Fingerprint {
 
 func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
+}
+
+// RuleStatus contains info about a rule's current evaluation state.
+type RuleStatus struct {
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
 }

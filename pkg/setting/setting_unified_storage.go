@@ -25,7 +25,21 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
-		storageConfig[resourceName] = UnifiedStorageConfig{DualWriterMode: rest.DualWriterMode(dualWriterMode)}
+
+		// parse dualWriter periodic data syncer config
+		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
+
+		storageConfig[resourceName] = UnifiedStorageConfig{
+			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
+			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
+		}
 	}
 	cfg.UnifiedStorage = storageConfig
+
+	// Set indexer config for unified storaae
+	section := cfg.Raw.Section("unified_storage")
+	cfg.IndexPath = section.Key("index_path").String()
+	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
+	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
+	cfg.IndexListLimit = section.Key("index_list_limit").MustInt(1000)
 }

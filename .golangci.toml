@@ -1,6 +1,7 @@
 [run]
 timeout = "20m"
 concurrency = 10
+allow-parallel-runners = true
 
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true

@@ -240,6 +240,7 @@ Use this transformation to select a source of data and extract content from it i
 - **Format** - Choose one of the following:
   - **JSON** - Parse JSON content from the source.
   - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
+  - **RegExp** - Parse content using a regular expression with [named capturing group(s)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group).
   - **Auto** - Discover fields automatically.
 - **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.
 - **Keep Time** - (Optional) Available only if **Replace All Fields** is true. Keeps the time field in the output.
@@ -1079,6 +1080,15 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Temperature | 25    |
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
+
+Using a negative number, you can keep values from the end of the set. Here is the result after adding a Limit transformation with a value of '-3':
+
+| Time                | Metric      | Value |
+| ------------------- | ----------- | ----- |
+| 2020-07-07 10:31:22 | Temperature | 22    |
+| 2020-07-07 09:30:57 | Humidity    | 33    |
+| 2020-07-07 09:30:05 | Temperature | 19    |
+
 
 This transformation helps you tailor the visual presentation of your data to focus on the most relevant information.
   `;

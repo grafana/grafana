@@ -66,8 +66,17 @@ The metrics query editor helps you select metrics, group and aggregate by labels
 1. _(Optional)_ Use the plus and minus icons in the filter and group-by sections to add and remove filters or group-by clauses.
 
 Google Cloud Monitoring supports several metrics types, such as `GAUGE`, `DELTA,` and `CUMULATIVE`.
-Each supports different aggregation options, such as reducers and aligners.
-The metrics query editor lists available aggregation methods for a selected metric, and sets a default reducer and aligner when you select a metric.
+Each supports different aggregation options, such as reducers and aligners. Additionally, metrics have specific value types that can be either scalar or a distribution.
+
+The metrics query editor lists available aggregation methods for a selected metric, and sets a default aggregation, reducer and aligner when you select a metric.
+
+In the case that the metric value type is a distribution, the aggregation will be set by default to the mean. For scalar value types, there is no aggregation by default.
+
+The various metrics are documented [here](https://cloud.google.com/monitoring/api/metrics_gcp) and further details on the kinds and types of metrics can be found [here](https://cloud.google.com/monitoring/api/v3/kinds-and-types).
+
+{{% admonition type="note" %}}
+Distribution metrics are typically best visualized as either a heatmap or histogram. When visualizing in this way, aggregation is not necessary. However, for other visualization types, performance degradation may be observed when attempting to query distribution metrics that are not aggregated due to the number of potential buckets that can be returned. For more information on how to visualize distribution metrics refer to [this page](https://cloud.google.com/monitoring/charts/charting-distribution-metrics).
+{{% /admonition %}}
 
 ### Apply a filter
 
@@ -198,10 +207,6 @@ An expected result would look like: `gce_instance - compute.googleapis.com/insta
 
 ### Deep-link from Grafana panels to the Google Cloud Console Metrics Explorer
 
-{{% admonition type="note" %}}
-Available in Grafana v7.1 and higher.
-{{% /admonition %}}
-
 {{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--no-shadow" caption="Google Cloud Monitoring deep linking" >}}
 
 You can click on a time series in the panel to access a context menu, which contains a link to **View in Metrics Explorer in Google Cloud Console**.
@@ -222,10 +227,6 @@ If the query editor rows return different units, Grafana uses the unit from the 
 
 ### Use the Monitoring Query Language
 
-{{% admonition type="note" %}}
-Available in Grafana v7.4 and higher.
-{{% /admonition %}}
-
 The Monitoring Query Language (MQL) query builder helps you query and display MQL results in time series format.
 To understand basic MQL concepts, refer to [Introduction to Monitoring Query Language](https://cloud.google.com/monitoring/mql).
 
@@ -244,10 +245,6 @@ MQL queries use the same alias patterns as [metric queries](#set-alias-patterns)
 However, `{{metric.service}}` is not supported, and `{{metric.type}}` and `{{metric.name}}` show the time series key in the response.
 
 ## Query Service Level Objectives
-
-{{% admonition type="note" %}}
-Available in Grafana v7.0 and higher.
-{{% /admonition %}}
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width="400px" class="docs-image--no-shadow" caption="Service Level Objectives (SLO) query editor" >}}
 
