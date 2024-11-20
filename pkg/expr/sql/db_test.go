@@ -37,6 +37,23 @@ func TestQueryFramesInto(t *testing.T) {
 		},
 		{
 			// TODO: Also ORDER BY to ensure the order is preserved
+			name:  "list table names when one table is present",
+			query: `SHOW TABLES;`,
+			input_frames: []*data.Frame{
+				data.NewFrame(
+					"inputFrameRefId",
+					//nolint:misspell
+					data.NewField("OSS Projects with Typos", nil, []string{"Garfana", "Pormetheus"}),
+				),
+			},
+			expected: data.NewFrame(
+				"sqlExpressionRefId",
+				// NOTE: `mydb` is the database name set by the application code
+				data.NewField("Tables_in_mydb", nil, []string{"inputFrameRefId"}),
+			),
+		},
+		{
+			// TODO: Also ORDER BY to ensure the order is preserved
 			name:  "query all rows from single input frame",
 			query: `SELECT * FROM inputFrameRefId LIMIT 1;`,
 			input_frames: []*data.Frame{

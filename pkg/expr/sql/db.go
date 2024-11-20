@@ -170,16 +170,15 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 }
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
-	// TODO: Consider if this should be moved outside of this function
-	// or indeed into convertToDataFrame
-	f.Name = tableName
 
 	pro := memory.NewDBProvider(db.inMemoryDb)
 	session := memory.NewSession(mysql.NewBaseSession(), pro)
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
 	for _, frame := range frames {
-		err := db.writeDataframeToDb(ctx, tableName, frame)
+		// We have both `frame` and `f` in this function. Consider renaming one or both.
+		// Potentially `f` to `outputFrame`
+		err := db.writeDataframeToDb(ctx, frame.Name, frame)
 		if err != nil {
 			return err
 		}
@@ -200,15 +199,17 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		return err
 	}
 
+	// TODO: Implement row limit and converters, as per sqlutil.FrameFromRows
 	// rowLimit := int64(1000) // TODO - set the row limit
-
 	// // converters := sqlutil.ConvertersFromSchema(f.RefID, f.Fields)
 	// // Use nil converters for now
 	// var converters []sqlutil.Converter
-
 	// rows := sqlutil.NewRowIter(mysqlRows, nil)
 	// frame, err := sqlutil.FrameFromRows(rows, rowLimit, converters...)
 
+	// TODO: Consider if this should be moved outside of this function
+	// or indeed into convertToDataFrame
+	f.Name = tableName
 	err = convertToDataFrame(iter, schema, f)
 	if err != nil {
 		return err
