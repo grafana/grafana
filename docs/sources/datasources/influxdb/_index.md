@@ -49,9 +49,9 @@ Grafana offers multiple configuration options for the InfluxDB data source, incl
 The following documents will help you get started with the InfluxDB data source in Grafana: 
 
 - [Get started with Grafana and InfluxDB](/docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-influxdb/)
-- [Configure the InfluxDB data source](/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/)
-- [InfluxDB query editor](/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/query-editor/)
-- [InfluxDB templates and variables](/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/)
+- [Configure the InfluxDB data source](./configure-influxdb-data-source/)
+- [InfluxDB query editor](./query-editor/)
+- [InfluxDB templates and variables](./template-variables/)
 
 Once you have configured the data source you can:
 
