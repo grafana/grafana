@@ -3,8 +3,8 @@ package fake
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/authapi"
 
+	"github.com/grafana/grafana/pkg/services/authapi"
 	"github.com/grafana/grafana/pkg/util"
 )
 
