@@ -6,6 +6,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { Resource } from '../apiserver/types';
 
+import { DeleteRepositoryButton } from './DeleteRepositoryButton';
 import { useListRepositoryQuery } from './api';
 import { RepositorySpec } from './api/types';
 import { NEW_URL, PROVISIONING_URL } from './constants';
@@ -60,9 +61,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
                   <LinkButton variant="secondary" href={`${PROVISIONING_URL}/edit/${item.metadata.name}`}>
                     Edit
                   </LinkButton>
-                  <LinkButton variant="destructive" href={`${PROVISIONING_URL}/delete/${item.metadata.name}`} disabled>
-                    Delete
-                  </LinkButton>
+                  <DeleteRepositoryButton name={item.metadata.name} />
                 </Stack>
               </Card>
             );
