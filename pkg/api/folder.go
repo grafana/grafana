@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -722,9 +723,9 @@ func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
 	hits := make([]dtos.FolderSearchHit, 0)
 	for _, item := range out.Items {
 		// convert item to legacy folder format
-		f, err := internalfolders.UnstructuredToLegacyFolderDTO(item)
-		if err != nil {
-			fk8s.writeError(c, err)
+		f, _ := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
+		if f == nil {
+			fk8s.writeError(c, fmt.Errorf("unable covert unstructured item to legacy folder"))
 			return
 		}
 
