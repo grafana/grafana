@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -116,7 +117,10 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 				responder.Error(err)
 				return
 			}
-			responder.Object(200, ttt) // proxy the list
+
+			// responder not happy flipping types
+			out, _ := json.Marshal(ttt)
+			w.Write(out)
 			return
 		}
 
