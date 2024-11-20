@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/authapi/fake"
 	"os"
 	"path/filepath"
 	"sync"
@@ -169,7 +170,7 @@ func ProvideService(
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{}
-		s.authApiService = &authapi.AuthapiStub{Policies: map[string]authapi.AccessPolicy{}, Token: nil}
+		s.authApiService = &fake.AuthapiStub{Policies: map[string]authapi.AccessPolicy{}, Token: nil}
 		s.cfg.StackID = "12345"
 	}
 
