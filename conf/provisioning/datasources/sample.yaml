@@ -70,7 +70,7 @@ apiVersion: 1
 #     # Grafana UI.
 #     editable: false
 #     # Grafana Enterprise only - optional query and resource
-#     cache settings for this data source.
+#     # cache settings for this data source.
 #     caching:
 #       # <bool> Enables caching for this data source.
 #       enabled: true
