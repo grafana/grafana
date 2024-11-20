@@ -72,6 +72,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
   ],
   "liveNow": true,
   "preload": true,
+  "schemaVersion": 40,
   "tags": [
     "tag1",
     "tag2",
@@ -177,7 +178,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
       "kind": "ConstantVariable",
       "spec": {
         "current": {
-          "text": undefined,
+          "text": "value4",
           "value": "value4",
         },
         "description": "A constant variable",
@@ -195,7 +196,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "auto_count": 10,
         "auto_min": "1m",
         "current": {
-          "text": undefined,
+          "text": "1m",
           "value": "1m",
         },
         "description": "An interval variable",
