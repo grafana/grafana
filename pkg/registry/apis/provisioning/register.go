@@ -30,6 +30,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,12 +43,13 @@ var (
 
 // This is used just so wire has something unique to return
 type ProvisioningAPIBuilder struct {
-	urlProvider       func(namespace string) string
-	webhookSecreteKey string
+	urlProvider      func(namespace string) string
+	webhookSecretKey string
 
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
+	client            *resourceClient
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -57,21 +59,24 @@ func NewProvisioningAPIBuilder(
 	local *LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecreteKey string,
+	identities auth.BackgroundIdentityService,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
-		webhookSecreteKey: webhookSecreteKey,
+		webhookSecretKey:  webhookSecreteKey,
+		client:            newResourceClient(identities),
 	}
 }
 
 func RegisterAPIService(
-	// It is OK to use settigns.Cfg here -- this is only used when running single tenant with a full setup
+	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
+	identities auth.BackgroundIdentityService,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -81,7 +86,7 @@ func RegisterAPIService(
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey)
+	}, cfg.SecretKey, identities)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -136,6 +141,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	helloWorld := &helloWorldSubresource{
 		getter:        repositoryStorage,
 		statusUpdater: repositoryStatusStorage,
+		parent:        b,
 	}
 
 	storage := map[string]rest.Storage{}
@@ -508,7 +514,7 @@ spec:
 // using the configured secret key. The generated secret is consistent.
 // TODO: this must be replaced by a app platform secrets once we have that.
 func (b *ProvisioningAPIBuilder) generateWebhookSecret(token string) string {
-	secretKey := []byte(b.webhookSecreteKey)
+	secretKey := []byte(b.webhookSecretKey)
 	h := hmac.New(sha256.New, secretKey)
 
 	h.Write([]byte(token))
