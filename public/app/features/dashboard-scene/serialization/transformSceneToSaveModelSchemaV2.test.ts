@@ -23,7 +23,9 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -51,6 +53,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // The intention is to have a complete dashboard scene
     // with all the possible properties set
     dashboardScene = setupDashboardScene({
+      $data: new DashboardDataLayerSet({ annotationLayers }),
       title: 'Test Dashboard',
       description: 'Test Description',
       preload: true,
@@ -283,3 +286,37 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result).toMatchSnapshot();
   });
 });
+
+const annotationLayer1 = new DashboardAnnotationsDataLayer({
+  key: 'layer1',
+  query: {
+    datasource: {
+      type: 'grafana',
+      uid: '-- Grafana --',
+    },
+    name: 'query1',
+    enable: true,
+    iconColor: 'red',
+  },
+  name: 'layer1',
+  isEnabled: true,
+  isHidden: false,
+});
+
+const annotationLayer2 = new DashboardAnnotationsDataLayer({
+  key: 'layer2',
+  query: {
+    datasource: {
+      type: 'prometheus',
+      uid: 'abcdef',
+    },
+    name: 'query2',
+    enable: true,
+    iconColor: 'blue',
+  },
+  name: 'layer2',
+  isEnabled: true,
+  isHidden: true,
+});
+
+const annotationLayers = [annotationLayer1, annotationLayer2];
