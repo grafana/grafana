@@ -613,7 +613,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create snapshots",
 			Group:       "Snapshots",
 			Permissions: []ac.Permission{
-				{Action: dashboards.ActionSnapshotsCreate, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionSnapshotsCreate},
 			},
 		},
 		Grants: []string{string(org.RoleEditor)},
