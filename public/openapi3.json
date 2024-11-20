@@ -9751,6 +9751,9 @@
           "hidden": {
             "type": "boolean"
           },
+          "mapped": {
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
