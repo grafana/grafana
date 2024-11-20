@@ -37,6 +37,7 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
       position: 'absolute',
       top,
       backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
     };
 
     top += height + theme.spacing.gridSize;
