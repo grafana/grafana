@@ -8,9 +8,9 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { KBObjectArray, RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { isRecordingRuleByType } from '../../utils/rules';
+import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -45,6 +45,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaManaged = isGrafanaManagedRuleByType(type);
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
@@ -52,25 +53,29 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const shouldAllowSimplifiedRouting =
     type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
 
-  function onCloseLabelsEditor(
-    labelsToUpdate?: Array<{
-      key: string;
-      value: string;
-    }>
-  ) {
+  function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
       setValue('labels', labelsToUpdate);
     }
     setShowLabelsEditor(false);
   }
-  if (!type) {
+
+  if (isGrafanaRecordingRuleByType(type)) {
     return null;
   }
 
+  const step = !isGrafanaManaged ? 4 : 5;
+
+  const title = isRecordingRuleByType(type)
+    ? 'Add labels'
+    : isGrafanaManaged
+      ? 'Configure notifications'
+      : 'Configure labels and notifications';
+
   return (
     <RuleEditorSection
-      stepNo={4}
-      title={isRecordingRuleByType(type) ? 'Add labels' : 'Configure labels and notifications'}
+      stepNo={step}
+      title={title}
       description={
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
@@ -88,13 +93,17 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
-      <LabelsEditorModal
-        isOpen={showLabelsEditor}
-        onClose={onCloseLabelsEditor}
-        dataSourceName={dataSourceName}
-        initialLabels={getValues('labels')}
-      />
+      {!isGrafanaManaged && (
+        <>
+          <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+          <LabelsEditorModal
+            isOpen={showLabelsEditor}
+            onClose={onCloseLabelsEditor}
+            dataSourceName={dataSourceName}
+            initialLabels={getValues('labels')}
+          />
+        </>
+      )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>

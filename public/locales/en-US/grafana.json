@@ -33,41 +33,11 @@
       }
     }
   },
-  "alert-rule-form": {
-    "evaluation-behaviour": {
-      "info-help": {
-        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
-      },
-      "pending-period": "Pending period"
-    },
-    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
-    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
-    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
-    "evaluation-behaviour-for": {
-      "error-parsing": "Failed to parse duration",
-      "validation": "Pending period must be greater than or equal to the evaluation interval."
-    },
-    "evaluation-behaviour-group": {
-      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
-    },
-    "pause": {
-      "alerting": "Turn on to pause evaluation for this alert rule.",
-      "label": "Pause evaluation",
-      "recording": "Turn on to pause evaluation for this recording rule."
-    }
-  },
   "alerting": {
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
           "text": "Define how the recording rule is evaluated."
-        }
-      }
-    },
-    "alert-rule-form": {
-      "evaluation-behaviour": {
-        "description": {
-          "text": "Define how the alert rule is evaluated."
         }
       }
     },
@@ -177,10 +147,6 @@
             "alerting": "Create a new evaluation group to use for this alert rule.",
             "recording": "Create a new evaluation group to use for this recording rule."
           }
-        },
-        "text": {
-          "alerting": "Define how often the alert rule is evaluated.",
-          "recording": "Define how often the recording rule is evaluated."
         }
       }
     },
@@ -265,6 +231,60 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "rule-form": {
+      "evaluation": {
+        "evaluation-group-and-interval": "Evaluation group and interval",
+        "group": {
+          "cancel": "Cancel",
+          "create": "Create",
+          "interval": "Evaluation interval"
+        },
+        "group-name": "Evaluation group name",
+        "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "new-group": "New evaluation group",
+        "pause": {
+          "alerting": "Turn on to pause evaluation for this alert rule.",
+          "recording": "Turn on to pause evaluation for this recording rule."
+        },
+        "select-folder-before": "Select a folder before setting evaluation group and interval"
+      },
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        },
+        "info-help": {
+          "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        },
+        "pending-period": "Pending period"
+      },
+      "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+      "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+      "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+      "evaluation-behaviour-for": {
+        "error-parsing": "Failed to parse duration",
+        "validation": "Pending period must be greater than or equal to the evaluation interval."
+      },
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "create-folder": "Create a new folder to store your alert rule in.",
+        "creating-new-folder": "Creating new folder",
+        "label": "Folder",
+        "name": "Folder name",
+        "new-folder": "New folder",
+        "new-folder-or": "or"
+      },
+      "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
+      "folders": {
+        "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
+      },
+      "labels": {
+        "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
+      },
+      "pause": {
+        "label": "Pause evaluation"
+      }
     },
     "rule-groups": {
       "delete": {
