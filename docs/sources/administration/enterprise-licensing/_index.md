@@ -256,7 +256,7 @@ The system creates a session when a user signs in to Grafana from a new device, 
 
 When a user reaches the session limit, the fourth connection succeeds and the longest inactive session is signed out.
 
-**API `/login` endpoint rate limit**: Grafana Cloud users are limited to 10 log in attempts using the `/login` API endpoint per user in a given 10-minute period. The period starts from the first log in attempt.
+**API `/login` endpoint rate limit**: Grafana Cloud users are rate limited to 10 log in attempts using the `/login` API endpoint per user in a given 10-minute period. The period starts from the first log in attempt.
 
 ### Request usage billing
 
