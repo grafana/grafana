@@ -111,7 +111,7 @@ func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) 
 // 	return nil
 // }
 
-func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
+func (db *DB) writeDataframeToDb(tableName string, frame *data.Frame) error {
 	if frame == nil {
 		return fmt.Errorf("input frame is nil")
 	}
@@ -123,13 +123,13 @@ func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 			Name:     field.Name,
 			Type:     convertDataType(field.Type()),
 			Nullable: true,
-			Source:   name,
+			Source:   tableName,
 		}
 	}
 
 	// Create table with the dynamic schema
-	table := memory.NewTable(db.inMemoryDb, name, mysql.NewPrimaryKeySchema(schema), nil)
-	db.inMemoryDb.AddTable(name, table)
+	table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
+	db.inMemoryDb.AddTable(tableName, table)
 
 	// Insert data from the frame
 	pro := memory.NewDBProvider(db.inMemoryDb)
@@ -170,18 +170,17 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	}
 }
 
-// TODO: Rename `name` to `tableName`?
-func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f *data.Frame) error {
+func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
 	// TODO: Consider if this should be moved outside of this function
 	// or indeed into convertToDataFrame
-	f.Name = name
+	f.Name = tableName
 
 	pro := memory.NewDBProvider(db.inMemoryDb)
 	session := memory.NewSession(mysql.NewBaseSession(), pro)
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
 	for _, frame := range frames {
-		err := db.writeDataframeToDb(name, frame)
+		err := db.writeDataframeToDb(tableName, frame)
 		if err != nil {
 			return err
 		}
