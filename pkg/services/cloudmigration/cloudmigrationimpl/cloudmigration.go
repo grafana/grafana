@@ -152,8 +152,7 @@ func ProvideService(
 		if err != nil {
 			return nil, fmt.Errorf("creating http client for GCOM: %w", err)
 		}
-		gcomS := gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom)
-		s.gcomService = gcomS
+		s.gcomService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom)
 
 		if features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrationsAuthApiMig) {
 			s.log.Info("using authapi client because feature flag is enabled")
@@ -165,7 +164,7 @@ func ProvideService(
 			s.authApiService = authapi.New(authapi.Config{ApiURL: cfg.CloudMigration.AuthAPIUrl, Token: cfg.CloudMigration.GcomAPIToken}, httpClientAuthApi)
 		} else {
 			s.log.Info("using gcom client for auth")
-			s.authApiService = gcomS.(*gcom.GcomClient)
+			s.authApiService = gcom.New(gcom.Config{ApiURL: cfg.GrafanaComAPIURL, Token: cfg.CloudMigration.GcomAPIToken}, httpClientGcom).(*gcom.GcomClient)
 		}
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
