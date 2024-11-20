@@ -56,7 +56,7 @@
     "@grafana/faro-web-sdk": "^1.3.6",
     "@grafana/schema": "11.4.0-pre",
     "@hello-pangea/dnd": "17.0.0",
-    "@leeoniya/ufuzzy": "1.0.14",
+    "@leeoniya/ufuzzy": "1.0.16",
     "@monaco-editor/react": "4.6.0",
     "@popperjs/core": "2.11.8",
     "@react-aria/dialog": "3.5.19",
