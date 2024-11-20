@@ -37,8 +37,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     const currentTime = Date.now().valueOf();
     const current = this.state.selectedObject?.resolve();
 
-    if (currentTime - this.selectedTime < 10) {
-      console.log('ignore click');
+    if (currentTime - this.selectedTime < 500) {
+      console.log('toggleSelection ignored');
       return;
     }
 
@@ -49,10 +49,20 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
 
     this.selectedElement?.classList.remove('selected-dashboard-item');
-
     this.selectedElement = element;
     this.selectedElement.classList.add('selected-dashboard-item');
     this.selectedTime = Date.now().valueOf();
+  }
+
+  public clearSelection() {
+    if (this.state.selectedObject) {
+      this.setState({ selectedObject: undefined });
+    }
+
+    if (this.selectedElement) {
+      this.selectedElement.classList.remove('selected-dashboard-item');
+      this.selectedElement = null;
+    }
   }
 
   public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
@@ -105,6 +115,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const distance = getDistanceTo(target, panelElement);
     if (distance > 1) {
+      this.clearSelection();
       console.log('distance too far', distance);
       return;
     }
