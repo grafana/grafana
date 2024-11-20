@@ -65,7 +65,7 @@ export const Page = () => {
     const response = await fetch('api/user');
     if (!response.ok) {
       console.warn('No user found, show login button');
-      return
+      return;
     }
     const val = await response.json();
     setUserView({
@@ -74,7 +74,7 @@ export const Page = () => {
         avatarUrl: val.avatarUrl,
       },
       lastActiveAt: new Date(),
-    })
+    });
   });
 
   return (
@@ -101,11 +101,15 @@ export const Page = () => {
                 value={url}
                 isLoading={urls.loading}
               />
-              <div style={{marginTop: '5px'}}>{ 
-              userView 
-               ? <UserIcon userView={userView}/>
-               : <a href="/login"><Button variant='primary'>Login</Button></a>
-              }</div>
+              <div style={{ marginTop: '5px' }}>
+                {userView ? (
+                  <UserIcon userView={userView} />
+                ) : (
+                  <a href="/login">
+                    <Button variant="primary">Login</Button>
+                  </a>
+                )}
+              </div>
             </Stack>
           </div>
 
