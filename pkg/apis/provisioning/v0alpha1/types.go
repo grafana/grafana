@@ -149,8 +149,8 @@ type ResourceWrapper struct {
 	// Path to the remote file
 	Path string `json:"path,omitempty"`
 
-	// The commit hash (if exists)
-	Commit string `json:"commit,omitempty"`
+	// The ref hash (if exists)
+	Ref string `json:"commit,omitempty"`
 
 	// Resource from the upstream repository
 	Resource common.Unstructured `json:"resource"`

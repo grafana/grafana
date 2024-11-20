@@ -116,9 +116,9 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
-	if commit != "" {
-		return nil, apierrors.NewBadRequest("local repository does not support commits")
+func (r *localRepository) Read(ctx context.Context, path string, ref string) ([]byte, error) {
+	if ref != "" {
+		return nil, apierrors.NewBadRequest("local repository does not support refs")
 	}
 	if r.path == "" {
 		return nil, &apierrors.StatusError{
@@ -150,6 +150,15 @@ func (r *localRepository) Create(ctx context.Context, path string, data []byte, 
 	return fmt.Errorf("file already exists")
 }
 
+func (r *localRepository) SubmitCreate(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "submit create not supported for local repository",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *localRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
@@ -167,6 +176,15 @@ func (r *localRepository) Update(ctx context.Context, path string, data []byte, 
 	return os.WriteFile(path, data, 0600)
 }
 
+func (r *localRepository) SubmitUpdate(ctx context.Context, path string, data []byte, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "submit update not supported for local repository",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *localRepository) Delete(ctx context.Context, path string, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
@@ -178,6 +196,15 @@ func (r *localRepository) Delete(ctx context.Context, path string, comment strin
 	}
 
 	return os.Remove(filepath.Join(r.path, path))
+}
+
+func (r *localRepository) SubmitDelete(ctx context.Context, path string, comment string) error {
+	return &apierrors.StatusError{
+		ErrStatus: v1.Status{
+			Message: "submit delete not supported for local repository",
+			Code:    http.StatusNotImplemented,
+		},
+	}
 }
 
 // Webhook implements provisioning.Repository.

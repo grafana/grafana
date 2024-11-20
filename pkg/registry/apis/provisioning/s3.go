@@ -51,7 +51,7 @@ func (r *s3Repository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *s3Repository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
+func (r *s3Repository) Read(ctx context.Context, path string, ref string) ([]byte, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
@@ -69,10 +69,28 @@ func (r *s3Repository) Create(ctx context.Context, path string, data []byte, com
 	}
 }
 
+func (r *s3Repository) SubmitCreate(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit create s3 file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *s3Repository) Update(ctx context.Context, path string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
-			Message: "write file is not yet implemented",
+			Message: "write s3 file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *s3Repository) SubmitUpdate(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit update s3 file is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}
@@ -81,7 +99,15 @@ func (r *s3Repository) Update(ctx context.Context, path string, data []byte, com
 func (r *s3Repository) Delete(ctx context.Context, path string, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
-			Message: "delete file not yet implemented",
+			Message: "delete s3 file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+func (r *s3Repository) SubmitDelete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit delete s3 file not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}

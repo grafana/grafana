@@ -406,10 +406,10 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Get.Parameters = []*spec3.Parameter{
 			{
 				ParameterProps: spec3.ParameterProps{
-					Name:        "commit",
+					Name:        "ref",
 					In:          "query",
 					Example:     "ca171cc730",
-					Description: "optional commit hash for the requested file",
+					Description: "optional reference for the requested file",
 					Schema:      spec.StringProperty(),
 					Required:    false,
 				},
@@ -417,21 +417,33 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		}
 
 		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{
+		writeParameters := []*spec3.Parameter{
 			{
 				ParameterProps: spec3.ParameterProps{
 					Name:        "message",
 					In:          "query",
 					Example:     "My commit message",
-					Description: "for git properties this will be in the commit message",
+					Description: "for git repositories this will be in the commit message",
 					Schema:      spec.StringProperty(),
 					Required:    false,
 				},
 			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					// TODO: is there a better name for this?
+					Name:        "submit",
+					In:          "query",
+					Example:     "true",
+					Description: "for git repositories this will submit changes to a new branch",
+					Schema:      spec.BooleanProperty(),
+					Required:    false,
+				},
+			},
 		}
-		sub.Delete.Parameters = comment
-		sub.Post.Parameters = comment
-		sub.Put.Parameters = comment
+
+		sub.Delete.Parameters = writeParameters
+		sub.Post.Parameters = writeParameters
+		sub.Put.Parameters = writeParameters
 		sub.Post.RequestBody = &spec3.RequestBody{
 			RequestBodyProps: spec3.RequestBodyProps{
 				Content: map[string]*spec3.MediaType{

@@ -43,7 +43,7 @@ type Repository interface {
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
-	Read(ctx context.Context, path string, commit string) ([]byte, error)
+	Read(ctx context.Context, path string, ref string) ([]byte, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
@@ -55,6 +55,13 @@ type Repository interface {
 
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, path string, comment string) error
+
+	// SubmitCreate is called when a user submits a create request
+	SubmitCreate(ctx context.Context, path string, data []byte, comment string) error
+	// SubmitUpdate is called when a user submits an update request
+	SubmitUpdate(ctx context.Context, path string, data []byte, comment string) error
+	// SubmitDelete is called when a user submits a delete request
+	SubmitDelete(ctx context.Context, path string, comment string) error
 
 	// For repositories that support webhooks
 	Webhook(responder rest.Responder) http.HandlerFunc
@@ -98,7 +105,7 @@ func (r *unknownRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *unknownRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
+func (r *unknownRepository) Read(ctx context.Context, path string, ref string) ([]byte, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
@@ -116,10 +123,28 @@ func (r *unknownRepository) Create(ctx context.Context, path string, data []byte
 	}
 }
 
+func (r *unknownRepository) SubmitCreate(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit create file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *unknownRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
-			Message: "write file is not yet implemented",
+			Message: "update file is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) SubmitUpdate(ctx context.Context, path string, data []byte, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit update file is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}
@@ -129,6 +154,15 @@ func (r *unknownRepository) Delete(ctx context.Context, path string, comment str
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
+func (r *unknownRepository) SubmitDelete(ctx context.Context, path string, comment string) error {
+	return &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "submit delete file not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
 	}

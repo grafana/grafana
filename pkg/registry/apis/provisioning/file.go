@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -90,16 +91,25 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		var obj runtime.Object
-		commit := r.URL.Query().Get("commit")
+		ref := r.URL.Query().Get("ref")
 		message := r.URL.Query().Get("message")
+
+		var isSubmit bool
+		if param := r.URL.Query().Get("submit"); param != "" {
+			isSubmit, err = strconv.ParseBool(param)
+			if err != nil {
+				responder.Error(errors.NewBadRequest("invalid submit parameter"))
+				return
+			}
+		}
 
 		switch r.Method {
 		case http.MethodGet:
-			obj, err = s.doRead(r.Context(), repo, filePath, commit)
+			obj, err = s.doRead(r.Context(), repo, filePath, ref)
 		case http.MethodPost:
-			obj, err = s.doWrite(r.Context(), false, repo, filePath, message, r)
+			obj, err = s.doWrite(r.Context(), false, isSubmit, repo, filePath, message, r)
 		case http.MethodPut:
-			obj, err = s.doWrite(r.Context(), true, repo, filePath, message, r)
+			obj, err = s.doWrite(r.Context(), true, isSubmit, repo, filePath, message, r)
 		case http.MethodDelete:
 			obj, err = s.doDelete(r.Context(), repo, filePath, message)
 		default:
@@ -129,8 +139,8 @@ func (s *readConnector) getValidatedBody(_ context.Context, data []byte) (*unstr
 	return obj, gvk, err
 }
 
-func (s *readConnector) doRead(ctx context.Context, repo Repository, path string, commit string) (*provisioning.ResourceWrapper, error) {
-	data, err := repo.Read(ctx, path, commit)
+func (s *readConnector) doRead(ctx context.Context, repo Repository, path string, ref string) (*provisioning.ResourceWrapper, error) {
+	data, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -141,17 +151,17 @@ func (s *readConnector) doRead(ctx context.Context, repo Repository, path string
 	}
 
 	return &provisioning.ResourceWrapper{
-		Path:   path,
-		Commit: commit,
+		Path: path,
+		Ref:  ref,
 		Resource: v0alpha1.Unstructured{
 			Object: obj.Object,
 		},
 	}, nil
 }
 
-func (s *readConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, message string, req *http.Request) (runtime.Object, error) {
+func (s *readConnector) doWrite(ctx context.Context, isUpdate bool, isSubmit bool, repo Repository, path string, message string, req *http.Request) (runtime.Object, error) {
 	settings := repo.Config().Spec.Editing
-	if update && !settings.Update {
+	if isUpdate && !settings.Update {
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
 	} else if !settings.Create {
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
@@ -190,11 +200,17 @@ func (s *readConnector) doWrite(ctx context.Context, update bool, repo Repositor
 		return nil, fmt.Errorf("unexpected format")
 	}
 
-	if update {
+	switch {
+	case isSubmit && isUpdate:
+		err = repo.SubmitUpdate(ctx, path, data, message)
+	case isSubmit && !isUpdate:
+		err = repo.SubmitCreate(ctx, path, data, message)
+	case isUpdate:
 		err = repo.Update(ctx, path, data, message)
-	} else {
+	default:
 		err = repo.Create(ctx, path, data, message)
 	}
+
 	if err != nil {
 		return nil, err
 	}
