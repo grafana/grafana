@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
-import { useForm } from 'react-hook-form';
+import cx from 'classnames';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Alert, Button, ClipboardButton, Divider, Field, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, Divider, Field, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -24,54 +25,66 @@ export class SharePanelInternally extends ShareLinkTab {
   }
 }
 
-type ImageSettingsForm = {
-  width: number;
-  height: number;
-  zoom: number;
-};
+// type ImageSettingsForm = {
+//   width: number;
+//   height: number;
+//   zoom: number;
+// };
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
   const styles = useStyles2(getStyles);
-  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl } = model.useState();
+  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef, onDismiss } =
+    model.useState();
 
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [renderImage, setRenderImage] = useState(false);
+
+  const panelTitle = panelRef?.resolve().state.title;
   // const { handleSubmit, reset, ...formMethods } = useForm({ mode: 'onBlur', defaultValues: settings });
 
   const dashboard = getDashboardSceneFor(model);
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
+  const onRenderImageClick = () => {
+    setIsImageLoaded(false);
+    setRenderImage(true);
+  };
+
+  const onImageRendered = () => {
+    setIsImageLoaded(true);
+  };
+
   return (
-    <>
-      <div className={styles.configDescription}>
-        <Text variant="body">
-          <Trans i18nKey="link.share-panel.config-description">
-            Create a personalized, direct link to share your panel within your organization, with the following
-            customization settings:
-          </Trans>
-        </Text>
+    <div>
+      <Text variant="body">
+        <Trans i18nKey="link.share-panel.config-description">
+          Create a personalized, direct link to share your panel within your organization, with the following
+          customization settings:
+        </Trans>
+      </Text>
+      <div className={styles.configurationContainer}>
+        <ShareInternallyConfiguration
+          useLockedTime={useLockedTime}
+          onToggleLockedTime={() => model.onToggleLockedTime()}
+          useShortUrl={useShortUrl}
+          onUrlShorten={() => model.onUrlShorten()}
+          selectedTheme={selectedTheme}
+          onChangeTheme={(t) => model.onThemeChange(t)}
+          isLoading={isBuildUrlLoading}
+        />
+        <ClipboardButton
+          icon="link"
+          variant="primary"
+          fill="outline"
+          disabled={isBuildUrlLoading}
+          getText={model.getShareUrl}
+          onClipboardCopy={model.onCopy}
+        >
+          <Trans i18nKey="link.share.copy-link-button">Copy link</Trans>
+        </ClipboardButton>
       </div>
-      <ShareInternallyConfiguration
-        useLockedTime={useLockedTime}
-        onToggleLockedTime={() => model.onToggleLockedTime()}
-        useShortUrl={useShortUrl}
-        onUrlShorten={() => model.onUrlShorten()}
-        selectedTheme={selectedTheme}
-        onChangeTheme={(t) => model.onThemeChange(t)}
-        isLoading={isBuildUrlLoading}
-      />
+      <Divider spacing={2} />
       <Stack gap={2} direction="column">
-        <div className={styles.buttonsContainer}>
-          <ClipboardButton
-            icon="link"
-            variant="primary"
-            fill="outline"
-            disabled={isBuildUrlLoading}
-            getText={model.getShareUrl}
-            onClipboardCopy={model.onCopy}
-          >
-            <Trans i18nKey="link.share.copy-link-button">Copy link</Trans>
-          </ClipboardButton>
-        </div>
-        <Divider spacing={1} />
         {!isDashboardSaved && (
           <Alert severity="info" title={t('share-modal.link.save-alert', 'Dashboard is not saved')} bottomSpacing={0}>
             <Trans i18nKey="share-modal.link.save-dashboard">
@@ -106,56 +119,68 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           <Text element="h5">
             <Trans i18nKey="link.share-panel.render-image-subtitle">Image settings</Trans>
           </Text>
-          <Stack gap={1} justifyContent="space-between" direction={{ xs: 'column', sm: 'row' }}>
-            <Field label="Width" className={styles.imageConfigurationField}>
-              <Input
-                type="number"
-                suffix="px"
-                // onChange={(event) => onChange(event.currentTarget.value, to.value)}
-                // addonAfter={icon}
-                // onKeyDown={submitOnEnter}
-                // data-testid={selectors.components.TimePicker.fromField}
-                // value={from.value}
-              />
-            </Field>
-            <Field label="Height" className={styles.imageConfigurationField}>
-              <Input
-                type="number"
-                suffix="px"
-                // onChange={(event) => onChange(event.currentTarget.value, to.value)}
-                // addonAfter={icon}
-                // onKeyDown={submitOnEnter}
-                // data-testid={selectors.components.TimePicker.fromField}
-                // value={from.value}
-              />
-            </Field>
-            <Field label="Zoom" className={styles.imageConfigurationField}>
-              <Input name="importantInput" required />
-            </Field>
-          </Stack>
-          <Stack gap={1}>
-            <Button
-              icon="gf-layout-simple"
-              variant="secondary"
-              fill="solid"
-              disabled={!config.rendererAvailable || !isDashboardSaved}
-            >
-              <Trans i18nKey="link.share-panel.render-image">Render image</Trans>
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                // modalRef?.resolve().onDismiss();
-              }}
-              fill="outline"
-            >
-              <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
-            </Button>
-          </Stack>
-          {/*<img src={imageUrl} alt="panel-img" />*/}
+          <div>
+            <Stack gap={1} justifyContent="space-between" direction={{ xs: 'column', sm: 'row' }}>
+              <Field label="Width" className={styles.imageConfigurationField}>
+                <Input
+                  type="number"
+                  suffix="px"
+                  // onChange={(event) => onChange(event.currentTarget.value, to.value)}
+                  // addonAfter={icon}
+                  // onKeyDown={submitOnEnter}
+                  // data-testid={selectors.components.TimePicker.fromField}
+                  // value={from.value}
+                />
+              </Field>
+              <Field label="Height" className={styles.imageConfigurationField}>
+                <Input
+                  type="number"
+                  suffix="px"
+                  // onChange={(event) => onChange(event.currentTarget.value, to.value)}
+                  // addonAfter={icon}
+                  // onKeyDown={submitOnEnter}
+                  // data-testid={selectors.components.TimePicker.fromField}
+                  // value={from.value}
+                />
+              </Field>
+              <Field label="Zoom" className={styles.imageConfigurationField}>
+                <Input name="importantInput" required />
+              </Field>
+            </Stack>
+            <Stack gap={1}>
+              <Button
+                icon="gf-layout-simple"
+                variant="secondary"
+                fill="solid"
+                disabled={!config.rendererAvailable || !isDashboardSaved}
+                onClick={onRenderImageClick}
+              >
+                <Trans i18nKey="link.share-panel.render-image">Render image</Trans>
+              </Button>
+              <Button variant="secondary" fill="outline" onClick={onDismiss}>
+                <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
+              </Button>
+            </Stack>
+          </div>
+          {!isImageLoaded && renderImage && (
+            <div>
+              <LoadingBar width={128} />
+              <div className={styles.imageLoadingContainer}>
+                <Text variant="body">{panelTitle || ''}</Text>
+              </div>
+            </div>
+          )}
+          {renderImage && (
+            <img
+              src={imageUrl}
+              alt="panel-img"
+              className={cx(styles.image, { [styles.hiddenImage]: !isImageLoaded })}
+              onLoad={onImageRendered}
+            />
+          )}
         </Stack>
       </Stack>
-    </>
+    </div>
   );
 }
 
@@ -163,10 +188,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   configDescription: css({
     marginBottom: theme.spacing(2),
   }),
-  buttonsContainer: css({
+  configurationContainer: css({
     marginTop: theme.spacing(2),
   }),
   imageConfigurationField: css({
     flex: 1,
+  }),
+  image: css({
+    width: '100%',
+  }),
+  hiddenImage: css({
+    visibility: 'hidden',
+  }),
+  imageLoadingContainer: css({
+    height: 268,
+    border: `1px solid ${theme.components.input.borderColor}`,
+    padding: theme.spacing(1),
   }),
 });
