@@ -290,7 +290,10 @@ func (dr *DashboardServiceImpl) findFoldersZanzanaList(ctx context.Context, quer
 		return nil, err
 	}
 
-	if len(res.Items) == 0 {
+	query.SkipAccessControlFilter = true
+	if res.All {
+		return dr.dashboardStore.FindDashboards(ctx, &query)
+	} else if len(res.Items) == 0 {
 		return []dashboards.DashboardSearchProjection{}, nil
 	}
 
