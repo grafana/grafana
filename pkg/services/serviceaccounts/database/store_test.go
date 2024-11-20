@@ -265,10 +265,10 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 		t.Skip("skipping test in short mode")
 	}
 	cases := []struct {
-		desc        string
-		user        tests.TestUser
-		expectedUID string
-		expectedErr error
+		desc          string
+		user          tests.TestUser
+		retrieveByUID bool
+		expectedErr   error
 	}{
 		{
 			desc:        "service accounts should exist and get retrieved",
@@ -276,10 +276,10 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "service accounts should be able to be retrieved with uid",
-			user:        tests.TestUser{Login: "test1@admin", IsServiceAccount: false, UID: "test-uid"},
-			expectedErr: nil,
-			expectedUID: "test-uid",
+			desc:          "service accounts should be able to be retrieved with uid",
+			user:          tests.TestUser{Login: "test1@admin", IsServiceAccount: true},
+			expectedErr:   nil,
+			retrieveByUID: true,
 		},
 		{
 			desc:        "service accounts is false should not retrieve user",
@@ -294,7 +294,7 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 			var err error
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
-			if c.expectedUID != "" {
+			if c.retrieveByUID {
 				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
 					OrgID: user.OrgID,
 					UID:   user.UID,
@@ -311,8 +311,8 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, c.user.Login, dto.Login)
 				require.Len(t, dto.Teams, 0)
-				if c.expectedUID != "" {
-					require.Equal(t, c.expectedUID, dto.UID)
+				if c.retrieveByUID {
+					require.Equal(t, user.UID, dto.UID)
 				}
 			}
 		})
