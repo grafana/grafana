@@ -33,38 +33,8 @@
       }
     }
   },
-  "alert-rule-form": {
-    "evaluation-behaviour": {
-      "info-help": {
-        "text": ""
-      },
-      "pending-period": ""
-    },
-    "evaluation-behaviour-description1": "",
-    "evaluation-behaviour-description2": "",
-    "evaluation-behaviour-description3": "",
-    "evaluation-behaviour-for": {
-      "error-parsing": "",
-      "validation": ""
-    },
-    "evaluation-behaviour-group": {
-      "text": ""
-    },
-    "pause": {
-      "alerting": "",
-      "label": "",
-      "recording": ""
-    }
-  },
   "alerting": {
     "alert-recording-rule-form": {
-      "evaluation-behaviour": {
-        "description": {
-          "text": ""
-        }
-      }
-    },
-    "alert-rule-form": {
       "evaluation-behaviour": {
         "description": {
           "text": ""
@@ -177,10 +147,6 @@
             "alerting": "",
             "recording": ""
           }
-        },
-        "text": {
-          "alerting": "",
-          "recording": ""
         }
       }
     },
@@ -265,6 +231,60 @@
       },
       "preview": "",
       "previewCondition": ""
+    },
+    "rule-form": {
+      "evaluation": {
+        "evaluation-group-and-interval": "",
+        "group": {
+          "cancel": "",
+          "create": "",
+          "interval": ""
+        },
+        "group-name": "",
+        "group-text": "",
+        "new-group": "",
+        "pause": {
+          "alerting": "",
+          "recording": ""
+        },
+        "select-folder-before": ""
+      },
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        },
+        "info-help": {
+          "text": ""
+        },
+        "pending-period": ""
+      },
+      "evaluation-behaviour-description1": "",
+      "evaluation-behaviour-description2": "",
+      "evaluation-behaviour-description3": "",
+      "evaluation-behaviour-for": {
+        "error-parsing": "",
+        "validation": ""
+      },
+      "folder": {
+        "cancel": "",
+        "create": "",
+        "create-folder": "",
+        "creating-new-folder": "",
+        "label": "",
+        "name": "",
+        "new-folder": "",
+        "new-folder-or": ""
+      },
+      "folder-and-labels": "",
+      "folders": {
+        "help-info": ""
+      },
+      "labels": {
+        "help-info": ""
+      },
+      "pause": {
+        "label": ""
+      }
     },
     "rule-groups": {
       "delete": {
@@ -2649,9 +2669,11 @@
       "back-button": "Retour à la configuration de l'exportation",
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
+      "loading": "",
       "save-button": "Enregistrer dans un fichier",
       "share-externally-label": "Exporter pour un partage externe",
-      "view-button": "Afficher au format JSON"
+      "view-button": "Afficher au format JSON",
+      "view-button-schemav2": ""
     },
     "library": {
       "info": "Créer un panneau de bibliothèque."
