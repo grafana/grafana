@@ -161,6 +161,7 @@
           "title": "Data source-managed"
         },
         "grafanaManaged": {
+          "export-new-rule": "Export new alert rule",
           "export-rules": "Export rules",
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
