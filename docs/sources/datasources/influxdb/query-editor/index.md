@@ -35,7 +35,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-editors
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/latest/panels-visualizations/query-transform-data/#query-editors
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/#query-editors
   build-dashboards:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/
