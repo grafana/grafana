@@ -260,7 +260,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read added resource: %w", err)
 			}
 
-			r.logger.Info("added file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("added file", "file", file, "resource", string(resource), "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Modified {
@@ -269,7 +269,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read modified resource: %w", err)
 			}
 
-			r.logger.Info("modified file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("modified file", "file", file, "resource", string(resource), "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Removed {
@@ -278,7 +278,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 				return fmt.Errorf("read removed resource: %w", err)
 			}
 
-			r.logger.Info("removed file", "file", file, "resource", resource, "commit", commit.GetID())
+			r.logger.Info("removed file", "file", file, "resource", string(resource), "commit", commit.GetID())
 		}
 
 		beforeRef = commit.GetID()
