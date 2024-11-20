@@ -1,0 +1,15 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "dashboard.grafana.app",
+    "resource": "dashboards",
+    "name": "bbb"
+  },
+  "rv": 1234,
+  "title": "bbb",
+  "created": 1730490142000,
+  "createdBy": "user:1",
+  "repository": {
+    "name": "SQL"
+  }
+}
