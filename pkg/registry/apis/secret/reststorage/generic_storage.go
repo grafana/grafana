@@ -32,14 +32,13 @@ var (
 
 // GenericStorage is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type GenericStorage struct {
-	// TODO: do we want another interface that is less broad here? meaning that it doesn't have the `Decrypt` method at all.
-	store          secretstore.SecureValueStore
+	store          secretstore.SecureValueStoreCRUDL
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
 // NewGenericStorage is a returns a constructed `*GenericStorage`.
-func NewGenericStorage(store secretstore.SecureValueStore, resource utils.ResourceInfo) *GenericStorage {
+func NewGenericStorage(store secretstore.SecureValueStoreCRUDL, resource utils.ResourceInfo) *GenericStorage {
 	return &GenericStorage{store, resource, resource.TableConverter()}
 }
 

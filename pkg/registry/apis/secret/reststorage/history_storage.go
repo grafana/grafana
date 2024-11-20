@@ -22,12 +22,11 @@ var (
 
 // HistoryStorage implements the methods for the "history" subresource. This is exposed via HTTP, not gRPC.
 type HistoryStorage struct {
-	// TODO: we can use composition and only expose the `History` method this uses.
-	store secretstore.SecureValueStore
+	store secretstore.SecureValueStoreHistory
 }
 
 // NewHistoryStorage is a returns a constructed `*HistoryStorage`.
-func NewHistoryStorage(store secretstore.SecureValueStore) *HistoryStorage {
+func NewHistoryStorage(store secretstore.SecureValueStoreHistory) *HistoryStorage {
 	return &HistoryStorage{store}
 }
 

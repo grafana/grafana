@@ -23,12 +23,11 @@ var (
 type DecryptStorage struct {
 	config *setting.Cfg
 
-	// TODO: we can use composition and only expose the `Decrypt` method this uses.
-	store secretstore.SecureValueStore
+	store secretstore.SecureValueStoreDecrypt
 }
 
 // NewDecryptStorage is a returns a constructed `*DecryptStorage`.
-func NewDecryptStorage(config *setting.Cfg, store secretstore.SecureValueStore) *DecryptStorage {
+func NewDecryptStorage(config *setting.Cfg, store secretstore.SecureValueStoreDecrypt) *DecryptStorage {
 	return &DecryptStorage{config, store}
 }
 
