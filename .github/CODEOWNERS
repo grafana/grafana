@@ -40,7 +40,6 @@
 
 /docs/sources/alerting/                                                           @brendamuir
 /docs/sources/dashboards/                                                         @imatwawana
-/docs/sources/explore/                                                            @grafana/observability-traces-and-profiling @lwandz13
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @irenerl24 @GrafanaWriter
 /docs/sources/upgrade-guide/                                                      @imatwawana
