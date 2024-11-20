@@ -77,7 +77,7 @@ type Requester interface {
 }
 
 // IntIdentifier converts a typeID to an int64.
-// Applicable for users, service accounts, api keys and renderer service.
+// Applicable for users, service accounts, api keys, renderer service and provisioning.
 // Errors if the identifier is not initialized or if type is not recognized.
 func IntIdentifier(typedID string) (int64, error) {
 	typ, id, err := ParseTypeAndID(typedID)
@@ -85,7 +85,7 @@ func IntIdentifier(typedID string) (int64, error) {
 		return 0, err
 	}
 
-	return intIdentifier(typ, id, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService)
+	return intIdentifier(typ, id, claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount, claims.TypeRenderService, claims.TypeProvisioning)
 }
 
 // UserIdentifier converts a typeID to an int64.

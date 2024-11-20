@@ -10,6 +10,8 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.52.0
 
+replace github.com/grafana/authlib/claims => /Users/charandas/go/src/github.com/grafana/authlib/claims
+
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.34.2-20240902100956-02fd72488966.2 // @grafana/observability-traces-and-profiling

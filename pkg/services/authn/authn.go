@@ -25,6 +25,7 @@ const (
 	ClientJWT          = "auth.client.jwt"
 	ClientExtendedJWT  = "auth.client.extended-jwt"
 	ClientRender       = "auth.client.render"
+	ClientProvisioning = "auth.client.provisioning"
 	ClientSession      = "auth.client.session"
 	ClientForm         = "auth.client.form"
 	ClientProxy        = "auth.client.proxy"

@@ -91,6 +91,8 @@ func (u *SignedInUser) GetIdentityType() claims.IdentityType {
 		return claims.TypeUser
 	case u.IsAnonymous:
 		return claims.TypeAnonymous
+	case u.AuthenticatedBy == "provisioning":
+		return claims.TypeProvisioning
 	case u.AuthenticatedBy == "render" && u.UserID == 0:
 		return claims.TypeRenderService
 	}

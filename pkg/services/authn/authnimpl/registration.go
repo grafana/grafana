@@ -45,6 +45,7 @@ func ProvideRegistration(
 	logger := log.New("authn.registration")
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
+	authnSvc.RegisterClient(clients.ProvideProvisioning())
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService))
 
 	if cfg.LoginCookieName != "" {

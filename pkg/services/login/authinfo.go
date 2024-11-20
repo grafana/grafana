@@ -34,6 +34,7 @@ const (
 	JWTModule              = "jwt"
 	ExtendedJWTModule      = "extendedjwt"
 	RenderModule           = "render"
+	ProvisioningModule     = "provisioning"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
 	GoogleAuthModule     = "oauth_google"
