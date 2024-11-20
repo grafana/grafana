@@ -253,17 +253,17 @@ All of these settings are optional.
 The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, including all core data source plugins except MySQL, PostgreSQL, and MS SQL.
 {{< /admonition >}}
 
-| Name              | Type   | Data source                        | Description                                              |
-| ----------------- | ------ | ---------------------------------- | -------------------------------------------------------- |
-| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests                           |
-| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests                    |
-| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests                     |
-| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                 |
-| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                        |
-| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                  |
-| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                  |
-| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider |
-| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider |
+| Name              | Type   | Data source                        | Description                                                                                                                                                      |
+| ----------------- | ------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tlsCACert         | string | _HTTP\*_, MySQL, PostgreSQL        | CA cert for out going requests. You can point directly to your stored cert by using an environment variable following the `$__file{path/to/ca}` format.          |
+| tlsClientCert     | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client cert for outgoing requests. You can point directly to your stored cert by using an environment variable following the `$__file{path/to/cert}` format. |
+| tlsClientKey      | string | _HTTP\*_, MySQL, PostgreSQL        | TLS Client key for outgoing requests. You can point directly to your stored key by using an environment variable following the `$__file{path/to/key}` format.    |
+| password          | string | _HTTP\*_, MySQL, PostgreSQL, MSSQL | password                                                                                                                                                         |
+| basicAuthPassword | string | _HTTP\*_                           | password for basic authentication                                                                                                                                |
+| accessKey         | string | Cloudwatch                         | Access key for connecting to Cloudwatch                                                                                                                          |
+| secretKey         | string | Cloudwatch                         | Secret key for connecting to Cloudwatch                                                                                                                          |
+| sigV4AccessKey    | string | Elasticsearch and Prometheus       | SigV4 access key. Required when using keys auth provider                                                                                                         |
+| sigV4SecretKey    | string | Elasticsearch and Prometheus       | SigV4 secret key. Required when using keys auth provider                                                                                                         |
 
 #### Custom HTTP headers for data sources
 

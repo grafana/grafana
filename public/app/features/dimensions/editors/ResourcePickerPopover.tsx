@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -21,20 +21,22 @@ interface Props {
   mediaType: MediaType;
   folderName: ResourceFolderName;
   maxFiles?: number;
+  hidePopper?: () => void;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName, maxFiles } = props;
+  const { value, onChange, mediaType, folderName, maxFiles, hidePopper } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
     onChange(value);
+    hidePopper?.();
   };
 
-  const ref = createRef<HTMLElement>();
+  const ref = useRef<HTMLElement>(null);
   const { dialogProps } = useDialog({}, ref);
   const { overlayProps } = useOverlay({ onClose, isDismissable: true, isOpen: true }, ref);
 
@@ -124,11 +126,13 @@ export const ResourcePickerPopover = (props: Props) => {
                         getBackendSrv()
                           .get(`api/storage/read/${data.path}`)
                           .then(() => setNewValue(`${config.appUrl}api/storage/read/${data.path}`))
-                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`));
+                          .then(() => onChange(`${config.appUrl}api/storage/read/${data.path}`))
+                          .then(() => hidePopper?.());
                       })
                       .catch((err) => console.error(err));
                   } else {
                     onChange(newValue);
+                    hidePopper?.();
                   }
                 }}
               >

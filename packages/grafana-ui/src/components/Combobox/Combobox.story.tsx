@@ -4,23 +4,30 @@ import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { Divider } from '../Divider/Divider';
 import { Field } from '../Forms/Field';
-import { Select, AsyncSelect } from '../Select/Select';
+import { AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
+import mdx from './Combobox.mdx';
 
-type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
+type PropsAndCustomArgs<T extends string | number = string> = ComponentProps<typeof Combobox<T>> & {
+  numberOfOptions: number;
+};
 
 const meta: Meta<PropsAndCustomArgs> = {
   title: 'Forms/Combobox',
   component: Combobox,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
   args: {
     loading: undefined,
     invalid: undefined,
     width: undefined,
+    isClearable: false,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
@@ -39,12 +46,6 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Honeydew', value: 'honeydew' },
       { label: 'Iceberg Lettuce', value: 'iceberg-lettuce' },
       { label: 'Jackfruit', value: 'jackfruit' },
-      { label: '1', value: 1 },
-      { label: '2', value: 2 },
-      { label: '3', value: 3 },
-      { label: '4', value: 4 },
-      { label: '5', value: 5 },
-      { label: '6', value: 6 },
     ],
     value: 'banana',
   },
@@ -53,15 +54,16 @@ const meta: Meta<PropsAndCustomArgs> = {
   decorators: [InDevDecorator],
 };
 
-const BasicWithState: StoryFn<typeof Combobox> = (args) => {
-  const [value, setValue] = useState(args.value);
+const BasicWithState: StoryFn<PropsAndCustomArgs> = (args) => {
+  const [value, setValue] = useState<string | null>();
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
         id="test-combobox"
         {...args}
         value={value}
-        onChange={(val) => {
+        onChange={(val: ComboboxOption | null) => {
+          // TODO: Figure out how to update value on args
           setValue(val?.value || null);
           action('onChange')(val);
         }}
@@ -81,7 +83,7 @@ async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   }));
 }
 
-const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs<string>> = ({ numberOfOptions, ...args }) => {
   const [value, setValue] = useState<string | null>(null);
   const [options, setOptions] = useState<ComboboxOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -96,138 +98,18 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
     }, 1000);
   }, [numberOfOptions]);
 
+  const { onChange, ...rest } = args;
   return (
     <Combobox
-      {...args}
+      {...rest}
       loading={isLoading}
       options={options}
       value={value}
-      onChange={(opt) => {
+      onChange={(opt: ComboboxOption | null) => {
         setValue(opt?.value || null);
         action('onChange')(opt);
       }}
     />
-  );
-};
-
-const SelectComparisonStory: StoryFn<typeof Combobox> = (args) => {
-  const [comboboxValue, setComboboxValue] = useState(args.value);
-  const theme = useTheme2();
-
-  if (typeof args.options === 'function') {
-    throw new Error('This story does not support async options');
-  }
-
-  return (
-    <div style={{ border: '1px solid ' + theme.colors.border.weak, padding: 16 }}>
-      <Field label="Combobox with default size">
-        <Combobox
-          id="combobox-default-size"
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Field label="Select with default size">
-        <Select
-          id="select-default-size"
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Divider />
-
-      <Field label="Combobox with explicit size (25)">
-        <Combobox
-          id="combobox-explicit-size"
-          width={25}
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Field label="Select with explicit size (25)">
-        <Select
-          id="select-explicit-size"
-          width={25}
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Divider />
-
-      <Field label="Combobox with auto width, minWidth 15">
-        <Combobox
-          id="combobox-auto-size"
-          width="auto"
-          minWidth={15}
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Field label="Select with auto width">
-        <Select
-          id="select-auto-size"
-          width="auto"
-          value={comboboxValue}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Field label="Combobox with auto width, minWidth 15, empty value">
-        <Combobox
-          id="combobox-auto-size-empty"
-          width="auto"
-          minWidth={15}
-          value={null}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-
-      <Field label="Select with auto width, empty value">
-        <Select
-          id="select-auto-size-empty"
-          width="auto"
-          value={null}
-          options={args.options}
-          onChange={(val) => {
-            setComboboxValue(val?.value || null);
-            action('onChange')(val);
-          }}
-        />
-      </Field>
-    </div>
   );
 };
 
@@ -254,6 +136,7 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const loadOptionsAction = action('loadOptions called');
 const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
   // Combobox
   const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
@@ -263,7 +146,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
   // This simulates a kind of search API call
   const loadOptionsWithLabels = useCallback((inputValue: string) => {
-    console.info(`Load options called with value '${inputValue}' `);
+    loadOptionsAction(inputValue);
     return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
   }, []);
 
@@ -281,6 +164,8 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
     }
   }, []);
 
+  const { onChange, ...rest } = args;
+
   return (
     <>
       <Field
@@ -288,11 +173,12 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
       >
         <Combobox
+          {...rest}
           id="test-combobox-one"
           placeholder="Select an option"
           options={loadOptionsWithLabels}
           value={selectedOption}
-          onChange={(val) => {
+          onChange={(val: ComboboxOption | null) => {
             action('onChange')(val);
             setSelectedOption(val);
           }}
@@ -305,11 +191,12 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
         description="Or without labels, where consumer can just pass in a raw scalar value Value"
       >
         <Combobox
+          {...args}
           id="test-combobox-two"
           placeholder="Select an option"
           options={loadOptionsOnlyValues}
           value={selectedOption?.value ?? null}
-          onChange={(val) => {
+          onChange={(val: ComboboxOption | null) => {
             action('onChange')(val);
             setSelectedOption(val);
           }}
@@ -329,6 +216,7 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           }}
         />
       </Field>
+
       <Field label="Compared to AsyncSelect">
         <AsyncSelect
           id="test-async-select"
@@ -339,6 +227,20 @@ const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
           onChange={(val) => {
             action('onChange')(val);
             setAsyncSelectValue(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          {...args}
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val: ComboboxOption | null) => {
+            action('onChange')(val);
+            setSelectedOption(val);
           }}
         />
       </Field>
@@ -366,9 +268,9 @@ const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
           flex: 1,
         }}
       >
-        <Combobox placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
-        <Combobox placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
-        <Combobox placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
       </div>
     );
   }
@@ -394,13 +296,6 @@ const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
 
 export const PositioningTest: StoryObj<PropsAndCustomArgs> = {
   render: PositioningTestStory,
-};
-
-export const ComparisonToSelect: StoryObj<PropsAndCustomArgs> = {
-  args: {
-    numberOfOptions: 100,
-  },
-  render: SelectComparisonStory,
 };
 
 export default meta;

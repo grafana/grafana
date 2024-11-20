@@ -34,6 +34,7 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
+import { setOtelExperienceToggleState } from '../services/store';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -485,6 +486,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
 
+    setOtelExperienceToggleState(!useOtelExperience);
     trail.setState({ useOtelExperience: !useOtelExperience });
   };
 

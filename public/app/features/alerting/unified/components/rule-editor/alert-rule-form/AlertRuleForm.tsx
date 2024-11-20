@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -13,6 +13,8 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
   isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
@@ -36,6 +38,7 @@ import {
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useReturnTo } from '../../../hooks/useReturnTo';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { DataSourceType } from '../../../utils/datasource';
@@ -59,7 +62,8 @@ import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -84,6 +88,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
+  const { returnTo } = useReturnTo();
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
@@ -178,9 +183,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
     if (exitOnSave) {
-      const returnTo = queryParams.get('returnTo') || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+      const returnToUrl = returnTo || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
 
-      locationService.push(returnTo);
+      locationService.push(returnToUrl);
       return;
     }
 
@@ -285,38 +290,37 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
-          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {/* Step 3-4-5 */}
-              {showDataSourceDependantStep && (
-                <>
-                  {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && (
-                    <GrafanaEvaluationBehavior
-                      evaluateEvery={evaluateEvery}
-                      setEvaluateEvery={setEvaluateEvery}
-                      existing={Boolean(existing)}
-                      enableProvisionedGroups={false}
-                    />
-                  )}
+          <Stack direction="column" gap={3}>
+            {/* Step 1 */}
+            <AlertRuleNameAndMetric />
+            {/* Step 2 */}
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            {/* Step 3-4-5 */}
+            {showDataSourceDependantStep && (
+              <>
+                {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
 
-                  {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
+                {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
 
-                  {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
+                {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
 
-                  {/* Step 4 & 5 */}
-                  {/* Notifications step*/}
-                  <NotificationsStep alertUid={uidFromParams} />
-                  {/* Annotations only for cloud and Grafana */}
-                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
-                </>
-              )}
-            </Stack>
-          </CustomScrollbar>
+                {/* Step 4 & 5 & 6*/}
+                {isGrafanaManagedRuleByType(type) && (
+                  <GrafanaEvaluationBehaviorStep
+                    evaluateEvery={evaluateEvery}
+                    setEvaluateEvery={setEvaluateEvery}
+                    existing={Boolean(existing)}
+                    enableProvisionedGroups={false}
+                  />
+                )}
+                {/* Notifications step*/}
+                <NotificationsStep alertUid={uidFromParams} />
+                {/* Annotations only for alerting rules */}
+                {!isRecordingRuleByType(type) && <AnnotationsStep />}
+              </>
+            )}
+          </Stack>
         </div>
       </form>
       {showDeleteModal ? (

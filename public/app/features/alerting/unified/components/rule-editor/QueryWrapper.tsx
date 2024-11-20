@@ -98,7 +98,18 @@ export const QueryWrapper = ({
     // It's unclear as to why this happens, but we need better visibility on why this happens,
     // so we log when it does, and make the query model datasource UID match the datasource UID
     // We already elsewhere work under the assumption that the datasource settings are fetched from the datasourceUid property
-    queryWithDefaults.datasource.uid = query.datasourceUid;
+
+    // This check is necessary for some few cases where the datasource might be an string instead of an object
+    // see: https://github.com/grafana/grafana/issues/96040 for more context
+    if (typeof queryWithDefaults.datasource === 'object' && Boolean(queryWithDefaults.datasource)) {
+      queryWithDefaults.datasource.uid = query.datasourceUid;
+    } else {
+      // if the datasource is a string, we need to convert it to an object, and populate the fields from the query model
+      queryWithDefaults.datasource = {};
+      queryWithDefaults.datasource.uid = query.datasourceUid;
+      queryWithDefaults.datasource.type = query.model.datasource?.type;
+      queryWithDefaults.datasource.apiVersion = query.model.datasource?.apiVersion;
+    }
   }
 
   function SelectingDataSourceTooltip() {

@@ -115,6 +115,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     // Needed due to block formatting context
     tabContent: css({
       paddingLeft: '5px',
+      width: '100%',
     }),
   };
 };

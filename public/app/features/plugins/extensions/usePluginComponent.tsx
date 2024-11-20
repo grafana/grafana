@@ -5,8 +5,10 @@ import { usePluginContext } from '@grafana/data';
 import { UsePluginComponentResult } from '@grafana/runtime';
 
 import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { log } from './logs/log';
-import { isExposedComponentDependencyMissing, isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { isExposedComponentDependencyMissing } from './validators';
 
 // Returns a component exposed by a plugin.
 // (Exposed components can be defined in plugins by calling .exposeComponent() on the AppPlugin instance.)
@@ -29,14 +31,12 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
     const registryItem = registryState[id];
     const componentLog = log.child({
       title: registryItem.title,
-      description: registryItem.description,
+      description: registryItem.description ?? '',
       pluginId: registryItem.pluginId,
     });
 
-    if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext, componentLog)) {
-      componentLog.warning(
-        `usePluginComponent("${id}") - The exposed component ("${id}") is missing from the dependencies[] in the "plugin.json" file.`
-      );
+    if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
+      componentLog.error(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
       return {
         isLoading: false,
         component: null,

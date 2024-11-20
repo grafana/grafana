@@ -83,7 +83,7 @@ export const getPluginExtensions: GetExtensions = ({
         extensionPointId,
         path: addedLink.path ?? '',
         title: addedLink.title,
-        description: addedLink.description,
+        description: addedLink.description ?? '',
         onClick: typeof addedLink.onClick,
       });
       // Run the configure() function with the current context, and apply the ovverides
@@ -104,7 +104,7 @@ export const getPluginExtensions: GetExtensions = ({
         // Configurable properties
         icon: overrides?.icon || addedLink.icon,
         title: overrides?.title || addedLink.title,
-        description: overrides?.description || addedLink.description,
+        description: overrides?.description || addedLink.description || '',
         path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
         category: overrides?.category || addedLink.category,
       };
@@ -134,7 +134,7 @@ export const getPluginExtensions: GetExtensions = ({
 
     const componentLog = log.child({
       title: addedComponent.title,
-      description: addedComponent.description,
+      description: addedComponent.description ?? '',
       pluginId: addedComponent.pluginId,
     });
 
@@ -143,7 +143,7 @@ export const getPluginExtensions: GetExtensions = ({
       type: PluginExtensionTypes.component,
       pluginId: addedComponent.pluginId,
       title: addedComponent.title,
-      description: addedComponent.description,
+      description: addedComponent.description ?? '',
       component: wrapWithPluginContext(addedComponent.pluginId, addedComponent.component, componentLog),
     };
 
