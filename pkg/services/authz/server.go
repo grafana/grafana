@@ -16,10 +16,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authz/mappers"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
+
+func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) {
+	server := rbac.NewService(db, log.New("authz-grpc-server"), tracer)
+
+	srv := handler.GetServer()
+	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterAuthzExtentionServiceServer(srv, server)
+}
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
 var _ grpc_auth.ServiceAuthFuncOverride = (*legacyServer)(nil)
