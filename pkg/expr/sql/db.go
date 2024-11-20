@@ -8,7 +8,7 @@ import (
 
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
-	gomysql "github.com/dolthub/go-mysql-server/sql"
+	mysql "github.com/dolthub/go-mysql-server/sql"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -26,7 +26,7 @@ func (db *DB) RunCommands(commands []string) (string, error) {
 }
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Frame) error {
+func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
 	// Create fields based on the schema
 	for _, col := range schema {
 		var field *data.Field
@@ -34,10 +34,10 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 		switch colType := col.Type.(type) {
 		// NumberType represents all integer and floating point types
 		// TODO: branch between int and float
-		case gomysql.NumberType:
+		case mysql.NumberType:
 			field = data.NewField(col.Name, nil, []int64{})
 		// StringType represents all string types, including VARCHAR and BLOB.
-		case gomysql.StringType:
+		case mysql.StringType:
 			field = data.NewField(col.Name, nil, []string{})
 		// TODO: Implement the following types
 		// DatetimeType represents DATE, DATETIME, and TIMESTAMP.
@@ -58,7 +58,7 @@ func convertToDataFrame(iter gomysql.RowIter, schema gomysql.Schema, f *data.Fra
 	// Iterate through the rows and append data to fields
 	for {
 		// TODO: Use a more appropriate context
-		row, err := iter.Next(gomysql.NewEmptyContext())
+		row, err := iter.Next(mysql.NewEmptyContext())
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -117,9 +117,9 @@ func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 	}
 
 	// Create schema based on frame fields
-	schema := make(gomysql.Schema, len(frame.Fields))
+	schema := make(mysql.Schema, len(frame.Fields))
 	for i, field := range frame.Fields {
-		schema[i] = &gomysql.Column{
+		schema[i] = &mysql.Column{
 			Name:     field.Name,
 			Type:     convertDataType(field.Type()),
 			Nullable: true,
@@ -128,16 +128,16 @@ func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 	}
 
 	// Create table with the dynamic schema
-	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(schema), nil)
+	table := memory.NewTable(db.inMemoryDb, name, mysql.NewPrimaryKeySchema(schema), nil)
 	db.inMemoryDb.AddTable(name, table)
 
 	// Insert data from the frame
 	pro := memory.NewDBProvider(db.inMemoryDb)
-	session := memory.NewSession(gomysql.NewBaseSession(), pro)
-	ctx := gomysql.NewContext(context.Background(), gomysql.WithSession(session))
+	session := memory.NewSession(mysql.NewBaseSession(), pro)
+	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
 	for i := 0; i < frame.Rows(); i++ {
-		row := make(gomysql.Row, len(frame.Fields))
+		row := make(mysql.Row, len(frame.Fields))
 		for j, field := range frame.Fields {
 			row[j] = field.At(i)
 		}
@@ -151,7 +151,7 @@ func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 }
 
 // Helper function to convert data.FieldType to types.Type
-func convertDataType(fieldType data.FieldType) gomysql.Type {
+func convertDataType(fieldType data.FieldType) mysql.Type {
 	switch fieldType {
 	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64:
 		return types.Int64
@@ -184,11 +184,11 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	}
 
 	engine := sqle.NewDefault(
-		gomysql.NewDatabaseProvider(
+		mysql.NewDatabaseProvider(
 			db.inMemoryDb,
 		))
 
-	ctx := gomysql.NewEmptyContext()
+	ctx := mysql.NewEmptyContext()
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
