@@ -12,6 +12,7 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	secret "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -85,25 +86,16 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	// other interfaces that equal to different operations like `get`, `list` and so on.
 	secureValueStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
-		// The `restStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): &secureValueRESTStorage{
-			store:          b.store,
-			resource:       secureValueResource,
-			tableConverter: secureValueResource.TableConverter(),
-		},
+		// The `reststorage.GenericStorage` struct will implement interfaces for CRUDL operations on `securevalue`.
+		secureValueResource.StoragePath(): reststorage.NewGenericStorage(b.store, secureValueResource),
 
 		// This is a subresource from `securevalue`. It gets accessed like `securevalue/xyz/decrypt`.
 		// Not yet supported by grafana-app-sdk or unified storage.
-		secureValueResource.StoragePath("decrypt"): &secretDecrypt{
-			config: b.config,
-			store:  b.store,
-		},
+		secureValueResource.StoragePath("decrypt"): reststorage.NewDecryptStorage(b.config, b.store),
 
 		// This is a subresrouce from `securevalue`. It gets accessed like `securevalue/xyz/history`.
 		// Not yet supported by grafana-app-sdk or unified storage.
-		secureValueResource.StoragePath("history"): &secretHistory{
-			store: b.store,
-		},
+		secureValueResource.StoragePath("history"): reststorage.NewHistoryStorage(b.store),
 	}
 
 	// This does not do anything here. Shouldn't it also use the keymanager resource? TODO!
