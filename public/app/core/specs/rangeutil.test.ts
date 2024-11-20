@@ -103,5 +103,17 @@ describe('rangeUtil', () => {
       const text = rangeUtil.describeTimeRange({ from: 'now-6h', to: 'now+1h' });
       expect(text).toBe('now-6h to now+1h');
     });
+
+    it('Date range that is in custom quick ranges', () => {
+      const opt: TimeOption = { from: 'now-4w/w', to: 'now-1w/w', display: 'Previous 4 weeks' };
+      const text = rangeUtil.describeTimeRange({ from: opt.from, to: opt.to }, null, [opt]);
+      expect(text).toBe(opt.display);
+    });
+
+    it('Date range description from custom quick ranges has higher priority', () => {
+      const opt: TimeOption = { from: 'now/d', to: 'now/d', display: 'This day' };
+      const text = rangeUtil.describeTimeRange({ from: opt.from, to: opt.to }, null, [opt]);
+      expect(text).toBe(opt.display); // overrides 'Today'
+    });
   });
 });
