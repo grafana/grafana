@@ -176,6 +176,10 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	// or indeed into convertToDataFrame
 	f.Name = name
 
+	pro := memory.NewDBProvider(db.inMemoryDb)
+	session := memory.NewSession(mysql.NewBaseSession(), pro)
+	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
+
 	for _, frame := range frames {
 		err := db.writeDataframeToDb(name, frame)
 		if err != nil {
@@ -183,14 +187,12 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 		}
 	}
 
-	engine := sqle.NewDefault(
-		mysql.NewDatabaseProvider(
-			db.inMemoryDb,
-		))
-
-	pro := memory.NewDBProvider(db.inMemoryDb)
-	session := memory.NewSession(mysql.NewBaseSession(), pro)
-	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
+	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
+	engine := sqle.NewDefault(pro)
+	// engine := sqle.NewDefault(
+	// 	mysql.NewDatabaseProvider(
+	// 		db.inMemoryDb,
+	// 	))
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
