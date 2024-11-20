@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/scope"
 	"github.com/grafana/grafana/pkg/registry/apis/search"
@@ -39,7 +38,6 @@ func ProvideRegistryServiceSink(
 	_ *notifications.NotificationsAPIBuilder,
 	_ *search.SearchAPIBuilder,
 	_ *userstorage.UserStorageAPIBuilder,
-	_ *provisioning.ProvisioningAPIBuilder,
 ) *Service {
 	return &Service{}
 }
