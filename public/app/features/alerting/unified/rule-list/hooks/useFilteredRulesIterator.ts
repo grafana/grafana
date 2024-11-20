@@ -28,7 +28,7 @@ export interface RuleWithOrigin {
 
 const { useLazyGroupsQuery } = prometheusApi;
 
-export function useFilteredRulesIteratorProvider(filterState: RulesFilter, groupLimit: number) {
+export function useFilteredRulesIteratorProvider() {
   const [fetchGroups] = useLazyGroupsQuery();
   const allRuleSourceNames = getAllRulesSourceNames();
 
@@ -71,7 +71,7 @@ export function useFilteredRulesIteratorProvider(filterState: RulesFilter, group
     [fetchGroups]
   );
 
-  const getFilteredRulesIterator = () => {
+  const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
       ? filterState.dataSourceNames
       : allRuleSourceNames;

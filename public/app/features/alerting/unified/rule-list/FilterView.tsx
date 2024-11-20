@@ -1,7 +1,6 @@
 import { take, tap, withAbort } from 'ix/asynciterable/operators';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { useDeepCompareEffect } from 'react-use';
 
 import { Card, EmptyState, Stack, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
@@ -24,30 +23,30 @@ const FRONTENT_PAGE_SIZE = 100;
 const API_PAGE_SIZE = 2000;
 
 export function FilterView({ filterState }: FilterViewProps) {
+  // ⚠️ We use a key to force the component to unmount and remount when the filter state changes
+  return <FilterViewResults filterState={filterState} key={JSON.stringify(filterState)} />;
+}
+
+function FilterViewResults({ filterState }: FilterViewProps) {
   const [transitionPending, startTransition] = useTransition();
 
   /* this hook returns a function that creates an AsyncIterable<RuleWithOrigin> which we will use to populate the front-end */
-  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider(filterState, API_PAGE_SIZE);
+  const { getFilteredRulesIterator } = useFilteredRulesIteratorProvider();
 
   /* this is the abort controller that allows us to stop an AsyncIterable */
   const controller = useRef(new AbortController());
 
   /**
-   * This function returs a iterator that we can use to populate the search results.
+   * This an iterator that we can use to populate the search results.
    * It also uses the signal from the AbortController above to cancel retrieving more results and sets up a
    * callback function to detect when we've exhausted the source.
-   */
-  const createNewIterator = useCallback(
-    () =>
-      getFilteredRulesIterator().pipe(
-        withAbort(controller.current.signal),
-        onFinished(() => setDoneSearching(true))
-      ),
-    [getFilteredRulesIterator]
+   * This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
+  const rulesIterator = useRef(
+    getFilteredRulesIterator(filterState, API_PAGE_SIZE).pipe(
+      withAbort(controller.current.signal),
+      onFinished(() => setDoneSearching(true))
+    )
   );
-
-  /* This is the main AsyncIterable<RuleWithOrigin> we will use for the search results */
-  const rulesIterator = useRef(createNewIterator());
 
   const [rules, setRules] = useState<RuleWithOrigin[]>([]);
   const [doneSearching, setDoneSearching] = useState(false);
@@ -61,30 +60,12 @@ export function FilterView({ filterState }: FilterViewProps) {
     }
   });
 
-  /**
-   * When the filter state is updated, reset the AbortController and re-create the iterator.
-   * Then reset the state of the component
-   */
-  useDeepCompareEffect(() => {
-    // recreate abort controller
-    controller.current.abort();
-    controller.current = new AbortController();
-
-    // recreate rules iterator
-    rulesIterator.current = createNewIterator();
-
-    // reset view state
-    setRules([]);
-    setDoneSearching(false);
-
-    // fetch a new page
-    loadResultPage();
-  }, [filterState]);
-
   /* When we unmount the component we make sure to abort all iterables */
   useEffect(() => {
+    const currentAbortController = controller.current;
+
     return () => {
-      controller.current.abort();
+      currentAbortController.abort();
     };
   }, [controller]);
 
