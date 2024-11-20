@@ -42,33 +42,46 @@ var (
 
 // This is used just so wire has something unique to return
 type ProvisioningAPIBuilder struct {
-	cfg               *setting.Cfg
+	urlProvider       func(namespace string) string
+	webhookSecreteKey string
+
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 }
 
-func NewProvisioningAPIBuilder(cfg *setting.Cfg, local *LocalFolderResolver) *ProvisioningAPIBuilder {
+// This constructor will be called when building a multi-tenant apiserveer
+// Avoid adding anything that secretly requires additional hidden dependencies
+// like *settings.Cfg or core grafana services that depend on database connections
+func NewProvisioningAPIBuilder(
+	local *LocalFolderResolver,
+	urlProvider func(namespace string) string,
+	webhookSecreteKey string,
+) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
-		cfg:               cfg,
+		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
+		webhookSecreteKey: webhookSecreteKey,
 	}
 }
 
 func RegisterAPIService(
+	// It is OK to use settigns.Cfg here -- this is only used when running single tenant with a full setup
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	cfg *setting.Cfg,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewProvisioningAPIBuilder(cfg, &LocalFolderResolver{
+	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
-	})
+	}, func(namespace string) string {
+		return cfg.AppURL
+	}, cfg.SecretKey)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -264,7 +277,11 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		}
 
 		if r.Spec.GitHub.WebhookURL == "" {
-			r.Spec.GitHub.WebhookURL = fmt.Sprintf("%sapi/provisioning/v0alpha1/namespaces/%s/repositories/%s/webhook", b.cfg.AppURL, a.GetNamespace(), a.GetName())
+			gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+			r.Spec.GitHub.WebhookURL = fmt.Sprintf("%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+				b.urlProvider(a.GetNamespace()), // gets the full name
+				gvr.Group, gvr.Version,
+				a.GetNamespace(), gvr.Resource, a.GetName())
 		}
 
 		if r.Spec.GitHub.WebhookSecret == "" {
@@ -491,7 +508,7 @@ spec:
 // using the configured secret key. The generated secret is consistent.
 // TODO: this must be replaced by a app platform secrets once we have that.
 func (b *ProvisioningAPIBuilder) generateWebhookSecret(token string) string {
-	secretKey := []byte(b.cfg.SecretKey)
+	secretKey := []byte(b.webhookSecreteKey)
 	h := hmac.New(sha256.New, secretKey)
 
 	h.Write([]byte(token))
