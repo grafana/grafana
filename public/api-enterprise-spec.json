@@ -7123,6 +7123,12 @@
         "hidden": {
           "type": "boolean"
         },
+        "mappedGroupUIDs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "name": {
           "type": "string"
         },

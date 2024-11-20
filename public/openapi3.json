@@ -9751,6 +9751,12 @@
           "hidden": {
             "type": "boolean"
           },
+          "mappedGroupUIDs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "name": {
             "type": "string"
           },
