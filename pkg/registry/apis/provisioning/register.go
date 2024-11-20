@@ -12,21 +12,19 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -151,6 +149,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
+		client: b.client.identities,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("file")] = &readConnector{
 		getter: b,
@@ -160,7 +159,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 }
 
 func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (Repository, error) {
-	obj, err := b.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
