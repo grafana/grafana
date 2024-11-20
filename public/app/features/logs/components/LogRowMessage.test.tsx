@@ -212,7 +212,6 @@ line3`;
 
       const { row } = setup({ logRowMenuIconsBefore, logRowMenuIconsAfter });
 
-      await userEvent.hover(screen.getByText('test123'));
       await userEvent.click(screen.getByLabelText('Addon before'));
       await userEvent.click(screen.getByLabelText('Addon after'));
 
