@@ -513,7 +513,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Dashboard snapshots
 		apiRoute.Group("/dashboard/snapshots", func(dashboardRoute routing.RouteRegister) {
-			dashboardRoute.Get("/", routing.Wrap(hs.SearchDashboardSnapshots))
+			dashboardRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionSnapshotsRead)), routing.Wrap(hs.SearchDashboardSnapshots))
 		})
 
 		// Playlist

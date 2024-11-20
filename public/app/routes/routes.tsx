@@ -444,6 +444,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/snapshots',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.SnapshotsRead]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),

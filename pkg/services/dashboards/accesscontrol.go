@@ -34,6 +34,7 @@ const (
 	ActionDashboardsPublicWrite      = "dashboards.public:write"
 	ActionSnapshotsCreate            = "snapshots:create"
 	ActionSnapshotsDelete            = "snapshots:delete"
+	ActionSnapshotsRead              = "snapshots:read"
 )
 
 var (
