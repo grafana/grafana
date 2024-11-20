@@ -272,7 +272,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       }
 
       if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
-        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
+        matchesFilterFor.plugins = rule.rulerRule && !isPluginProvidedRule(rule.rulerRule);
       }
 
       if ('contactPoint' in matchesFilterFor) {

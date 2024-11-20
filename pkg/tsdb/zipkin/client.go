@@ -127,6 +127,10 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 	}
 
 	res, err := z.httpClient.Get(traceUrl)
+	if err != nil {
+		return trace, err
+	}
+
 	defer func() {
 		if res != nil {
 			if err = res.Body.Close(); err != nil {
@@ -134,9 +138,6 @@ func (z *ZipkinClient) Trace(traceId string) ([]model.SpanModel, error) {
 			}
 		}
 	}()
-	if err != nil {
-		return trace, err
-	}
 	if err := json.NewDecoder(res.Body).Decode(&trace); err != nil {
 		return trace, err
 	}

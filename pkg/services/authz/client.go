@@ -88,7 +88,10 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	return newGrpcLegacyClient(authCfg)
+	if cfg.StackID == "" {
+		return newGrpcLegacyClient(authCfg)
+	}
+	return newCloudLegacyClient(authCfg)
 }
 
 func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error) {

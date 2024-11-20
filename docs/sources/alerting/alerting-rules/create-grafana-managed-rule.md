@@ -85,6 +85,9 @@ Multiple alert instances can be created as a result of one alert rule (also know
 
 {{% admonition type="note" %}}
 For Grafana Cloud Free Forever, you can create up to 100 free Grafana-managed alert rules with each alert rule having a maximum of 1000 alert instances.
+
+For all paid tiers (Cloud Pro and Advanced), there is a soft limit of 2000 alert rules and unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](https://grafana.com/docs/grafana-cloud/account-management/support/).
+
 {{% /admonition %}}
 
 Grafana-managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.

@@ -1,9 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { Button, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';

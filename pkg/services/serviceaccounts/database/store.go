@@ -402,6 +402,43 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		if err := sess.Find(&searchResult.ServiceAccounts); err != nil {
 			return err
 		}
+
+		// stop here if we don't want to count the number of tokens per service account
+		if !query.CountTokens {
+			return nil
+		}
+
+		// Fetch tokens count for each service account
+		accountIDs := make([]int64, len(searchResult.ServiceAccounts))
+		for i, serviceAccount := range searchResult.ServiceAccounts {
+			accountIDs[i] = serviceAccount.Id
+		}
+
+		tokensSess := dbSession.Table("api_key").
+			Select("service_account_id, COUNT(id) AS token_count").
+			Where("org_id = ?", query.OrgID).
+			In("service_account_id", accountIDs).
+			GroupBy("service_account_id")
+
+		type tokenCount struct {
+			AccountId  int64 `xorm:"service_account_id"`
+			TokenCount int64 `xorm:"token_count"`
+		}
+
+		var tokens []tokenCount
+		if err = tokensSess.Find(&tokens); err != nil {
+			return err
+		}
+
+		tokenMap := make(map[int64]int64)
+		for _, token := range tokens {
+			tokenMap[token.AccountId] = token.TokenCount
+		}
+
+		for i, account := range searchResult.ServiceAccounts {
+			searchResult.ServiceAccounts[i].Tokens = tokenMap[account.Id]
+		}
+
 		return nil
 	})
 	if err != nil {
