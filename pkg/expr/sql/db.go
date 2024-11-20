@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/davecgh/go-spew/spew"
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -120,6 +121,8 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 		for j, field := range frame.Fields {
 			row[j] = field.At(i)
 		}
+		spew.Dump(row)
+
 		err := table.Insert(ctx, row)
 		if err != nil {
 			return fmt.Errorf("error inserting row %d: %v", i, err)
@@ -134,6 +137,10 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	switch fieldType {
 	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64:
 		return types.Int64
+	// case when it's a slice of pointers to int64
+	case data.FieldTypeNullableInt64:
+		return types.Int64
+
 	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
 		return types.Uint64
 	case data.FieldTypeFloat32, data.FieldTypeFloat64:
@@ -145,6 +152,7 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	case data.FieldTypeTime:
 		return types.Timestamp
 	default:
+		fmt.Println("------- Unsupported field type: ", fieldType)
 		return types.JSON
 	}
 }
