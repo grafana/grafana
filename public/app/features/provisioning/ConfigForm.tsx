@@ -97,10 +97,11 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <b>An extra setting is required for private repositories:</b>
             <pre>repo (Full control of private repositories)</pre>
           </ControlledCollapse>
-          <Field label={'GitHub token'}>
+          <Field label={'GitHub token'} required error={errors?.token?.message} invalid={!!errors.token}>
             <Controller
               name={'token'}
               control={control}
+              rules={{ required: 'This field is required.' }}
               render={({ field: { ref, ...field } }) => {
                 return (
                   <SecretInput

@@ -13,6 +13,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
         generateDashboardPreviews: data.generateDashboardPreviews,
         owner: data.owner,
         repository: data.repository,
+        token: data.token,
       };
       break;
     case 'local':

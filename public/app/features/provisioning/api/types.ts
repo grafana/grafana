@@ -18,6 +18,7 @@ export type S3RepositoryConfig = {
 };
 
 export type RepositorySpec = {
+  title?: string;
   description?: string;
   folder?: string;
   github?: GitHubRepositoryConfig;
