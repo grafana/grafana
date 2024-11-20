@@ -48,7 +48,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#variable-best-practices
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#variable-best-practices
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/#variable-best-practices
 
 ---
 
