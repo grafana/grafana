@@ -29,6 +29,7 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
+  rows: TableRow[];
 }
 
 interface HeaderCellProps {
@@ -190,6 +191,27 @@ export function TableNG(props: TableNGProps) {
     }
   };
 
+  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+    const fnBody = `
+      const rows = Array(frame.length);
+      const values = frame.fields.map(f => f.values);
+
+      for (let i = 0; i < frame.length; i++) {
+        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+      }
+
+      return rows;
+    `;
+
+    const convert = new Function('frame', fnBody);
+
+    const records = convert(frame);
+
+    return records;
+  }, []);
+
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
+
   const mapFrameToDataGrid = (main: DataFrame) => {
     const columns: TableColumn[] = [];
 
@@ -208,6 +230,7 @@ export function TableNG(props: TableNGProps) {
       columns.push({
         key,
         name: field.name,
+        rows,
         field,
         cellClass: styles.cell,
         renderCell: (props: any) => {
@@ -265,32 +288,11 @@ export function TableNG(props: TableNGProps) {
     return columns;
   };
 
-  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
-    const fnBody = `
-      const rows = Array(frame.length);
-      const values = frame.fields.map(f => f.values);
-
-      for (let i = 0; i < frame.length; i++) {
-        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
-      }
-
-      return rows;
-    `;
-
-    const convert = new Function('frame', fnBody);
-
-    const records = convert(frame);
-
-    return records;
-  }, []);
-
   const columns = mapFrameToDataGrid(props.data);
 
   useLayoutEffect(() => {
     setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
   }, [columns]);
-
-  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
     return columns.reduce(

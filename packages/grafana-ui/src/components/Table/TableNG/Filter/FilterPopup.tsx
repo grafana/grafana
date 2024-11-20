@@ -7,8 +7,8 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
-import { FilterList } from './FilterList';
 
+import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
 // import { TableStyles } from './styles';
@@ -33,7 +33,11 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
-  const { preFilteredRows, filterValue, setFilter } = column;
+  // preFilteredRows: any[]
+  // filterValue: any,
+  // setFilter: (value: any) => void
+  const preFilteredRows = column.rows;
+  const { filterValue, setFilter } = column;
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
