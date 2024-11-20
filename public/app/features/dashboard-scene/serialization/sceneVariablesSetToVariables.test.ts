@@ -911,7 +911,7 @@ describe('sceneVariablesSetToVariables', () => {
       "kind": "ConstantVariable",
       "spec": {
         "current": {
-          "text": undefined,
+          "text": "constant value",
           "value": "constant value",
         },
         "description": "test-desc",
@@ -979,7 +979,7 @@ describe('sceneVariablesSetToVariables', () => {
         "auto_count": 30,
         "auto_min": "10s",
         "current": {
-          "text": undefined,
+          "text": "1m",
           "value": "1m",
         },
         "description": undefined,

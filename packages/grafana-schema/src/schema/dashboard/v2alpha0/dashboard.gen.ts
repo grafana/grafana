@@ -31,9 +31,13 @@ export interface DashboardV2Spec {
 	// |* more element types in the future
 	elements: Record<string, PanelKind>;
 	annotations: AnnotationQueryKind[];
+	layout: GridLayoutKind;
+	// Version of the JSON schema, incremented each time a Grafana update brings
+	// changes to said schema.
+	// version: will rely on k8s resource versioning, via metadata.resorceVersion
 	// revision?: int // for plugins only
 	// gnetId?: string // ??? Wat is this used for?
-	layout: GridLayoutKind;
+	schemaVersion: number;
 }
 
 export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
@@ -47,6 +51,7 @@ export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	elements: {},
 	annotations: [],
 	layout: defaultGridLayoutKind(),
+	schemaVersion: 39,
 });
 
 export interface AnnotationPanelFilter {
