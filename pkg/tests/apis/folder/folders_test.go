@@ -775,12 +775,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 
 	type testCase struct {
 		description          string
-		input                string
 		permissions          []resourcepermissions.SetResourcePermissionCommand
 		expectedCode         int
 		expectedParentUIDs   []string
 		expectedParentTitles []string
-		expectedParentOrgIDs []int64
 	}
 	tcs := []testCase{
 		{
