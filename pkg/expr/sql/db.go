@@ -9,7 +9,6 @@ import (
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
 	gomysql "github.com/dolthub/go-mysql-server/sql"
-	"github.com/dolthub/go-mysql-server/sql/information_schema"
 	"github.com/dolthub/go-mysql-server/sql/types"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
@@ -187,7 +186,6 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 	engine := sqle.NewDefault(
 		gomysql.NewDatabaseProvider(
 			db.inMemoryDb,
-			information_schema.NewInformationSchemaDatabase(),
 		))
 
 	ctx := gomysql.NewEmptyContext()
