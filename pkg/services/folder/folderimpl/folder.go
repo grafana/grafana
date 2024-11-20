@@ -306,12 +306,9 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 
 	// Fetch the parent since the permissions for fetching the newly created folder
 	// are not yet present for the user--this requires a call to ClearUserPermissionCache
-	parent, err := s.Get(ctx, &folder.GetFolderQuery{
-		UID:              &f.ParentUID,
-		OrgID:            f.OrgID,
-		WithFullpath:     true,
-		WithFullpathUIDs: true,
-		SignedInUser:     user,
+	parents, err := s.GetParents(ctx, folder.GetParentsQuery{
+		UID:   f.UID,
+		OrgID: f.OrgID,
 	})
 	if err != nil {
 		return nil, err
@@ -319,8 +316,12 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
 	// Escape forward slashes in the title
 	title := strings.Replace(f.Title, "/", "\\/", -1)
-	f.Fullpath = title + "/" + parent.Fullpath
-	f.FullpathUIDs = f.UID + "/" + parent.FullpathUIDs
+	f.Fullpath = title
+	f.FullpathUIDs = f.UID
+	for _, p := range parents {
+		f.Fullpath = f.Fullpath + "/" + p.Title
+		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
+	}
 	return f, nil
 }
 
