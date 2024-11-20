@@ -882,4 +882,16 @@ const (
 	// FlagCrashDetection
 	// Enables browser crash detection reporting to Faro.
 	FlagCrashDetection = "crashDetection"
+
+	// FlagJaegerBackendMigration
+	// Enables querying the Jaeger data source without the proxy
+	FlagJaegerBackendMigration = "jaegerBackendMigration"
+
+	// FlagReportingUseRawTimeRange
+	// Uses the original report or dashboard time range instead of making an absolute transformation
+	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
+
+	// FlagAlertingUIOptimizeReducer
+	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
+	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
 )

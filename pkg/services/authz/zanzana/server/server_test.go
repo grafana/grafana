@@ -49,6 +49,10 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test list", func(t *testing.T) {
 		testList(t, srv)
 	})
+
+	t.Run("test batch check", func(t *testing.T) {
+		testBatchCheck(t, srv)
+	})
 }
 
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
@@ -62,13 +66,13 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	require.NoError(t, err)
 
 	namespace := "default"
-	storeInf, err := srv.initNamespaceStore(context.Background(), namespace)
+	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
 	// seed tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				common.NewResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),

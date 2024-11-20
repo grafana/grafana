@@ -1,11 +1,6 @@
 package dashboard
 
-DashboardV2: {
-  kind: "Dashboard"
-  spec: DashboardSpec
-}
-
-DashboardSpec: {
+DashboardV2Spec: {
   // Unique numeric identifier for the dashboard.
   // `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
   id?: int64

@@ -1,12 +1,14 @@
 import {
-  DashboardLink as OldDashboardLink,
-  VariableHide as OldVariableHide,
-  VariableRefresh as OldVariableRefresh,
-  VariableSort as OldVariableSort,
+  DashboardLink as DashboardLinkV1,
+  VariableHide as VariableHideV1,
+  VariableRefresh as VariableRefreshV1,
+  VariableSort as VariableSortV1,
+  DashboardCursorSync as DashboardCursorSyncV1,
+  DashboardLinkType as DashboardLinkTypeV1,
 } from '@grafana/schema';
 import {
   DashboardCursorSync,
-  defaultDashboardSpec,
+  defaultDashboardV2Spec,
   DashboardLinkType,
   DashboardLink,
   defaultVariableHide,
@@ -15,9 +17,10 @@ import {
   VariableHide,
   VariableRefresh,
   VariableSort,
+  defaultDashboardLinkType,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
-export function transformCursorSynctoEnum(cursorSync?: number): DashboardCursorSync {
+export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): DashboardCursorSync {
   switch (cursorSync) {
     case 0:
       return DashboardCursorSync.Off;
@@ -26,22 +29,22 @@ export function transformCursorSynctoEnum(cursorSync?: number): DashboardCursorS
     case 2:
       return DashboardCursorSync.Tooltip;
     default:
-      return defaultDashboardSpec().cursorSync;
+      return defaultDashboardV2Spec().cursorSync;
   }
 }
 
-function transformDashboardLinkTypeToEnum(linkType: string): DashboardLinkType {
+function transformDashboardLinkTypeToEnum(linkType: DashboardLinkTypeV1): DashboardLinkType {
   switch (linkType) {
     case 'link':
       return DashboardLinkType.Link;
-    case 'dashboard':
+    case 'dashboards':
       return DashboardLinkType.Dashboards;
     default:
-      return DashboardLinkType.Link;
+      return defaultDashboardLinkType();
   }
 }
 
-export function transformDashboardLinksToEnums(links: OldDashboardLink[]): DashboardLink[] {
+export function transformDashboardLinksToEnums(links: DashboardLinkV1[]): DashboardLink[] {
   return links.map((link) => {
     return {
       ...link,
@@ -49,7 +52,7 @@ export function transformDashboardLinksToEnums(links: OldDashboardLink[]): Dashb
     };
   });
 }
-export function transformVariableRefreshToEnum(refresh: OldVariableRefresh): VariableRefresh {
+export function transformVariableRefreshToEnum(refresh?: VariableRefreshV1): VariableRefresh {
   switch (refresh) {
     case 0:
       return VariableRefresh.Never;
@@ -61,7 +64,7 @@ export function transformVariableRefreshToEnum(refresh: OldVariableRefresh): Var
       return defaultVariableRefresh();
   }
 }
-export function transformVariableHideToEnum(hide?: OldVariableHide): VariableHide {
+export function transformVariableHideToEnum(hide?: VariableHideV1): VariableHide {
   switch (hide) {
     case 0:
       return VariableHide.DontHide;
@@ -73,7 +76,7 @@ export function transformVariableHideToEnum(hide?: OldVariableHide): VariableHid
       return defaultVariableHide();
   }
 }
-export function transformSortVariableToEnum(sort?: OldVariableSort): VariableSort {
+export function transformSortVariableToEnum(sort?: VariableSortV1): VariableSort {
   switch (sort) {
     case 0:
       return VariableSort.Disabled;

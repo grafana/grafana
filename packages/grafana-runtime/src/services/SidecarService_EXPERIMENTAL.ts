@@ -2,6 +2,7 @@ import * as H from 'history';
 import { pick } from 'lodash';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 
+import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 
 import { HistoryWrapper, LocationService, locationService } from './LocationService';
@@ -92,6 +93,8 @@ export class SidecarService_EXPERIMENTAL {
     }
     this._initialContext.next(context);
     this.memoryLocationService.push({ pathname: `/a/${pluginId}` });
+
+    reportInteraction('sidecar_service_open_app', { pluginId, version: 1 });
   }
 
   /**
@@ -104,6 +107,7 @@ export class SidecarService_EXPERIMENTAL {
     }
 
     this.memoryLocationService.push({ pathname: `/a/${pluginId}${path || ''}` });
+    reportInteraction('sidecar_service_open_app', { pluginId, version: 2 });
   }
 
   /**
@@ -116,6 +120,8 @@ export class SidecarService_EXPERIMENTAL {
 
     this._initialContext.next(undefined);
     this.memoryLocationService.replace({ pathname: '/' });
+
+    reportInteraction('sidecar_service_close_app');
   }
 
   /**
@@ -139,7 +145,9 @@ export class SidecarService_EXPERIMENTAL {
       return false;
     }
 
-    return !!(this.activePluginId && (this.activePluginId === pluginId || getMainAppPluginId() === pluginId));
+    const result = !!(this.activePluginId && (this.activePluginId === pluginId || getMainAppPluginId() === pluginId));
+    reportInteraction('sidecar_service_is_app_opened', { pluginId, isOpened: result });
+    return result;
   }
 }
 

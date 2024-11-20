@@ -22,7 +22,7 @@ func testList(t *testing.T, server *Server) {
 		}
 	}
 
-	t.Run("user:1 should list resource:dashboards.grafana.app/dashboards/1", func(t *testing.T) {
+	t.Run("user:1 should list resource:dashboard.grafana.app/dashboards/1", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:1", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 1)
@@ -38,7 +38,7 @@ func testList(t *testing.T, server *Server) {
 		assert.Len(t, res.GetFolders(), 0)
 	})
 
-	t.Run("user:3 should be able to list resource:dashboards.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
+	t.Run("user:3 should be able to list resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:3", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func testList(t *testing.T, server *Server) {
 		assert.Equal(t, res.GetItems()[0], "1")
 	})
 
-	t.Run("user:4 should be able to list all dashboards.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
+	t.Run("user:4 should be able to list all dashboard.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:4", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)
@@ -64,7 +64,7 @@ func testList(t *testing.T, server *Server) {
 		assert.Equal(t, second, "3")
 	})
 
-	t.Run("user:5 should be get list all dashboards.grafana.app/dashboards in folder 1 with set relation", func(t *testing.T) {
+	t.Run("user:5 should be get list all dashboard.grafana.app/dashboards in folder 1 with set relation", func(t *testing.T) {
 		res, err := server.List(context.Background(), newList("user:5", dashboardGroup, dashboardResource))
 		require.NoError(t, err)
 		assert.Len(t, res.GetItems(), 0)

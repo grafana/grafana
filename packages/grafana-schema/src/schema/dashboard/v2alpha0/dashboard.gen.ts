@@ -1,16 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-export interface DashboardV2 {
-	kind: "Dashboard";
-	spec: DashboardSpec;
-}
-
-export const defaultDashboardV2 = (): DashboardV2 => ({
-	kind: "Dashboard",
-	spec: defaultDashboardSpec(),
-});
-
-export interface DashboardSpec {
+export interface DashboardV2Spec {
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
 	id?: number;
@@ -46,7 +36,7 @@ export interface DashboardSpec {
 	layout: GridLayoutKind;
 }
 
-export const defaultDashboardSpec = (): DashboardSpec => ({
+export const defaultDashboardV2Spec = (): DashboardV2Spec => ({
 	title: "",
 	cursorSync: DashboardCursorSync.Off,
 	preload: false,

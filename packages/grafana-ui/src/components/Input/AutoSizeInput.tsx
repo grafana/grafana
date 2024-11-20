@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { measureText } from '../../utils/measureText';
 
+import { AutoSizeInputContext } from './AutoSizeInputContext';
 import { Input, Props as InputProps } from './Input';
 
 export interface Props extends InputProps {
@@ -24,6 +25,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     onKeyDown,
     onBlur,
     value: controlledValue,
+    placeholder,
     ...restProps
   } = props;
   // Initialize internal state
@@ -36,38 +38,45 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
   const inputWidth = useMemo(() => {
-    const valueString = typeof value === 'string' ? value : value.toString();
+    const displayValue = value || placeholder || '';
+    const valueString = typeof displayValue === 'string' ? displayValue : displayValue.toString();
+
     return getWidthFor(valueString, minWidth, maxWidth);
-  }, [value, minWidth, maxWidth]);
+  }, [placeholder, value, minWidth, maxWidth]);
 
   return (
-    <Input
-      {...restProps}
-      ref={ref}
-      value={value.toString()}
-      onChange={(event) => {
-        if (onChange) {
-          onChange(event);
-        }
-        setValue(event.currentTarget.value);
-      }}
-      width={inputWidth}
-      onBlur={(event) => {
-        if (onBlur) {
-          onBlur(event);
-        } else if (onCommitChange) {
-          onCommitChange(event);
-        }
-      }}
-      onKeyDown={(event) => {
-        if (onKeyDown) {
-          onKeyDown(event);
-        } else if (event.key === 'Enter' && onCommitChange) {
-          onCommitChange(event);
-        }
-      }}
-      data-testid={'autosize-input'}
-    />
+    // Used to tell Input to increase the width properly of the input to fit the text.
+    // See comment in Input.tsx for more details
+    <AutoSizeInputContext.Provider value={true}>
+      <Input
+        {...restProps}
+        placeholder={placeholder}
+        ref={ref}
+        value={value.toString()}
+        onChange={(event) => {
+          if (onChange) {
+            onChange(event);
+          }
+          setValue(event.currentTarget.value);
+        }}
+        onBlur={(event) => {
+          if (onBlur) {
+            onBlur(event);
+          } else if (onCommitChange) {
+            onCommitChange(event);
+          }
+        }}
+        onKeyDown={(event) => {
+          if (onKeyDown) {
+            onKeyDown(event);
+          } else if (event.key === 'Enter' && onCommitChange) {
+            onCommitChange(event);
+          }
+        }}
+        width={inputWidth}
+        data-testid="autosize-input"
+      />
+    </AutoSizeInputContext.Provider>
   );
 });
 

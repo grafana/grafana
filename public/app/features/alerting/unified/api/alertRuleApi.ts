@@ -17,7 +17,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
-import { Folder } from '../components/rule-editor/RuleFolderPicker';
+import { Folder } from '../types/rule-form';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
@@ -25,9 +25,9 @@ import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rule
 import { alertingApi, WithNotificationOptions } from './alertingApi';
 import {
   FetchPromRulesFilter,
+  getRulesFilterSearchParams,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  getRulesFilterSearchParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -173,9 +173,21 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         dashboardUid?: string;
         panelId?: number;
         limitAlerts?: number;
+        maxGroups?: number;
+        excludeAlerts?: boolean;
       }
     >({
-      query: ({ ruleSourceName, namespace, groupName, ruleName, dashboardUid, panelId, limitAlerts }) => {
+      query: ({
+        ruleSourceName,
+        namespace,
+        groupName,
+        ruleName,
+        dashboardUid,
+        panelId,
+        limitAlerts,
+        maxGroups,
+        excludeAlerts,
+      }) => {
         const queryParams: Record<string, string | undefined> = {
           rule_group: groupName,
           rule_name: ruleName,
@@ -193,6 +205,14 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         if (limitAlerts !== undefined) {
           set(queryParams, PrometheusAPIFilters.LimitAlerts, String(limitAlerts));
+        }
+
+        if (maxGroups) {
+          set(queryParams, 'max_groups', maxGroups);
+        }
+
+        if (excludeAlerts) {
+          set(queryParams, 'exclude_alerts', 'true');
         }
 
         return {
