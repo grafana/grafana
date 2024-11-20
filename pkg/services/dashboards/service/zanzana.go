@@ -292,21 +292,3 @@ func (dr *DashboardServiceImpl) findFoldersZanzanaList(ctx context.Context, quer
 	query.DashboardUIDs = res.Items
 	return dr.dashboardStore.FindDashboards(ctx, &query)
 }
-
-func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, kind, action string) ([]string, error) {
-	namespace := query.SignedInUser.GetNamespace()
-	req, ok := zanzana.TranslateToListRequest(namespace, action, kind)
-	if !ok {
-		return nil, errors.New("resource type not supported")
-	}
-
-	res, err := dr.zclient.List(ctx, query.SignedInUser, req)
-	if err != nil {
-		return nil, err
-	}
-
-	resourceUIDs := make([]string, 0)
-	resourceUIDs = append(resourceUIDs, res.Items...)
-
-	return resourceUIDs, nil
-}
