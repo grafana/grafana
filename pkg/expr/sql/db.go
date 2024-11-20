@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -99,6 +99,7 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 	if frame == nil {
 		return fmt.Errorf("input frame is nil")
 	}
+	tableName = strings.ToLower(frame.RefID)
 
 	// Create schema based on frame fields
 	schema := make(mysql.Schema, len(frame.Fields))
@@ -121,7 +122,6 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 		for j, field := range frame.Fields {
 			row[j] = field.At(i)
 		}
-		spew.Dump(row)
 
 		err := table.Insert(ctx, row)
 		if err != nil {
@@ -152,13 +152,12 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	case data.FieldTypeTime:
 		return types.Timestamp
 	default:
-		fmt.Println("------- Unsupported field type: ", fieldType)
+		fmt.Printf("------- Unsupported field type: %t", fieldType)
 		return types.JSON
 	}
 }
 
 func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Frame, f *data.Frame) error {
-
 	pro := memory.NewDBProvider(db.inMemoryDb)
 	session := memory.NewSession(mysql.NewBaseSession(), pro)
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
@@ -166,7 +165,7 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	for _, frame := range frames {
 		// We have both `frame` and `f` in this function. Consider renaming one or both.
 		// Potentially `f` to `outputFrame`
-		err := db.writeDataframeToDb(ctx, frame.Name, frame)
+		err := db.writeDataframeToDb(ctx, tableName, frame)
 		if err != nil {
 			return err
 		}
