@@ -83,6 +83,8 @@ var (
 	ToOpenFGATuples                   = common.ToOpenFGATuples
 	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+
+	FormatGroupResource = common.FormatGroupResource
 )
 
 // NewTupleEntry constructs new openfga entry type:name[#relation].
@@ -164,6 +166,14 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	}
 
 	return req, true
+}
+
+func TranslateToGroupResource(kind string) string {
+	translation, ok := resourceTranslations[kind]
+	if !ok {
+		return ""
+	}
+	return common.FormatGroupResource(translation.group, translation.resource)
 }
 
 func TranslateBasicRole(name string) string {

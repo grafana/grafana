@@ -29,12 +29,10 @@ import {
   expressionTypes,
   ReducerMode,
 } from 'app/features/expressions/types';
-import { useDispatch } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
-import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
@@ -184,12 +182,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     }
   }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
-  const dispatchReduxAction = useDispatch();
-  useEffect(() => {
-    dispatchReduxAction(fetchAllPromBuildInfoAction());
-  }, [dispatchReduxAction]);
-
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -272,6 +265,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -287,7 +281,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
-      if (!editingExistingRule) {
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
         dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
       }
 
@@ -300,7 +294,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -322,7 +316,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
-  const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
+  // Using dataSourcesWithRuler[0] gives incorrect types - no undefined
+  // Using at(0) provides a safe type with undefined
+  const recordingRuleDefaultDatasource = rulesSourcesWithRuler.at(0);
 
   useEffect(() => {
     clearPreviewData();

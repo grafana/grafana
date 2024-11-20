@@ -22,7 +22,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
@@ -239,4 +238,5 @@ export interface FeatureToggles {
   crashDetection?: boolean;
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
+  alertingUIOptimizeReducer?: boolean;
 }
