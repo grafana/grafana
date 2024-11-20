@@ -236,6 +236,11 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		return nil, err
 	}
 
+	if res.All {
+		query.SkipAccessControlFilter = true
+		return dr.dashboardStore.FindDashboards(ctx, &query)
+	}
+
 	if len(res.Folders) > 0 {
 		// Find dashboards in folders that user has access to
 		query.SkipAccessControlFilter = true
