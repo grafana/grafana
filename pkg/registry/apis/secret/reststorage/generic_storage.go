@@ -1,4 +1,4 @@
-package secret
+package reststorage
 
 import (
 	"bytes"
@@ -19,62 +19,67 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*secureValueRESTStorage)(nil)
-	_ rest.SingularNameProvider = (*secureValueRESTStorage)(nil)
-	_ rest.Getter               = (*secureValueRESTStorage)(nil)
-	_ rest.Lister               = (*secureValueRESTStorage)(nil)
-	_ rest.Storage              = (*secureValueRESTStorage)(nil)
-	_ rest.Creater              = (*secureValueRESTStorage)(nil)
-	_ rest.Updater              = (*secureValueRESTStorage)(nil)
-	_ rest.GracefulDeleter      = (*secureValueRESTStorage)(nil)
-	_ rest.CollectionDeleter    = (*secureValueRESTStorage)(nil)
+	_ rest.Scoper               = (*GenericStorage)(nil)
+	_ rest.SingularNameProvider = (*GenericStorage)(nil)
+	_ rest.Getter               = (*GenericStorage)(nil)
+	_ rest.Lister               = (*GenericStorage)(nil)
+	_ rest.Storage              = (*GenericStorage)(nil)
+	_ rest.Creater              = (*GenericStorage)(nil)
+	_ rest.Updater              = (*GenericStorage)(nil)
+	_ rest.GracefulDeleter      = (*GenericStorage)(nil)
+	_ rest.CollectionDeleter    = (*GenericStorage)(nil)
 )
 
-// secureValueRESTStorage is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
-type secureValueRESTStorage struct {
+// GenericStorage is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
+type GenericStorage struct {
 	// TODO: do we want another interface that is less broad here? meaning that it doesn't have the `Decrypt` method at all.
 	store          secretstore.SecureValueStore
 	resource       utils.ResourceInfo
 	tableConverter rest.TableConvertor
 }
 
+// NewGenericStorage is a returns a constructed `*GenericStorage`.
+func NewGenericStorage(store secretstore.SecureValueStore, resource utils.ResourceInfo) *GenericStorage {
+	return &GenericStorage{store, resource, resource.TableConverter()}
+}
+
 // New returns an empty `*SecureValue` that is used by the `Create` method.
-func (s *secureValueRESTStorage) New() runtime.Object {
+func (s *GenericStorage) New() runtime.Object {
 	return s.resource.NewFunc()
 }
 
 // Destroy is called when? [TODO]
-func (s *secureValueRESTStorage) Destroy() {}
+func (s *GenericStorage) Destroy() {}
 
 // NamespaceScoped returns `true` because the storage is namespaced (== org).
-func (s *secureValueRESTStorage) NamespaceScoped() bool {
+func (s *GenericStorage) NamespaceScoped() bool {
 	return true
 }
 
 // GetSingularName is used by `kubectl` discovery to have singular name representation of resources.
-func (s *secureValueRESTStorage) GetSingularName() string {
+func (s *GenericStorage) GetSingularName() string {
 	return s.resource.GetSingularName()
 }
 
 // NewList returns an empty `*SecureValueList` that is used by the `List` method.
-func (s *secureValueRESTStorage) NewList() runtime.Object {
+func (s *GenericStorage) NewList() runtime.Object {
 	return s.resource.NewListFunc()
 }
 
 // ConvertToTable is used by Kubernetes and converts objects to `metav1.Table`.
-func (s *secureValueRESTStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *GenericStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
-func (s *secureValueRESTStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *GenericStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns := request.NamespaceValue(ctx)
 
 	return s.store.List(ctx, ns, options)
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
-func (s *secureValueRESTStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *GenericStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns := request.NamespaceValue(ctx)
 
 	v, err := s.store.Read(ctx, ns, name)
@@ -103,7 +108,7 @@ func checkPathOrValue(s *secret.SecureValue, mustExist bool) error {
 }
 
 // Create a new `securevalue`. Does some validation and allows empty `name` (generated).
-func (s *secureValueRESTStorage) Create(
+func (s *GenericStorage) Create(
 	ctx context.Context,
 	obj runtime.Object,
 
@@ -146,7 +151,7 @@ func (s *secureValueRESTStorage) Create(
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
-func (s *secureValueRESTStorage) Update(
+func (s *GenericStorage) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
@@ -209,7 +214,7 @@ func (s *secureValueRESTStorage) Update(
 
 // Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was intant or not. It always is for `securevalues`.
-func (s *secureValueRESTStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *GenericStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ns := request.NamespaceValue(ctx)
 
 	// TODO: Make sure the second parameter is always `true` when `err == nil`.
@@ -219,6 +224,6 @@ func (s *secureValueRESTStorage) Delete(ctx context.Context, name string, delete
 }
 
 // DeleteCollection is not implemented. TODO: Do we want to implement it? Or do we want to restrict it on purpose and `securevalues` must be deleted one by one?
-func (s *secureValueRESTStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+func (s *GenericStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("DeleteCollection for secrets not implemented")
 }

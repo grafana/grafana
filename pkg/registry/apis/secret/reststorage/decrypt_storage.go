@@ -1,4 +1,4 @@
-package secret
+package reststorage
 
 import (
 	"context"
@@ -14,56 +14,61 @@ import (
 )
 
 var (
-	_ rest.Storage         = (*secretDecrypt)(nil)
-	_ rest.Scoper          = (*secretHistory)(nil)
-	_ rest.Connecter       = (*secretDecrypt)(nil)
-	_ rest.StorageMetadata = (*secretDecrypt)(nil)
+	_ rest.Storage         = (*DecryptStorage)(nil)
+	_ rest.Scoper          = (*DecryptStorage)(nil)
+	_ rest.Connecter       = (*DecryptStorage)(nil)
+	_ rest.StorageMetadata = (*DecryptStorage)(nil)
 )
 
-type secretDecrypt struct {
+type DecryptStorage struct {
 	config *setting.Cfg
 
 	// TODO: we can use composition and only expose the `Decrypt` method this uses.
 	store secretstore.SecureValueStore
 }
 
+// NewDecryptStorage is a returns a constructed `*DecryptStorage`.
+func NewDecryptStorage(config *setting.Cfg, store secretstore.SecureValueStore) *DecryptStorage {
+	return &DecryptStorage{config, store}
+}
+
 // New returns an empty `*SecureValue` that is required to be implemented by any storage.
-func (r *secretDecrypt) New() runtime.Object {
+func (r *DecryptStorage) New() runtime.Object {
 	return &secret.SecureValue{}
 }
 
 // Destroy is a no-op.
-func (r *secretDecrypt) Destroy() {}
+func (r *DecryptStorage) Destroy() {}
 
 // NamespaceScoped returns `true` because the storage is namespaced (== org).
-func (r *secretDecrypt) NamespaceScoped() bool {
+func (r *DecryptStorage) NamespaceScoped() bool {
 	return true
 }
 
 // ConnectMethods returns the list of HTTP methods we accept for this subresource.
-func (r *secretDecrypt) ConnectMethods() []string {
+func (r *DecryptStorage) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
 // NewConnectOptions returns some custom options that is passed in the `opts` field used by `Connect`.
-func (r *secretDecrypt) NewConnectOptions() (runtime.Object, bool, string) {
+func (r *DecryptStorage) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ProducesMIMETypes returns the `Content-Type` used by `Connect`.
-func (r *secretDecrypt) ProducesMIMETypes(verb string) []string {
+func (r *DecryptStorage) ProducesMIMETypes(verb string) []string {
 	return []string{"text/plain"}
 }
 
 // ProducesObject returns the concrete type (marshable with `json` tags) used by `Connect`.
-func (r *secretDecrypt) ProducesObject(verb string) interface{} {
+func (r *DecryptStorage) ProducesObject(verb string) interface{} {
 	// TODO: this could be a string, if we use `responder.Object`.
 	return &secret.SecureValue{}
 }
 
 // Connect returns an http.Handler that will handle the request/response for a given API invocation.
 // See other methods implemented for supporting/optional functionality.
-func (r *secretDecrypt) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *DecryptStorage) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	ns := request.NamespaceValue(ctx)
 
 	val, err := r.store.Decrypt(ctx, ns, name)

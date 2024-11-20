@@ -1,4 +1,4 @@
-package secret
+package reststorage
 
 import (
 	"context"
@@ -14,54 +14,59 @@ import (
 
 // TODO: what really do we need to implement in this case?
 var (
-	_ rest.Storage         = (*secretHistory)(nil)
-	_ rest.Scoper          = (*secretHistory)(nil)
-	_ rest.Connecter       = (*secretHistory)(nil)
-	_ rest.StorageMetadata = (*secretHistory)(nil)
+	_ rest.Storage         = (*HistoryStorage)(nil)
+	_ rest.Scoper          = (*HistoryStorage)(nil)
+	_ rest.Connecter       = (*HistoryStorage)(nil)
+	_ rest.StorageMetadata = (*HistoryStorage)(nil)
 )
 
-// secretHistory implements the methods for the "history" subresource. This is exposed via HTTP, not gRPC.
-type secretHistory struct {
+// HistoryStorage implements the methods for the "history" subresource. This is exposed via HTTP, not gRPC.
+type HistoryStorage struct {
 	// TODO: we can use composition and only expose the `History` method this uses.
 	store secretstore.SecureValueStore
 }
 
+// NewHistoryStorage is a returns a constructed `*HistoryStorage`.
+func NewHistoryStorage(store secretstore.SecureValueStore) *HistoryStorage {
+	return &HistoryStorage{store}
+}
+
 // New returns an empty `*SecureValueActivityList` that is required to be implemented by any storage.
-func (r *secretHistory) New() runtime.Object {
+func (r *HistoryStorage) New() runtime.Object {
 	return &secret.SecureValueActivityList{}
 }
 
 // Destroy is a no-op.
-func (r *secretHistory) Destroy() {}
+func (r *HistoryStorage) Destroy() {}
 
 // NamespaceScoped returns `true` because the storage is namespaced (== org).
-func (r *secretHistory) NamespaceScoped() bool {
+func (r *HistoryStorage) NamespaceScoped() bool {
 	return true
 }
 
 // ConnectMethods returns the list of HTTP methods we accept for this subresource.
-func (r *secretHistory) ConnectMethods() []string {
+func (r *HistoryStorage) ConnectMethods() []string {
 	return []string{http.MethodGet}
 }
 
 // NewConnectOptions returns some custom options that is passed in the `opts` field used by `Connect`.
-func (r *secretHistory) NewConnectOptions() (runtime.Object, bool, string) {
+func (r *HistoryStorage) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
 // ProducesMIMETypes returns the `Content-Type` used by `Connect`.
-func (r *secretHistory) ProducesMIMETypes(verb string) []string {
+func (r *HistoryStorage) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
 // ProducesObject returns the concrete type (marshable with `json` tags) used by `Connect`.
-func (r *secretHistory) ProducesObject(verb string) interface{} {
+func (r *HistoryStorage) ProducesObject(verb string) interface{} {
 	return &secret.SecureValueActivityList{}
 }
 
 // Connect returns an http.Handler that will handle the request/response for a given API invocation.
 // See other methods implemented for supporting/optional functionality.
-func (r *secretHistory) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *HistoryStorage) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	ns := request.NamespaceValue(ctx)
 
 	// TODO: should this be inside the HTTP handler?
