@@ -35,8 +35,8 @@ func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *tes
 
 	_, cfg := db.InitTestDBWithCfg(t)
 	cfg.HTTPPort = "3001"
-	cfg.GRPCServerNetwork = "tcp"
-	cfg.GRPCServerAddress = "localhost:10000"
+	cfg.GRPCServer.Network = "tcp"
+	cfg.GRPCServer.Address = "localhost:10000"
 	addStorageServerToConfig(t, cfg, dbType)
 	cfg.Target = []string{modules.StorageServer}
 
