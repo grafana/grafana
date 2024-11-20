@@ -125,21 +125,23 @@ export function MetricCombobox({
           initialMetrics={loadMetricsExplorerMetrics}
         />
       )}
-      {variableEditor ? (
-        <InlineFieldRow>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            {asyncSelect()}
-          </InlineField>
-        </InlineFieldRow>
-      ) : (
-        <EditorFieldGroup>
-          <EditorField label="Metric">{asyncSelect()}</EditorField>
-        </EditorFieldGroup>
-      )}
+      <div style={{ maxWidth: '100%' }}>
+        {variableEditor ? (
+          <InlineFieldRow>
+            <InlineField
+              label="Metric"
+              labelWidth={20}
+              tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            >
+              {asyncSelect()}
+            </InlineField>
+          </InlineFieldRow>
+        ) : (
+          <EditorFieldGroup>
+            <EditorField label="Metric">{asyncSelect()}</EditorField>
+          </EditorFieldGroup>
+        )}
+      </div>
     </>
   );
 }
