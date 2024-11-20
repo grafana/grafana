@@ -1,16 +1,8 @@
 import { SelectableValue } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneCSSGridLayout,
-  sceneGraph,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
 import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
@@ -133,42 +125,9 @@ export class ResponsiveGridLayoutManager
   activateRepeaters?(): void {
     throw new Error('Method not implemented.');
   }
-
-  public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
-    const target = evt.target as HTMLElement;
-    const isPanel = target.closest('.grid-item-drag-handle');
-
-    if (!isPanel) {
-      return;
-    }
-
-    const panelKey = target.closest('[data-viz-panel-key]');
-    if (!panelKey) {
-      return;
-    }
-
-    const key = panelKey.getAttribute('data-viz-panel-key');
-    if (!key) {
-      return;
-    }
-
-    const panel = sceneGraph.findByKey(this, key);
-    if (panel instanceof VizPanel) {
-      const gridItem = panel.parent;
-      if (gridItem instanceof ResponsiveGridItem) {
-        this.toggleSelection(gridItem);
-      }
-    }
-  };
-
-  private toggleSelection(item: ResponsiveGridItem) {
-    const optionsPane = dashboardSceneGraph.getOptionsPane(this);
-    optionsPane.toggleSelection(item);
-  }
-
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return (
-      <LayoutEditChrome layoutManager={model} onClick={model.onClick}>
+      <LayoutEditChrome layoutManager={model}>
         <model.state.layout.Component model={model.state.layout} />
       </LayoutEditChrome>
     );

@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, VizPanel, SceneObjectBase, SceneObject, SceneComponentProps } from '@grafana/scenes';
-import { Switch } from '@grafana/ui';
+import { Switch, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -68,12 +68,10 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridItem>) => {
     const { body } = model.useState();
-    const { selectedObject } = dashboardSceneGraph.getOptionsPane(model).useState();
     const style = useStyles2(getStyles);
-    const isSelected = selectedObject === model;
 
     return (
-      <div className={cx(style.wrapper, isSelected && style.selected)}>
+      <div className={cx(style.wrapper)}>
         <body.Component model={body} />
       </div>
     );
@@ -86,9 +84,6 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       position: 'relative',
-    }),
-    selected: css({
-      boxShadow: `1px 1px ${theme.colors.primary.border}, -1px -1px ${theme.colors.primary.border}`,
     }),
   };
 }

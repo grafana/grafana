@@ -38,6 +38,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -69,7 +70,6 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardOptionsPane } from './options-pane/DashboardOptionsPane';
 import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -128,7 +128,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
   /** options pane */
-  optionsPane: DashboardOptionsPane;
+  editPane: DashboardEditPane;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -179,7 +179,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
-      optionsPane: new DashboardOptionsPane({ key: 'options-pane' }),
+      editPane: new DashboardEditPane({ key: 'options-pane' }),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);

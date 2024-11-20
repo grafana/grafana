@@ -40,6 +40,13 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  public constructor(state: DefaultGridLayoutManagerState) {
+    super(state);
+
+    //@ts-ignore
+    this.state.grid.getDragClass = () => 'grid-item-drag-handle';
+  }
+
   public editModeChanged(isEditing: boolean): void {
     this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
     forceRenderChildren(this.state.grid, true);

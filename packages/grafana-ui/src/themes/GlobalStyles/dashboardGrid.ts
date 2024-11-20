@@ -2,6 +2,8 @@ import { css } from '@emotion/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
+import { getFocusStyles } from '../mixins';
+
 export function getDashboardGridStyles(theme: GrafanaTheme2) {
   return css({
     '.react-resizable-handle': {
@@ -59,6 +61,8 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
     '.react-grid-item.cssTransforms': {
       transitionProperty: 'none !important',
     },
+
+    '.selected-dashboard-item': getFocusStyles(theme),
 
     [theme.transitions.handleMotion('no-preference')]: {
       '.react-grid-layout--enable-move-animations': {

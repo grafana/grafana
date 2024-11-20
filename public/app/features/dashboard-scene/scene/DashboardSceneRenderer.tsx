@@ -30,7 +30,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelSearch,
     panelsPerRow,
     isEditing,
-    optionsPane,
+    editPane,
   } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight ?? 0);
@@ -74,7 +74,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
         <bodyToRender.Component model={bodyToRender} />
       </div>
-      {isEditing && <optionsPane.Component model={optionsPane} />}
+      {isEditing && <editPane.Component model={editPane} />}
     </>
   );
 
@@ -97,7 +97,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <NativeScrollbar divId="page-scrollbar" onSetScrollRef={model.onSetScrollRef}>
-          <div className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}>
+          <div
+            className={cx(styles.pageContainer, hasControls && styles.pageContainerWithControls)}
+            onClick={editPane.onClick}
+            onFocus={editPane.onFocus}
+          >
             <NavToolbarActions dashboard={model} />
             {controls && (
               <div className={styles.controlsWrapper}>

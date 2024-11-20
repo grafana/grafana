@@ -1,9 +1,9 @@
 import { VizPanel, sceneGraph, behaviors, SceneObject } from '@grafana/scenes';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
-import { DashboardOptionsPane } from '../scene/options-pane/DashboardOptionsPane';
 
 function getTimePicker(scene: DashboardScene) {
   return scene.state.controls?.state.timePicker;
@@ -49,7 +49,7 @@ export function getCursorSync(scene: DashboardScene) {
 
 export function getOptionsPane(scene: SceneObject) {
   const optionsPane = sceneGraph.findByKey(scene, 'options-pane');
-  if (optionsPane instanceof DashboardOptionsPane) {
+  if (optionsPane instanceof DashboardEditPane) {
     return optionsPane;
   }
 
