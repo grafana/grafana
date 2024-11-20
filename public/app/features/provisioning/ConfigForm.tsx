@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
-import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -9,18 +8,18 @@ import { Field, Combobox, SecretInput, Input, Button, Switch, TextLink, Controll
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { useCreateRepositoryMutation } from './api';
-import { RepositorySpec } from './api/types';
+import { RepositoryResource } from './api/types';
+import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 
 export interface ConfigFormProps {
-  spec?: RepositorySpec;
+  data?: RepositoryResource;
 }
-export function ConfigForm({ spec }: ConfigFormProps) {
-  const [submitData, request] = useCreateRepositoryMutation();
+export function ConfigForm({ data }: ConfigFormProps) {
+  const [submitData, request] = useCreateOrUpdateRepository(data?.metadata.name);
   const {
     register,
     handleSubmit,
@@ -30,7 +29,7 @@ export function ConfigForm({ spec }: ConfigFormProps) {
     setValue,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: spec ? specToData(spec) : { type: 'github' } });
+  } = useForm<RepositoryFormData>({ defaultValues: data ? specToData(data.spec) : { type: 'github' } });
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const navigate = useNavigate();
   const watchType = watch('type');
@@ -53,7 +52,7 @@ export function ConfigForm({ spec }: ConfigFormProps) {
 
   const onSubmit = (data: RepositoryFormData) => {
     const spec = dataToSpec(data);
-    submitData({ metadata: { generateName: uuidv4() }, spec });
+    submitData(spec);
   };
 
   return (
