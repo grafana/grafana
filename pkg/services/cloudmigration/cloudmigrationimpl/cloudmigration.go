@@ -169,7 +169,7 @@ func ProvideService(
 	} else {
 		s.gmsClient = gmsclient.NewInMemoryClient()
 		s.gcomService = &gcomStub{}
-		s.authApiService = &authapiStub{policies: map[string]authapi.AccessPolicy{}, token: nil}
+		s.authApiService = &authapi.AuthapiStub{Policies: map[string]authapi.AccessPolicy{}, Token: nil}
 		s.cfg.StackID = "12345"
 	}
 
