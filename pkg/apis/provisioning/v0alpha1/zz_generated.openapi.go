@@ -395,7 +395,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"commit": {
+					"ref": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The ref hash (if exists)",
 							Type:        []string{"string"},

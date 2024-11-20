@@ -150,7 +150,7 @@ type ResourceWrapper struct {
 	Path string `json:"path,omitempty"`
 
 	// The ref hash (if exists)
-	Ref string `json:"commit,omitempty"`
+	Ref string `json:"ref,omitempty"`
 
 	// Resource from the upstream repository
 	Resource common.Unstructured `json:"resource"`
