@@ -54,7 +54,7 @@ async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise
   let metricNames: string[] = [];
   if (dataProvider.languageProvider.datasource.hasLabelsMatchAPISupport()) {
     // use the metric regex with match[] param for partial typing of metric name to filter metric names
-    metricNames = await debounce(() => dataProvider.getLimitedMetricNames(dataProvider.inputInRange), 300)();
+    metricNames = await debounce(() => dataProvider.getLimitedMetricNames(dataProvider.inputInRange), 50)();
   } else {
     metricNames = dataProvider.getAllMetricNames();
   }

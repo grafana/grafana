@@ -1,7 +1,8 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx
 import { css } from '@emotion/css';
 import { parser } from '@prometheus-io/lezer-promql';
-import { debounce } from 'lodash';
+import debounce from 'debounce-promise';
+import { debounce as debounceLodash } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
 import { useEffect, useRef } from 'react';
 import { useLatest } from 'react-use';
@@ -166,13 +167,16 @@ const MonacoQueryField = (props: Props) => {
           // we call the completion-provider.
           const filteringCompletionProvider: monacoTypes.languages.CompletionItemProvider = {
             ...completionProvider,
-            provideCompletionItems: (model, position, context, token) => {
+            provideCompletionItems: async (model, position, context, token) => {
               // if the model-id does not match, then this call is from a different editor-instance,
               // not "our instance", so return nothing
               if (editor.getModel()?.id !== model.id) {
                 return { suggestions: [] };
               }
-              return completionProvider.provideCompletionItems(model, position, context, token);
+              return await debounce(
+                () => completionProvider.provideCompletionItems(model, position, context, token),
+                300
+              )();
             },
           };
 
@@ -208,7 +212,7 @@ const MonacoQueryField = (props: Props) => {
           // This can run quite slowly, so we're debouncing this which should accomplish two things
           // 1. Should prevent this function from blocking the current call stack by pushing into the web API callback queue
           // 2. Should prevent a bunch of duplicates of this function being called as the user is typing
-          const updateCurrentEditorValue = debounce(() => {
+          const updateCurrentEditorValue = debounceLodash(() => {
             const editorValue = editor.getValue();
             onChangeRef.current(editorValue);
           }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
