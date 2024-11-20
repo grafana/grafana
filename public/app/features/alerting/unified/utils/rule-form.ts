@@ -40,12 +40,11 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-type KVObject = { key: string; value: string };
-
 import { EvalFunction } from '../../state/alertDef';
 import {
   AlertManagerManualRouting,
   ContactPoint,
+  KVObject,
   RuleFormType,
   RuleFormValues,
   SimplifiedEditor,
@@ -97,7 +96,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     group: '',
 
     // grafana
-    folder: null,
+    folder: undefined,
     queries: [],
     recordingRulesQueries: [],
     condition: '',
@@ -756,16 +755,18 @@ export const panelToRuleFormValues = async (
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
 
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries,
     name: panel.title,
     condition: queries[queries.length - 1].refId,
@@ -827,15 +828,18 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const { folderTitle, folderUid } = dashboard.state.meta;
 
+  const folder =
+    folderUid && folderTitle
+      ? {
+          kind: 'folder',
+          uid: folderUid,
+          title: folderTitle,
+        }
+      : undefined;
+
   const formValues = {
     type: RuleFormType.grafana,
-    folder:
-      folderUid && folderTitle
-        ? {
-            uid: folderUid,
-            title: folderTitle,
-          }
-        : undefined,
+    folder,
     queries: grafanaQueries,
     name: vizPanel.state.title,
     condition: grafanaQueries[grafanaQueries.length - 1].refId,
@@ -851,6 +855,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
       },
     ],
   };
+
   return formValues;
 };
 
