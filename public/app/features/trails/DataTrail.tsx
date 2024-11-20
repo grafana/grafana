@@ -49,7 +49,13 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
-import { sortResources, getOtelJoinQuery, getOtelResourcesObject, updateOtelJoinWithGroupLeft } from './otel/util';
+import {
+  sortResources,
+  getOtelJoinQuery,
+  getOtelResourcesObject,
+  updateOtelJoinWithGroupLeft,
+  getProdOrDefaultOption,
+} from './otel/util';
 import { getOtelExperienceToggleState } from './services/store';
 import {
   getVariablesWithOtelJoinQueryConstant,
@@ -357,7 +363,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           // We have to have a default value because custom variable requires it
           // we choose one default value to help filter metrics
           // The work flow for OTel begins with users selecting a deployment environment
-          const defaultDepEnv = options[0].value; // usually production
+          // default to production
+          let defaultDepEnv = getProdOrDefaultOption(options) ?? '';
           // On starting the explore metrics workflow, the custom variable has no value
           // Even if there is state, the value is always ''
           // The only reference to state values are in the text
