@@ -1706,9 +1706,9 @@ __metadata:
   linkType: hard
 
 "@bsull/augurs@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@bsull/augurs@npm:0.6.0"
-  checksum: 10/0ba2ea0432f7d4c44ccec4d112e672f8d5d977407be42ff5995e1d6641b4b0238f97b9cdf13bc1fc066559bbd54e6fb00ad1f418014823a6c22af619e7a29c6a
+  version: 0.6.3
+  resolution: "@bsull/augurs@npm:0.6.3"
+  checksum: 10/034ed8b125dc51cd1cc4155ed2e14c479caf9372af2eda4476a7fc408041fef88c8d14a188f66239c840e925b8786fba20b22d89a8d537c69d5bc3096f72b102
   languageName: node
   linkType: hard
 
