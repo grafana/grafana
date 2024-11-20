@@ -33,7 +33,6 @@ describe('ShareMenu', () => {
     });
     grantUserPermissions([AccessControlAction.SnapshotsCreate]);
 
-    config.featureToggles.publicDashboards = true;
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
     setup({ meta: { canEdit: true } });
@@ -44,7 +43,6 @@ describe('ShareMenu', () => {
   });
 
   it('should not share externally when public dashboard is disabled', async () => {
-    config.featureToggles.publicDashboards = false;
     config.publicDashboardsEnabled = false;
     setup();
 
