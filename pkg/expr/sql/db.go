@@ -31,13 +31,16 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	for _, col := range schema {
 		var field *data.Field
 		// switch col.Type.Type() {
-		switch colType := col.Type.(type) {
+		spew.Dump(col.Type)
+		switch col.Type {
 		// NumberType represents all integer and floating point types
 		// TODO: branch between int and float
-		case mysql.NumberType:
+		case types.Int64:
 			field = data.NewField(col.Name, nil, []int64{})
+		case types.Float64:
+			field = data.NewField(col.Name, nil, []float64{})
 		// StringType represents all string types, including VARCHAR and BLOB.
-		case mysql.StringType:
+		case types.Text:
 			field = data.NewField(col.Name, nil, []string{})
 		// TODO: Implement the following types
 		// DatetimeType represents DATE, DATETIME, and TIMESTAMP.
@@ -50,7 +53,7 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		// case int8:
 		// 	field = data.NewField(col.Name, nil, []int64{})
 		default:
-			return fmt.Errorf("unsupported type for column %s: %v", col.Name, colType)
+			return fmt.Errorf("unsupported type for column %s: %v", col.Name, col.Type)
 		}
 		f.Fields = append(f.Fields, field)
 	}
