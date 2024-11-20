@@ -26,6 +26,7 @@ func (b *builderAdmission) Validate(ctx context.Context, a admission.Attributes,
 	if v, ok := b.validators[a.GetResource().GroupVersion()]; ok {
 		return v.Validate(ctx, a, o)
 	}
+
 	return nil
 }
 
