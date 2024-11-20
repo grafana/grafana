@@ -97,7 +97,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF elements
 
     // annotations
-    annotations: getAnnotations(oldDash), //FIXME
+    annotations: getAnnotations(oldDash),
     // EOF annotations
 
     // layout
