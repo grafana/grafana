@@ -39,7 +39,7 @@
     "@emotion/css": "11.13.4",
     "@floating-ui/react": "0.26.28",
     "@grafana/data": "11.4.0-pre",
-    "@grafana/experimental": "2.1.2",
+    "@grafana/experimental": "2.1.4",
     "@grafana/faro-web-sdk": "1.12.1",
     "@grafana/runtime": "11.4.0-pre",
     "@grafana/schema": "11.4.0-pre",

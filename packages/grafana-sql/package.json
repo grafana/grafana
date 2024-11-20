@@ -17,7 +17,7 @@
     "@emotion/css": "11.13.4",
     "@grafana/data": "11.4.0-pre",
     "@grafana/e2e-selectors": "11.4.0-pre",
-    "@grafana/experimental": "2.1.2",
+    "@grafana/experimental": "2.1.4",
     "@grafana/runtime": "11.4.0-pre",
     "@grafana/ui": "11.4.0-pre",
     "@react-awesome-query-builder/ui": "6.6.3",
