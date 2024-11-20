@@ -334,7 +334,11 @@ export function sceneVariablesSetToSchemaV2Variables(
         kind: 'ConstantVariable',
         spec: {
           ...commonProperties,
-          current: currentVariableOption,
+          current: {
+            ...currentVariableOption,
+            // Constant variable doesn't use text state
+            text: String(variable.state.value),
+          },
           // @ts-expect-error
           query: variable.state.value,
         },
@@ -346,7 +350,11 @@ export function sceneVariablesSetToSchemaV2Variables(
         kind: 'IntervalVariable',
         spec: {
           ...commonProperties,
-          current: currentVariableOption,
+          current: {
+            ...currentVariableOption,
+            // Interval variable doesn't use text state
+            text: variable.state.value,
+          },
           query: intervals,
           refresh: VariableRefresh.OnTimeRangeChanged,
           options: variable.state.intervals.map((interval) => ({
@@ -410,7 +418,7 @@ export function sceneVariablesSetToSchemaV2Variables(
       };
       variables.push(adhocVariable);
     } else {
-      throw new Error('Unsupported variable type');
+      throw new Error('Unsupported variable type: ' + variable.state.type);
     }
   }
 
