@@ -37,7 +37,7 @@ func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.Pl
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: err.Error()}, nil
 	}
 
 	return dsHandler.CheckHealth(ctx, req)
