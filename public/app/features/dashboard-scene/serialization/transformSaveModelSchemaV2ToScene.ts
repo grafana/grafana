@@ -1,12 +1,9 @@
-import { uniqueId } from 'lodash';
-
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
   SceneGridLayout,
   SceneTimeRange,
-  SceneVariableSet,
   VariableValueSelectors,
   SceneRefreshPicker,
   SceneObject,
@@ -16,20 +13,23 @@ import {
   SceneGridItemLike,
   SceneDataLayerControls,
   UserActionEvent,
+  SceneDataProvider,
+  SceneQueryRunner,
+  SceneDataTransformer,
 } from '@grafana/scenes';
-import { PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/kinds';
 
-import { DashboardV2 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import {
+  DashboardCursorSync,
+  DashboardV2Spec,
+  PanelKind,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
-import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
@@ -38,16 +38,18 @@ import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
-import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
+import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import {
+  DashboardCursorSync as DashboardCursorSyncV1,
+  defaultDashboardCursorSync,
+} from '@grafana/schema/dist/esm/index.gen';
 
-export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2): DashboardScene {
-  const spec = dashboard.spec;
-
+export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): DashboardScene {
   // FIXME: Variables
   // const variables = new SceneVariableSet({
   //   variables: spec.variables.map((variable) => {
@@ -71,104 +73,120 @@ export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2): Dashb
   //   });
   // });
 
-  const alertStatesLayer = new AlertStatesDataLayer({
-    key: 'alert-states',
-    name: 'Alert States',
-  });
-
   const dashboardScene = new DashboardScene({
-    description: spec.description,
-    editable: spec.editable,
-    preload: spec.preload,
-    id: spec.id,
+    description: dashboard.description,
+    editable: dashboard.editable,
+    preload: dashboard.preload,
+    id: dashboard.id,
     isDirty: false,
-    links: spec.links,
+    links: dashboard.links,
     meta: {},
-    tags: spec.tags,
-    title: spec.title,
-    uid: spec.id?.toString(),
-    version: 1,
+    tags: dashboard.tags,
+    title: dashboard.title,
+    uid: dashboard.id?.toString(),
+    version: dashboard.schemaVersion,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: spec.preload ? false : true,
-        children: createSceneObjectsForPanels(spec.elements),
+        isLazy: dashboard.preload ? false : true,
+        children: createSceneGridLayoutForItems(dashboard),
         $behaviors: [trackIfEmpty],
       }),
     }),
     $timeRange: new SceneTimeRange({
-      from: spec.timeSettings.from,
-      to: spec.timeSettings.to,
-      fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
-      timeZone: spec.timeSettings.timezone,
-      weekStart: spec.timeSettings.weekStart,
-      UNSAFE_nowDelay: spec.timeSettings.nowDelay,
+      from: dashboard.timeSettings.from,
+      to: dashboard.timeSettings.to,
+      fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
+      timeZone: dashboard.timeSettings.timezone,
+      weekStart: dashboard.timeSettings.weekStart,
+      UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
     }),
-    // FIXME: Variables
+    // FIXME: Variables pending to implement
     // $variables: variables,
     $behaviors: [
       new behaviors.CursorSync({
-        sync: spec.cursorSync,
+        sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
       }),
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
       registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer({ enabled: spec.liveNow }),
+      new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
       new DashboardScopesFacade({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: spec.id?.toString(),
+        uid: dashboard.id?.toString(),
       }),
       new DashboardReloadBehavior({
         reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: spec.id?.toString(),
+        uid: dashboard.id?.toString(),
         version: 1,
       }),
     ],
     $data: new DashboardDataLayerSet({
       // FIXME: Annotations
       // annotationLayers,
-      alertStatesLayer,
     }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
       timePicker: new SceneTimePicker({}),
       refreshPicker: new SceneRefreshPicker({
-        refresh: spec.timeSettings.autoRefresh,
-        intervals: spec.timeSettings.autoRefreshIntervals,
+        refresh: dashboard.timeSettings.autoRefresh,
+        intervals: dashboard.timeSettings.autoRefreshIntervals,
         withText: true,
       }),
-      hideTimeControls: spec.timeSettings.hideTimepicker,
+      hideTimeControls: dashboard.timeSettings.hideTimepicker,
     }),
   });
 
   return dashboardScene;
 }
 
-function createSceneObjectsForPanels(elements: Record<string, PanelKind>): SceneGridItemLike[] {
-  const panels: SceneGridItemLike[] = [];
+function createSceneGridLayoutForItems(dashboard: DashboardV2Spec): SceneGridItemLike[] {
+  const gridElements = dashboard.layout.spec.items;
 
-  for (const key in elements) {
-    const panel = elements[key];
-    const panelObject = buildGridItemForPanel(panel);
-    panels.push(panelObject);
-  }
+  return gridElements.map((element) => {
+    if (element.kind === 'GridLayoutItem') {
+      const panel = dashboard.elements[element.spec.element.name];
 
-  return panels;
+      if (!panel) {
+        throw new Error(`Panel with uid ${element.spec.element.name} not found in the dashboard elements`);
+      }
+
+      if (panel.kind === 'Panel') {
+        const vizPanel = buildVizPanel(panel);
+
+        return new DashboardGridItem({
+          key: `grid-item-${panel.spec.uid}`,
+          x: element.spec.x,
+          y: element.spec.y,
+          width: element.spec.width,
+          height: element.spec.height,
+          itemHeight: element.spec.height,
+          body: vizPanel,
+        });
+      } else {
+        throw new Error(`Unknown element kind: ${element.kind}`);
+      }
+    } else {
+      throw new Error(`Unknown layout element kind: ${element.kind}`);
+    }
+  });
 }
 
-function buildGridItemForPanel(panel: PanelKind): DashboardGridItem {
+function buildVizPanel(panel: PanelKind): VizPanel {
   const titleItems: SceneObject[] = [];
 
   if (config.featureToggles.angularDeprecationUI) {
     titleItems.push(new AngularDeprecation());
   }
-  titleItems.push(
-    new VizPanelLinks({
-      rawLinks: panel.spec.links,
-      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-    })
-  );
+
+  // FIXME: Links in a panel are DashboardLinks not DataLinks
+  // titleItems.push(
+  //   new VizPanelLinks({
+  //     rawLinks: panel.spec.links,
+  //     menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+  //   })
+  // );
 
   titleItems.push(new PanelNotices());
 
@@ -183,7 +201,8 @@ function buildGridItemForPanel(panel: PanelKind): DashboardGridItem {
     options: panel.spec.vizConfig.spec.options,
     fieldConfig: panel.spec.vizConfig.spec.fieldConfig,
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
-    displayMode: panel.spec.transparent ? 'transparent' : undefined,
+    // FIXME: Transparent is not added to the schema yet
+    // displayMode: panel.spec.transparent ? 'transparent' : undefined,
     hoverHeader: !panel.spec.title && !timeOverrideShown,
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
@@ -212,21 +231,12 @@ function buildGridItemForPanel(panel: PanelKind): DashboardGridItem {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
-      hideTimeOverride: queryOptions.hideTimeOverride,
+      // FIXME: hideTimeOverride is not added to the schema yet
+      // hideTimeOverride: queryOptions.hideTimeOverride,
     });
   }
 
-  const body = new VizPanel(vizPanelState);
-
-  return new DashboardGridItem({
-    key: `grid-item-${panel.spec.uid}`,
-    x: panel.spec.gridPos.x,
-    y: panel.spec.gridPos.y,
-    width: panel.spec.gridPos.w,
-    height: panel.spec.gridPos.h,
-    itemHeight: panel.spec.gridPos.h,
-    body,
-  });
+  return new VizPanel(vizPanelState);
 }
 
 function trackIfEmpty(grid: SceneGridLayout) {
@@ -255,4 +265,56 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
         break;
     }
   });
+}
+
+export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
+  const panel = panelKind.spec;
+  const targets = panel.data?.spec.queries ?? [];
+  // Skip setting query runner for panels without queries
+  if (!targets?.length) {
+    return undefined;
+  }
+
+  // Skip setting query runner for panel plugins with skipDataQuery
+  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
+    return undefined;
+  }
+
+  let dataProvider: SceneDataProvider | undefined = undefined;
+  const datasource = panel.data.spec.queries[0]?.spec.datasource;
+
+  dataProvider = new SceneQueryRunner({
+    datasource: datasource ?? undefined,
+    queries: targets.map((query) => query.spec),
+    maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
+    maxDataPointsFromWidth: true,
+    cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
+    queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
+    minInterval: panel.data.spec.queryOptions.interval ?? undefined,
+    dataLayerFilter: {
+      // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
+      panelId: parseInt(panel.uid, 10),
+    },
+    $behaviors: [new DashboardDatasourceBehaviour({})],
+  });
+
+  // Wrap inner data provider in a data transformer
+  return new SceneDataTransformer({
+    $data: dataProvider,
+    // FIXME: These types are not compatible
+    transformations: panel.data.spec.transformations.map((transformation) => transformation.spec),
+  });
+}
+
+function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): DashboardCursorSyncV1 {
+  switch (cursorSync) {
+    case DashboardCursorSync.Crosshair:
+      return DashboardCursorSyncV1.Crosshair;
+    case DashboardCursorSync.Tooltip:
+      return DashboardCursorSyncV1.Tooltip;
+    case DashboardCursorSync.Off:
+      return DashboardCursorSyncV1.Off;
+    default:
+      return defaultDashboardCursorSync;
+  }
 }
