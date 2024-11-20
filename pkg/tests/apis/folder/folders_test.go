@@ -784,6 +784,20 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	}
 	tcs := []testCase{
 		{
+			description:          "get folder by UID should return parent folders if nested folder are enabled",
+			expectedCode:         http.StatusOK,
+			expectedParentUIDs:   []string{"parentuid"},
+			expectedParentTitles: []string{"testparent"},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{dashboards.ActionFoldersRead},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+		},
+		{
 			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
 			expectedCode:         http.StatusOK,
 			expectedParentUIDs:   []string{api.REDACTED},
