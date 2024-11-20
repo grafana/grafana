@@ -38,6 +38,9 @@ export function useSidecar_EXPERIMENTAL() {
     openAppV2: (pluginId: string, path?: string) => {
       return service.openAppV2(pluginId, path);
     },
+    openAppV3: (options: { pluginId: string; path?: string; follow?: boolean }) => {
+      return service.openAppV3(options);
+    },
     closeApp: () => service.closeApp(),
     isAppOpened: (pluginId: string) => {
       return service.isAppOpened(pluginId);
