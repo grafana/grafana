@@ -219,22 +219,27 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
+	var result []dashboards.DashboardSearchProjection
 	if query.Type == searchstore.TypeFolder || query.Type == searchstore.TypeAlertFolder {
 		return dr.findFoldersZanzanaList(ctx, query)
 	}
 
-	// List folders where user can read dashboards
-	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.KindFolders, dashboards.ActionDashboardsRead)
+	// List dashboards and folders where user can read dashboards
+	namespace := query.SignedInUser.GetNamespace()
+	req, ok := zanzana.TranslateToListRequest(namespace, dashboards.ActionDashboardsRead, zanzana.KindDashboards)
+	if !ok {
+		return nil, errors.New("resource type not supported")
+	}
+
+	res, err := dr.zclient.List(ctx, query.SignedInUser, req)
 	if err != nil {
 		return nil, err
 	}
 
-	var result []dashboards.DashboardSearchProjection
-
-	if len(allowedFolders) > 0 {
+	if len(res.Folders) > 0 {
 		// Find dashboards in folders that user has access to
 		query.SkipAccessControlFilter = true
-		query.FolderUIDs = allowedFolders
+		query.FolderUIDs = res.Folders
 		result, err = dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -247,15 +252,9 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		return result, nil
 	}
 
-	// Run second query to find dashboards with direct permission assignments
-	allowedDashboards, err := dr.listAllowedResources(ctx, query, zanzana.KindDashboards, dashboards.ActionDashboardsRead)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(allowedDashboards) > 0 {
+	if len(res.Items) > 0 {
 		query.FolderUIDs = []string{}
-		query.DashboardUIDs = allowedDashboards
+		query.DashboardUIDs = res.Items
 		query.Limit = rest
 		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
@@ -275,16 +274,22 @@ func (dr *DashboardServiceImpl) findFoldersZanzanaList(ctx context.Context, quer
 	}
 
 	// List available folders
-	allowedFolders, err := dr.listAllowedResources(ctx, query, zanzana.KindFolders, action)
+	namespace := query.SignedInUser.GetNamespace()
+	req, ok := zanzana.TranslateToListRequest(namespace, action, zanzana.KindFolders)
+	if !ok {
+		return nil, errors.New("resource type not supported")
+	}
+
+	res, err := dr.zclient.List(ctx, query.SignedInUser, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(allowedFolders) == 0 {
+	if len(res.Items) == 0 {
 		return []dashboards.DashboardSearchProjection{}, nil
 	}
 
-	query.DashboardUIDs = allowedFolders
+	query.DashboardUIDs = res.Items
 	return dr.dashboardStore.FindDashboards(ctx, &query)
 }
 
@@ -301,9 +306,7 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	}
 
 	resourceUIDs := make([]string, 0)
-	for _, uid := range res.Items {
-		resourceUIDs = append(resourceUIDs, uid)
-	}
+	resourceUIDs = append(resourceUIDs, res.Items...)
 
 	return resourceUIDs, nil
 }
