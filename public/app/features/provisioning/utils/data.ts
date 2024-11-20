@@ -30,3 +30,13 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
 
   return spec;
 };
+
+export const specToData = (spec: RepositorySpec): Partial<RepositoryFormData> => {
+  return {
+    type: spec.type,
+    folder: spec.folder,
+    ...spec.github,
+    ...spec.local,
+    ...spec.s3,
+  };
+};

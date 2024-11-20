@@ -10,15 +10,16 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { useCreateRepositoryMutation } from './api';
+import { RepositorySpec } from './api/types';
 import { RepositoryFormData } from './types';
-import { dataToSpec } from './utils/data';
+import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 
 export interface ConfigFormProps {
-  config?: RepositoryFormData;
+  spec?: RepositorySpec;
 }
-export function ConfigForm({ config }: ConfigFormProps) {
+export function ConfigForm({ spec }: ConfigFormProps) {
   const [submitData, request] = useCreateRepositoryMutation();
   const {
     register,
@@ -29,7 +30,7 @@ export function ConfigForm({ config }: ConfigFormProps) {
     setValue,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: config?.spec || { type: 'github' } });
+  } = useForm<RepositoryFormData>({ defaultValues: spec ? specToData(spec) : { type: 'github' } });
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const navigate = useNavigate();
   const watchType = watch('type');

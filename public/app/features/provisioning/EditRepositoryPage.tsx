@@ -24,7 +24,7 @@ export default function EditRepositoryPage() {
             <TextLink href={PROVISIONING_URL}>Back to repositories</TextLink>
           </EmptyState>
         ) : (
-          <ConfigForm config={query.data} />
+          <ConfigForm spec={query.data?.spec} />
         )}
       </Page.Contents>
     </Page>
