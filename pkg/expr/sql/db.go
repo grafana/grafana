@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -132,7 +133,10 @@ func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
 	db.inMemoryDb.AddTable(name, table)
 
 	// Insert data from the frame
-	ctx := gomysql.NewEmptyContext()
+	pro := memory.NewDBProvider(db.inMemoryDb)
+	session := memory.NewSession(gomysql.NewBaseSession(), pro)
+	ctx := gomysql.NewContext(context.Background(), gomysql.WithSession(session))
+
 	for i := 0; i < frame.Rows(); i++ {
 		row := make(gomysql.Row, len(frame.Fields))
 		for j, field := range frame.Fields {
