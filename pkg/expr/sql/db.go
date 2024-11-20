@@ -7,6 +7,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -103,21 +104,35 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 		schema[i] = &mysql.Column{
 			Name:     field.Name,
 			Type:     convertDataType(field.Type()),
-			Nullable: true,
+			Nullable: field.Type().Nullable(),
 			Source:   tableName,
 		}
 	}
+
+	spew.Dump(frame)
 
 	// Create table with the dynamic schema
 	table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
 	db.inMemoryDb.AddTable(tableName, table)
 
 	// Insert data from the frame
+	spew.Dump(schema)
 	for i := 0; i < frame.Rows(); i++ {
 		row := make(mysql.Row, len(frame.Fields))
 		for j, field := range frame.Fields {
+			spew.Dump(field.At(i), row[j], schema[j].Type)
+			if schema[j].Nullable {
+				if field.At(i) == nil {
+					continue
+				}
+				v, _ := field.ConcreteAt(i)
+				row[j] = v
+				continue
+			}
 			row[j] = field.At(i)
 		}
+
+		spew.Dump(row)
 
 		err := table.Insert(ctx, row)
 		if err != nil {
@@ -133,13 +148,9 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	switch fieldType {
 	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64:
 		return types.Int64
-	// case when it's a slice of pointers to int64
-	case data.FieldTypeNullableInt64:
-		return types.Int64
-
 	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
 		return types.Uint64
-	case data.FieldTypeFloat32, data.FieldTypeFloat64:
+	case data.FieldTypeFloat32, data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
 		return types.Float64
 	case data.FieldTypeString:
 		return types.Text
@@ -148,7 +159,7 @@ func convertDataType(fieldType data.FieldType) mysql.Type {
 	case data.FieldTypeTime:
 		return types.Timestamp
 	default:
-		fmt.Printf("------- Unsupported field type: %t", fieldType)
+		fmt.Printf("------- Unsupported field type: %v", fieldType)
 		return types.JSON
 	}
 }
