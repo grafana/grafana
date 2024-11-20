@@ -350,7 +350,7 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
 
   // if we have a base threshold set by default but not on the config, we need to merge it in
   const defaultBaseStep =
-    defaults.thresholds?.mode === ThresholdsMode.Absolute &&
+    defaults?.thresholds?.mode === ThresholdsMode.Absolute &&
     defaults.thresholds?.steps.find((step) => step.value === -Infinity);
   if (
     config.thresholds?.mode === ThresholdsMode.Absolute &&
