@@ -146,7 +146,7 @@ describe('PanelOptions', () => {
     it('Can update', async () => {
       const {} = setup();
 
-      await userEvent.click(screen.getByLabelText('Remove label'));
+      await userEvent.click(screen.getByLabelText('Remove property'));
 
       expect(screen.queryByLabelText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
     });
