@@ -93,26 +93,6 @@ func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) 
 	return nil
 }
 
-// func (db *DB) writeDataframeToDb(name string, frame *data.Frame) error {
-// 	// TODO: Check these details:
-// 	// - Do we need a primary key?
-// 	// - Can we omit `Nullable` and `Source`?
-// 	table := memory.NewTable(db.inMemoryDb, name, gomysql.NewPrimaryKeySchema(gomysql.Schema{
-// 		// https://pkg.go.dev/github.com/dolthub/go-mysql-server/sql#Column
-// 		{Name: "name", Type: types.Text, Nullable: false, Source: name},
-// 		{Name: "profession", Type: types.Text, Nullable: false, Source: name},
-// 	}), nil)
-
-// 	db.inMemoryDb.AddTable(name, table)
-// 	// TODO: Use a more appropriate context
-// 	err := table.Insert(gomysql.NewEmptyContext(), gomysql.NewRow("sam", "engineer"))
-// 	if err != nil {
-// 		return fmt.Errorf("error inserting row: %v", err)
-// 	}
-
-// 	return nil
-// }
-
 // TODO: Check if it really makes sense to receive a shared context here, rather than creating a new one
 func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *data.Frame) error {
 	if frame == nil {
