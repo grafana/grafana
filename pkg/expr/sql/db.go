@@ -28,7 +28,7 @@ func (db *DB) RunCommands(commands []string) (string, error) {
 }
 
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
-func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
+func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema, f *data.Frame) error {
 	// Create fields based on the schema
 	for _, col := range schema {
 		var field *data.Field
@@ -60,7 +60,7 @@ func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) 
 	// Iterate through the rows and append data to fields
 	for {
 		// TODO: Use a more appropriate context
-		row, err := iter.Next(mysql.NewEmptyContext())
+		row, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -190,7 +190,7 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	// TODO: Consider if this should be moved outside of this function
 	// or indeed into convertToDataFrame
 	f.Name = tableName
-	err = convertToDataFrame(iter, schema, f)
+	err = convertToDataFrame(ctx, iter, schema, f)
 	if err != nil {
 		return err
 	}
