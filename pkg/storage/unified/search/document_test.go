@@ -22,6 +22,7 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 		key.Name = name
 		prefix := fmt.Sprintf("%s-%s", kind, key.Name)
 		t.Run(prefix, func(t *testing.T) {
+			// nolint:gosec
 			in, err := os.ReadFile(filepath.Join("testdata", "doc", prefix+".json"))
 			require.NoError(t, err)
 
@@ -32,6 +33,9 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 			require.NoError(t, err)
 
 			outpath := filepath.Join("testdata", "doc", prefix+"-out.json")
+
+			// test path
+			// nolint:gosec
 			expect, _ := os.ReadFile(outpath)
 			if !assert.JSONEq(t, string(expect), string(out)) {
 				err = os.WriteFile(outpath, out, 0600)
