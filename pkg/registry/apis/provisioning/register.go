@@ -2,6 +2,9 @@ package provisioning
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -39,23 +42,36 @@ var (
 
 // This is used just so wire has something unique to return
 type ProvisioningAPIBuilder struct {
+	urlProvider       func(namespace string) string
+	webhookSecreteKey string
+
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 }
 
-func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
+// This constructor will be called when building a multi-tenant apiserveer
+// Avoid adding anything that secretly requires additional hidden dependencies
+// like *settings.Cfg or core grafana services that depend on database connections
+func NewProvisioningAPIBuilder(
+	local *LocalFolderResolver,
+	urlProvider func(namespace string) string,
+	webhookSecreteKey string,
+) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
+		urlProvider:       urlProvider,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
+		webhookSecreteKey: webhookSecreteKey,
 	}
 }
 
 func RegisterAPIService(
+	// It is OK to use settigns.Cfg here -- this is only used when running single tenant with a full setup
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	cfg *setting.Cfg,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -63,7 +79,9 @@ func RegisterAPIService(
 	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
-	})
+	}, func(namespace string) string {
+		return cfg.AppURL
+	}, cfg.SecretKey)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -236,6 +254,42 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		b.logger.Error("failed to run after delete", "error", err)
 		return
 	}
+}
+func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration")
+	}
+
+	if r.Spec.Type == provisioning.GithubRepositoryType {
+		if r.Spec.GitHub == nil {
+			return fmt.Errorf("github configuration is required")
+		}
+
+		if r.Spec.GitHub.Branch == "" {
+			r.Spec.GitHub.Branch = "main"
+		}
+
+		if r.Spec.GitHub.WebhookURL == "" {
+			gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+			r.Spec.GitHub.WebhookURL = fmt.Sprintf("%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+				b.urlProvider(a.GetNamespace()), // gets the full name
+				gvr.Group, gvr.Version,
+				a.GetNamespace(), gvr.Resource, a.GetName())
+		}
+
+		if r.Spec.GitHub.WebhookSecret == "" {
+			r.Spec.GitHub.WebhookSecret = b.generateWebhookSecret(r.Spec.GitHub.Token)
+		}
+	}
+
+	return nil
 }
 
 func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -448,4 +502,17 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// generateWebhookSecret generates a webhook secret from a token
+// using the configured secret key. The generated secret is consistent.
+// TODO: this must be replaced by a app platform secrets once we have that.
+func (b *ProvisioningAPIBuilder) generateWebhookSecret(token string) string {
+	secretKey := []byte(b.webhookSecreteKey)
+	h := hmac.New(sha256.New, secretKey)
+
+	h.Write([]byte(token))
+	hashed := h.Sum(nil)
+
+	return hex.EncodeToString(hashed)
 }
