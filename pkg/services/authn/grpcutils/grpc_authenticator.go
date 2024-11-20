@@ -99,10 +99,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 }
 
 func FallbackUsed(ctx context.Context) bool {
-	if ctx.Value(contextFallbackKey{}) == nil {
-		return false
-	}
-	return true
+	return ctx.Value(contextFallbackKey{}) != nil
 }
 
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
