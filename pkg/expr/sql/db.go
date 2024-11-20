@@ -188,7 +188,9 @@ func (db *DB) QueryFramesInto(name string, query string, frames []*data.Frame, f
 			db.inMemoryDb,
 		))
 
-	ctx := mysql.NewEmptyContext()
+	pro := memory.NewDBProvider(db.inMemoryDb)
+	session := memory.NewSession(mysql.NewBaseSession(), pro)
+	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
 	schema, iter, _, err := engine.Query(ctx, query)
 	if err != nil {
