@@ -9,6 +9,7 @@ labels:
     - enterprise
     - oss
 title: InfluxDB query Editor
+menuTitle: Query editor
 weight: 400
 refs:
   explore:
