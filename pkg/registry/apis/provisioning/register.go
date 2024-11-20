@@ -2,6 +2,9 @@ package provisioning
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -39,13 +42,15 @@ var (
 
 // This is used just so wire has something unique to return
 type ProvisioningAPIBuilder struct {
+	cfg               *setting.Cfg
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 }
 
-func NewProvisioningAPIBuilder(local *LocalFolderResolver) *ProvisioningAPIBuilder {
+func NewProvisioningAPIBuilder(cfg *setting.Cfg, local *LocalFolderResolver) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
+		cfg:               cfg,
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 	}
@@ -60,7 +65,7 @@ func RegisterAPIService(
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
+	builder := NewProvisioningAPIBuilder(cfg, &LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	})
@@ -236,6 +241,38 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		b.logger.Error("failed to run after delete", "error", err)
 		return
 	}
+}
+func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	r, ok := obj.(*provisioning.Repository)
+	if !ok {
+		return fmt.Errorf("expected repository configuration")
+	}
+
+	if r.Spec.Type == provisioning.GithubRepositoryType {
+		if r.Spec.GitHub == nil {
+			return fmt.Errorf("github configuration is required")
+		}
+
+		if r.Spec.GitHub.Branch == "" {
+			r.Spec.GitHub.Branch = "main"
+		}
+
+		if r.Spec.GitHub.WebhookURL == "" {
+			r.Spec.GitHub.WebhookURL = fmt.Sprintf("%sapi/provisioning/v0alpha1/namespaces/%s/repositories/%s/webhook", b.cfg.AppURL, a.GetNamespace(), a.GetName())
+		}
+
+		if r.Spec.GitHub.WebhookSecret == "" {
+			r.Spec.GitHub.WebhookSecret = b.generateWebhookSecret(r.Spec.GitHub.Token)
+		}
+	}
+
+	return nil
 }
 
 func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -448,4 +485,17 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// generateWebhookSecret generates a webhook secret from a token
+// using the configured secret key. The generated secret is consistent.
+// TODO: this must be replaced by a app platform secrets once we have that.
+func (b *ProvisioningAPIBuilder) generateWebhookSecret(token string) string {
+	secretKey := []byte(b.cfg.SecretKey)
+	h := hmac.New(sha256.New, secretKey)
+
+	h.Write([]byte(token))
+	hashed := h.Sum(nil)
+
+	return hex.EncodeToString(hashed)
 }
