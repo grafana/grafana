@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -153,7 +154,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}
 
 		js, _ := json.MarshalIndent(found, "", "  ")
-		// fmt.Printf("%s", string(js))
+		fmt.Printf("%s", string(js))
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
@@ -170,7 +171,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy",
 					"webhookSecret": "dummyWebhookSecret",
-					"webhookURL": "https://dummyWebhookUrl/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
+					"webhookURL": "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/github-example/webhook"
 				},
 				"title": "Github Example",
 				"type": "github"

@@ -7,9 +7,11 @@ import (
 	"sync"
 
 	"golang.org/x/net/context"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -17,16 +19,21 @@ import (
 
 type BackgroundIdentityService interface {
 	WorkerIdentity(ctx context.Context, namespace string) (identity.Requester, error)
+
+	// This will return a rest.Config with a worker identity attached in the context
+	RestConfigForNamespace(ctx context.Context, namespace string) (*rest.Config, error)
 }
 
 func ProvideProvisioningIdentityService(
 	serviceAccounts serviceaccounts.Service,
 	authn authn.Service,
+	clientConfigProvider apiserver.DirectRestConfigProvider,
 ) BackgroundIdentityService {
 	prefix := "provisioning-background-worker"
 	return &backgroundIdentities{
 		serviceAccountNamePrefix: prefix,
 		role:                     org.RoleAdmin,
+		clientConfigProvider:     clientConfigProvider,
 
 		log:             slog.Default().With("logger", "background-identities", "prefix", prefix),
 		accounts:        make(map[int64]string),
@@ -40,6 +47,7 @@ type backgroundIdentities struct {
 
 	serviceAccountNamePrefix string
 	role                     org.RoleType
+	clientConfigProvider     apiserver.DirectRestConfigProvider
 
 	// typed ids
 	accounts map[int64]string
@@ -102,4 +110,12 @@ func (o *backgroundIdentities) WorkerIdentity(ctx context.Context, namespace str
 	}
 
 	return o.authn.ResolveIdentity(ctx, info.OrgID, id)
+}
+
+func (o *backgroundIdentities) RestConfigForNamespace(ctx context.Context, namespace string) (*rest.Config, error) {
+	id, err := o.WorkerIdentity(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+	return o.clientConfigProvider.GetRestConfigForBackgroundWorker(id), nil
 }
