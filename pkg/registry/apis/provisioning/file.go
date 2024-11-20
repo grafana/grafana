@@ -63,8 +63,14 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		idx := strings.Index(r.URL.Path, "/"+name+"/read")
-		filePath := strings.TrimLeft(r.URL.Path[idx+len(name+"/read")+1:], "/")
+		prefix := fmt.Sprintf("/%s/file/", name)
+		idx := strings.Index(r.URL.Path, prefix)
+		if idx == -1 {
+			responder.Error(errors.NewBadRequest("invalid index"))
+			return
+		}
+
+		filePath := r.URL.Path[idx+len(prefix):]
 		if filePath == "" {
 			responder.Error(errors.NewBadRequest("missing path"))
 			return
@@ -91,9 +97,9 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		case http.MethodGet:
 			obj, err = s.doRead(r.Context(), repo, filePath, commit)
 		case http.MethodPost:
-			obj, err = s.doWrite(r.Context(), true, repo, filePath, message, r)
-		case http.MethodPut:
 			obj, err = s.doWrite(r.Context(), false, repo, filePath, message, r)
+		case http.MethodPut:
+			obj, err = s.doWrite(r.Context(), true, repo, filePath, message, r)
 		case http.MethodDelete:
 			obj, err = s.doDelete(r.Context(), repo, filePath, message)
 		default:
@@ -211,7 +217,10 @@ func (s *readConnector) doDelete(ctx context.Context, repo Repository, path stri
 
 	fmt.Printf("TODO! trigger sync for this file we just deleted... %s\n", path)
 
-	return nil, err
+	return &provisioning.ResourceWrapper{
+		Path: path,
+		// TODO: should we return the deleted object and / or commit?
+	}, nil
 }
 
 var (
