@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { useCreateRepositoryMutation, useUpdateRepositoryMutation } from './api';
 import { RepositorySpec } from './api/types';
@@ -13,7 +12,7 @@ export function useCreateOrUpdateRepository(name?: string) {
       if (name) {
         return update({ name, body: { metadata: { name }, spec: data } });
       }
-      return create({ metadata: { generateName: uuidv4() }, spec: { ...data, title: 'test' } });
+      return create({ metadata: { generateName: 'repository' }, spec: { ...data, title: 'test' } });
     },
     [create, name, update]
   );

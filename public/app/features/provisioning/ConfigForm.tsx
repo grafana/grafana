@@ -30,7 +30,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: data ? specToData(data.spec) : { type: 'github' } });
-  const [tokenConfigured, setTokenConfigured] = useState(false);
+  const [tokenConfigured, setTokenConfigured] = useState(Boolean(data?.metadata?.name));
   const navigate = useNavigate();
   const watchType = watch('type');
 
