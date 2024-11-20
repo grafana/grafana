@@ -1,23 +1,28 @@
-import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useCallback, useEffect, useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
 import { useDeleteRepositoryMutation } from './api';
-import { PROVISIONING_URL } from './constants';
 
+const appEvents = getAppEvents();
 export function DeleteRepositoryButton({ name }: { name: string }) {
   const [deleteRepository, request] = useDeleteRepositoryMutation();
   const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (request.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Repository settings deleted'],
+      });
+    }
+  }, [request.isSuccess]);
 
   const onConfirm = useCallback(() => {
     deleteRepository({ name });
-
-    if (request.isSuccess) {
-      navigate(PROVISIONING_URL);
-    }
-  }, [deleteRepository, name, request.isSuccess, navigate]);
+  }, [deleteRepository, name]);
 
   return (
     <>

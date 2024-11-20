@@ -14,6 +14,7 @@ import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
+const appEvents = getAppEvents();
 
 export interface ConfigFormProps {
   data?: RepositoryResource;
@@ -35,8 +36,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const watchType = watch('type');
 
   useEffect(() => {
-    const appEvents = getAppEvents();
-
     if (request.isSuccess) {
       const formData = getValues();
 
@@ -125,10 +124,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <Input {...register('repository', { required: 'This field is required.' })} placeholder={'example'} />
           </Field>
           <Field label={'Commit directly to main'}>
-            <Switch {...register('branchWorkflow')} />
+            <Switch {...register('branchWorkflow')} id={'branchWorkflow'} />
           </Field>
           <Field label={'Show dashboard previews'}>
-            <Switch {...register('generateDashboardPreviews')} />
+            <Switch {...register('generateDashboardPreviews')} id={'generateDashboardPreviews'} />
           </Field>
         </>
       )}
