@@ -1,5 +1,4 @@
 import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
-
 import {
   DashboardV2Spec,
   defaultDashboardV2Spec,
@@ -24,7 +23,9 @@ import {
   ConstantVariableKind,
   GroupByVariableKind,
   AdhocVariableKind,
-} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+} from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -59,6 +60,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     editable: oldDash.editable,
     links: transformDashboardLinksToEnums(oldDash.links),
     tags: oldDash.tags,
+    schemaVersion: DASHBOARD_SCHEMA_VERSION,
     // EOF dashboard settings
 
     // time settings

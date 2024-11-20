@@ -10,6 +10,7 @@ export const handyTestingSchema: DashboardV2Spec = {
   editable: true,
   links: [],
   tags: [],
+  schemaVersion: 39,
   timeSettings: {
     timezone: 'browser',
     from: 'now-6h',
