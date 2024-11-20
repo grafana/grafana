@@ -124,6 +124,14 @@ export interface DataSourceRef {
 export const defaultDataSourceRef = (): DataSourceRef => ({
 });
 
+export enum DataTopic {
+	AlertStates = "alertStates",
+	Annotations = "annotations",
+	Series = "series",
+}
+
+export const defaultDataTopic = (): DataTopic => (DataTopic.AlertStates);
+
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
@@ -135,8 +143,7 @@ export interface DataTransformerConfig {
 	// Optional frame matcher. When missing it will be applied to all results
 	filter?: MatcherConfig;
 	// Where to pull DataFrames from as input to transformation
-	// replaced with common.DataTopic
-	topic?: "series" | "annotations" | "alertStates";
+	topic?: DataTopic;
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	options: any;

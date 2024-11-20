@@ -1,3 +1,5 @@
+import { uniqueId } from 'lodash';
+
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -17,6 +19,10 @@ import {
   SceneQueryRunner,
   SceneDataTransformer,
 } from '@grafana/scenes';
+import {
+  DashboardCursorSync as DashboardCursorSyncV1,
+  defaultDashboardCursorSync,
+} from '@grafana/schema/dist/esm/index.gen';
 
 import {
   DashboardCursorSync,
@@ -24,14 +30,15 @@ import {
   PanelKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
-import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
@@ -43,11 +50,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
-import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
-import {
-  DashboardCursorSync as DashboardCursorSyncV1,
-  defaultDashboardCursorSync,
-} from '@grafana/schema/dist/esm/index.gen';
 
 export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): DashboardScene {
   // FIXME: Variables
@@ -62,16 +64,15 @@ export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): D
   //   }),
   // });
 
-  // FIXME: Annotations
-  // const annotationLayers = spec.annotations.map((annotation) => {
-  //   return new DashboardAnnotationsDataLayer({
-  //     key: uniqueId('annotations-'),
-  //     query: annotation,
-  //     name: annotation.name,
-  //     isEnabled: Boolean(annotation.enable),
-  //     isHidden: Boolean(annotation.hide),
-  //   });
-  // });
+  const annotationLayers = dashboard.annotations.map((annotation) => {
+    return new DashboardAnnotationsDataLayer({
+      key: uniqueId('annotations-'),
+      query: annotation.spec,
+      name: annotation.spec.name,
+      isEnabled: Boolean(annotation.spec.enable),
+      isHidden: Boolean(annotation.spec.hide),
+    });
+  });
 
   const dashboardScene = new DashboardScene({
     description: dashboard.description,
@@ -123,8 +124,7 @@ export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): D
       }),
     ],
     $data: new DashboardDataLayerSet({
-      // FIXME: Annotations
-      // annotationLayers,
+      annotationLayers,
     }),
     controls: new DashboardControls({
       variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
@@ -301,7 +301,6 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({
     $data: dataProvider,
-    // FIXME: These types are not compatible
     transformations: panel.data.spec.transformations.map((transformation) => transformation.spec),
   });
 }

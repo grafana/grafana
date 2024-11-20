@@ -102,6 +102,8 @@ DataSourceRef: {
   uid?: string
 }
 
+DataTopic: "alertStates" | "annotations" | "series"
+
 // Transformations allow to manipulate data returned by a query before the system applies a visualization.
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
@@ -113,7 +115,7 @@ DataTransformerConfig: {
   // Optional frame matcher. When missing it will be applied to all results
   filter?: MatcherConfig
   // Where to pull DataFrames from as input to transformation
-  topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
+  topic?: DataTopic
   // Options to be passed to the transformer
   // Valid options depend on the transformer id
   options: _
