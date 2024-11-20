@@ -45,8 +45,12 @@ DashboardV2Spec: {
 
   layout: GridLayoutKind
 
-  // version: will rely on k8s resource versioning, via metadata.resorceVersion
+  // Version of the JSON schema, incremented each time a Grafana update brings
+  // changes to said schema.
+  schemaVersion: uint16 | *39
 
+
+  // version: will rely on k8s resource versioning, via metadata.resorceVersion
   // revision?: int // for plugins only
   // gnetId?: string // ??? Wat is this used for?
 }
