@@ -8,7 +8,7 @@ import { Resource } from '../apiserver/types';
 
 import { useListRepositoryQuery } from './api';
 import { RepositorySpec } from './api/types';
-import { NEW_URL } from './constants';
+import { NEW_URL, PROVISIONING_URL } from './constants';
 
 export default function RepositoryListPage() {
   const query = useListRepositoryQuery();
@@ -57,10 +57,10 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
                   <Card.Meta>{item.spec.type}</Card.Meta>
                 </Stack>
                 <Stack>
-                  <LinkButton variant="secondary" href={`/provisioning/edit/${item.metadata.name}`} disabled>
+                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/edit/${item.metadata.name}`}>
                     Edit
                   </LinkButton>
-                  <LinkButton variant="destructive" href={`/provisioning/delete/${item.metadata.name}`} disabled>
+                  <LinkButton variant="destructive" href={`${PROVISIONING_URL}/delete/${item.metadata.name}`} disabled>
                     Delete
                   </LinkButton>
                 </Stack>

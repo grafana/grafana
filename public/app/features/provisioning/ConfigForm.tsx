@@ -15,7 +15,10 @@ import { dataToSpec } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 
-export function ConfigForm() {
+export interface ConfigFormProps {
+  config?: RepositoryFormData;
+}
+export function ConfigForm({ config }: ConfigFormProps) {
   const [submitData, request] = useCreateRepositoryMutation();
   const {
     register,
@@ -26,7 +29,7 @@ export function ConfigForm() {
     setValue,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: { type: 'github' } });
+  } = useForm<RepositoryFormData>({ defaultValues: config?.spec || { type: 'github' } });
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const navigate = useNavigate();
   const watchType = watch('type');
