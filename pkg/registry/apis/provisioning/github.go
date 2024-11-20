@@ -56,6 +56,9 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Repository == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "repository"), "a github repo name is required"))
 	}
+	if gh.Branch == "" {
+		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
+	}
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
@@ -181,16 +184,9 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 		return fmt.Errorf("repository mismatch")
 	}
 
-	branch := r.config.Spec.GitHub.Branch
-	if branch == "" {
-		// Default to main if no branch is specified
-		// TODO: should this be a mutation hook instead?
-		branch = "main"
-	}
-
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
-	if event.GetRef() != fmt.Sprintf("refs/heads/%s", branch) {
+	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
 		return nil
 	}
 
