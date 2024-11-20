@@ -172,14 +172,10 @@ export interface RuleLocation {
 }
 
 export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
-  const [fetchAlertRule, { isLoading, currentData, error, isUninitialized }] =
-    alertRuleApi.endpoints.getAlertRule.useLazyQuery();
-
-  useEffect(() => {
-    if (isGrafanaRuleIdentifier(ruleIdentifier)) {
-      fetchAlertRule({ uid: ruleIdentifier.uid });
-    }
-  }, [ruleIdentifier, fetchAlertRule]);
+  const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
+    { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
+    { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }
+  );
 
   return useMemo(() => {
     if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {

@@ -192,15 +192,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       if (isCloudRulerRule(ruleDefinition)) {
         const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
         locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
-      } else {
-        // For Grafana managed rules we need to update the existing property with the new rule definition
-        const identifier = ruleId.tryParse(uidFromParams, true);
-        if (identifier) {
-          const editURL = createRelativeUrl(
-            `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`
-          );
-          locationService.replace(editURL);
-        }
       }
     }
   };
