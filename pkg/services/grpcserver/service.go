@@ -46,7 +46,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 	s := &gPRCServerService{
 		cfg:         cfg.GRPCServer,
 		logger:      log.New("grpc-server"),
-		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer) || cfg.GRPCServer.Enabled,
+		enabled:     features.IsEnabledGlobally(featuremgmt.FlagGrpcServer), // TODO: replace with cfg.GRPCServer.Enabled when we remove feature toggle.
 		startedChan: make(chan struct{}),
 	}
 
