@@ -92,6 +92,8 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 
   onClose = () => {
     const dashboard = getDashboardSceneFor(this);
+    const meta = dashboard.state.meta;
+
     locationService.push(
       getDashboardUrl({
         uid: dashboard.state.uid,
@@ -101,6 +103,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           inspect: null,
           inspectTab: null,
         },
+        isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       })
     );
   };
