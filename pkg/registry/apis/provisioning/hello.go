@@ -3,9 +3,10 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -13,7 +14,8 @@ import (
 )
 
 type helloWorldSubresource struct {
-	getter rest.Getter
+	getter        rest.Getter
+	statusUpdater rest.Updater
 }
 
 func (*helloWorldSubresource) New() runtime.Object {
@@ -48,7 +50,7 @@ func (*helloWorldSubresource) NewConnectOptions() (runtime.Object, bool, string)
 }
 
 func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	obj, err := s.getter.Get(ctx, name, &v1.GetOptions{})
+	obj, err := s.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,10 +65,37 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 			whom = "World"
 		}
 
-		fmt.Printf("GOT: %s/%s\n", repo.Name, repo.Spec.Type)
-		fmt.Printf(" local: %+v\n", repo.Spec.Local)
-		fmt.Printf(" github: %+v\n", repo.Spec.GitHub)
-		fmt.Printf(" s3: %+v\n", repo.Spec.S3)
+		newCommit := r.URL.Query().Get("commit")
+		if newCommit != "" {
+			repo.Status.CurrentGitCommit = newCommit
+			obj, b, err := s.statusUpdater.Update(
+				ctx,
+				name, // resource name
+				rest.DefaultUpdatedObjectInfo(obj, func(ctx context.Context, newObj, oldObj runtime.Object) (transformedNewObj runtime.Object, err error) {
+					newObj.(*v0alpha1.Repository).Status.CurrentGitCommit = newCommit
+					slog.InfoContext(ctx, "updated the commit", "newObj", newObj, "newCommit", newCommit)
+					return newObj, nil
+				}),
+				func(ctx context.Context, obj runtime.Object) error { return nil },      // createValidation
+				func(ctx context.Context, obj, old runtime.Object) error { return nil }, // updateValidation
+				false,                   // forceAllowCreate
+				&metav1.UpdateOptions{}, // options
+			)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			repo = obj.(*v0alpha1.Repository)
+			slog.InfoContext(ctx, "the conspicuous boolean", "bool", b)
+		}
+
+		slog.InfoContext(ctx, "Got a repository",
+			"name", repo.Name,
+			"type", repo.Spec.Type,
+			"status", repo.Status,
+			"local", repo.Spec.Local,
+			"github", repo.Spec.GitHub,
+			"s3", repo.Spec.S3)
 
 		responder.Object(http.StatusOK, &v0alpha1.HelloWorld{Whom: whom})
 	}), nil
