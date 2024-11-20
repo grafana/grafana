@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+var dbName = "mydb"
+
 type DB struct {
 	inMemoryDb *memory.Database
 }
@@ -183,6 +185,9 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 		}
 	}
 
+	// Select the database in the context
+	ctx.SetCurrentDatabase(dbName)
+
 	// TODO: Check if it's wise to reuse the existing provider, rather than creating a new one
 	engine := sqle.NewDefault(pro)
 	// engine := sqle.NewDefault(
@@ -214,6 +219,6 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 
 func NewInMemoryDB() *DB { // TODO - name the function. The InMemoryDB name is now used on line 13
 	return &DB{
-		inMemoryDb: memory.NewDatabase("test"), // TODO - change the name of the database
+		inMemoryDb: memory.NewDatabase(dbName), // TODO - change the name of the database
 	}
 }
