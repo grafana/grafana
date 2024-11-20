@@ -15,7 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: InfluxDB 
+menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
 refs:
