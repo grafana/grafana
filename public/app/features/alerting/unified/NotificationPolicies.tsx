@@ -107,7 +107,7 @@ const AmRoutes = () => {
     refetch: refetchNotificationPolicyRoute,
   } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' }, { skip: !showPoliciesTab });
 
-  const [result] = currentData && currentData.length > 0 ? currentData : [];
+  const [result] = currentData ?? [];
 
   const updateNotificationPolicyRoute = useUpdateNotificationPolicyRoute(selectedAlertmanager ?? '');
 
