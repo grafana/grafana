@@ -22,10 +22,13 @@ import {
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
 import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
-import { DashboardRepeatsProcessedEvent } from '../types';
+import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
+
+import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;
@@ -38,9 +41,11 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+export class DashboardGridItem
+  extends SceneObjectBase<DashboardGridItemState>
+  implements SceneGridItemLike, DashboardLayoutItem
+{
   private _prevRepeatValues?: VariableValueSingle[];
-
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
   public constructor(state: DashboardGridItemState) {
@@ -187,6 +192,18 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     }
 
     this.setState(stateUpdate);
+  }
+
+  /**
+   * DashboardLayoutItem interface start
+   */
+  public isDashboardLayoutItem: true = true;
+
+  /**
+   * Returns options for panel edit
+   */
+  public getOptions(): OptionsPaneCategoryDescriptor {
+    return getDashboardGridItemOptions(this);
   }
 
   /**

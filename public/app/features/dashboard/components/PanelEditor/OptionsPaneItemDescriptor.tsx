@@ -11,7 +11,7 @@ import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
 import { OptionPaneItemOverrideInfo } from './types';
 
-export interface OptionsPaneItemProps {
+export interface OptionsPaneItemInfo {
   title: string;
   value?: any;
   description?: string;
@@ -19,6 +19,8 @@ export interface OptionsPaneItemProps {
   render: () => React.ReactElement;
   skipField?: boolean;
   showIf?: () => boolean;
+  /** Hook for controlling visibility */
+  useShowIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
   addon?: ReactNode;
 }
@@ -29,74 +31,87 @@ export interface OptionsPaneItemProps {
 export class OptionsPaneItemDescriptor {
   parent!: OptionsPaneCategoryDescriptor;
 
-  constructor(public props: OptionsPaneItemProps) {}
-
-  getLabel(searchQuery?: string): ReactNode {
-    const { title, description, overrides, addon } = this.props;
-
-    if (!searchQuery) {
-      // Do not render label for categories with only one child
-      if (this.parent.props.title === title && !overrides?.length) {
-        return null;
-      }
-
-      return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} />;
-    }
-
-    const categories: React.ReactNode[] = [];
-
-    if (this.parent.parent) {
-      categories.push(this.highlightWord(this.parent.parent.props.title, searchQuery));
-    }
-
-    if (this.parent.props.title !== title) {
-      categories.push(this.highlightWord(this.parent.props.title, searchQuery));
-    }
-
-    return (
-      <Label description={description && this.highlightWord(description, searchQuery)} category={categories}>
-        {this.highlightWord(title, searchQuery)}
-        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-      </Label>
-    );
-  }
-
-  highlightWord(word: string, query: string) {
-    return (
-      <Highlighter textToHighlight={word} searchWords={[query]} highlightClassName={'search-fragment-highlight'} />
-    );
-  }
-
-  renderOverrides() {
-    const { overrides } = this.props;
-    if (!overrides || overrides.length === 0) {
-      return;
-    }
-  }
+  constructor(public props: OptionsPaneItemInfo) {}
 
   render(searchQuery?: string) {
-    const { title, description, render, showIf, skipField } = this.props;
-    const key = `${this.parent.props.id} ${title}`;
+    return <OptionsPaneItem key={this.props.title} itemDescriptor={this} searchQuery={searchQuery} />;
+  }
 
-    if (showIf && !showIf()) {
+  useShowIf() {
+    if (this.props.useShowIf) {
+      return this.props.useShowIf();
+    }
+
+    if (this.props.showIf) {
+      return this.props.showIf();
+    }
+
+    return true;
+  }
+}
+
+interface OptionsPaneItemProps {
+  itemDescriptor: OptionsPaneItemDescriptor;
+  searchQuery?: string;
+}
+
+function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) {
+  const { title, description, render, skipField } = itemDescriptor.props;
+  const key = `${itemDescriptor.parent.props.id} ${title}`;
+  const showIf = itemDescriptor.useShowIf();
+
+  if (!showIf) {
+    return null;
+  }
+
+  if (skipField) {
+    return render();
+  }
+
+  return (
+    <Field
+      label={renderOptionLabel(itemDescriptor, searchQuery)}
+      description={description}
+      key={key}
+      aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
+    >
+      {render()}
+    </Field>
+  );
+}
+
+function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuery?: string): ReactNode {
+  const { title, description, overrides, addon } = itemDescriptor.props;
+
+  if (!searchQuery) {
+    // Do not render label for categories with only one child
+    if (itemDescriptor.parent.props.title === title && !overrides?.length) {
       return null;
     }
 
-    if (skipField) {
-      return render();
-    }
-
-    return (
-      <Field
-        label={this.getLabel(searchQuery)}
-        description={description}
-        key={key}
-        aria-label={selectors.components.PanelEditor.OptionsPane.fieldLabel(key)}
-      >
-        {render()}
-      </Field>
-    );
+    return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} />;
   }
+
+  const categories: React.ReactNode[] = [];
+
+  if (itemDescriptor.parent.parent) {
+    categories.push(highlightWord(itemDescriptor.parent.parent.props.title, searchQuery));
+  }
+
+  if (itemDescriptor.parent.props.title !== title) {
+    categories.push(highlightWord(itemDescriptor.parent.props.title, searchQuery));
+  }
+
+  return (
+    <Label description={description && highlightWord(description, searchQuery)} category={categories}>
+      {highlightWord(title, searchQuery)}
+      {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+    </Label>
+  );
+}
+
+function highlightWord(word: string, query: string) {
+  return <Highlighter textToHighlight={word} searchWords={[query]} highlightClassName={'search-fragment-highlight'} />;
 }
 
 interface OptionPanelLabelProps {
