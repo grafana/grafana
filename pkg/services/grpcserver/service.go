@@ -75,7 +75,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			interceptors.LoggingUnaryInterceptor(s.logger, s.enabled), // needs to be registered after tracing interceptor to get trace id
+			interceptors.LoggingUnaryInterceptor(s.logger, s.cfg.EnableLogging), // needs to be registered after tracing interceptor to get trace id
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
 		grpc.ChainStreamInterceptor(
