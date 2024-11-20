@@ -25,6 +25,7 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
+	UID              string
 }
 
 type TestApiKey struct {
@@ -57,6 +58,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	require.NoError(t, err)
 
 	u1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+		UID:              testUser.UID,
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
