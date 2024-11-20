@@ -265,14 +265,21 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 		t.Skip("skipping test in short mode")
 	}
 	cases := []struct {
-		desc        string
-		user        tests.TestUser
-		expectedErr error
+		desc          string
+		user          tests.TestUser
+		retrieveByUID bool
+		expectedErr   error
 	}{
 		{
 			desc:        "service accounts should exist and get retrieved",
 			user:        tests.TestUser{Login: "servicetest1@admin", IsServiceAccount: true},
 			expectedErr: nil,
+		},
+		{
+			desc:          "service accounts should be able to be retrieved with uid",
+			user:          tests.TestUser{Login: "test1@admin", IsServiceAccount: true},
+			expectedErr:   nil,
+			retrieveByUID: true,
 		},
 		{
 			desc:        "service accounts is false should not retrieve user",
@@ -283,18 +290,30 @@ func TestIntegrationStore_RetrieveServiceAccount(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
+			var dto *serviceaccounts.ServiceAccountProfileDTO
+			var err error
 			db, store := setupTestDatabase(t)
 			user := tests.SetupUserServiceAccount(t, db, store.cfg, c.user)
-			dto, err := store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
-				OrgID: user.OrgID,
-				ID:    user.ID,
-			})
+			if c.retrieveByUID {
+				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+					OrgID: user.OrgID,
+					UID:   user.UID,
+				})
+			} else {
+				dto, err = store.RetrieveServiceAccount(context.Background(), &serviceaccounts.GetServiceAccountQuery{
+					OrgID: user.OrgID,
+					ID:    user.ID,
+				})
+			}
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, c.user.Login, dto.Login)
 				require.Len(t, dto.Teams, 0)
+				if c.retrieveByUID {
+					require.Equal(t, user.UID, dto.UID)
+				}
 			}
 		})
 	}

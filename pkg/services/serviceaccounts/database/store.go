@@ -222,7 +222,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, q
 		}
 
 		if query.UID != "" {
-			whereConditions = append(whereConditions, "user.uid = ?")
+			whereConditions = append(whereConditions, fmt.Sprintf("%s.uid = ?", s.sqlStore.GetDialect().Quote("user")))
 			whereParams = append(whereParams, query.UID)
 		}
 
