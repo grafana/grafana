@@ -334,4 +334,15 @@ describe('LokiQueryModeller', () => {
       expect(result.operations[1].id).toBe(LokiOperationId.Unwrap);
     });
   });
+
+  describe('Disabled operations', () => {
+    it('Can query with line filter contains operation with empty params', () => {
+      expect(
+        modeller.renderQuery({
+          labels: [{ label: 'app', op: '=', value: 'grafana' }],
+          operations: [{ id: LokiOperationId.LineContains, params: [''], disabled: true }],
+        })
+      ).toBe('{app="grafana"}');
+    });
+  });
 });
