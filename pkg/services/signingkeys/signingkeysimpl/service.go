@@ -237,7 +237,7 @@ func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (cryp
 		return nil, errors.New("private key is empty")
 	}
 
-	payload := make([]byte, base64.StdEncoding.DecodedLen(len(privateKey)))
+	payload := make([]byte, base64.RawStdEncoding.DecodedLen(len(privateKey)))
 	_, err := base64.RawStdEncoding.Decode(payload, privateKey)
 	if err != nil {
 		return nil, err
