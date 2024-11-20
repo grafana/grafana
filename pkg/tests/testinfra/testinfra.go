@@ -68,10 +68,10 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		listener2, err := net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
 
-		cfg.GRPCServerNetwork = "tcp"
-		cfg.GRPCServerAddress = listener2.Addr().String()
-		cfg.GRPCServerTLSConfig = nil
-		_, err = unistore.NewKey("address", cfg.GRPCServerAddress)
+		cfg.GRPCServer.Network = "tcp"
+		cfg.GRPCServer.Address = listener2.Addr().String()
+		cfg.GRPCServer.TLSConfig = nil
+		_, err = unistore.NewKey("address", cfg.GRPCServer.Address)
 		require.NoError(t, err)
 
 		// release the one we just discovered -- it will be used by the services on startup
