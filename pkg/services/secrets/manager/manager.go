@@ -377,7 +377,6 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	}
 
 	var decrypted []byte
-	// /!\ payload ends with "\x00\x00"
 	decrypted, err = s.enc.Decrypt(ctx, payload, string(dataKey))
 
 	return decrypted, err
