@@ -194,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       content: "''",
       position: 'absolute',
       top: 0,
-      left: '8px',
+      left: '1px',
       width: '1px',
       height: '100%',
       background: theme.colors.border.weak,
