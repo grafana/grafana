@@ -1,9 +1,0 @@
-apiVersion: provisioning.grafana.app/v0alpha1
-kind: Repository
-spec:
-  title: Provisioning... inception
-  description: provision a repository from provisioning
-  type: s3 
-  s3:
-    region: us-west-1
-    bucket: my-bucket

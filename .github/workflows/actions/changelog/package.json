@@ -1,6 +1,0 @@
-{
-  "name": "changelog",
-  "main": "index.js",
-  "type": "module",
-  "description": "changelog generator"
-}
