@@ -415,14 +415,14 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		}
 
 		tokensSess := dbSession.Table("api_key").
-			Select("service_account_id, COUNT(id) AS tokens").
+			Select("service_account_id, COUNT(id) AS token_count").
 			Where("org_id = ?", query.OrgID).
 			In("service_account_id", accountIDs).
 			GroupBy("service_account_id")
 
 		type tokenCount struct {
-			AccountId int64 `xorm:"service_account_id"`
-			Tokens    int64 `xorm:"tokens"`
+			AccountId  int64 `xorm:"service_account_id"`
+			TokenCount int64 `xorm:"token_count"`
 		}
 
 		var tokens []tokenCount
@@ -432,7 +432,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 
 		tokenMap := make(map[int64]int64)
 		for _, token := range tokens {
-			tokenMap[token.AccountId] = token.Tokens
+			tokenMap[token.AccountId] = token.TokenCount
 		}
 
 		for i, account := range searchResult.ServiceAccounts {
