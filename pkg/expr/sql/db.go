@@ -111,7 +111,8 @@ func convertToDataFrame(iter mysql.RowIter, schema mysql.Schema, f *data.Frame) 
 // 	return nil
 // }
 
-func (db *DB) writeDataframeToDb(tableName string, frame *data.Frame) error {
+// TODO: Check if it really makes sense to receive a shared context here, rather than creating a new one
+func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *data.Frame) error {
 	if frame == nil {
 		return fmt.Errorf("input frame is nil")
 	}
@@ -132,10 +133,6 @@ func (db *DB) writeDataframeToDb(tableName string, frame *data.Frame) error {
 	db.inMemoryDb.AddTable(tableName, table)
 
 	// Insert data from the frame
-	pro := memory.NewDBProvider(db.inMemoryDb)
-	session := memory.NewSession(mysql.NewBaseSession(), pro)
-	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
-
 	for i := 0; i < frame.Rows(); i++ {
 		row := make(mysql.Row, len(frame.Fields))
 		for j, field := range frame.Fields {
@@ -180,7 +177,7 @@ func (db *DB) QueryFramesInto(tableName string, query string, frames []*data.Fra
 	ctx := mysql.NewContext(context.Background(), mysql.WithSession(session))
 
 	for _, frame := range frames {
-		err := db.writeDataframeToDb(tableName, frame)
+		err := db.writeDataframeToDb(ctx, tableName, frame)
 		if err != nil {
 			return err
 		}
