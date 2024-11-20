@@ -3,6 +3,7 @@
 import './global-jquery-shim';
 
 import angular from 'angular';
+import { TransformStream } from 'node:stream/web';
 import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
@@ -68,6 +69,7 @@ global.IntersectionObserver = mockIntersectionObserver;
 
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
 
