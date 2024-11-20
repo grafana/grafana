@@ -95,6 +95,8 @@ async function fetchDashboard(
         if (isDashboardResource(dashboard)) {
           throw new Error('v2 schema not supported');
         }
+
+        return dashboard;
       }
       case DashboardRoutes.Normal: {
         const dashDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
