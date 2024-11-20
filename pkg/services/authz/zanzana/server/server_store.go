@@ -30,8 +30,8 @@ func (s *Server) getStoreInfo(ctx context.Context, namespace string) (*storeInfo
 	}
 
 	info = storeInfo{
-		Id:                   store.GetId(),
-		AuthorizationModelId: modelID,
+		ID:      store.GetId(),
+		ModelID: modelID,
 	}
 
 	s.stores[namespace] = info

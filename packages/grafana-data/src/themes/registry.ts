@@ -85,12 +85,30 @@ function createDebug(): GrafanaTheme2 {
         border: '#ff000088',
         text: '#cccc00',
         contrastText: '#ffff00',
+        shade: '#9900dd',
       },
       secondary: {
         ...baseDarkColors.secondary,
         border: '#ff000088',
         text: '#cccc00',
         contrastText: '#ffff00',
+        shade: '#9900dd',
+      },
+      info: {
+        ...baseDarkColors.info,
+        shade: '#9900dd',
+      },
+      warning: {
+        ...baseDarkColors.warning,
+        shade: '#9900dd',
+      },
+      success: {
+        ...baseDarkColors.success,
+        shade: '#9900dd',
+      },
+      error: {
+        ...baseDarkColors.error,
+        shade: '#9900dd',
       },
       action: {
         hover: '#9900dd',

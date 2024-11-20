@@ -31,7 +31,7 @@ func newBatch(subject, group, resource string, items []*authzextv1.BatchCheckIte
 }
 
 func testBatchCheck(t *testing.T, server *Server) {
-	t.Run("user:1 should only be able to read resource:dashboards.grafana.app/dashboards/1", func(t *testing.T) {
+	t.Run("user:1 should only be able to read resource:dashboard.grafana.app/dashboards/1", func(t *testing.T) {
 		groupPrefix := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newBatch("user:1", dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},
@@ -44,7 +44,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.False(t, res.Groups[groupPrefix].Items["2"])
 	})
 
-	t.Run("user:2 should be able to read resource:dashboards.grafana.app/dashboards/{1,2} through namespace", func(t *testing.T) {
+	t.Run("user:2 should be able to read resource:dashboard.grafana.app/dashboards/{1,2} through namespace", func(t *testing.T) {
 		groupPrefix := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newBatch("user:2", dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},
@@ -54,7 +54,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.Len(t, res.Groups[groupPrefix].Items, 2)
 	})
 
-	t.Run("user:3 should be able to read resource:dashboards.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
+	t.Run("user:3 should be able to read resource:dashboard.grafana.app/dashboards/1 with set relation", func(t *testing.T) {
 		groupPrefix := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newBatch("user:3", dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},
@@ -67,7 +67,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.False(t, res.Groups[groupPrefix].Items["2"])
 	})
 
-	t.Run("user:4 should be able to read all dashboards.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
+	t.Run("user:4 should be able to read all dashboard.grafana.app/dashboards in folder 1 and 3", func(t *testing.T) {
 		groupPrefix := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newBatch("user:4", dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},
@@ -82,7 +82,7 @@ func testBatchCheck(t *testing.T, server *Server) {
 		assert.False(t, res.Groups[groupPrefix].Items["3"])
 	})
 
-	t.Run("user:5 should be able to read resource:dashboards.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
+	t.Run("user:5 should be able to read resource:dashboard.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
 		groupPrefix := zanzana.FormatGroupResource(dashboardGroup, dashboardResource)
 		res, err := server.BatchCheck(context.Background(), newBatch("user:5", dashboardGroup, dashboardResource, []*authzextv1.BatchCheckItem{
 			{Name: "1", Folder: "1"},

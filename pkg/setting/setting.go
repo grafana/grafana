@@ -5,11 +5,9 @@ package setting
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -480,12 +478,7 @@ type Cfg struct {
 	Zanzana ZanzanaSettings
 
 	// GRPC Server.
-	GRPCServerNetwork        string
-	GRPCServerAddress        string
-	GRPCServerTLSConfig      *tls.Config
-	GRPCServerEnableLogging  bool // log request and response of each unary gRPC call
-	GRPCServerMaxRecvMsgSize int
-	GRPCServerMaxSendMsgSize int
+	GRPCServer GRPCServerSettings
 
 	CustomResponseHeaders map[string]string
 
@@ -1795,71 +1788,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	if err == nil && enabled {
 		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
 		return fmt.Errorf("invalid setting [alerting].enabled")
-	}
-	return nil
-}
-
-func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
-	server := iniFile.Section("grpc_server")
-	errPrefix := "grpc_server:"
-	useTLS := server.Key("use_tls").MustBool(false)
-	certFile := server.Key("cert_file").String()
-	keyFile := server.Key("cert_key").String()
-	if useTLS {
-		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
-		}
-		cfg.GRPCServerTLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{serverCert},
-			ClientAuth:   tls.NoClientCert,
-		}
-	}
-
-	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
-	cfg.GRPCServerAddress = valueAsString(server, "address", "")
-	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
-	cfg.GRPCServerMaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
-	cfg.GRPCServerMaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
-	switch cfg.GRPCServerNetwork {
-	case "unix":
-		if cfg.GRPCServerAddress != "" {
-			// Explicitly provided path for unix domain socket.
-			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
-				// File does not exist - nice, nothing to do.
-			} else if err != nil {
-				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
-			} else {
-				if stat.Mode()&fs.ModeSocket == 0 {
-					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
-				}
-				// Unix domain socket file, should be safe to remove.
-				err := os.Remove(cfg.GRPCServerAddress)
-				if err != nil {
-					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
-				}
-			}
-		} else {
-			// Use temporary file path for a unix domain socket.
-			tf, err := os.CreateTemp("", "gf_grpc_server_api")
-			if err != nil {
-				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
-			}
-			unixPath := tf.Name()
-			if err := tf.Close(); err != nil {
-				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
-			}
-			if err := os.Remove(unixPath); err != nil {
-				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
-			}
-			cfg.GRPCServerAddress = unixPath
-		}
-	case "tcp":
-		if cfg.GRPCServerAddress == "" {
-			cfg.GRPCServerAddress = "127.0.0.1:10000"
-		}
-	default:
-		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
 	}
 	return nil
 }

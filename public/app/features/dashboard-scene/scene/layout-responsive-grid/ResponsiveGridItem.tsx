@@ -2,11 +2,10 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, VizPanel, SceneObjectBase, SceneObject, SceneComponentProps } from '@grafana/scenes';
-import { Switch, useStyles2 } from '@grafana/ui';
+import { Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardLayoutItem } from '../types';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
