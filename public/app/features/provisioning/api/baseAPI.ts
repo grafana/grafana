@@ -18,7 +18,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
-          showErrorAlert: false,
+          showErrorAlert: requestOptions.showErrorAlert,
           data: requestOptions.body,
         })
       );

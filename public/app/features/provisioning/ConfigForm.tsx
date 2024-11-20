@@ -36,6 +36,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
 
   useEffect(() => {
     const appEvents = getAppEvents();
+
     if (request.isSuccess) {
       const formData = getValues();
 
