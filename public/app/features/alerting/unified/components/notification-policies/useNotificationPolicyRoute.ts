@@ -34,7 +34,7 @@ export const useNotificationPolicyRoute = ({ alertmanager }: BaseAlertmanagerArg
         return {
           ...result,
           currentData: result.currentData ? k8sRoutesToRoutesMemoized(result.currentData.items) : undefined,
-          data: result.data ? k8sRoutesToRoutes(result.data.items) : undefined,
+          data: result.data ? k8sRoutesToRoutesMemoized(result.data.items) : undefined,
         };
       },
     }
