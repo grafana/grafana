@@ -92,15 +92,20 @@ func (r *githubRepository) Test(ctx context.Context) error {
 
 // ReadResource implements provisioning.Repository.
 func (r *githubRepository) Read(ctx context.Context, filePath string, commit string) ([]byte, error) {
+	ref := commit
+	if commit == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+
 	content, _, _, err := r.githubClient.Repositories.GetContents(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, filePath, &github.RepositoryContentGetOptions{
-		Ref: commit,
+		Ref: ref,
 	})
 	if err != nil {
 		var ghErr *github.ErrorResponse
 		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
 			return nil, &apierrors.StatusError{
 				ErrStatus: metav1.Status{
-					Message: "file not found",
+					Message: fmt.Sprintf("file not found; path=%s ref=%s", filePath, ref),
 					Code:    http.StatusNotFound,
 				},
 			}
@@ -113,34 +118,88 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, commit str
 	if err != nil {
 		return nil, fmt.Errorf("get content: %w", err)
 	}
+
 	return []byte(data), nil
 }
 
 func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
-	return &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "write file is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	if _, _, err := r.githubClient.Repositories.CreateFile(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentFileOptions{
+		Message: github.String(comment),
+		Content: data,
+		Branch:  github.String(r.config.Spec.GitHub.Branch),
+	}); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusUnprocessableEntity {
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file already exists",
+					Code:    http.StatusConflict,
+				},
+			}
+		}
+
+		return err
 	}
+
+	return nil
 }
 
 func (r *githubRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
-	return &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "write file is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	file, _, _, err := r.githubClient.Repositories.GetContents(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentGetOptions{
+		Ref: r.config.Spec.GitHub.Branch,
+	})
+
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file not found",
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+
+		return fmt.Errorf("get content before file update: %w", err)
 	}
+
+	if _, _, err = r.githubClient.Repositories.UpdateFile(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentFileOptions{
+		Message: github.String(comment),
+		Content: data,
+		SHA:     file.SHA,
+		Branch:  github.String(r.config.Spec.GitHub.Branch),
+	}); err != nil {
+		return fmt.Errorf("update file: %w", err)
+	}
+
+	return nil
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
-	return &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "delete file not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
+	file, _, _, err := r.githubClient.Repositories.GetContents(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentGetOptions{
+		Ref: r.config.Spec.GitHub.Branch,
+	})
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusNotFound {
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file not found",
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
 	}
+
+	if _, _, err = r.githubClient.Repositories.DeleteFile(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentFileOptions{
+		Message: github.String(comment),
+		Branch:  github.String(r.config.Spec.GitHub.Branch),
+		SHA:     file.SHA,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Webhook implements provisioning.Repository.
