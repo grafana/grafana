@@ -22,20 +22,28 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-type SecureValueStore interface {
+type SecureValueStoreCRUDL interface {
 	Create(ctx context.Context, s *secret.SecureValue) (*secret.SecureValue, error)
+	Read(ctx context.Context, ns string, name string) (*secret.SecureValue, error) // The value will not be included
 	Update(ctx context.Context, s *secret.SecureValue) (*secret.SecureValue, error)
 	Delete(ctx context.Context, ns string, name string) (*secret.SecureValue, bool, error)
 	List(ctx context.Context, ns string, options *internalversion.ListOptions) (*secret.SecureValueList, error)
+}
 
-	// The value will not be included
-	Read(ctx context.Context, ns string, name string) (*secret.SecureValue, error)
-
-	// Return a version that has the secure value visible
-	Decrypt(ctx context.Context, ns string, name string) (*secret.SecureValue, error)
-
+type SecureValueStoreHistory interface {
 	// Show the history for a single value
 	History(ctx context.Context, ns string, name string, continueToken string) (*secret.SecureValueActivityList, error)
+}
+
+type SecureValueStoreDecrypt interface {
+	// Return a version that has the secure value visible
+	Decrypt(ctx context.Context, ns string, name string) (*secret.SecureValue, error)
+}
+
+type SecureValueStore interface {
+	SecureValueStoreCRUDL
+	SecureValueStoreHistory
+	SecureValueStoreDecrypt
 }
 
 // ProvideSecureValueStore is used in the wiring.
