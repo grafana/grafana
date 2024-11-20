@@ -36,6 +36,18 @@ export class OptionsPaneItemDescriptor {
   render(searchQuery?: string) {
     return <OptionsPaneItem key={this.props.title} itemDescriptor={this} searchQuery={searchQuery} />;
   }
+
+  useShowIf() {
+    if (this.props.useShowIf) {
+      return this.props.useShowIf();
+    }
+
+    if (this.props.showIf) {
+      return this.props.showIf();
+    }
+
+    return true;
+  }
 }
 
 interface OptionsPaneItemProps {
@@ -44,15 +56,11 @@ interface OptionsPaneItemProps {
 }
 
 function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) {
-  const { title, description, render, showIf, skipField, useShowIf } = itemDescriptor.props;
+  const { title, description, render, skipField } = itemDescriptor.props;
   const key = `${itemDescriptor.parent.props.id} ${title}`;
+  const showIf = itemDescriptor.useShowIf();
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  if (useShowIf && !useShowIf()) {
-    return null;
-  }
-
-  if (showIf && !showIf()) {
+  if (!showIf) {
     return null;
   }
 
