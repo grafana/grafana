@@ -28,6 +28,7 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax from './promql';
+import { formatKeyValueStringsForLabelValuesQuery } from './querybuilder/components/MetricSelect';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
@@ -156,14 +157,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @returns
    */
   async getLimitedMetrics(metricRegex: string): Promise<string[]> {
-    const limit = this.datasource.metricNamesAutocompleteSuggestionLimit.toString();
+    // need time range
+    // need match params for metric match[]
+    // need label filters if used in the query builder
+    // pass in limit into metricFindQuery?
+    // pass in tome range into metricFindQuery?
 
-    const options = {
-      key: '__name__',
-      filters: [{ key: '__name__', value: '.*' + metricRegex + '.*', operator: '=~' }],
-      limit,
-    };
-    const metricNames = await this.datasource.getTagValues(options);
+    // const limit = this.datasource.metricNamesAutocompleteSuggestionLimit.toString();
+
+    const metricNames = await this.datasource.metricFindQuery(
+      formatKeyValueStringsForLabelValuesQuery(metricRegex, [])
+    );
+
     // metrics should only be strings but MetricFindValue from getTagKeys is a (string|number|undefined)
     if (metricNames.every((el: MetricFindValue) => typeof el.value === 'string')) {
       return metricNames.map((m: { text: string }) => m.text);

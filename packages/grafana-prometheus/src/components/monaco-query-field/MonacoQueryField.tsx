@@ -175,7 +175,7 @@ const MonacoQueryField = (props: Props) => {
               }
               return await debounce(
                 () => completionProvider.provideCompletionItems(model, position, context, token),
-                300
+                200
               )();
             },
           };
