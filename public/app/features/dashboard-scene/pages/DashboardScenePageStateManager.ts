@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { DashboardSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
@@ -220,37 +222,51 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  public async reloadDashboard(queryParams?: LoadDashboardOptions['params'] | undefined) {
-    // TODO[schema]: handle v2
-    // if (!this.state.options) {
-    //   return;
-    // }
-    // const options = {
-    //   ...this.state.options,
-    //   queryParams,
-    // };
-    // if (isEqual(options, this.state.options)) {
-    //   return;
-    // }
-    // try {
-    //   this.setState({ isLoading: true });
-    //   const rsp = await this.fetchDashboard(options);
-    //   const fromCache = this.getSceneFromCache(options.uid);
-    //   if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
-    //     this.setState({ isLoading: false });
-    //     return;
-    //   }
-    //   if (!rsp?.dashboard) {
-    //     this.setState({ isLoading: false, loadError: 'Dashboard not found' });
-    //     return;
-    //   }
-    //   const scene = transformSaveModelToScene(rsp);
-    //   this.setSceneCache(options.uid, scene);
-    //   this.setState({ dashboard: scene, isLoading: false, options });
-    // } catch (err) {
-    //   const msg = getMessageFromError(err);
-    //   this.setState({ isLoading: false, loadError: msg });
-    // }
+  public async reloadDashboard(params: LoadDashboardOptions['params']) {
+    const stateOptions = this.state.options;
+    if (!stateOptions) {
+      return;
+    }
+    const options = {
+      ...stateOptions,
+      params,
+    };
+    // We shouldn't check all params since:
+    // - version doesn't impact the new dashboard, and it's there for increased compatibility
+    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
+    // - other params don't affect the dashboard content
+    if (
+      isEqual(options.params?.variables, stateOptions.params?.variables) &&
+      isEqual(options.params?.scopes, stateOptions.params?.scopes)
+    ) {
+      return;
+    }
+    try {
+      this.setState({ isLoading: true });
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (isDashboardResource(rsp)) {
+        // TODO[schema]: handle v2
+        throw new Error('v2 schema handling not implemented');
+      } else {
+        if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+          this.setState({ isLoading: false });
+          return;
+        }
+
+        if (!rsp?.dashboard) {
+          this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+          return;
+        }
+        const scene = transformSaveModelToScene(rsp);
+        this.setSceneCache(options.uid, scene);
+        this.setState({ dashboard: scene, isLoading: false, options });
+      }
+    } catch (err) {
+      const msg = getMessageFromError(err);
+      this.setState({ isLoading: false, loadError: msg });
+    }
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene | null> {

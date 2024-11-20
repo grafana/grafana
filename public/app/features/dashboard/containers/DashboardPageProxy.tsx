@@ -20,7 +20,8 @@ export type DashboardPageProxyProps = Omit<
 // This proxy component is used for Dashboard -> Scenes migration.
 // It will render DashboardScenePage if the user is only allowed to view the dashboard.
 function DashboardPageProxy(props: DashboardPageProxyProps) {
-  const forceScenes = props.queryParams.scenes === true;
+  // Force scenes by query param or when v2 API is enabled.
+  const forceScenes = props.queryParams.scenes === true || config.featureToggles.useV2DashboardsAPI;
   const forceOld = props.queryParams.scenes === false;
   const params = useParams<DashboardPageParams>();
   const location = useLocation();
@@ -49,41 +50,27 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
+  // Dashboard scene with v2 API enabled is forced in L29. With that we will never reach this point, but adding this check for safety.
   if (isDashboardResource(dashboard.value)) {
-    // TODO[schema]: handle v2
-    throw new Error('v2 schema handling not implemented');
-  } else {
-    if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
-      return null;
-    }
+    throw new Error('v2 schema is only supported with for dashboard scenes');
+  }
+
+  if (dashboard?.value?.dashboard?.uid !== params.uid && dashboard.value?.meta?.isNew !== true) {
+    return null;
   }
 
   if (!config.featureToggles.dashboardSceneForViewers) {
     return <DashboardPage {...props} params={params} location={location} />;
   }
 
-  if (isDashboardResource(dashboard.value)) {
-    // TODO[schema]: handle v2
-    // if (
-    //   dashboard.value &&
-    //   !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
-    //   isScenesSupportedRoute
-    // ) {
-    //   return <DashboardScenePage {...props} />;
-    // } else {
-    //   return <DashboardPage {...props} params={params} location={location} />;
-    // }
-    throw new Error('v2 schema handling not implemented');
+  if (
+    dashboard.value &&
+    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
+    isScenesSupportedRoute
+  ) {
+    return <DashboardScenePage {...props} />;
   } else {
-    if (
-      dashboard.value &&
-      !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
-      isScenesSupportedRoute
-    ) {
-      return <DashboardScenePage {...props} />;
-    } else {
-      return <DashboardPage {...props} params={params} location={location} />;
-    }
+    return <DashboardPage {...props} params={params} location={location} />;
   }
 }
 
