@@ -39,7 +39,7 @@ export const updateUserRoles = (roles: Role[], userId: number, orgId?: number) =
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
-  const filteredRoles = roles.filter((role) => !role.mappedGroupUIDs);
+  const filteredRoles = roles.filter((role) => !role.mapped);
   const roleUids = filteredRoles.flatMap((x) => x.uid);
   return getBackendSrv().put(userRolesUrl, {
     orgId,

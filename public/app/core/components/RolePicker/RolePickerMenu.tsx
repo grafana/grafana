@@ -159,13 +159,13 @@ export const RolePickerMenu = ({
 
   const changeableGroupRolesSelected = (groupType: GroupType, group: string) => {
     const selectedGroupOptions = getSelectedGroupOptions(group);
-    const changeableGroupOptions = selectedGroupOptions.filter((role) => role.delegatable && !role.mappedGroupUIDs);
+    const changeableGroupOptions = selectedGroupOptions.filter((role) => role.delegatable && !role.mapped);
     const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
     return changeableGroupOptions.length > 0 && changeableGroupOptions.length < groupOptions!.options.length;
   };
 
   const onChange = (option: Role) => {
-    if (selectedOptions.find((role) => role.uid === option.uid && !role.mappedGroupUIDs)) {
+    if (selectedOptions.find((role) => role.uid === option.uid && !role.mapped)) {
       setSelectedOptions(selectedOptions.filter((role) => role.uid !== option.uid));
     } else {
       setSelectedOptions([...selectedOptions, option]);
@@ -183,7 +183,7 @@ export const RolePickerMenu = ({
 
     if (groupSelected(groupType, value) || changeableGroupRolesSelected(groupType, value)) {
       const mappedGroupOptions = selectedOptions.filter((option) =>
-        group.options.find((role) => role.uid === option.uid && option.mappedGroupUIDs)
+        group.options.find((role) => role.uid === option.uid && option.mapped)
       );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
       setSelectedOptions([...restOptions, ...mappedGroupOptions]);
@@ -192,8 +192,7 @@ export const RolePickerMenu = ({
         group.options.find((role) => role.uid === option.uid && role.delegatable)
       );
       const groupOptions = group.options.filter(
-        (role) =>
-          role.delegatable && !selectedOptions.find((option) => role.uid === option.uid && option.mappedGroupUIDs)
+        (role) => role.delegatable && !selectedOptions.find((option) => role.uid === option.uid && option.mapped)
       );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
       setSelectedOptions([...restOptions, ...groupOptions, ...mappedGroupOptions]);
@@ -205,7 +204,7 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    const mappedRoles = selectedOptions.filter((role) => role.mappedGroupUIDs);
+    const mappedRoles = selectedOptions.filter((role) => role.mapped);
     const nonDelegatableRoles = options.filter((role) =>
       selectedOptions.find((option) => role.uid === option.uid && !role.delegatable)
     );
@@ -215,7 +214,7 @@ export const RolePickerMenu = ({
   const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
       const roleGroup = getRoleGroup(role);
-      return roleGroup !== group || role.mappedGroupUIDs;
+      return roleGroup !== group || role.mapped;
     });
     setSelectedOptions(options);
   };

@@ -167,7 +167,7 @@ export interface Role {
   group: string;
   global: boolean;
   delegatable?: boolean;
-  mappedGroupUIDs?: boolean;
+  mapped?: boolean;
   version: number;
   created: string;
   updated: string;
