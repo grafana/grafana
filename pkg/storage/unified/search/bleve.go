@@ -98,7 +98,20 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	var err error
 	var index bleve.Index
-	mapping := bleve.NewIndexMapping() // auto-magic
+	mapping := bleve.NewIndexMapping()
+	// so we can define different mappings per resource kind (ie "Dashboard", "Folder", "Alert", "Playlist", etc)
+	mapping.TypeField = "Kind" // or add a Type() method to the document if we don't want to index this field
+
+	// set the title field to use keyword analyzer so it sorts by the whole phrase
+	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
+	docMapping := bleve.NewDocumentMapping()
+	docMapping.AddFieldMappingsAt("title", bleve.NewKeywordFieldMapping())
+
+	// now apply the doc mappoing to "Kinds" ie "Dashboard" and "Folder"
+	// this is one reason we had mappers definned per resource kind
+	mapping.AddDocumentMapping("Dashboard", docMapping)
+	mapping.AddDocumentMapping("Folder", docMapping)
+
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
 		index, err = bleve.New(dir, mapping)
