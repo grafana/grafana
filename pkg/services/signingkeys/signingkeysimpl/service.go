@@ -1,6 +1,7 @@
 package signingkeysimpl
 
 import (
+	"bytes"
 	"context"
 	"crypto"
 	"crypto/ecdsa"
@@ -236,6 +237,10 @@ func (s *Service) decodePrivateKey(ctx context.Context, privateKey []byte) (cryp
 	if len(privateKey) == 0 {
 		return nil, errors.New("private key is empty")
 	}
+
+	// Backwards compatibility with old base64 encoding
+	// Can be removed in the future
+	privateKey = bytes.TrimRight(privateKey, "=")
 
 	payload := make([]byte, base64.RawStdEncoding.DecodedLen(len(privateKey)))
 	_, err := base64.RawStdEncoding.Decode(payload, privateKey)
