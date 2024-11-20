@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	provisioningauth "github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -228,6 +229,7 @@ var wireBasicSet = wire.NewSet(
 	authinfoimpl.ProvideService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
 	authinfoimpl.ProvideStore,
+	provisioningauth.ProvideProvisioningIdentityService,
 	datasourceproxy.ProvideService,
 	search.ProvideService,
 	searchV2.ProvideService,
