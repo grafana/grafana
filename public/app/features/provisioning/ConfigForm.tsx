@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Field, Combobox, SecretInput, Input, Button, Switch } from '@grafana/ui';
+import { Field, Combobox, SecretInput, Input, Button, Switch, TextLink, ControlledCollapse } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
@@ -53,7 +53,7 @@ export function ConfigForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 600 }}>
+    <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
       <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
       <Field label={'Repository type'}>
         <Controller
@@ -73,6 +73,26 @@ export function ConfigForm() {
       </Field>
       {watchType === 'github' && (
         <>
+          <ControlledCollapse collapsible label="Access Token Permissions" isOpen>
+            <p>
+              To create a new Access Token, navigate to{' '}
+              <TextLink external href="https://github.com/settings/tokens">
+                Personal Access Tokens
+              </TextLink>{' '}
+              and create a click &quot;Generate new token.&quot;
+            </p>
+
+            <p>Ensure that your token has the following permissions:</p>
+
+            <b>For all repositories:</b>
+            <pre>public_repo, repo:status, repo_deployment, read:packages, read:user, user:email</pre>
+
+            <b>For GitHub projects:</b>
+            <pre>read:org, read:project</pre>
+
+            <b>An extra setting is required for private repositories:</b>
+            <pre>repo (Full control of private repositories)</pre>
+          </ControlledCollapse>
           <Field label={'GitHub token'}>
             <Controller
               name={'token'}
