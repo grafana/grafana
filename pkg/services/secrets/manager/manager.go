@@ -377,6 +377,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	}
 
 	var decrypted []byte
+	// /!\ payload ends with "\x00\x00"
 	decrypted, err = s.enc.Decrypt(ctx, payload, string(dataKey))
 
 	return decrypted, err
@@ -441,7 +442,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 		return nil, fmt.Errorf("could not find encryption provider '%s'", dataKey.Provider)
 	}
 
-	// 2.2. Encrypt the data key.
+	// 2.2. Decrypt the data key.
 	decrypted, err := provider.Decrypt(ctx, dataKey.EncryptedData)
 	if err != nil {
 		return nil, err
