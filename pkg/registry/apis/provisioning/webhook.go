@@ -10,11 +10,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
 // This only works for github right now
 type webhookConnector struct {
+	client auth.BackgroundIdentityService
 	getter RepoGetter
 }
 
@@ -53,7 +58,14 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	repo, err := s.getter.GetRepository(ctx, name)
+	ns := request.NamespaceValue(ctx)
+	id, err := s.client.WorkerIdentity(ctx, ns)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the repository with the worker identity (since the request user is likely anonymous)
+	repo, err := s.getter.GetRepository(identity.WithRequester(ctx, id), name)
 	if err != nil {
 		return nil, err
 	}
