@@ -40,12 +40,11 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-type KVObject = { key: string; value: string };
-
 import { EvalFunction } from '../../state/alertDef';
 import {
   AlertManagerManualRouting,
   ContactPoint,
+  KVObject,
   RuleFormType,
   RuleFormValues,
   SimplifiedEditor,

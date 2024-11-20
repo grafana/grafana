@@ -27,6 +27,9 @@ export interface SimplifiedEditor {
   simplifiedQueryEditor: boolean;
 }
 
+export type KVObject = { key: string; value: string };
+export type KBObjectArray = KVObject[];
+
 export interface RuleFormValues {
   // common
   name: string;
