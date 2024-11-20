@@ -30,6 +30,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelSearch,
     panelsPerRow,
     isEditing,
+    optionsPane,
   } = model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight ?? 0);
@@ -69,9 +70,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   );
 
   const withPanels = (
-    <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
-      <bodyToRender.Component model={bodyToRender} />
-    </div>
+    <>
+      <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
+        <bodyToRender.Component model={bodyToRender} />
+      </div>
+      {isEditing && <optionsPane.Component model={optionsPane} />}
+    </>
   );
 
   const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
@@ -86,11 +90,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     body = [emptyState, withPanels];
   } else if (panelSearch || panelsPerRow) {
     body = <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
-  }
-
-  function renderCanvas() {
-    if (isEditing) {
-    }
   }
 
   return (

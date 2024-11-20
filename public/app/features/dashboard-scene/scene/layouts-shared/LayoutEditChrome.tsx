@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Field, Select } from '@grafana/ui';
+import { ControlsLabel } from '@grafana/scenes';
+import { useStyles2, Select, Stack } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
@@ -32,13 +33,14 @@ export function LayoutEditChrome({ layoutManager, children, onClick }: Props) {
     <div className={styles.wrapper} onClick={onClick}>
       {isEditing && (
         <div className={styles.editHeader}>
-          <Field label="Layout type">
+          <Stack gap={0}>
+            <ControlsLabel label="Layout type" />
             <Select
               options={options}
               value={currentLayoutOption}
               onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
             />
-          </Field>
+          </Stack>
           {layoutManager.renderEditor?.()}
         </div>
       )}
@@ -53,7 +55,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(0, 1, 0.5, 1),
+      padding: theme.spacing(0, 1, 0.5, 0),
       margin: theme.spacing(0, 0, 1, 0),
       alignItems: 'flex-end',
       borderBottom: `1px solid ${theme.colors.border.weak}`,

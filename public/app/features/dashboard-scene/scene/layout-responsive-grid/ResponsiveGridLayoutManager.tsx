@@ -3,12 +3,11 @@ import {
   SceneComponentProps,
   SceneCSSGridLayout,
   sceneGraph,
-  SceneLayout,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
-import { Button, Field, Select } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -163,15 +162,8 @@ export class ResponsiveGridLayoutManager
   };
 
   private toggleSelection(item: ResponsiveGridItem) {
-    for (const child of this.state.layout.state.children) {
-      if (child instanceof ResponsiveGridItem) {
-        if (child.state.isSelected && child !== item) {
-          child.setState({ isSelected: false });
-        }
-      }
-    }
-
-    item.setState({ isSelected: !item.state.isSelected });
+    const optionsPane = dashboardSceneGraph.getOptionsPane(this);
+    optionsPane.toggleSelection(item);
   }
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
@@ -184,8 +176,8 @@ export class ResponsiveGridLayoutManager
 }
 
 function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGridLayoutManager>) {
-  const cssLayout = layoutManager.state.layout;
-  const { templateColumns, autoRows } = cssLayout.useState();
+  //const cssLayout = layoutManager.state.layout;
+  //const { templateColumns, autoRows } = cssLayout.useState();
 
   const rowOptions: Array<SelectableValue<string>> = [];
   const sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 650];
@@ -207,17 +199,17 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
     rowOptions.push({ label: `Fixed: ${size}px`, value: `${size}px` });
   }
 
-  const onColumnsChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ templateColumns: value.value });
-  };
+  // const onColumnsChange = (value: SelectableValue<string>) => {
+  //   cssLayout.setState({ templateColumns: value.value });
+  // };
 
-  const onRowsChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ autoRows: value.value });
-  };
+  // const onRowsChange = (value: SelectableValue<string>) => {
+  //   cssLayout.setState({ autoRows: value.value });
+  // };
 
   return (
     <>
-      <Field label="Columns">
+      {/* <Field label="Columns">
         <Select
           options={colOptions}
           value={String(templateColumns)}
@@ -228,7 +220,7 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
 
       <Field label="Row height">
         <Select options={rowOptions} value={String(autoRows)} onChange={onRowsChange} />
-      </Field>
+      </Field> */}
       <Button
         fill="outline"
         icon="plus"

@@ -6,12 +6,12 @@ import { Switch, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { DashboardLayoutItem } from '../types';
 
 export interface ResponsiveGridItemState extends SceneObjectState {
   body: VizPanel;
   hideWhenNoData?: boolean;
-  isSelected?: boolean;
 }
 
 export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState> implements DashboardLayoutItem {
@@ -68,8 +68,10 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
   }
 
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridItem>) => {
-    const { body, isSelected } = model.useState();
+    const { body } = model.useState();
+    const { selectedObject } = dashboardSceneGraph.getOptionsPane(model).useState();
     const style = useStyles2(getStyles);
+    const isSelected = selectedObject === model;
 
     return (
       <div className={cx(style.wrapper, isSelected && style.selected)}>

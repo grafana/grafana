@@ -69,6 +69,7 @@ import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './ang
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DashboardOptionsPane } from './options-pane/DashboardOptionsPane';
 import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -126,6 +127,8 @@ export interface DashboardSceneState extends SceneObjectState {
   panelSearch?: string;
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
+  /** options pane */
+  optionsPane: DashboardOptionsPane;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -176,6 +179,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
+      optionsPane: new DashboardOptionsPane({ key: 'options-pane' }),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
