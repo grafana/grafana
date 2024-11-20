@@ -380,7 +380,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			Icon:     "library-panel",
 		})
 
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPublicDashboards) && s.cfg.PublicDashboardsEnabled {
+		if s.cfg.PublicDashboardsEnabled {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Public dashboards",
 				Id:   "dashboards/public",

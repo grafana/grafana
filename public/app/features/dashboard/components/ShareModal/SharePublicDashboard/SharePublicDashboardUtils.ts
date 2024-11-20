@@ -95,7 +95,7 @@ export const generatePublicDashboardConfigUrl = (dashboardUid: string, dashboard
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
 
 export const isPublicDashboardsEnabled = () => {
-  return Boolean(config.featureToggles.publicDashboards) && config.publicDashboardsEnabled;
+  return config.publicDashboardsEnabled;
 };
 
 export const isEmailSharingEnabled = () =>
