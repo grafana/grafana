@@ -281,6 +281,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 		Limit:        perPage,
 		Filter:       filter,
 		SignedInUser: c.SignedInUser,
+		CountTokens:  true,
 	}
 	serviceAccountSearch, err := api.service.SearchOrgServiceAccounts(ctx, &q)
 	if err != nil {
@@ -296,13 +297,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 		saIDs[saIDString] = true
 		metadata := api.getAccessControlMetadata(c, map[string]bool{saIDString: true})
 		sa.AccessControl = metadata[strconv.FormatInt(sa.Id, 10)]
-		tokens, err := api.service.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
-			OrgID: &sa.OrgId, ServiceAccountID: &sa.Id,
-		})
-		if err != nil {
-			api.log.Warn("Failed to list tokens for service account", "serviceAccount", sa.Id)
-		}
-		sa.Tokens = int64(len(tokens))
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)
