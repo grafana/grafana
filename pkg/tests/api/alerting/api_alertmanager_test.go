@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -730,27 +729,26 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 
 	createRule(t, apiClient, "default")
 
-	if testinfra.ContainsFeatureToggle(opts.EnableFeatureToggles, featuremgmt.FlagKubernetesFolders) {
-		t.Run("editor create a rule within the folder/namespace", func(t *testing.T) {
-			u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
-			// nolint:gosec
-			resp, err := http.Get(u)
+	t.Run("editor create a rule within the folder/namespace", func(t *testing.T) {
+		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Get(u)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
 			require.NoError(t, err)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
 
-			assert.Equal(t, 200, resp.StatusCode)
+		assert.Equal(t, 200, resp.StatusCode)
 
-			re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
-			b = re.ReplaceAll(b, []byte(`"uid":""`))
-			re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
-			b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
+		re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
+		b = re.ReplaceAll(b, []byte(`"uid":""`))
+		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
+		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
 
-			expectedGetRulesResponseBody := fmt.Sprintf(`{
+		expectedGetRulesResponseBody := fmt.Sprintf(`{
 				"default": [
 					{
 						"name": "arulegroup",
@@ -808,47 +806,43 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 					}
 				]
 			}`, namespaceUID)
-			assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
+	})
+	t.Run("editor can not delete the folder because it contains Grafana 8 alerts", func(t *testing.T) {
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
 		})
-		t.Run("editor can not delete the folder because it contains Grafana 8 alerts", func(t *testing.T) {
-			u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s", grafanaListedAddr, namespaceUID)
-			req, err := http.NewRequest(http.MethodDelete, u, nil)
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		var errutilErr errutil.PublicError
+		err = json.Unmarshal(b, &errutilErr)
+		require.NoError(t, err)
+		assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
+	})
+	t.Run("editor can delete the folder if forceDeleteRules is true", func(t *testing.T) {
+		u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
+		req, err := http.NewRequest(http.MethodDelete, u, nil)
+		require.NoError(t, err)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
 			require.NoError(t, err)
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			require.NoError(t, err)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			b, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-			var errutilErr errutil.PublicError
-			err = json.Unmarshal(b, &errutilErr)
-			require.NoError(t, err)
-			assert.Equal(t, "Folder cannot be deleted: folder is not empty", errutilErr.Message)
 		})
-		t.Run("editor can delete the folder if forceDeleteRules is true", func(t *testing.T) {
-			u := fmt.Sprintf("http://editor:editor@%s/api/folders/%s?forceDeleteRules=true", grafanaListedAddr, namespaceUID)
-			req, err := http.NewRequest(http.MethodDelete, u, nil)
-			require.NoError(t, err)
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			require.NoError(t, err)
-			t.Cleanup(func() {
-				err := resp.Body.Close()
-				require.NoError(t, err)
-			})
-			_, err = io.ReadAll(resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, 200, resp.StatusCode)
-		})
-	} else {
-		t.Skip("editor create a rule within the folder/namespace")
-		t.Skip("editor can not delete the folder because it contains Grafana 8 alerts")
-		t.Skip("editor can delete the folder if forceDeleteRules is true")
-	}
+		_, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+	})
+	// TODO(@leonorfmartins): write tests for uni store when we are able to support it
 }
 
 func TestIntegrationAlertRuleCRUD(t *testing.T) {
