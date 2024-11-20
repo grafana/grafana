@@ -11,6 +11,7 @@ import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { prometheusApi } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
+import { Annotation } from '../../utils/constants';
 import { getAllRulesSourceNames, getDatasourceAPIUid } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
 import { hashRule } from '../../utils/rule-id';
@@ -131,9 +132,11 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
   if (filterState.freeFormWords.length > 0 && !filterState.freeFormWords.some((word) => name.includes(word))) {
     return false;
   }
+
   if (filterState.ruleName && !name.includes(filterState.ruleName)) {
     return false;
   }
+
   if (filterState.labels.length > 0) {
     const matchers = compact(filterState.labels.map(looseParseMatcher));
     const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(labels, matchers);
@@ -141,9 +144,11 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
       return false;
     }
   }
+
   if (filterState.ruleType && type !== filterState.ruleType) {
     return false;
   }
+
   if (filterState.ruleState) {
     if (!isAlertingRule(rule)) {
       return false;
@@ -152,8 +157,13 @@ function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
       return false;
     }
   }
+
   if (filterState.ruleHealth && health !== filterState.ruleHealth) {
     return false;
+  }
+
+  if (filterState.dashboardUid) {
+    return rule.labels ? rule.labels[Annotation.dashboardUID] === filterState.dashboardUid : false;
   }
 
   return true;
