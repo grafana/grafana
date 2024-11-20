@@ -1,8 +1,10 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricsLabelsSection.tsx
+import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -195,9 +197,9 @@ export function MetricsLabelsSection({
   }, [datasource, query, withTemplateVariableOptions]);
 
   const MetricSelectComponent = config.featureToggles.prometheusUsesCombobox ? MetricCombobox : MetricSelect;
-
+  const styles = useStyles2(getStyles);
   return (
-    <>
+    <div className={styles.addaptToParent}>
       <MetricSelectComponent
         query={query}
         onChange={onChange}
@@ -217,9 +219,18 @@ export function MetricsLabelsSection({
         onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
         variableEditor={variableEditor}
       />
-    </>
+    </div>
   );
 }
+
+const getStyles = () => ({
+  addaptToParent: css({
+    maxWidth: '100%',
+    '> div': {
+      maxWidth: '100%',
+    },
+  }),
+});
 
 /**
  * Returns list of metrics, either all or filtered by query param. It also adds description string to each metric if it
