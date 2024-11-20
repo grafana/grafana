@@ -9,9 +9,7 @@
     "annotations": {
         "grafana.app/folder": "the-folder-uid",
         "grafana.app/createdBy": "user:be2g71ke8yoe8b",
-        "grafana.app/originHash": "Grafana v9.2.0",
-        "grafana.app/originName": "UI",
-        "grafana.app/originPath": "/dashboard/new"
+        "grafana.app/repositoryName": "MyGit"
     },
     "labels": {
        "host": "abc",
@@ -72,7 +70,8 @@
       },
       {
         "id": 7,
-        "type": "barchart"
+        "type": "barchart",
+        "datasource": "TheDisplayName"
       },
       {
         "id": 8,
