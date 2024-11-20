@@ -6,12 +6,16 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+//------------------------------------------------------------
+// Standard dashboard fields
+//------------------------------------------------------------
 
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
@@ -19,7 +23,10 @@ const DASHBOARD_PANEL_TYPES = "panel_types"
 const DASHBOARD_DS_TYPES = "ds_types"
 const DASHBOARD_TRANSFORMATIONS = "transformation"
 
-// Added in enterprise
+//------------------------------------------------------------
+// The following fields are added in enterprise
+//------------------------------------------------------------
+
 const DASHBOARD_VIEWS_LAST_1_DAYS = "views_last_1_days"
 const DASHBOARD_VIEWS_LAST_7_DAYS = "views_last_7_days"
 const DASHBOARD_VIEWS_LAST_30_DAYS = "views_last_30_days"
@@ -62,7 +69,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		},
 	})
 	if namespaced == nil {
-		// Use a
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
@@ -75,12 +81,9 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		}
 	}
 	return resource.DocumentBuilderInfo{
-		GroupResource: schema.GroupResource{
-			Group:    "dashboards.grafana.app",
-			Resource: "dashboards",
-		},
-		Fields:     fields,
-		Namespaced: namespaced,
+		GroupResource: v0alpha1.DashboardResourceInfo.GroupResource(),
+		Fields:        fields,
+		Namespaced:    namespaced,
 	}, err
 }
 
