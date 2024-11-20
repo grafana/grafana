@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	sqle "github.com/dolthub/go-mysql-server"
 	"github.com/dolthub/go-mysql-server/memory"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -30,8 +30,6 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	// Create fields based on the schema
 	for _, col := range schema {
 		var field *data.Field
-		// switch col.Type.Type() {
-		spew.Dump(col.Type)
 		switch col.Type {
 		// NumberType represents all integer and floating point types
 		// TODO: branch between int and float
@@ -42,6 +40,8 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 		// StringType represents all string types, including VARCHAR and BLOB.
 		case types.Text:
 			field = data.NewField(col.Name, nil, []string{})
+		case types.Timestamp:
+			field = data.NewField(col.Name, nil, []time.Time{})
 		// TODO: Implement the following types
 		// DatetimeType represents DATE, DATETIME, and TIMESTAMP.
 		// YearType represents the YEAR type.
@@ -84,6 +84,8 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 				f.Fields[i].Append(v)
 			case bool:
 				f.Fields[i].Append(v)
+			case time.Time:
+				f.Fields[i].Append(v)
 			// Add more types as needed
 			default:
 				return fmt.Errorf("unsupported value type for column %s: %T", schema[i].Name, v)
@@ -112,18 +114,14 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 		}
 	}
 
-	spew.Dump(frame)
-
 	// Create table with the dynamic schema
 	table := memory.NewTable(db.inMemoryDb, tableName, mysql.NewPrimaryKeySchema(schema), nil)
 	db.inMemoryDb.AddTable(tableName, table)
 
 	// Insert data from the frame
-	spew.Dump(schema)
 	for i := 0; i < frame.Rows(); i++ {
 		row := make(mysql.Row, len(frame.Fields))
 		for j, field := range frame.Fields {
-			spew.Dump(field.At(i), row[j], schema[j].Type)
 			if schema[j].Nullable {
 				if field.At(i) == nil {
 					continue
@@ -134,8 +132,6 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 			}
 			row[j] = field.At(i)
 		}
-
-		spew.Dump(row)
 
 		err := table.Insert(ctx, row)
 		if err != nil {
