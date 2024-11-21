@@ -49,9 +49,9 @@ describe('DataTrailsBookmarks', () => {
     render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
     const button = screen.getByLabelText('bookmarkCarrot');
     fireEvent.click(button);
-    expect(screen.getByText('Select metric')).toBeInTheDocument();
+    expect(screen.getByText('All metrics')).toBeInTheDocument();
     fireEvent.click(button);
-    expect(screen.queryByText('Select metric')).not.toBeInTheDocument();
+    expect(screen.queryByText('All metrics')).not.toBeInTheDocument();
   });
 
   it('calls onDelete when the delete button is clicked', () => {
