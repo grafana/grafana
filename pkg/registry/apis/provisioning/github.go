@@ -36,7 +36,6 @@ func newGithubRepository(ctx context.Context, config *provisioning.Repository) *
 		githubClient: githubClient,
 		logger:       slog.Default().With("logger", "github-repository"),
 	}
-
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -374,7 +373,6 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 					r.logger.Info("webhook secret reverted", "url", oldCfg.WebhookURL)
 					return nil
 				}, nil
-
 			}
 		}
 

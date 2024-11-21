@@ -158,7 +158,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
 	}
 
-	defer req.Body.Close()
+	defer func() { _ = req.Body.Close() }()
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
