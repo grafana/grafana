@@ -12,7 +12,6 @@ export const escapeForUtf8Support = (value: string) => {
     return value;
   }
 
-  const lowerHex = '0123456789abcdef';
   let escaped = 'U__';
 
   // Removes the quotes around the value
@@ -28,21 +27,13 @@ export const escapeForUtf8Support = (value: string) => {
       escaped += char;
     } else if (codePoint === undefined || !isValidCodePoint(codePoint)) {
       escaped += '_FFFD_';
-    } else if (codePoint < 0x100) {
+    } else {
       escaped += '_';
-      for (let shift = 4; shift >= 0; shift -= 4) {
-        escaped += lowerHex[(codePoint >> shift) & 0xf];
-      }
-      escaped += '_';
-    } else if (codePoint < 0x10000) {
-      escaped += '_';
-      for (let shift = 12; shift >= 0; shift -= 4) {
-        escaped += lowerHex[(codePoint >> shift) & 0xf];
-      }
+      escaped += codePoint.toString(16); // Convert code point to hexadecimal
       escaped += '_';
     }
 
-    // Handle surrogate pairs in UTF-16
+    // Handle surrogate pairs for characters outside the Basic Multilingual Plane
     if (codePoint !== undefined && codePoint > 0xffff) {
       i++; // Skip the second half of the surrogate pair
     }

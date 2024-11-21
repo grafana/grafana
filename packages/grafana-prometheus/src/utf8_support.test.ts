@@ -18,6 +18,7 @@ describe('applyValueEncodingEscaping', () => {
       '"http.status:sum"',
       '"my lovely_http.status:sum"',
       '"花火"',
+      '"label with 😱"',
     ];
     const expected = [
       'no:escaping_required',
@@ -26,6 +27,7 @@ describe('applyValueEncodingEscaping', () => {
       'U__http_2e_status:sum',
       'U__my_20_lovely__http_2e_status:sum',
       'U___82b1__706b_',
+      'U__label_20_with_20__1f631_',
     ];
     const excapedLabels = labels.map(escapeForUtf8Support);
     expect(excapedLabels).toEqual(expected);
