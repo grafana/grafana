@@ -49,14 +49,20 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 		authnlib.WithTracerAuthOption(tracer),
 	}
-	if authCfg.Mode == ModeOnPrem {
+	switch authCfg.Mode {
+	case ModeOnPrem:
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
+			authnlib.WithIDTokenAuthOption(true),
+		)
+	case ModeCloud:
+		grpcOpts = append(grpcOpts,
+			// ID tokens are enabled but not required in cloud
+			authnlib.WithIDTokenAuthOption(false),
 		)
 	}
 
