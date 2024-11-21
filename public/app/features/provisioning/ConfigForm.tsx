@@ -68,6 +68,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 options={typeOptions}
                 onChange={(value) => onChange(value?.value)}
                 placeholder={'Select repository type'}
+                disabled={!!data?.spec}
                 {...field}
               />
             );
