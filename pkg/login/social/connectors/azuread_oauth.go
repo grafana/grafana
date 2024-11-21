@@ -198,9 +198,6 @@ func (s *SocialAzureAD) Exchange(ctx context.Context, code string, authOptions .
 			oauth2.SetAuthURLParam("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"),
 		)
 
-		// Clear client_secret to avoid including it in the request
-		s.Config.ClientSecret = ""
-
 	case social.ClientSecretPost:
 		// Default behavior for ClientSecretPost, no additional setup needed
 
