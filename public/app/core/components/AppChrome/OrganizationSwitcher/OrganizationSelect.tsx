@@ -12,19 +12,19 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
   const styles = useStyles2(getStyles);
   const { orgId } = contextSrv.user;
 
-  const options = useMemo(() =>
+  const options = useMemo(
+    () =>
       orgs.map((org) => ({
         label: org.name,
         description: org.role,
         value: org,
       })),
-    [orgs]);
+    [orgs]
+  );
 
-  const selectedValue = useMemo(() =>
-      options.find(option => option.value.orgId === orgId),
-    [options, orgId]);
+  const selectedValue = useMemo(() => options.find((option) => option.value.orgId === orgId), [options, orgId]);
 
-  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => (selectedValue));
+  const [value, setValue] = useState<SelectableValue<UserOrg>>(() => selectedValue);
   const onChange = (option: SelectableValue<UserOrg>) => {
     setValue(option);
     onSelectChange(option);
