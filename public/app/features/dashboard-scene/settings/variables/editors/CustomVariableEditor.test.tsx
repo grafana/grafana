@@ -55,10 +55,16 @@ describe('CustomVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
 
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
     // It include-all-custom input appears after include-all checkbox is checked only
     expect(() =>
       getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput)
     ).toThrow('Unable to find an element');
+
+    fireEvent.click(allowCustomValueCheckbox);
 
     fireEvent.click(multiCheckbox);
 
@@ -69,6 +75,7 @@ describe('CustomVariableEditor', () => {
 
     expect(variable.state.isMulti).toBe(true);
     expect(variable.state.includeAll).toBe(true);
+    expect(variable.state.allowCustomValue).toBe(false);
     expect(allValueInput).toBeInTheDocument();
   });
 

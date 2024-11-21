@@ -61,6 +61,9 @@ describe('DataSourceVariableEditor', () => {
     const includeAllCheckbox = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
 
     const typeSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
@@ -69,6 +72,8 @@ describe('DataSourceVariableEditor', () => {
     expect(typeSelect.textContent).toBe('ds1');
     expect(multiCheckbox).toBeInTheDocument();
     expect(multiCheckbox).not.toBeChecked();
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
     expect(includeAllCheckbox).toBeInTheDocument();
     expect(includeAllCheckbox).not.toBeChecked();
   });

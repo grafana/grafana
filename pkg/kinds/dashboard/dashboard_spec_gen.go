@@ -924,6 +924,9 @@ type VariableModel struct {
 	// Custom all value
 	AllValue *string `json:"allValue,omitempty"`
 
+	// Allow custom values to be entered in the variable
+	AllowCustomValue *bool `json:"allowCustomValue,omitempty"`
+
 	// Option to be selected in a variable.
 	Current *VariableOption `json:"current,omitempty"`
 
