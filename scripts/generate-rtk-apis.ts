@@ -36,6 +36,11 @@ const config: ConfigFile = {
       apiImport: 'baseAPI',
       filterEndpoints: ['getUserPreferences', 'updateUserPreferences', 'patchUserPreferences'],
     },
+    '../public/app/features/provisioning/api/endpoints.gen.ts': {
+      apiFile: '../public/app/features/provisioning/api/baseApi.ts',
+      schemaFile: '../public/app/features/provisioning/api/spec.json',
+      apiImport: 'baseAPI',
+    },
   },
 };
 

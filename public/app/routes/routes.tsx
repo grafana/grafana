@@ -533,6 +533,24 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
     },
+    {
+      path: '/admin/provisioning',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RepositoryListPage"*/ 'app/features/provisioning/RepositoryListPage')
+      ),
+    },
+    {
+      path: '/admin/provisioning/new',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NewRepositoryPage"*/ 'app/features/provisioning/NewRepositoryPage')
+      ),
+    },
+    {
+      path: '/admin/provisioning/edit/:name',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "EditRepositoryPage"*/ 'app/features/provisioning/EditRepositoryPage')
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
