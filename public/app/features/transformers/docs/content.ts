@@ -1254,7 +1254,6 @@ Select this option to transform the time series data frame from the long format 
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
 
-> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
   `;
     },
     links: [
@@ -1456,7 +1455,6 @@ Here is the result after applying the Series to rows transformation.
 
 This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format.
 
-> **Note:** This transformation is available in Grafana 7.1+.
   `;
     },
   },
