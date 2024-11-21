@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"golang.org/x/net/context"
 	"k8s.io/client-go/rest"
@@ -169,9 +170,16 @@ func (o *backgroundIdentities) verifyServiceAccount(ctx context.Context, orgId i
 }
 
 func (o *backgroundIdentities) RestConfigForNamespace(ctx context.Context, namespace string) (*rest.Config, error) {
+	ts := time.Now()
 	id, err := o.WorkerIdentity(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
-	return o.clientConfigProvider.GetRestConfigForBackgroundWorker(id), nil
+	return o.clientConfigProvider.GetRestConfigForBackgroundWorker(func() identity.Requester {
+		if time.Since(ts) > time.Minute { // Get a fresh user every min
+			ts = time.Now()
+			id, _ = o.WorkerIdentity(ctx, namespace)
+		}
+		return id
+	}), nil
 }
