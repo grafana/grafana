@@ -549,6 +549,7 @@ export interface QueryOptionsSpec {
 	queryCachingTTL?: number;
 	interval?: string;
 	cacheTimeout?: string;
+	hideTimeOverride?: boolean;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({

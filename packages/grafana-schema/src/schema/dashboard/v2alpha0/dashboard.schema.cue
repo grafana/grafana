@@ -385,6 +385,7 @@ QueryOptionsSpec: {
   queryCachingTTL?: int
   interval?: string
   cacheTimeout?: string
+  hideTimeOverride?: bool
 }
 
 DataQueryKind: {
