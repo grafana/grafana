@@ -1,8 +1,11 @@
 package provisioning
 
-import "errors"
+import (
+	"errors"
+	"io/fs"
+)
 
 var (
-	ErrFileNotFound      = errors.New("file not found")
+	ErrFileNotFound      = fs.ErrNotExist
 	ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 )
