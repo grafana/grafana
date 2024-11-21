@@ -47,7 +47,7 @@ func TestUtils(t *testing.T) {
 apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
 metadata:
-	name: hello
+  name: hello
 spec:
   title: a title
 `)))
