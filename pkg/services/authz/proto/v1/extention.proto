@@ -11,6 +11,7 @@ import "google/protobuf/wrappers.proto";
 service AuthzExtentionService {
   rpc List(ListRequest) returns (ListResponse);
   rpc BatchCheck(BatchCheckRequest) returns (BatchCheckResponse);
+  rpc Capabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
 
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Write(WriteRequest) returns (WriteResponse);
@@ -54,7 +55,6 @@ message RelationshipCondition {
 }
 
 message ReadRequest {
-  // Use namespace instead of store id. It will be handled on the server side
   string namespace = 1;
   ReadRequestTupleKey tuple_key = 2;
   google.protobuf.Int32Value page_size = 3;
@@ -81,7 +81,6 @@ message WriteRequestDeletes {
 }
 
 message WriteRequest {
-  // Use namespace instead of store id. It will be handled on the server side
   string namespace = 1;
   WriteRequestWrites writes = 2;
   WriteRequestDeletes deletes = 3;
@@ -110,4 +109,19 @@ message BatchCheckResponse {
 
 message BatchCheckGroupResource {
   map<string, bool> items = 1;
+}
+
+message CapabilitiesRequest {
+  string subject = 1;
+  string group = 2;
+  string namespace = 3;
+  string resource = 4;
+  string name = 5;
+  string folder = 6;
+  string path = 7;
+  string subresource = 8;
+}
+
+message CapabilitiesResponse {
+  repeated string capabilities = 1;
 }
