@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { useCreateRepositoryMutation, useUpdateRepositoryMutation } from './api';
-import { RepositorySpec } from './api/types';
+import { useCreateRepositoryMutation, useListRepositoryQuery, useUpdateRepositoryMutation } from './api';
+import { RepositoryResource, RepositorySpec } from './api/types';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
@@ -18,4 +18,15 @@ export function useCreateOrUpdateRepository(name?: string) {
   );
 
   return [updateOrCreate, name ? updateRequest : createRequest] as const;
+}
+
+// Sort repositories by resourceVersion to show the last modified
+export function useRepositoryList(): [RepositoryResource[] | undefined, boolean] {
+  const query = useListRepositoryQuery();
+
+  const sortedItems = query.data?.items?.slice().sort((a, b) => {
+    return Number(b.metadata.resourceVersion) - Number(a.metadata.resourceVersion);
+  });
+
+  return [sortedItems, query.isLoading];
 }

@@ -7,16 +7,16 @@ import { Page } from 'app/core/components/Page/Page';
 import { Resource } from '../apiserver/types';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
-import { useListRepositoryQuery } from './api';
 import { RepositorySpec } from './api/types';
 import { NEW_URL, PROVISIONING_URL } from './constants';
+import { useRepositoryList } from './hooks';
 
 export default function RepositoryListPage() {
-  const query = useListRepositoryQuery();
+  const [items, isLoading] = useRepositoryList();
   return (
     <Page navId="provisioning" subTitle="View and manage your configured repositories">
-      <Page.Contents isLoading={query.isLoading}>
-        <RepositoryListPageContent items={query.data?.items} />
+      <Page.Contents isLoading={isLoading}>
+        <RepositoryListPageContent items={items} />
       </Page.Contents>
     </Page>
   );
