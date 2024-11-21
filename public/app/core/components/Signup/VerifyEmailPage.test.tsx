@@ -28,7 +28,7 @@ jest.mock('@grafana/runtime', () => ({
 describe('VerifyEmail Page', () => {
   it('renders correctly', () => {
     render(<VerifyEmailPage />);
-    expect(screen.getByText('Verify Email')).toBeInTheDocument();
+    expect(screen.getByText('Verify email')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /Email/i })).toBeInTheDocument();
 
     expect(screen.getByRole('button', { name: 'Send verification email' })).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('VerifyEmail Page', () => {
         email: 'test@gmail.com',
       })
     );
-    expect(screen.getByRole('link', { name: 'Complete Signup' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Complete Signup' })).toHaveAttribute('href', '/signup');
+    expect(screen.getByRole('link', { name: 'Complete signup' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Complete signup' })).toHaveAttribute('href', '/signup');
   });
 });
