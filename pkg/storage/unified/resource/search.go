@@ -1,0 +1,211 @@
+package resource
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"sync"
+	"time"
+
+	"github.com/hashicorp/golang-lru/v2/expirable"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
+)
+
+type NamespacedResource struct {
+	Namespace string
+	Group     string
+	Resource  string
+}
+
+type SearchBackend interface {
+	// TODO
+}
+
+const tracingPrexfixSearch = "unified_search."
+
+// This supports indexing+search regardless of implementation
+type searchSupport struct {
+	tracer   trace.Tracer
+	log      *slog.Logger
+	storage  StorageBackend
+	search   SearchBackend
+	builders *builderCache
+
+	initWorkers int
+}
+
+func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+	// OK to skip search for now
+	if opts.Backend == nil {
+		return nil, nil // fmt.Errorf("missing search backend")
+	}
+
+	support = &searchSupport{
+		tracer:  tracer,
+		storage: storage,
+		search:  opts.Backend,
+		log:     slog.Default().With("logger", "resource-search"),
+	}
+
+	info, err := opts.Resources.GetDocumentBuilders()
+	if err != nil {
+		return nil, err
+	}
+
+	support.builders, err = newBuilderCache(info, 100, time.Minute*2) // TODO? opts
+	if support.builders != nil {
+		support.builders.blob = blob
+	}
+	return support, err
+}
+
+// init is called during startup.  any failure will block startup and continued execution
+func (s *searchSupport) init(ctx context.Context) error {
+	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
+	defer span.End()
+
+	// TODO, replace namespaces with a query that gets top values
+	namespaces, err := s.storage.Namespaces(ctx)
+	if err != nil {
+		return err
+	}
+
+	group := errgroup.Group{}
+	group.SetLimit(s.initWorkers)
+	totalBatchesIndexed := 0
+
+	// Prepare all the (large) indexes
+	// TODO, threading and query real information:
+	// SELECT namespace,"group",resource,COUNT(*),resource_version FROM resource
+	//   GROUP BY "group", "resource", "namespace"
+	//   ORDER BY resource_version desc;
+	for _, ns := range namespaces {
+		for _, gv := range s.builders.kinds() {
+			group.Go(func() error {
+				s.log.Debug("initializing search index", "namespace", ns, "gv", gv)
+				totalBatchesIndexed++
+
+				_, _, err = s.build(ctx, NamespacedResource{
+					Group:     gv.Group,
+					Resource:  gv.Resource,
+					Namespace: ns,
+				})
+				return err
+			})
+		}
+	}
+
+	err = group.Wait()
+	if err != nil {
+		return err
+	}
+	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
+
+	fmt.Printf("TODO, listen to all events\n")
+
+	return nil
+}
+
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource) (any, int64, error) {
+	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
+	defer span.End()
+
+	builder, err := s.builders.get(ctx, nsr)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	fmt.Printf("TODO, build %s // %+v\n", nsr.Namespace, builder)
+
+	return nil, 0, nil
+}
+
+type builderCache struct {
+	// The default builder
+	defaultBuilder DocumentBuilder
+
+	// Possible blob support
+	blob BlobSupport
+
+	// lookup by group, then resource (namespace)
+	// This is only modified at startup, so we do not need mutex for access
+	lookup map[string]map[string]DocumentBuilderInfo
+
+	// For namespaced based resources that require a cache
+	ns *expirable.LRU[NamespacedResource, DocumentBuilder]
+	mu sync.Mutex // only locked for a cache miss
+}
+
+func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
+	cache := &builderCache{
+		lookup: make(map[string]map[string]DocumentBuilderInfo),
+		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
+	}
+	if len(cfg) == 0 {
+		return cache, fmt.Errorf("no builders configured")
+	}
+
+	for _, b := range cfg {
+		// the default
+		if b.GroupResource.Group == "" && b.GroupResource.Resource == "" {
+			if b.Builder == nil {
+				return cache, fmt.Errorf("default document builder is missing")
+			}
+			cache.defaultBuilder = b.Builder
+			continue
+		}
+		g, ok := cache.lookup[b.GroupResource.Group]
+		if !ok {
+			g = make(map[string]DocumentBuilderInfo)
+			cache.lookup[b.GroupResource.Group] = g
+		}
+		g[b.GroupResource.Resource] = b
+	}
+	return cache, nil
+}
+
+// hack for now... iterate the registered kinds
+func (s *builderCache) kinds() []NamespacedResource {
+	kinds := make([]NamespacedResource, 10)
+	for _, g := range s.lookup {
+		for _, r := range g {
+			kinds = append(kinds, NamespacedResource{
+				Group:    r.GroupResource.Group,
+				Resource: r.GroupResource.Resource,
+			})
+		}
+	}
+	return kinds
+}
+
+// context is typically background.  Holds an LRU cache for a
+func (s *builderCache) get(ctx context.Context, key NamespacedResource) (DocumentBuilder, error) {
+	g, ok := s.lookup[key.Group]
+	if ok {
+		r, ok := g[key.Resource]
+		if ok {
+			if r.Builder != nil {
+				return r.Builder, nil
+			}
+
+			// The builder needs context
+			builder, ok := s.ns.Get(key)
+			if ok {
+				return builder, nil
+			}
+			{
+				s.mu.Lock()
+				defer s.mu.Unlock()
+
+				b, err := r.Namespaced(ctx, key.Namespace, s.blob)
+				if err == nil {
+					_ = s.ns.Add(key, b)
+				}
+				return b, err
+			}
+		}
+	}
+	return s.defaultBuilder, nil
+}
