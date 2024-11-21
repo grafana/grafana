@@ -197,7 +197,11 @@ func (in *RepositoryStatus) DeepCopy() *RepositoryStatus {
 func (in *ResourceWrapper) DeepCopyInto(out *ResourceWrapper) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	in.Resource.DeepCopyInto(&out.Resource)
+	if in.Timestamp != nil {
+		in, out := &in.Timestamp, &out.Timestamp
+		*out = (*in).DeepCopy()
+	}
+	in.Value.DeepCopyInto(&out.Value)
 	return
 }
 

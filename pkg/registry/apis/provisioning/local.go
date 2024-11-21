@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -108,7 +108,7 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 // Test implements provisioning.Repository.
 func (r *localRepository) Test(ctx context.Context) error {
 	return &apierrors.StatusError{
-		ErrStatus: v1.Status{
+		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
 			Code:    http.StatusNotImplemented,
 		},
@@ -116,27 +116,44 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
-	if commit != "" {
-		return nil, apierrors.NewBadRequest("local repository does not support commits")
+func (r *localRepository) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
+	if ref != "" {
+		return nil, apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
 		return nil, &apierrors.StatusError{
-			ErrStatus: v1.Status{
+			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
 		}
 	}
 
+	fullpath := filepath.Join(r.path, path)
+	info, err := os.Stat(fullpath)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, ErrFileNotFound
+	}
+
 	//nolint:gosec
-	return os.ReadFile(filepath.Join(r.path, path))
+	data, err := os.ReadFile(fullpath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &FileInfo{
+		Path: path,
+		Data: data,
+		Modified: &metav1.Time{
+			Time: info.ModTime(),
+		},
+	}, nil
 }
 
 func (r *localRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
-			ErrStatus: v1.Status{
+			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
@@ -153,7 +170,7 @@ func (r *localRepository) Create(ctx context.Context, path string, data []byte, 
 func (r *localRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
-			ErrStatus: v1.Status{
+			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
@@ -170,7 +187,7 @@ func (r *localRepository) Update(ctx context.Context, path string, data []byte, 
 func (r *localRepository) Delete(ctx context.Context, path string, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
-			ErrStatus: v1.Status{
+			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
