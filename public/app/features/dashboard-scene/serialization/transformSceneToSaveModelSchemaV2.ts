@@ -196,7 +196,16 @@ export function gridItemToGridLayoutItemKind(gridItem: DashboardGridItem, isSnap
 
 function getElements(state: DashboardSceneState) {
   const panels = state.body.getVizPanels() ?? [];
-  const panelsArray = panels.reduce((acc: PanelKind[], vizPanel: VizPanel) => {
+
+  const panelsArray = panels.map((vizPanel: VizPanel) => {
+    const vizFieldConfig: FieldConfigSource = {
+      ...vizPanel.state.fieldConfig,
+      defaults: {
+        ...vizPanel.state.fieldConfig,
+        decimals: vizPanel.state.fieldConfig.defaults.decimals ?? undefined,
+      },
+    };
+
     const elementSpec: PanelKind = {
       kind: 'Panel',
       spec: {
@@ -217,14 +226,15 @@ function getElements(state: DashboardSceneState) {
           spec: {
             pluginVersion: vizPanel.state.pluginVersion ?? '',
             options: vizPanel.state.options,
-            fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? defaultFieldConfigSource(),
+            fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
           },
         },
       },
     };
-    acc.push(elementSpec);
-    return acc;
-  }, []);
+
+    return elementSpec;
+  });
+
   // create elements
 
   const elements = createElements(panelsArray);
@@ -232,11 +242,27 @@ function getElements(state: DashboardSceneState) {
 }
 
 function getPanelLinks(panel: VizPanel): DashboardLink[] {
-  const vizLinks = dashboardSceneGraph.getPanelLinks(panel);
-  if (vizLinks) {
-    return (vizLinks.state.rawLinks as DashboardLink[]) ?? [];
-  }
-  return [];
+  const vizLinks = dashboardSceneGraph.getPanelLinks(panel)?.state?.rawLinks ?? [];
+
+  return vizLinks.map((link) => {
+    const dashLink: DashboardLink = {
+      title: link.title,
+      targetBlank: link.targetBlank ?? false, // TODO: should this default to false?
+      url: link.url,
+
+      // TODO: the following properties are required on DashboardLink, but not present in DataLink
+      // Does the DashboardLink schema need correcting?
+      type: link.type,
+      icon: link.icon,
+      tooltip: link.tooltip,
+      tags: link.tags,
+      asDropdown: link.asDropdown,
+      includeVars: link.includeVars,
+      keepTime: link.keepTime,
+    };
+
+    return dashLink;
+  });
 }
 
 function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
@@ -271,7 +297,8 @@ export function getDataQueryKind(query: SceneDataQuery): string {
   return query.datasource?.type ?? 'default';
 }
 
-export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
+// FIXME: not ideal to type this so loosely - What should a dataQuerySpec actually be?
+export function getDataQuerySpec(query: SceneDataQuery): Record<string, unknown> {
   const dataQuerySpec = {
     kind: getDataQueryKind(query),
     spec: query,
@@ -282,29 +309,39 @@ export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
 function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
   let transformations: TransformationKind[] = [];
   const dataProvider = vizPanel.state.$data;
+
   if (dataProvider instanceof SceneDataTransformer) {
     const transformationList = dataProvider.state.transformations;
+
     if (transformationList.length === 0) {
       return [];
     }
-    transformationList.forEach((transformationItem) => {
-      const transformation = transformationItem as DataTransformerConfig;
-      const transformationSpec: DataTransformerConfig = {
-        id: transformation.id,
-        disabled: transformation.disabled,
-        filter: {
-          id: transformation.filter?.id ?? '',
-          options: transformation.filter?.options ?? {},
-        },
-        topic: transformation.topic,
-        options: transformation.options,
-      };
 
-      transformations.push({
-        kind: transformation.id,
-        spec: transformationSpec,
-      });
-    });
+    for (const transformationItem of transformationList) {
+      const transformation = transformationItem;
+
+      if ('id' in transformation) {
+        //        ^?
+        // Transformation is a DataTransformerConfig
+        const transformationSpec: DataTransformerConfig = {
+          id: transformation.id,
+          disabled: transformation.disabled,
+          filter: {
+            id: transformation.filter?.id ?? '',
+            options: transformation.filter?.options ?? {},
+          },
+          topic: transformation.topic,
+          options: transformation.options,
+        };
+
+        transformations.push({
+          kind: transformation.id,
+          spec: transformationSpec,
+        });
+      } else {
+        // TODO: It's a CustomTransformerDefinition - what do?
+      }
+    }
   }
   return transformations;
 }
@@ -338,14 +375,14 @@ function getVizPanelQueryOptions(vizPanel: VizPanel): QueryOptionsSpec {
 }
 
 function createElements(panels: PanelKind[]): Record<string, PanelKind> {
-  return panels.reduce(
-    (acc, panel) => {
-      const key = panel.spec.uid;
-      acc[key] = panel;
-      return acc;
-    },
-    {} as Record<string, PanelKind>
-  );
+  const elements: Record<string, PanelKind> = {};
+
+  for (const panel of panels) {
+    const key = panel.spec.uid;
+    elements[key] = panel;
+  }
+
+  return elements;
 }
 
 function getVariables(oldDash: DashboardSceneState) {
@@ -371,100 +408,109 @@ function getVariables(oldDash: DashboardSceneState) {
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
-function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
+function isDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
     return false;
   }
 
-  if (typeof dash.title !== 'string') {
+  if (!('title' in dash) || typeof dash.title !== 'string') {
     return false;
   }
-  if (typeof dash.description !== 'string') {
+  if (!('description' in dash) || typeof dash.description !== 'string') {
     return false;
   }
-  if (typeof dash.cursorSync !== 'string') {
-    return false;
-  }
-  if (!Object.values(DashboardCursorSync).includes(dash.cursorSync)) {
-    return false;
-  }
-  if (typeof dash.liveNow !== 'boolean') {
-    return false;
-  }
-  if (typeof dash.preload !== 'boolean') {
-    return false;
-  }
-  if (typeof dash.editable !== 'boolean') {
-    return false;
-  }
-  if (!Array.isArray(dash.links)) {
-    return false;
-  }
-  if (!Array.isArray(dash.tags)) {
+  if (!('cursorSync' in dash) || typeof dash.cursorSync !== 'string') {
     return false;
   }
 
-  if (dash.id !== undefined && typeof dash.id !== 'number') {
+  const validCursorSyncValues: string[] = Object.values(DashboardCursorSync);
+  if (
+    !('cursorSync' in dash) ||
+    typeof dash.cursorSync !== 'string' ||
+    !validCursorSyncValues.includes(dash.cursorSync)
+  ) {
+    return false;
+  }
+  if (!('liveNow' in dash) || typeof dash.liveNow !== 'boolean') {
+    return false;
+  }
+  if (!('preload' in dash) || typeof dash.preload !== 'boolean') {
+    return false;
+  }
+  if (!('editable' in dash) || typeof dash.editable !== 'boolean') {
+    return false;
+  }
+  if (!('links' in dash) || !Array.isArray(dash.links)) {
+    return false;
+  }
+  if (!('tags' in dash) || !Array.isArray(dash.tags)) {
+    return false;
+  }
+  if (!('id' in dash) || typeof dash.id !== 'number') {
     return false;
   }
 
   // Time settings
-  if (typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
+  if (!('timeSettings' in dash) || typeof dash.timeSettings !== 'object' || dash.timeSettings === null) {
     return false;
   }
-  if (typeof dash.timeSettings.timezone !== 'string') {
+  if (!('timezone' in dash.timeSettings) || typeof dash.timeSettings.timezone !== 'string') {
     return false;
   }
-  if (typeof dash.timeSettings.from !== 'string') {
+  if (!('from' in dash.timeSettings) || typeof dash.timeSettings.from !== 'string') {
     return false;
   }
-  if (typeof dash.timeSettings.to !== 'string') {
+  if (!('to' in dash.timeSettings) || typeof dash.timeSettings.to !== 'string') {
     return false;
   }
-  if (typeof dash.timeSettings.autoRefresh !== 'string') {
+  if (!('autoRefresh' in dash.timeSettings) || typeof dash.timeSettings.autoRefresh !== 'string') {
     return false;
   }
-  if (!Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
+  if (!('autoRefreshIntervals' in dash.timeSettings) || !Array.isArray(dash.timeSettings.autoRefreshIntervals)) {
     return false;
   }
-  if (!Array.isArray(dash.timeSettings.quickRanges)) {
+  if (!('quickRanges' in dash.timeSettings) || !Array.isArray(dash.timeSettings.quickRanges)) {
     return false;
   }
-  if (typeof dash.timeSettings.hideTimepicker !== 'boolean') {
+  if (!('hideTimepicker' in dash.timeSettings) || typeof dash.timeSettings.hideTimepicker !== 'boolean') {
     return false;
   }
-  if (typeof dash.timeSettings.weekStart !== 'string') {
+  if (!('weekStart' in dash.timeSettings) || typeof dash.timeSettings.weekStart !== 'string') {
     return false;
   }
-  if (typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
+  if (!('fiscalYearStartMonth' in dash.timeSettings) || typeof dash.timeSettings.fiscalYearStartMonth !== 'number') {
     return false;
   }
-  if (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string') {
+
+  if (
+    !('nowDelay' in dash.timeSettings) ||
+    (dash.timeSettings.nowDelay !== undefined && typeof dash.timeSettings.nowDelay !== 'string')
+  ) {
     return false;
   }
 
   // Other sections
-  if (!Array.isArray(dash.variables)) {
+  if (!('variables' in dash) || !Array.isArray(dash.variables)) {
     return false;
   }
-  if (typeof dash.elements !== 'object' || dash.elements === null) {
+  if (!('elements' in dash) || typeof dash.elements !== 'object' || dash.elements === null) {
     return false;
   }
-  if (!Array.isArray(dash.annotations)) {
+  if (!('annotations' in dash) || !Array.isArray(dash.annotations)) {
     return false;
   }
 
   // Layout
-  if (typeof dash.layout !== 'object' || dash.layout === null) {
+  if (!('layout' in dash) || typeof dash.layout !== 'object' || dash.layout === null) {
     return false;
   }
-  if (dash.layout.kind !== 'GridLayout') {
+  if (!('kind' in dash.layout) || dash.layout.kind !== 'GridLayout') {
     return false;
   }
-  if (typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
+  if (!('spec' in dash.layout) || typeof dash.layout.spec !== 'object' || dash.layout.spec === null) {
     return false;
   }
-  if (!Array.isArray(dash.layout.spec.items)) {
+  if (!('items' in dash.layout.spec) || !Array.isArray(dash.layout.spec.items)) {
     return false;
   }
 
