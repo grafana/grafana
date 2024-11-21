@@ -88,6 +88,7 @@ export class SidecarService_EXPERIMENTAL {
 
       if (!this.mainOnAllowedRoute) {
         this.closeApp();
+        return;
       }
 
       // We check if we moved to some other app or part of grafana from where we opened the sidecar.
@@ -170,7 +171,7 @@ export class SidecarService_EXPERIMENTAL {
    * Opens an app in a sidecar. You can also relative path inside the app to open.
    * @param options.pluginId Plugin ID of the app to open
    * @param options.path Relative path inside the app to open
-   * @param options.follow If true, the sidecar will stay open eve if the main location change to another app or
+   * @param options.follow If true, the sidecar will stay open even if the main location change to another app or
    *   Grafana section
    *
    * @experimental
