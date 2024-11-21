@@ -179,6 +179,9 @@ In the field mapping specify:
 | Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
+
+> **Note:** When using this transformation for thresholds, the visualization will continue to use the panel's base threshold.
+
   `;
     },
   },
