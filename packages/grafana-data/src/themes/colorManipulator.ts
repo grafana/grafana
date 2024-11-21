@@ -246,7 +246,7 @@ export function emphasize(color: string, coefficient = 0.15) {
  * @beta
  */
 export function alpha(color: string, value: number) {
-  return tinycolor(color).setAlpha(value).toHex8String();
+  return tinycolor(color).setAlpha(value).toRgbString();
 }
 
 /**
