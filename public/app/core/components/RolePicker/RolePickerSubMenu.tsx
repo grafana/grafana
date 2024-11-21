@@ -1,8 +1,7 @@
 import { cx } from '@emotion/css';
 
-import { Button, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 import { Role } from 'app/types';
 
 import { RoleMenuOption } from './RoleMenuOption';
@@ -58,6 +57,7 @@ export const RolePickerSubMenu = ({
               disabled={
                 !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
               }
+              mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
               onChange={onSelect}
               hideDescription
             />

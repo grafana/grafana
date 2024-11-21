@@ -19,11 +19,13 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  DataFrameType,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
+import { parseDataplaneLogsFrame } from 'app/features/logs/logsFrame';
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
@@ -136,6 +138,18 @@ export const getFieldLinksForExplore = (options: {
       },
       text: 'Data',
     };
+
+    if (dataFrame.meta?.type === DataFrameType.LogLines) {
+      const dataPlane = parseDataplaneLogsFrame(dataFrame);
+      const labels = dataPlane?.getLogFrameLabels();
+      if (labels != null) {
+        Object.entries(labels[rowIndex]).forEach((value) => {
+          scopedVars[value[0]] = {
+            value: value[1],
+          };
+        });
+      }
+    }
 
     dataFrame.fields.forEach((f) => {
       if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {

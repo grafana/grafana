@@ -1,7 +1,6 @@
-import userEvent from '@testing-library/user-event';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, waitForElementToBeRemoved } from 'test/test-utils';
+import { screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessControlAction } from 'app/types';
@@ -20,8 +19,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
 }));
-
-jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -46,10 +43,7 @@ describe('RuleEditor cloud', () => {
   });
 
   it('can create a new cloud alert', async () => {
-    const user = userEvent.setup();
-
-    renderRuleEditor();
-    await waitForElementToBeRemoved(screen.queryAllByTestId('Spinner'));
+    const { user } = renderRuleEditor();
 
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
     expect(removeExpressionsButtons).toHaveLength(2);

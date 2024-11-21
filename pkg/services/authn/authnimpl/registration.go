@@ -17,10 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -38,7 +40,7 @@ func ProvideRegistration(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
-	tracer tracing.Tracer,
+	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
 ) Registration {
 	logger := log.New("authn.registration")
 
@@ -76,6 +78,11 @@ func ProvideRegistration(
 		if !cfg.DisableLoginForm {
 			authnSvc.RegisterClient(clients.ProvideForm(passwordClient))
 		}
+	}
+
+	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabledGlobally(featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
+		passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
+		authnSvc.RegisterClient(passwordless)
 	}
 
 	if cfg.AuthProxy.Enabled && len(proxyClients) > 0 {

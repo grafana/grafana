@@ -157,9 +157,9 @@ type bleveIndex struct {
 }
 
 // Write implements resource.DocumentIndex.
-func (b *bleveIndex) Write(doc resource.IndexableDocument) error {
+func (b *bleveIndex) Write(doc *resource.IndexableDocument) error {
 	if b.batch != nil {
-		err := b.batch.Index(doc.GetID(), doc)
+		err := b.batch.Index(doc.Key.SearchID(), doc)
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func (b *bleveIndex) Write(doc resource.IndexableDocument) error {
 		}
 		return err // nil
 	}
-	return b.index.Index(doc.GetID(), doc)
+	return b.index.Index(doc.Key.SearchID(), doc)
 }
 
 // Delete implements resource.DocumentIndex.
@@ -177,7 +177,7 @@ func (b *bleveIndex) Delete(key *resource.ResourceKey) error {
 	if b.batch != nil {
 		return fmt.Errorf("unexpected delete while building batch")
 	}
-	return b.index.Delete(toID(key))
+	return b.index.Delete(key.SearchID())
 }
 
 // Flush implements resource.DocumentIndex.
@@ -252,8 +252,10 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
+	fmt.Printf("FRAME! %+v", frame)
+
 	// Write frame as JSON
-	response.Frame, err = frame.MarshalJSON()
+	//response.Frame, err = frame.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}

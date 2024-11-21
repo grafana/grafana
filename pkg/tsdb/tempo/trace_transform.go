@@ -62,8 +62,7 @@ func TraceToFrame(resourceSpans []*tracev11.ResourceSpans) (*data.Frame, error) 
 			data.NewField("tags", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
-			// TODO: use constant once available in the SDK
-			PreferredVisualization: "trace",
+			PreferredVisualization: data.VisTypeTrace,
 		},
 	}
 
@@ -194,33 +193,79 @@ func resourceToProcess(resource *v1.Resource) (string, []*KeyValue) {
 		if attribute.Key(attr.Key) == semconv.ServiceNameKey {
 			serviceName = attr.GetValue().GetStringValue()
 		}
-		tags = append(tags, &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)})
+		val, err := getAttributeVal(attr.Value)
+		if err != nil {
+			logger.Debug("error transforming resource to process", "err", err)
+		}
+		tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 	}
 
 	return serviceName, tags
 }
 
-func getAttributeVal(attr *commonv11.AnyValue) any {
+func getAttributeVal(attr *commonv11.AnyValue) (any, error) {
 	switch attr.GetValue().(type) {
 	case *commonv11.AnyValue_StringValue:
-		return attr.GetStringValue()
+		return attr.GetStringValue(), nil
 	case *commonv11.AnyValue_IntValue:
-		return attr.GetIntValue()
+		return attr.GetIntValue(), nil
 	case *commonv11.AnyValue_BoolValue:
-		return attr.GetBoolValue()
+		return attr.GetBoolValue(), nil
 	case *commonv11.AnyValue_DoubleValue:
-		return attr.GetDoubleValue()
-	case *commonv11.AnyValue_KvlistValue, *commonv11.AnyValue_ArrayValue:
-		return attr.GetStringValue()
+		return attr.GetDoubleValue(), nil
+	case *commonv11.AnyValue_KvlistValue:
+		return kvListAsString(attr.GetKvlistValue())
+	case *commonv11.AnyValue_ArrayValue:
+		return arrayAsString(attr.GetArrayValue())
 	default:
-		return nil
+		return attr.GetStringValue(), nil
 	}
+}
+
+func arrayAsString(list *commonv11.ArrayValue) (string, error) {
+	vals := make([]any, len(list.GetValues()))
+
+	for i, val := range list.GetValues() {
+		v, err := getAttributeVal(val)
+		if err != nil {
+			return "", fmt.Errorf("failed to get attribute value: %w", err)
+		}
+		vals[i] = v
+	}
+
+	res, err := json.Marshal(vals)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal array: %w", err)
+	}
+	return string(res), nil
+}
+
+func kvListAsString(list *commonv11.KeyValueList) (string, error) {
+	vals := make(map[string]any, len(list.GetValues()))
+
+	for _, val := range list.GetValues() {
+		v, err := getAttributeVal(val.GetValue())
+		if err != nil {
+			return "", fmt.Errorf("failed to get attribute value: %w", err)
+		}
+		vals[val.GetKey()] = v
+	}
+
+	res, err := json.Marshal(vals)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal kvlist: %w", err)
+	}
+	return string(res), nil
 }
 
 func getSpanTags(span *tracev11.Span) []*KeyValue {
 	tags := make([]*KeyValue, len(span.Attributes))
 	for i, attr := range span.Attributes {
-		tags[i] = &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)}
+		val, err := getAttributeVal(attr.Value)
+		if err != nil {
+			logger.Debug("error transforming span tags", "err", err)
+		}
+		tags[i] = &KeyValue{Key: attr.Key, Value: val}
 	}
 	return tags
 }
@@ -255,7 +300,11 @@ func spanEventsToLogs(events []*tracev11.Span_Event) []*TraceLog {
 		event := events[i]
 		fields := make([]*KeyValue, 0, len(event.Attributes)+1)
 		for _, attr := range event.Attributes {
-			fields = append(fields, &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)})
+			val, err := getAttributeVal(attr.Value)
+			if err != nil {
+				logger.Debug("error transforming span events to logs", "err", err)
+			}
+			fields = append(fields, &KeyValue{Key: attr.Key, Value: val})
 		}
 		logs = append(logs, &TraceLog{
 			Timestamp: float64(event.TimeUnixNano) / 1_000_000,
@@ -285,7 +334,11 @@ func spanLinksToReferences(links []*tracev11.Span_Link) []*TraceReference {
 
 		tags := make([]*KeyValue, 0, len(link.Attributes))
 		for _, attr := range link.Attributes {
-			tags = append(tags, &KeyValue{Key: attr.Key, Value: getAttributeVal(attr.Value)})
+			val, err := getAttributeVal(attr.Value)
+			if err != nil {
+				logger.Debug("error transforming span links to references", "err", err)
+			}
+			tags = append(tags, &KeyValue{Key: attr.Key, Value: val})
 		}
 
 		references = append(references, &TraceReference{

@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Azure AD OAuth2
-title: Configure Azure AD OAuth2 authentication
+menuTitle: Azure AD/Entra ID OAuth
+title: Configure Azure AD/Entra ID OAuth authentication
 weight: 800
 ---
 
-# Configure Azure AD OAuth2 authentication
+# Configure Azure AD/Entra ID OAuth authentication
 
 The Azure AD authentication allows you to use a Microsoft Entra ID (formerly known as Azure Active Directory) tenant as an identity provider for Grafana. You can use Entra ID application roles to assign users and groups to Grafana roles from the Azure Portal.
 
@@ -27,7 +27,7 @@ If Users use the same email address in Microsoft Entra ID that they use with oth
 
 ## Create the Microsoft Entra ID application
 
-To enable the Azure AD OAuth2, register your application with Entra ID.
+To enable the Azure AD/Entra ID OAuth, register your application with Entra ID.
 
 1. Log in to [Azure Portal](https://portal.azure.com), then click **Microsoft Entra ID** in the side menu.
 
@@ -181,7 +181,7 @@ Ensure that you have followed the steps in [Create the Microsoft Entra ID applic
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Azure AD/Entra ID OAuth client from within Grafana using the Grafana UI. To do this, navigate to the **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
@@ -353,14 +353,14 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 auto_login = true
 ```
 
-### Team Sync (Enterprise only)
+### Group sync (Enterprise only)
 
-With Team Sync you can map your Entra ID groups to teams in Grafana so that your users will automatically be added to
-the correct teams.
+With group sync you can map your Entra ID groups to teams and roles in Grafana. This allows users to automatically be added to
+the correct teams and be granted the correct roles in Grafana.
 
 You can reference Entra ID groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
+To learn more about group synchronization, refer to [Configure team sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-team-sync) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync).
 
 ## Common troubleshooting
 

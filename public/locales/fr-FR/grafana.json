@@ -33,38 +33,8 @@
       }
     }
   },
-  "alert-rule-form": {
-    "evaluation-behaviour": {
-      "info-help": {
-        "text": ""
-      },
-      "pending-period": ""
-    },
-    "evaluation-behaviour-description1": "",
-    "evaluation-behaviour-description2": "",
-    "evaluation-behaviour-description3": "",
-    "evaluation-behaviour-for": {
-      "error-parsing": "",
-      "validation": ""
-    },
-    "evaluation-behaviour-group": {
-      "text": ""
-    },
-    "pause": {
-      "alerting": "",
-      "label": "",
-      "recording": ""
-    }
-  },
   "alerting": {
     "alert-recording-rule-form": {
-      "evaluation-behaviour": {
-        "description": {
-          "text": ""
-        }
-      }
-    },
-    "alert-rule-form": {
       "evaluation-behaviour": {
         "description": {
           "text": ""
@@ -137,7 +107,6 @@
       "export-all": "",
       "view": ""
     },
-    "contact-point": "",
     "contact-points": {
       "create": "",
       "custom-template-value": "",
@@ -155,6 +124,7 @@
       },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
+      "no-contact-points-found": "",
       "no-delivery-attempts": "",
       "no-integrations": "",
       "only-firing": "",
@@ -177,10 +147,6 @@
             "alerting": "",
             "recording": ""
           }
-        },
-        "text": {
-          "alerting": "",
-          "recording": ""
         }
       }
     },
@@ -266,6 +232,60 @@
       "preview": "",
       "previewCondition": ""
     },
+    "rule-form": {
+      "evaluation": {
+        "evaluation-group-and-interval": "",
+        "group": {
+          "cancel": "",
+          "create": "",
+          "interval": ""
+        },
+        "group-name": "",
+        "group-text": "",
+        "new-group": "",
+        "pause": {
+          "alerting": "",
+          "recording": ""
+        },
+        "select-folder-before": ""
+      },
+      "evaluation-behaviour": {
+        "description": {
+          "text": ""
+        },
+        "info-help": {
+          "text": ""
+        },
+        "pending-period": ""
+      },
+      "evaluation-behaviour-description1": "",
+      "evaluation-behaviour-description2": "",
+      "evaluation-behaviour-description3": "",
+      "evaluation-behaviour-for": {
+        "error-parsing": "",
+        "validation": ""
+      },
+      "folder": {
+        "cancel": "",
+        "create": "",
+        "create-folder": "",
+        "creating-new-folder": "",
+        "label": "",
+        "name": "",
+        "new-folder": "",
+        "new-folder-or": ""
+      },
+      "folder-and-labels": "",
+      "folders": {
+        "help-info": ""
+      },
+      "labels": {
+        "help-info": ""
+      },
+      "pause": {
+        "label": ""
+      }
+    },
     "rule-groups": {
       "delete": {
         "success": ""
@@ -279,6 +299,10 @@
       "update": {
         "success": ""
       }
+    },
+    "rule-list": {
+      "configure-datasource": "",
+      "new-alert-rule": ""
     },
     "rule-state": {
       "creating": "",
@@ -455,7 +479,7 @@
       "title": ""
     },
     "custom-value": {
-      "create": ""
+      "label": ""
     },
     "options": {
       "no-found": ""
@@ -1459,6 +1483,14 @@
     },
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
+      "confirmation-code": "",
+      "confirmation-code-label": "",
+      "confirmation-code-placeholder": "",
+      "email-label": "",
+      "email-placeholder": "",
+      "email-required": "",
+      "name-label": "",
+      "name-placeholder": "",
       "password-label": "Mot de passe",
       "password-placeholder": "",
       "password-required": "Vous devez renseigner le mot de passe",
@@ -1466,7 +1498,9 @@
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
       "username-placeholder": "",
-      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur",
+      "verify-email-label": "",
+      "verify-email-loading-label": ""
     },
     "services": {
       "sing-in-with-prefix": "Se connecter avec {{serviceName}}"
@@ -2635,9 +2669,11 @@
       "back-button": "Retour à la configuration de l'exportation",
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
+      "loading": "",
       "save-button": "Enregistrer dans un fichier",
       "share-externally-label": "Exporter pour un partage externe",
-      "view-button": "Afficher au format JSON"
+      "view-button": "Afficher au format JSON",
+      "view-button-schemav2": ""
     },
     "library": {
       "info": "Créer un panneau de bibliothèque."
