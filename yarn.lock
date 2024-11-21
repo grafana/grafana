@@ -4106,7 +4106,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^5.25.1":
+"@grafana/scenes@npm:5.25.1":
   version: 5.25.1
   resolution: "@grafana/scenes@npm:5.25.1"
   dependencies:
@@ -18911,7 +18911,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.25.1"
+    "@grafana/scenes": "npm:5.25.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
