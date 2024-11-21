@@ -8,45 +8,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type bleveFlatDocument struct {
-	// The group/resource (essentially kind)
-	GR string `json:"gr,omitempty"`
-
-	Title       string `json:"title,omitempty"`
-	TitleSort   string `json:"title_sort,omitempty"`
-	Description string `json:"description,omitempty"`
-
-	Tags []string `json:"tags,omitempty"`
-
-	Labels map[string]string `json:"labels,omitempty"`
-	Folder string            `json:"folder,omitempty"`
-
-	// Custom fields
-	Fields map[string]any `json:"fields,omitempty"`
-}
-
-func getBleveMappings(gr string, fields resource.SearchableDocumentFields) mapping.IndexMapping {
+func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMapping {
 	mapper := bleve.NewIndexMapping()
-	mapper.TypeField = "gr"
-	mapper.AddDocumentMapping(gr, getBleveDocMappings(fields))
+	mapper.DefaultMapping = getBleveDocMappings(fields)
 	return mapper
 }
 
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "gr", // will be the same in the entire index???
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
-	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "title",
 		Type:               "text",
+		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: true,
@@ -54,18 +27,19 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		DocValues:          false,
 	})
 
+	// TODO - if we don't want title to be a keyword, we can use this
 	// set the title field to use keyword analyzer so it sorts by the whole phrase
 	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "title_sort",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              false, // not stored!
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
+	// mapper.AddFieldMapping(&mapping.FieldMapping{
+	// 	Name:               "title_sort",
+	// 	Type:               "text",
+	// 	Analyzer:           keyword.Name,
+	// 	Store:              false, // not stored!
+	// 	Index:              true,
+	// 	IncludeTermVectors: false,
+	// 	IncludeInAll:       false,
+	// 	DocValues:          false,
+	// })
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "description",
