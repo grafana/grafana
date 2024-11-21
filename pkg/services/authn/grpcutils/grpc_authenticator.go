@@ -27,11 +27,7 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 	)
 }
 
-func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGrpcServerConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,

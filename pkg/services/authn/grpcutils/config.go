@@ -3,6 +3,8 @@ package grpcutils
 import (
 	"fmt"
 
+	"github.com/spf13/pflag"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,6 +28,13 @@ type GrpcServerConfig struct {
 	AllowedAudiences []string
 	Mode             Mode
 	LegacyFallback   bool
+	AllowInsecure    bool
+}
+
+func (*GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.String("grpc_server_authentication.mode", string(ModeCloud), "gRPC server authentication mode")
+	fs.String("grpc_server_authentication.signing_keys_url", "", "gRPC server authentication signing keys URL")
+	fs.StringSlice("grpc_server_authentication.allowed_audiences", []string{}, "gRPC server authentication allowed audiences")
 }
 
 func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
