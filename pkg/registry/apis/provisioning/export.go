@@ -108,6 +108,8 @@ func (c *exportConnector) Connect(
 				continue
 			}
 
+			// TODO: Drop the metadata field before writing?
+			// TODO: Do we want this to export YAML instead maybe?
 			json, err := json.MarshalIndent(item.Object, "", "\t")
 			if err != nil {
 				slog.ErrorContext(ctx, "failed to marshal dashboard into JSON",
