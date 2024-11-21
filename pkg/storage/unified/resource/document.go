@@ -159,11 +159,8 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	return doc
 }
 
-func StandardDocumentBuilder() DocumentBuilderInfo {
-	return DocumentBuilderInfo{
-		Builder: &standardDocumentBuilder{},
-		Fields:  StandardSearchFields(),
-	}
+func StandardDocumentBuilder() DocumentBuilder {
+	return &standardDocumentBuilder{}
 }
 
 type standardDocumentBuilder struct{}

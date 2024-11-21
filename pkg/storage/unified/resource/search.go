@@ -62,6 +62,9 @@ type SearchBackend interface {
 		// The last known resource version (can be used to know that nothing has changed)
 		resourceVersion int64,
 
+		// The non-standard index fields
+		fields SearchableDocumentFields,
+
 		// The builder will write all documents before returning
 		builder func(index ResourceIndex) (int64, error),
 	) (ResourceIndex, error)
@@ -170,6 +173,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	if err != nil {
 		return nil, 0, err
 	}
+	fields := s.builders.GetFields(nsr)
 
 	s.log.Debug(fmt.Sprintf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder))
 
@@ -178,7 +182,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		Resource:  nsr.Resource,
 		Namespace: nsr.Namespace,
 	}
-	index, err := s.search.BuildIndex(ctx, nsr, size, rv, func(index ResourceIndex) (int64, error) {
+	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &ListOptions{
@@ -229,6 +233,9 @@ type builderCache struct {
 	// Possible blob support
 	blob BlobSupport
 
+	// searchable fields initialized once on startup
+	fields map[schema.GroupResource]SearchableDocumentFields
+
 	// lookup by group, then resource (namespace)
 	// This is only modified at startup, so we do not need mutex for access
 	lookup map[string]map[string]DocumentBuilderInfo
@@ -240,6 +247,7 @@ type builderCache struct {
 
 func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
+		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
 	}
@@ -262,8 +270,15 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 			cache.lookup[b.GroupResource.Group] = g
 		}
 		g[b.GroupResource.Resource] = b
+
+		// Any custom fields
+		cache.fields[b.GroupResource] = b.Fields
 	}
 	return cache, nil
+}
+
+func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
+	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
 }
 
 // context is typically background.  Holds an LRU cache for a

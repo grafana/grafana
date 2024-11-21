@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -43,12 +44,21 @@ func TestBleveBackend(t *testing.T) {
 
 	t.Run("build dashboards", func(t *testing.T) {
 		key := dashboardskey
+		info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+			return &DashboardDocumentBuilder{
+				Namespace:        namespace,
+				Blob:             blob,
+				Stats:            NewDashboardStatsLookup(nil), // empty stats
+				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+			}, nil
+		})
+		require.NoError(t, err)
 
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, rv, func(index resource.ResourceIndex) (int64, error) {
+		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 1,
 				Key: &resource.ResourceKey{
@@ -150,12 +160,13 @@ func TestBleveBackend(t *testing.T) {
 
 	t.Run("build folders", func(t *testing.T) {
 		key := folderKey
+		var fields resource.SearchableDocumentFields
 
 		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, rv, func(index resource.ResourceIndex) (int64, error) {
+		}, 2, rv, fields, func(index resource.ResourceIndex) (int64, error) {
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 1,
 				Key: &resource.ResourceKey{

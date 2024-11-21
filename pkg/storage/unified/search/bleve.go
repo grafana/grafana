@@ -87,6 +87,9 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	// The last known resource version can be used to know that we can skip calling the builder
 	resourceVersion int64,
 
+	// the non-standard searchable fields
+	fields resource.SearchableDocumentFields,
+
 	// The builder will write all documents before returning
 	builder func(index resource.ResourceIndex) (int64, error),
 ) (resource.ResourceIndex, error) {
@@ -98,19 +101,25 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 	var err error
 	var index bleve.Index
-	mapping := bleve.NewIndexMapping()
-	// so we can define different mappings per resource kind (ie "Dashboard", "Folder", "Alert", "Playlist", etc)
-	mapping.TypeField = "Kind" // or add a Type() method to the document if we don't want to index this field
 
 	// set the title field to use keyword analyzer so it sorts by the whole phrase
 	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
 	docMapping := bleve.NewDocumentMapping()
 	docMapping.AddFieldMappingsAt("title", bleve.NewKeywordFieldMapping())
+	docMapping.AddFieldMappingsAt("folder", bleve.NewKeywordFieldMapping())
 
-	// now apply the doc mappoing to "Kinds" ie "Dashboard" and "Folder"
-	// this is one reason we had mappers definned per resource kind
-	mapping.AddDocumentMapping("Dashboard", docMapping)
-	mapping.AddDocumentMapping("Folder", docMapping)
+	gr := fmt.Sprintf("%s/%s", key.Group, key.Resource)
+	mapping := bleve.NewIndexMapping()
+	mapping.TypeField = "gr" // can it be for everything?
+	mapping.AddDocumentMapping(gr, docMapping)
+
+	// Custom fields do not always exist
+	if fields != nil {
+		for _, name := range fields.Fields() {
+			field := fields.Field(name)
+			fmt.Printf("TODO... add mapping for: %+v\n", field)
+		}
+	}
 
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
@@ -131,6 +140,8 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		index:     index,
 		batch:     index.NewBatch(),
 		batchSize: b.opts.BatchSize,
+		fields:    fields,
+		standard:  resource.StandardSearchFields(),
 	}
 	_, err = builder(idx)
 	if err != nil {
@@ -149,17 +160,47 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 type bleveIndex struct {
 	key   resource.NamespacedResource
+	gr    string // the {group}/{resource}
 	index bleve.Index
+
+	standard resource.SearchableDocumentFields
+	fields   resource.SearchableDocumentFields
 
 	// only valid in single thread
 	batch     *bleve.Batch
 	batchSize int // ??? not totally sure the units here
 }
 
+type bleveFlatDocument struct {
+	// The group/resource (essentially kind)
+	GR string `json:"gr"`
+
+	Title       string `json:"title"`
+	TitleSort   string `json:"title_sort"` // indexed with keyword, do not store!
+	Description string `json:"description,omitempty"`
+
+	Tags []string `json:"tags,omitempty"`
+
+	Labels map[string]string `json:"labels,omitempty"`
+	Folder string            `json:"folder,omitempty"`
+
+	Fields map[string]any `json:"fields,omitempty"`
+}
+
 // Write implements resource.DocumentIndex.
-func (b *bleveIndex) Write(doc *resource.IndexableDocument) error {
+func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
+	doc := bleveFlatDocument{
+		GR:          b.gr,
+		Title:       v.Title,
+		TitleSort:   v.Title,
+		Description: v.Description,
+		Tags:        v.Tags,
+		Labels:      v.Labels,
+		Fields:      v.Fields,
+	}
+
 	if b.batch != nil {
-		err := b.batch.Index(doc.Key.SearchID(), doc)
+		err := b.batch.Index(v.Key.SearchID(), doc)
 		if err != nil {
 			return err
 		}
@@ -169,7 +210,7 @@ func (b *bleveIndex) Write(doc *resource.IndexableDocument) error {
 		}
 		return err // nil
 	}
-	return b.index.Index(doc.Key.SearchID(), doc)
+	return b.index.Index(v.Key.SearchID(), doc)
 }
 
 // Delete implements resource.DocumentIndex.
@@ -457,6 +498,48 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	return nil, resource.NewBadRequestError(
 		fmt.Sprintf("unsupported query operation (%s %s %v)", req.Key, req.Operator, req.Values),
 	)
+}
+
+func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
+	fields := []*resource.ResourceTableColumnDefinition{}
+	for _, name := range selectFields {
+		f := b.standard.Field(name)
+		if f == nil && b.fields != nil {
+			f = b.fields.Field(name)
+		}
+		if f == nil {
+			return nil, fmt.Errorf("unknown field: " + name)
+		}
+	}
+	if explain {
+		fields = append(fields, b.standard.Field(resource.SEARCH_FIELD_EXPLAIN))
+	}
+
+	table := &resource.ResourceTable{
+		Columns: fields,
+		Rows:    make([]*resource.ResourceTableRow, hits.Len()),
+	}
+	for i, match := range hits {
+		row := &resource.ResourceTableRow{
+			Key: &resource.ResourceKey{},
+			Cells: make([]any, 0, len(fields)),
+		}
+
+		key := &resource.ResourceKey{}
+		err := key.ReadSearchID(match.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		cells := 
+		for i, f := range fields {
+			// QUICK QUICK... more options yes
+			v := match.Fields[f.Name]
+			cells[i] = v
+		}
+
+	}
+	return table, nil
 }
 
 func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*data.Frame, error) {
