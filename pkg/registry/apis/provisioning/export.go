@@ -5,14 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
+	"slices"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/dynamic"
 )
 
 type exportConnector struct {
@@ -83,6 +87,24 @@ func (c *exportConnector) Connect(
 		}
 		dashboardIface := client.Resource(dashboardGVR).Namespace(ns)
 
+		folderGVR, ok := c.client.GVR(ns, schema.GroupVersionKind{
+			Group:   "folder.grafana.app",
+			Version: "v0alpha1",
+			Kind:    "Folder",
+		})
+		if !ok {
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("no GVR was found for folders")))
+			return
+		}
+		folderIface := client.Resource(folderGVR).Namespace(ns)
+
+		// TODO: handle pagination
+		_, err = c.fetchFolderInfo(ctx, folderIface)
+		if err != nil {
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to list folders: %w", err)))
+			return
+		}
+
 		// TODO: handle pagination
 		dashboardList, err := dashboardIface.List(ctx, metav1.ListOptions{})
 		if err != nil {
@@ -107,6 +129,11 @@ func (c *exportConnector) Connect(
 					"namespace", map[string]string{"expected": ns, "actual": namespace})
 				continue
 			}
+
+			folder := item.GetAnnotations()["grafana.app/folder"]
+			// TODO: Use folder to find where to put it
+			slog.InfoContext(ctx, "dashboard folder found",
+				"folder", folder)
 
 			// TODO: Drop the metadata field before writing?
 			// TODO: Do we want this to export YAML instead maybe?
@@ -136,6 +163,59 @@ func (c *exportConnector) Connect(
 
 		responder.Object(http.StatusOK, &provisioning.ResourceWrapper{})
 	}), nil
+}
+
+type folderExport struct {
+	Name string
+	UID  apitypes.UID
+	// Parent is a pointer to a parent folder. Nil if none.
+	Parent *folderExport
+}
+
+func (c *exportConnector) fetchFolderInfo(
+	ctx context.Context,
+	iface dynamic.ResourceInterface,
+) ([]*folderExport, error) {
+	folders := make(map[string]*folderExport)
+
+	// TODO: handle pagination
+	rawFolders, err := iface.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, rf := range rawFolders.Items {
+		name := rf.GetName()
+		uid := rf.GetUID()
+		folders[name] = &folderExport{
+			Name: name,
+			UID:  uid,
+		}
+	}
+
+	// Double iteration is not great but whatever... probably not too many folders anyhow...
+	for _, folder := range folders {
+		parents, err := iface.Get(ctx, folder.Name, metav1.GetOptions{}, "parents")
+		if err != nil {
+			return nil, err
+		}
+
+		// FIXME: use "items" here when we undo that hack
+		uncastItems := parents.Object["infoItems"]
+		if uncastItems == nil { // avoid interface conversion panic
+			continue
+		}
+		items := uncastItems.([]any)
+		if len(items) == 0 {
+			continue
+		}
+
+		// the UID in the returned value is actually the metadata.name!
+		parentUid := items[0].(map[string]interface{})["uid"].(string)
+		folder.Parent = folders[parentUid]
+	}
+
+	return slices.Collect(maps.Values(folders)), nil
 }
 
 var (
