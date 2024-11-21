@@ -6,6 +6,7 @@ import { Checkbox } from '../Forms/Checkbox';
 import { Portal } from '../Portal/Portal';
 
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
+import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
 import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
@@ -120,14 +121,16 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
                 const itemProps = getItemProps({ item, index });
                 const isSelected = selectedItems.some((opt) => opt.value === item.value);
                 return (
-                  <Checkbox
-                    //className={styles.optionBody}
-                    key={`${item.value}${index}`}
-                    style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
+                  <li
+                    key={item.value}
                     {...itemProps}
-                    checked={isSelected}
-                    label={itemToString(item)}
-                  />
+                    style={highlightedIndex === index ? { backgroundColor: 'blue' } : {}}
+                  >
+                    {' '}
+                    {/* Add styling with virtualization */}
+                    <Checkbox key={`${item.value}${index}`} value={isSelected} />
+                    <OptionListItem option={item} />
+                  </li>
                 );
               })}
             </div>
