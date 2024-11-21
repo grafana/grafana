@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { toDataFrame, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { RefIDPicker, Props, RefIDMultiPicker, MultiProps } from './FieldsByFrameRefIdMatcher';
+import { RefIDPicker, Props, RefIDMultiPicker, MultiProps, stringsToRegexp, regexpToStrings } from './FieldsByFrameRefIdMatcher';
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -64,6 +64,25 @@ describe('RefIDPicker', () => {
 });
 
 describe('RefIDMultiPicker', () => {
+  const namesRegexp = /^(?:a|b \(ttt\)|bla\.foo|zzz\|cow|\$dollar\[baz\])$/;
+  const namesArray = [
+    "a",
+    "b (ttt)",
+    "bla.foo",
+    "zzz|cow",
+    "$dollar[baz]"
+  ];
+
+  it('creates regexp string from array of names',  async () => {
+    const names = regexpToStrings(namesRegexp.toString());
+    expect(names).toEqual(namesArray);
+  });
+
+  it('creates array of names from regexp string',  async () => {
+    const regexpStr = stringsToRegexp(namesArray);
+    expect(regexpStr).toEqual(namesRegexp.toString());
+  });
+
   it('Should be able to select frame', async () => {
     multiSetup();
 

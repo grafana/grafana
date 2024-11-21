@@ -120,8 +120,21 @@ export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiPr
   });
 
   const currentValue = useMemo(() => {
-    const extractedRefIds = value?.slice(1, -1).split('|');
-    const matchedRefIds = listOfRefIds.filter((refId) => extractedRefIds?.includes(refId.value || ''));
+    let extractedRefIds = new Set<string>();
+
+    if (value) {
+      if (value.startsWith('/^')) {
+        try {
+          extractedRefIds = new Set(regexpToStrings(value));
+        } catch {
+          extractedRefIds.add(value);
+        }
+      } else {
+        extractedRefIds.add(value);
+      }
+    }
+
+    const matchedRefIds = listOfRefIds.filter((refId) => extractedRefIds.has(refId.value || ''));
 
     if (matchedRefIds.length) {
       return matchedRefIds;
@@ -202,4 +215,29 @@ export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
   name: 'Fields returned by query',
   description: 'Set properties for fields from a specific query',
   optionsToLabel: (options) => options,
+};
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+// funcs below will parse/unparse a regexp like /^(?:foo|bar)$/ -> ["foo", "bar"]
+
+/** @internal */
+export const regexpToStrings = (regexp: string) => {
+  return (
+    regexp
+      // strip /^(?:)$/ wrapper
+      .slice(5, -3)
+      // split on unescaped |
+      .split(/(?<!\\)\|/g)
+      // unescape remaining regexp special chars
+      .map((string) => string.replace(/\\(.)/g, '$1'))
+  );
+};
+
+/** @internal */
+export const stringsToRegexp = (strings: string[]) => {
+  return `/^(?:${strings.map((string) => escapeRegExp(string)).join('|')})$/`;
 };
