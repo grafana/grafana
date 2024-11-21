@@ -19,7 +19,9 @@ import (
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
+func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -52,6 +54,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
+	opts.Search = resource.SearchOptions{
+		Resources: docs,
+	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Index = resource.NewResourceIndexServer(cfg, tracer)

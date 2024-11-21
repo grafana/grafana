@@ -1,26 +1,21 @@
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneObjectState, SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
-import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
+import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
+import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { isDashboardLayoutItem } from '../scene/types';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function getPanelFrameCategory2(
-  panel: VizPanel,
-  layoutElementState: SceneObjectState
-): OptionsPaneCategoryDescriptor {
+export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -30,7 +25,7 @@ export function getPanelFrameCategory2(
   const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
   const links = panelLinksObject?.state.rawLinks ?? [];
   const dashboard = getDashboardSceneFor(panel);
-  const layoutElement = panel.parent;
+  const layoutElement = panel.parent!;
 
   descriptor
     .addItem(
@@ -97,72 +92,8 @@ export function getPanelFrameCategory2(
       )
     );
 
-  if (layoutElement instanceof DashboardGridItem) {
-    const gridItem = layoutElement;
-
-    const category = new OptionsPaneCategoryDescriptor({
-      title: 'Repeat options',
-      id: 'Repeat options',
-      isOpenDefault: false,
-    });
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Repeat by variable',
-        description:
-          'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-        render: function renderRepeatOptions() {
-          return (
-            <RepeatRowSelect2
-              id="repeat-by-variable-select"
-              sceneContext={panel}
-              repeat={gridItem.state.variableName}
-              onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
-            />
-          );
-        },
-      })
-    );
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Repeat direction',
-        showIf: () => Boolean(gridItem.state.variableName),
-        render: function renderRepeatOptions() {
-          const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
-            { label: 'Horizontal', value: 'h' },
-            { label: 'Vertical', value: 'v' },
-          ];
-
-          return (
-            <RadioButtonGroup
-              options={directionOptions}
-              value={gridItem.state.repeatDirection ?? 'h'}
-              onChange={(value) => gridItem.setState({ repeatDirection: value })}
-            />
-          );
-        },
-      })
-    );
-
-    category.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Max per row',
-        showIf: () => Boolean(gridItem.state.variableName && gridItem.state.repeatDirection === 'h'),
-        render: function renderOption() {
-          const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
-          return (
-            <Select
-              options={maxPerRowOptions}
-              value={gridItem.state.maxPerRow ?? 4}
-              onChange={(value) => gridItem.setState({ maxPerRow: value.value })}
-            />
-          );
-        },
-      })
-    );
-
-    descriptor.addCategory(category);
+  if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {
+    descriptor.addCategory(layoutElement.getOptions());
   }
 
   return descriptor;

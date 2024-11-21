@@ -1,0 +1,56 @@
+{
+  "kind": "Report",
+  "apiVersion": "reports.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "aaa",
+    "namespace": "default",
+    "uid": "GPShlB3AMM0KIVRtn3H2DbGEckFHGXltAkO1o0XD79cX",
+    "resourceVersion": "1706690655000",
+    "creationTimestamp": "2024-01-31T08:44:15Z",
+    "annotations": {
+      "grafana.app/createdBy": "user:abc",
+      "grafana.app/originName": "SQL"
+    }
+  },
+  "spec": {
+    "title": "Test AAA",
+    "recipients": "",
+    "replyTo": "",
+    "message": "Hi, \nPlease find attached a PDF status report. If you have any questions, feel free to contact me!\nBest,",
+    "schedule": {
+      "startDate": "2024-01-31T08:43:15Z",
+      "endDate": null,
+      "frequency": "weekly",
+      "workdaysOnly": false,
+      "timeZone": "America/Los_Angeles"
+    },
+    "options": {
+      "orientation": "landscape",
+      "layout": "simple",
+      "pdfShowTemplateVariables": false,
+      "pdfCombineOneFile": false
+    },
+    "enableDashboardUrl": true,
+    "state": "draft",
+    "dashboards": [
+      {
+        "uid": "vmie2cmWz",
+        "timeRange": {
+          "from": "now-15m",
+          "to": "now"
+        }
+      },
+      {
+        "uid": "xMsQdBfWz",
+        "timeRange": {
+          "from": "now-1h",
+          "to": "now"
+        }
+      }
+    ],
+    "formats": [
+      "pdf"
+    ],
+    "scaleFactor": 3
+  }
+}

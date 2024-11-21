@@ -57,6 +57,7 @@ export const RolePickerSubMenu = ({
               disabled={
                 !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
               }
+              mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
               onChange={onSelect}
               hideDescription
             />

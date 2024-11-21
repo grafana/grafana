@@ -110,6 +110,38 @@ Edges can also show statistics when you hover over the edge. Similar to nodes, y
 
 The first data source supporting this visualization is X-Ray data source for its Service map feature. For more information, refer to the [X-Ray plugin documentation](https://grafana.com/grafana/plugins/grafana-x-ray-datasource).
 
+## Node graph navigation
+
+You can use pan, zoom, and other functions to navigate a node graph.
+
+### Pan
+
+You can pan the view by clicking outside any node or edge and dragging your mouse.
+
+### Zoom
+
+Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
+
+### Hidden nodes
+
+The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
+
+![Node graph exploration](/media/docs/grafana/panels-visualizations/node-graph-exploration-8.0-2.png 'Node graph exploration')
+
+### Grid view
+
+You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
+
+![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
+
+To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
+
+![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
+
+Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
+
+![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -152,38 +184,6 @@ In node graphs, some data fields may have pre-configured data links. To add a di
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Navigating the node graph
-
-You can use pan, zoom, and other functions to navigate a node graph.
-
-### Pan
-
-You can pan the view by clicking outside any node or edge and dragging your mouse.
-
-### Zoom
-
-Use the buttons in the lower right corner to zoom in or out. You can also use the mouse wheel or touchpad scroll, together with either Ctrl or Cmd key to do so.
-
-### Hidden nodes
-
-The number of nodes shown at a given time is limited to maintain a reasonable visualization performance. Nodes that are not currently visible are hidden behind clickable markers that show an approximate number of hidden nodes that are connected by a particular edge. You can click on the marker to expand the graph around that node.
-
-![Node graph exploration](/media/docs/grafana/panels-visualizations/node-graph-exploration-8.0-2.png 'Node graph exploration')
-
-### Grid view
-
-You can switch to the grid view to have a better overview of the most interesting nodes in the graph. Grid view shows nodes in a grid without edges and can be sorted by stats shown inside the node or by stats represented by the a colored border of the nodes.
-
-![Node graph grid](/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid-v11.3.png 'Node graph grid')
-
-To sort the nodes, click on the stats inside the legend. The marker next to the stat name shows which stat is currently used for sorting and sorting direction.
-
-![Node graph legend](/media/docs/grafana/panels-visualizations/screenshot-node-graph-legend-v11.3.png 'Node graph legend')
-
-Click on the node and select "Show in Graph layout" option to switch back to graph layout and focus on the selected node, to show it in context of the full graph.
-
-![Node graph grid to default](/media/docs/grafana/panels-visualizations/screenshot-node-graph-view-v11.3.png 'Node graph grid to default')
 
 ## Data API
 
