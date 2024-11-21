@@ -50,7 +50,7 @@ export function MegaMenuItemText({ children, isActive, onClick, target, url, onP
       >
         {linkContent}
       </LinkComponent>
-      {config.featureToggles.pinNavItems && url && url !== '/bookmarks' && (
+      {config.featureToggles.pinNavItems && config.bootData.user.isSignedIn && url && url !== '/bookmarks' && (
         <IconButton
           name="bookmark"
           className={'pin-icon'}
