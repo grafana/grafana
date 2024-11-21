@@ -145,13 +145,13 @@ func (db *DB) writeDataframeToDb(ctx *mysql.Context, tableName string, frame *da
 // Helper function to convert data.FieldType to types.Type
 func convertDataType(fieldType data.FieldType) mysql.Type {
 	switch fieldType {
-	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64:
+	case data.FieldTypeInt8, data.FieldTypeInt16, data.FieldTypeInt32, data.FieldTypeInt64, data.FieldTypeNullableInt64:
 		return types.Int64
 	case data.FieldTypeUint8, data.FieldTypeUint16, data.FieldTypeUint32, data.FieldTypeUint64:
 		return types.Uint64
 	case data.FieldTypeFloat32, data.FieldTypeFloat64, data.FieldTypeNullableFloat64:
 		return types.Float64
-	case data.FieldTypeString:
+	case data.FieldTypeString, data.FieldTypeNullableString:
 		return types.Text
 	case data.FieldTypeBool:
 		return types.Boolean
