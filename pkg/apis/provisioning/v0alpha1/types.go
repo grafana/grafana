@@ -158,8 +158,17 @@ type ResourceWrapper struct {
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
 
-	// The raw resource body
-	Value common.Unstructured `json:"value"`
+	// If errors exist, show them here
+	Errors []string `json:"errors,omitempty"`
+
+	// Different flavors of the same object
+	Resource ResourceObjects `json:"resource"`
+}
+
+type ResourceObjects struct {
+	File   common.Unstructured `json:"file,omitempty"`
+	Store  common.Unstructured `json:"store,omitempty"`
+	DryRun common.Unstructured `json:"dryRun,omitempty"`
 }
 
 // Dummy object to return for webhooks
