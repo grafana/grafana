@@ -807,9 +807,16 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 					Actions:           []string{dashboards.ActionFoldersRead},
 					Resource:          "folders",
 					ResourceAttribute: "uid",
-					ResourceID:        "descUid",
+					ResourceID:        "descuid",
 				},
 			},
+		},
+		{
+			description:          "get folder by UID should not succeed if user doesn't have permissions for the folder",
+			expectedCode:         http.StatusForbidden,
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
+			permissions:          []resourcepermissions.SetResourcePermissionCommand{},
 		},
 	}
 
@@ -847,7 +854,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			require.NotEmpty(t, parentUID)
 
 			// Create descendant folder
-			payload := "{ \"uid\": \"descUid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
+			payload := "{ \"uid\": \"descuid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
 			resp := apis.DoRequest(helper, apis.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: http.MethodPost,
@@ -862,7 +869,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 			getResp := apis.DoRequest(helper, apis.RequestParams{
 				User:   user,
 				Method: http.MethodGet,
-				Path:   "/api/folders/descUid",
+				Path:   "/api/folders/descuid",
 			}, &dtos.Folder{})
 			require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
 			require.NotNil(t, getResp.Result)
@@ -899,7 +906,7 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 				getWithAC := apis.DoRequest(helper, apis.RequestParams{
 					User:   acUser,
 					Method: http.MethodGet,
-					Path:   "/api/folders/descUid?accesscontrol=true",
+					Path:   "/api/folders/descuid?accesscontrol=true",
 				}, &dtos.Folder{})
 				require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
 				require.NotNil(t, getWithAC.Result)
