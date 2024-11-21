@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"path/filepath"
 
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -129,7 +130,7 @@ func (c *exportConnector) Connect(
 				continue
 			}
 
-			folder := folders[item.GetAnnotations()["grafana.app/folder"]]
+			folder := folders[item.GetAnnotations()[apiutils.AnnoKeyFolder]]
 
 			// TODO: Drop the metadata field before writing?
 			// TODO: Do we want this to export YAML instead maybe?
