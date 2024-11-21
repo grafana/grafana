@@ -4395,6 +4395,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
