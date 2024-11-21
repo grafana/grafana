@@ -17,6 +17,7 @@ import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem, RecordingRuleIdentifier } from './types';
+import { utf8Support } from './utf8_support';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -545,12 +546,3 @@ export function truncateResult<T>(array: T[], limit?: number): T[] {
   array.length = Math.min(array.length, limit);
   return array;
 }
-
-const labelNamePriorToUtf8Support = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-export const utf8Support = (label: string) => {
-  const isLegacyLabel = labelNamePriorToUtf8Support.test(label);
-  if (isLegacyLabel) {
-    return label;
-  }
-  return `"${label}"`;
-};

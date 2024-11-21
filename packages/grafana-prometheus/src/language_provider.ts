@@ -25,11 +25,11 @@ import {
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
-  utf8Support,
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
+import { escapeForUtf8Support, utf8Support } from './utf8_support';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -209,7 +209,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getAdjustedInterval(this.timeRange);
     const interpolatedName = this.datasource.interpolateString(key);
-    const url = `/api/v1/label/${interpolatedName}/values`;
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName);
+    const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
   };
@@ -298,7 +299,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       requestOptions = undefined;
     }
 
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams, requestOptions);
+    const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName ?? '');
+
+    const value = await this.request(
+      `/api/v1/label/${interpolatedAndEscapedName}/values`,
+      [],
+      urlParams,
+      requestOptions
+    );
     return value ?? [];
   };
 

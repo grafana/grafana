@@ -5,12 +5,7 @@ import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
-import {
-  getClientCacheDurationInMinutes,
-  getPrometheusTime,
-  getRangeSnapInterval,
-  utf8Support,
-} from './language_utils';
+import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();
@@ -670,15 +665,6 @@ describe('Language completion provider', () => {
           ],
         });
       });
-    });
-  });
-
-  describe('utf8 support', () => {
-    it('should return utf8 labels wrapped in quotes', () => {
-      const labels = ['metric_label', 'utf8 label with space 🤘'];
-      const expected = ['metric_label', `"utf8 label with space 🤘"`];
-      const supportedLabels = labels.map(utf8Support);
-      expect(supportedLabels).toEqual(expected);
     });
   });
 });
