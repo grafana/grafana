@@ -77,7 +77,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: '1 1 0',
       width: '100%',
-      minHeight: 0,
     }),
     icon: css({
       display: 'flex',
@@ -86,18 +85,6 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       border: 'none',
       gap: theme.spacing(1),
-    }),
-    rowTitle: css({}),
-    rowActions: css({
-      display: 'flex',
-      opacity: 0,
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: 'opacity 200ms ease-in',
-      },
-
-      '&:hover, &:focus-within': {
-        opacity: 1,
-      },
     }),
   };
 }
