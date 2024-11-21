@@ -89,9 +89,9 @@ func (*defaultDocumentBuilder) BuildDocument(_ context.Context, key *resource.Re
 // This is common across all resources
 type StandardDocumentFields struct {
 	// unique ID across everything (group+resource+namespace+name)
-	ID string `json:"id"`
-	RV int64  `json:"rv"`
-
+	ID        string `json:"id"`
+	RV        int64  `json:"rv"`
+	Kind      string
 	Group     string `json:"group"`
 	Resource  string `json:"resource"`
 	Namespace string `json:"namespace"`

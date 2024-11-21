@@ -2,16 +2,16 @@
 //  
 //  Frame[0] 
 //  Name: 
-//  Dimensions: 11 Fields by 3 Rows
-//  +----------------+-----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+---------------------+
-//  | Name: id       | Name: rv        | Name: name     | Name: folder   | Name: title    | Name: tags              | Name: byte_size | Name:                | Name: origin_name | Name: origin_time | Name: labels.region |
-//  | Labels:        | Labels:         | Labels:        | Labels:        | Labels:        | Labels:                 | Labels:         | Labels:              | Labels:           | Labels:           | Labels:             |
-//  | Type: []string | Type: []float64 | Type: []string | Type: []string | Type: []string | Type: []json.RawMessage | Type: []float64 | Type: []*string      | Type: []string    | Type: []float64   | Type: []*string     |
-//  +----------------+-----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+---------------------+
-//  | dash/aaa       | 1               | aaa            | xxx            | test aaa       | ["aa","bb"]             | 0               | 1970-01-01T02:46:40Z | SQL               | 0                 | null                |
-//  | dash/bbb       | 2               | bbb            | yyy            | test bbb       | ["aa"]                  | 0               | null                 | SQL               | 0                 | east                |
-//  | dash/ccc       | 3               | ccc            | xxx            | test ccc       | ["aa"]                  | 0               | null                 | SQL               | 0                 | west                |
-//  +----------------+-----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+---------------------+
+//  Dimensions: 12 Fields by 3 Rows
+//  +----------------+-----------------+----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+-----------------+
+//  | Name: id       | Name: rv        | Name: Kind     | Name: name     | Name: folder   | Name: title    | Name: tags              | Name: byte_size | Name: created        | Name: origin_name | Name: origin_time | Name:           |
+//  | Labels:        | Labels:         | Labels:        | Labels:        | Labels:        | Labels:        | Labels:                 | Labels:         | Labels:              | Labels:           | Labels:           | Labels:         |
+//  | Type: []string | Type: []float64 | Type: []string | Type: []string | Type: []string | Type: []string | Type: []json.RawMessage | Type: []float64 | Type: []*string      | Type: []string    | Type: []float64   | Type: []*string |
+//  +----------------+-----------------+----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+-----------------+
+//  | dash/ccc       | 3               | Dashboard      | ccc            | xxx            | test ccc       | ["aa"]                  | 0               | null                 | SQL               | 0                 | west            |
+//  | dash/bbb       | 2               | Dashboard      | bbb            | yyy            | test bbb       | ["aa"]                  | 0               | null                 | SQL               | 0                 | east            |
+//  | dash/aaa       | 1               | Dashboard      | aaa            | xxx            | test aaa       | ["aa","bb"]             | 0               | 1970-01-01T02:46:40Z | SQL               | 0                 | null            |
+//  +----------------+-----------------+----------------+----------------+----------------+----------------+-------------------------+-----------------+----------------------+-------------------+-------------------+-----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -33,6 +33,13 @@
             "type": "number",
             "typeInfo": {
               "frame": "float64"
+            }
+          },
+          {
+            "name": "Kind",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
             }
           },
           {
@@ -71,6 +78,7 @@
             }
           },
           {
+            "name": "created",
             "type": "string",
             "typeInfo": {
               "frame": "string",
@@ -92,7 +100,6 @@
             }
           },
           {
-            "name": "labels.region",
             "type": "string",
             "typeInfo": {
               "frame": "string",
@@ -104,19 +111,24 @@
       "data": {
         "values": [
           [
-            "dash/aaa",
+            "dash/ccc",
             "dash/bbb",
-            "dash/ccc"
+            "dash/aaa"
           ],
           [
-            1,
+            3,
             2,
-            3
+            1
           ],
           [
-            "aaa",
+            "Dashboard",
+            "Dashboard",
+            "Dashboard"
+          ],
+          [
+            "ccc",
             "bbb",
-            "ccc"
+            "aaa"
           ],
           [
             "xxx",
@@ -124,20 +136,20 @@
             "xxx"
           ],
           [
-            "test aaa",
+            "test ccc",
             "test bbb",
-            "test ccc"
+            "test aaa"
           ],
           [
             [
+              "aa"
+            ],
+            [
+              "aa"
+            ],
+            [
               "aa",
               "bb"
-            ],
-            [
-              "aa"
-            ],
-            [
-              "aa"
             ]
           ],
           [
@@ -146,9 +158,9 @@
             0
           ],
           [
-            "1970-01-01T02:46:40Z",
             null,
-            null
+            null,
+            "1970-01-01T02:46:40Z"
           ],
           [
             "SQL",
@@ -161,9 +173,9 @@
             0
           ],
           [
-            null,
+            "west",
             "east",
-            "west"
+            null
           ]
         ]
       }

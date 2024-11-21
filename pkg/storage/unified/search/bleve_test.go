@@ -53,6 +53,7 @@ func TestBleveBackend(t *testing.T) {
 		}, 2, rv, func(index resource.ResourceIndex) (int64, error) {
 			_ = index.Write(&StandardDocumentFields{
 				RV:         1,
+				Kind:       "Dashboard",
 				ID:         "dash/aaa",
 				Name:       "aaa",
 				Title:      "test aaa",
@@ -63,6 +64,7 @@ func TestBleveBackend(t *testing.T) {
 			})
 			_ = index.Write(&StandardDocumentFields{
 				RV:         2,
+				Kind:       "Dashboard",
 				ID:         "dash/bbb",
 				Name:       "bbb",
 				Title:      "test bbb",
@@ -75,6 +77,7 @@ func TestBleveBackend(t *testing.T) {
 			})
 			_ = index.Write(&StandardDocumentFields{
 				RV:         3,
+				Kind:       "Dashboard",
 				ID:         "dash/ccc",
 				Name:       "ccc",
 				Title:      "test ccc",
@@ -96,9 +99,8 @@ func TestBleveBackend(t *testing.T) {
 				Key: key,
 			},
 			Limit: 100000,
-			// ????? this does not seem to work
 			SortBy: []*resource.ResourceSearchRequest_Sort{
-				{Field: "title", Desc: false}, // ccc,bbb,aaa
+				{Field: "title", Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"tags": {
