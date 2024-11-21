@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -133,20 +134,20 @@ func (c *exportConnector) Connect(
 			folder := folders[item.GetAnnotations()[apiutils.AnnoKeyFolder]]
 
 			delete(item.Object, "metadata")
-			json, err := yaml.Marshal(item.Object)
+			marshalledBody, baseFileName, err := c.marshalPreferredFormat(item.Object, name, repo)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to marshal dashboard into YAML",
+				slog.ErrorContext(ctx, "failed to marshal dashboard into preferred format",
 					"err", err,
 					"dashboard", name,
 					"namespace", ns)
-				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to marshal dashboard %s into json: %w", name, err)))
+				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to marshal dashboard %s: %w", name, err)))
 				return
 			}
 
-			fileName := filepath.Join(folder.CreatePath(), name+".yaml")
+			fileName := filepath.Join(folder.CreatePath(), baseFileName)
 			// TODO: Upsert
-			if err := repo.Create(ctx, fileName, json, "export of dashboard "+name+" in namespace "+ns); err != nil {
-				slog.ErrorContext(ctx, "failed to write dashboard JSON to repository",
+			if err := repo.Create(ctx, fileName, marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
+				slog.ErrorContext(ctx, "failed to write dashboard model to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),
 					"dashboard", name,
@@ -223,6 +224,16 @@ func (c *exportConnector) fetchFolderInfo(
 	}
 
 	return folders, nil
+}
+
+func (c *exportConnector) marshalPreferredFormat(obj any, name string, repo Repository) (body []byte, fileName string, err error) {
+	if repo.Config().Spec.PreferYAML {
+		body, err = yaml.Marshal(obj)
+		return body, name + ".yaml", err
+	} else {
+		body, err := json.MarshalIndent(obj, "", "    ")
+		return body, name + ".json", err
+	}
 }
 
 var (
