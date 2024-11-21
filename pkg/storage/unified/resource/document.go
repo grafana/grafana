@@ -42,6 +42,10 @@ type DocumentBuilderInfo struct {
 	Namespaced NamespacedDocumentSupplier
 }
 
+type DocumentBuilderSupplier interface {
+	GetDocumentBuilders() ([]DocumentBuilderInfo, error)
+}
+
 // IndexableDocument can be written to a ResourceIndex
 // Although public, this is *NOT* an end user interface
 type IndexableDocument struct {

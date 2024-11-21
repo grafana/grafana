@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -17,6 +18,7 @@ import (
 // Standard dashboard fields
 //------------------------------------------------------------
 
+const DASHBOARD_LEGACY_ID = "legacy_id"
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
@@ -73,7 +75,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
-				Stats:            map[string]map[string]int64{},
+				Stats:            NewDashboardStatsLookup(nil),
 				DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{
 					// empty values (does not resolve anything)
 				}),
@@ -93,13 +95,24 @@ type DashboardDocumentBuilder struct {
 
 	// Cached stats for this namespace
 	// TODO, load this from apiserver request
-	Stats map[string]map[string]int64
+	Stats DashboardStatsLookup
 
 	// data source lookup
 	DatasourceLookup dashboard.DatasourceLookup
 
 	// For large dashboards we will need to load them from blob store
 	Blob resource.BlobSupport
+}
+
+type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
+
+func NewDashboardStatsLookup(stats map[string]map[string]int64) DashboardStatsLookup {
+	return func(ctx context.Context, uid string) map[string]int64 {
+		if stats == nil {
+			return nil
+		}
+		return stats[uid]
+	}
 }
 
 var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
@@ -174,19 +187,30 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION:  summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:      summary.LinkCount,
-		DASHBOARD_PANEL_TYPES:     panelTypes,
-		DASHBOARD_DS_TYPES:        dsTypes,
-		DASHBOARD_TRANSFORMATIONS: transformations,
+		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:     summary.LinkCount,
+	}
+
+	if summary.ID > 0 {
+		doc.Fields[DASHBOARD_LEGACY_ID] = summary.ID
+	}
+	if len(panelTypes) > 0 {
+		sort.Strings(panelTypes)
+		doc.Fields[DASHBOARD_PANEL_TYPES] = panelTypes
+	}
+	if len(dsTypes) > 0 {
+		sort.Strings(dsTypes)
+		doc.Fields[DASHBOARD_DS_TYPES] = dsTypes
+	}
+	if len(transformations) > 0 {
+		sort.Strings(transformations)
+		doc.Fields[DASHBOARD_TRANSFORMATIONS] = transformations
 	}
 
 	// Add the stats fields
-	stats, ok := s.Stats[key.Name] // summary.UID
-	if ok {
-		for k, v := range stats {
-			doc.Fields[k] = v
-		}
+	stats := s.Stats(ctx, key.Name) // summary.UID
+	for k, v := range stats {
+		doc.Fields[k] = v
 	}
 
 	return doc, nil

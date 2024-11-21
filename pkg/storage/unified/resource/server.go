@@ -123,6 +123,15 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
+// Passed as input to the constructor
+type SearchOptions struct {
+	// The raw index backend (eg, bleve, frames, parquet, etc)
+	Backend SearchBackend
+
+	// The supported resource types
+	Resources DocumentBuilderSupplier
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
@@ -135,6 +144,9 @@ type ResourceServerOptions struct {
 
 	// Requests based on a search index
 	Index ResourceIndexServer
+
+	// Search options
+	Search SearchOptions
 
 	// Diagnostics
 	Diagnostics DiagnosticsServer
@@ -225,7 +237,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:      cancel,
 	}
 
-	return s, nil
+	var err error
+	s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
+	return s, err
 }
 
 var _ ResourceServer = &server{}
@@ -235,6 +249,7 @@ type server struct {
 	log          *slog.Logger
 	backend      StorageBackend
 	blob         BlobSupport
+	search       *searchSupport
 	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
 	access       authz.AccessClient
