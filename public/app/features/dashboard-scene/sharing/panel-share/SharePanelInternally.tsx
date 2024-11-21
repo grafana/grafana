@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import { useState } from 'react';
+import { useAsyncFn } from 'react-use';
+import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, Divider, Field, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Input } from '@grafana/ui/src/components/Input/Input';
@@ -36,8 +36,14 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
   const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef, onDismiss } =
     model.useState();
 
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [renderImage, setRenderImage] = useState(false);
+  // const [renderImage, { data: image, isLoading, isFetching }] = useLazyRenderImageQuery();
+
+  const [{ loading, value }, renderImage] = useAsyncFn(async () => {
+    const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
+    const blob = new Blob([response.data], { type: 'image/png' });
+
+    return URL.createObjectURL(blob);
+  }, [imageUrl]);
 
   const panelTitle = panelRef?.resolve().state.title;
   // const { handleSubmit, reset, ...formMethods } = useForm({ mode: 'onBlur', defaultValues: settings });
@@ -45,13 +51,9 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
   const dashboard = getDashboardSceneFor(model);
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
-  const onRenderImageClick = () => {
-    setIsImageLoaded(false);
-    setRenderImage(true);
-  };
-
-  const onImageRendered = () => {
-    setIsImageLoaded(true);
+  const onRenderImageClick = async () => {
+    await model.buildUrl();
+    await renderImage();
   };
 
   return (
@@ -162,7 +164,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
               </Button>
             </Stack>
           </div>
-          {!isImageLoaded && renderImage && (
+          {loading && (
             <div>
               <LoadingBar width={128} />
               <div className={styles.imageLoadingContainer}>
@@ -170,14 +172,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
               </div>
             </div>
           )}
-          {renderImage && (
-            <img
-              src={imageUrl}
-              alt="panel-img"
-              className={cx(styles.image, { [styles.hiddenImage]: !isImageLoaded })}
-              onLoad={onImageRendered}
-            />
-          )}
+          {value && !loading && <img src={value} alt="panel-img" className={styles.image} />}
         </Stack>
       </Stack>
     </div>
@@ -195,13 +190,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1,
   }),
   image: css({
+    maxWidth: 724,
     width: '100%',
   }),
-  hiddenImage: css({
-    visibility: 'hidden',
-  }),
   imageLoadingContainer: css({
-    height: 268,
+    maxWidth: 724,
+    height: 362,
     border: `1px solid ${theme.components.input.borderColor}`,
     padding: theme.spacing(1),
   }),
