@@ -248,8 +248,6 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	})
 
 	t.Run("GMS results applied to local snapshot", func(t *testing.T) {
-		t.Skip("This test is flaky and needs to be fixed")
-
 		gmsClientFake.getSnapshotResponse = &cloudmigration.GetSnapshotStatusResponse{
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
