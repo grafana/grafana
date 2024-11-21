@@ -5,6 +5,7 @@ This module returns all pipelines used in OpenAPI specification generation of Gr
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
 )
 load(
     "scripts/drone/steps/lib.star",
@@ -58,6 +59,7 @@ def swagger_gen(ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
         },
         services = [],
         steps = test_steps,
+        volumes = github_app_pipeline_volumes(),
     )
 
     return p

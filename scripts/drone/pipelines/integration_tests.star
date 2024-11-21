@@ -10,6 +10,7 @@ load(
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
 )
 load(
     "scripts/drone/steps/lib.star",
@@ -56,6 +57,8 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(github_app_generate_token_step())
         init_steps.append(enterprise_setup_step())
+
+        volumes += github_app_pipeline_volumes()
 
     init_steps += [
         download_grabpl_step(),

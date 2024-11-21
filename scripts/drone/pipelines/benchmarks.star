@@ -10,6 +10,7 @@ load(
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
 )
 load(
     "scripts/drone/steps/lib.star",
@@ -36,7 +37,7 @@ def integration_benchmarks(prefix):
     environment = {"EDITION": "oss"}
 
     services = integration_test_services()
-    volumes = integration_test_services_volumes()
+    volumes = integration_test_services_volumes() + github_app_pipeline_volumes()
 
     # In pull requests, attempt to clone grafana enterprise.
     init_steps = [

@@ -3,6 +3,7 @@
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
 )
 load(
     "scripts/drone/steps/lib.star",
@@ -178,4 +179,5 @@ def build_e2e(trigger, ver_mode):
         services = [],
         steps = init_steps + build_steps,
         trigger = trigger,
+        volumes = github_app_pipeline_volumes(),
     )

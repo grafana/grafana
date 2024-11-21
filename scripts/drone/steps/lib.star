@@ -5,6 +5,7 @@ This module is a library of Drone steps and other pipeline components.
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_step_volumes",
 )
 load(
     "scripts/drone/steps/rgm.star",
@@ -103,7 +104,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         check = []
     else:
         check = [
-            'is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'is_fork=$(curl --retry 5 "https://$${GITHUB_TOKEN}@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
@@ -112,7 +113,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         "image": images["git"],
         "commands": [
             "apk add --update curl jq bash",
-            "GITHUB_TOKEN=$(cat ./.github/token)",
+            "GITHUB_TOKEN=$(cat /github-app/token)",
         ] + check + [
             'git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
@@ -121,6 +122,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         "depends_on": [
             github_app_generate_token_step()["name"],
         ],
+        "volumes": github_app_step_volumes(),
     }
 
     if canFail:
@@ -335,7 +337,7 @@ def e2e_tests_artifacts():
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
         },
         "commands": [
-            "GITHUB_TOKEN=$(cat ./.github/token)",
+            "GITHUB_TOKEN=$(cat /github-app/token)",
             # if no videos found do nothing
             "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
@@ -350,6 +352,7 @@ def e2e_tests_artifacts():
             'curl -X POST https://api.github.com/repos/${DRONE_REPO}/statuses/${DRONE_COMMIT_SHA} -H "Authorization: token $${GITHUB_TOKEN}" -d ' +
             '"{\\"state\\":\\"success\\",\\"target_url\\":\\"$${E2E_ARTIFACTS_VIDEO_ZIP}\\", \\"description\\": \\"Click on the details to download e2e recording videos\\", \\"context\\": \\"e2e_artifacts\\"}"',
         ],
+        "volumes": github_app_step_volumes(),
     }
 
 def playwright_e2e_report_upload():
@@ -396,7 +399,7 @@ def playwright_e2e_report_post_link():
             ],
         },
         "commands": [
-            "GITHUB_TOKEN=$(cat ./.github/token)",
+            "GITHUB_TOKEN=$(cat /github-app/token)",
             # if the trace doesn't folder exists, it means that there are no failed tests.
             "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
             # if it exists, we will post a comment on the PR with the link to the report
@@ -408,6 +411,7 @@ def playwright_e2e_report_post_link():
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
             '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer. <br /> For information on how to run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests). \\"}"',
         ],
+        "volumes": github_app_step_volumes(),
     }
 
 def upload_cdn_step(ver_mode, trigger = None, depends_on = ["grafana-server"]):
@@ -881,10 +885,11 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
         ],
         "environment": environment,
         "commands": [
-            "GITHUB_TOKEN=$(cat ./.github/token)",
+            "GITHUB_TOKEN=$(cat /github-app/token)",
             "cd /",
             "./cpp-e2e/scripts/ci-run.sh {} {}".format(cloud, branch),
         ],
+        "volumes": github_app_step_volumes(),
     }
     step = dict(step, when = when)
     return step

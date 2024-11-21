@@ -23,6 +23,7 @@ load(
 load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
+    "github_app_step_volumes",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -144,13 +145,13 @@ def rgm_run(name, script):
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
-            "export GITHUB_TOKEN=$(cat ./.github/token)",
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}] + github_app_step_volumes(),
     }
 
     return [
@@ -348,7 +349,7 @@ def rgm_promotion_pipeline():
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
-            "export GITHUB_TOKEN=$(cat ./.github/token)",
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "dagger run --silent /src/grafana-build artifacts " +
             "-a $${ARTIFACTS} " +
             "--grafana-ref=$${GRAFANA_REF} " +
@@ -360,7 +361,7 @@ def rgm_promotion_pipeline():
         "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}] + github_app_step_volumes(),
     }
 
     generate_token_step = github_app_generate_token_step()
