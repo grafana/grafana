@@ -19,7 +19,6 @@ menuTitle: Configure the InfluxDB data source
 title: Configure the InfluxDB data source
 weight: 300
 refs:
-  build-dashboards:
   provision-grafana:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#provision-grafana
@@ -29,7 +28,7 @@ refs:
 
 # Configure the InfluxDB data source
 
-This document describes how to configure the InfluxDB data source and reviews configuration options. 
+This document provides instructions for configuring the InfluxDB data source and explains the available configuration options. 
 
 ## Before you begin
 
@@ -96,7 +95,7 @@ If you enable **Basic auth** under the Auth section you need to configure the fo
 
 **TLS/SSL auth details:**
 
-TLS/SSL certificates are encrypted and stared int he Grafana database.
+TLS/SSL certificates are encrypted and stared in the Grafana database.
 
 - **CA cert** - If you toggle **With CA cert** add your self-signed cert here.
 - **Server name** - Name of the server. Example: server1.domain.com
@@ -126,7 +125,7 @@ The following settings are specific to the InfluxQL query language option.
 - **User** - The user name used to sign in to InfluxDB.
 - **Password** - Defines the token used to query the bucket defined in **Database**. Retrieve the password from the [Tokens page](https://docs.influxdata.com/influxdb/v2.0/security/tokens/view-tokens/) of the InfluxDB UI.
 - **HTTP method** - Sets the HTTP method used to query your data source. The POST method allows for larger queries that would return an error using the GET method. The default method is `POST`.
-- **Min time interval** - _(Optional)_ Sets the minimum time interval for auto group-by.  Grafana recommends  setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#configure-min-time-interval) for format examples.
+- **Min time interval** - _(Optional)_ Sets the minimum time interval for auto group-by.  Grafana recommends  setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`. Refer to [Min time interval](#min-time-interval) for format examples.
 - **Max series** - _(Optional)_ Sets a limit on the maximum number of series or tables that Grafana processes.  Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
 ### SQL-specific configuration section
@@ -135,7 +134,7 @@ The following settings are specific to the SQL query language option.
 
 **SQL InfluxDB details section:**
 
-- **Database** - Add the ID of the bucket to query. Obtain this from the **Buckets page** of the InfluxDB UI. 
+- **Database** - Specify the **bucket ID**. Refer to the **Buckets page** in the InfluxDB UI to locate the ID.  
 - **Token** The API token used for SQL queries. Generated on InfluxDB Cloud dashboard under [Load Data > API Tokens](https://docs.influxdata.com/influxdb/cloud-serverless/get-started/setup/#create-an-all-access-api-token) menu.
 - **Insecure Connection** - Toggle to disable gRPC TLS security.
 - **Max series** - _(Optional)_ Sets a limit on the maximum number of series or tables that Grafana processes.  Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
@@ -147,9 +146,9 @@ The following settings are specific to the Flux query language option.
 **Flux InfluxDB details section:**
 
 - **Organization** - The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) used for Flux queries. Also used for the `v.organization` query macro.
-- **Token** - The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`. For influx 1.8, the token is `username:password`. 
-- **Default bucket** -  _(Optional)_ The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries.
-- **Min time interval** - Sets the minimum time interval for auto group-by.  Grafana recommends  setting this to match the data write frequency. For example, if your data is written every minute, it’s recommended to set this interval to 1 minute, so that each group contains data from each new write. The default is `10s`.
+- **Token** - The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/). Token must be set as `Authorization` header with the value `Token <generated-token>`. For Influx 1.8, the token is `username:password`.
+- **Default bucket** - _(Optional)_ The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) used for the `v.defaultBucket` macro in Flux queries.
+- **Min time interval** - Sets the minimum time interval for auto group-by. Grafana recommends aligning this setting with the data write frequency. For example, if data is written every minute, set the interval to 1 minute to ensure each group includes data from every new write. The default is `10s`.
 - **Max series** - Sets a limit on the maximum number of series or tables that Grafana processes.  Set a lower limit to prevent system overload, or increase it if you have many small time series and need to display more of them. The default is `1000`.
 
 ### Min time interval

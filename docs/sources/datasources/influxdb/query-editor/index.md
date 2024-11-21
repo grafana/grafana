@@ -52,13 +52,18 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  configure-influxdb-data-source:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure-influxdb-data-source/
 ---
 
 # InfluxDB query editor
 
 Grafana's query editors are unique to each data source. For general information on Grafana query editors, refer to [Query editors](ref:query-editor). For general information on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
-The InfluxDB query editor is located on the [Explore page](ref:explore). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**. 
+The InfluxDB query editor is located on the [Explore page](ref:explore). You can also access the InfluxDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 You can also use the query editor to retrieve [log data](#query-logs) and [annotate](#apply-annotations) visualizations.
 
@@ -190,7 +195,7 @@ Examples:
 ## Flux query editor
 
 Grafana supports Flux when running InfluxDB v1.8 and higher.
-If your data source is [configured for Flux](/docs/grafana/latest/datasources/influxdb/configure-influxdb-data-source/), you can use
+If your data source is [configured for Flux](ref:configure-influxdb-data-source), you can use
 the [Flux](https://docs.influxdata.com/flux/v0/) in the query editor, which serves as
 a text editor for raw Flux queries with macro support.
 
