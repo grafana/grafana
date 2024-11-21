@@ -80,9 +80,6 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.GetCurrentOAuthToken")
 	defer span.End()
 
-	// import cycle
-	// reqCtx := contexthandler.FromContext(ctx)
-
 	ctxLogger := logger.FromContext(ctx)
 
 	if usr == nil || usr.IsNil() {
@@ -106,7 +103,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 
 	if !strings.HasPrefix(usr.GetAuthenticatedBy(), "oauth_") {
 		ctxLogger.Warn("The specified user's auth provider is not oauth",
-			"authmodule", usr.GetAuthenticatedBy(), "UserID", userID)
+			"authmodule", usr.GetAuthenticatedBy())
 		return nil
 	}
 
@@ -148,16 +145,16 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		return persistedToken
 	}
 
-	currentToken, err := o.TryTokenRefresh(ctx, usr, sessionToken)
+	token, err := o.TryTokenRefresh(ctx, usr, sessionToken)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return currentToken
+			return persistedToken
 		}
 
 		return nil
 	}
 
-	return currentToken
+	return token
 }
 
 // IsOAuthPassThruEnabled returns true if Forward OAuth Identity (oauthPassThru) is enabled for the provided data source.
@@ -350,10 +347,15 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 		UserId:     userID,
 		AuthModule: usr.GetAuthenticatedBy(),
 		AuthId:     usr.GetAuthID(),
+		OAuthToken: &oauth2.Token{
+			AccessToken:  "",
+			RefreshToken: "",
+			Expiry:       time.Time{},
+		},
 	})
 }
 
-func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oauth2.Token, usr identity.Requester, sessionToken *auth.UserToken) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken *oauth2.Token, usr identity.Requester, sessionToken *auth.UserToken) (*oauth2.Token, error) {
 	ctx, span := o.tracer.Start(ctx, "oauthtoken.tryGetOrRefreshOAuthToken")
 	defer span.End()
 
@@ -367,44 +369,33 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 
 	ctxLogger := logger.FromContext(ctx).New("userID", userID)
 
-	// Check if the user has a refresh token
-	if storedToken.RefreshToken == "" {
+	if persistedToken.RefreshToken == "" {
 		ctxLogger.Warn("No refresh token available", "authmodule", usr.GetAuthenticatedBy())
 		return nil, ErrNoRefreshTokenFound
 	}
 
-	// if err := checkOAuthRefreshToken(authInfo); err != nil {
-	// 	return nil, err
-	// }
-	// var token *oauth2.Token
-	// if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-	// 	token = buildOAuthTokenFromExternalSession(externalSession)
-	// } else {
-
-	// }
-
-	refreshNeeded := needTokenRefresh(ctx, storedToken)
+	refreshNeeded := needTokenRefresh(ctx, persistedToken)
 	if !refreshNeeded {
-		return storedToken, nil
+		return persistedToken, nil
 	}
 
 	authProvider := usr.GetAuthenticatedBy()
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", authProvider, "error", err)
-		return storedToken, err
+		return persistedToken, err
 	}
 
 	client, err := o.SocialService.GetOAuthHttpClient(authProvider)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth http client", "provider", authProvider, "error", err)
-		return storedToken, err
+		return persistedToken, err
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 
 	start := time.Now()
 	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(ctx, storedToken).Token()
+	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
 	o.tokenRefreshDuration.WithLabelValues(authProvider, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
 
@@ -421,7 +412,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 	}
 
 	// If the tokens are not the same, update the entry in the DB
-	if !tokensEq(storedToken, token) {
+	if !tokensEq(persistedToken, token) {
 		updateAuthCommand := &login.UpdateAuthInfoCommand{
 			UserId:     userID,
 			AuthModule: usr.GetAuthenticatedBy(),
@@ -447,7 +438,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, storedToken *oa
 			}
 		} else {
 			if err := o.AuthInfoService.UpdateAuthInfo(ctx, updateAuthCommand); err != nil {
-				ctxLogger.Error("Failed to update auth info during token refresh", "error", err)
+				ctxLogger.Error("Failed to update auth info during token refresh", "authID", usr.GetAuthID(), "error", err)
 				return token, err
 			}
 		}
@@ -497,7 +488,7 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 
 	idTokenExp, err := GetIDTokenExpiry(persistedToken)
 	if err != nil {
-		logger.Warn("Could not get ID Token expiry", "error", err)
+		ctxLogger.Warn("Could not get ID Token expiry", "error", err)
 	}
 	if !persistedToken.Expiry.IsZero() {
 		_, hasAccessTokenExpired = getExpiryWithSkew(persistedToken.Expiry)
@@ -506,7 +497,7 @@ func needTokenRefresh(ctx context.Context, persistedToken *oauth2.Token) bool {
 		_, hasIdTokenExpired = getExpiryWithSkew(idTokenExp)
 	}
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
-		ctxLogger.Debug("Neither Access nor ID Token have expired yet")
+		ctxLogger.Debug("Neither access nor id token have expired yet")
 		return false
 	}
 	if hasIdTokenExpired {

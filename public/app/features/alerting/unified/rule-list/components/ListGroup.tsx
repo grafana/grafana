@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { PropsWithChildren, ReactNode } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -13,36 +14,39 @@ interface GroupProps extends PropsWithChildren {
   metaRight?: ReactNode;
   actions?: ReactNode;
   isOpen?: boolean;
-  onToggle: () => void;
 }
 
-export const Group = ({
+export const ListGroup = ({
   name,
   description,
-  onToggle,
-  isOpen = false,
+  isOpen = true,
   metaRight = null,
   actions = null,
   children,
 }: GroupProps) => {
   const styles = useStyles2(getStyles);
+  const [open, toggle] = useToggle(isOpen);
 
   return (
-    <div className={styles.groupWrapper} role="treeitem" aria-expanded={isOpen} aria-selected="false">
+    <div className={styles.groupWrapper} role="treeitem" aria-expanded={open} aria-selected="false">
       <GroupHeader
-        onToggle={onToggle}
-        isOpen={isOpen}
+        onToggle={() => toggle()}
+        isOpen={open}
         description={description}
         name={name}
         metaRight={metaRight}
         actions={actions}
       />
-      {isOpen && <div role="group">{children}</div>}
+      {open && <div role="group">{children}</div>}
     </div>
   );
 };
 
-const GroupHeader = (props: GroupProps) => {
+type GroupHeaderProps = GroupProps & {
+  onToggle: () => void;
+};
+
+const GroupHeader = (props: GroupHeaderProps) => {
   const { name, description, metaRight = null, actions = null, isOpen = false, onToggle } = props;
 
   const styles = useStyles2(getStyles);
@@ -50,9 +54,9 @@ const GroupHeader = (props: GroupProps) => {
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={1}>
+        <Stack alignItems="center" gap={0}>
           <IconButton
-            name={isOpen ? 'angle-right' : 'angle-down'}
+            name={isOpen ? 'angle-down' : 'angle-right'}
             onClick={onToggle}
             aria-label={t('common.collapse', 'Collapse')}
           />
@@ -76,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   headerWrapper: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 
     background: theme.colors.background.secondary,
 

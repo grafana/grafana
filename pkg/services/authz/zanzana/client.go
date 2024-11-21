@@ -16,6 +16,7 @@ type Client interface {
 	List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error)
 	Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
 	Write(ctx context.Context, req *authzextv1.WriteRequest) error
+	BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error)
 }
 
 func NewNoopClient() *client.NoopClient {

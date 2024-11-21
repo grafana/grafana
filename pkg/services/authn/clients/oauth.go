@@ -270,7 +270,7 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester, sessionToke
 	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
 
 	if err := c.oauthService.InvalidateOAuthTokens(ctx, user, sessionToken); err != nil {
-		ctxLogger.Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
+		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)

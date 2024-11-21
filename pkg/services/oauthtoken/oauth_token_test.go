@@ -719,8 +719,8 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storedToken := buildOAuthTokenFromAuthInfo(tt.usr)
-			needsTokenRefresh := needTokenRefresh(context.Background(), storedToken)
+			token := buildOAuthTokenFromAuthInfo(tt.usr)
+			needsTokenRefresh := needTokenRefresh(context.Background(), token)
 
 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
 		})
