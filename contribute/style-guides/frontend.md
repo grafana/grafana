@@ -99,8 +99,6 @@ For directory names, use dash-case (sometimes called kebab-case).
 
 ### Functions
 
-Use PascalCase. For example:
-
 Use camelCase.
 
 ```typescript
@@ -146,8 +144,6 @@ type RequestInfo = ...
 ```
 
 ### Methods
-
-Use PascalCase. For example:
 
 Use camelCase.
 
@@ -295,8 +291,6 @@ function transform(value?: string): TransformedValue | undefined {
 ```
 
 ### Variables
-
-Use PascalCase. For example:
 
 Use camelCase.
 
