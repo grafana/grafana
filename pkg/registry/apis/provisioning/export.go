@@ -2,7 +2,6 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -132,11 +132,10 @@ func (c *exportConnector) Connect(
 
 			folder := folders[item.GetAnnotations()[apiutils.AnnoKeyFolder]]
 
-			// TODO: Drop the metadata field before writing?
-			// TODO: Do we want this to export YAML instead maybe?
-			json, err := json.MarshalIndent(item.Object, "", "\t")
+			delete(item.Object, "metadata")
+			json, err := yaml.Marshal(item.Object)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to marshal dashboard into JSON",
+				slog.ErrorContext(ctx, "failed to marshal dashboard into YAML",
 					"err", err,
 					"dashboard", name,
 					"namespace", ns)
@@ -144,9 +143,9 @@ func (c *exportConnector) Connect(
 				return
 			}
 
-			fileName := filepath.Join(folder.CreatePath(), name+".json")
+			fileName := filepath.Join(folder.CreatePath(), name+".yaml")
 			// TODO: Upsert
-			if err := repo.Create(ctx, fileName, json, "export of dashboard "+name+" in ns "+ns); err != nil {
+			if err := repo.Create(ctx, fileName, json, "export of dashboard "+name+" in namespace "+ns); err != nil {
 				slog.ErrorContext(ctx, "failed to write dashboard JSON to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),
