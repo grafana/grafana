@@ -2,17 +2,14 @@ package provisioning
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -92,36 +89,6 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 			}
 			repo = obj.(*v0alpha1.Repository)
 			slog.InfoContext(ctx, "the conspicuous boolean", "bool", b)
-		}
-
-		write := r.URL.Query().Get("list")
-		if write != "" {
-			gvr, ok := s.parent.client.GVR(repo.Namespace, schema.GroupVersionKind{
-				Group:   v1alpha1.GROUP,   // dashboard.grafana.app
-				Version: v1alpha1.VERSION, // "v0alpha1",
-				Kind:    "Dashboard",
-			})
-			if !ok {
-				responder.Error(fmt.Errorf("no dashboard gvr"))
-				return
-			}
-
-			client, err := s.parent.client.Client(repo.Namespace)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			ttt, err := client.Resource(gvr).Namespace(repo.Namespace).List(ctx, metav1.ListOptions{})
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-
-			// responder not happy flipping types
-			out, _ := json.Marshal(ttt)
-			w.Write(out)
-			return
 		}
 
 		slog.InfoContext(ctx, "Got a repository",
