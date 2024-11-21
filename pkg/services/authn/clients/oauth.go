@@ -266,23 +266,21 @@ func (c *OAuth) Logout(ctx context.Context, user identity.Requester) (*authn.Red
 		return nil, false
 	}
 
-	if err := c.oauthService.InvalidateOAuthTokens(ctx, &login.UserAuth{
-		UserId:     userID,
-		AuthId:     user.GetAuthID(),
-		AuthModule: user.GetAuthenticatedBy(),
-	}); err != nil {
-		c.log.FromContext(ctx).Error("Failed to invalidate tokens", "id", user.GetID(), "error", err)
+	ctxLogger := c.log.FromContext(ctx).New("userID", userID)
+
+	if err := c.oauthService.InvalidateOAuthTokens(ctx, user); err != nil {
+		ctxLogger.Error("Failed to invalidate tokens", "error", err)
 	}
 
 	oauthCfg := c.socialService.GetOAuthInfoProvider(c.providerName)
 	if !oauthCfg.Enabled {
-		c.log.FromContext(ctx).Debug("OAuth client is disabled")
+		ctxLogger.Debug("OAuth client is disabled")
 		return nil, false
 	}
 
 	redirectURL := getOAuthSignoutRedirectURL(c.cfg, oauthCfg)
 	if redirectURL == "" {
-		c.log.FromContext(ctx).Debug("No signout redirect url configured")
+		ctxLogger.Debug("No signout redirect url configured")
 		return nil, false
 	}
 
