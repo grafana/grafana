@@ -1,4 +1,5 @@
 import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
+import { capitalize } from 'lodash';
 
 import {
   FieldConfigPropertyItem,
@@ -27,6 +28,8 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
   Action,
+  OneClickMode,
+  SelectFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { config } from '@grafana/runtime';
@@ -350,6 +353,32 @@ export const getAllStandardFieldConfigs = () => {
 
   const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
 
+  // @TODO Remove after removing the feature flag.
+  const oneClickModeOptions = [
+    { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
+    { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
+  ];
+
+  let oneClickDescription = 'When enabled, a single click opens the first link';
+
+  const oneClickMode: FieldConfigPropertyItem<FieldConfig, OneClickMode, SelectFieldConfigSettings<OneClickMode>> = {
+    id: 'oneClickMode',
+    path: 'oneClickMode',
+    name: 'One-click',
+    editor: standardEditorsRegistry.get('radio').editor,
+    override: standardEditorsRegistry.get('radio').editor,
+    process: (value) => value,
+    settings: {
+      options: oneClickModeOptions,
+    },
+    defaultValue: OneClickMode.Off,
+    shouldApply: () => true,
+    category: [dataLinksCategory],
+    description: oneClickDescription,
+    getItemsCount: (value) => (value ? value.length : 0),
+    showIf: () => config.featureToggles.vizActions,
+  };
+
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
@@ -454,6 +483,7 @@ export const getAllStandardFieldConfigs = () => {
     displayName,
     color,
     noValue,
+    oneClickMode,
     links,
     actions,
     mappings,
