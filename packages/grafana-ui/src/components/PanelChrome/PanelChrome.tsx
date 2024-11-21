@@ -294,7 +294,12 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
-        <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
+        <div
+          className={cx(styles.headerContainer, dragClass)}
+          style={headerStyles}
+          data-testid="header-container"
+          data-dashboard-selectable={true}
+        >
           {statusMessage && (
             <div className={dragClassCancel}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />

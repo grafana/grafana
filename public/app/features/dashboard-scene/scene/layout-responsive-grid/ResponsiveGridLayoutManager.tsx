@@ -18,14 +18,6 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  public constructor(state: ResponsiveGridLayoutManagerState) {
-    super(state);
-
-    this.state.layout.isDraggable = () => true;
-    //@ts-ignore
-    this.state.layout.getDragClass = () => 'grid-item-drag-handle';
-  }
-
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {
