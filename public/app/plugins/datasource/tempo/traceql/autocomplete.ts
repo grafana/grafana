@@ -427,13 +427,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private getTagsCompletions(prepend?: string, scope?: string): CompletionItem[] {
     const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
-    return tags
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
-      .map((key) => ({
-        label: key,
-        insertText: (prepend || '') + key,
-        type: 'TAG_NAME',
-      }));
+    return tagsToCompletionItems(tags, prepend);
   }
 
   private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
@@ -548,4 +542,14 @@ function fixSuggestion(
       }
     }
   }
+}
+
+const collator = new Intl.Collator('en', { sensitivity: 'accent' });
+
+function tagsToCompletionItems(tags: string[], prepend = ''): CompletionItem[] {
+  return tags.sort(collator.compare).map((key) => ({
+    label: key,
+    insertText: `${prepend}${key}`,
+    type: 'TAG_NAME',
+  }));
 }
