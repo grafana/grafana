@@ -360,10 +360,7 @@ VizConfigKind: {
 AnnotationQuerySpec: {
   datasource: DataSourceRef
   query: DataQueryKind
-
-  // TODO: Should be figured out based on datasource (Grafana ds)
-  // builtIn?: int
-  // Below are currently existing options for annotation queries
+  builtIn: bool
   enable: bool
   filter: AnnotationPanelFilter
   hide: bool

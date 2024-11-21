@@ -505,9 +505,7 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 export interface AnnotationQuerySpec {
 	datasource: DataSourceRef;
 	query: DataQueryKind;
-	// TODO: Should be figured out based on datasource (Grafana ds)
-	// builtIn?: int
-	// Below are currently existing options for annotation queries
+	builtIn: boolean;
 	enable: boolean;
 	filter: AnnotationPanelFilter;
 	hide: boolean;
@@ -518,6 +516,7 @@ export interface AnnotationQuerySpec {
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	datasource: defaultDataSourceRef(),
 	query: defaultDataQueryKind(),
+	builtIn: false,
 	enable: false,
 	filter: defaultAnnotationPanelFilter(),
 	hide: false,
