@@ -105,9 +105,9 @@ func (_m *MockUserAuthTokenService) FindExternalSessions(ctx context.Context, qu
 	return r0, r1
 }
 
-// GetExternalSession provides a mock function with given fields: ctx, extSessionID
-func (_m *MockUserAuthTokenService) GetExternalSession(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
-	ret := _m.Called(ctx, extSessionID)
+// GetExternalSession provides a mock function with given fields: ctx, externalSessionID
+func (_m *MockUserAuthTokenService) GetExternalSession(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+	ret := _m.Called(ctx, externalSessionID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetExternalSession")
@@ -116,10 +116,10 @@ func (_m *MockUserAuthTokenService) GetExternalSession(ctx context.Context, extS
 	var r0 *auth.ExternalSession
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64) (*auth.ExternalSession, error)); ok {
-		return rf(ctx, extSessionID)
+		return rf(ctx, externalSessionID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int64) *auth.ExternalSession); ok {
-		r0 = rf(ctx, extSessionID)
+		r0 = rf(ctx, externalSessionID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*auth.ExternalSession)
@@ -127,7 +127,7 @@ func (_m *MockUserAuthTokenService) GetExternalSession(ctx context.Context, extS
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, extSessionID)
+		r1 = rf(ctx, externalSessionID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -351,9 +351,9 @@ func (_m *MockUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.Ro
 	return r0, r1
 }
 
-// UpdateExternalSession provides a mock function with given fields: ctx, extSessionID, update
-func (_m *MockUserAuthTokenService) UpdateExternalSession(ctx context.Context, extSessionID int64, update *auth.UpdateExternalSessionCommand) error {
-	ret := _m.Called(ctx, extSessionID, update)
+// UpdateExternalSession provides a mock function with given fields: ctx, externalSessionID, cmd
+func (_m *MockUserAuthTokenService) UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	ret := _m.Called(ctx, externalSessionID, cmd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateExternalSession")
@@ -361,7 +361,7 @@ func (_m *MockUserAuthTokenService) UpdateExternalSession(ctx context.Context, e
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, int64, *auth.UpdateExternalSessionCommand) error); ok {
-		r0 = rf(ctx, extSessionID, update)
+		r0 = rf(ctx, externalSessionID, cmd)
 	} else {
 		r0 = ret.Error(0)
 	}

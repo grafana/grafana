@@ -80,9 +80,9 @@ type UserTokenService interface {
 	CreateToken(ctx context.Context, cmd *CreateTokenCommand) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
 	GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*UserToken, error)
-	GetExternalSession(ctx context.Context, extSessionID int64) (*ExternalSession, error)
+	GetExternalSession(ctx context.Context, externalSessionID int64) (*ExternalSession, error)
 	FindExternalSessions(ctx context.Context, query *ListExternalSessionQuery) ([]*ExternalSession, error)
-	UpdateExternalSession(ctx context.Context, extSessionID int64, update *UpdateExternalSessionCommand) error
+	UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *UpdateExternalSessionCommand) error
 
 	// RotateToken will always rotate a valid token
 	RotateToken(ctx context.Context, cmd RotateCommand) (*UserToken, error)

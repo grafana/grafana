@@ -27,11 +27,11 @@ func provideExternalSessionStore(sqlStore db.DB, secretService secrets.Service, 
 	}
 }
 
-func (s *store) Get(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
+func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error) {
 	ctx, span := s.tracer.Start(ctx, "externalsession.Get")
 	defer span.End()
 
-	externalSession := &auth.ExternalSession{ID: extSessionID}
+	externalSession := &auth.ExternalSession{ID: ID}
 
 	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		found, err := sess.Get(externalSession)

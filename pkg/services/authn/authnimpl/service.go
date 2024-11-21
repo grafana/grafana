@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
@@ -283,7 +282,7 @@ func (s *Service) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uin
 	s.preLogoutHooks.insert(hook, priority)
 }
 
-func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, error) {
+func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Logout")
 	defer span.End()
 

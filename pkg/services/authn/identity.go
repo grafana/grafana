@@ -288,7 +288,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDToken:         i.IDToken,
 		FallbackType:    i.Type,
 		Namespace:       i.Namespace,
-		UserToken:       i.SessionToken,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {
