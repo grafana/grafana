@@ -73,7 +73,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
-					"name": "repositories/file",
+					"name": "repositories/files",
 					"singularName": "",
 					"namespaced": true,
 					"kind": "ResourceWrapper",
