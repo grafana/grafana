@@ -1,12 +1,10 @@
 import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Select } from '@grafana/ui';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps } from '../types';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -72,8 +70,8 @@ export class ResponsiveGridLayoutManager
     return panels;
   }
 
-  public renderEditor() {
-    return <AutomaticGridEditor layoutManager={this} />;
+  public getOptions(): OptionsPaneItemDescriptor[] {
+    return getOptions(this);
   }
 
   public getDescriptor(): LayoutRegistryItem {
@@ -118,17 +116,14 @@ export class ResponsiveGridLayoutManager
     throw new Error('Method not implemented.');
   }
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
-    return (
-      <LayoutEditChrome layoutManager={model}>
-        <model.state.layout.Component model={model.state.layout} />
-      </LayoutEditChrome>
-    );
+    return <model.state.layout.Component model={model.state.layout} />;
   };
 }
 
-function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGridLayoutManager>) {
-  //const cssLayout = layoutManager.state.layout;
-  //const { templateColumns, autoRows } = cssLayout.useState();
+function getOptions(layoutManager: ResponsiveGridLayoutManager): OptionsPaneItemDescriptor[] {
+  const options: OptionsPaneItemDescriptor[] = [];
+
+  const cssLayout = layoutManager.state.layout;
 
   const rowOptions: Array<SelectableValue<string>> = [];
   const sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 650];
@@ -150,39 +145,43 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
     rowOptions.push({ label: `Fixed: ${size}px`, value: `${size}px` });
   }
 
-  // const onColumnsChange = (value: SelectableValue<string>) => {
-  //   cssLayout.setState({ templateColumns: value.value });
-  // };
-
-  // const onRowsChange = (value: SelectableValue<string>) => {
-  //   cssLayout.setState({ autoRows: value.value });
-  // };
-
-  return (
-    <>
-      {/* <Field label="Columns">
-        <Select
-          options={colOptions}
-          value={String(templateColumns)}
-          onChange={onColumnsChange}
-          allowCustomValue={true}
-        />
-      </Field>
-
-      <Field label="Row height">
-        <Select options={rowOptions} value={String(autoRows)} onChange={onRowsChange} />
-      </Field> */}
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          const vizPanel = getDefaultVizPanel();
-          layoutManager.addPanel(vizPanel);
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
-      </Button>
-    </>
+  options.push(
+    new OptionsPaneItemDescriptor({
+      title: 'Columns',
+      render: () => {
+        const { templateColumns } = cssLayout.useState();
+        return (
+          <Select
+            options={colOptions}
+            value={String(templateColumns)}
+            onChange={(value) => {
+              cssLayout.setState({ templateColumns: value.value });
+            }}
+            allowCustomValue={true}
+          />
+        );
+      },
+    })
   );
+
+  options.push(
+    new OptionsPaneItemDescriptor({
+      title: 'Rows',
+      render: () => {
+        const { autoRows } = cssLayout.useState();
+        return (
+          <Select
+            options={rowOptions}
+            value={String(autoRows)}
+            onChange={(value) => {
+              cssLayout.setState({ autoRows: value.value });
+            }}
+            allowCustomValue={true}
+          />
+        );
+      },
+    })
+  );
+
+  return options;
 }

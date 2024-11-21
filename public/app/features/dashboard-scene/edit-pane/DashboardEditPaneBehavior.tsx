@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { SceneObjectBase } from '@grafana/scenes';
 import { Button, Input, Select, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -11,53 +13,64 @@ import { getDashboardSceneFor } from '../utils/utils';
 export class DashboardEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
 
-  public getEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    const dashboardOptions = new OptionsPaneCategoryDescriptor({
-      title: 'Dashboard options',
-      id: 'dashboard-options',
-      isOpenDefault: true,
-    });
-
+  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const dashboard = getDashboardSceneFor(this);
 
-    dashboardOptions.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Title',
-        render: function renderTitle() {
-          return <DashboardTitleInput dashboard={dashboard} />;
-        },
-      })
-    );
+    // When layout changes we need to update options list
+    const { body } = dashboard.useState();
 
-    dashboardOptions.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Description',
-        render: function renderTitle() {
-          return <DashboardDescriptionInput dashboard={dashboard} />;
-        },
-      })
-    );
+    return useMemo(() => {
+      const dashboardOptions = new OptionsPaneCategoryDescriptor({
+        title: 'Dashboard options',
+        id: 'dashboard-options',
+        isOpenDefault: true,
+      });
 
-    const categories = [dashboardOptions];
+      dashboardOptions.addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Title',
+          render: function renderTitle() {
+            return <DashboardTitleInput dashboard={dashboard} />;
+          },
+        })
+      );
 
-    const layoutCategory = new OptionsPaneCategoryDescriptor({
-      title: 'Layout',
-      id: 'layout-options',
-      isOpenDefault: true,
-    });
+      dashboardOptions.addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Description',
+          render: function renderTitle() {
+            return <DashboardDescriptionInput dashboard={dashboard} />;
+          },
+        })
+      );
 
-    layoutCategory.addItem(
-      new OptionsPaneItemDescriptor({
-        title: 'Type',
-        render: function renderTitle() {
-          return <DashboardLayoutSelector dashboard={dashboard} />;
-        },
-      })
-    );
+      const categories = [dashboardOptions];
 
-    categories.push(layoutCategory);
+      const layoutCategory = new OptionsPaneCategoryDescriptor({
+        title: 'Layout',
+        id: 'layout-options',
+        isOpenDefault: true,
+      });
 
-    return categories;
+      layoutCategory.addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Type',
+          render: function renderTitle() {
+            return <DashboardLayoutSelector dashboard={dashboard} />;
+          },
+        })
+      );
+
+      if (body.getOptions) {
+        for (const option of body.getOptions()) {
+          layoutCategory.addItem(option);
+        }
+      }
+
+      categories.push(layoutCategory);
+
+      return categories;
+    }, [dashboard, body]);
   }
 
   public getTypeName(): string {

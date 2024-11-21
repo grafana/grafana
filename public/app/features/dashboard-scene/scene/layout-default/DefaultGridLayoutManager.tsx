@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneGridLayout,
@@ -23,7 +22,6 @@ import {
   getDefaultVizPanel,
 } from '../../utils/utils';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
-import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
 
@@ -381,15 +379,7 @@ export class DefaultGridLayoutManager
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    if (!config.featureToggles.dashboardNewLayouts) {
-      return <model.state.grid.Component model={model.state.grid} />;
-    }
-
-    return (
-      <LayoutEditChrome layoutManager={model}>
-        <model.state.grid.Component model={model.state.grid} />
-      </LayoutEditChrome>
-    );
+    return <model.state.grid.Component model={model.state.grid} />;
   };
 }
 

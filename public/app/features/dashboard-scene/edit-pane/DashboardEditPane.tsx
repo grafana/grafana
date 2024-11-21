@@ -15,6 +15,8 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { ElementEditPane } from './ElementEditPane';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -62,10 +64,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   }
 
   public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
+    const dashboard = getDashboardSceneFor(this);
+    if (!dashboard.state.isEditing) {
+      return;
+    }
+
     const target = evt.target as HTMLElement;
     const isPanel = target.closest('[data-dashboard-selectable]');
     const focusElement = target.closest('[tabindex]');
-    console.log('evt', evt);
 
     if (!isPanel) {
       return;

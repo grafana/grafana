@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObject } from '@grafana/scenes';
@@ -14,12 +13,17 @@ export interface Props {
 
 export function ElementEditPane({ obj }: Props) {
   const element = getEditableElementFor(obj);
-  const categories = useMemo(() => element.getEditPaneOptions(), [element]);
+  const categories = element.useEditPaneOptions();
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={0}>
-      <OptionsPaneCategory id="selected-item" title={element.getTypeName()} isOpenDefault={true}>
+      <OptionsPaneCategory
+        id="selected-item"
+        title={element.getTypeName()}
+        isOpenDefault={true}
+        className={styles.noBorderTop}
+      >
         <div className={styles.actionsBox}>{element.renderActions()}</div>
       </OptionsPaneCategory>
       {categories.map((cat) => cat.render())}
@@ -43,6 +47,9 @@ function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    noBorderTop: css({
+      borderTop: 'none',
+    }),
     actionsBox: css({
       display: 'flex',
       alignItems: 'center',

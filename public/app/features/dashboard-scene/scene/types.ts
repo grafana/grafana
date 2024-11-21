@@ -1,6 +1,7 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
 import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 /**
  * A scene object that usually wraps an underlying layout
@@ -54,7 +55,7 @@ export interface DashboardLayoutManager extends SceneObject {
   /**
    * Renders options and layout actions
    */
-  renderEditor?(): React.ReactNode;
+  getOptions?(): OptionsPaneItemDescriptor[];
 }
 
 /**
@@ -71,10 +72,6 @@ export interface LayoutRegistryItem extends RegistryItem {
    * @param saveModel
    */
   createFromSaveModel?(saveModel: any): void;
-}
-
-export interface LayoutEditorProps<T> {
-  layoutManager: T;
 }
 
 /**
@@ -132,9 +129,9 @@ export interface EditableDashboardElement {
    */
   isEditableDashboardElement: true;
   /**
-   * Return option categories for the edit pane
+   * Hook that returns edit pane options
    */
-  getEditPaneOptions(): OptionsPaneCategoryDescriptor[];
+  useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
   /**
    * Get the type name of the element
    */
