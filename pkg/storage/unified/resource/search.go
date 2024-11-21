@@ -110,7 +110,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
-	fmt.Printf("TODO, listen to all events\n")
+	s.log.Debug("TODO, listen to all events")
 
 	return nil
 }
@@ -124,7 +124,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		return nil, 0, err
 	}
 
-	fmt.Printf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder)
+	s.log.Debug(fmt.Sprintf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder))
 
 	return nil, 0, nil
 }
