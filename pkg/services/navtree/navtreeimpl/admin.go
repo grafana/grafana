@@ -74,7 +74,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
 		Text:     "Provisioning",
 		Id:       "provisioning",
-		SubTitle: "Store and version control your resources",
+		SubTitle: "Manage resources from remote repositories",
 		Url:      s.cfg.AppSubURL + "/admin/provisioning",
 	})
 
