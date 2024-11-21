@@ -142,6 +142,11 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		parent:        b,
 	}
 
+	exportConnector := &exportConnector{
+		repoGetter: b,
+		client:     b.client,
+	}
+
 	storage := map[string]rest.Storage{}
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
@@ -154,6 +159,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
