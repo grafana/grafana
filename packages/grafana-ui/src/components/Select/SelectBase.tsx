@@ -15,6 +15,7 @@ import Creatable from 'react-select/creatable';
 import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
+import { logOptions } from '../../utils';
 import { Trans } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
@@ -78,6 +79,8 @@ interface SelectPropsWithExtras extends ReactSelectProps {
   showAllSelectedWhenOpen: boolean;
   noMultiValueWrap?: boolean;
 }
+
+const RECOMMENDED_ITEMS_AMOUNT = 10_000;
 
 function determineToggleAllState(selectedValue: SelectableValue[], options: SelectableValue[]) {
   if (options.length === selectedValue.length) {
@@ -162,6 +165,21 @@ export function SelectBase<T, Rest = {}>({
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
+
+  // log a warning if the amount of items exceeds the recommended amount
+  const warningLogRefOptions = useRef<boolean>(false);
+  if (!warningLogRefOptions.current) {
+    const updateRef = logOptions(options.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabel);
+    warningLogRefOptions.current = updateRef;
+  }
+
+  // is there a way to get the amount in loadOptions?
+  // for now, default options can be used to log a warning if it is not a boolean
+  const warningLogRefDefaultOptions = useRef<boolean>(false);
+  if (!warningLogRefDefaultOptions.current && defaultOptions && typeof defaultOptions !== 'boolean') {
+    const updateRef = logOptions(options.length, RECOMMENDED_ITEMS_AMOUNT, id, ariaLabel);
+    warningLogRefDefaultOptions.current = updateRef;
+  }
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).

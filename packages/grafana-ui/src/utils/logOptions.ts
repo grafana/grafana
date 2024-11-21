@@ -10,7 +10,7 @@ export function logOptions(
   recommendedAmount: number,
   id: string | undefined,
   ariaLabelledBy: string | undefined
-): void {
+): boolean {
   if (amount > recommendedAmount) {
     const msg = `[Combobox] Items exceed the recommended amount ${recommendedAmount}.`;
     console.warn(msg, {
@@ -19,5 +19,7 @@ export function logOptions(
       'aria-labelledby': ariaLabelledBy ?? '',
       id: id ?? '',
     });
+    return true;
   }
+  return false;
 }
