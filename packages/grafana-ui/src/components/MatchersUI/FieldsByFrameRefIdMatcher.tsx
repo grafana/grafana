@@ -232,7 +232,7 @@ export const regexpToStrings = (regexp: string) => {
       .slice(5, -3)
       // split on unescaped |
       .split(/(?<!\\)\|/g)
-      // unescape remaining regexp special chars
+      // unescape remaining escaped chars
       .map((string) => string.replace(/\\(.)/g, '$1'))
   );
 };
