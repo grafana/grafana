@@ -37,6 +37,6 @@ func (s *Service) TryTokenRefresh(context.Context, identity.Requester) (*oauth2.
 	return s.Token, nil
 }
 
-func (s *Service) InvalidateOAuthTokens(context.Context, *login.UserAuth) error {
+func (s *Service) InvalidateOAuthTokens(context.Context, identity.Requester) error {
 	return nil
 }
