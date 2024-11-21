@@ -219,9 +219,19 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
-	var result []dashboards.DashboardSearchProjection
 	if query.Type == searchstore.TypeFolder || query.Type == searchstore.TypeAlertFolder {
 		return dr.findFoldersZanzanaList(ctx, query)
+	}
+
+	result := make([]dashboards.DashboardSearchProjection, 0)
+
+	// If query type is not set, we need to search both for folders and dashboards
+	if query.Type == "" {
+		folders, err := dr.findFoldersZanzanaList(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, folders...)
 	}
 
 	// List dashboards and folders where user can read dashboards
@@ -245,10 +255,11 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		// Find dashboards in folders that user has access to
 		query.SkipAccessControlFilter = true
 		query.FolderUIDs = res.Folders
-		result, err = dr.dashboardStore.FindDashboards(ctx, &query)
+		dashboardRes, err := dr.dashboardStore.FindDashboards(ctx, &query)
 		if err != nil {
 			return nil, err
 		}
+		result = append(result, dashboardRes...)
 	}
 
 	// skip if limit reached
