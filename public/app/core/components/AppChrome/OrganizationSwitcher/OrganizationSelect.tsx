@@ -20,7 +20,9 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
       })),
     [orgs]);
 
-  const selectedValue = options.find(option => option.value.orgId === orgId)
+  const selectedValue = useMemo(() =>
+      options.find(option => option.value.orgId === orgId),
+    [options, orgId]);
 
   const [value, setValue] = useState<SelectableValue<UserOrg>>(() => (selectedValue));
   const onChange = (option: SelectableValue<UserOrg>) => {
