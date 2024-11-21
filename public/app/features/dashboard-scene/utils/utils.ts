@@ -290,7 +290,7 @@ export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutMa
     if (isDashboardLayoutManager(parent)) {
       return parent;
     }
-    parent = sceneObject.parent;
+    parent = parent.parent;
   }
 
   throw new Error('Could not find layout manager for scene object');

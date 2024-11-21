@@ -102,7 +102,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
 
     return (
       <div className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed)} ref={ref}>
-        <div className={cx(styles.rowHeader, isCollapsed && styles.rowCollapsed)}>
+        <div className={styles.rowHeader}>
           <button
             onClick={model.onCollapseToggle}
             className={styles.rowTitleButton}
@@ -130,10 +130,9 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(0, 1, 0.5, 1),
+      padding: theme.spacing(0, 0, 0.5, 0),
       margin: theme.spacing(0, 0, 1, 0),
       alignItems: 'center',
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
       '&:hover, &:focus-within': {
         '& > div': {
@@ -155,9 +154,6 @@ function getStyles(theme: GrafanaTheme2) {
       minWidth: 0,
       gap: theme.spacing(1),
     }),
-    rowCollapsed: css({
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-    }),
     rowTitle: css({
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
@@ -176,6 +172,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     wrapperCollapsed: css({
       flexGrow: 0,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     rowActions: css({
       display: 'flex',
