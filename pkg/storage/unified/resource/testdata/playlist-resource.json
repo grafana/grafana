@@ -5,15 +5,18 @@
         "name": "ae2ntrqxefvnke",
         "namespace": "default",
         "uid": "playlist-1",
-        "creationTimestamp": "2024-11-01T19:42:22Z",
+        "creationTimestamp": "2024-06-01T10:11:12Z",
         "annotations": {
-            "grafana.app/createdBy": "user:1",
+            "grafana.app/createdBy": "user:ABC",
+            "grafana.app/updatedBy": "user:XYZ",
             "grafana.app/repoName": "SQL",
             "grafana.app/repoPath": "15",
-            "grafana.app/repoTimestamp": "2024-11-01T19:42:22Z"
+            "grafana.app/repoHash": "xyz",
+            "grafana.app/updatedTimestamp": "2024-07-01T10:11:12Z"
         }
     },
     "spec": {
-        "title": "test-us-playlist"
+        "title": "test playlist unified storage",
+        "description": "description for the test playlist"
     }
 }
