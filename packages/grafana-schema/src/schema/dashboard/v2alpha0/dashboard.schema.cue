@@ -358,7 +358,7 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
   query: DataQueryKind
   builtIn: bool
   enable: bool
@@ -390,7 +390,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
   query: DataQueryKind
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
 
   refId: string
   hidden: bool
@@ -590,7 +590,7 @@ QueryVariableSpec: {
   refresh: VariableRefresh
   skipUrlSync: bool | *false
   description?: string
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   query: string | DataQueryKind | *""
   regex: string | *""
   sort: VariableSort
@@ -724,7 +724,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""
     value: ""
@@ -748,7 +748,7 @@ GroupByVariableKind: {
 // Adhoc variable specification
 AdhocVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   baseFilters: [...AdHocFilterWithLabels] | *[]
   filters: [...AdHocFilterWithLabels] | *[]
   defaultKeys: [...MetricFindValue] | *[]

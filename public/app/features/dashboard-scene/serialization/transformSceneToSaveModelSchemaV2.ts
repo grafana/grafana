@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import {
   behaviors,
   dataLayers,
@@ -34,6 +36,7 @@ import {
   AdhocVariableKind,
   AnnotationQueryKind,
   defaultAnnotationPanelFilter,
+  defaultAnnotationQuerySpec,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -394,15 +397,19 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
       kind: 'AnnotationQuery',
       spec: {
         name: layer.state.query.name,
-        datasource: layer.state.query.datasource!, // FIXME: this cannot be undefined
+        datasource: layer.state.query.datasource || undefined,
         query: {
           kind: layer.state.query.datasource?.type ?? 'default',
-          spec: layer.state.query,
+          spec: omit(layer.state.query, 'datasource'),
         },
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
         iconColor: layer.state.query.iconColor,
+        builtIn:
+          layer.state.query.builtIn === undefined
+            ? Boolean(layer.state.query.builtIn)
+            : defaultAnnotationQuerySpec().builtIn,
       },
     };
     annotations.push(result);

@@ -6,6 +6,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
+        "builtIn": false,
         "datasource": {
           "type": "grafana",
           "uid": "-- Grafana --",
@@ -21,10 +22,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "query": {
           "kind": "grafana",
           "spec": {
-            "datasource": {
-              "type": "grafana",
-              "uid": "-- Grafana --",
-            },
             "enable": true,
             "iconColor": "red",
             "name": "query1",
@@ -35,6 +32,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     {
       "kind": "AnnotationQuery",
       "spec": {
+        "builtIn": false,
         "datasource": {
           "type": "prometheus",
           "uid": "abcdef",
@@ -50,10 +48,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         "query": {
           "kind": "prometheus",
           "spec": {
-            "datasource": {
-              "type": "prometheus",
-              "uid": "abcdef",
-            },
             "enable": true,
             "iconColor": "blue",
             "name": "query2",
