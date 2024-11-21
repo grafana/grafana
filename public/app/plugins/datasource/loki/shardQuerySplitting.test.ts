@@ -50,9 +50,7 @@ describe('runShardSplitQuery()', () => {
   };
   let request: DataQueryRequest<LokiQuery>;
   beforeEach(() => {
-    request = createRequest([
-      { expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan },
-    ]);
+    request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }]);
     datasource = createLokiDatasource();
     datasource.languageProvider.fetchLabelValues = jest.fn();
     datasource.interpolateVariablesInQueries = jest.fn().mockImplementation((queries: LokiQuery[]) => {
@@ -84,7 +82,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"20|10"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -97,7 +95,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_2_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"3|2"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -110,7 +108,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_4_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__="1"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -123,7 +121,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_5_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=""}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -152,7 +150,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_2',
         targets: [
           {
-            expr: 'count_over_time({service_name="test", filter="true", __stream_shard__=~"20|10"} | drop __stream_shard__[1m])',
+            expr: '{service_name="test", filter="true", __stream_shard__=~"20|10"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -210,19 +208,16 @@ describe('runShardSplitQuery()', () => {
   });
 
   test('Adjusts the group size based on errors and execution time', async () => {
-    const request = createRequest(
-      [{ expr: 'count_over_time($SELECTOR[1m])', refId: 'A', direction: LokiQueryDirection.Scan }],
-      {
-        range: {
+    const request = createRequest([{ expr: '$SELECTOR', refId: 'A', direction: LokiQueryDirection.Scan }], {
+      range: {
+        from: dateTime('2024-11-13T05:00:00.000Z'),
+        to: dateTime('2024-11-14T06:00:00.000Z'),
+        raw: {
           from: dateTime('2024-11-13T05:00:00.000Z'),
           to: dateTime('2024-11-14T06:00:00.000Z'),
-          raw: {
-            from: dateTime('2024-11-13T05:00:00.000Z'),
-            to: dateTime('2024-11-14T06:00:00.000Z'),
-          },
         },
-      }
-    );
+      },
+    });
 
     jest
       .mocked(datasource.languageProvider.fetchLabelValues)
@@ -381,7 +376,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_0_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"20|10|9"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"20|10|9"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -395,7 +390,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_4',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7|6|5"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"8|7|6|5"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -409,7 +404,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_3_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"8|7"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"8|7"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -423,7 +418,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_5_3',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"6|5|4"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"6|5|4"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -437,7 +432,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_8_2',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=~"3|2"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=~"3|2"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -451,7 +446,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_10_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__="1"} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__="1"}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
@@ -465,7 +460,7 @@ describe('runShardSplitQuery()', () => {
         requestId: 'TEST_shard_0_11_1',
         targets: [
           {
-            expr: 'count_over_time({a="b", __stream_shard__=""} | drop __stream_shard__[1m])',
+            expr: '{a="b", __stream_shard__=""}',
             refId: 'A',
             direction: LokiQueryDirection.Scan,
           },
