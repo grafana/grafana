@@ -37,7 +37,11 @@ type searchSupport struct {
 }
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
-	// TODO? skip if missing backend????
+	// No backend search support
+	if opts.Backend == nil {
+		return nil, nil
+	}
+
 	if opts.WorkerThreads < 1 {
 		opts.WorkerThreads = 1
 	}
