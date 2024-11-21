@@ -370,8 +370,8 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
-        isDraggable: false,
-        isResizable: false,
+        isDraggable: true,
+        isResizable: true,
       }),
     });
   }

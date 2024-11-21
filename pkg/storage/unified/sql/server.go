@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,7 +19,9 @@ import (
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer) (resource.ResourceServer, error) {
+func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -27,7 +30,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		},
 		Reg: reg,
 	}
-
+	if ac != nil {
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac)
+	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
 		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
@@ -49,6 +54,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
+	opts.Search = resource.SearchOptions{
+		Resources: docs,
+	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
