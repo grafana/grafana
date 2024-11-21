@@ -96,7 +96,7 @@ type DirectRestConfigProvider interface {
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
 
 	// Get a rest client with the given identity
-	GetRestConfigForBackgroundWorker(requester identity.Requester) *clientrest.Config
+	GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config
 
 	// This can be used to rewrite incoming requests to path now supported under /apis
 	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
@@ -517,14 +517,14 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	}
 }
 
-func (s *service) GetRestConfigForBackgroundWorker(requester identity.Requester) *clientrest.Config {
+func (s *service) GetRestConfigForBackgroundWorker(requester func() identity.Requester) *clientrest.Config {
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
 				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
-				ctx := identity.WithRequester(context.Background(), requester)
+				ctx := identity.WithRequester(context.Background(), requester())
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},
