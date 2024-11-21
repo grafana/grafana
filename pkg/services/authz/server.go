@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	authzlib "github.com/grafana/authlib/authz"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/claims"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -33,12 +31,10 @@ func RegisterRBACAuthZService(handler grpcserver.Provider, db legacysql.LegacyDa
 }
 
 var _ authzv1.AuthzServiceServer = (*legacyServer)(nil)
-var _ grpc_auth.ServiceAuthFuncOverride = (*legacyServer)(nil)
-var _ authzlib.ServiceAuthorizeFuncOverride = (*legacyServer)(nil)
 
 func newLegacyServer(
 	authnSvc authn.Service, ac accesscontrol.AccessControl, folderSvc folder.Service,
-	features featuremgmt.FeatureToggles, grpcServer grpcserver.Provider, tracer tracing.Tracer, cfg *Cfg,
+	features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (*legacyServer, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
@@ -53,14 +49,6 @@ func newLegacyServer(
 		mapper:    mappers.NewK8sRbacMapper(),
 	}
 
-	if cfg.listen {
-		if !cfg.allowInsecure {
-			l.logger.Error("Not allowing the authz service to run in insecure mode as Auth is skipped")
-		} else {
-			grpcServer.GetServer().RegisterService(&authzv1.AuthzService_ServiceDesc, l)
-		}
-	}
-
 	return l, nil
 }
 
@@ -73,24 +61,6 @@ type legacyServer struct {
 	logger    log.Logger
 	tracer    tracing.Tracer
 	mapper    *mappers.K8sRbacMapper
-}
-
-// AuthFuncOverride is a function that allows to override the default auth function.
-// This is ok for now since we don't have on-prem access token support.
-func (l *legacyServer) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
-	ctx, span := l.tracer.Start(ctx, "authz.AuthFuncOverride")
-	defer span.End()
-
-	return ctx, nil
-}
-
-// AuthorizeFuncOverride is a function that allows to override the default authorize function that checks the namespace of the caller.
-// This is ok for now since we don't have on-prem access token support.
-func (l *legacyServer) AuthorizeFuncOverride(ctx context.Context) error {
-	_, span := l.tracer.Start(ctx, "authz.AuthorizeFuncOverride")
-	defer span.End()
-
-	return nil
 }
 
 func wrapErr(err error) error {

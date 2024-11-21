@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,48 +27,22 @@ type Client interface {
 	authzlib.AccessChecker
 }
 
-// ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
-func ProvideAuthZClient(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl,
-	authnSvc authn.Service, folderSvc folder.Service, grpcServer grpcserver.Provider,
-	tracer tracing.Tracer,
+// ProvideInProcAuthZClient provides an AuthZ client and spins an in-proc connection to a local AuthZ service.
+func ProvideInProcAuthZClient(
+	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl,
+	authnSvc authn.Service, folderSvc folder.Service, tracer tracing.Tracer,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
 		return nil, nil
 	}
 
-	authCfg, err := ReadCfg(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	var client Client
-
 	// Register the server
-	server, err := newLegacyServer(authnSvc, ac, folderSvc, features, grpcServer, tracer, authCfg)
+	server, err := newLegacyServer(authnSvc, ac, folderSvc, features, tracer)
 	if err != nil {
 		return nil, err
 	}
 
-	switch authCfg.mode {
-	case ModeInProc:
-		client, err = newInProcLegacyClient(server)
-		if err != nil {
-			return nil, err
-		}
-	case ModeGRPC:
-		client, err = newGrpcLegacyClient(authCfg)
-		if err != nil {
-			return nil, err
-		}
-	case ModeCloud:
-		client, err = newCloudLegacyClient(authCfg)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return client, err
+	return newInProcLegacyClient(server)
 }
 
 // ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
@@ -86,7 +59,7 @@ func ProvideStandaloneAuthZClient(
 		return nil, err
 	}
 
-	if authCfg.mode == ModeGRPC {
+	if authCfg.mode == ModeOnPrem {
 		return newGrpcLegacyClient(authCfg)
 	}
 	return newCloudLegacyClient(authCfg)
@@ -115,7 +88,7 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error)
 }
 
 func newGrpcLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
-	// This client interceptor is a noop, as we don't send an access token
+	// This client interceptor is a noop equivalent, as we don't send an access token
 	clientConfig := authnlib.GrpcClientConfig{}
 	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&clientConfig, authnlib.WithDisableAccessTokenOption())
 	if err != nil {

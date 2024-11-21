@@ -10,21 +10,19 @@ type Mode string
 
 func (s Mode) IsValid() bool {
 	switch s {
-	case ModeGRPC, ModeInProc, ModeCloud:
+	case ModeOnPrem, ModeCloud:
 		return true
 	}
 	return false
 }
 
 const (
+	ModeOnPrem Mode = "on-prem"
 	ModeCloud  Mode = "cloud"
-	ModeGRPC   Mode = "grpc"
-	ModeInProc Mode = "inproc"
 )
 
 type Cfg struct {
 	remoteAddress string
-	listen        bool
 	mode          Mode
 
 	token            string
@@ -38,7 +36,7 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 	authzSection := cfg.SectionWithEnvOverrides("authorization")
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 
-	mode := Mode(authzSection.Key("mode").MustString(string(ModeInProc)))
+	mode := Mode(authzSection.Key("mode").MustString(string(ModeOnPrem)))
 	if !mode.IsValid() {
 		return nil, fmt.Errorf("authorization: invalid mode %q", mode)
 	}
@@ -56,7 +54,6 @@ func ReadCfg(cfg *setting.Cfg) (*Cfg, error) {
 
 	return &Cfg{
 		remoteAddress:    authzSection.Key("remote_address").MustString(""),
-		listen:           authzSection.Key("listen").MustBool(false),
 		mode:             mode,
 		token:            token,
 		tokenExchangeURL: tokenExchangeURL,
