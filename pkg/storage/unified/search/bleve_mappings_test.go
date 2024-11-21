@@ -9,10 +9,8 @@ import (
 )
 
 func TestDocumentMapping(t *testing.T) {
-	gr := "xxx/yyy"
-	mappings := getBleveMappings(gr, nil)
+	mappings := getBleveMappings(nil)
 	data := bleveFlatDocument{
-		gr:        gr,
 		Title:     "title",
 		TitleSort: "title",
 		Tags:      []string{"a", "b"},

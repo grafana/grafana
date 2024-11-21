@@ -99,8 +99,7 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var err error
 	var index bleve.Index
 
-	gr := fmt.Sprintf("%s/%s", key.Group, key.Resource)
-	mapper := getBleveMappings(gr, fields)
+	mapper := getBleveMappings(fields)
 
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
@@ -141,7 +140,6 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 
 type bleveIndex struct {
 	key   resource.NamespacedResource
-	gr    string // the {group}/{resource}
 	index bleve.Index
 
 	standard resource.SearchableDocumentFields
@@ -155,7 +153,6 @@ type bleveIndex struct {
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
 	doc := bleveFlatDocument{
-		gr:          b.gr,
 		Title:       v.Title,
 		TitleSort:   v.Title,
 		Description: v.Description,

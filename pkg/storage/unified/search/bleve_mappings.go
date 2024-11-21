@@ -9,9 +9,6 @@ import (
 )
 
 type bleveFlatDocument struct {
-	// The group/resource (essentially kind)
-	gr string
-
 	Title       string `json:"title,omitempty"`
 	TitleSort   string `json:"title_sort,omitempty"`
 	Description string `json:"description,omitempty"`
@@ -25,14 +22,16 @@ type bleveFlatDocument struct {
 	Fields map[string]any `json:"fields,omitempty"`
 }
 
+const kind = "resource"
+
 func (d bleveFlatDocument) Type() string {
-	return d.gr
+	return kind
 }
 
-func getBleveMappings(gr string, fields resource.SearchableDocumentFields) mapping.IndexMapping {
+func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMapping {
 	mapper := bleve.NewIndexMapping()
 	// mapper.TypeField = "gr"
-	mapper.AddDocumentMapping(gr, getBleveDocMappings(fields))
+	mapper.AddDocumentMapping(kind, getBleveDocMappings(fields))
 	return mapper
 }
 
