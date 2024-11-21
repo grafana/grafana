@@ -75,6 +75,14 @@ export function ConfigForm({ data }: ConfigFormProps) {
           }}
         />
       </Field>
+      <Field
+        label={'Title'}
+        description={'A human-readable name for the config'}
+        invalid={!!errors.title}
+        error={errors?.title?.message}
+      >
+        <Input {...register('title', { required: 'This field is required.' })} placeholder={'My config'} />
+      </Field>
       {watchType === 'github' && (
         <>
           <ControlledCollapse collapsible label="Access Token Permissions" isOpen>

@@ -54,7 +54,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
             return (
               <Card key={item.metadata.name} className={css({ alignItems: 'center' })}>
                 <Stack direction={'column'}>
-                  <Card.Heading>{item.metadata.name}</Card.Heading>
+                  <Card.Heading>{item.spec.title}</Card.Heading>
                   <Card.Meta>{item.spec.type}</Card.Meta>
                 </Stack>
                 <Stack>
