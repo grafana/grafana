@@ -11,7 +11,7 @@ import (
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -200,6 +200,13 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		return
 	}
 
+	if err := b.createRepoFolder(cfg); err != nil {
+		b.logger.Error("failed to create folder of repository; moving on without creating one",
+			"repository", cfg.GetName(),
+			"namespace", cfg.GetNamespace(),
+			"err", err)
+	}
+
 	ctx := context.Background()
 	repo, err := b.asRepository(ctx, cfg)
 	if err != nil {
@@ -211,6 +218,58 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		b.logger.Error("failed to run after create", "error", err)
 		return
 	}
+}
+
+func (b *ProvisioningAPIBuilder) createRepoFolder(repo *provisioning.Repository) error {
+	// TODO: This needs an integration test.
+
+	gvr, ok := b.client.GVR(repo.GetNamespace(), schema.GroupVersionKind{
+		Group:   "folder.grafana.app",
+		Version: "v0alpha1",
+		Kind:    "Folder",
+	})
+	if !ok {
+		return fmt.Errorf("failed to get GVR of folders")
+	}
+
+	client, err := b.client.Client(repo.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("failed to create resource client: %w", err)
+	}
+	iface := client.Resource(gvr).Namespace(repo.GetNamespace())
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	_, err = iface.Get(ctx, repo.GetName(), metav1.GetOptions{})
+	if err == nil {
+		// It already exists, so let's assume the user knows best here.
+		// Updating the title or description might mess with the user's pre-established workflow, which is not something we want to do.
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to search for existing repo folder: %w", err)
+	}
+
+	response, err := iface.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      repo.GetName(),
+				"namespace": repo.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"title":       repo.Spec.Title,
+				"description": "Repository-managed folder.",
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return err
+	}
+
+	slog.Info("got response from creating",
+		"response", response)
+	return nil
 }
 
 func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runtime.Object, opts *metav1.UpdateOptions) (registry.FinishFunc, error) {
@@ -266,6 +325,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 }
+
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -356,7 +416,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	}
 
 	if len(list) > 0 {
-		return errors.NewInvalid(schema.GroupKind{
+		return apierrors.NewInvalid(schema.GroupKind{
 			Group: provisioning.GROUP,
 			Kind:  "Repository", //??
 		}, a.GetName(), list)
