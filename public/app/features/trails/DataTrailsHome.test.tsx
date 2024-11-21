@@ -7,9 +7,8 @@ import { DataTrailsHome } from './DataTrailsHome';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { VAR_FILTERS } from './shared';
 
-// jest.mock is like a magic import. when you start to see errors that are specific, that's when you mock it.
 jest.mock('./TrailStore/TrailStore', () => ({
-  getTrailStore: jest.fn(), // where we mock the function
+  getTrailStore: jest.fn(),
 }));
 
 describe('DataTrailsHome', () => {
@@ -49,13 +48,9 @@ describe('DataTrailsHome', () => {
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
 
-  // // this test should likely be in the /DataTrailsRecentMetrics.test.tsx
   it('truncates singular long label in recent explorations', () => {
-    // create a full DataTrail
     const trail = new DataTrail({});
-    //
     function getFilterVar() {
-      // a sceneGraph is
       const variable = sceneGraph.lookupVariable(VAR_FILTERS, trail);
       if (variable instanceof AdHocFiltersVariable) {
         return variable;

@@ -10,7 +10,6 @@ jest.mock('./utils', () => ({
   getDataSourceName: jest.fn(() => 'Test DataSource Name'),
 }));
 
-// note: might be good to have the same tests for both trail and bookmark; OR maybe the component should be changed to just take what it needs
 describe('DataTrailCard', () => {
   // trail is a recent metric exploration
   const trail = new DataTrail({ key: '1', metric: 'Test Recent Exploration' });
