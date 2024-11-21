@@ -160,9 +160,13 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   }
 
   if (item.kind !== 'folder') {
+    const itemKind = item.kind;
+    const itemUID = item.uid;
     return process.env.NODE_ENV !== 'production' ? (
       <span style={virtualStyles} className={styles.row}>
-        Non-folder {item.kind} {item.uid}
+        <Trans i18nKey="browse-dashboards.folder-picker.non-folder-item">
+          Non-folder {{ itemKind }} {{ itemUID }}
+        </Trans>
       </span>
     ) : null;
   }

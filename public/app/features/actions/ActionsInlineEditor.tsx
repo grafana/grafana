@@ -7,6 +7,7 @@ import { Action, DataFrame, GrafanaTheme2, defaultActionConfig, VariableSuggesti
 import { Button } from '@grafana/ui/src/components/Button';
 import { Modal } from '@grafana/ui/src/components/Modal/Modal';
 import { useStyles2 } from '@grafana/ui/src/themes';
+import { Trans } from 'app/core/internationalization';
 
 import { ActionEditorModalContent } from './ActionEditorModalContent';
 import { ActionListItem } from './ActionsListItem';
@@ -95,7 +96,9 @@ export const ActionsInlineEditor = ({
       {/* one-link placeholder */}
       {showOneClick && actionsSafe.length > 0 && (
         <div className={styles.oneClickOverlay}>
-          <span className={styles.oneClickSpan}>One-click link</span>
+          <span className={styles.oneClickSpan}>
+            <Trans i18nKey="actions-editor.inline.one-click-link">One-click link</Trans>
+          </span>
         </div>
       )}
 
@@ -151,7 +154,7 @@ export const ActionsInlineEditor = ({
       )}
 
       <Button size="sm" icon="plus" onClick={onActionAdd} variant="secondary" className={styles.button}>
-        Add action
+        <Trans i18nKey="actions-editor.inline.add-button">Add action</Trans>
       </Button>
     </div>
   );

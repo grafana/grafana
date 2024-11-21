@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
@@ -24,7 +25,9 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
   return (
     <>
       <div className={styles.groupHeader}>
-        <span style={{ marginRight: theme.spacing(1) }}>Basic roles</span>
+        <span style={{ marginRight: theme.spacing(1) }}>
+          <Trans i18nKey="role-picker.built-in.basic-roles">Basic roles</Trans>
+        </span>
         {disabled && disabledMesssage && (
           <Tooltip placement="right-end" interactive={true} content={<div>{disabledMesssage}</div>}>
             <Icon name="question-circle" />

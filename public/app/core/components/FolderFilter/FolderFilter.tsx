@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItemType } from 'app/features/search/types';
 import { FolderInfo, PermissionLevelString } from 'app/types';
@@ -40,7 +41,7 @@ export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JS
           onClick={() => onChange([])}
           aria-label="Clear folders"
         >
-          Clear folders
+          <Trans i18nKey="folder-filter.clear-folder-button">Clear folders</Trans>
         </Button>
       )}
       <AsyncMultiSelect

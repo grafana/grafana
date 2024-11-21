@@ -1,4 +1,5 @@
 import { Box, Stack, Text } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { LdapUser } from 'app/types';
 
 import { LdapUserGroups } from './LdapUserGroups';
@@ -21,7 +22,9 @@ export const LdapUserInfo = ({ ldapUser }: Props) => {
         <LdapUserTeams teams={ldapUser.teams} />
       ) : (
         <Box>
-          <Text>No teams found via LDAP</Text>
+          <Text>
+            <Trans i18nKey="admin.ldap-user-info.no-team">No teams found via LDAP</Trans>
+          </Text>
         </Box>
       )}
     </Stack>

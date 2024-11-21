@@ -73,7 +73,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
 
         <div className={styles.suffix}>
           <Icon name="keyboard" />
-          <Text variant="bodySmall">{modKey}+k</Text>
+          <Text variant="bodySmall">{`${modKey}+k`}</Text>
         </div>
       </div>
     </div>

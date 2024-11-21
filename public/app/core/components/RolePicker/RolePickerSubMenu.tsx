@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { Trans } from 'app/core/internationalization';
 import { Role } from 'app/types';
 
 import { RoleMenuOption } from './RoleMenuOption';
@@ -67,7 +68,7 @@ export const RolePickerSubMenu = ({
       <div className={customStyles.subMenuButtonRow}>
         <Stack justifyContent="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>
-            Clear
+            <Trans i18nKey="role-picker.sub-menu.clear-button">Clear</Trans>
           </Button>
         </Stack>
       </div>

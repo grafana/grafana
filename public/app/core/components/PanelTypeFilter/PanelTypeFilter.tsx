@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
@@ -53,7 +54,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           onClick={() => onChange([])}
           aria-label="Clear types"
         >
-          Clear types
+          <Trans i18nKey="panel-type-filter.clear-button">Clear types</Trans>
         </Button>
       )}
       <MultiSelect<PanelPluginMeta> {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Box, Button, Icon, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { ResourcePermission } from './types';
 
@@ -20,7 +21,13 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
     <tr>
       <td>{getAvatar(item)}</td>
       <td>{getDescription(item)}</td>
-      <td>{item.isInherited && <em className={styles.inherited}>Inherited from folder</em>}</td>
+      <td>
+        {item.isInherited && (
+          <em className={styles.inherited}>
+            <Trans i18nKey="access-control.permission-list-item.inherited">Inherited from folder</Trans>
+          </em>
+        )}
+      </td>
       <td>
         <Select
           disabled={!canSet || !item.isManaged}
