@@ -66,6 +66,8 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	)
 }
 
+type contextFallbackKey struct{}
+
 type AuthenticatorWithFallback struct {
 	authenticator *authnlib.GrpcAuthenticator
 	fallback      interceptors.Authenticator
@@ -96,6 +98,10 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 	}, nil
 }
 
+func FallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
+
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
 	defer span.End()
@@ -107,6 +113,7 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 		newCtx, err = f.fallback.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 		span.SetAttributes(attribute.Bool("fallback_used", true))
+		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
 	}
 	return newCtx, err
 }

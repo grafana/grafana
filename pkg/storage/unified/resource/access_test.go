@@ -10,7 +10,7 @@ import (
 
 func TestAuthzLimitedClient_Check(t *testing.T) {
 	mockClient := &staticAuthzClient{allowed: false}
-	client := NewAuthzLimitedClient(mockClient)
+	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
 
 	tests := []struct {
 		group    string
@@ -35,7 +35,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 
 func TestAuthzLimitedClient_Compile(t *testing.T) {
 	mockClient := &staticAuthzClient{allowed: false}
-	client := NewAuthzLimitedClient(mockClient)
+	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
 
 	tests := []struct {
 		group    string

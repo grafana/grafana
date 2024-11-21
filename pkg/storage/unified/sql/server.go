@@ -31,7 +31,7 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 		Reg: reg,
 	}
 	if ac != nil {
-		opts.AccessClient = resource.NewAuthzLimitedClient(ac)
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer})
 	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
