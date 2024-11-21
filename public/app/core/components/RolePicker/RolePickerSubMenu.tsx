@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 
-import { Button, CustomScrollbar, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { Role } from 'app/types';
 
@@ -41,7 +41,7 @@ export const RolePickerSubMenu = ({
       className={cx(customStyles.subMenu, { [customStyles.subMenuLeft]: showOnLeft })}
       aria-label="Role picker submenu"
     >
-      <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack>
+      <ScrollContainer maxHeight={`${MENU_MAX_HEIGHT}px`}>
         <div className={styles.optionBody}>
           {options.map((option, i) => (
             <RoleMenuOption
@@ -57,12 +57,13 @@ export const RolePickerSubMenu = ({
               disabled={
                 !!(option.uid && disabledOptions?.find((opt) => opt.uid === option.uid)) || isNotDelegatable(option)
               }
+              mapped={!!(option.uid && selectedOptions.find((opt) => opt.uid === option.uid && opt.mapped))}
               onChange={onSelect}
               hideDescription
             />
           ))}
         </div>
-      </CustomScrollbar>
+      </ScrollContainer>
       <div className={customStyles.subMenuButtonRow}>
         <Stack justifyContent="flex-end">
           <Button size="sm" fill="text" onClick={onClearInternal}>

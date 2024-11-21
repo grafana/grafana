@@ -22,10 +22,11 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 
-import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';
 import { transformResponse } from './utils/transforms';
+
+const apiPrefix = '/api/v2';
 
 export interface ZipkinJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
@@ -59,7 +60,10 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
     }
 
     if (target.query) {
-      const query = this.applyVariables(target, options.scopedVars);
+      if (config.featureToggles.zipkinBackendMigration && !this.nodeGraph?.enabled) {
+        return super.query(options);
+      }
+      const query = this.applyTemplateVariables(target, options.scopedVars);
       return this.request<ZipkinSpan[]>(`${apiPrefix}/trace/${encodeURIComponent(query.query)}`).pipe(
         map((res) => responseToDataQueryResponse(res, this.nodeGraph?.enabled))
       );
@@ -68,7 +72,11 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
   }
 
   async metadataRequest(url: string, params?: Record<string, unknown>) {
-    const res = await lastValueFrom(this.request(url, params, { hideFromInspector: true }));
+    if (config.featureToggles.zipkinBackendMigration) {
+      return await this.getResource(url, params);
+    }
+    const urlWithPrefix = `${apiPrefix}/${url}`;
+    const res = await lastValueFrom(this.request(urlWithPrefix, params, { hideFromInspector: true }));
     return res.data;
   }
 
@@ -77,7 +85,7 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
       return await super.testDatasource();
     }
 
-    await this.metadataRequest(`${apiPrefix}/services`);
+    await this.metadataRequest('services');
     return { status: 'success', message: 'Data source is working' };
   }
 
@@ -94,12 +102,12 @@ export class ZipkinDatasource extends DataSourceWithBackend<ZipkinQuery, ZipkinJ
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars),
+        ...this.applyTemplateVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
+  applyTemplateVariables(query: ZipkinQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
 
     return {

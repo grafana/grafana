@@ -9,9 +9,16 @@ const lodashPlugin = require('eslint-plugin-lodash');
 const barrelPlugin = require('eslint-plugin-no-barrel-files');
 const reactPlugin = require('eslint-plugin-react');
 const testingLibraryPlugin = require('eslint-plugin-testing-library');
+const unicornPlugin = require('eslint-plugin-unicorn');
 
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
+
+const bettererConfig = require('./.betterer.eslint.config');
+const getEnvConfig = require('./scripts/webpack/env-util');
+
+const envConfig = getEnvConfig();
+const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
 
 /**
  * @type {Array<import('eslint').Linter.Config>}
@@ -42,6 +49,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
     ],
   },
+  // Conditionally run the betterer rules if enabled in dev's config
+  ...(enableBettererRules ? bettererConfig : []),
   grafanaConfig,
   {
     name: 'react/jsx-runtime',
@@ -233,11 +242,15 @@ module.exports = [
   },
   {
     name: 'grafana/alerting-overrides',
+    plugins: {
+      unicorn: unicornPlugin,
+    },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
+      'unicorn/no-unused-properties': 'error',
     },
   },
   {

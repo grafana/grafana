@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 
-import { Button, CustomScrollbar, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
 
@@ -157,8 +157,15 @@ export const RolePickerMenu = ({
     return selectedGroupOptions.length > 0 && selectedGroupOptions.length < groupOptions!.options.length;
   };
 
+  const changeableGroupRolesSelected = (groupType: GroupType, group: string) => {
+    const selectedGroupOptions = getSelectedGroupOptions(group);
+    const changeableGroupOptions = selectedGroupOptions.filter((role) => role.delegatable && !role.mapped);
+    const groupOptions = rolesCollection[groupType]?.optionGroup.find((g) => g.value === group);
+    return changeableGroupOptions.length > 0 && changeableGroupOptions.length < groupOptions!.options.length;
+  };
+
   const onChange = (option: Role) => {
-    if (selectedOptions.find((role) => role.uid === option.uid)) {
+    if (selectedOptions.find((role) => role.uid === option.uid && !role.mapped)) {
       setSelectedOptions(selectedOptions.filter((role) => role.uid !== option.uid));
     } else {
       setSelectedOptions([...selectedOptions, option]);
@@ -174,12 +181,21 @@ export const RolePickerMenu = ({
       return;
     }
 
-    if (groupSelected(groupType, value) || groupPartiallySelected(groupType, value)) {
-      setSelectedOptions(selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid)));
-    } else {
-      const groupOptions = group.options.filter((role) => role.delegatable);
+    if (groupSelected(groupType, value) || changeableGroupRolesSelected(groupType, value)) {
+      const mappedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && option.mapped)
+      );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-      setSelectedOptions([...restOptions, ...groupOptions]);
+      setSelectedOptions([...restOptions, ...mappedGroupOptions]);
+    } else {
+      const mappedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && role.delegatable)
+      );
+      const groupOptions = group.options.filter(
+        (role) => role.delegatable && !selectedOptions.find((option) => role.uid === option.uid && option.mapped)
+      );
+      const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
+      setSelectedOptions([...restOptions, ...groupOptions, ...mappedGroupOptions]);
     }
   };
 
@@ -188,13 +204,17 @@ export const RolePickerMenu = ({
   };
 
   const onClearInternal = async () => {
-    setSelectedOptions([]);
+    const mappedRoles = selectedOptions.filter((role) => role.mapped);
+    const nonDelegatableRoles = options.filter((role) =>
+      selectedOptions.find((option) => role.uid === option.uid && !role.delegatable)
+    );
+    setSelectedOptions([...mappedRoles, ...nonDelegatableRoles]);
   };
 
   const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
       const roleGroup = getRoleGroup(role);
-      return roleGroup !== group;
+      return roleGroup !== group || role.mapped;
     });
     setSelectedOptions(options);
   };
@@ -217,14 +237,11 @@ export const RolePickerMenu = ({
       )}
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar
-          autoHide={false}
-          autoHeightMax={`${MENU_MAX_HEIGHT}px`}
-          hideHorizontalTrack
-          hideVerticalTrack
+        <ScrollContainer
+          maxHeight={`${MENU_MAX_HEIGHT}px`}
           // NOTE: this is a way to force hiding of the scrollbar
           // the scrollbar makes the mouseEvents drop
-          className={cx(customStyles.hideScrollBar)}
+          scrollbarWidth="none"
         >
           {showBasicRole && (
             <div className={customStyles.menuSection}>
@@ -254,7 +271,7 @@ export const RolePickerMenu = ({
               showOnLeftSubMenu={menuLeft}
             />
           ))}
-        </CustomScrollbar>
+        </ScrollContainer>
         <div className={customStyles.menuButtonRow}>
           <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>

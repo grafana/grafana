@@ -34,6 +34,7 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
+import { setOtelExperienceToggleState } from '../services/store';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -44,6 +45,7 @@ import {
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
+import { AddToExplorationButton } from './AddToExplorationsButton';
 import { SelectMetricAction } from './SelectMetricAction';
 import { getMetricNames } from './api';
 import { getPreviewPanelFor } from './previewPanel';
@@ -485,6 +487,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     const trail = getTrailFor(this);
     const useOtelExperience = trail.state.useOtelExperience;
 
+    setOtelExperienceToggleState(!useOtelExperience);
     trail.setState({ useOtelExperience: !useOtelExperience });
   };
 
@@ -622,7 +625,10 @@ function getCardPanelFor(metric: string, description?: string) {
   return PanelBuilders.text()
     .setTitle(metric)
     .setDescription(description)
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
+    .setHeaderActions([
+      new SelectMetricAction({ metric, title: 'Select' }),
+      new AddToExplorationButton({ labelName: metric }),
+    ])
     .setOption('content', '')
     .build();
 }
