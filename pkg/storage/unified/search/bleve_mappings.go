@@ -10,7 +10,7 @@ import (
 
 type bleveFlatDocument struct {
 	// The group/resource (essentially kind)
-	GR string `json:"gr,omitempty"`
+	gr string
 
 	Title       string `json:"title,omitempty"`
 	TitleSort   string `json:"title_sort,omitempty"`
@@ -25,25 +25,29 @@ type bleveFlatDocument struct {
 	Fields map[string]any `json:"fields,omitempty"`
 }
 
+func (d bleveFlatDocument) Type() string {
+	return d.gr
+}
+
 func getBleveMappings(gr string, fields resource.SearchableDocumentFields) mapping.IndexMapping {
 	mapper := bleve.NewIndexMapping()
-	mapper.TypeField = "gr"
+	// mapper.TypeField = "gr"
 	mapper.AddDocumentMapping(gr, getBleveDocMappings(fields))
 	return mapper
 }
 
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "gr", // will be the same in the entire index???
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
+	// mapper.AddFieldMapping(&mapping.FieldMapping{
+	// 	Name:               "gr", // will be the same in the entire index???
+	// 	Type:               "text",
+	// 	Analyzer:           keyword.Name,
+	// 	Store:              true,
+	// 	Index:              true,
+	// 	IncludeTermVectors: false,
+	// 	IncludeInAll:       false,
+	// 	DocValues:          false,
+	// })
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "title",
 		Type:               "text",

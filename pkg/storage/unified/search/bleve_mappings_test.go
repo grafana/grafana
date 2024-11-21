@@ -12,7 +12,7 @@ func TestDocumentMapping(t *testing.T) {
 	gr := "xxx/yyy"
 	mappings := getBleveMappings(gr, nil)
 	data := bleveFlatDocument{
-		GR:        gr,
+		gr:        gr,
 		Title:     "title",
 		TitleSort: "title",
 		Tags:      []string{"a", "b"},
@@ -28,5 +28,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 7, len(doc.Fields))
+	require.Equal(t, 6, len(doc.Fields))
 }

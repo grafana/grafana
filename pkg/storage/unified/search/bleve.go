@@ -155,7 +155,7 @@ type bleveIndex struct {
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
 	doc := bleveFlatDocument{
-		GR:          b.gr,
+		gr:          b.gr,
 		Title:       v.Title,
 		TitleSort:   v.Title,
 		Description: v.Description,
