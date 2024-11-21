@@ -114,7 +114,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "apk add --update curl jq bash",
             "GITHUB_TOKEN=$(cat ./.github/token)",
         ] + check + [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
+            'git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
         ],
