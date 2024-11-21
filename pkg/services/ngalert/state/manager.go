@@ -541,7 +541,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 func resultStateReason(result eval.Result, rule *ngModels.AlertRule) string {
 	if rule.ExecErrState == ngModels.KeepLastErrState || rule.NoDataState == ngModels.KeepLast {
-		return ngModels.ConcatReasons(result.State.String(), ngModels.StateReasonKeepLast)
+		rule.NoDataState != ngModels.Alerting {
+			return ngModels.ConcatReasons(result.State.String(), ngModels.StateReasonKeepLast)
+		}
 	}
 
 	return result.State.String()
