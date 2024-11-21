@@ -8,19 +8,16 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { Folder, KBObjectArray } from '../../../types/rule-form';
 import { useGetAlertManagerDataSourcesByPermissionAndConfig } from '../../../utils/datasource';
-import { Folder } from '../RuleFolderPicker';
 
 const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
 interface NotificationPreviewProps {
-  customLabels: Array<{
-    key: string;
-    value: string;
-  }>;
+  customLabels: KBObjectArray;
   alertQueries: AlertQuery[];
   condition: string | null;
-  folder: Folder | null;
+  folder?: Folder;
   alertName?: string;
   alertUid?: string;
 }

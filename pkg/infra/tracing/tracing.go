@@ -381,6 +381,15 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	return spanCtx.TraceID().String()
 }
 
+func ServerTimingForSpan(span trace.Span) string {
+	spanCtx := span.SpanContext()
+	if !spanCtx.HasTraceID() || !spanCtx.IsValid() {
+		return ""
+	}
+
+	return fmt.Sprintf("00-%s-%s-01", spanCtx.TraceID().String(), spanCtx.SpanID().String())
+}
+
 // Error sets the status to error and record the error as an exception in the provided span.
 func Error(span trace.Span, err error) error {
 	attr := []attribute.KeyValue{}
