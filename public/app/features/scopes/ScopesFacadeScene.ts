@@ -15,8 +15,8 @@ interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
   handler?: (facade: ScopesFacade) => void;
   // The render count is a workaround to force the URL sync manager to update the URL with the latest scopes
-  // Basically it starts at 0 and it is increased with every scopes value update
-  renderCount: number;
+  // Basically it starts at 0, and it is increased with every scopes value update
+  renderCount?: number;
 }
 
 export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements SceneObjectWithUrlSync {
@@ -54,7 +54,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
     this._subs.add(
       scopesSelectorScene?.subscribeToState((newState, prevState) => {
         if (!newState.isLoadingScopes && (prevState.isLoadingScopes || !isEqual(newState.scopes, prevState.scopes))) {
-          this.setState({ renderCount: this.state.renderCount + 1 });
+          this.setState({ renderCount: (this.state.renderCount ?? 0) + 1 });
           this.state.handler?.(this);
         }
       })
