@@ -23,7 +23,7 @@ import {
 } from '../../utils/utils';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { RowActions } from '../row-actions/RowActions';
-import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { DashboardGridItem } from './DashboardGridItem';
 
@@ -374,40 +374,7 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public renderEditor() {
-    return <DefaultGridLayoutEditor layoutManager={this} />;
-  }
-
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
     return <model.state.grid.Component model={model.state.grid} />;
   };
-}
-
-function DefaultGridLayoutEditor({ layoutManager }: LayoutEditorProps<DefaultGridLayoutManager>) {
-  return (
-    <>
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          const vizPanel = getDefaultVizPanel();
-          layoutManager.addPanel(vizPanel);
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.visualization">Visualization</Trans>
-      </Button>
-
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          layoutManager.addNewRow!();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.row">Row</Trans>
-      </Button>
-    </>
-  );
 }

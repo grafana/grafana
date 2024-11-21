@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
 import { SceneObjectBase } from '@grafana/scenes';
-import { Button, Input, Select, TextArea } from '@grafana/ui';
+import { Button, Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { layoutRegistry } from '../scene/layouts-shared/layoutRegistry';
-import { DashboardLayoutManager, EditableDashboardElement, isLayoutParent, LayoutRegistryItem } from '../scene/types';
+import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { EditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 export class DashboardEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
@@ -19,58 +19,33 @@ export class DashboardEditPaneBehavior extends SceneObjectBase implements Editab
     // When layout changes we need to update options list
     const { body } = dashboard.useState();
 
-    return useMemo(() => {
-      const dashboardOptions = new OptionsPaneCategoryDescriptor({
+    const dashboardOptions = useMemo(() => {
+      return new OptionsPaneCategoryDescriptor({
         title: 'Dashboard options',
         id: 'dashboard-options',
         isOpenDefault: true,
-      });
+      })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Title',
+            render: function renderTitle() {
+              return <DashboardTitleInput dashboard={dashboard} />;
+            },
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Description',
+            render: function renderTitle() {
+              return <DashboardDescriptionInput dashboard={dashboard} />;
+            },
+          })
+        );
+    }, [dashboard]);
 
-      dashboardOptions.addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Title',
-          render: function renderTitle() {
-            return <DashboardTitleInput dashboard={dashboard} />;
-          },
-        })
-      );
+    const layoutCategory = useLayoutCategory(body);
 
-      dashboardOptions.addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Description',
-          render: function renderTitle() {
-            return <DashboardDescriptionInput dashboard={dashboard} />;
-          },
-        })
-      );
-
-      const categories = [dashboardOptions];
-
-      const layoutCategory = new OptionsPaneCategoryDescriptor({
-        title: 'Layout',
-        id: 'layout-options',
-        isOpenDefault: true,
-      });
-
-      layoutCategory.addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Type',
-          render: function renderTitle() {
-            return <DashboardLayoutSelector dashboard={dashboard} />;
-          },
-        })
-      );
-
-      if (body.getOptions) {
-        for (const option of body.getOptions()) {
-          layoutCategory.addItem(option);
-        }
-      }
-
-      categories.push(layoutCategory);
-
-      return categories;
-    }, [dashboard, body]);
+    return [dashboardOptions, layoutCategory];
   }
 
   public getTypeName(): string {
@@ -100,32 +75,4 @@ export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardS
   const { description } = dashboard.useState();
 
   return <TextArea value={description} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
-}
-
-export function DashboardLayoutSelector({ dashboard }: { dashboard: DashboardScene }) {
-  const { body: layoutManager } = dashboard.useState();
-
-  const layouts = layoutRegistry.list();
-  const options = layouts.map((layout) => ({
-    label: layout.name,
-    value: layout,
-  }));
-
-  const currentLayoutId = layoutManager.getDescriptor().id;
-  const currentLayoutOption = options.find((option) => option.value.id === currentLayoutId);
-
-  return (
-    <Select
-      options={options}
-      value={currentLayoutOption}
-      onChange={(option) => changeLayoutTo(layoutManager, option.value!)}
-    />
-  );
-}
-
-function changeLayoutTo(currentLayout: DashboardLayoutManager, newLayoutDescriptor: LayoutRegistryItem) {
-  const layoutParent = currentLayout.parent;
-  if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(newLayoutDescriptor.createFromLayout(currentLayout));
-  }
 }

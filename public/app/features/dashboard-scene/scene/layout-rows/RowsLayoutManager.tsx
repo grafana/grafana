@@ -2,13 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { useStyles2 } from '@grafana/ui';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import { ResponsiveGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
-import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps } from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem } from '../types';
 
 import { RowItem } from './RowItem';
 
@@ -42,6 +39,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     //this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
+  public removeRow(row: RowItem) {
+    this.setState({
+      rows: this.state.rows.filter((r) => r !== row),
+    });
+  }
+
   public duplicatePanel(panel: VizPanel): void {
     throw new Error('Method not implemented.');
   }
@@ -57,8 +60,8 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return panels;
   }
 
-  public renderEditor() {
-    return <RowsLayoutEditor layoutManager={this} />;
+  public getOptions() {
+    return [];
   }
 
   public getDescriptor(): LayoutRegistryItem {
@@ -89,32 +92,13 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const styles = useStyles2(getStyles);
 
     return (
-      <LayoutEditChrome layoutManager={model}>
-        <div className={styles.wrapper}>
-          {rows.map((row) => (
-            <RowItem.Component model={row} key={row.state.key!} />
-          ))}
-        </div>
-      </LayoutEditChrome>
+      <div className={styles.wrapper}>
+        {rows.map((row) => (
+          <RowItem.Component model={row} key={row.state.key!} />
+        ))}
+      </div>
     );
   };
-}
-
-function RowsLayoutEditor({ layoutManager }: LayoutEditorProps<RowsLayoutManager>) {
-  return (
-    <>
-      <Button
-        fill="outline"
-        icon="plus"
-        onClick={() => {
-          layoutManager.addNewRow();
-          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
-        }}
-      >
-        <Trans i18nKey="dashboard.add-menu.row">Row</Trans>
-      </Button>
-    </>
-  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -124,6 +108,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(1),
       height: '100%',
+      width: '100%',
     }),
   };
 }

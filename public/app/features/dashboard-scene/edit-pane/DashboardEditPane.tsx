@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -24,17 +24,10 @@ export interface DashboardEditPaneState extends SceneObjectState {
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
-  private selectedElement: HTMLElement | null = null;
-  private selectedTime = 0;
+  private selectedHtmlElement: HTMLElement | null | undefined = null;
 
-  public toggleSelection(object: SceneObject, element: HTMLElement) {
-    const currentTime = Date.now().valueOf();
+  public selectObject(object: SceneObject, element?: HTMLElement) {
     const current = this.state.selectedObject?.resolve();
-
-    if (currentTime - this.selectedTime < 500) {
-      console.log('toggleSelection ignored');
-      return;
-    }
 
     if (current === object) {
       this.setState({ selectedObject: undefined });
@@ -42,10 +35,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.setState({ selectedObject: object.getRef() });
     }
 
-    this.selectedElement?.classList.remove('selected-dashboard-item');
-    this.selectedElement = element;
-    this.selectedElement.classList.add('selected-dashboard-item');
-    this.selectedTime = Date.now().valueOf();
+    this.selectedHtmlElement?.classList.remove('selected-dashboard-item');
+    this.selectedHtmlElement = element;
+
+    if (this.selectedHtmlElement) {
+      this.selectedHtmlElement.classList.add('selected-dashboard-item');
+    }
   }
 
   public clearSelection() {
@@ -53,14 +48,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.setState({ selectedObject: undefined });
     }
 
-    if (this.selectedElement) {
-      this.selectedElement.classList.remove('selected-dashboard-item');
-      this.selectedElement = null;
+    if (this.selectedHtmlElement) {
+      this.selectedHtmlElement.classList.remove('selected-dashboard-item');
+      this.selectedHtmlElement = null;
     }
-  }
-
-  public selectObject(object: SceneObject) {
-    this.setState({ selectedObject: object.getRef() });
   }
 
   public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
@@ -99,7 +90,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const panel = sceneGraph.findByKey(this, key);
     if (panel instanceof VizPanel) {
-      this.toggleSelection(panel, focusElement);
+      this.selectObject(panel, focusElement);
     }
   };
 
@@ -133,9 +124,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public onClickAway = () => {
     this.setState({ selectedObject: undefined });
 
-    if (this.selectedElement) {
-      this.selectedElement?.classList.remove('selected-dashboard-item');
-      this.selectedElement = null;
+    if (this.selectedHtmlElement) {
+      this.selectedHtmlElement?.classList.remove('selected-dashboard-item');
+      this.selectedHtmlElement = null;
     }
   };
 
