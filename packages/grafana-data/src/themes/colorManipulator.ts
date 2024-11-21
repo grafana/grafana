@@ -29,33 +29,7 @@ function clamp(value: number, min = 0, max = 1) {
  * @beta
  */
 export function hexToRgb(color: string) {
-  color = color.slice(1);
-
-  const re = new RegExp(`.{1,${color.length >= 6 ? 2 : 1}}`, 'g');
-  let result = color.match(re);
-
-  if (!result) {
-    return '';
-  }
-
-  let colors = Array.from(result);
-
-  if (colors[0].length === 1) {
-    colors = colors.map((n) => n + n);
-  }
-
-  return colors
-    ? `rgb${colors.length === 4 ? 'a' : ''}(${colors
-        .map((n, index) => {
-          return index < 3 ? parseInt(n, 16) : Math.round((parseInt(n, 16) / 255) * 1000) / 1000;
-        })
-        .join(', ')})`
-    : '';
-}
-
-function intToHex(int: number) {
-  const hex = int.toString(16);
-  return hex.length === 1 ? `0${hex}` : hex;
+  return tinycolor(color).toRgbString();
 }
 
 /**
@@ -66,12 +40,11 @@ function intToHex(int: number) {
  */
 export function rgbToHex(color: string) {
   // Idempotent
-  if (color.indexOf('#') === 0) {
+  if (color.startsWith('#')) {
     return color;
   }
 
-  const { values } = decomposeColor(color);
-  return `#${values.map((n: number) => intToHex(n)).join('')}`;
+  return tinycolor(color).toHexString();
 }
 
 /**
@@ -80,9 +53,10 @@ export function rgbToHex(color: string) {
  * @returns A hex color string, i.e. #ff0000 or #ff0000ff
  */
 export function asHexString(color: string): string {
-  if (color[0] === '#') {
+  if (color.startsWith('#')) {
     return color;
   }
+
   const tColor = tinycolor(color);
   return tColor.getAlpha() === 1 ? tColor.toHexString() : tColor.toHex8String();
 }
@@ -212,9 +186,27 @@ export function recomposeColor(color: DecomposeColor) {
  * @beta
  */
 export function getContrastRatio(foreground: string, background: string, canvas?: string) {
-  const lumA = getLuminance(foreground);
-  const lumB = getLuminance(background, canvas);
-  return (Math.max(lumA, lumB) + 0.05) / (Math.min(lumA, lumB) + 0.05);
+  const colorA = tinycolor(foreground);
+  const colorB = blendColor(background, canvas);
+  return tinycolor.readability(colorA, colorB);
+}
+
+/** Blends a color with alpha with the provided background color */
+function blendColor(color: string, background?: string) {
+  const tc = tinycolor(color);
+  const rgb = tc.toRgb();
+  const alpha = tc.getAlpha();
+  if (!background || alpha >= 1) {
+    return tc;
+  }
+
+  const bg = tinycolor(background).toRgb();
+
+  return tinycolor({
+    r: rgb.r * alpha + bg.r * (1 - alpha),
+    g: rgb.g * alpha + bg.g * (1 - alpha),
+    b: rgb.b * alpha + bg.b * (1 - alpha),
+  });
 }
 
 /**
@@ -228,27 +220,7 @@ export function getContrastRatio(foreground: string, background: string, canvas?
  * @beta
  */
 export function getLuminance(color: string, background?: string) {
-  const parts = decomposeColor(color);
-
-  let rgb = parts.type === 'hsl' ? decomposeColor(hslToRgb(color)).values : parts.values;
-
-  if (background && parts.type === 'rgba') {
-    const backgroundParts = decomposeColor(background);
-    const alpha = rgb[3];
-    rgb[0] = rgb[0] * alpha + backgroundParts.values[0] * (1 - alpha);
-    rgb[1] = rgb[1] * alpha + backgroundParts.values[1] * (1 - alpha);
-    rgb[2] = rgb[2] * alpha + backgroundParts.values[2] * (1 - alpha);
-  }
-
-  const rgbNumbers = rgb.map((val: any) => {
-    if (parts.type !== 'color') {
-      val /= 255; // normalized
-    }
-    return val <= 0.03928 ? val / 12.92 : ((val + 0.055) / 1.055) ** 2.4;
-  });
-
-  // Truncate at 3 digits
-  return Number((0.2126 * rgbNumbers[0] + 0.7152 * rgbNumbers[1] + 0.0722 * rgbNumbers[2]).toFixed(3));
+  return blendColor(color, background).getLuminance();
 }
 
 /**
@@ -260,7 +232,9 @@ export function getLuminance(color: string, background?: string) {
  * @beta
  */
 export function emphasize(color: string, coefficient = 0.15) {
-  return getLuminance(color) > 0.5 ? darken(color, coefficient) : lighten(color, coefficient);
+  const tc = tinycolor(color);
+  const emphasizedColor = tc.getLuminance() > 0.5 ? darken(color, coefficient) : lighten(color, coefficient);
+  return emphasizedColor;
 }
 
 /**
@@ -272,51 +246,7 @@ export function emphasize(color: string, coefficient = 0.15) {
  * @beta
  */
 export function alpha(color: string, value: number) {
-  if (color === '') {
-    return '#000000';
-  }
-
-  value = clamp(value);
-
-  // hex 3, hex 4 (w/alpha), hex 6, hex 8 (w/alpha)
-  if (color[0] === '#') {
-    if (color.length === 9) {
-      color = color.substring(0, 7);
-    } else if (color.length <= 5) {
-      let c = '#';
-      for (let i = 1; i < 4; i++) {
-        c += color[i] + color[i];
-      }
-      color = c;
-    }
-
-    return (
-      color +
-      Math.round(value * 255)
-        .toString(16)
-        .padStart(2, '0')
-    );
-  }
-  // rgb(, hsl(
-  else if (color[3] === '(') {
-    // rgb() and hsl() do not require the "a" suffix to accept alpha values in modern browsers:
-    // https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/rgb()#accepts_alpha_value
-    return color.replace(')', `, ${value})`);
-  }
-  // rgba(, hsla(
-  else if (color[4] === '(') {
-    return color.substring(0, color.lastIndexOf(',')) + `, ${value})`;
-  }
-
-  const parts = decomposeColor(color);
-
-  if (parts.type === 'color') {
-    parts.values[3] = `/${value}`;
-  } else {
-    parts.values[3] = value;
-  }
-
-  return recomposeColor(parts);
+  return tinycolor(color).setAlpha(value).toHex8String();
 }
 
 /**
@@ -327,17 +257,14 @@ export function alpha(color: string, value: number) {
  * @beta
  */
 export function darken(color: string, coefficient: number) {
-  const parts = decomposeColor(color);
+  const { r, g, b } = tinycolor(color).toRgb();
   coefficient = clamp(coefficient);
 
-  if (parts.type.indexOf('hsl') !== -1) {
-    parts.values[2] *= 1 - coefficient;
-  } else if (parts.type.indexOf('rgb') !== -1 || parts.type.indexOf('color') !== -1) {
-    for (let i = 0; i < 3; i += 1) {
-      parts.values[i] *= 1 - coefficient;
-    }
-  }
-  return recomposeColor(parts);
+  return tinycolor({
+    r: r * (1 - coefficient),
+    g: g * (1 - coefficient),
+    b: b * (1 - coefficient),
+  }).toRgbString();
 }
 
 /**
@@ -348,22 +275,14 @@ export function darken(color: string, coefficient: number) {
  * @beta
  */
 export function lighten(color: string, coefficient: number) {
-  const parts = decomposeColor(color);
+  const { r, g, b } = tinycolor(color).toRgb();
   coefficient = clamp(coefficient);
 
-  if (parts.type.indexOf('hsl') !== -1) {
-    parts.values[2] += (100 - parts.values[2]) * coefficient;
-  } else if (parts.type.indexOf('rgb') !== -1) {
-    for (let i = 0; i < 3; i += 1) {
-      parts.values[i] += (255 - parts.values[i]) * coefficient;
-    }
-  } else if (parts.type.indexOf('color') !== -1) {
-    for (let i = 0; i < 3; i += 1) {
-      parts.values[i] += (1 - parts.values[i]) * coefficient;
-    }
-  }
-
-  return recomposeColor(parts);
+  return tinycolor({
+    r: r + (255 - r) * coefficient,
+    g: g + (255 - g) * coefficient,
+    b: b + (255 - b) * coefficient,
+  }).toRgbString();
 }
 
 interface DecomposeColor {
