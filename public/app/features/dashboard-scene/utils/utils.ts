@@ -13,6 +13,7 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
+import { VizPanelEditPaneBehavior } from '../edit-pane/VizPanelEditPaneBehavior';
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -220,6 +221,7 @@ export function getDefaultVizPanel(): VizPanel {
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
+    $behaviors: [new VizPanelEditPaneBehavior({})],
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),

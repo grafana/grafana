@@ -57,12 +57,22 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     }
   }
 
+  public selectObject(object: SceneObject) {
+    this.setState({ selectedObject: object.getRef() });
+  }
+
   public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
     const target = evt.target as HTMLElement;
-    const isPanel = target.closest('[data-dashboard-selectable');
+    const isPanel = target.closest('[data-dashboard-selectable]');
     const focusElement = target.closest('[tabindex]');
+    console.log('evt', evt);
 
     if (!isPanel) {
+      return;
+    }
+
+    const cancel = target.closest('.grid-drag-cancel');
+    if (cancel) {
       return;
     }
 

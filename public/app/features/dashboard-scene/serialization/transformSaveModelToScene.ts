@@ -24,6 +24,8 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
+import { DashboardEditPaneBehavior } from '../edit-pane/DashboardEditPaneBehavior';
+import { VizPanelEditPaneBehavior } from '../edit-pane/VizPanelEditPaneBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -248,6 +250,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       new behaviors.SceneQueryController(),
       registerDashboardMacro,
       registerPanelInteractionsReporter,
+      new DashboardEditPaneBehavior({}),
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
       addPanelsOnLoadBehavior,
@@ -317,7 +320,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    $behaviors: [],
+    $behaviors: [new VizPanelEditPaneBehavior({})],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };

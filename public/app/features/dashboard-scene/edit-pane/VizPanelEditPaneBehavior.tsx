@@ -1,5 +1,5 @@
-import { SceneObjectState, SceneObjectBase, VizPanel } from '@grafana/scenes';
-import { Button, Switch } from '@grafana/ui';
+import { SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -11,19 +11,27 @@ import {
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export class VizPanelEditableElement implements EditableDashboardElement {
+export class VizPanelEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;
 
-  public constructor(private panel: VizPanel) {}
+  private getPanel(): VizPanel {
+    const panel = this.parent;
+
+    if (!(panel instanceof VizPanel)) {
+      throw new Error('VizPanelEditPaneBehavior must have a VizPanel parent');
+    }
+
+    return panel;
+  }
 
   public getEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const panelOptions = new OptionsPaneCategoryDescriptor({
-      title: '',
-      id: '',
+      title: 'Panel options',
+      id: 'panel-options',
       isOpenDefault: true,
     });
 
-    const panel = this.panel;
+    const panel = this.getPanel();
     const layoutElement = panel.parent!;
 
     panelOptions
@@ -61,6 +69,7 @@ export class VizPanelEditableElement implements EditableDashboardElement {
       categories.push(layoutElement.getOptions());
     }
 
+    // TODO add visualization options & field config options
     return categories;
   }
 
@@ -69,8 +78,9 @@ export class VizPanelEditableElement implements EditableDashboardElement {
   }
 
   public onDelete = () => {
-    const dashboard = getDashboardSceneFor(this.panel);
-    dashboard.removePanel(this.panel);
+    // TODO this should just fetch parent layout manager
+    const dashboard = getDashboardSceneFor(this);
+    dashboard.removePanel(this.getPanel());
   };
 
   public renderActions(): React.ReactNode {

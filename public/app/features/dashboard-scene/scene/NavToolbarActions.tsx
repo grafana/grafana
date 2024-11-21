@@ -400,6 +400,25 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   toolbarActions.push({
+    group: 'settings',
+    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onOpenEditPane();
+        }}
+        tooltip="Options"
+        fill="text"
+        size="sm"
+        key="settings"
+        variant="secondary"
+        icon="columns"
+        data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
+      />
+    ),
+  });
+
+  toolbarActions.push({
     group: 'main-buttons',
     condition: isEditing && !meta.isNew && isShowingDashboard,
     render: () => (
