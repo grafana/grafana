@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
 
 import { measureText } from '../../utils/measureText';
@@ -28,7 +28,7 @@ export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, r
     placeholder,
     ...restProps
   } = props;
-  const [inputState, setInputValue] = useControlledState(controlledValue);
+  const [inputState, setInputValue] = useControlledState(controlledValue, onChange);
   const inputValue = inputState || defaultValue;
 
   // Update input width when `value`, `minWidth`, or `maxWidth` change
@@ -100,8 +100,8 @@ AutoSizeInput.displayName = 'AutoSizeInput';
  * If the initial value is not undefined, then the value will be controlled by the parent
  * for the lifetime of the component and calls to setState will be ignored.
  */
-function useControlledState<T>(controlledValue: T): [T, (newValue: T) => void] {
-  const isControlledNow = controlledValue !== undefined;
+function useControlledState<T>(controlledValue: T, onChange: Function | undefined): [T, (newValue: T) => void] {
+  const isControlledNow = controlledValue !== undefined && onChange !== undefined;
   const isControlledRef = useRef(isControlledNow); // set the initial value - we never change this
 
   const hasLoggedControlledWarning = useRef(false);
@@ -113,6 +113,12 @@ function useControlledState<T>(controlledValue: T): [T, (newValue: T) => void] {
   }
 
   const [internalValue, setInternalValue] = React.useState(controlledValue);
+
+  useEffect(() => {
+    if (!isControlledRef.current) {
+      setInternalValue(controlledValue);
+    }
+  }, [controlledValue]);
 
   const handleChange = useCallback((newValue: T) => {
     if (!isControlledRef.current) {
