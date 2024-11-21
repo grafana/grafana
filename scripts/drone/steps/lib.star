@@ -3,6 +3,10 @@ This module is a library of Drone steps and other pipeline components.
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_backend_step",
 )
@@ -22,10 +26,6 @@ load(
     "gcp_upload_artifacts_key",
     "npm_token",
     "prerelease_bucket",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step",
 )
 
 trigger_oss = {

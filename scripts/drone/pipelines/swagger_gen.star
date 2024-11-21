@@ -3,6 +3,10 @@ This module returns all pipelines used in OpenAPI specification generation of Gr
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/steps/lib.star",
     "enterprise_setup_step",
 )
@@ -17,10 +21,6 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step",
 )
 
 def swagger_gen_step(ver_mode):

@@ -56,10 +56,6 @@ load(
     "scripts/drone/pipelines/verify_storybook.star",
     "verify_storybook",
 )
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step"
-)
 
 ver_mode = "pr"
 trigger = {

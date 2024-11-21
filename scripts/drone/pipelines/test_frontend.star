@@ -3,6 +3,10 @@ This module returns the pipeline used for testing backend code.
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/steps/lib.star",
     "betterer_frontend_step",
     "enterprise_setup_step",
@@ -13,10 +17,6 @@ load(
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step",
 )
 
 def test_frontend(trigger, ver_mode):

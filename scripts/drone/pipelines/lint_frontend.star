@@ -3,6 +3,10 @@ This module returns the pipeline used for linting frontend code.
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/steps/lib.star",
     "enterprise_setup_step",
     "identify_runner_step",
@@ -13,10 +17,6 @@ load(
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step",
 )
 
 def lint_frontend_pipeline(trigger, ver_mode):

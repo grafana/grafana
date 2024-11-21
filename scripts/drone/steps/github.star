@@ -1,3 +1,7 @@
+"""
+This module is used to interface with the GitHub App to extract temporary installation tokens.
+"""
+
 load(
     "scripts/drone/utils/images.star",
     "images",

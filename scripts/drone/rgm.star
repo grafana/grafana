@@ -21,6 +21,10 @@ load(
     "whats_new_checker_pipeline",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/utils/images.star",
     "images",
 )
@@ -43,10 +47,6 @@ load(
     "rgm_downloads_destination",
     "rgm_gcp_key_base64",
     "rgm_storybook_destination",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step",
 )
 
 docs_paths = {

@@ -1,6 +1,10 @@
 """This module contains the comprehensive build pipeline."""
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+)
+load(
     "scripts/drone/steps/lib.star",
     "build_frontend_package_step",
     "build_storybook_step",
@@ -28,10 +32,6 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "yarn_install_step",
-)
-load(
-    "scripts/drone/steps/github.star",
-    "github_app_generate_token_step"
 )
 load(
     "scripts/drone/steps/rgm.star",
