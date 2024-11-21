@@ -122,3 +122,29 @@ export interface DashboardRepeatsProcessedEventPayload {
 export class DashboardRepeatsProcessedEvent extends BusEventWithPayload<DashboardRepeatsProcessedEventPayload> {
   public static type = 'dashboard-repeats-processed';
 }
+
+/**
+ * Interface for elements that have options
+ */
+export interface EditableDashboardElement {
+  /**
+   * Marks this object as a element that can be selected and edited directly on the canvas
+   */
+  isEditableDashboardElement: true;
+  /**
+   * Return option categories for the edit pane
+   */
+  getEditPaneOptions(): OptionsPaneCategoryDescriptor[];
+  /**
+   * Get the type name of the element
+   */
+  getTypeName(): string;
+  /**
+   * Panel Actions
+   **/
+  renderActions(): React.ReactNode;
+}
+
+export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {
+  return 'isEditableDashboardElement' in obj;
+}
