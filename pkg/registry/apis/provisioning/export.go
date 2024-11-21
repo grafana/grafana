@@ -77,7 +77,8 @@ func (c *exportConnector) Connect(
 			return
 		}
 
-		dashboardGVR, ok := c.client.GVR(ns, schema.GroupVersionKind{
+		lookup := newKindsLookup(client)
+		dashboardGVR, ok := lookup.Resource(schema.GroupVersionKind{
 			Group:   "dashboard.grafana.app",
 			Version: "v2alpha1",
 			Kind:    "Dashboard",
@@ -88,7 +89,7 @@ func (c *exportConnector) Connect(
 		}
 		dashboardIface := client.Resource(dashboardGVR).Namespace(ns)
 
-		folderGVR, ok := c.client.GVR(ns, schema.GroupVersionKind{
+		folderGVR, ok := lookup.Resource(schema.GroupVersionKind{
 			Group:   "folder.grafana.app",
 			Version: "v0alpha1",
 			Kind:    "Folder",
