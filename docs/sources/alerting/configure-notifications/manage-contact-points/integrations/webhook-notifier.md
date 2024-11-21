@@ -19,9 +19,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Webhook notifier
+menuTitle: Webhook
 title: Configure the webhook notifier for Alerting
-weight: 0
+weight: 165
 refs:
   notification-templates:
     - pattern: /docs/grafana/

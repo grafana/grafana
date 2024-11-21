@@ -30,7 +30,7 @@ interface Props {
 
 export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const appNotification = useAppNotification();
-  const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
+  const [deleteTemplate] = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
 
   const tableStyles = useStyles2(getAlertTableStyles);
 
@@ -39,7 +39,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
       try {
-        await deleteTemplate({ uid: templateToDelete.uid });
+        await deleteTemplate.execute({ uid: templateToDelete.uid });
         appNotification.success('Template deleted', `Template ${templateToDelete.title} has been deleted`);
       } catch (error) {
         appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.title}`);
@@ -166,7 +166,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               />
             </Authorize>
           )}
-          <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
+          <Authorize actions={[AlertmanagerAction.CreateNotificationTemplate]}>
             <ActionIcon
               to={makeAMLink(
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,

@@ -24,6 +24,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   referenceElement: HTMLElement;
   wrapperClassName?: string;
   renderArrow?: boolean;
+  hidePopper?: () => void;
 }
 
 export function Popover({
@@ -34,6 +35,7 @@ export function Popover({
   wrapperClassName,
   referenceElement,
   renderArrow,
+  hidePopper,
   ...rest
 }: Props) {
   const theme = useTheme2();
@@ -95,7 +97,7 @@ export function Popover({
           {renderArrow && <FloatingArrow fill={theme.colors.border.weak} ref={arrowRef} context={context} />}
           {typeof content === 'string' && content}
           {React.isValidElement(content) && React.cloneElement(content)}
-          {typeof content === 'function' && content({})}
+          {typeof content === 'function' && content({ hidePopper })}
         </div>
       </div>
     </Portal>

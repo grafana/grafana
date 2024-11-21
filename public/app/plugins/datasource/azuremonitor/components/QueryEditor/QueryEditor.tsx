@@ -9,7 +9,7 @@ import { Alert, Button, CodeEditor, Space } from '@grafana/ui';
 import AzureMonitorDatasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import {
-  AzureDataSourceJsonData,
+  AzureMonitorDataSourceJsonData,
   AzureMonitorErrorish,
   AzureMonitorOption,
   AzureMonitorQuery,
@@ -28,7 +28,7 @@ import usePreparedQuery from './usePreparedQuery';
 export type AzureMonitorQueryEditorProps = QueryEditorProps<
   AzureMonitorDatasource,
   AzureMonitorQuery,
-  AzureDataSourceJsonData
+  AzureMonitorDataSourceJsonData
 >;
 
 const QueryEditor = ({

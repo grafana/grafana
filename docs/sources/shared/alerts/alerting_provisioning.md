@@ -1152,6 +1152,8 @@ Status: Bad Request
 POST /api/v1/provisioning/contact-points
 ```
 
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1658,23 +1660,22 @@ Status: Accepted
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
-> EmbeddedContactPoint is the contact point type that is used
-> by grafanas embedded alertmanager implementation.
+EmbeddedContactPoint is the contact point type used by Grafana-managed alerts.
+
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 **Properties**
 
 {{% responsive-table %}}
 
-| Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
-| ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
-| disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
-| name                                 | string                  | `string` |          |         | Name is used as grouping key in the UI. Contact points with the   |
-| same name will be grouped in the UI. | `webhook_1`             |
-| provenance                           | string                  | `string` |          |         |                                                                   |           |
-| settings                             | [JSON](#json)           | `JSON`   |    ✓     |         |                                                                   |           |
-| type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
-| uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
-| set by the user.                     | `my_external_reference` |
+| Name                  | Type          | Go type  | Required | Default | Description                                                                        | Example                 |
+| --------------------- | ------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------- | ----------------------- |
+| disableResolveMessage | boolean       | `bool`   |          |         |                                                                                    | `false`                 |
+| name                  | string        | `string` |          |         | `name` groups multiple contact points with the same name in the UI.                | `webhook_1`             |
+| provenance            | string        | `string` |          |         |                                                                                    |                         |
+| settings              | [JSON](#json) | `JSON`   |    ✓     |         |                                                                                    |                         |
+| type                  | string        | `string` |    ✓     |         |                                                                                    | `webhook`               |
+| uid                   | string        | `string` |          |         | UID is the unique identifier of the contact point. The UID can be set by the user. | `my_external_reference` |
 
 {{% /responsive-table %}}
 

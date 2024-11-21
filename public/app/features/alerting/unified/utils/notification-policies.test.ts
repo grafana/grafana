@@ -485,6 +485,11 @@ describe('matchLabels', () => {
     const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
     expect(result.matches).toEqual(true);
   });
+
+  it('does match regular expressions with flags', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '(?i).*BAr.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
 });
 
 describe('unquoteRouteMatchers', () => {

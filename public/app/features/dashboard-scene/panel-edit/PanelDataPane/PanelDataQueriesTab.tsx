@@ -201,8 +201,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
     }
 
-    if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
-      dataObjStateUpdate.minInterval = options.minInterval;
+    if (options.minInterval !== dataObj.state.minInterval) {
+      dataObjStateUpdate.minInterval = options.minInterval ?? undefined;
     }
 
     const timeFrom = options.timeRange?.from ?? undefined;

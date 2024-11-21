@@ -895,7 +895,68 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
 		require.Len(t, updatedRuleGroup.Rules, 1)
-		require.False(t, false, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		require.True(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+	})
+
+	t.Run("disable simplified query editor in editor settings", func(t *testing.T) {
+		metadata := &apimodels.AlertRuleMetadata{
+			EditorSettings: apimodels.AlertRuleEditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		createdRuleGroup := createAlertInGrafana(metadata)
+
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+
+		// disabling the editor
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection = false
+
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
+		require.Len(t, updatedRuleGroup.Rules, 1)
+		require.False(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+	})
+
+	t.Run("set simplified notifications editor in editor settings", func(t *testing.T) {
+		metadata := &apimodels.AlertRuleMetadata{
+			EditorSettings: apimodels.AlertRuleEditorSettings{
+				SimplifiedQueryAndExpressionsSection: false,
+			},
+		}
+		createdRuleGroup := createAlertInGrafana(metadata)
+
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = true
+
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
+		require.Len(t, updatedRuleGroup.Rules, 1)
+		require.True(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
+	})
+
+	t.Run("disable simplified notifications editor in editor settings", func(t *testing.T) {
+		metadata := &apimodels.AlertRuleMetadata{
+			EditorSettings: apimodels.AlertRuleEditorSettings{
+				SimplifiedNotificationsSection: true,
+			},
+		}
+		createdRuleGroup := createAlertInGrafana(metadata)
+
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+
+		// disabling the editor
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection = false
+
+		_, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
+		require.Len(t, updatedRuleGroup.Rules, 1)
+		require.False(t, updatedRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedNotificationsSection)
 	})
 
 	t.Run("post alert without metadata", func(t *testing.T) {
@@ -903,7 +964,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 		createdRuleGroup := apiClient.GetRulesGroup(t, folderName, groupName).GettableRuleGroupConfig
 		require.Len(t, createdRuleGroup.Rules, 1)
-		require.False(t, false, createdRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
+		require.False(t, createdRuleGroup.Rules[0].GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection)
 	})
 }
 
@@ -1133,7 +1194,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"exec_err_state": "Alerting",
 				"metadata": {
 					"editor_settings": {
-						"simplified_query_and_expressions_section": false
+						"simplified_query_and_expressions_section": false,
+						"simplified_notifications_section": false
 					}
 				}
 			}
@@ -1171,7 +1233,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"exec_err_state": "Alerting",
 				"metadata": {
 					"editor_settings": {
-						"simplified_query_and_expressions_section": false
+						"simplified_query_and_expressions_section": false,
+						"simplified_notifications_section": false
 					}
 				}
 			}
@@ -1221,7 +1284,8 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"exec_err_state": "Alerting",
 				"metadata": {
 					"editor_settings": {
-						"simplified_query_and_expressions_section": false
+						"simplified_query_and_expressions_section": false,
+						"simplified_notifications_section": false
 					}
 				}
 			}

@@ -137,6 +137,31 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 	}
 }
 
+// Namespaces returns the list of unique namespaces in storage.
+func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
+	var namespaces []string
+
+	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
+		if err != nil {
+			return err
+		}
+		for rows.Next() {
+			var ns string
+			err = rows.Scan(&ns)
+			if err != nil {
+				return err
+			}
+			namespaces = append(namespaces, ns)
+		}
+
+		err = rows.Close()
+		return err
+	})
+
+	return namespaces, err
+}
+
 func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, tracePrefix+"Create")
 	defer span.End()

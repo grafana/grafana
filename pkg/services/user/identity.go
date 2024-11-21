@@ -30,8 +30,8 @@ type SignedInUser struct {
 	// AuthID will be set if user signed in using external method
 	AuthID string
 	// AuthenticatedBy be set if user signed in using external method
-	AuthenticatedBy            string
-	AllowedKubernetesNamespace string
+	AuthenticatedBy string
+	Namespace       string
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -104,7 +104,18 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 
 // GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
-	return u.Name
+	// kubernetesAggregator feature flag which allows Cloud Apps to become available
+	// in single tenant Grafana requires that GetName() returns something and not an empty string
+	// the logic below ensures that something is returned
+	if u.Name != "" {
+		return u.Name
+	}
+
+	if u.Login != "" {
+		return u.Login
+	}
+
+	return u.Email
 }
 
 // GetExtra implements Requester.
@@ -173,8 +184,8 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
-func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
-	return u.AllowedKubernetesNamespace
+func (u *SignedInUser) GetNamespace() string {
+	return u.Namespace
 }
 
 // GetCacheKey returns a unique key for the entity.

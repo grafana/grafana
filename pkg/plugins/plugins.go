@@ -144,26 +144,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		return JSONData{}, err
 	}
 
-	// Hardcoded changes
-	switch plugin.ID {
-	case "grafana-piechart-panel":
+	if plugin.ID == "grafana-piechart-panel" {
 		plugin.Name = "Pie Chart (old)"
-	case "grafana-pyroscope-datasource":
-		fallthrough
-	case "grafana-testdata-datasource":
-		fallthrough
-	case "grafana-postgresql-datasource":
-		fallthrough
-	case "annolist":
-		fallthrough
-	case "debug":
-		if len(plugin.AliasIDs) == 0 {
-			return plugin, fmt.Errorf("expected alias to be set")
-		}
-	default: // TODO: when gcom validates the alias, this condition can be removed
-		if len(plugin.AliasIDs) > 0 {
-			return plugin, ErrUnsupportedAlias
-		}
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {

@@ -7,7 +7,6 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
@@ -18,12 +17,11 @@ const (
 
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
-func ProvideLocalSigner(keyService signingkeys.Service, features featuremgmt.FeatureToggles) (*LocalSigner, error) {
-	return &LocalSigner{features, keyService}, nil
+func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
+	return &LocalSigner{keyService}, nil
 }
 
 type LocalSigner struct {
-	features   featuremgmt.FeatureToggles
 	keyService signingkeys.Service
 }
 

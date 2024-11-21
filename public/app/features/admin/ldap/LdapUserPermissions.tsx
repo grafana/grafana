@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import * as React from 'react';
 
 import { Column, Icon, InteractiveTable } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { LdapPermissions } from 'app/types';
 
 interface Props {
@@ -33,9 +34,9 @@ export const LdapUserPermissions = ({ permissions }: Props) => {
       {
         permission: 'Grafana admin',
         value: permissions.isGrafanaAdmin ? (
-          <>
+          <Trans i18nKey="admin.ldap-permissions.admin">
             <Icon name="shield" /> Yes
-          </>
+          </Trans>
         ) : (
           'No'
         ),
@@ -43,13 +44,13 @@ export const LdapUserPermissions = ({ permissions }: Props) => {
       {
         permission: 'Status',
         value: permissions.isDisabled ? (
-          <>
+          <Trans i18nKey="admin.ldap-permissions.inactive">
             <Icon name="times" /> Inactive
-          </>
+          </Trans>
         ) : (
-          <>
+          <Trans i18nKey="admin.ldap-permissions.active">
             <Icon name="check" /> Active
-          </>
+          </Trans>
         ),
       },
     ],

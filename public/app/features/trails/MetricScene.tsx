@@ -32,6 +32,7 @@ import {
   getVariablesWithMetricConstant,
   MakeOptional,
   MetricSelectedEvent,
+  RefreshMetricsEvent,
   trailDS,
   VAR_GROUP_BY,
   VAR_METRIC_EXPR,
@@ -68,6 +69,16 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
   private _onActivate() {
     if (this.state.actionView === undefined) {
       this.setActionView('overview');
+    }
+
+    if (config.featureToggles.enableScopesInMetricsExplore) {
+      // Push the scopes change event to the tabs
+      // The event is not propagated because the tabs are not part of the scene graph
+      this._subs.add(
+        this.subscribeToEvent(RefreshMetricsEvent, (event) => {
+          this.state.body.state.selectedTab?.publishEvent(event);
+        })
+      );
     }
   }
 
@@ -153,11 +164,9 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
   public openExploreLink = async () => {
     reportExploreMetrics('selected_metric_action_clicked', { action: 'open_in_explore' });
     this.getLinkToExplore().then((link) => {
-      // We need to ensure we prefix with the appSubUrl for environments that don't host grafana at the root.
-      const url = `${config.appSubUrl}${link}`;
       // We use window.open instead of a Link or <a> because we want to compute the explore link when clicking,
       // if we precompute it we have to keep track of a lot of dependencies
-      window.open(url, '_blank');
+      window.open(link, '_blank');
     });
   };
 

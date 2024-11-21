@@ -1,10 +1,11 @@
 import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { config, createMonitoringLogger, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
+import { parseLogsFrame } from '../logs/logsFrame';
 
 import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import {
@@ -43,7 +44,7 @@ export const attachCorrelationsToDataFrames = (
     }
 
     const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
-    decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
+    decorateDataFrameWithInternalDataLinks(dataFrame, fixLokiDataplaneFields(sourceCorrelations, dataFrame));
   });
 
   return dataFrames;
@@ -80,6 +81,27 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
         }
       }
     });
+  });
+};
+
+/*
+If a correlation was made based on the log line field prior to the loki data plane, they would use the field "Line" 
+
+Change it to use whatever the body field name is post-loki data plane
+*/
+const fixLokiDataplaneFields = (correlations: CorrelationData[], dataFrame: DataFrame) => {
+  return correlations.map((correlation) => {
+    if (
+      correlation.source.meta?.id === 'loki' &&
+      config.featureToggles.lokiLogsDataplane === true &&
+      correlation.config.field === 'Line'
+    ) {
+      const logsFrame = parseLogsFrame(dataFrame);
+      if (logsFrame != null && logsFrame.bodyField.name !== undefined) {
+        correlation.config.field = logsFrame?.bodyField.name;
+      }
+    }
+    return correlation;
   });
 };
 
