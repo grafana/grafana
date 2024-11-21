@@ -90,34 +90,52 @@ throwUnhandledRejections();
 
 // Used by useMeasure
 global.ResizeObserver = class ResizeObserver {
+  static #observationEntry: ResizeObserverEntry = {
+    contentRect: {
+      x: 1,
+      y: 2,
+      width: 500,
+      height: 500,
+      top: 100,
+      bottom: 0,
+      left: 100,
+      right: 0,
+    },
+    target: {
+      // Needed for react-virtual to work in tests
+      getAttribute: () => 1,
+    },
+  } as unknown as ResizeObserverEntry;
+
+  #isObserving = false;
+  #callback: ResizeObserverCallback;
+
   constructor(callback: ResizeObserverCallback) {
+    this.#callback = callback;
+  }
+
+  #emitObservation() {
     setTimeout(() => {
-      callback(
-        [
-          {
-            contentRect: {
-              x: 1,
-              y: 2,
-              width: 500,
-              height: 500,
-              top: 100,
-              bottom: 0,
-              left: 100,
-              right: 0,
-            },
-            target: {
-              // Needed for react-virtual to work in tests
-              getAttribute: () => 1,
-            },
-          } as unknown as ResizeObserverEntry,
-        ],
-        this
-      );
+      if (!this.#isObserving) {
+        return;
+      }
+
+      this.#callback([ResizeObserver.#observationEntry], this);
     });
   }
-  observe() {}
-  disconnect() {}
-  unobserve() {}
+
+  observe() {
+    this.#isObserving = true;
+    this.#emitObservation();
+  }
+
+  disconnect() {
+    this.#isObserving = false;
+  }
+
+  unobserve() {
+    this.#isObserving = false;
+  }
 };
 
 global.BroadcastChannel = class BroadcastChannel {

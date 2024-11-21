@@ -73,6 +73,16 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
+					"name": "repositories/export",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "ResourceWrapper",
+					"verbs": [
+						"create",
+						"get"
+					]
+				},
+				{
 					"name": "repositories/files",
 					"singularName": "",
 					"namespaced": true,

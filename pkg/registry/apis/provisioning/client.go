@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
@@ -70,10 +71,15 @@ func (c *kindsLookup) Resource(gvk schema.GroupVersionKind) (schema.GroupVersion
 			gvr = gvk.GroupVersion().WithResource("dashboards")
 		case "Playlist":
 			gvr = gvk.GroupVersion().WithResource("playlists")
+		case "Folder":
+			gvr = gvk.GroupVersion().WithResource(folder.RESOURCE)
 		default:
 			ok = false
 		}
 		// TODO... use the client to get the resource!
+		if ok {
+			c.kinds[gvk] = gvr
+		}
 	}
 
 	return gvr, ok
