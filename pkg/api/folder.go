@@ -994,19 +994,9 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		return nil, nil
 	}
 
-	if len(f.FullpathUIDs) == 0 {
-		return map[string]bool{}, nil
-	}
-
-	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
-	// The first part of the path is the newly created folder which we don't need to check here
-	if len(parentsFullPathUIDs) < 2 {
-		return map[string]bool{}, nil
-	}
-
-	folderIDs := map[string]bool{f.UID: true}
-	for _, uid := range parentsFullPathUIDs[1:] {
-		folderIDs[uid] = true
+	folderIDs, err := fk8s.getParents(f)
+	if err != nil {
+		return nil, err
 	}
 
 	allMetadata := getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
@@ -1018,4 +1008,23 @@ func (fk8s *folderK8sHandler) getFolderACMetadata(c *contextmodel.ReqContext, f 
 		}
 	}
 	return metadata, nil
+}
+
+func (fk8s *folderK8sHandler) getParents(f *folder.Folder) (map[string]bool, error) {
+	folderIDs := map[string]bool{f.UID: true}
+	if (f.UID == accesscontrol.GeneralFolderUID) || (f.UID == folder.SharedWithMeFolderUID) {
+		return folderIDs, nil
+	}
+
+	parentsFullPathUIDs := strings.Split(f.FullpathUIDs, "/")
+	// The first part of the path is the newly created folder which we don't need to check here
+	if len(parentsFullPathUIDs) < 2 {
+		return folderIDs, nil
+	}
+
+	for _, uid := range parentsFullPathUIDs[1:] {
+		folderIDs[uid] = true
+	}
+
+	return folderIDs, nil
 }
