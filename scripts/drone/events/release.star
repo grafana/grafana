@@ -8,6 +8,12 @@ load(
     "integration_test_services_volumes",
 )
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+    "github_app_step_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -69,10 +75,10 @@ def release_pr_step(depends_on = []):
         "image": images["curl"],
         "depends_on": depends_on,
         "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
             "GH_CLI_URL": "https://github.com/cli/cli/releases/download/v2.50.0/gh_2.50.0_linux_amd64.tar.gz",
         },
         "commands": [
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             "apk add perl",
             "v_target=`echo $${{TAG}} | perl -pe 's/{}/v\\1.\\2.x/'`".format(semver_regex),
             # Install gh CLI
@@ -86,6 +92,7 @@ def release_pr_step(depends_on = []):
             "-f latest=$${LATEST} " +
             "--repo=grafana/grafana release-pr.yml",
         ],
+        "volumes": github_app_step_volumes(),
     }
 
 def release_npm_packages_step():
@@ -149,7 +156,8 @@ def publish_artifacts_pipelines(mode):
         compile_build_cmd(),
         publish_artifacts_step(),
         publish_storybook_step(),
-        release_pr_step(depends_on = ["publish-artifacts"]),
+        github_app_generate_token_step(),
+        release_pr_step(depends_on = ["publish-artifacts", github_app_generate_token_step()["name"]]),
     ]
 
     return [
@@ -162,6 +170,7 @@ def publish_artifacts_pipelines(mode):
             steps = [
                 release_pr_step(),
             ],
+            volumes = github_app_pipeline_volumes(),
         ),
         pipeline(
             name = "publish-artifacts-{}".format(mode),
