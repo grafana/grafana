@@ -142,7 +142,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
-          return align === 1 ? 0 : calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim, formatValue);
+          return calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim, formatValue);
         }),
       filter,
       incrs,
@@ -281,8 +281,6 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
 
   if (axis.side === 2) {
     axisSize += axis!.gap! + UPLOT_AXIS_FONT_SIZE;
-  } else if (axis.side === 3 && axis.align === 1) {
-    axisSize = 0;
   } else if (values?.length) {
     let maxTextWidth = values.reduce((acc, value) => Math.max(acc, measureText(value, UPLOT_AXIS_FONT_SIZE).width), 0);
     // limit y tick label width to 40% of visualization
