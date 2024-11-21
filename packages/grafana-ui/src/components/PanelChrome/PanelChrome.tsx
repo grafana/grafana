@@ -84,6 +84,10 @@ interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
   /**
+   * If false, the VizPanelMenu will always be visible in the panel header. Defaults to true.
+   */
+  showMenuOnHover?: boolean;
+  /**
    * callback when collapsing or expanding the panel
    */
   onToggleCollapse?: (collapsed: boolean) => void;
@@ -94,6 +98,7 @@ interface Collapsible {
 interface HoverHeader {
   collapsible?: never;
   collapsed?: never;
+  showMenuOnHover?: never;
   onToggleCollapse?: never;
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
@@ -134,6 +139,7 @@ export function PanelChrome({
   onFocus,
   onMouseMove,
   onMouseEnter,
+  showMenuOnHover = true,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -150,7 +156,7 @@ export function PanelChrome({
   }
 
   // hover menu is only shown on hover when not on touch devices
-  const showOnHoverClass = 'show-on-hover';
+  const showOnHoverClass = showMenuOnHover ? 'show-on-hover' : 'always-show';
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
@@ -389,6 +395,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
+
+      '.always-show': {
+        background: 'none',
+        '&:focus-visible, &:hover': {
+          background: theme.colors.secondary.shade,
+        },
+      },
 
       '.show-on-hover': {
         opacity: '0',
