@@ -66,12 +66,16 @@
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /hack/ @grafana/grafana-app-platform-squad
 
+/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
+/public/app/features/provisioning @grafana/grafana-git-ui-sync-team
+/conf/provisioning/sample @grafana/grafana-git-ui-sync-team
+/pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
+
 /apps/alerting/ @grafana/alerting-backend
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend
-/pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/bus/ @grafana/grafana-search-and-storage
@@ -681,7 +685,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
-/pkg/registry/apis/provisioning @grafana/grafana-git-ui-sync-team
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/codegen/ @grafana/grafana-as-code

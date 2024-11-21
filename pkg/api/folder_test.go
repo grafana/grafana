@@ -15,6 +15,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -525,6 +526,9 @@ func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext
 }
 
 func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (m mockClientConfigProvider) GetRestConfigForBackgroundWorker(func() identity.Requester) *clientrest.Config {
+	return nil
+}
 
 func TestHTTPServer_FolderMetadataK8s(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
