@@ -337,7 +337,7 @@ def e2e_tests_artifacts():
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
         },
         "commands": [
-            "GITHUB_TOKEN=$(cat /github-app/token)",
+            "export GITHUB_TOKEN=$(cat /github-app/token)",
             # if no videos found do nothing
             "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
