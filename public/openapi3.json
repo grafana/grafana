@@ -9624,6 +9624,9 @@
           "branding": {
             "$ref": "#/components/schemas/ReportBrandingOptions"
           },
+          "embeddedImageTheme": {
+            "type": "string"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9631,6 +9634,9 @@
           "orgId": {
             "format": "int64",
             "type": "integer"
+          },
+          "pdfTheme": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
@@ -9743,6 +9749,9 @@
             "type": "string"
           },
           "hidden": {
+            "type": "boolean"
+          },
+          "mapped": {
             "type": "boolean"
           },
           "name": {
@@ -18048,6 +18057,9 @@
           },
           "403": {
             "$ref": "#/components/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"

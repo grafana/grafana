@@ -793,7 +793,8 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"exec_err_state": "Alerting",
 								"metadata": {
 									"editor_settings": {
-										"simplified_query_and_expressions_section": false
+										"simplified_query_and_expressions_section": false,
+										"simplified_notifications_section": false
 									}
 								}
 							}
@@ -1276,7 +1277,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "exec_err_state":"Alerting",
 						  "metadata": {
 						      "editor_settings": {
-							      "simplified_query_and_expressions_section": false
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
 							  }
 						  }
 					   }
@@ -1317,7 +1319,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "exec_err_state":"Alerting",
 						  "metadata": {
 						      "editor_settings": {
-							      "simplified_query_and_expressions_section": false
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
 							  }
 						  }
 					   }
@@ -1630,7 +1633,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "exec_err_state":"Alerting",
 						  "metadata": {
 						      "editor_settings": {
-							      "simplified_query_and_expressions_section": false
+							      "simplified_query_and_expressions_section": false,
+								  "simplified_notifications_section": false
 							  }
 						  }
 		               }
@@ -1744,7 +1748,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "exec_err_state":"Alerting",
 					  "metadata": {
 				        "editor_settings": {
-					      "simplified_query_and_expressions_section": false
+					      "simplified_query_and_expressions_section": false,
+						  "simplified_notifications_section": false
 					    }
 					   }
 				      }
@@ -1837,7 +1842,8 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "exec_err_state":"Alerting",
 					  "metadata": {
 				        "editor_settings": {
-					      "simplified_query_and_expressions_section": false
+					      "simplified_query_and_expressions_section": false,
+						  "simplified_notifications_section": false
 					    }
 					   }
 				      }
@@ -2369,7 +2375,8 @@ func TestIntegrationQuota(t *testing.T) {
 						  "exec_err_state":"Alerting",
 						  "metadata": {
 						    "editor_settings": {
-							  "simplified_query_and_expressions_section": false
+							  "simplified_query_and_expressions_section": false,
+							  "simplified_notifications_section": false
 							 }
 						   }
 					      }

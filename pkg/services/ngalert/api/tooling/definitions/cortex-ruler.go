@@ -460,6 +460,7 @@ type AlertRuleMetadata struct {
 // swagger:model
 type AlertRuleEditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section" yaml:"simplified_query_and_expressions_section"`
+	SimplifiedNotificationsSection       bool `json:"simplified_notifications_section" yaml:"simplified_notifications_section"`
 }
 
 // swagger:model

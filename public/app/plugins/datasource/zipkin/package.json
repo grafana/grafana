@@ -4,10 +4,10 @@
   "private": true,
   "version": "11.4.0-pre",
   "dependencies": {
-    "@emotion/css": "11.13.4",
+    "@emotion/css": "11.13.5",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "2.1.2",
+    "@grafana/experimental": "2.1.4",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
     "@testing-library/dom": "10.4.0",
-    "@testing-library/jest-dom": "6.5.0",
+    "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.0.1",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.13",

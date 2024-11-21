@@ -17,6 +17,8 @@ import (
 )
 
 const (
+	namespace = "default"
+
 	dashboardGroup    = "dashboard.grafana.app"
 	dashboardResource = "dashboards"
 
@@ -49,6 +51,14 @@ func TestIntegrationServer(t *testing.T) {
 	t.Run("test list", func(t *testing.T) {
 		testList(t, srv)
 	})
+
+	t.Run("test batch check", func(t *testing.T) {
+		testBatchCheck(t, srv)
+	})
+
+	t.Run("test capabilities", func(t *testing.T) {
+		testCapabilities(t, srv)
+	})
 }
 
 func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
@@ -61,22 +71,23 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	srv, err := NewAuthz(openfga)
 	require.NoError(t, err)
 
-	namespace := "default"
-	storeInf, err := srv.initNamespaceStore(context.Background(), namespace)
+	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
 	require.NoError(t, err)
 
 	// seed tuples
 	_, err = openfga.Write(context.Background(), &openfgav1.WriteRequest{
-		StoreId:              storeInf.Id,
-		AuthorizationModelId: storeInf.AuthorizationModelId,
+		StoreId:              storeInf.ID,
+		AuthorizationModelId: storeInf.ModelID,
 		Writes: &openfgav1.WriteRequestWrites{
 			TupleKeys: []*openfgav1.TupleKey{
 				common.NewResourceTuple("user:1", "read", dashboardGroup, dashboardResource, "1"),
+				common.NewResourceTuple("user:1", "write", dashboardGroup, dashboardResource, "1"),
 				common.NewNamespaceResourceTuple("user:2", "read", dashboardGroup, dashboardResource),
+				common.NewNamespaceResourceTuple("user:2", "write", dashboardGroup, dashboardResource),
 				common.NewResourceTuple("user:3", "view", dashboardGroup, dashboardResource, "1"),
 				common.NewFolderResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "1"),
 				common.NewFolderResourceTuple("user:4", "read", dashboardGroup, dashboardResource, "3"),
-				common.NewFolderResourceTuple("user:5", "view", dashboardGroup, dashboardResource, "1"),
+				common.NewFolderResourceTuple("user:5", "edit", dashboardGroup, dashboardResource, "1"),
 				common.NewFolderTuple("user:6", "read", "1"),
 				common.NewNamespaceResourceTuple("user:7", "read", folderGroup, folderResource),
 				common.NewFolderParentTuple("5", "4"),

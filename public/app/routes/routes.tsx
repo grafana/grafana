@@ -19,7 +19,6 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
-import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -530,7 +529,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/bookmarks',
-      component: () => <BookmarksPage />,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
+      ),
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

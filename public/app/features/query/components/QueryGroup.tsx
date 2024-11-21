@@ -16,8 +16,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Button, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
+import { Button, HorizontalGroup, InlineFormLabel, Modal, ScrollContainer, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';

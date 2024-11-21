@@ -37,11 +37,11 @@ func (s *NoopServiceImpl) GetSessionList(ctx context.Context, orgID int64) (*clo
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) CreateSession(ctx context.Context, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
+func (s *NoopServiceImpl) CreateSession(ctx context.Context, signedInUser *user.SignedInUser, cm cloudmigration.CloudMigrationSessionRequest) (*cloudmigration.CloudMigrationSessionResponse, error) {
 	return nil, cloudmigration.ErrMigrationDisabled
 }
 
-func (s *NoopServiceImpl) DeleteSession(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
+func (s *NoopServiceImpl) DeleteSession(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, uid string) (*cloudmigration.CloudMigrationSession, error) {
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
@@ -57,7 +57,7 @@ func (s *NoopServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrat
 	return nil, cloudmigration.ErrFeatureDisabledError
 }
 
-func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, orgID int64, sessionUid string, snapshotUid string) error {
+func (s *NoopServiceImpl) UploadSnapshot(ctx context.Context, orgID int64, signedInUser *user.SignedInUser, sessionUid string, snapshotUid string) error {
 	return cloudmigration.ErrFeatureDisabledError
 }
 
