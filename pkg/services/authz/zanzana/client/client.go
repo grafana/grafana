@@ -146,13 +146,8 @@ func (c *Client) List(ctx context.Context, id claims.AuthInfo, req *authzextv1.L
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
 	defer span.End()
 
-	return c.authzext.List(ctx, &authzextv1.ListRequest{
-		Subject:   id.GetUID(),
-		Group:     req.GetGroup(),
-		Verb:      req.GetVerb(),
-		Resource:  req.GetResource(),
-		Namespace: req.GetNamespace(),
-	})
+	req.Subject = id.GetUID()
+	return c.authzext.List(ctx, req)
 }
 
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
