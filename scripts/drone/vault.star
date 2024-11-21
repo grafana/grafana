@@ -23,7 +23,6 @@ rgm_destination = "destination"
 rgm_storybook_destination = "rgm_storybook_destination"
 rgm_cdn_destination = "rgm_cdn_destination"
 rgm_downloads_destination = "rgm_downloads_destination"
-rgm_github_token = "github_token"
 rgm_dagger_token = "dagger_token"
 
 docker_username = "docker_username"
@@ -54,7 +53,6 @@ def secrets():
         vault_secret("grafana_api_key", "infra/data/ci/grafana-release-eng/grafanacom", "api_key"),
         vault_secret(gcr_pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret(gar_pull_secret, "secret/data/common/gar", ".dockerconfigjson"),
-        vault_secret("github_token", "ci/data/repo/grafana/grafana/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
         vault_secret(docker_username, "infra/data/ci/grafanaci-docker-hub", "username"),
