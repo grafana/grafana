@@ -30,6 +30,18 @@ func TestUtils(t *testing.T) {
 		require.NotNil(t, obj)
 	})
 
+	t.Run("YAML Parsing", func(t *testing.T) {
+		obj, gvk, err := LoadYAMLOrJSON(bytes.NewReader([]byte("kind: xyz\npi: 3.1415")))
+		require.NoError(t, err)
+		require.NotNil(t, gvk)
+		require.Equal(t, "xyz", obj.Object["kind"])
+		require.Equal(t, 3.1415, obj.Object["pi"])
+
+		// // Tabs in the value
+		// _, _, err = LoadYAMLOrJSON(bytes.NewReader([]byte("kind: xyz\n\tpi: 3.1415")))
+		// require.Equal(t, ErrYamlContainsTabs, err)
+	})
+
 	t.Run("load playlist yaml", func(t *testing.T) {
 		obj, gvk, err := LoadYAMLOrJSON(bytes.NewReader([]byte(`
 apiVersion: playlist.grafana.app/v0alpha1
@@ -37,7 +49,7 @@ kind: Playlist
 metadata:
 	name: hello
 spec:
-	title: a title
+  title: a title
 `)))
 
 		require.NoError(t, err)
