@@ -137,7 +137,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	}
 
 	statesCount := 0
-	states := make(map[int64]map[string]*ruleStates, len(orgIds))
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -168,9 +167,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			}
 		}
 
-		orgStates := make(map[string]*ruleStates, len(ruleByUID))
-		states[orgId] = orgStates
-
 		// Get Instances
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
@@ -191,12 +187,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			annotations := ruleForEntry.Annotations
 			if annotations == nil {
 				annotations = make(map[string]string)
-			}
-
-			rulesStates, ok := orgStates[entry.RuleUID]
-			if !ok {
-				rulesStates = &ruleStates{states: make(map[data.Fingerprint]*State)}
-				orgStates[entry.RuleUID] = rulesStates
 			}
 
 			lbs := map[string]string(entry.Labels)
