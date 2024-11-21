@@ -112,6 +112,25 @@ The following two links are always present in the footer:
 
 If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer, and only what is specified is included.
 
+## Custom branding for air-gapped deployments
+
+To customize branding in an air-gapped deployment:
+
+1. Copy the desired image file into Grafana's image directory:
+
+   - On Linux:
+     `/usr/share/grafana/public/img/`
+
+   - On Windows:
+     `C:/Program Files/GrafanaLabs/grafana/public/img/`
+
+   - on macOS:
+     ``
+
+1. Remove the semicolon to include one of the following configuration options in your `custom.ini` or `grafana.ini` file:
+   - `login_logo = /public/img/<your-logo.png>`
+   - `login_background = url(<grafana_base_url>/public/img/<your_logo>.jpg)`
+
 ## Custom branding for shared dashboards
 
 In addition to the customizations described below, you can customize the footer of your shared dashboards.
