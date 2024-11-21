@@ -317,6 +317,11 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr identity.Reques
 		UserId:     userID,
 		AuthModule: usr.GetAuthenticatedBy(),
 		AuthId:     usr.GetAuthID(),
+		OAuthToken: &oauth2.Token{
+			AccessToken:  "",
+			RefreshToken: "",
+			Expiry:       time.Time{},
+		},
 	})
 }
 
