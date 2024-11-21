@@ -1,5 +1,8 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
+import * as common from '@grafana/schema';
+
+
 export interface DashboardV2Spec {
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
@@ -135,8 +138,7 @@ export interface DataTransformerConfig {
 	// Optional frame matcher. When missing it will be applied to all results
 	filter?: MatcherConfig;
 	// Where to pull DataFrames from as input to transformation
-	// replaced with common.DataTopic
-	topic?: "series" | "annotations" | "alertStates";
+	topic?: common.DataTopic;
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	options: any;

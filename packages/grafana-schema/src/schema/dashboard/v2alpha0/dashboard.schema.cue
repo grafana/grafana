@@ -1,4 +1,8 @@
-package dashboard
+package v2alpha0
+
+import (
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+)
 
 DashboardV2Spec: {
   // Unique numeric identifier for the dashboard.
@@ -113,7 +117,7 @@ DataTransformerConfig: {
   // Optional frame matcher. When missing it will be applied to all results
   filter?: MatcherConfig
   // Where to pull DataFrames from as input to transformation
-  topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
+  topic?: common.DataTopic
   // Options to be passed to the transformer
   // Valid options depend on the transformer id
   options: _
