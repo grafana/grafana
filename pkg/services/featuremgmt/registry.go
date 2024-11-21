@@ -364,10 +364,12 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Name:              "unifiedRequestLog",
+			Description:       "Writes error logs to the request logger",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaBackendGroup,
+			Expression:        "true",
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "renderAuthJWT",
