@@ -21,52 +21,52 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
-type readConnector struct {
+type filesConnector struct {
 	getter RepoGetter
 }
 
-func (*readConnector) New() runtime.Object {
+func (*filesConnector) New() runtime.Object {
 	// This is added as the "ResponseType" regardless what ProducesObject() returns
 	return &provisioning.ResourceWrapper{}
 }
 
-func (*readConnector) Destroy() {}
+func (*filesConnector) Destroy() {}
 
-func (*readConnector) NamespaceScoped() bool {
+func (*filesConnector) NamespaceScoped() bool {
 	return true
 }
 
-func (*readConnector) GetSingularName() string {
+func (*filesConnector) GetSingularName() string {
 	return "Resource"
 }
 
-func (*readConnector) ProducesMIMETypes(verb string) []string {
+func (*filesConnector) ProducesMIMETypes(verb string) []string {
 	return []string{"application/json"}
 }
 
-func (*readConnector) ProducesObject(verb string) any {
+func (*filesConnector) ProducesObject(verb string) any {
 	return &provisioning.ResourceWrapper{}
 }
 
-func (*readConnector) ConnectMethods() []string {
+func (*filesConnector) ConnectMethods() []string {
 	return []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete}
 }
 
-func (*readConnector) NewConnectOptions() (runtime.Object, bool, string) {
+func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, "" // true adds the {path} component
 }
 
-func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	repo, err := s.getter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		prefix := fmt.Sprintf("/%s/file/", name)
+		prefix := fmt.Sprintf("/%s/files/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
-			responder.Error(errors.NewBadRequest("invalid index"))
+			responder.Error(errors.NewBadRequest("invalid request path"))
 			return
 		}
 
@@ -90,18 +90,18 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 		}
 
 		var obj runtime.Object
-		commit := r.URL.Query().Get("commit")
+		ref := r.URL.Query().Get("ref")
 		message := r.URL.Query().Get("message")
 
 		switch r.Method {
 		case http.MethodGet:
-			obj, err = s.doRead(r.Context(), repo, filePath, commit)
+			obj, err = s.doRead(r.Context(), repo, filePath, ref)
 		case http.MethodPost:
-			obj, err = s.doWrite(r.Context(), false, repo, filePath, message, r)
+			obj, err = s.doWrite(r.Context(), false, repo, filePath, ref, message, r)
 		case http.MethodPut:
-			obj, err = s.doWrite(r.Context(), true, repo, filePath, message, r)
+			obj, err = s.doWrite(r.Context(), true, repo, filePath, ref, message, r)
 		case http.MethodDelete:
-			obj, err = s.doDelete(r.Context(), repo, filePath, message)
+			obj, err = s.doDelete(r.Context(), repo, filePath, ref, message)
 		default:
 			err = errors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 		}
@@ -114,7 +114,7 @@ func (s *readConnector) Connect(ctx context.Context, name string, opts runtime.O
 	}), nil
 }
 
-func (s *readConnector) getValidatedBody(_ context.Context, data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
+func (s *filesConnector) getValidatedBody(_ context.Context, data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
 	obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(data))
 	if err != nil {
 		obj, gvk, err = FallbackResourceLoader(data)
@@ -129,8 +129,8 @@ func (s *readConnector) getValidatedBody(_ context.Context, data []byte) (*unstr
 	return obj, gvk, err
 }
 
-func (s *readConnector) doRead(ctx context.Context, repo Repository, path string, commit string) (*provisioning.ResourceWrapper, error) {
-	info, err := repo.Read(ctx, path, commit)
+func (s *filesConnector) doRead(ctx context.Context, repo Repository, path string, ref string) (*provisioning.ResourceWrapper, error) {
+	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (s *readConnector) doRead(ctx context.Context, repo Repository, path string
 	}, nil
 }
 
-func (s *readConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, message string, req *http.Request) (runtime.Object, error) {
+func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, ref string, message string, req *http.Request) (runtime.Object, error) {
 	settings := repo.Config().Spec.Editing
 	if update && !settings.Update {
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
@@ -205,7 +205,7 @@ func (s *readConnector) doWrite(ctx context.Context, update bool, repo Repositor
 	return obj, err
 }
 
-func (s *readConnector) doDelete(ctx context.Context, repo Repository, path string, message string) (runtime.Object, error) {
+func (s *filesConnector) doDelete(ctx context.Context, repo Repository, path string, ref string, message string) (runtime.Object, error) {
 	settings := repo.Config().Spec.Editing
 	if !settings.Delete {
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
@@ -225,9 +225,9 @@ func (s *readConnector) doDelete(ctx context.Context, repo Repository, path stri
 }
 
 var (
-	_ rest.Storage              = (*readConnector)(nil)
-	_ rest.Connecter            = (*readConnector)(nil)
-	_ rest.Scoper               = (*readConnector)(nil)
-	_ rest.SingularNameProvider = (*readConnector)(nil)
-	_ rest.StorageMetadata      = (*readConnector)(nil)
+	_ rest.Storage              = (*filesConnector)(nil)
+	_ rest.Connecter            = (*filesConnector)(nil)
+	_ rest.Scoper               = (*filesConnector)(nil)
+	_ rest.SingularNameProvider = (*filesConnector)(nil)
+	_ rest.StorageMetadata      = (*filesConnector)(nil)
 )
