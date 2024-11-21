@@ -515,6 +515,34 @@ func TestDatasourceCachingConfig(t *testing.T) {
 		require.Equal(t, len(resCachingConfigs.DeleteDatasourceUIDs), len(expectedDatasourceUIDs))
 		require.ElementsMatch(t, resCachingConfigs.DatasourceCachingConfigs, expectedConfigs)
 	})
+
+	t.Run("get datasource caching config with missing caching", func(t *testing.T) {
+		testGraphite_UID := util.GenerateShortUID()
+		expectedConfigs := []DatasourceCachingConfig{
+			{
+				DataSourceUID: testGraphite_UID,
+				Enabled:       false,
+				QueriesTTL:    int64(10000),
+				ResourcesTTL:  int64(1000),
+				UseDefaultTTL: false,
+			},
+		}
+		expectedDatasourceUIDs := []string{testGraphite_UID}
+		store := &spyStore{
+			items: []*datasources.DataSource{
+				{Name: "Graphite", OrgID: 1, ID: 1, UID: testGraphite_UID}},
+		}
+		orgFake := &orgtest.FakeOrgService{ExpectedOrg: &org.Org{ID: 1}}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
+
+		resCachingConfigs, err := dc.getCachingConfigs(context.Background(), cacheDisabledConfig)
+		require.NoError(t, err)
+		require.NotNil(t, resCachingConfigs)
+
+		require.Equal(t, len(resCachingConfigs.DeleteDatasourceUIDs), len(expectedDatasourceUIDs))
+		require.ElementsMatch(t, resCachingConfigs.DatasourceCachingConfigs, expectedConfigs)
+	})
 }
 
 func validateDeleteDatasources(t *testing.T, dsCfg *configs) {
