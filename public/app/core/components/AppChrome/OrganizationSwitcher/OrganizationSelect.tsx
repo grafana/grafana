@@ -10,7 +10,7 @@ import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
   const styles = useStyles2(getStyles);
-  const { orgId} = contextSrv.user;
+  const { orgId } = contextSrv.user;
 
   const options = useMemo(() =>
       orgs.map((org) => ({
