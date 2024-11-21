@@ -4,8 +4,13 @@ import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
-import LanguageProvider, { utf8Support } from './language_provider';
-import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
+import LanguageProvider from './language_provider';
+import {
+  getClientCacheDurationInMinutes,
+  getPrometheusTime,
+  getRangeSnapInterval,
+  utf8Support,
+} from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();

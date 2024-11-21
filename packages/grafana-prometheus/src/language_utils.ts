@@ -39,17 +39,19 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
     const { __name__, ...rest } = label;
     if (withName) {
       valueSet['__name__'] = valueSet['__name__'] || new Set();
-      if (!valueSet['__name__'].has(__name__)) {
-        valueSet['__name__'].add(__name__);
+      const utf8SupportedValue = utf8Support(__name__);
+      if (!valueSet['__name__'].has(utf8SupportedValue)) {
+        valueSet['__name__'].add(utf8SupportedValue);
       }
     }
 
     Object.keys(rest).forEach((key) => {
-      if (!valueSet[key]) {
-        valueSet[key] = new Set();
+      const utf8SupportedKey = utf8Support(key);
+      if (!valueSet[utf8SupportedKey]) {
+        valueSet[utf8SupportedKey] = new Set();
       }
-      if (!valueSet[key].has(rest[key])) {
-        valueSet[key].add(rest[key]);
+      if (!valueSet[utf8SupportedKey].has(rest[key])) {
+        valueSet[utf8SupportedKey].add(utf8Support(rest[key]));
       }
     });
   });
@@ -543,3 +545,12 @@ export function truncateResult<T>(array: T[], limit?: number): T[] {
   array.length = Math.min(array.length, limit);
   return array;
 }
+
+const labelNamePriorToUtf8Support = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+export const utf8Support = (label: string) => {
+  const isLegacyLabel = labelNamePriorToUtf8Support.test(label);
+  if (isLegacyLabel) {
+    return label;
+  }
+  return `"${label}"`;
+};

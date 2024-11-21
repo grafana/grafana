@@ -25,6 +25,7 @@ import {
   processHistogramMetrics,
   processLabels,
   toPromLikeQuery,
+  utf8Support,
 } from './language_utils';
 import PromqlSyntax from './promql';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
@@ -49,8 +50,6 @@ const buildCacheHeaders = (durationInSeconds: number) => {
     },
   };
 };
-
-const labelNamePriorToUtf8Support = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 export function getMetadataString(metric: string, metadata: PromMetricsMetadata): string | undefined {
   if (!metadata[metric]) {
@@ -495,17 +494,3 @@ function isCancelledError(error: unknown): error is {
 } {
   return typeof error === 'object' && error !== null && 'cancelled' in error && error.cancelled === true;
 }
-
-export const utf8Support = (label: string) => {
-  const isLegacyLabel = labelNamePriorToUtf8Support.test(label);
-  if (isLegacyLabel) {
-    return label;
-  }
-  return `"${label}"`;
-};
-
-//   func isValidLegacyRune(b rune, i int) bool {
-//     return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == ':' || (b >= '0' && b <= '9' && i > 0)
-//   }
-// METRIC_LABEL_NAME_RE = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
-// current label regex [a-zA-Z_][a-zA-Z0-9_]*
