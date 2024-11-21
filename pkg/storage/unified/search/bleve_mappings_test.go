@@ -5,15 +5,16 @@ import (
 	"testing"
 
 	"github.com/blevesearch/bleve/v2/document"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDocumentMapping(t *testing.T) {
 	mappings := getBleveMappings(nil)
-	data := bleveFlatDocument{
-		Title:     "title",
-		TitleSort: "title",
-		Tags:      []string{"a", "b"},
+	data := resource.IndexableDocument{
+		Title: "title",
+		// TitleSort: "title",
+		Tags: []string{"a", "b"},
 	}
 
 	doc := document.NewDocument("id")
@@ -26,5 +27,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 6, len(doc.Fields))
+	require.Equal(t, 10, len(doc.Fields))
 }

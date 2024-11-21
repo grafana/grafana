@@ -8,29 +8,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type bleveFlatDocument struct {
-	Title       string `json:"title,omitempty"`
-	TitleSort   string `json:"title_sort,omitempty"`
-	Description string `json:"description,omitempty"`
-
-	Tags []string `json:"tags,omitempty"`
-
-	Labels map[string]string `json:"labels,omitempty"`
-	Folder string            `json:"folder,omitempty"`
-
-	// Custom fields
-	Fields map[string]any `json:"fields,omitempty"`
-}
-
-const kind = "resource"
-
-func (d bleveFlatDocument) Type() string {
-	return kind
-}
-
 func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMapping {
 	mapper := bleve.NewIndexMapping()
-	mapper.AddDocumentMapping(kind, getBleveDocMappings(fields))
+	mapper.DefaultMapping = getBleveDocMappings(fields)
 	return mapper
 }
 
@@ -39,6 +19,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "title",
 		Type:               "text",
+		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
 		IncludeTermVectors: true,
@@ -46,18 +27,19 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		DocValues:          false,
 	})
 
+	// TODO - if we don't want title to be a keyword, we can use this
 	// set the title field to use keyword analyzer so it sorts by the whole phrase
 	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
-	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "title_sort",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              false, // not stored!
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
+	// mapper.AddFieldMapping(&mapping.FieldMapping{
+	// 	Name:               "title_sort",
+	// 	Type:               "text",
+	// 	Analyzer:           keyword.Name,
+	// 	Store:              false, // not stored!
+	// 	Index:              true,
+	// 	IncludeTermVectors: false,
+	// 	IncludeInAll:       false,
+	// 	DocValues:          false,
+	// })
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "description",

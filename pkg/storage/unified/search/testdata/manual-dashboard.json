@@ -33,17 +33,16 @@
   "rows": [
     {
       "cells": [
-        "ns/g/dash/aaa",
-        "test aaa",
+        "ns/g/dash/ccc",
+        "test ccc",
         [
-          "aa",
-          "bb"
+          "aa"
         ],
-        null
+        "xxx"
       ],
       "object": {
         "metadata": {
-          "name": "aaa",
+          "name": "ccc",
           "namespace": "ns",
           "creationTimestamp": null
         }
@@ -56,7 +55,7 @@
         [
           "aa"
         ],
-        null
+        "xxx"
       ],
       "object": {
         "metadata": {
@@ -68,16 +67,17 @@
     },
     {
       "cells": [
-        "ns/g/dash/ccc",
-        "test ccc",
+        "ns/g/dash/aaa",
+        "test aaa",
         [
-          "aa"
+          "aa",
+          "bb"
         ],
-        null
+        "xxx"
       ],
       "object": {
         "metadata": {
-          "name": "ccc",
+          "name": "aaa",
           "namespace": "ns",
           "creationTimestamp": null
         }
