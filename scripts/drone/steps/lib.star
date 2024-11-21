@@ -433,6 +433,7 @@ def upload_cdn_step(ver_mode, trigger = None, depends_on = ["grafana-server"]):
       ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
       trigger: a Drone trigger for the step.
         Defaults to None.
+      depends_on: names of steps that must run before this one will run.
 
     Returns:
       Drone step.
