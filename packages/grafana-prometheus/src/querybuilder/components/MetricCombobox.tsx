@@ -88,35 +88,27 @@ export function MetricCombobox({
   const asyncSelect = () => {
     return (
       <InputGroup>
-        <div
-          style={
-            metricsExplorerEnabled
-              ? { width: `calc(100% - 32px)`, display: 'flex', flexDirection: 'row' }
-              : { width: '100%' }
-          }
-        >
-          <Combobox
-            placeholder="Select metric"
-            width="auto"
-            minWidth={25}
-            options={loadOptions}
-            value={query.metric}
-            onChange={onComboboxChange}
-            createCustomValue
-          />
+        <Combobox
+          placeholder="Select metric"
+          width="auto"
+          minWidth={25}
+          options={loadOptions}
+          value={query.metric}
+          onChange={onComboboxChange}
+          createCustomValue
+        />
 
-          {metricsExplorerEnabled ? (
-            <Button
-              tooltip="Open metrics explorer"
-              aria-label="Open metrics explorer"
-              variant="secondary"
-              icon="book-open"
-              onClick={() => setMetricsModalOpen(true)}
-            />
-          ) : (
-            <></>
-          )}
-        </div>
+        {metricsExplorerEnabled ? (
+          <Button
+            tooltip="Open metrics explorer"
+            aria-label="Open metrics explorer"
+            variant="secondary"
+            icon="book-open"
+            onClick={() => setMetricsModalOpen(true)}
+          />
+        ) : (
+          <></>
+        )}
       </InputGroup>
     );
   };

@@ -6,7 +6,7 @@ import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -58,10 +58,9 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
       checkLlms();
     }
   }, [prometheusPromQAIL]);
-  const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.addaptToParent}>
+    <>
       {prometheusPromQAIL && showDrawer && (
         <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
           <PromQail
@@ -148,17 +147,8 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           showExplain={showExplain}
         />
       )}
-    </div>
+    </>
   );
-});
-
-const getStyles = () => ({
-  addaptToParent: css({
-    maxWidth: '100%',
-    '> div': {
-      maxWidth: '100%',
-    },
-  }),
 });
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';

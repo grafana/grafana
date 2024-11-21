@@ -114,11 +114,5 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         pointerEvents: 'none',
       },
     }),
-    autoSizeContainer: css({
-      maxWidth: '100%',
-      '> div': {
-        maxWidth: '100%',
-      },
-    }),
   };
 };
