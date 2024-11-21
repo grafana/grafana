@@ -75,7 +75,7 @@ The InfluxDB data source has three different types of query editors, each corres
 - [SQL](#sql-query-editor)
 - [Flux](#flux-query-editor)
 
-Editor options vary based on query language. 
+Editor options vary based on query language.
 
 ## InfluxQL query editor
 
@@ -105,7 +105,7 @@ If you use raw query mode, your query must include `WHERE $timeFilter`. You shou
 ### Match by regular expressions
 
 You can enter regular expressions for metric names or tag filter values.
-Wrap the regex pattern in forward slashes (`/`), as shown in this example:  `/measurement/`.
+Wrap the regex pattern in forward slashes (`/`), as shown in this example: `/measurement/`.
 
 Grafana automatically adjusts the filter tag condition to use the InfluxDB regex match condition operator (`=~`).
 
@@ -126,7 +126,7 @@ SELECT derivative(mean("value"), 10s) / 10 AS "REQ/s"
 FROM....
 ```
 
- You can also use a * in a SELECT statement to select all fields.
+You can also use a \* in a SELECT statement to select all fields.
 
 ```sql
 SELECT * FROM <measurement_name>
@@ -137,7 +137,7 @@ SELECT * FROM <measurement_name>
 To group results by a tag, specify the tag in the **GROUP BY** row:
 
 1. Click the **+ sign** in the GROUP BY row.
-1. Select a tag from the drop-down. 
+1. Select a tag from the drop-down.
 
 You can GROUP BY multiple options.
 
@@ -155,7 +155,7 @@ To remove a GROUP BY option click the **X icon** next to the option.
 
 You can also use the `[[tag_hostname]]` pattern replacement syntax.
 
-For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value for each legend value.  
+For example, entering the value `Host: [[tag_hostname]]` in the ALIAS BY field replaces it with the `hostname` tag value for each legend value.
 
 An example legend value is `Host: server1`.
 
@@ -243,7 +243,7 @@ To view the interpolated version of a query with the Query inspector, refer to [
 
 You can query and display log data from InfluxDB in [Explore](ref:explore) and in the dashboard [Logs panel](ref:logs).
 
-Select an InfluxDB data source in the Query editor.  Under the **Select measurement field** next to the **FROM** section, choose a measurement containing your log data, then choose the appropriate fields that will display the log message. Add any additional filters by clicking the **+ sign** next to the **WHERE** field. Add additional conditions in the GROUP BY, ORDER BY and the rest of the options.
+Select an InfluxDB data source in the Query editor. Under the **Select measurement field** next to the **FROM** section, choose a measurement containing your log data, then choose the appropriate fields that will display the log message. Add any additional filters by clicking the **+ sign** next to the **WHERE** field. Add additional conditions in the GROUP BY, ORDER BY and the rest of the options.
 
 After InfluxDB returns the results, the log panel displays log rows along with a bar chart. The x-axis represents time, while the y-axis shows the frequency or count.
 

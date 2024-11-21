@@ -49,7 +49,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/#variable-best-practices
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/variables/#variable-best-practices
-
 ---
 
 # InfluxDB template variables
@@ -59,7 +58,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 For additional information using variables and templates, refer to the following documentation:
 
 - [Variables](ref:variables)
-- [Templates](ref:variables) 
+- [Templates](ref:variables)
 - [Add and manage variables](ref:add-template-variables)
 - [Variable best practices](ref:variable-best-practices)
 
@@ -69,7 +68,7 @@ By adding a query template variable, you can write an InfluxDB metadata explorat
 
 For more information, refer to [Add a query variable](ref:add-template-variables-add-a-query-variable).
 
-To create a variable containing all values for the `hostname` tag,  use the following query format in the **Query** variable:
+To create a variable containing all values for the `hostname` tag, use the following query format in the **Query** variable:
 
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"

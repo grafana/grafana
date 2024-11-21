@@ -40,13 +40,13 @@ refs:
 
 {{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Grafana includes built-in support for InfluxDB. You do not have to install a plugin to add the InfluxDB data source. 
+Grafana includes built-in support for InfluxDB. You do not have to install a plugin to add the InfluxDB data source.
 
 Grafana offers multiple configuration options for the InfluxDB data source, including a choice of three query languages and a robust query editor that includes both a code editor and a visual query builder.
 
-## Get started with the InfluxDB data source 
+## Get started with the InfluxDB data source
 
-The following documents will help you get started with the InfluxDB data source in Grafana: 
+The following documents will help you get started with the InfluxDB data source in Grafana:
 
 - [Get started with Grafana and InfluxDB](/docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-influxdb/)
 - [Configure the InfluxDB data source](./configure-influxdb-data-source/)
