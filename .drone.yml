@@ -1454,9 +1454,6 @@ steps:
     && return 1; fi
   depends_on:
   - clone-enterprise
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
   image: golang:1.23.1-alpine
   name: swagger-gen
 trigger:
@@ -5957,6 +5954,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2b22ad423cdc62203f76d465c24d7f86a2f560fd0442ea3e69c9127bc994ef30
+hmac: 6c71ac450bdcb61dae545ceadfaa12862d451c2f9aeb7f73f48d79ec83b58f63
 
 ...

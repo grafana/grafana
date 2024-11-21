@@ -19,10 +19,6 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
-load(
-    "scripts/drone/vault.star",
-    "from_secret",
-)
 
 def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
@@ -31,9 +27,6 @@ def swagger_gen_step(ver_mode):
     return {
         "name": "swagger-gen",
         "image": images["go"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
         "commands": [
             "apk add --update git make",
             "make swagger-clean && make openapi3-gen",
