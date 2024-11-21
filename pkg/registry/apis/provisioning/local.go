@@ -162,6 +162,9 @@ func (r *localRepository) Create(ctx context.Context, path string, data []byte, 
 
 	path = filepath.Join(r.path, path)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			return err
+		}
 		return os.WriteFile(path, data, 0600)
 	}
 	return fmt.Errorf("file already exists")

@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"maps"
 	"net/http"
-	"slices"
+	"path/filepath"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -99,7 +98,7 @@ func (c *exportConnector) Connect(
 		folderIface := client.Resource(folderGVR).Namespace(ns)
 
 		// TODO: handle pagination
-		_, err = c.fetchFolderInfo(ctx, folderIface)
+		folders, err := c.fetchFolderInfo(ctx, folderIface)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to list folders: %w", err)))
 			return
@@ -130,10 +129,7 @@ func (c *exportConnector) Connect(
 				continue
 			}
 
-			folder := item.GetAnnotations()["grafana.app/folder"]
-			// TODO: Use folder to find where to put it
-			slog.InfoContext(ctx, "dashboard folder found",
-				"folder", folder)
+			folder := folders[item.GetAnnotations()["grafana.app/folder"]]
 
 			// TODO: Drop the metadata field before writing?
 			// TODO: Do we want this to export YAML instead maybe?
@@ -147,8 +143,7 @@ func (c *exportConnector) Connect(
 				return
 			}
 
-			// TODO: Create appropriate folder path
-			fileName := name + ".json"
+			fileName := filepath.Join(folder.CreatePath(), name+".json")
 			// TODO: Upsert
 			if err := repo.Create(ctx, fileName, json, "export of dashboard "+name+" in ns "+ns); err != nil {
 				slog.ErrorContext(ctx, "failed to write dashboard JSON to repository",
@@ -172,10 +167,22 @@ type folderExport struct {
 	Parent *folderExport
 }
 
+func (e *folderExport) CreatePath() string {
+	if e == nil {
+		return ""
+	}
+
+	if e.Parent == nil {
+		return e.Name
+	} else {
+		return filepath.Join(e.Parent.CreatePath(), e.Name)
+	}
+}
+
 func (c *exportConnector) fetchFolderInfo(
 	ctx context.Context,
 	iface dynamic.ResourceInterface,
-) ([]*folderExport, error) {
+) (map[string]*folderExport, error) {
 	folders := make(map[string]*folderExport)
 
 	// TODO: handle pagination
@@ -215,7 +222,7 @@ func (c *exportConnector) fetchFolderInfo(
 		folder.Parent = folders[parentUid]
 	}
 
-	return slices.Collect(maps.Values(folders)), nil
+	return folders, nil
 }
 
 var (
