@@ -34,6 +34,7 @@ func ProvideUnifiedStorageClient(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	authzc authz.Client,
+	docs resource.DocumentBuilderSupplier,
 ) (resource.ResourceClient, error) {
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
@@ -97,7 +98,7 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		server, err := sql.NewResourceServer(ctx, db, cfg, features, tracer, reg, authzc)
+		server, err := sql.NewResourceServer(ctx, db, cfg, features, docs, tracer, reg, authzc)
 		if err != nil {
 			return nil, err
 		}
