@@ -2,11 +2,9 @@ package search
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
 
@@ -18,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/authz"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -102,33 +99,17 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 	var err error
 	var index bleve.Index
 
-	// set the title field to use keyword analyzer so it sorts by the whole phrase
-	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
-	docMapping := bleve.NewDocumentMapping()
-	docMapping.AddFieldMappingsAt("title", bleve.NewKeywordFieldMapping())
-	docMapping.AddFieldMappingsAt("folder", bleve.NewKeywordFieldMapping())
-
 	gr := fmt.Sprintf("%s/%s", key.Group, key.Resource)
-	mapping := bleve.NewIndexMapping()
-	mapping.TypeField = "gr" // can it be for everything?
-	mapping.AddDocumentMapping(gr, docMapping)
-
-	// Custom fields do not always exist
-	if fields != nil {
-		for _, name := range fields.Fields() {
-			field := fields.Field(name)
-			fmt.Printf("TODO... add mapping for: %+v\n", field)
-		}
-	}
+	mapper := getBleveMappings(gr, fields)
 
 	if size > b.opts.FileThreshold {
 		dir := filepath.Join(b.opts.Root, key.Namespace, fmt.Sprintf("%s.%s", key.Resource, key.Group))
-		index, err = bleve.New(dir, mapping)
+		index, err = bleve.New(dir, mapper)
 		if err == nil {
 			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
 	} else {
-		index, err = bleve.NewMemOnly(mapping)
+		index, err = bleve.NewMemOnly(mapper)
 	}
 	if err != nil {
 		return nil, err
@@ -169,22 +150,6 @@ type bleveIndex struct {
 	// only valid in single thread
 	batch     *bleve.Batch
 	batchSize int // ??? not totally sure the units here
-}
-
-type bleveFlatDocument struct {
-	// The group/resource (essentially kind)
-	GR string `json:"gr"`
-
-	Title       string `json:"title"`
-	TitleSort   string `json:"title_sort"` // indexed with keyword, do not store!
-	Description string `json:"description,omitempty"`
-
-	Tags []string `json:"tags,omitempty"`
-
-	Labels map[string]string `json:"labels,omitempty"`
-	Folder string            `json:"folder,omitempty"`
-
-	Fields map[string]any `json:"fields,omitempty"`
 }
 
 // Write implements resource.DocumentIndex.
@@ -287,13 +252,10 @@ func (b *bleveIndex) Search(
 	response.QueryCost = res.Cost
 	response.MaxScore = res.MaxScore
 
-	// Convert the hits to a data frame
-	frame, err := hitsToFrame(searchrequest.Fields, res.Hits, req.Explain)
+	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("FRAME! %+v", frame)
 
 	// Write frame as JSON
 	//response.Frame, err = frame.MarshalJSON()
@@ -428,10 +390,10 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 
 	// Add the sort fields
 	for _, sort := range req.SortBy {
+		// use the parallel sort field
 		if sort.Field == "title" {
-			// ???? is this doing anything????
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   "title",
+				Field:   "title_sort",
 				Desc:    sort.Desc,
 				Type:    search.SortFieldAsString, // force for title????
 				Mode:    search.SortFieldDefault,  // ???
@@ -468,11 +430,6 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		})
 	}
 
-	if true { // debugging, what is happening!!
-		jj, _ := json.MarshalIndent(searchrequest.Sort, "", "  ")
-		fmt.Printf("SORT: %s\n", jj)
-	}
-
 	return searchrequest, nil
 }
 
@@ -500,138 +457,81 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	)
 }
 
+func (b *bleveIndex) getAllFields() []*resource.ResourceTableColumnDefinition {
+	return []*resource.ResourceTableColumnDefinition{
+		b.standard.Field(resource.SEARCH_FIELD_ID),
+		b.standard.Field(resource.SEARCH_FIELD_TITLE),
+		b.standard.Field(resource.SEARCH_FIELD_TAGS),
+		b.standard.Field(resource.SEARCH_FIELD_FOLDER),
+	}
+}
+
 func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
 	fields := []*resource.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
+		if name == "_all" {
+			fields = b.getAllFields()
+			break
+		}
+
 		f := b.standard.Field(name)
 		if f == nil && b.fields != nil {
 			f = b.fields.Field(name)
 		}
 		if f == nil {
-			return nil, fmt.Errorf("unknown field: " + name)
+			continue // OK for now
+			//			return nil, fmt.Errorf("unknown response field: " + name)
 		}
 	}
 	if explain {
 		fields = append(fields, b.standard.Field(resource.SEARCH_FIELD_EXPLAIN))
 	}
 
+	builder, err := resource.NewTableBuilder(fields)
+	if err != nil {
+		return nil, err
+	}
+	encoders := builder.Encoders()
+
 	table := &resource.ResourceTable{
 		Columns: fields,
 		Rows:    make([]*resource.ResourceTableRow, hits.Len()),
 	}
-	for i, match := range hits {
+	for rowID, match := range hits {
 		row := &resource.ResourceTableRow{
-			Key: &resource.ResourceKey{},
-			Cells: make([]any, 0, len(fields)),
+			Key:   &resource.ResourceKey{},
+			Cells: make([][]byte, len(fields)),
 		}
+		table.Rows[rowID] = row
 
-		key := &resource.ResourceKey{}
-		err := key.ReadSearchID(match.ID)
+		err := row.Key.ReadSearchID(match.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		cells := 
 		for i, f := range fields {
+			if f.Name == resource.SEARCH_FIELD_ID {
+				row.Cells[i] = []byte(match.ID)
+				continue
+			}
+
 			// QUICK QUICK... more options yes
 			v := match.Fields[f.Name]
-			cells[i] = v
+			if v != nil {
+				// Encode the value to protobuf
+				row.Cells[i], err = encoders[i](v)
+				if err != nil {
+					return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v", rowID, i, v)
+				}
+			}
 		}
-
 	}
+
+	// ttt, err := builder.ToK8s()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Printf("TTT %+v\n", ttt)
+
 	return table, nil
-}
-
-func hitsToFrame(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*data.Frame, error) {
-	// HACK, for now...
-	// it looks like array with one value is a string,
-	// but an array with two is an array.  So discovering the type
-	// using `data.FieldTypeFor(v)` is not a great long term solution
-	forceJSONArray := map[string]bool{
-		"tags": true,
-	}
-
-	size := hits.Len()
-	frame := data.NewFrame("")
-	for _, fname := range selectFields {
-		var field *data.Field
-		isJSON := false // for arrays
-		isForceJSONArray := forceJSONArray[fname]
-
-		for row, hit := range hits {
-			v, ok := hit.Fields[fname]
-			if ok {
-				if field == nil {
-					// Add a field if any value exists
-					ftype := data.FieldTypeFor(v)
-					if ftype == data.FieldTypeUnknown || isForceJSONArray {
-						ftype = data.FieldTypeJSON
-						isJSON = true
-					} else if row > 0 {
-						ftype = ftype.NullableType()
-					}
-
-					field = data.NewFieldFromFieldType(ftype, size)
-					field.Name = fname
-				}
-
-				// Use json to support multi-valued fields
-				if isJSON {
-					if isForceJSONArray {
-						// currently single values are not arrays
-						k := reflect.TypeOf(v).Kind()
-						if !(k == reflect.Array || k == reflect.Slice) {
-							v = []any{v}
-						}
-					}
-					jj, _ := json.Marshal(v)
-					field.SetConcrete(row, json.RawMessage(jj))
-				} else {
-					field.SetConcrete(row, v)
-				}
-			} else {
-				// Swap nullable type if missing
-				if field != nil && !field.Nullable() && !isJSON {
-					tmp := data.NewFieldFromFieldType(field.Type().NullableType(), size)
-					for i := 0; i < row; i++ {
-						tmp.SetConcrete(i, field.At(i)) // replace the
-					}
-					field = tmp
-				}
-			}
-		}
-
-		if field != nil {
-			// Do not include all empty strings
-			if field.Type() == data.FieldTypeString {
-				allEmpty := true
-				for i := 0; i < size; i++ {
-					if field.At(i) != "" {
-						allEmpty = false
-						break
-					}
-				}
-				if allEmpty {
-					continue
-				}
-			}
-			frame.Fields = append(frame.Fields, field)
-		}
-	}
-
-	// Add the explain field
-	if explain {
-		field := data.NewFieldFromFieldType(data.FieldTypeJSON, size)
-		field.Name = "explain"
-		for row, hit := range hits {
-			if hit.Expl != nil {
-				js, _ := json.Marshal(hit.Expl)
-				if len(js) > 0 {
-					field.Set(row, json.RawMessage(js))
-				}
-			}
-		}
-	}
-
-	return frame, nil
 }

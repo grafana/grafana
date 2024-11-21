@@ -1,0 +1,65 @@
+{
+  "metadata": {},
+  "columnDefinitions": [
+    {
+      "name": "_id",
+      "type": "string",
+      "format": "",
+      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
+      "priority": 0
+    },
+    {
+      "name": "title",
+      "type": "string",
+      "format": "",
+      "description": "Display name for the resource",
+      "priority": 0
+    },
+    {
+      "name": "tags",
+      "type": "string",
+      "format": "",
+      "description": "Unique tags",
+      "priority": 0
+    },
+    {
+      "name": "folder",
+      "type": "string",
+      "format": "",
+      "description": "Kubernetes name for the folder",
+      "priority": 0
+    }
+  ],
+  "rows": [
+    {
+      "cells": [
+        "ns/g/folder/xxx",
+        "test xxx",
+        null,
+        null
+      ],
+      "object": {
+        "metadata": {
+          "name": "xxx",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/g/folder/yyy",
+        "test yyy",
+        null,
+        null
+      ],
+      "object": {
+        "metadata": {
+          "name": "yyy",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    }
+  ]
+}

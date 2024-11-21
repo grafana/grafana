@@ -292,6 +292,20 @@ func StandardSearchFields() SearchableDocumentFields {
 					FreeText: true,
 				},
 			},
+			{
+				Name:        SEARCH_FIELD_TAGS,
+				Type:        ResourceTableColumnDefinition_STRING,
+				IsArray:     true,
+				Description: "Unique tags",
+				Properties: &ResourceTableColumnDefinition_Properties{
+					Filterable: true,
+				},
+			},
+			{
+				Name:        SEARCH_FIELD_FOLDER,
+				Type:        ResourceTableColumnDefinition_STRING,
+				Description: "Kubernetes name for the folder",
+			},
 		})
 		if err != nil {
 			panic("failed to initialize standard search fields")

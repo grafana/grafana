@@ -107,6 +107,8 @@ type TableBuilder struct {
 	hasDuplicateNames bool
 }
 
+type ResourceColumnEncoder = func(v any) ([]byte, error)
+
 func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, error) {
 	table := &TableBuilder{
 		ResourceTable: ResourceTable{
@@ -129,24 +131,13 @@ func NewTableBuilder(cols []*ResourceTableColumnDefinition) (*TableBuilder, erro
 	return table, err
 }
 
-func (x *TableBuilder) AddRowCells(key *ResourceKey, rv int64, cells []any) error {
-	row := &ResourceTableRow{
-		Key:             key,
-		ResourceVersion: rv,
-		Cells:           make([][]byte, len(x.Columns)),
+func (x *TableBuilder) Encoders() []ResourceColumnEncoder {
+	encoders := make([]ResourceColumnEncoder, len(x.Columns))
+	for i, f := range x.Columns {
+		v := x.lookup[f.Name]
+		encoders[i] = v.Encode
 	}
-
-	for i, v := range cells {
-		column = x.lookup
-		b, err := column.Encode(v)
-		if err != nil {
-			return err
-		}
-		row.Cells[column.index] = b
-	}
-
-	x.Rows = append(x.Rows, row)
-	return nil
+	return encoders
 }
 
 func (x *TableBuilder) AddRow(key *ResourceKey, rv int64, vals map[string]any) error {
