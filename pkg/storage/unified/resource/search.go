@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type NamespacedResource struct {
@@ -27,26 +28,26 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer   trace.Tracer
-	log      *slog.Logger
-	storage  StorageBackend
-	search   SearchBackend
-	builders *builderCache
-
+	tracer      trace.Tracer
+	log         *slog.Logger
+	storage     StorageBackend
+	search      SearchBackend
+	builders    *builderCache
 	initWorkers int
 }
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
-	// OK to skip search for now
-	if opts.Backend == nil {
-		return nil, nil // fmt.Errorf("missing search backend")
+	// TODO? skip if missing backend????
+	if opts.WorkerThreads < 1 {
+		opts.WorkerThreads = 1
 	}
 
 	support = &searchSupport{
-		tracer:  tracer,
-		storage: storage,
-		search:  opts.Backend,
-		log:     slog.Default().With("logger", "resource-search"),
+		tracer:      tracer,
+		storage:     storage,
+		search:      opts.Backend,
+		log:         slog.Default().With("logger", "resource-search"),
+		initWorkers: opts.WorkerThreads,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -58,6 +59,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	if support.builders != nil {
 		support.builders.blob = blob
 	}
+
 	return support, err
 }
 
@@ -72,9 +74,15 @@ func (s *searchSupport) init(ctx context.Context) error {
 		return err
 	}
 
+	// Hardcoded for now... should come from the query
+	kinds := []schema.GroupResource{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Group: "playlist.grafana.app", Resource: "playlists"},
+	}
+
+	totalBatchesIndexed := 0
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
-	totalBatchesIndexed := 0
 
 	// Prepare all the (large) indexes
 	// TODO, threading and query real information:
@@ -82,16 +90,15 @@ func (s *searchSupport) init(ctx context.Context) error {
 	//   GROUP BY "group", "resource", "namespace"
 	//   ORDER BY resource_version desc;
 	for _, ns := range namespaces {
-		for _, gv := range s.builders.kinds() {
+		for _, gr := range kinds {
 			group.Go(func() error {
-				s.log.Debug("initializing search index", "namespace", ns, "gv", gv)
+				s.log.Debug("initializing search index", "namespace", ns, "gr", gr)
 				totalBatchesIndexed++
-
 				_, _, err = s.build(ctx, NamespacedResource{
-					Group:     gv.Group,
-					Resource:  gv.Resource,
+					Group:     gr.Group,
+					Resource:  gr.Resource,
 					Namespace: ns,
-				})
+				}, 10, 0) // TODO, approximate size
 				return err
 			})
 		}
@@ -108,7 +115,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	return nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource) (any, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (any, int64, error) {
 	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -117,7 +124,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource) (any,
 		return nil, 0, err
 	}
 
-	fmt.Printf("TODO, build %s // %+v\n", nsr.Namespace, builder)
+	fmt.Printf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder)
 
 	return nil, 0, nil
 }
@@ -164,20 +171,6 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 		g[b.GroupResource.Resource] = b
 	}
 	return cache, nil
-}
-
-// hack for now... iterate the registered kinds
-func (s *builderCache) kinds() []NamespacedResource {
-	kinds := make([]NamespacedResource, 10)
-	for _, g := range s.lookup {
-		for _, r := range g {
-			kinds = append(kinds, NamespacedResource{
-				Group:    r.GroupResource.Group,
-				Resource: r.GroupResource.Resource,
-			})
-		}
-	}
-	return kinds
 }
 
 // context is typically background.  Holds an LRU cache for a

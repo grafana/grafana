@@ -130,6 +130,9 @@ type SearchOptions struct {
 
 	// The supported resource types
 	Resources DocumentBuilderSupplier
+
+	// How many threads should build indexes
+	WorkerThreads int
 }
 
 type ResourceServerOptions struct {
@@ -237,9 +240,15 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:      cancel,
 	}
 
-	var err error
-	s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
-	return s, err
+	if opts.Search.Resources != nil {
+		var err error
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return s, nil
 }
 
 var _ ResourceServer = &server{}
@@ -282,6 +291,11 @@ func (s *server) Init(ctx context.Context) error {
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
+		}
+
+		// initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.initErr = s.search.init(ctx)
 		}
 
 		if s.initErr != nil {
