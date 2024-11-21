@@ -72,7 +72,8 @@ refs:
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
-    - pattern: /docs/grafana-cloud/connect-externally-hosted/data-sources/
+    - pattern: /docs/grafana-cloud/
+    - destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   compatible-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
