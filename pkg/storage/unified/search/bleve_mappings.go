@@ -30,23 +30,12 @@ func (d bleveFlatDocument) Type() string {
 
 func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMapping {
 	mapper := bleve.NewIndexMapping()
-	// mapper.TypeField = "gr"
 	mapper.AddDocumentMapping(kind, getBleveDocMappings(fields))
 	return mapper
 }
 
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
-	// mapper.AddFieldMapping(&mapping.FieldMapping{
-	// 	Name:               "gr", // will be the same in the entire index???
-	// 	Type:               "text",
-	// 	Analyzer:           keyword.Name,
-	// 	Store:              true,
-	// 	Index:              true,
-	// 	IncludeTermVectors: false,
-	// 	IncludeInAll:       false,
-	// 	DocValues:          false,
-	// })
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "title",
 		Type:               "text",
