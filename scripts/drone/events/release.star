@@ -3,15 +3,15 @@ This module returns all the pipelines used in the event of a release along with 
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/github.star",
     "github_app_generate_token_step",
     "github_app_pipeline_volumes",
     "github_app_step_volumes",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
 )
 load(
     "scripts/drone/steps/lib.star",
