@@ -2406,6 +2406,18 @@
     },
     {
       "metadata": {
+        "name": "onPremToCloudMigrationsAuthApiMig",
+        "resourceVersion": "1732033809064",
+        "creationTimestamp": "2024-11-19T16:30:09Z"
+      },
+      "spec": {
+        "description": "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
