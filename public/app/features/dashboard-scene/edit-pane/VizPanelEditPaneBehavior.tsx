@@ -12,6 +12,7 @@ import {
   PanelFrameTitleInput,
 } from '../panel-edit/getPanelFrameOptions';
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 export class VizPanelEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
@@ -108,9 +109,8 @@ export class VizPanelEditPaneBehavior extends SceneObjectBase implements Editabl
   }
 
   public onDelete = () => {
-    // TODO this should just fetch parent layout manager
-    const dashboard = getDashboardSceneFor(this);
-    dashboard.removePanel(this.getPanel());
+    const layout = dashboardSceneGraph.getLayoutManagerFor(this);
+    layout.removePanel(this.getPanel());
   };
 
   public renderActions(): React.ReactNode {

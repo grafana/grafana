@@ -19,6 +19,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -281,3 +282,16 @@ export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivat
  * Useful when rendering a scene object out of context of it's parent
  */
 export const activateInActiveParents = activateSceneObjectAndParentTree;
+
+export function getLayoutManagerFor(sceneObject: SceneObject): DashboardLayoutManager {
+  let parent = sceneObject.parent;
+
+  while (parent) {
+    if (isDashboardLayoutManager(parent)) {
+      return parent;
+    }
+    parent = sceneObject.parent;
+  }
+
+  throw new Error('Could not find layout manager for scene object');
+}

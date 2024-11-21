@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -50,16 +50,19 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     return 'Row';
   }
 
-  public onDelete() {
+  public onDelete = () => {
     const layout = sceneGraph.getAncestor(this, RowsLayoutManager);
     layout.removeRow(this);
-  }
+  };
 
   public renderActions(): React.ReactNode {
     return (
       <>
         <Button size="sm" variant="secondary">
           Copy
+        </Button>
+        <Button size="sm" variant="primary" onClick={this.onAddPanel} fill="outline">
+          Add panel
         </Button>
         <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
           Delete
@@ -98,8 +101,8 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     const ref = useRef<HTMLDivElement>(null);
 
     return (
-      <div className={styles.wrapper} ref={ref} style={{ flexGrow: isCollapsed ? 0 : 1 }}>
-        <div className={styles.rowHeader}>
+      <div className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed)} ref={ref}>
+        <div className={cx(styles.rowHeader, isCollapsed && styles.rowCollapsed)}>
           <button
             onClick={model.onCollapseToggle}
             className={styles.rowTitleButton}
@@ -131,7 +134,6 @@ function getStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(0, 0, 1, 0),
       alignItems: 'center',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-      paddingBottom: theme.spacing(1),
 
       '&:hover, &:focus-within': {
         '& > div': {
@@ -170,6 +172,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       width: '100%',
+      flexGrow: 1,
+    }),
+    wrapperCollapsed: css({
+      flexGrow: 0,
     }),
     rowActions: css({
       display: 'flex',

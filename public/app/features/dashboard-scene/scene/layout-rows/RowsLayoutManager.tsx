@@ -14,6 +14,8 @@ interface RowsLayoutManagerState extends SceneObjectState {
 }
 
 export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> implements DashboardLayoutManager {
+  public isDashboardLayoutManager: true = true;
+
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {}
@@ -34,10 +36,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     return 0;
   }
 
-  public removePanel(panel: VizPanel) {
-    //const element = panel.parent;
-    //this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
-  }
+  public removePanel(panel: VizPanel) {}
 
   public removeRow(row: RowItem) {
     this.setState({

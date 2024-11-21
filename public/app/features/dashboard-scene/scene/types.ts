@@ -8,6 +8,8 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
  * Dealing with all the state management and editing of the layout
  */
 export interface DashboardLayoutManager extends SceneObject {
+  /** Marks it as a DashboardLayoutManager */
+  isDashboardLayoutManager: true;
   /**
    * Notify the layout manager that the edit mode has changed
    * @param isEditing
@@ -52,6 +54,10 @@ export interface DashboardLayoutManager extends SceneObject {
    * Renders options and layout actions
    */
   getOptions?(): OptionsPaneItemDescriptor[];
+}
+
+export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {
+  return 'isDashboardLayoutManager' in obj;
 }
 
 /**
@@ -121,11 +127,11 @@ export class DashboardRepeatsProcessedEvent extends BusEventWithPayload<Dashboar
  */
 export interface EditableDashboardElement {
   /**
-   * Marks this object as a element that can be selected and edited directly on the canvas
+   * Marks this object as an element that can be selected and edited directly on the canvas
    */
   isEditableDashboardElement: true;
   /**
-   * Hook that returns edit pane options
+   * Hook that returns edit pane optionsß
    */
   useEditPaneOptions(): OptionsPaneCategoryDescriptor[];
   /**

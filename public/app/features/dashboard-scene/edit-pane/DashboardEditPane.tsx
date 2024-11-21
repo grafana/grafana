@@ -161,9 +161,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       zIndex: theme.zIndex.modal,
       boxShadow: theme.shadows.z3,
-    }),
-    selected: css({
-      boxShadow: `1px 1px ${theme.colors.primary.border}, -1px -1px ${theme.colors.primary.border}`,
+      overflowY: 'auto',
     }),
   };
 }

@@ -8,18 +8,14 @@ import {
   sceneUtils,
   SceneComponentProps,
 } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
-import { Trans } from 'app/core/internationalization';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
-  getDefaultVizPanel,
 } from '../../utils/utils';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { RowActions } from '../row-actions/RowActions';
@@ -38,6 +34,8 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  public isDashboardLayoutManager: true = true;
+
   public editModeChanged(isEditing: boolean): void {
     this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
     forceRenderChildren(this.state.grid, true);

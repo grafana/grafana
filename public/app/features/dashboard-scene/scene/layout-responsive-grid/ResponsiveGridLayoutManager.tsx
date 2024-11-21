@@ -16,6 +16,8 @@ export class ResponsiveGridLayoutManager
   extends SceneObjectBase<ResponsiveGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  public isDashboardLayoutManager: true = true;
+
   public editModeChanged(isEditing: boolean): void {}
 
   public addPanel(vizPanel: VizPanel): void {
