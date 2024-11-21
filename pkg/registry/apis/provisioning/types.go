@@ -29,6 +29,19 @@ func (f UndoFunc) Chain(ctx context.Context, next UndoFunc) UndoFunc {
 	}
 }
 
+type FileInfo struct {
+	// Path to the file on disk
+	Path string
+	// The raw bytes
+	Data []byte
+	// The git branch or reference commit
+	Ref string
+	// The git hash for a given file
+	Hash string
+	// When was the file changed (if known)
+	Modified *metav1.Time
+}
+
 type Repository interface {
 	// The saved object
 	Config() *provisioning.Repository
@@ -43,7 +56,7 @@ type Repository interface {
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
-	Read(ctx context.Context, path string, commit string) ([]byte, error)
+	Read(ctx context.Context, path string, ref string) (*FileInfo, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
@@ -98,7 +111,7 @@ func (r *unknownRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *unknownRepository) Read(ctx context.Context, path string, commit string) ([]byte, error) {
+func (r *unknownRepository) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",

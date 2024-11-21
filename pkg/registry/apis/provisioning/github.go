@@ -91,9 +91,8 @@ func (r *githubRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *githubRepository) Read(ctx context.Context, filePath string, commit string) ([]byte, error) {
-	ref := commit
-	if commit == "" {
+func (r *githubRepository) Read(ctx context.Context, filePath string, ref string) (*FileInfo, error) {
+	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
 
@@ -118,8 +117,12 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, commit str
 	if err != nil {
 		return nil, fmt.Errorf("get content: %w", err)
 	}
-
-	return []byte(data), nil
+	return &FileInfo{
+		Path: filePath,
+		Ref:  ref,
+		Data: []byte(data),
+		Hash: content.GetSHA(),
+	}, nil
 }
 
 func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
@@ -255,30 +258,30 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 		r.logger.Info("process commit", "commit", commit.GetID(), "message", commit.GetMessage())
 
 		for _, file := range commit.Added {
-			resource, err := r.Read(ctx, file, commit.GetID())
+			info, err := r.Read(ctx, file, commit.GetID())
 			if err != nil {
 				return fmt.Errorf("read added resource: %w", err)
 			}
 
-			r.logger.Info("added file", "file", file, "resource", string(resource), "commit", commit.GetID())
+			r.logger.Info("added file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Modified {
-			resource, err := r.Read(ctx, file, commit.GetID())
+			info, err := r.Read(ctx, file, commit.GetID())
 			if err != nil {
 				return fmt.Errorf("read modified resource: %w", err)
 			}
 
-			r.logger.Info("modified file", "file", file, "resource", string(resource), "commit", commit.GetID())
+			r.logger.Info("modified file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
 		}
 
 		for _, file := range commit.Removed {
-			resource, err := r.Read(ctx, file, beforeRef)
+			info, err := r.Read(ctx, file, beforeRef)
 			if err != nil {
 				return fmt.Errorf("read removed resource: %w", err)
 			}
 
-			r.logger.Info("removed file", "file", file, "resource", string(resource), "commit", commit.GetID())
+			r.logger.Info("removed file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
 		}
 
 		beforeRef = commit.GetID()

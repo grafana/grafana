@@ -395,25 +395,38 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"commit": {
+					"ref": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The commit hash (if exists)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"resource": {
+					"hash": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Resource from the upstream repository",
+							Description: "The repo hash value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timestamp": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The modified time in the remote file system",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The raw resource body",
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
-				Required: []string{"resource"},
+				Required: []string{"value"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"},
+			"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured", "k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 

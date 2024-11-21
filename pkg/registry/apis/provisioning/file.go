@@ -130,20 +130,21 @@ func (s *readConnector) getValidatedBody(_ context.Context, data []byte) (*unstr
 }
 
 func (s *readConnector) doRead(ctx context.Context, repo Repository, path string, commit string) (*provisioning.ResourceWrapper, error) {
-	data, err := repo.Read(ctx, path, commit)
+	info, err := repo.Read(ctx, path, commit)
 	if err != nil {
 		return nil, err
 	}
 
-	obj, _, err := s.getValidatedBody(ctx, data)
+	obj, _, err := s.getValidatedBody(ctx, info.Data)
 	if err != nil {
 		return nil, err
 	}
-
 	return &provisioning.ResourceWrapper{
-		Path:   path,
-		Commit: commit,
-		Resource: v0alpha1.Unstructured{
+		Path:      info.Path,
+		Ref:       info.Ref,
+		Hash:      info.Hash,
+		Timestamp: info.Modified,
+		Value: v0alpha1.Unstructured{
 			Object: obj.Object,
 		},
 	}, nil

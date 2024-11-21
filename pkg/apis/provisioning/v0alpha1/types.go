@@ -150,10 +150,16 @@ type ResourceWrapper struct {
 	Path string `json:"path,omitempty"`
 
 	// The commit hash (if exists)
-	Commit string `json:"commit,omitempty"`
+	Ref string `json:"ref,omitempty"`
 
-	// Resource from the upstream repository
-	Resource common.Unstructured `json:"resource"`
+	// The repo hash value
+	Hash string `json:"hash,omitempty"`
+
+	// The modified time in the remote file system
+	Timestamp *metav1.Time `json:"timestamp,omitempty"`
+
+	// The raw resource body
+	Value common.Unstructured `json:"value"`
 }
 
 // Dummy object to return for webhooks
