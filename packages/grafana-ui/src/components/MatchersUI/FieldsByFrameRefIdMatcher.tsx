@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { DataFrame, getFrameDisplayName, FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
 
-import { Select } from '../Select/Select';
+import { MultiSelect, Select } from '../Select/Select';
 
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
@@ -69,6 +69,82 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   }
   return (
     <Select
+      options={listOfRefIds}
+      onChange={onFilterChange}
+      isClearable={true}
+      placeholder={placeholder ?? 'Select query refId'}
+      value={currentValue}
+    />
+  );
+}
+
+const recoverMultiRefIdMissing = (
+  newRefIds: Array<SelectableValue<string>>,
+  oldRefIds: Array<SelectableValue<string>>,
+  previousValue: Array<SelectableValue<string>> | undefined
+): Array<SelectableValue<string>> | undefined => {
+  if (!previousValue || !previousValue.length) {
+    return;
+  }
+  // Previously selected value is missing from the new list.
+  // Find the value that is in the new list but isn't in the old list
+  const changedTo = newRefIds.filter((newRefId) => {
+    return oldRefIds.some((oldRefId) => {
+      return newRefId === oldRefId;
+    });
+  });
+
+  if (changedTo.length) {
+    // Found the new value, we assume the old value changed to this one, so we'll use it
+    return changedTo;
+  }
+  return;
+};
+
+export interface MultiProps {
+  value?: string; // 1 or more refID in reqExp format /A|B|C/
+  data: DataFrame[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+}
+
+export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiProps) {
+  const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
+
+  const [priorSelectionState, updatePriorSelectionState] = useState<{
+    refIds: SelectableValue[];
+    value: Array<SelectableValue<string>> | undefined;
+  }>({
+    refIds: [],
+    value: undefined,
+  });
+
+  const currentValue = useMemo(() => {
+    const extractedRefIds = value?.slice(1, -1).split('|');
+    const matchedRefIds = listOfRefIds.filter((refId) => extractedRefIds?.includes(refId.value || ''));
+
+    if (matchedRefIds.length) {
+      return matchedRefIds;
+    }
+
+    return recoverMultiRefIdMissing(listOfRefIds, priorSelectionState.refIds, priorSelectionState.value);
+  }, [value, listOfRefIds, priorSelectionState]);
+
+  const onFilterChange = useCallback(
+    (v: Array<SelectableValue<string>>) => {
+      onChange(v.map((v) => v.value!));
+    },
+    [onChange]
+  );
+
+  if (listOfRefIds !== priorSelectionState.refIds || currentValue?.length !== priorSelectionState.value?.length) {
+    updatePriorSelectionState({
+      refIds: listOfRefIds,
+      value: currentValue,
+    });
+  }
+  return (
+    <MultiSelect
       options={listOfRefIds}
       onChange={onFilterChange}
       isClearable={true}
