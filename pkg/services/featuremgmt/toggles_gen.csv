@@ -47,7 +47,7 @@ disableSSEDataplane,experimental,@grafana/observability-metrics,false,false,fals
 alertStateHistoryLokiSecondary,experimental,@grafana/alerting-squad,false,false,false
 alertStateHistoryLokiPrimary,experimental,@grafana/alerting-squad,false,false,false
 alertStateHistoryLokiOnly,experimental,@grafana/alerting-squad,false,false,false
-unifiedRequestLog,experimental,@grafana/grafana-backend-group,false,false,false
+unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/grafana-as-code,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true

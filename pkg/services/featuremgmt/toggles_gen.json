@@ -3374,13 +3374,18 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "resourceVersion": "1731688509416",
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-15 16:35:09.416681 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes error logs to the request logger",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-group"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-backend-group",
+        "hideFromAdminPage": true,
+        "expression": "true"
       }
     },
     {
