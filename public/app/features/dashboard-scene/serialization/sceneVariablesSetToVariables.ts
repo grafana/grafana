@@ -74,6 +74,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
+        allowCustomValue: variable.state.allowCustomValue,
         skipUrlSync: variable.state.skipUrlSync,
       });
     } else if (sceneUtils.isCustomVariable(variable)) {
@@ -90,6 +91,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
@@ -107,6 +109,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
@@ -175,6 +178,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         name: variable.state.name,
         type: 'adhoc',
         datasource: variable.state.datasource,
+        allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,
