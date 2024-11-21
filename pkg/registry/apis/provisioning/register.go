@@ -158,6 +158,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
+		client: b.client,
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage

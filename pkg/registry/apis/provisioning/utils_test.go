@@ -71,7 +71,7 @@ spec:
 
 		require.NoError(t, err)
 		require.Equal(t, &schema.GroupVersionKind{
-			Group:   "dashboards.grafana.app",
+			Group:   "dashboard.grafana.app",
 			Version: "v0alpha1",
 			Kind:    "Dashboard",
 		}, gvk)

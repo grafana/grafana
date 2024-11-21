@@ -1,9 +1,7 @@
 package provisioning
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,18 +9,15 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type filesConnector struct {
 	getter RepoGetter
+	client *resourceClient
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -93,9 +88,10 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		ref := r.URL.Query().Get("ref")
 		message := r.URL.Query().Get("message")
 
+		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			obj, err = s.doRead(r.Context(), repo, filePath, ref)
+			obj, err, code = s.doRead(r.Context(), repo, filePath, ref)
 		case http.MethodPost:
 			obj, err = s.doWrite(r.Context(), false, repo, filePath, ref, message, r)
 		case http.MethodPut:
@@ -110,44 +106,48 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			responder.Error(err)
 			return
 		}
-		responder.Object(200, obj)
+		responder.Object(code, obj)
 	}), nil
 }
 
-func (s *filesConnector) getValidatedBody(_ context.Context, data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
-	obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(data))
-	if err != nil {
-		obj, gvk, err = FallbackResourceLoader(data)
-		if err != nil {
-			return nil, nil, err
-		}
+func (s *filesConnector) getParser(repo Repository) (*fileParser, error) {
+	ns := repo.Config().Namespace
+	if ns == "" {
+		return nil, fmt.Errorf("missing namespace")
 	}
-
-	// TODO? dry run??? and add validation errors/warnings?
-	fmt.Printf("TODO, get client and then dry run... %+v\n", gvk)
-
-	return obj, gvk, err
+	client, err := s.client.Client(ns) // As system user
+	if err != nil {
+		return nil, err
+	}
+	return &fileParser{
+		namespace: ns,
+		repo:      repo,
+		client:    client,
+		kinds:     newKindsLookup(client),
+	}, nil
 }
 
-func (s *filesConnector) doRead(ctx context.Context, repo Repository, path string, ref string) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doRead(ctx context.Context, repo Repository, path string, ref string) (*provisioning.ResourceWrapper, error, int) {
 	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err
+		return nil, err, 0
 	}
 
-	obj, _, err := s.getValidatedBody(ctx, info.Data)
+	parser, err := s.getParser(repo)
 	if err != nil {
-		return nil, err
+		return nil, err, 0
 	}
-	return &provisioning.ResourceWrapper{
-		Path:      info.Path,
-		Ref:       info.Ref,
-		Hash:      info.Hash,
-		Timestamp: info.Modified,
-		Value: v0alpha1.Unstructured{
-			Object: obj.Object,
-		},
-	}, nil
+
+	parsed, err := parser.parse(ctx, info, true)
+	if err != nil {
+		return nil, err, 0
+	}
+
+	code := http.StatusOK
+	if len(parsed.errors) > 0 {
+		code = http.StatusNotAcceptable
+	}
+	return parsed.AsResourceWrapper(), nil, code
 }
 
 func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, ref string, message string, req *http.Request) (runtime.Object, error) {
@@ -158,37 +158,31 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
 	}
 
-	defer req.Body.Close()
+	defer func() { _ = req.Body.Close() }()
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	obj, _, err := s.getValidatedBody(ctx, data)
+	info := &FileInfo{
+		Data: data,
+		Path: path,
+		Ref:  ref,
+	}
+
+	parser, err := s.getParser(repo)
 	if err != nil {
 		return nil, err
 	}
 
-	switch filepath.Ext(path) {
-	// JSON pretty print
-	case ".json":
-		data, err = json.MarshalIndent(obj, "", "  ")
-		if err != nil {
-			return nil, err
-		}
+	parsed, err := parser.parse(ctx, info, true)
+	if err != nil {
+		return nil, err
+	}
 
-	// Write the value as yaml
-	case ".yaml", ".yml":
-		buff := bytes.NewBuffer(make([]byte, 0, 1024))
-		err = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
-			Encode(obj, buff)
-		if err != nil {
-			return nil, err
-		}
-		data = buff.Bytes()
-
-	default:
-		return nil, fmt.Errorf("unexpected format")
+	data, err = parsed.ToSaveBytes()
+	if err != nil {
+		return nil, err
 	}
 
 	if update {
@@ -200,9 +194,9 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 		return nil, err
 	}
 
-	fmt.Printf("TODO! trigger sync for this file we just wrote... %s\n", path)
+	fmt.Printf("TODO! write the file into real storage %s\n", path)
 
-	return obj, err
+	return parsed.obj, err
 }
 
 func (s *filesConnector) doDelete(ctx context.Context, repo Repository, path string, ref string, message string) (runtime.Object, error) {

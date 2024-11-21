@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/grafana/grafana/pkg/apis/dashboard"
 )
 
 func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
@@ -36,7 +38,7 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 			value["schemaVersion"] != nil &&
 			value["tags"] != nil {
 			gvk := &schema.GroupVersionKind{
-				Group:   "dashboards.grafana.app",
+				Group:   dashboard.GROUP,
 				Version: "v0alpha1",
 				Kind:    "Dashboard"}
 			return &unstructured.Unstructured{

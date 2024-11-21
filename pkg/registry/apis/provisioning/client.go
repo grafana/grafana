@@ -15,9 +15,6 @@ type resourceClient struct {
 	identities auth.BackgroundIdentityService
 	client     map[string]*dynamic.DynamicClient
 	clientMu   sync.Mutex
-
-	kinds  map[schema.GroupVersionKind]schema.GroupVersionResource
-	kindMu sync.Mutex
 }
 
 func newResourceClient(identities auth.BackgroundIdentityService) *resourceClient {
@@ -49,22 +46,40 @@ func (c *resourceClient) Client(ns string) (*dynamic.DynamicClient, error) {
 	return client, nil
 }
 
-func (c *resourceClient) GVR(ns string, gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool) {
+type kindsLookup struct {
+	client *dynamic.DynamicClient
+	kinds  map[schema.GroupVersionKind]schema.GroupVersionResource
+	kindMu sync.Mutex
+}
+
+func newKindsLookup(client *dynamic.DynamicClient) *kindsLookup {
+	return &kindsLookup{
+		client: client,
+		kinds:  make(map[schema.GroupVersionKind]schema.GroupVersionResource),
+	}
+}
+
+func (c *kindsLookup) Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool) {
 	c.kindMu.Lock()
 	defer c.kindMu.Unlock()
 
-	// TODO... this needs to find the right GVR for a GVK
-	ok := true
-	var gvr schema.GroupVersionResource
-	switch gvk.Kind {
-	case "Dashboard":
-		gvr = gvk.GroupVersion().WithResource("dashboards")
-	case "Playlist":
-		gvr = gvk.GroupVersion().WithResource("playlists")
-	case "Folder":
-		gvr = gvk.GroupVersion().WithResource(folder.RESOURCE)
-	default:
-		ok = false
+	gvr, ok := c.kinds[gvk]
+	if !ok {
+		ok = true
+		switch gvk.Kind {
+		case "Dashboard":
+			gvr = gvk.GroupVersion().WithResource("dashboards")
+		case "Playlist":
+			gvr = gvk.GroupVersion().WithResource("playlists")
+		case "Folder":
+			gvr = gvk.GroupVersion().WithResource(folder.RESOURCE)
+		default:
+			ok = false
+		}
+		// TODO... use the client to get the resource!
+		if ok {
+			c.kinds[gvk] = gvr
+		}
 	}
 
 	return gvr, ok
