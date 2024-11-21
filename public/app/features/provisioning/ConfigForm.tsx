@@ -157,7 +157,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
           </Field>
         </>
       )}
-      <Field label={'Resource folder'}>
+      <Field label={'Target folder'}>
         <Controller
           control={control}
           name={'folder'}
