@@ -169,7 +169,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
       if (!config.thresholds) {
         config.thresholds = {
           mode: ThresholdsMode.Absolute,
-          steps: [{ value: -Infinity, color: 'green' }],
+          steps: [],
         };
       }
 

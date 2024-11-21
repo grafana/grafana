@@ -179,6 +179,9 @@ In the field mapping specify:
 | Color | Value mappings / Color | All values |
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
+
+> **Note:** When you use this transformation for thresholds, the visualization continues to use the panel's base threshold.
+
   `;
     },
   },
@@ -1251,7 +1254,6 @@ Select this option to transform the time series data frame from the long format 
 | 2023-01-01 00:00:00 | 10     | 20     |
 | 2023-01-01 01:00:00 | 15     | 25     |
 
-> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
   `;
     },
     links: [
@@ -1453,7 +1455,6 @@ Here is the result after applying the Series to rows transformation.
 
 This transformation facilitates the consolidation of results from multiple time series queries, providing a streamlined and unified dataset for efficient analysis and visualization in a tabular format.
 
-> **Note:** This transformation is available in Grafana 7.1+.
   `;
     },
   },
