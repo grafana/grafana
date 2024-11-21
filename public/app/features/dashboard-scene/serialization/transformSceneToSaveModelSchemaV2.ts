@@ -1,3 +1,4 @@
+import { FieldConfig } from '@grafana/data';
 import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import {
   DashboardV2Spec,
@@ -23,6 +24,7 @@ import {
   ConstantVariableKind,
   GroupByVariableKind,
   AdhocVariableKind,
+  FieldConfig as FieldConfigV2,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -201,8 +203,19 @@ function getElements(state: DashboardSceneState) {
     const vizFieldConfig: FieldConfigSource = {
       ...vizPanel.state.fieldConfig,
       defaults: {
-        ...vizPanel.state.fieldConfig,
+        ...vizPanel.state.fieldConfig.defaults,
+
+        // Removing null from the defaults
         decimals: vizPanel.state.fieldConfig.defaults.decimals ?? undefined,
+        min: vizPanel.state.fieldConfig.defaults.min ?? undefined,
+        max: vizPanel.state.fieldConfig.defaults.max ?? undefined,
+
+        // FIXME: mappings has an enum type that's incompatible. Annoyingly, I think this is Typescript getting in the way here
+        // because it's just the name that's incompatible, not the value
+        mappings: 'fixme', //
+
+        // source allows mode to be string, but target v2alpha0 requires FieldColorModeId
+        color: 'fixme',
       },
     };
 
@@ -446,7 +459,9 @@ function isDashboardSchemaV2(dash: unknown): dash is DashboardV2Spec {
   if (!('tags' in dash) || !Array.isArray(dash.tags)) {
     return false;
   }
-  if (!('id' in dash) || typeof dash.id !== 'number') {
+
+  // ID is optional, so it's check looks a bit different
+  if ('id' in dash && typeof dash.id !== 'number') {
     return false;
   }
 
