@@ -14,7 +14,7 @@ import (
 func testList(t *testing.T, server *Server) {
 	newList := func(subject, group, resource string) *authzextv1.ListRequest {
 		return &authzextv1.ListRequest{
-			Namespace: "default",
+			Namespace: namespace,
 			Verb:      utils.VerbList,
 			Subject:   subject,
 			Group:     group,

@@ -14,7 +14,7 @@ import (
 func testCheck(t *testing.T, server *Server) {
 	newRead := func(subject, group, resource, folder, name string) *authzv1.CheckRequest {
 		return &authzv1.CheckRequest{
-			Namespace: "default",
+			Namespace: namespace,
 			Subject:   subject,
 			Verb:      utils.VerbGet,
 			Group:     group,
