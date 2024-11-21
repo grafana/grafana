@@ -6,7 +6,8 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { Scope, TempoJsonData } from '../types';
 
-import { CompletionProvider } from './autocomplete';
+import { CompletionProvider, tagsToObjs, tagsToObjsFaster } from './autocomplete';
+import { testTags } from './testTags';
 import { intrinsicsV1, scopes } from './traceql';
 
 const emptyPosition = {} as monacoTypes.Position;
@@ -16,6 +17,17 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('CompletionProvider', () => {
+  it('prepares tags', async () => {
+    console.time('tagsToObjs');
+    tagsToObjs(testTags);
+    console.timeEnd('tagsToObjs');
+
+
+    console.time('tagsToObjsFaster');
+    tagsToObjsFaster(testTags);
+    console.timeEnd('tagsToObjsFaster');
+  });
+
   it('suggests tags, intrinsics and scopes (API v1)', async () => {
     const { provider, model } = setup('{}', 1, v1Tags);
     const result = await provider.provideCompletionItems(model, emptyPosition);
