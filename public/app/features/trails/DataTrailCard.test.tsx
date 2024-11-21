@@ -6,8 +6,6 @@ import { DataTrailBookmark } from './TrailStore/TrailStore';
 
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
-  getDataSource: jest.fn(() => 'Test DataSource'),
-  getDataSourceName: jest.fn(() => 'Test DataSource Name'),
 }));
 
 describe('DataTrailCard', () => {
