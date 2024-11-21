@@ -73,7 +73,6 @@ export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
 export const SIMPLIFIED_QUERY_EDITOR_KEY = 'grafana.alerting.simplifiedQueryEditor';
-export const SIMPLIFIED_NOTIFICATION_STEP_KEY = 'grafana.alerting.simplifiedNotificationStep';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
@@ -139,7 +138,7 @@ function getDefaultEditorSettings() {
   }
   //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
-  const notificationStepSettings = localStorage.getItem(SIMPLIFIED_NOTIFICATION_STEP_KEY);
+  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
     simplifiedNotificationEditor: notificationStepSettings !== 'false',

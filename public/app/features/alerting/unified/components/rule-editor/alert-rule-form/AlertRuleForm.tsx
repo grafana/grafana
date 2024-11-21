@@ -52,7 +52,6 @@ import {
   ignoreHiddenQueries,
   MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
-  SIMPLIFIED_NOTIFICATION_STEP_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
@@ -440,11 +439,6 @@ function storeInLocalStorageValues(values: RuleFormValues) {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
     } else {
       localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
-    }
-    if (values.editorSettings.simplifiedNotificationEditor) {
-      localStorage.setItem(SIMPLIFIED_NOTIFICATION_STEP_KEY, 'true');
-    } else {
-      localStorage.setItem(SIMPLIFIED_NOTIFICATION_STEP_KEY, 'false');
     }
   }
 }
