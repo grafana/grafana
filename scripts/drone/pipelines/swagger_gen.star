@@ -3,8 +3,13 @@ This module returns all pipelines used in OpenAPI specification generation of Gr
 """
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
-    "clone_enterprise_step_pr",
+    "enterprise_setup_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -14,10 +19,6 @@ load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
-load(
-    "scripts/drone/vault.star",
-    "from_secret",
-)
 
 def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
@@ -26,9 +27,6 @@ def swagger_gen_step(ver_mode):
     return {
         "name": "swagger-gen",
         "image": images["go"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
         "commands": [
             "apk add --update git make",
             "make swagger-clean && make openapi3-gen",
@@ -42,7 +40,8 @@ def swagger_gen_step(ver_mode):
 
 def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
     test_steps = [
-        clone_enterprise_step_pr(source = source, canFail = True),
+        github_app_generate_token_step(),
+        enterprise_setup_step(source = source, canFail = True),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 
@@ -51,6 +50,7 @@ def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
         trigger = trigger,
         services = [],
         steps = test_steps,
+        volumes = github_app_pipeline_volumes(),
     )
 
     return p
