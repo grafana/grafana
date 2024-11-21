@@ -5,7 +5,17 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
 
-import { HistoryWrapper, LocationService, locationService } from './LocationService';
+import { HistoryWrapper, locationService as mainLocationService, LocationService } from './LocationService';
+
+// Only allow sidecar to be opened on these routes. It does not seem to make sense to keep the sidecar opened on
+// config/admin pages for example.
+// At this moment let's be restrictive about where the sidecar can show and add more routes if there is a need.
+const ALLOW_ROUTES = [
+  /(^\/d\/)/, // dashboards
+  /^\/explore/, // explore + explore metrics
+  /^\/a\/[^\/]+/, // app plugins
+  /^\/alerting/,
+];
 
 /**
  * This is a service that handles state and operation of a sidecar feature (sideview to render a second app in grafana).
@@ -19,15 +29,26 @@ import { HistoryWrapper, LocationService, locationService } from './LocationServ
  */
 export class SidecarService_EXPERIMENTAL {
   private _initialContext: BehaviorSubject<unknown | undefined>;
-  private memoryLocationService: LocationService;
-  private history: LocationStorageHistory;
 
-  constructor() {
+  private sidecarLocationService: LocationService;
+  private mainLocationService: LocationService;
+
+  // If true we don't close the sidecar when user navigates to another app or part of Grafana from where the sidecar
+  // was opened.
+  private follow = false;
+
+  // Keep track of where the sidecar was originally opened for autoclose behaviour.
+  private mainLocationWhenOpened: string | undefined;
+
+  private mainOnAllowedRoute = false;
+
+  constructor(mainLocationService: LocationService) {
     this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
-    // We need a local ref for this so we can tap into the location changes and drive rerendering of components based
-    // on it without having a parent Router.
-    this.history = createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' });
-    this.memoryLocationService = new HistoryWrapper(this.history);
+    this.mainLocationService = mainLocationService;
+    this.sidecarLocationService = new HistoryWrapper(
+      createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
+    );
+    this.handleMainLocationChanges();
   }
 
   private assertFeatureEnabled() {
@@ -39,6 +60,48 @@ export class SidecarService_EXPERIMENTAL {
     return true;
   }
 
+  private updateMainLocationWhenOpened() {
+    const pathname = this.mainLocationService.getLocation().pathname;
+    for (const route of ALLOW_ROUTES) {
+      const match = pathname.match(route)?.[0];
+      if (match) {
+        this.mainLocationWhenOpened = match;
+        return;
+      }
+    }
+  }
+
+  /**
+   * Every time the main location changes we check if we should keep the sidecar open or close it based on list
+   * of allowed routes and also based on the follow flag when opening the app.
+   */
+  private handleMainLocationChanges() {
+    this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) =>
+      this.mainLocationService.getLocation().pathname.match(prefix)
+    );
+
+    this.mainLocationService.getLocationObservable().subscribe((location) => {
+      if (!this.activePluginId) {
+        return;
+      }
+      this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) => location.pathname.match(prefix));
+
+      if (!this.mainOnAllowedRoute) {
+        this.closeApp();
+        return;
+      }
+
+      // We check if we moved to some other app or part of grafana from where we opened the sidecar.
+      const isTheSameLocation = Boolean(
+        this.mainLocationWhenOpened && location.pathname.startsWith(this.mainLocationWhenOpened)
+      );
+
+      if (!(isTheSameLocation || this.follow)) {
+        this.closeApp();
+      }
+    });
+  }
+
   /**
    * Get current app id of the app in sidecar. This is most probably provisional. In the future
    * this should be driven by URL addressing so that routing for the apps don't change. Useful just internally
@@ -47,7 +110,7 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginIdObservable() {
-    return this.history.getLocationObservable().pipe(
+    return this.sidecarLocationService.getLocationObservable().pipe(
       map((val) => {
         return getPluginIdFromUrl(val?.pathname || '');
       })
@@ -75,11 +138,11 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   get activePluginId() {
-    return getPluginIdFromUrl(this.memoryLocationService.getLocation().pathname);
+    return getPluginIdFromUrl(this.sidecarLocationService.getLocation().pathname);
   }
 
   getLocationService() {
-    return this.memoryLocationService;
+    return this.sidecarLocationService;
   }
 
   /**
@@ -88,26 +151,41 @@ export class SidecarService_EXPERIMENTAL {
    * @experimental
    */
   openApp(pluginId: string, context?: unknown) {
-    if (!this.assertFeatureEnabled()) {
+    if (!(this.assertFeatureEnabled() && this.mainOnAllowedRoute)) {
       return;
     }
     this._initialContext.next(context);
-    this.memoryLocationService.push({ pathname: `/a/${pluginId}` });
-
-    reportInteraction('sidecar_service_open_app', { pluginId, version: 1 });
+    this.openAppV3({ pluginId, follow: false });
   }
 
   /**
    * Opens an app in a sidecar. You can also relative path inside the app to open.
+   * @deprecated
    * @experimental
    */
   openAppV2(pluginId: string, path?: string) {
-    if (!this.assertFeatureEnabled()) {
+    this.openAppV3({ pluginId, path, follow: false });
+  }
+
+  /**
+   * Opens an app in a sidecar. You can also relative path inside the app to open.
+   * @param options.pluginId Plugin ID of the app to open
+   * @param options.path Relative path inside the app to open
+   * @param options.follow If true, the sidecar will stay open even if the main location change to another app or
+   *   Grafana section
+   *
+   * @experimental
+   */
+  openAppV3(options: { pluginId: string; path?: string; follow?: boolean }) {
+    if (!(this.assertFeatureEnabled() && this.mainOnAllowedRoute)) {
       return;
     }
 
-    this.memoryLocationService.push({ pathname: `/a/${pluginId}${path || ''}` });
-    reportInteraction('sidecar_service_open_app', { pluginId, version: 2 });
+    this.follow = options.follow || false;
+
+    this.updateMainLocationWhenOpened();
+    this.sidecarLocationService.push({ pathname: `/a/${options.pluginId}${options.path || ''}` });
+    reportInteraction('sidecar_service_open_app', { pluginId: options.pluginId, follow: options.follow });
   }
 
   /**
@@ -118,8 +196,10 @@ export class SidecarService_EXPERIMENTAL {
       return;
     }
 
+    this.follow = false;
+    this.mainLocationWhenOpened = undefined;
     this._initialContext.next(undefined);
-    this.memoryLocationService.replace({ pathname: '/' });
+    this.sidecarLocationService.replace({ pathname: '/' });
 
     reportInteraction('sidecar_service_close_app');
   }
@@ -160,7 +240,7 @@ function getPluginIdFromUrl(url: string) {
 function getMainAppPluginId() {
   // TODO: not great but we have to get a handle on the other locationService used for the main view and easiest way
   //   right now is through this global singleton
-  const { pathname } = locationService.getLocation();
+  const { pathname } = mainLocationService.getLocation();
 
   // A naive way to sort of simulate core features being an app and having an appID
   let mainApp = getPluginIdFromUrl(pathname);
@@ -258,4 +338,4 @@ function createLocationStorageHistory(options: LocalStorageHistoryOptions): Loca
   };
 }
 
-export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL();
+export const sidecarServiceSingleton_EXPERIMENTAL = new SidecarService_EXPERIMENTAL(mainLocationService);
