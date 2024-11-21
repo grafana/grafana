@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -92,7 +93,7 @@ type IndexableDocument struct {
 
 	// Maintain a list of resource references.
 	// Someday this will likely be part of https://github.com/grafana/gamma
-	References []ResourceReference `json:"reference,omitempty"`
+	References ResourceReferences `json:"reference,omitempty"`
 
 	// When the resource is managed by an upstream repository
 	RepoInfo *utils.ResourceRepositoryInfo `json:"repository,omitempty"`
@@ -104,6 +105,35 @@ type ResourceReference struct {
 	Version  string `json:"version,omitempty"` // the api version
 	Kind     string `json:"kind,omitempty"`    // panel, data source (for now)
 	Name     string `json:"name"`              // the UID / panel name
+}
+
+func (m ResourceReference) String() string {
+	var sb strings.Builder
+	sb.WriteString(m.Relation)
+	sb.WriteString(">>")
+	sb.WriteString(m.Group)
+	if m.Version != "" {
+		sb.WriteString("/")
+		sb.WriteString(m.Version)
+	}
+	if m.Kind != "" {
+		sb.WriteString("/")
+		sb.WriteString(m.Kind)
+	}
+	sb.WriteString("/")
+	sb.WriteString(m.Name)
+	return sb.String()
+}
+
+// Sortable list of references
+type ResourceReferences []ResourceReference
+
+func (m ResourceReferences) Len() int      { return len(m) }
+func (m ResourceReferences) Swap(i, j int) { m[i], m[j] = m[j], m[i] }
+func (m ResourceReferences) Less(i, j int) bool {
+	a := m[i].String()
+	b := m[j].String()
+	return strings.Compare(a, b) > 0
 }
 
 // Create a new indexable document based on a generic k8s resource

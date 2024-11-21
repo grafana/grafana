@@ -185,6 +185,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 			Relation: "depends-on",
 		})
 	}
+	if doc.References != nil {
+		sort.Sort(doc.References)
+	}
 
 	doc.Fields = map[string]any{
 		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,

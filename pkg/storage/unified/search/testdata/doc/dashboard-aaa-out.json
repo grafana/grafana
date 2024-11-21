@@ -39,15 +39,9 @@
   "reference": [
     {
       "relation": "depends-on",
-      "group": "dashboards.grafana.app",
-      "kind": "LibraryPanel",
-      "name": "a7975b7a-fb53-4ab7-951d-15810953b54f"
-    },
-    {
-      "relation": "depends-on",
-      "group": "dashboards.grafana.app",
-      "kind": "LibraryPanel",
-      "name": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+      "group": "my-custom-plugin",
+      "kind": "DataSource",
+      "name": "DSUID"
     },
     {
       "relation": "depends-on",
@@ -57,9 +51,15 @@
     },
     {
       "relation": "depends-on",
-      "group": "my-custom-plugin",
-      "kind": "DataSource",
-      "name": "DSUID"
+      "group": "dashboards.grafana.app",
+      "kind": "LibraryPanel",
+      "name": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
+    },
+    {
+      "relation": "depends-on",
+      "group": "dashboards.grafana.app",
+      "kind": "LibraryPanel",
+      "name": "a7975b7a-fb53-4ab7-951d-15810953b54f"
     }
   ]
 }
