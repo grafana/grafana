@@ -204,6 +204,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -282,6 +283,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -384,6 +386,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -517,6 +520,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1042,6 +1046,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1390,6 +1395,7 @@ steps:
   - is_fork=$(curl --retry 5 "https://$(cat ./.github/token)@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1509,6 +1515,7 @@ steps:
 - commands:
   - apk add --update curl jq bash
   - GITHUB_TOKEN=$(cat ./.github/token)
+  - ls -a /usr/bin
   - git clone "https://x-access-token:$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -5888,6 +5895,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4072c21ba8504eadb538dd75e829c40768835520966907f8a1cf5357702a6897
+hmac: 83f7dd7fd2f6605d0d72b878e4e60761fc583aa14072d9333698c81a477daeb5
 
 ...
