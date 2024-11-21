@@ -151,7 +151,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		getter: b,
 		client: b.client.identities,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("file")] = &readConnector{
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -397,10 +397,10 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	}
 
 	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/file")
+	delete(oas.Paths.Paths, repoprefix+"/files")
 
 	// update the version with a path
-	sub = oas.Paths.Paths[repoprefix+"/file/{path}"]
+	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{
