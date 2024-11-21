@@ -43,7 +43,7 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.13.4",
+    "@emotion/css": "11.13.5",
     "@grafana/data": "11.4.0-pre",
     "@grafana/ui": "11.4.0-pre",
     "@leeoniya/ufuzzy": "1.0.16",
