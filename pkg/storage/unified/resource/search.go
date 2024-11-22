@@ -78,7 +78,7 @@ type searchSupport struct {
 	log         *slog.Logger
 	storage     StorageBackend
 	search      SearchBackend
-	client      authz.AccessClient
+	access      authz.AccessClient
 	builders    *builderCache
 	initWorkers int
 }
@@ -87,7 +87,7 @@ var (
 	_ ResourceIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -98,6 +98,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	}
 
 	support = &searchSupport{
+		access:      access,
 		tracer:      tracer,
 		storage:     storage,
 		search:      opts.Backend,
@@ -155,7 +156,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 		}
 		federate = append(federate, sub)
 	}
-	return idx.Search(ctx, s.client, req, federate)
+	return idx.Search(ctx, s.access, req, federate)
 }
 
 // init is called during startup.  any failure will block startup and continued execution
