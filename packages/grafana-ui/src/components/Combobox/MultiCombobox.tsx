@@ -1,5 +1,5 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
@@ -8,10 +8,7 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxOption, ComboboxBaseProps, AutoSizeConditionals, itemToString } from './Combobox';
 import { OptionListItem } from './OptionListItem';
 import { ValuePill } from './ValuePill';
-import { getComboboxStyles } from './getComboboxStyles';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
-
-//import { getComboboxStyles } from './getComboboxStyles';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
   value?: string | Array<ComboboxOption<T>>;
@@ -23,7 +20,6 @@ type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> &
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const { options, placeholder } = props;
 
-  const styles = useStyles2(getComboboxStyles);
   const multiStyles = useStyles2(getMultiComboboxStyles);
 
   const isAsync = typeof options === 'function';
