@@ -241,4 +241,5 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  alertingNotificationsStepMode?: boolean;
 }
