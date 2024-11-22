@@ -14,7 +14,7 @@ interface GroupByVariableEditorProps {
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   const { variable, onRunQuery } = props;
-  const { datasource: datasourceRef, defaultOptions, allowCustomValue } = variable.useState();
+  const { datasource: datasourceRef, defaultOptions, allowCustomValue = true } = variable.useState();
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);

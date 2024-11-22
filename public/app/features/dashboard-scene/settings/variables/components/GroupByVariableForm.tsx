@@ -83,7 +83,7 @@ export function GroupByVariableForm({
       )}
 
       <VariableCheckboxField
-        value={allowCustomValue ?? true}
+        value={allowCustomValue}
         name="Allow custom values"
         description="Enables users to add custom values to the list"
         onChange={onAllowCustomValueChange}
