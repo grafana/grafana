@@ -21,7 +21,7 @@ function ExportNewGrafanaRuleWrapper({ children }: ExportNewGrafanaRuleWrapperPr
       navId="alert-list"
       pageNav={{
         text: 'Export new Grafana rule',
-        subTitle: 'Export a new rule definition in the format of your choice. Any changes you make will not be saved.',
+        subTitle: 'Export a new rule definition in Terraform(HCL) format. Any changes you make will not be saved.',
       }}
     >
       {children}

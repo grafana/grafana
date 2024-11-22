@@ -192,7 +192,7 @@ function ExportNewRuleButton() {
       icon="download-alt"
       variant="secondary"
       tooltip="Export new grafana rule"
-      onClick={() => logInfo(LogMessages.grafanaRecording)}
+      onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
     >
       <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export new alert rule</Trans>
     </LinkButton>

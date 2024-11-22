@@ -155,12 +155,12 @@ export const getPayloadToExport = (
 ): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
-  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uid } };
+  const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: ruleUid } };
   if (existingGroup?.rules) {
     // we have to update the rule in the group in the same position if it exists, otherwise we have to add it at the end
     let alreadyExistsInGroup = false;
     const updatedRules = existingGroup.rules.map((rule: RulerRuleDTO) => {
-      if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === uid) {
+      if (isGrafanaRulerRule(rule) && rule.grafana_alert.uid === ruleUid) {
         alreadyExistsInGroup = true;
         return updatedRule;
       } else {
@@ -187,8 +187,8 @@ export const getPayloadToExport = (
 const useGetPayloadToExport = (values: RuleFormValues, ruleUid?: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
   const payload: PostableRulerRuleGroupDTO = useMemo(() => {
-    return getPayloadToExport(values, rulerGroupDto?.value, uid);
-  }, [uid, rulerGroupDto, values]);
+    return getPayloadToExport(values, rulerGroupDto?.value, ruleUid);
+  }, [ruleUid, rulerGroupDto, values]);
   return { payload, loadingGroup: rulerGroupDto.loading };
 };
 
