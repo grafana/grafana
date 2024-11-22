@@ -117,6 +117,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: ({ name, body }) => ({
         url: `${BASE_PATH}/${name}/status`,
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/merge-patch+json' },
         body,
       }),
     }),
