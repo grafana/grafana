@@ -136,10 +136,12 @@ function getDefaultEditorSettings() {
   if (!editorSettingsEnabled) {
     return undefined;
   }
-  //then, check in local storage if the user has saved last rule with simplified query editor
+  //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
+    simplifiedNotificationEditor: notificationStepSettings !== 'false',
   };
 }
 
@@ -229,6 +231,7 @@ export function getNotificationSettingsForDTO(
 function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
   return {
     simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+    simplified_notifications_section: simplifiedEditor.simplifiedNotificationEditor,
   };
 }
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
@@ -348,11 +351,13 @@ function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+      simplifiedNotificationEditor: ga.metadata.editor_settings.simplified_notifications_section,
     };
   }
 
   return {
     simplifiedQueryEditor: false,
+    simplifiedNotificationEditor: Boolean(ga.notification_settings), // in case this rule was created before the new field was added, we'll default to current routing settings
   };
 }
 
