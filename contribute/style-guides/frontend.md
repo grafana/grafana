@@ -292,7 +292,7 @@ function transform(value?: string): TransformedValue | undefined {
 
 ### Variables
 
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 // bad
