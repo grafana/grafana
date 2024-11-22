@@ -189,15 +189,9 @@ Next, we establish an [alert rule](https://grafana.com/docs/grafana/latest/alert
 
 In this section, we use the default options for Grafana-managed alert rule creation. The default options let us define the query, a expression (used to manipulate the data -- the `WHEN` field in the UI), and the condition that must be met for the alert to be triggered (in default mode is the threshold).
 
-1. Select the **Prometheus** data source from the drop-down menu.
-1. In the Query editor, switch to **Code** mode by clicking the button on the right.
-1. Enter the following query:
+Grafana includes a [test data source](https://grafana.com/docs/grafana/latest/datasources/testdata/) that creates simulated time series data. This data source is included in the demo environment for this tutorial. If you're working in Grafana Cloud or your own local Grafana instance, you can add the data source through the **Connections** menu.
 
-   ```promql
-   vector(1)
-   ```
-
-   In Prometheus, `vector(1)` is a special type of PromQL query that generates a constant vector. This is useful in testing and query manipulation, where you might need a constant value for calculations or comparisons. This query allows you to create an alert rule that is always firing.
+1. Select the **TestData** data source from the drop-down menu.
 
 1. In the **Alert condition** section:
 
@@ -205,9 +199,9 @@ In this section, we use the default options for Grafana-managed alert rule creat
 
 1. Click **Preview alert rule condition** to run the query.
 
-   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
+   It should return random time series data. The alert rule state should be `Firing`.
 
-   {{< figure src="/media/docs/alerting/firing-alert-preview.png" max-width="1200px" caption="A preview of a firing alert" >}}
+   {{< figure src="/media/docs/alerting/random-walk-firing-alert-rule.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
 ### Set evaluation behavior
 

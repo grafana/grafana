@@ -1,6 +1,8 @@
 import { BettererFileTest } from '@betterer/betterer';
-import { ESLint, Linter } from 'eslint';
+import { ESLint } from 'eslint';
 import { promises as fs } from 'fs';
+
+import config from './.betterer.eslint.config';
 
 // Why are we ignoring these?
 // They're all deprecated/being removed so doesn't make sense to fix types
@@ -80,56 +82,6 @@ function countEslintErrors() {
     }
 
     const { baseDirectory } = resolver;
-
-    const baseRules: Partial<Linter.RulesRecord> = {
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@grafana/no-aria-label-selectors': 'error',
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@grafana/ui*', '*/Layout/*'],
-              importNames: ['Layout', 'HorizontalGroup', 'VerticalGroup'],
-              message: 'Use Stack component instead.',
-            },
-          ],
-        },
-      ],
-    };
-
-    const config: Linter.Config[] = [
-      {
-        files: ['**/*.{js,jsx,ts,tsx}'],
-        rules: baseRules,
-      },
-      {
-        files: ['**/*.{ts,tsx}'],
-        ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
-        rules: {
-          '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-        },
-      },
-      {
-        files: ['public/app/**/*.{ts,tsx}'],
-        rules: {
-          'no-barrel-files/no-barrel-files': 'error',
-        },
-      },
-      {
-        files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
-        ignores: [
-          'public/app/plugins/**',
-          '**/*.story.tsx',
-          '**/*.{test,spec}.{ts,tsx}',
-          '**/__mocks__/',
-          'public/test',
-        ],
-        rules: {
-          '@grafana/no-untranslated-strings': 'error',
-        },
-      },
-    ];
 
     const runner = new ESLint({
       overrideConfig: config,
