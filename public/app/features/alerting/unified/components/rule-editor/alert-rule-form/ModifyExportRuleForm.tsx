@@ -26,7 +26,7 @@ import {
 import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
-import { ExportFormats, allGrafanaExportProviders } from '../../export/providers';
+import { ExportFormats, HclExportProvider, allGrafanaExportProviders } from '../../export/providers';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
@@ -204,7 +204,7 @@ const GrafanaRuleDesignExportPreview = ({
   const nameSpaceUID = exportValues.folder?.uid ?? '';
 
   useEffect(() => {
-    !loadingGroup && getExport({ payload, format: exportFormat, nameSpaceUID });
+    !loadingGroup && payload.name && getExport({ payload, format: exportFormat, nameSpaceUID });
   }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
 
   if (exportData.isLoading) {
@@ -231,6 +231,8 @@ interface GrafanaRuleDesignExporterProps {
 
 export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+  const exportingNewRule = !uid;
+  const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (
     <GrafanaExportDrawer
@@ -238,7 +240,7 @@ export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: G
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={formatProviders}
     >
       <GrafanaRuleDesignExportPreview
         exportFormat={activeTab}
