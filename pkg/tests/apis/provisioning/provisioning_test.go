@@ -31,8 +31,8 @@ func TestIntegrationProvisioning(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-			featuremgmt.FlagKubernetesFolders,                    // Required for tests that deal with folders.
+			featuremgmt.FlagProvisioning,      // Required to start the example service
+			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
 		},
 	})
 

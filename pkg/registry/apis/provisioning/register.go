@@ -79,8 +79,8 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 ) *ProvisioningAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+		return nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
