@@ -4,6 +4,7 @@ import { MultiCombobox } from './MultiCombobox';
 import mdx from './MultiCombobox.mdx';
 
 const meta: Meta<typeof MultiCombobox> = {
+  title: 'Forms/MultiCombobox',
   component: MultiCombobox,
   parameters: {
     docs: {
