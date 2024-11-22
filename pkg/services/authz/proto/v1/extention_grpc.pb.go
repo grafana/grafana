@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzExtentionService_List_FullMethodName       = "/authz.extention.v1.AuthzExtentionService/List"
 	AuthzExtentionService_BatchCheck_FullMethodName = "/authz.extention.v1.AuthzExtentionService/BatchCheck"
 	AuthzExtentionService_Read_FullMethodName       = "/authz.extention.v1.AuthzExtentionService/Read"
 	AuthzExtentionService_Write_FullMethodName      = "/authz.extention.v1.AuthzExtentionService/Write"
@@ -29,7 +28,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthzExtentionServiceClient interface {
-	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
@@ -41,16 +39,6 @@ type authzExtentionServiceClient struct {
 
 func NewAuthzExtentionServiceClient(cc grpc.ClientConnInterface) AuthzExtentionServiceClient {
 	return &authzExtentionServiceClient{cc}
-}
-
-func (c *authzExtentionServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, AuthzExtentionService_List_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *authzExtentionServiceClient) BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error) {
@@ -87,7 +75,6 @@ func (c *authzExtentionServiceClient) Write(ctx context.Context, in *WriteReques
 // All implementations should embed UnimplementedAuthzExtentionServiceServer
 // for forward compatibility
 type AuthzExtentionServiceServer interface {
-	List(context.Context, *ListRequest) (*ListResponse, error)
 	BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
@@ -97,9 +84,6 @@ type AuthzExtentionServiceServer interface {
 type UnimplementedAuthzExtentionServiceServer struct {
 }
 
-func (UnimplementedAuthzExtentionServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
-}
 func (UnimplementedAuthzExtentionServiceServer) BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchCheck not implemented")
 }
@@ -119,24 +103,6 @@ type UnsafeAuthzExtentionServiceServer interface {
 
 func RegisterAuthzExtentionServiceServer(s grpc.ServiceRegistrar, srv AuthzExtentionServiceServer) {
 	s.RegisterService(&AuthzExtentionService_ServiceDesc, srv)
-}
-
-func _AuthzExtentionService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AuthzExtentionServiceServer).List(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AuthzExtentionService_List_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthzExtentionServiceServer).List(ctx, req.(*ListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _AuthzExtentionService_BatchCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -200,10 +166,6 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "authz.extention.v1.AuthzExtentionService",
 	HandlerType: (*AuthzExtentionServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "List",
-			Handler:    _AuthzExtentionService_List_Handler,
-		},
 		{
 			MethodName: "BatchCheck",
 			Handler:    _AuthzExtentionService_BatchCheck_Handler,

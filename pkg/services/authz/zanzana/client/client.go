@@ -142,14 +142,6 @@ func newItemChecker(res *authzextv1.ListResponse) authz.ItemChecker {
 	}
 }
 
-func (c *Client) List(ctx context.Context, id claims.AuthInfo, req *authzextv1.ListRequest) (*authzextv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
-	defer span.End()
-
-	req.Subject = id.GetUID()
-	return c.authzext.List(ctx, req)
-}
-
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
