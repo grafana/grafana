@@ -258,7 +258,7 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   );
 };
 
-type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'>;
+type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone' | 'quickRanges'>;
 
 export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone, quickRanges }) => {
   const styles = useStyles2(getLabelStyles);
