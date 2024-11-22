@@ -39,6 +39,7 @@ type ServiceAccountsService struct {
 	log               log.Logger
 	backgroundLog     log.Logger
 	secretScanService secretscan.Checker
+	orgService        org.Service
 
 	secretScanEnabled  bool
 	secretScanInterval time.Duration
@@ -71,6 +72,7 @@ func ProvideServiceAccountsService(
 		store:         serviceAccountsStore,
 		log:           log.New("serviceaccounts"),
 		backgroundLog: log.New("serviceaccounts.background"),
+		orgService:    orgService,
 	}
 
 	if err := RegisterRoles(acService); err != nil {
@@ -100,6 +102,11 @@ func (sa *ServiceAccountsService) Run(ctx context.Context) error {
 
 	if _, err := sa.getUsageMetrics(ctx); err != nil {
 		sa.log.Warn("Failed to get usage metrics", "error", err.Error())
+	}
+
+	err := sa.migrateAPIKeysForAllOrgs(ctx)
+	if err != nil {
+		sa.log.Warn("Failed to migrate API keys", "error", err.Error())
 	}
 
 	updateStatsTicker := time.NewTicker(metricsCollectionInterval)
@@ -297,6 +304,32 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 		return nil, err
 	}
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
+}
+
+func (sa *ServiceAccountsService) migrateAPIKeysForAllOrgs(ctx context.Context) error {
+	sa.log.Debug("Starting to migrate API keys to service accounts")
+
+	orgs, err := sa.orgService.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		return err
+	}
+
+	for _, o := range orgs {
+		sa.log.Debug("Migrating API keys for org", "orgId", o.ID)
+
+		result, err := sa.store.MigrateApiKeysToServiceAccounts(ctx, o.ID)
+		if err != nil {
+			sa.log.Warn("Failed to migrate API keys", "error", err.Error(), "orgId", o.ID)
+			continue
+		}
+		if result.Failed > 0 {
+			sa.log.Warn("Some API keys failed to be migrated", "keys_total", result.Total, "keys_failed", result.Failed, "orgId", o.ID)
+		} else {
+			sa.log.Debug("API key migration is successful", "orgId", o.ID, "keys_total", result.Total)
+		}
+	}
+
+	return nil
 }
 
 func validOrgID(orgID int64) error {
