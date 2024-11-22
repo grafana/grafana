@@ -52,8 +52,6 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
-    } else if (type === 'ds' && slug) {
-      promise = this._loadFromDatasource(slug); // explore dashboards as code
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
@@ -145,44 +143,6 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Scripted dashboard');
         }
       );
-  }
-
-  /**
-   * This is a temporary solution to load dashboards dynamically from a datasource
-   * Eventually this should become a plugin type or a special handler in the dashboard
-   * loading code
-   */
-  async _loadFromDatasource(dsid: string) {
-    const ds = await getDatasourceSrv().get(dsid);
-    if (!ds) {
-      return Promise.reject('can not find datasource: ' + dsid);
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const path = params.get('path');
-    if (!path) {
-      return Promise.reject('expecting path parameter');
-    }
-
-    const queryParams: { [key: string]: string } = {};
-
-    params.forEach((value, key) => {
-      queryParams[key] = value;
-    });
-
-    return getBackendSrv()
-      .get(`/api/datasources/uid/${ds.uid}/resources/${path}`, queryParams)
-      .then((data) => {
-        return {
-          meta: {
-            fromScript: true,
-            canDelete: false,
-            canSave: false,
-            canStar: false,
-          },
-          dashboard: data,
-        };
-      });
   }
 
   _executeScript(result: any) {
