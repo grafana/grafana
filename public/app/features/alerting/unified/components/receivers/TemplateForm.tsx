@@ -10,21 +10,23 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
+  Drawer,
   Dropdown,
   FieldSet,
+  InlineField,
   Input,
   LinkButton,
   Menu,
-  useStyles2,
   Stack,
+  Text,
   useSplitter,
-  Drawer,
-  InlineField,
-  Box,
+  useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
+import { t, Trans } from 'app/core/internationalization';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
@@ -169,7 +171,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const actionButtons = (
     <Stack>
       <Button onClick={() => formRef.current?.requestSubmit()} variant="primary" size="sm" disabled={isSubmitting}>
-        Save
+        <Trans i18nKey="common.save">Save</Trans>
       </Button>
       <LinkButton
         disabled={isSubmitting}
@@ -179,7 +181,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
         variant="secondary"
         size="sm"
       >
-        Cancel
+        <Trans i18nKey="common.cancel">Cancel</Trans>
       </LinkButton>
     </Stack>
   );
@@ -260,7 +262,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                   }
                                 >
                                   <Button variant="secondary" size="sm" icon="angle-down">
-                                    Add example
+                                    <Trans i18nKey="alerting.templates.editor.add-example">Add example</Trans>
                                   </Button>
                                 </Dropdown>
                               )}
@@ -271,7 +273,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                                 variant="secondary"
                                 onClick={toggleCheatsheetOpened}
                               >
-                                Help
+                                <Trans i18nKey="common.help">Help</Trans>
                               </Button>
                             </>
                           }
@@ -349,44 +351,43 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
 function TemplatingBasics() {
   const styles = useStyles2(getStyles);
 
+  const intro = t(
+    'alerting.templates.help.intro',
+    `Notification templates use Go templating language to create notification messages.
+
+In Grafana, a template group can define multiple notification templates using {{ define "<NAME>" }}.
+These templates can then be used in contact points and within other notification templates by calling {{ template "<NAME>" }}.
+For detailed information about notification templates, refer to our documentation.`
+  );
+
   return (
     <Alert title="" severity="info">
-      <Stack direction="row">
-        <div>
-          Notification templates use Go templating language to create notification messages.
-          <br />
-          <br />
-          In Grafana, a template group can define multiple notification templates using {'{{'} define "{'<NAME>'}"{' '}
-          {'}}'}.
-          <br />
-          These templates can then be used in contact points and within other notification templates by calling {
-            '{{'
-          }{' '}
-          template "{'<NAME>'}" {'}}'}.
-          <br />
-          <br />
-          For detailed information about notification templates, refer to our documentation.
-        </div>
-        <div>
-          <LinkButton
-            href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
-            target="_blank"
-            icon="external-link-alt"
-            variant="secondary"
-          >
-            Notification templates documentation
-          </LinkButton>
-        </div>
-      </Stack>
+      <Stack direction="column" gap={2}>
+        <Stack direction="row">
+          <div style={{ whiteSpace: 'pre' }}>{intro}</div>
+          <div>
+            <LinkButton
+              href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+              target="_blank"
+              icon="external-link-alt"
+              variant="secondary"
+            >
+              <Trans i18nKey="alerting.templates.editor.goto-docs">Notification templates documentation</Trans>
+            </LinkButton>
+          </div>
+        </Stack>
 
-      <div className={styles.snippets}>
-        For auto-completion of common templating code, type the following keywords in the content editor:
-        <div className={styles.code}>
-          {Object.values(snippets)
-            .map((s) => s.label)
-            .join(', ')}
-        </div>
-      </div>
+        <Text variant="bodySmall">
+          <Trans i18nKey="alerting.templates.editor.auto-complete">
+            For auto-completion of common templating code, type the following keywords in the content editor:
+          </Trans>
+          <div className={styles.code}>
+            {Object.values(snippets)
+              .map((s) => s.label)
+              .join(', ')}
+          </div>
+        </Text>
+      </Stack>
     </Alert>
   );
 }
@@ -469,10 +470,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       [narrowScreenQuery]: {
         display: 'none',
       },
-    }),
-    snippets: css({
-      marginTop: theme.spacing(2),
-      fontSize: theme.typography.bodySmall.fontSize,
     }),
     code: css({
       color: theme.colors.text.secondary,
