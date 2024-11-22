@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, InputGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { Combobox, ComboboxOption } from '@grafana/ui/src/components/Combobox/Combobox';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -84,7 +85,7 @@ export function MetricCombobox({
   }, [onGetMetrics]);
 
   const metricsExplorerEnabled = config.featureToggles.prometheusMetricEncyclopedia;
-
+  const styles = useStyles2(getStyles);
   const asyncSelect = () => {
     return (
       <InputGroup>
@@ -136,9 +137,11 @@ export function MetricCombobox({
           </InlineField>
         </InlineFieldRow>
       ) : (
-        <EditorFieldGroup>
-          <EditorField label="Metric">{asyncSelect()}</EditorField>
-        </EditorFieldGroup>
+        <span className={styles.addaptToParent}>
+          <EditorFieldGroup>
+            <EditorField label="Metric">{asyncSelect()}</EditorField>
+          </EditorFieldGroup>
+        </span>
       )}
     </>
   );
@@ -166,4 +169,13 @@ const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?:
   const queryString = regexifyLabelValuesQueryString(query);
 
   return formatPrometheusLabelFiltersToString(queryString, labelsFilters);
+};
+
+const getStyles = () => {
+  return {
+    addaptToParent: css({
+      label: 'metric-combobox-addapt-to-parent',
+      maxWidth: '100%',
+    }),
+  };
 };

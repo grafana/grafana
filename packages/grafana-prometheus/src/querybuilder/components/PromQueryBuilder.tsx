@@ -6,7 +6,7 @@ import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Drawer } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -45,7 +45,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
   const { prometheusPromQAIL } = config.featureToggles; // AI/ML + Prometheus
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-
+  const styles = useStyles2(getStyles);
   const initHints = datasource.getInitHints();
 
   useEffect(() => {
@@ -71,9 +71,11 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           />
         </Drawer>
       )}
-      <EditorRow>
-        <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
-      </EditorRow>
+      <span className={styles.addaptToParent}>
+        <EditorRow>
+          <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
+        </EditorRow>
+      </span>
       {initHints.length ? (
         <div
           className={css({
@@ -150,5 +152,14 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
     </>
   );
 });
+
+const getStyles = () => {
+  return {
+    addaptToParent: css({
+      label: 'prom-combobox-addapt-to-parent',
+      maxWidth: '100%',
+    }),
+  };
+};
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';

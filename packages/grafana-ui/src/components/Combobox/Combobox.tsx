@@ -370,7 +370,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   return (
-    <div>
+    <div className={isAutoSize ? styles.addaptToParent : undefined}>
       <InputComponent
         width={isAutoSize ? undefined : width}
         {...(isAutoSize ? { minWidth, maxWidth } : {})}
