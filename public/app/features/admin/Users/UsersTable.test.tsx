@@ -1,0 +1,50 @@
+import { render } from '@testing-library/react';
+
+import { UserDTO } from '../../../types';
+
+import { UsersTable, UsersTableProps } from './UsersTable';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
+
+const setup = (propOverrides?: object) => {
+  const props: UsersTableProps = {
+    users: [] as UserDTO[],
+    showPaging: true,
+    totalPages: 1,
+    onChangePage: jest.fn(),
+    currentPage: 1,
+    fetchData: jest.fn(),
+  };
+
+  Object.assign(props, propOverrides);
+
+  render(
+    <MemoryRouter>
+      <UsersTable {...props} />
+    </MemoryRouter>
+  );
+};
+
+describe('Render', () => {
+  it('should render component', () => {
+    expect(() => setup()).not.toThrow();
+  });
+
+  it('should render when one user has licensed role None', () => {
+    expect(() =>
+      setup({
+        users: [
+          {
+            id: 1,
+            uid: '1',
+            login: '1',
+            email: '1',
+            name: '1',
+            isGrafanaAdmin: false,
+            isDisabled: false,
+            licensedRole: 'None',
+          },
+        ],
+      })
+    ).not.toThrow();
+  });
+});
