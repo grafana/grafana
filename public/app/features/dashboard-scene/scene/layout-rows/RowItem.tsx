@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Input, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, Switch, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -18,6 +18,7 @@ export interface RowItemState extends SceneObjectState {
   layout: DashboardLayoutManager;
   title?: string;
   isCollapsed?: boolean;
+  isHeaderHidden?: boolean;
 }
 
 export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
@@ -31,13 +32,28 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
         title: 'Row options',
         id: 'row-options',
         isOpenDefault: true,
-      }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: 'Title',
-          value: row.state.title,
-          render: () => <RowTitleInput row={row} />,
-        })
-      );
+      })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Title',
+            value: row.state.title,
+            render: () => <RowTitleInput row={row} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Hide row header',
+            value: row.state.title,
+            render: () => <RowHeaderSwitch row={row} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Row height',
+            value: row.state.title,
+            render: () => <RowHeaderSwitch row={row} />,
+          })
+        );
     }, [row]);
 
     const { layout } = this.useState();
@@ -185,4 +201,19 @@ export function RowTitleInput({ row }: { row: RowItem }) {
   const { title } = row.useState();
 
   return <Input value={title} onChange={(e) => row.setState({ title: e.currentTarget.value })} />;
+}
+
+export function RowHeaderSwitch({ row }: { row: RowItem }) {
+  const { isHeaderHidden } = row.useState();
+
+  return (
+    <Switch
+      value={isHeaderHidden}
+      onChange={() => {
+        row.setState({
+          isHeaderHidden: !row.state.isHeaderHidden,
+        });
+      }}
+    />
+  );
 }
