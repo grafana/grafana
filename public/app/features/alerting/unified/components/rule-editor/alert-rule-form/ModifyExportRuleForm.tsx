@@ -151,7 +151,7 @@ interface GrafanaRuleDesignExportPreviewProps {
 export const getPayloadToExport = (
   formValues: RuleFormValues,
   existingGroup: RulerRuleGroupDTO<RulerRuleDTO> | null | undefined,
-  uid?: string
+  ruleUid?: string
 ): PostableRulerRuleGroupDTO => {
   const grafanaRuleDto = formValuesToRulerGrafanaRuleDTO(formValues);
 
