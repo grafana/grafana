@@ -24,7 +24,7 @@ func TestCorePlugin(t *testing.T) {
 		require.False(t, p.Exited())
 
 		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
-		require.Equal(t, plugins.ErrMethodNotImplemented, err)
+		require.NoError(t, err)
 
 		_, err = p.CheckHealth(context.Background(), nil)
 		require.Equal(t, plugins.ErrMethodNotImplemented, err)
@@ -57,7 +57,7 @@ func TestCorePlugin(t *testing.T) {
 		require.False(t, p.Exited())
 
 		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
-		require.Equal(t, plugins.ErrMethodNotImplemented, err)
+		require.NoError(t, err)
 
 		_, err = p.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 		require.NoError(t, err)
