@@ -84,6 +84,24 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 		},
 		{
+			name: "creates an instance",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"azureAuthType":"msi"}`),
+				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				ID:                      40,
+			},
+			expectedModel: &types.DatasourceInfo{
+				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
+				Settings:                types.AzureMonitorSettings{},
+				Routes:                  testRoutes,
+				JSONData:                map[string]any{"azureAuthType": "msi"},
+				DatasourceID:            40,
+				DecryptedSecureJSONData: map[string]string{"key": "value"},
+				Services:                map[string]types.DatasourceService{},
+			},
+			Err: require.NoError,
+		},
+		{
 			name: "creates an instance for customized cloud",
 			settings: backend.DataSourceInstanceSettings{
 				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
