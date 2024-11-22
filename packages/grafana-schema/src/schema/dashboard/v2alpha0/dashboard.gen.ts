@@ -254,7 +254,7 @@ export const defaultMatcherConfig = (): MatcherConfig => ({
 });
 
 export interface Threshold {
-	value: number | null;
+	value: number;
 	color: string;
 }
 
@@ -290,13 +290,13 @@ export const defaultValueMapping = (): ValueMapping => (defaultValueMap());
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 export enum MappingType {
-	Value = "value",
-	Range = "range",
-	Regex = "regex",
-	Special = "special",
+	ValueToText = "value",
+	RangeToText = "range",
+	RegexToText = "regex",
+	SpecialValue = "special",
 }
 
-export const defaultMappingType = (): MappingType => (MappingType.Value);
+export const defaultMappingType = (): MappingType => (MappingType.ValueToText);
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -383,7 +383,7 @@ export enum SpecialValueMatch {
 	False = "false",
 	Null = "null",
 	NotANumber = "nan",
-	NullNan = "null+nan",
+	NullAndNaN = "null+nan",
 	Empty = "empty",
 }
 

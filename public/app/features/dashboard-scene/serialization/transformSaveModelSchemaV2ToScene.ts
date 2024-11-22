@@ -30,14 +30,9 @@ import {
   GroupByVariable,
 } from '@grafana/scenes';
 import {
-  DashboardCursorSync as DashboardCursorSyncV1,
-  defaultDashboardCursorSync,
-} from '@grafana/schema/dist/esm/index.gen';
-import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardCursorSync,
   DashboardV2Spec,
   DatasourceVariableKind,
   GroupByVariableKind,
@@ -67,8 +62,14 @@ import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSes
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getIntervalsFromQueryString } from '../utils/utils';
 
-import { getAngularPanelMigrationHandler } from './angularMigration';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import {
+  transformCursorSyncV2ToV1,
+  transformSortVariableToEnumV1,
+  transformValueMappingsToV1,
+  transformVariableHideToEnumV1,
+  transformVariableRefreshToEnumV1,
+} from './transformToV1TypesUtils';
 
 const DEFAULT_DATASOURCE = 'default';
 
@@ -217,7 +218,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
-    fieldConfig: panel.spec.vizConfig.spec.fieldConfig,
+    fieldConfig: transformValueMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
     // FIXME: Transparent is not added to the schema yet
     // displayMode: panel.spec.transparent ? 'transparent' : undefined,
@@ -227,7 +228,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     titleItems,
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
-    _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    // _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel), //FIXME: Angular Migration
   };
 
   // FIXME: Library Panel
@@ -249,8 +250,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     vizPanelState.$timeRange = new PanelTimeRange({
       timeFrom: queryOptions.timeFrom,
       timeShift: queryOptions.timeShift,
-      // FIXME: hideTimeOverride is not added to the schema yet
-      // hideTimeOverride: queryOptions.hideTimeOverride,
+      hideTimeOverride: queryOptions.hideTimeOverride,
     });
   }
 
@@ -311,7 +311,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
     minInterval: panel.data.spec.queryOptions.interval ?? undefined,
     dataLayerFilter: {
       // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-      panelId: parseInt(panel.uid, 10),
+      panelId: Number.isNaN(parseInt(panel.uid, 10)) ? 0 : parseInt(panel.uid, 10),
     },
     $behaviors: [new DashboardDatasourceBehaviour({})],
   });
@@ -323,27 +323,15 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   });
 }
 
-function transformCursorSyncV2ToV1(cursorSync: DashboardCursorSync): DashboardCursorSyncV1 {
-  switch (cursorSync) {
-    case DashboardCursorSync.Crosshair:
-      return DashboardCursorSyncV1.Crosshair;
-    case DashboardCursorSync.Tooltip:
-      return DashboardCursorSyncV1.Tooltip;
-    case DashboardCursorSync.Off:
-      return DashboardCursorSyncV1.Off;
-    default:
-      return defaultDashboardCursorSync;
-  }
-}
-
 function getVariables(dashboard: DashboardV2Spec): SceneVariableSet | undefined {
   let variables: SceneVariableSet | undefined;
 
   if (dashboard.variables.length) {
     if (false) {
       // FIXME: isSnapshot is not added to the schema yet
+      //if (dashboard.meta?.isSnapshot) {
       // in the old model we use .meta.isSnapshot but meta is not persisted
-      variables = createVariablesForSnapshot(dashboard);
+      // variables = createVariablesForSnapshot(dashboard);
     } else {
       variables = createVariablesForDashboard(dashboard);
     }
@@ -387,9 +375,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       ...commonProperties,
       description: variable.spec.description,
       skipUrlSync: variable.spec.skipUrlSync,
-      // FIXME: need to fix this in cue schema defintion by updating VariableHide type definition to use default numeric values
-      // the same applies to sort and referesh fields which require updaring VariableSort and VariableRefresh type definitions
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
       datasource: variable.spec.datasource,
       applyMode: 'auto',
       filters: variable.spec.filters ?? [],
@@ -414,24 +400,24 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       includeAll: variable.spec.includeAll,
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else if (variable.kind === 'QueryVariable') {
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
-      query: variable.spec.query,
+      query: getDataQueryForVariable(variable),
       datasource: variable.spec.datasource,
-      sort: variable.spec.sort, //FIXME: need to fix this in cue schema defintion by updating VariableSort to use default numeric values
-      refresh: variable.spec.refresh, //FIXME: need to fix this in cue schema defintion by updating VariableRefresh to use default numeric values
+      sort: transformSortVariableToEnumV1(variable.spec.sort),
+      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
       allValue: variable.spec.allValue || undefined,
       includeAll: variable.spec.includeAll,
       defaultToAll: Boolean(variable.spec.includeAll),
       isMulti: variable.spec.multi,
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
     });
   } else if (variable.kind === 'DatasourceVariable') {
@@ -446,7 +432,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       defaultToAll: Boolean(variable.spec.includeAll),
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
       defaultOptionEnabled:
         variable.spec.current?.value === DEFAULT_DATASOURCE && variable.spec.current?.text === 'default',
     });
@@ -460,16 +446,16 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       autoEnabled: variable.spec.auto,
       autoStepCount: variable.spec.auto_count,
       autoMinInterval: variable.spec.auto_min,
-      refresh: variable.spec.refresh,
+      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else if (variable.kind === 'ConstantVariable') {
     return new ConstantVariable({
       ...commonProperties,
       value: variable.spec.query,
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else if (variable.kind === 'TextVariable') {
     let val;
@@ -487,7 +473,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       ...commonProperties,
       value: val,
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
   } else if (config.featureToggles.groupByVariable && variable.kind === 'GroupByVariable') {
     return new GroupByVariable({
@@ -496,13 +482,22 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       value: variable.spec.current?.value || [],
       text: variable.spec.current?.text || [],
       skipUrlSync: variable.spec.skipUrlSync,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
       // @ts-expect-error
       defaultOptions: variable.options,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.kind}`);
   }
+}
+
+function getDataQueryForVariable(variable: QueryVariableKind) {
+  return typeof variable.spec.query !== 'string'
+    ? {
+        ...variable.spec.query.spec,
+        refId: variable.spec.query.spec.refId ?? 'A',
+      }
+    : (variable.spec.query ?? '');
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
@@ -536,7 +531,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             readOnly: true,
             description: v.spec.description,
             skipUrlSync: v.spec.skipUrlSync,
-            hide: v.spec.hide,
+            hide: transformVariableHideToEnumV1(v.spec.hide),
             datasource: v.spec.datasource,
             applyMode: 'auto',
             filters: v.spec.filters ?? [],
@@ -578,21 +573,20 @@ export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVar
       description: variable.spec.description,
       value: currentInterval,
       text: currentInterval,
-      hide: variable.spec.hide,
+      hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
     return snapshotVariable;
   }
 
-  // FIXME: don't have a system variable that schema v2 would return
-  if (variable.kind === 'system' || variable.kind === 'ConstantVariable' || variable.kind === 'AdhocVariable') {
+  if (variable.kind === 'ConstantVariable' || variable.kind === 'AdhocVariable') {
     current = {
       value: '',
       text: '',
     };
   } else {
     current = {
-      value: variable.current?.value ?? '',
-      text: variable.current?.text ?? '',
+      value: variable.spec.current?.value ?? '',
+      text: variable.spec.current?.text ?? '',
     };
   }
 
@@ -602,7 +596,7 @@ export function createSnapshotVariable(variable: TypedVariableModelv2): SceneVar
     description: variable.spec.description,
     value: current?.value ?? '',
     text: current?.text ?? '',
-    hide: variable.spec.hide,
+    hide: transformVariableHideToEnumV1(variable.spec.hide),
   });
   return snapshotVariable;
 }
