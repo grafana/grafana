@@ -44,7 +44,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
 		}
 		details["verboseMessage"] = err.Error()
-		details["moreDetailsLink"] = "https://grafana.com/docs/grafana/latest/datasources/mysql/#configure-the-data-source"
+		details["errorDetailsLink"] = "https://grafana.com/docs/grafana/latest/datasources/mysql/#configure-the-data-source"
 	}
 	var driverErr *mysql.MySQLError
 	if errors.As(err, &driverErr) {
@@ -53,7 +53,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 			res.Message += fmt.Sprintf(". MySQL error number: %d", driverErr.Number)
 		}
 		details["verboseMessage"] = err.Error()
-		details["moreDetailsLink"] = "https://dev.mysql.com/doc/mysql-errors/8.4/en/"
+		details["errorDetailsLink"] = "https://dev.mysql.com/doc/mysql-errors/8.4/en/"
 	}
 	detailBytes, marshalErr := json.Marshal(details)
 	if marshalErr != nil {

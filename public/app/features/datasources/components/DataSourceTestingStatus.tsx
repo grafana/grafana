@@ -76,11 +76,11 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
-interface AlertErrorMessageProps extends HTMLAttributes<HTMLDivElement> {
-  moreDetailsLink?: string;
+interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
+  errorDetailsLink?: string;
 }
 
-const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
+const ErrorDetailsLink = ({ errorDetailsLink }: ErrorDetailsLinkProps) => {
   const theme = useTheme2();
   const styles = {
     content: css({
@@ -90,11 +90,11 @@ const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
       overflowY: 'auto',
     }),
   };
-  if (!moreDetailsLink) {
+  if (!errorDetailsLink) {
     return <></>;
   }
   const isValidUrl = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
-    moreDetailsLink
+    errorDetailsLink
   );
   if (!isValidUrl) {
     return <></>;
@@ -106,7 +106,7 @@ const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
         <Link
           aria-label={`More details about the error`}
           className={'external-link'}
-          href={moreDetailsLink}
+          href={errorDetailsLink}
           target="_blank"
           rel="noreferrer"
         >
@@ -118,7 +118,7 @@ const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
   );
 };
 
-AlertErrorMessage.displayName = 'AlertErrorMessage';
+ErrorDetailsLink.displayName = 'ErrorDetailsLink';
 
 const alertVariants = new Set(['success', 'info', 'warning', 'error']);
 const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str);
@@ -134,7 +134,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
-  const moreDetailsLink = testingStatus?.details?.moreDetailsLink;
+  const errorDetailsLink = testingStatus?.details?.errorDetailsLink;
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -159,9 +159,10 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                   dataSourceId={dataSource.uid}
                   onDashboardLinkClicked={onDashboardLinkClicked}
                 />
-              ) : (
-                <AlertErrorMessage moreDetailsLink={String(moreDetailsLink)} />
-              )}
+              ) : null}
+              {severity === 'error' && errorDetailsLink ? (
+                <ErrorDetailsLink errorDetailsLink={String(errorDetailsLink)} />
+              ) : null}
               {detailsVerboseMessage ? (
                 <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}
