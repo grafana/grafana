@@ -1,11 +1,12 @@
-import { behaviors, SceneDataTransformer, sceneGraph, SceneGridLayout, SceneQueryRunner } from '@grafana/scenes';
+import { behaviors, sceneGraph } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 
-import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 import { DashboardLayoutManager } from '../scene/types';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+
+import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
+import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardV2Spec = handyTestingSchema;
 
