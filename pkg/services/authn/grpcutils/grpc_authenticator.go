@@ -49,14 +49,20 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 		authnlib.WithTracerAuthOption(tracer),
 	}
-	if authCfg.Mode == ModeOnPrem {
+	switch authCfg.Mode {
+	case ModeOnPrem:
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
+			authnlib.WithIDTokenAuthOption(true),
+		)
+	case ModeCloud:
+		grpcOpts = append(grpcOpts,
+			// ID tokens are enabled but not required in cloud
+			authnlib.WithIDTokenAuthOption(false),
 		)
 	}
 
@@ -65,6 +71,8 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 		grpcOpts...,
 	)
 }
+
+type contextFallbackKey struct{}
 
 type AuthenticatorWithFallback struct {
 	authenticator *authnlib.GrpcAuthenticator
@@ -96,6 +104,10 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 	}, nil
 }
 
+func FallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
+
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
 	defer span.End()
@@ -107,6 +119,7 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 		newCtx, err = f.fallback.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 		span.SetAttributes(attribute.Bool("fallback_used", true))
+		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
 	}
 	return newCtx, err
 }

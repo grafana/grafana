@@ -14,6 +14,9 @@
     "permission-list": {
       "permission": "Permiso"
     },
+    "permission-list-item": {
+      "inherited": ""
+    },
     "permissions": {
       "add-label": "Añadir un permiso",
       "no-permissions": "No hay ningún permiso",
@@ -23,6 +26,143 @@
       "team": "Equipo",
       "title": "Permisos",
       "user": "Usuario"
+    }
+  },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "",
+      "save-button": ""
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "",
+      "one-click-link": ""
+    }
+  },
+  "admin": {
+    "anon-users": {
+      "not-found": ""
+    },
+    "edit-org": {
+      "access-denied": "",
+      "heading": "",
+      "update-button": "",
+      "users-heading": ""
+    },
+    "feature-toggles": {
+      "sub-title": ""
+    },
+    "get-enterprise": {
+      "contact-us": "",
+      "description": "",
+      "features-heading": "",
+      "included-description": "",
+      "included-heading": "",
+      "service-title": "",
+      "team-sync-details": "",
+      "title": ""
+    },
+    "ldap": {
+      "test-mapping-heading": "",
+      "test-mapping-run-button": ""
+    },
+    "ldap-permissions": {
+      "active": "",
+      "admin": "",
+      "inactive": ""
+    },
+    "ldap-status": {
+      "title": ""
+    },
+    "ldap-sync": {
+      "debug-button": "",
+      "external-sync-description": "",
+      "external-sync-label": "",
+      "next-sync-label": "",
+      "not-enabled": "",
+      "sync-button": "",
+      "title": ""
+    },
+    "ldap-sync-info": {
+      "title": ""
+    },
+    "ldap-user-groups": {
+      "no-org-found": ""
+    },
+    "ldap-user-info": {
+      "no-team": ""
+    },
+    "org-uers": {
+      "last-seen-never": ""
+    },
+    "org-users": {
+      "not-editable": ""
+    },
+    "orgs": {
+      "delete-body": "",
+      "id-header": "",
+      "name-header": "",
+      "new-org-button": ""
+    },
+    "server-settings": {
+      "alerts-button": "",
+      "dashboards-button": "",
+      "data-sources-button": "",
+      "not-found": "",
+      "title": "",
+      "users-button": ""
+    },
+    "settings": {
+      "info-description": ""
+    },
+    "upgrade-info": {
+      "title": ""
+    },
+    "user-orgs": {
+      "add-button": "",
+      "change-role-button": "",
+      "external-user-tooltip": "",
+      "remove-button": "",
+      "role-not-editable": "",
+      "title": ""
+    },
+    "user-orgs-modal": {
+      "add-button": "",
+      "cancel-button": ""
+    },
+    "user-permissions": {
+      "change-button": "",
+      "grafana-admin-key": "",
+      "grafana-admin-no": "",
+      "grafana-admin-yes": "",
+      "title": ""
+    },
+    "user-profile": {
+      "delete-button": "",
+      "disable-button": "",
+      "edit-button": "",
+      "enable-button": "",
+      "title": ""
+    },
+    "user-sessions": {
+      "browser-column": "",
+      "force-logout-all-button": "",
+      "force-logout-button": "",
+      "ip-column": "",
+      "last-seen-column": "",
+      "logged-on-column": "",
+      "title": ""
+    },
+    "users-create": {
+      "create-button": ""
+    },
+    "users-list": {
+      "create-button": ""
+    },
+    "users-table": {
+      "last-seen-never": "",
+      "no-licensed-role": ""
     }
   },
   "alert-labels": {
@@ -371,6 +511,17 @@
       "message": ""
     }
   },
+  "app-chrome": {
+    "skip-content-button": "",
+    "top-bar": {
+      "sign-in": ""
+    }
+  },
+  "app-notification": {
+    "item": {
+      "trace-id": ""
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "",
@@ -442,6 +593,7 @@
       "clear-selection": "Eliminar selección",
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
+      "non-folder-item": "",
       "search-placeholder": "Buscar carpetas",
       "unknown-error": "Error desconocido"
     },
@@ -883,6 +1035,12 @@
       "time-range-label": ""
     }
   },
+  "empty-list-cta": {
+    "pro-tip": ""
+  },
+  "entity-not-found": {
+    "description": ""
+  },
   "errors": {
     "dashboard-settings": {
       "annotations": {
@@ -1103,8 +1261,28 @@
       "export-as-json-tooltip": ""
     }
   },
+  "folder-filter": {
+    "clear-folder-button": ""
+  },
   "folder-picker": {
+    "create-instructions": "",
     "loading": "Cargando carpetas..."
+  },
+  "forgot-password": {
+    "back-button": "",
+    "change-password": {
+      "skip-button": "",
+      "submit-button": ""
+    },
+    "contact-admin": "",
+    "email-sent": "",
+    "reset-password-header": "",
+    "send-email-button": ""
+  },
+  "form-prompt": {
+    "continue-button": "",
+    "description": "",
+    "discard-button": ""
   },
   "gen-ai": {
     "apply-suggestion": "",
@@ -1225,6 +1403,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "",
+      "keys": ""
+    },
     "shortcuts-category": {
       "dashboard": "Panel de control",
       "focused-panel": "",
@@ -1475,6 +1657,9 @@
     }
   },
   "login": {
+    "divider": {
+      "connecting-text": ""
+    },
     "error": {
       "blocked": "Ha excedido el número de intentos de inicio de sesión para este usuario. Inténtelo de nuevo más tarde.",
       "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
@@ -1501,6 +1686,9 @@
       "username-required": "El correo o el nombre de usuario es obligatorio",
       "verify-email-label": "",
       "verify-email-loading-label": ""
+    },
+    "layout": {
+      "update-password": ""
     },
     "services": {
       "sing-in-with-prefix": "Iniciar sesión con {{serviceName}}"
@@ -2147,6 +2335,9 @@
     "no-matches": "",
     "unsupported-layout": ""
   },
+  "panel-type-filter": {
+    "clear-button": ""
+  },
   "playlist-edit": {
     "error-prefix": "Error al cargar la lista de reproducción:",
     "form": {
@@ -2240,6 +2431,10 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "plugin-help": {
+      "error": "",
+      "not-found": ""
     }
   },
   "profile": {
@@ -2433,6 +2628,10 @@
       "dashboard-modal-title": "Paneles de control públicos",
       "shared-dashboard-modal-title": ""
     },
+    "table-body": {
+      "dashboard-count_one": "",
+      "dashboard-count_other": ""
+    },
     "table-header": {
       "activated-label": "Activado",
       "activated-tooltip": "El usuario más antiguo ha estado activo en un tablero de control",
@@ -2527,6 +2726,19 @@
     "dismissable-button": "Cerrar"
   },
   "role-picker": {
+    "built-in": {
+      "basic-roles": ""
+    },
+    "input": {
+      "no-roles": ""
+    },
+    "menu": {
+      "clear-button": "",
+      "tooltip": ""
+    },
+    "sub-menu": {
+      "clear-button": ""
+    },
     "title": {
       "description": ""
     }
@@ -2535,6 +2747,11 @@
     "basic-roles": {
       "label": ""
     }
+  },
+  "route-error": {
+    "description": "",
+    "reload-button": "",
+    "title": ""
   },
   "save-dashboards": {
     "name-exists": {
@@ -2808,6 +3025,17 @@
     },
     "title": "Preferencias"
   },
+  "sign-up": {
+    "back-button": "",
+    "submit-button": "",
+    "verify": {
+      "back-button": "",
+      "complete-button": "",
+      "header": "",
+      "info": "",
+      "send-button": ""
+    }
+  },
   "silences": {
     "empty-state": {
       "button-title": "",
@@ -2860,6 +3088,7 @@
     "view-button": "Vista"
   },
   "tag-filter": {
+    "clear-button": "",
     "loading": "Cargando...",
     "no-tags": "No se ha encontrado ninguna etiqueta",
     "placeholder": "Filtrar por etiqueta"
@@ -2979,6 +3208,13 @@
       "add-transformation-body": "Las transformaciones permiten cambiar los datos de varias maneras antes de que se muestre su visualización.<1></1>Aquí se incluyen acciones como unir datos, renombrar campos, hacer cálculos, dar formato a los datos para mostrarlos, etc.",
       "add-transformation-header": "Empezar a transformar datos"
     }
+  },
+  "upgrade-box": {
+    "discovery-text": "",
+    "discovery-text-continued": "",
+    "get-started": "",
+    "learn-more": "",
+    "upgrade-button": ""
   },
   "user-orgs": {
     "current-org-button": "Actual",
