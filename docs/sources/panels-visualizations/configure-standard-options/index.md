@@ -126,6 +126,27 @@ For more granular control over the display of fields, refer to [Configure overri
 
 You can configure standard options for the following visualizations:
 
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
+
+<!--
 |                                |                                      |                                      |
 | ------------------------------ | ------------------------------------ | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
@@ -133,6 +154,8 @@ You can configure standard options for the following visualizations:
 | [Candlestick](ref:candlestick) | [Pie chart](ref:pie-chart)           | [Time series](ref:time-series)       |
 | [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
 | [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | [XY chart](ref:xy-chart)             |
+
+-->
 
 ## Standard options
 
