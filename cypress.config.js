@@ -51,34 +51,6 @@ module.exports = defineConfig({
         },
       });
 
-      on('task', {
-        writeBenchmarkResult: async ({ fileName, data }) => {
-          return await new Promise((resolve, reject) => {
-            let csv =
-              'run, duration, networkDuration, jsHeapSizeLimit, usedJSHeapSize, totalJSHeapSize, interactionType\n';
-            const projectPath = config.env.CWD || process.cwd();
-            const filePath = path.join(projectPath, 'benchmark-results', new Date().toString(), fileName);
-            csv += data
-              .map(
-                (r, i) =>
-                  `${i + 1}, ${r.duration}, ${r.networkDuration}, ${r.jsHeapSizeLimit}, ${r.usedJSHeapSize}, ${r.totalJSHeapSize}, ${r.interactionType}`
-              )
-              .join('\n');
-
-            const dir = path.dirname(filePath);
-
-            // Check if the directory exists
-            if (!fs.existsSync(dir)) {
-              // Create the directory recursively
-              fs.mkdirSync(dir, { recursive: true });
-            }
-
-            fs.writeFileSync(filePath, csv);
-            resolve(null);
-          });
-        },
-      });
-
       on('before:browser:launch', (browser = {}, launchOptions) => {
         console.log('launching browser %s is headless? %s', browser.name, browser.isHeadless);
 
@@ -113,18 +85,3 @@ module.exports = defineConfig({
     },
   },
 });
-
-// Function to create a directory and write a file in it
-function writeFileToNonExistentDirectory(filePath, data) {
-  const dir = path.dirname(filePath);
-
-  // Check if the directory exists
-  if (!fs.existsSync(dir)) {
-    // Create the directory recursively
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  // Write the file
-  fs.writeFileSync(filePath, data, 'utf8');
-  console.log(`File written to ${filePath}`);
-}

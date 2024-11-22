@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { logMeasurement } from '@grafana/runtime/src/utils/logging';
 import {
   VizPanel,
@@ -441,6 +441,14 @@ function getDashboardInteractionCallback(uid: string, title: string) {
     } else if (e.origin.indexOf('Variable') > -1) {
       interactionType = 'variable-change';
     }
+    reportInteraction('dashboard-render', {
+      interactionType,
+      duration: e.duration,
+      networkDuration: e.networkDuration,
+      totalJSHeapSize: e.totalJSHeapSize,
+      usedJSHeapSize: e.usedJSHeapSize,
+      jsHeapSizeLimit: e.jsHeapSizeLimit,
+    });
 
     logMeasurement(
       `dashboard.${interactionType}`,
