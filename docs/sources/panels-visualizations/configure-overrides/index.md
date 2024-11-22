@@ -121,6 +121,28 @@ After you've set them, your overrides appear in both the **All** and **Overrides
 
 You can configure field overrides for the following visualizations:
 
+{{< column-list >}}
+
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Heatmap](ref:heatmap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+- [XY chart](ref:xy-chart)
+
+{{< /column-list >}}
+
+<!--
 |                                |                                      |                                      |
 | ------------------------------ | ------------------------------------ | ------------------------------------ |
 | [Bar chart](ref:bar-chart)     | [Heatmap](ref:heatmap)               | [Status history](ref:status-history) |
@@ -129,6 +151,8 @@ You can configure field overrides for the following visualizations:
 | [Canvas](ref:canvas)           | [Stat](ref:stat)                     | [Trend](ref:trend)                   |
 | [Gauge](ref:gauge)             | [State timeline](ref:state-timeline) | [XY chart](ref:xy-chart)             |
 | [Geomap](ref:geomap)           |                                      |                                      |
+
+-->
 
 ## Override rules
 
