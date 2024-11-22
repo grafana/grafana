@@ -10,7 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/legacy"
 )
 
 type helloWorldSubresource struct {
@@ -65,6 +67,24 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		whom := r.URL.Query().Get("whom")
 		if whom == "" {
 			whom = "World"
+		}
+
+		// Hack the legacy export
+		if r.URL.Query().Get("export") != "" {
+			id, err := s.parent.client.identities.WorkerIdentity(ctx, repo.Namespace)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			path, err := s.parent.legacyExporter.Export(identity.WithRequester(r.Context(), id), legacy.ExportOptions{
+				OrgID: 1, // TODO.. get from namespace
+			})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			w.Write([]byte(path))
+			return
 		}
 
 		newCommit := r.URL.Query().Get("commit")

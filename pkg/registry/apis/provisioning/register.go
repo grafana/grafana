@@ -29,6 +29,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,6 +49,7 @@ type ProvisioningAPIBuilder struct {
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 	client            *resourceClient
+	legacyExporter    legacy.LegacyExporter
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -58,6 +60,7 @@ func NewProvisioningAPIBuilder(
 	urlProvider func(namespace string) string,
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
+	legacyExporter legacy.LegacyExporter,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
@@ -65,6 +68,7 @@ func NewProvisioningAPIBuilder(
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
+		legacyExporter:    legacyExporter,
 	}
 }
 
@@ -75,6 +79,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
+	legacyExporter legacy.LegacyExporter,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -84,7 +89,7 @@ func RegisterAPIService(
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities)
+	}, cfg.SecretKey, identities, legacyExporter)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
