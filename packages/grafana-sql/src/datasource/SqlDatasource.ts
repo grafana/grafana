@@ -78,9 +78,17 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
-        return this.getQueryModel().quoteLiteral(value);
+        return this.getQueryModel().quoteLiteral(value); // add quotes `'`
       } else {
-        return String(value).replace(/'/g, "''");
+        // fixbug, the value will doesn't contains quotes `'` when checkbox of Multi value is not checked.
+        // Another if the type of variable is scopeVar, has same promblem.
+        // Wrong Example:
+        //  select * from table where name in ($var_a) => select * from table where name in (a)
+        if (value === "''") {// PR: https://github.com/grafana/grafana/pull/56879
+          return String(value).replace(/'/g, "''");
+        } else {
+          return value
+        }
       }
     }
 
