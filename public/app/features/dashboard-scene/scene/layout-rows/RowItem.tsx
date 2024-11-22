@@ -4,7 +4,7 @@ import { useMemo, useRef } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { Button, Icon, Input, Switch, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, RadioButtonGroup, Switch, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -19,6 +19,7 @@ export interface RowItemState extends SceneObjectState {
   title?: string;
   isCollapsed?: boolean;
   isHeaderHidden?: boolean;
+  height?: 'expand' | 'min';
 }
 
 export class RowItem extends SceneObjectBase<RowItemState> implements LayoutParent, EditableDashboardElement {
@@ -36,21 +37,18 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
         .addItem(
           new OptionsPaneItemDescriptor({
             title: 'Title',
-            value: row.state.title,
             render: () => <RowTitleInput row={row} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Hide row header',
-            value: row.state.title,
-            render: () => <RowHeaderSwitch row={row} />,
+            title: 'Height',
+            render: () => <RowHeightSelect row={row} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: 'Row height',
-            value: row.state.title,
+            title: 'Hide row header',
             render: () => <RowHeaderSwitch row={row} />,
           })
         );
@@ -110,14 +108,18 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
-    const { layout, title, isCollapsed } = model.useState();
+    const { layout, title, isCollapsed, height = 'expand' } = model.useState();
     const { isEditing } = getDashboardSceneFor(model).useState();
     const styles = useStyles2(getStyles);
     const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
     const ref = useRef<HTMLDivElement>(null);
+    const shouldGrow = !isCollapsed && height === 'expand';
 
     return (
-      <div className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed)} ref={ref}>
+      <div
+        className={cx(styles.wrapper, isCollapsed && styles.wrapperCollapsed, shouldGrow && styles.wrapperGrow)}
+        ref={ref}
+      >
         <div className={styles.rowHeader}>
           <button
             onClick={model.onCollapseToggle}
@@ -184,6 +186,8 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       width: '100%',
+    }),
+    wrapperGrow: css({
       flexGrow: 1,
     }),
     wrapperCollapsed: css({
@@ -214,6 +218,27 @@ export function RowHeaderSwitch({ row }: { row: RowItem }) {
           isHeaderHidden: !row.state.isHeaderHidden,
         });
       }}
+    />
+  );
+}
+
+export function RowHeightSelect({ row }: { row: RowItem }) {
+  const { height = 'expand' } = row.useState();
+
+  const options = [
+    { label: 'Expand', value: 'expand' as const },
+    { label: 'Min', value: 'min' as const },
+  ];
+
+  return (
+    <RadioButtonGroup
+      options={options}
+      value={height}
+      onChange={(option) =>
+        row.setState({
+          height: option,
+        })
+      }
     />
   );
 }
