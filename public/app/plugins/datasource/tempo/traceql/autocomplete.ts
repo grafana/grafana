@@ -488,8 +488,7 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
 
 const SUGGEST_REGEXP = /(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/;
 
-/** @internal */
-export function completionItemsToSuggestions(
+function completionItemsToSuggestions(
   items: CompletionItem[],
   range: monacoTypes.IRange | languages.CompletionItemRanges,
   registerInteractionCommandId = 'noOp',

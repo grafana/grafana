@@ -6,8 +6,7 @@ import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { Scope, TempoJsonData } from '../types';
 
-import { completionItemsToSuggestions, CompletionProvider } from './autocomplete';
-import { completionItems } from './completionItems';
+import { CompletionProvider } from './autocomplete';
 import { intrinsicsV1, scopes } from './traceql';
 
 const emptyPosition = {} as monacoTypes.Position;
@@ -214,24 +213,6 @@ describe('CompletionProvider', () => {
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
       CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
     );
-  });
-
-  it('completionItemsToSuggestions', async () => {
-    console.time('completionItemsToSuggestions');
-    const modelValue = '{resource.name=~"vendor"} | count_over_time() by (span.)';
-    const range = {
-      startLineNumber: 1,
-      startColumn: 56,
-      endLineNumber: 1,
-      endColumn: 56,
-    };
-    const offset = 55;
-    const registerInteractionCommandId = 'DYNAMIC_1';
-
-    completionItemsToSuggestions(completionItems, range, registerInteractionCommandId, modelValue, offset);
-    console.timeEnd('completionItemsToSuggestions');
-
-    expect(1).toEqual(1);
   });
 
   it.each([
