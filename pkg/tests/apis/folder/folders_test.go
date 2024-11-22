@@ -440,7 +440,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		}
 		slices.Sort(uids) // make list compare stable
 
-		// Check all playlists
+		// Check all folders
 		for _, uid := range uids {
 			getFromBothAPIs(t, helper, client, uid, nil)
 		}
@@ -461,17 +461,21 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Equal(t, "Test folder (replaced from k8s; 1 item; PUT)", title)
 		require.Equal(t, "New description", description)
+
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
 
 		// ensure that we get 4 items when listing via k8s
 		l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
-		require.NotNil(t, l)
 		folders, err := meta.ExtractList(l)
 		require.NoError(t, err)
 		require.NotNil(t, folders)
 		require.Equal(t, len(folders), 4)
+
+		// delete test
+		errDelete := client.Resource.Delete(context.Background(), first.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, errDelete)
 	})
 	return helper
 }
