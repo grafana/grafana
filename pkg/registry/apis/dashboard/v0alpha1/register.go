@@ -177,6 +177,14 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	// Requires hack in to resolve with no name:
+	// pkg/services/apiserver/builder/helper.go#L58
+	storage["search"], err = dashboard.NewSearchConnector(b.unified,
+		func() runtime.Object { return &dashboardv0alpha1.DashboardWithAccessInfo{} }) // TODO... replace with a real model
+	if err != nil {
+		return err
+	}
+
 	// Expose read only library panels
 	storage[dashboardv0alpha1.LibraryPanelResourceInfo.StoragePath()] = &dashboard.LibraryPanelStore{
 		Access:       b.legacy.Access,
@@ -202,8 +210,13 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, root+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+"watch/"+dashboardv0alpha1.DashboardResourceInfo.GroupResource().Resource)
 
+	// Resolve the empty name
+	sub := oas.Paths.Paths[root+"search/{name}"]
+	oas.Paths.Paths[root+"search"] = sub
+	delete(oas.Paths.Paths, root+"search/{name}")
+
 	// The root API discovery list
-	sub := oas.Paths.Paths[root]
+	sub = oas.Paths.Paths[root]
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}

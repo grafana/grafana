@@ -16,7 +16,8 @@ import (
 func GetAuthorizer(dashboardService dashboards.DashboardService, l log.Logger) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-			if !attr.IsResourceRequest() {
+			// Use the standard authorizer
+			if !attr.IsResourceRequest() || attr.GetResource() == "search" {
 				return authorizer.DecisionNoOpinion, "", nil
 			}
 
