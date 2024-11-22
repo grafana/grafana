@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
@@ -10,7 +11,22 @@ import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardV2Spec = handyTestingSchema;
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    getInstanceSettings: jest.fn(),
+  }),
+}));
+
 describe('transformSaveModelSchemaV2ToScene', () => {
+  beforeAll(() => {
+    config.featureToggles.groupByVariable = true;
+  });
+
+  afterAll(() => {
+    config.featureToggles.groupByVariable = false;
+  });
+
   it('should initialize the DashboardScene with the model state', () => {
     const dash = { ...defaultDashboard };
 

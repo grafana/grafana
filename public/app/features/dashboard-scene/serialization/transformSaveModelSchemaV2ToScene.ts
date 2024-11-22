@@ -35,6 +35,14 @@ import {
   CustomVariableKind,
   DashboardV2Spec,
   DatasourceVariableKind,
+  defaultAdhocVariableKind,
+  defaultConstantVariableKind,
+  defaultCustomVariableKind,
+  defaultDatasourceVariableKind,
+  defaultGroupByVariableKind,
+  defaultIntervalVariableKind,
+  defaultQueryVariableKind,
+  defaultTextVariableKind,
   GroupByVariableKind,
   IntervalVariableKind,
   PanelKind,
@@ -370,7 +378,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
     label: variable.spec.label,
     description: variable.spec.description,
   };
-  if (variable.kind === 'AdhocVariable') {
+  if (variable.kind === defaultAdhocVariableKind().kind) {
     return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.spec.description,
@@ -388,7 +396,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       ),
     });
   }
-  if (variable.kind === 'CustomVariable') {
+  if (variable.kind === defaultCustomVariableKind().kind) {
     return new CustomVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -402,7 +410,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (variable.kind === 'QueryVariable') {
+  } else if (variable.kind === defaultQueryVariableKind().kind) {
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -420,7 +428,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       definition: variable.spec.definition,
     });
-  } else if (variable.kind === 'DatasourceVariable') {
+  } else if (variable.kind === defaultDatasourceVariableKind().kind) {
     return new DataSourceVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -436,7 +444,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       defaultOptionEnabled:
         variable.spec.current?.value === DEFAULT_DATASOURCE && variable.spec.current?.text === 'default',
     });
-  } else if (variable.kind === 'IntervalVariable') {
+  } else if (variable.kind === defaultIntervalVariableKind().kind) {
     const intervals = getIntervalsFromQueryString(variable.spec.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
@@ -450,14 +458,14 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (variable.kind === 'ConstantVariable') {
+  } else if (variable.kind === defaultConstantVariableKind().kind) {
     return new ConstantVariable({
       ...commonProperties,
       value: variable.spec.query,
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (variable.kind === 'TextVariable') {
+  } else if (variable.kind === defaultTextVariableKind().kind) {
     let val;
     if (!variable?.spec.current?.value) {
       val = variable.spec.query;
@@ -475,7 +483,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelv2): S
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (config.featureToggles.groupByVariable && variable.kind === 'GroupByVariable') {
+  } else if (config.featureToggles.groupByVariable && variable.kind === defaultGroupByVariableKind().kind) {
     return new GroupByVariable({
       ...commonProperties,
       datasource: variable.spec.datasource,
