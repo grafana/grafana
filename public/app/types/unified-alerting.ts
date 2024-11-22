@@ -153,17 +153,16 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
 export const GrafanaRulesSourceSymbol = Symbol('grafana');
 export type RulesSourceUid = string | typeof GrafanaRulesSourceSymbol;
 
-export type RulesSourceIdentifier =
-  | {
-      uid: string;
-      //Name is here only for compatibility with existing code. Should be removed in the future.
-      name: string;
-    }
-  | {
-      uid: typeof GrafanaRulesSourceSymbol;
-      name: typeof GRAFANA_RULES_SOURCE_NAME;
-    };
+export interface ExternalRulesSourceIdentifier {
+  uid: string;
+  name: string;
+}
+export interface GrafanaRulesSourceIdentifier {
+  uid: typeof GrafanaRulesSourceSymbol;
+  name: typeof GRAFANA_RULES_SOURCE_NAME;
+}
 
+export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
 // export interface NamespaceIdentifier {
 //   name: string;
 //   /**

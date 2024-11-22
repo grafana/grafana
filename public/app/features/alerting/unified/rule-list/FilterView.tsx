@@ -77,22 +77,26 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   if (noRulesFound && doneSearching) {
     return (
       <EmptyState variant="not-found" message="No matching rules found">
-        No alert- or recording rules matched your current set of filters.
+        <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
+          No alert- or recording rules matched your current set of filters.
+        </Trans>
       </EmptyState>
     );
   }
 
   return (
     <Stack direction="column" gap={0}>
-      {rules.map(({ ruleKey, rule, groupIdentifier }) => (
-        <AlertRuleLoader key={ruleKey} rule={rule} groupIdentifier={groupIdentifier} />
-      ))}
-      {loading && (
-        <>
-          <AlertRuleListItemLoader />
-          <AlertRuleListItemLoader />
-        </>
-      )}
+      <ul aria-label="filtered-rule-list">
+        {rules.map(({ ruleKey, rule, groupIdentifier }) => (
+          <AlertRuleLoader key={ruleKey} rule={rule} groupIdentifier={groupIdentifier} />
+        ))}
+        {loading && (
+          <>
+            <AlertRuleListItemLoader />
+            <AlertRuleListItemLoader />
+          </>
+        )}
+      </ul>
       {doneSearching && !noRulesFound && (
         <Card>
           <Text color="secondary">
@@ -113,6 +117,7 @@ const AlertRuleListItemLoader = () => (
     icon={<RuleListIcon isPaused={false} />}
     description={<Skeleton width={256} />}
     actions={<ActionsLoader />}
+    data-testid="alert-rule-list-item-loader"
   />
 );
 

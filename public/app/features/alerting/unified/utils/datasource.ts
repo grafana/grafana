@@ -7,7 +7,12 @@ import {
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { GrafanaRulesSourceSymbol, RulesSource } from 'app/types/unified-alerting';
+import {
+  ExternalRulesSourceIdentifier,
+  GrafanaRulesSourceSymbol,
+  RulesSource,
+  RulesSourceIdentifier,
+} from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
@@ -20,8 +25,6 @@ import { getAllDataSources } from './config';
 
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
 export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
-
-export type RulesSourceIdentifier = { rulesSourceName: string } | { uid: string };
 
 export enum DataSourceType {
   Alertmanager = 'alertmanager',
@@ -205,6 +208,13 @@ export function getAllRulesSourceNames(): string[] {
   }
 
   return availableRulesSources;
+}
+
+export function getExternalRulesSources(): ExternalRulesSourceIdentifier[] {
+  return getRulesDataSources().map((ds) => ({
+    name: ds.name,
+    uid: ds.uid,
+  }));
 }
 
 export function getAllRulesSources(): RulesSource[] {

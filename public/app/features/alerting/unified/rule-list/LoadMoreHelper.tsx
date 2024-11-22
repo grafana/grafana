@@ -19,7 +19,7 @@ function LoadMoreHelper({ handleLoad }: Props) {
     }
   }, [intersection, handleLoad]);
 
-  return <div ref={intersectionRef} />;
+  return <div ref={intersectionRef} data-testid="load-more-helper" />;
 }
 
 export default LoadMoreHelper;

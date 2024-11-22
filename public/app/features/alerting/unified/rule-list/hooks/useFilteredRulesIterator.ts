@@ -1,17 +1,16 @@
 import { merge } from 'ix/asynciterable/merge';
 import { filter, flatMap, map } from 'ix/asynciterable/operators';
 import { compact } from 'lodash';
-import memoize from 'micro-memoize';
 import { useCallback } from 'react';
 
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { DataSourceRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { DataSourceRuleGroupIdentifier, ExternalRulesSourceIdentifier } from 'app/types/unified-alerting';
 import { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { prometheusApi } from '../../api/prometheusApi';
 import { RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
-import { getAllRulesSourceNames, getDatasourceAPIUid } from '../../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
 import { hashRule } from '../../utils/rule-id';
 import { isAlertingRule } from '../../utils/rules';
@@ -30,23 +29,18 @@ const { useLazyGroupsQuery } = prometheusApi;
 
 export function useFilteredRulesIteratorProvider() {
   const [fetchGroups] = useLazyGroupsQuery();
-  const allRuleSourceNames = getAllRulesSourceNames();
+  const allExternalRulesSources = getExternalRulesSources();
 
   /**
    * This async generator will continue to yield rule groups and will keep fetching backend pages as long as the consumer
    * is iterating.
    */
   const fetchRuleSourceGroups = useCallback(
-    async function* (ruleSourceName: string, maxGroups: number) {
-      const ruleSourceUid = getDatasourceAPIUid(ruleSourceName);
-
-      const response = await fetchGroups({
-        ruleSource: { uid: ruleSourceUid },
-        groupLimit: maxGroups,
-      });
+    async function* (ruleSource: ExternalRulesSourceIdentifier, maxGroups: number) {
+      const response = await fetchGroups({ ruleSource: { uid: ruleSource.uid }, groupLimit: maxGroups });
 
       if (response.data?.data) {
-        yield* response.data.data.groups.map((group) => [ruleSourceName, group] as const);
+        yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
       }
 
       let lastToken: string | undefined = undefined;
@@ -56,13 +50,13 @@ export function useFilteredRulesIteratorProvider() {
 
       while (lastToken) {
         const response = await fetchGroups({
-          ruleSource: { uid: ruleSourceUid },
+          ruleSource: { uid: ruleSource.uid },
           groupNextToken: lastToken,
           groupLimit: maxGroups,
         });
 
         if (response.data?.data) {
-          yield* response.data.data.groups.map((group) => [ruleSourceName, group] as const);
+          yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
         }
 
         lastToken = response.data?.data?.groupNextToken;
@@ -73,12 +67,14 @@ export function useFilteredRulesIteratorProvider() {
 
   const getFilteredRulesIterator = (filterState: RulesFilter, groupLimit: number) => {
     const ruleSourcesToFetchFrom = filterState.dataSourceNames.length
-      ? filterState.dataSourceNames
-      : allRuleSourceNames;
+      ? filterState.dataSourceNames.map((ds) => ({ name: ds, uid: getDatasourceAPIUid(ds) }))
+      : allExternalRulesSources;
+
+    // This split into the first one and the rest is only for compatibility with the merge function from ix
     const [source, ...iterables] = ruleSourcesToFetchFrom.map((ds) => fetchRuleSourceGroups(ds, groupLimit));
 
     return merge(source, ...iterables).pipe(
-      filter(([rulesSource, group]) => groupFilter(rulesSource, group, filterState)),
+      filter(([_, group]) => groupFilter(group, filterState)),
       flatMap(([rulesSource, group]) => group.rules.map((rule) => [rulesSource, group, rule] as const)),
       filter(([_, __, rule]) => ruleFilter(rule, filterState)),
       map(([rulesSource, group, rule]) => mapRuleToRuleWithOrigin(rulesSource, group, rule))
@@ -88,17 +84,18 @@ export function useFilteredRulesIteratorProvider() {
   return { getFilteredRulesIterator };
 }
 
-// TODO maybe we want infinitely large?
-const getRulesSourceUidMemoized = memoize(getDatasourceAPIUid);
-
-function mapRuleToRuleWithOrigin(rulesSourceName: string, group: PromRuleGroupDTO, rule: PromRuleDTO): RuleWithOrigin {
-  const ruleKey = `${rulesSourceName}-${group.file}-${group.name}-${rule.name}-${rule.type}-${hashRule(rule)}`;
+function mapRuleToRuleWithOrigin(
+  rulesSource: ExternalRulesSourceIdentifier,
+  group: PromRuleGroupDTO,
+  rule: PromRuleDTO
+): RuleWithOrigin {
+  const ruleKey = `${rulesSource.name}-${group.file}-${group.name}-${rule.name}-${rule.type}-${hashRule(rule)}`;
 
   return {
     ruleKey,
     rule,
     groupIdentifier: {
-      rulesSource: { name: rulesSourceName, uid: getRulesSourceUidMemoized(rulesSourceName) },
+      rulesSource,
       namespace: { name: group.file },
       groupName: group.name,
       groupOrigin: 'datasource',
@@ -110,7 +107,7 @@ function mapRuleToRuleWithOrigin(rulesSourceName: string, group: PromRuleGroupDT
  * Returns a new group with only the rules that match the filter.
  * @returns A new group with filtered rules, or undefined if the group does not match the filter or all rules are filtered out.
  */
-function groupFilter(rulesSourceName: string, group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
+function groupFilter(group: PromRuleGroupDTO, filterState: RulesFilter): boolean {
   const { name, file } = group;
 
   // TODO Add fuzzy filtering or not
