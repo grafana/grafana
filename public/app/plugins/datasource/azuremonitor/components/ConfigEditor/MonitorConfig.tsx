@@ -48,15 +48,12 @@ export const MonitorConfig = (props: Props) => {
     }
   });
 
-  // feature flag to enable/disable user auth only for Azure Monitor
-  const azureMonitorAuthEnabled = config.featureToggles.azureMonitorEnableUserAuth ?? true;
-
   return (
     <>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
-        userIdentityEnabled={config.azure.userIdentityEnabled && azureMonitorAuthEnabled}
+        userIdentityEnabled={config.azure.userIdentityEnabled && !!config.featureToggles.azureMonitorEnableUserAuth}
         credentials={credentials}
         azureCloudOptions={getAzureCloudOptions()}
         onCredentialsChange={onCredentialsChange}
