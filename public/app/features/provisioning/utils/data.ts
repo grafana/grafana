@@ -6,6 +6,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
     type: data.type,
     folder: data.folder,
     title: data.title,
+    editing: data.editing,
   };
   switch (data.type) {
     case 'github':
@@ -33,10 +34,12 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   return spec;
 };
 
-export const specToData = (spec: RepositorySpec): Partial<RepositoryFormData> => {
+export const specToData = (spec: RepositorySpec): RepositoryFormData => {
   return {
-    type: spec.type,
-    folder: spec.folder,
+    ...spec,
+    owner: spec?.github?.owner || '',
+    repository: spec?.github?.repository || '',
+    editing: spec.editing,
     ...spec.github,
     ...spec.local,
     ...spec.s3,
