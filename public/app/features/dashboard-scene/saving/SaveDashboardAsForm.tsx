@@ -3,7 +3,6 @@ import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Dashboard } from '@grafana/schema';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -108,11 +107,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   return (
     <form onSubmit={handleSubmit(() => onSave(false))}>
-      <Field
-        label={<TitleFieldLabel dashboard={changedSaveModel} onChange={setValue} />}
-        invalid={!!errors.title}
-        error={errors.title?.message}
-      >
+      <Field label={<TitleFieldLabel onChange={setValue} />} invalid={!!errors.title} error={errors.title?.message}>
         <Input
           {...register('title', { required: 'Required', validate: validateDashboardName })}
           aria-label="Save dashboard title field"
@@ -123,7 +118,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         />
       </Field>
       <Field
-        label={<DescriptionLabel dashboard={changedSaveModel} onChange={setValue} />}
+        label={<DescriptionLabel onChange={setValue} />}
         invalid={!!errors.description}
         error={errors.description?.message}
       >
@@ -159,7 +154,6 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 }
 
 export interface TitleLabelProps {
-  dashboard: Dashboard;
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
@@ -178,7 +172,6 @@ export function TitleFieldLabel(props: TitleLabelProps) {
 }
 
 export interface DescriptionLabelProps {
-  dashboard: Dashboard;
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 

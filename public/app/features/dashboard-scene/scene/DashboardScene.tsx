@@ -25,6 +25,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import appEvents from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -46,6 +47,7 @@ import { getRawDashboardChanges } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
@@ -150,7 +152,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * The save model which the scene was originally created from
    */
-  private _initialSaveModel?: Dashboard;
+  private _initialSaveModel?: Dashboard | DashboardV2Spec;
   /**
    * Url state before editing started
    */
@@ -258,7 +260,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTracker.startTrackingChanges();
   };
 
-  public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
+  public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
+    if (isV2Dashboard(saveModel)) {
+      throw new Error('v2 schema not supported');
+    }
+
     this._initialSaveModel = {
       ...saveModel,
       id: result.id,
@@ -633,7 +639,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel?: Dashboard) {
+  public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
     this._initialSaveModel = saveModel;
   }
 
@@ -678,20 +684,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  getSaveModel(): Dashboard {
+  getSaveModel(): Dashboard | DashboardV2Spec {
+    if (isV2Dashboard(this._initialSaveModel!)) {
+      return transformSceneToSaveModelSchemaV2(this) as DashboardV2Spec;
+    }
     return transformSceneToSaveModel(this);
   }
 
   getSaveAsModel(options: SaveDashboardAsOptions): Dashboard {
     const saveModel = this.getSaveModel();
-    return {
-      ...saveModel,
-      id: null,
-      uid: '',
-      title: options.title || '',
-      description: options.description || '',
-      tags: options.isNew || options.copyTags ? saveModel.tags : [],
-    };
+    if (isV2Dashboard(saveModel)) {
+      throw new Error('Save as is not supported for v2 dashboards');
+    } else {
+      return {
+        ...saveModel,
+        id: null,
+        uid: '',
+        title: options.title || '',
+        description: options.description || '',
+        tags: options.isNew || options.copyTags ? saveModel.tags : [],
+      };
+    }
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
@@ -778,5 +791,18 @@ function getDashboardChangesFromScene(
   // ! is a code smell
   const initialSaveModel = scene.getInitialSaveModel()!;
   const changedSaveModel = scene.getSaveModel();
-  return getRawDashboardChanges(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
+
+  if (isV2Dashboard(initialSaveModel) && isV2Dashboard(changedSaveModel)) {
+    throw new Error('v2 schema not supported');
+    // return getRawDashboardV2Changes(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
+  }
+  if (!isV2Dashboard(initialSaveModel) && !isV2Dashboard(changedSaveModel)) {
+    return getRawDashboardChanges(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
+  }
+
+  throw new Error('Cannot compare v1 and v2 dashboards');
+}
+
+export function isV2Dashboard(model: Dashboard | DashboardV2Spec): model is DashboardV2Spec {
+  return 'elements' in model;
 }

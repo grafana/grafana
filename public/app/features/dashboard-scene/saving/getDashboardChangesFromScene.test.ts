@@ -6,7 +6,7 @@ import {
   sceneGraph,
   SceneRefreshPicker,
 } from '@grafana/scenes';
-import { VariableModel } from '@grafana/schema';
+import { Dashboard, VariableModel } from '@grafana/schema';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -238,7 +238,7 @@ describe('getDashboardChangesFromScene', () => {
       editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
       const result = dashboard.getDashboardChanges(false, true);
-      const panelSaveModel = result.changedSaveModel.panels![0];
+      const panelSaveModel = (result.changedSaveModel as Dashboard).panels![0];
       expect(panelSaveModel.title).toBe('changed title');
     });
   });
