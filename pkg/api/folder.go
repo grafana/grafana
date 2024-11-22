@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -45,7 +46,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 	apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
 		idScope := dashboards.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
 		uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
 		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
@@ -64,13 +64,14 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			// Use k8s client to implement legacy API
 			handler := newFolderK8sHandler(hs)
 			folderRoute.Post("/", handler.createFolder)
+			folderRoute.Get("/", handler.getFolders)
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+			folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
 		}
 		// Only adding support for some routes with the k8s handler for now. Include the rest here.
 		if false {
 			handler := newFolderK8sHandler(hs)
-			folderRoute.Get("/", handler.searchFolders)
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", handler.getFolder)
 				folderUidRoute.Delete("/", handler.deleteFolder)
@@ -661,32 +662,6 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 	}
 }
 
-func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
-	client, ok := fk8s.getClient(c)
-	if !ok {
-		return // error is already sent
-	}
-	out, err := client.List(c.Req.Context(), v1.ListOptions{})
-	if err != nil {
-		fk8s.writeError(c, err)
-		return
-	}
-
-	query := strings.ToUpper(c.Query("query"))
-	folders := []folder.Folder{}
-	for _, item := range out.Items {
-		p, _ := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
-		if p == nil {
-			continue
-		}
-		if query != "" && !strings.Contains(strings.ToUpper(p.Title), query) {
-			continue // query filter
-		}
-		folders = append(folders, *p)
-	}
-	c.JSON(http.StatusOK, folders)
-}
-
 func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	client, ok := fk8s.getClient(c)
 	if !ok {
@@ -716,6 +691,62 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	}
 
 	c.JSON(http.StatusOK, folderDTO)
+}
+
+func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
+	// NOTE: the current implementation is temporary and it will be
+	// replaced by a proper indexing service/search API
+	// Also, the current implementation does not support pagination
+
+	parentUid := strings.ToUpper(c.Query("parentUid"))
+
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+
+	// check that parent exists
+	if parentUid != "" {
+		_, err := client.Get(c.Req.Context(), c.Query("parentUid"), v1.GetOptions{})
+		if err != nil {
+			fk8s.writeError(c, err)
+			return
+		}
+	}
+
+	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	hits := make([]dtos.FolderSearchHit, 0)
+	for _, item := range out.Items {
+		// convert item to legacy folder format
+		f, _ := internalfolders.UnstructuredToLegacyFolder(item, c.SignedInUser.GetOrgID())
+		if f == nil {
+			fk8s.writeError(c, fmt.Errorf("unable covert unstructured item to legacy folder"))
+			return
+		}
+
+		// it we are at root level, skip subfolder
+		if parentUid == "" && f.ParentUID != "" {
+			continue // query filter
+		}
+		// if we are at a nested folder, then skip folders that don't belong to parentUid
+		if parentUid != "" && strings.ToUpper(f.ParentUID) != parentUid {
+			continue
+		}
+
+		hits = append(hits, dtos.FolderSearchHit{
+			ID:        f.ID, // nolint:staticcheck
+			UID:       f.UID,
+			Title:     f.Title,
+			ParentUID: f.ParentUID,
+		})
+	}
+
+	c.JSON(http.StatusOK, hits)
 }
 
 func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {

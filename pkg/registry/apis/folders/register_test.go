@@ -95,6 +95,42 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 				eval: "folders:create",
 			},
 		},
+		{
+			name: "user with read permissions should be able to list folders",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbList),
+			},
+			expect: expect{
+				eval:  "folders:read",
+				allow: true,
+			},
+		},
+		{
+			name: "user without read permissions should not be able to list folders",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbList),
+			},
+			expect: expect{
+				eval:  "folders:read",
+				allow: false,
+			},
+		},
 	}
 
 	b := &FolderAPIBuilder{

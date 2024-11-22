@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -412,7 +413,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD (just CR+List for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
@@ -462,6 +463,15 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.Equal(t, "New description", description)
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+
+		// ensure that we get 4 items when listing via k8s
+		l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, l)
+		folders, err := meta.ExtractList(l)
+		require.NoError(t, err)
+		require.NotNil(t, folders)
+		require.Equal(t, len(folders), 4)
 	})
 	return helper
 }
@@ -924,5 +934,167 @@ func testDescription(description string, expectedErr error) string {
 		return fmt.Sprintf(description, expectedErr.Error())
 	} else {
 		return description
+	}
+}
+
+// There are no counterpart of TestFoldersGetAPIEndpointK8S in pkg/api/folder_test.go
+func TestFoldersGetAPIEndpointK8S(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		description         string
+		expectedCode        int
+		params              string
+		createFolders       []string
+		expectedOutput      []dtos.FolderSearchHit
+		permissions         []resourcepermissions.SetResourcePermissionCommand
+		requestToAnotherOrg bool
+	}
+
+	folderReadAndCreatePermission := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{"folders:create", "folders:read"},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+
+	folder1 := "{ \"uid\": \"foo\", \"title\": \"Folder 1\"}"
+	folder2 := "{ \"uid\": \"bar\", \"title\": \"Folder 2\", \"parentUid\": \"foo\"}"
+	folder3 := "{ \"uid\": \"qux\", \"title\": \"Folder 3\"}"
+
+	tcs := []testCase{
+		{
+			description: "listing folders at root level succeeds",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			expectedCode: http.StatusOK,
+			expectedOutput: []dtos.FolderSearchHit{
+				dtos.FolderSearchHit{UID: "foo", Title: "Folder 1"},
+				dtos.FolderSearchHit{UID: "qux", Title: "Folder 3"},
+			},
+			permissions: folderReadAndCreatePermission,
+		},
+		{
+			description: "listing subfolders succeeds",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:       "?parentUid=foo",
+			expectedCode: http.StatusOK,
+			expectedOutput: []dtos.FolderSearchHit{
+				dtos.FolderSearchHit{UID: "bar", Title: "Folder 2", ParentUID: "foo"},
+			},
+			permissions: folderReadAndCreatePermission,
+		},
+		{
+			description: "listing subfolders for a parent that does not exists",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:         "?parentUid=notexists",
+			expectedCode:   http.StatusNotFound,
+			expectedOutput: []dtos.FolderSearchHit{},
+			permissions:    folderReadAndCreatePermission,
+		},
+		{
+			description: "listing folders at root level fails without the right permissions",
+			createFolders: []string{
+				folder1,
+				folder2,
+				folder3,
+			},
+			params:              "?parentUid=notfound",
+			expectedCode:        http.StatusForbidden,
+			expectedOutput:      []dtos.FolderSearchHit{},
+			permissions:         folderReadAndCreatePermission,
+			requestToAnotherOrg: true,
+		},
+	}
+
+	// test on all dualwriter modes
+	for mode := 1; mode <= 4; mode++ {
+		for _, tc := range tcs {
+			t.Run(fmt.Sprintf("Mode: %d, %s", mode, tc.description), func(t *testing.T) {
+				modeDw := grafanarest.DualWriterMode(mode)
+
+				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+					AppModeProduction:    true,
+					DisableAnonymous:     true,
+					APIServerStorageType: "unified",
+					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+						folderv0alpha1.RESOURCEGROUP: {
+							DualWriterMode: modeDw,
+						},
+					},
+					EnableFeatureToggles: []string{
+						featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+						featuremgmt.FlagNestedFolders,
+						featuremgmt.FlagKubernetesFolders,
+					},
+				})
+
+				userTest := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+
+				for _, f := range tc.createFolders {
+					client := helper.GetResourceClient(apis.ResourceClientArgs{
+						User: userTest,
+						GVR:  gvr,
+					})
+					create2 := apis.DoRequest(helper, apis.RequestParams{
+						User:   client.Args.User,
+						Method: http.MethodPost,
+						Path:   "/api/folders",
+						Body:   []byte(f),
+					}, &folder.Folder{})
+					require.NotEmpty(t, create2.Response)
+					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
+				}
+
+				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+				login := userTest.Identity.GetLogin()
+				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password("user"), addr)
+
+				req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(
+					"%s%s",
+					baseUrl,
+					fmt.Sprintf("/api/folders%s", tc.params),
+				), nil)
+				require.NoError(t, err)
+				req.Header.Set("Content-Type", "application/json")
+				if tc.requestToAnotherOrg {
+					req.Header.Set("x-grafana-org-id", "2")
+				}
+
+				resp, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+				if tc.expectedCode == http.StatusOK {
+					list := []dtos.FolderSearchHit{}
+					err = json.NewDecoder(resp.Body).Decode(&list)
+					require.NoError(t, err)
+					require.NoError(t, resp.Body.Close())
+
+					// ignore IDs
+					for i := 0; i < len(list); i++ {
+						list[i].ID = 0
+					}
+
+					require.ElementsMatch(t, tc.expectedOutput, list)
+				}
+			})
+		}
 	}
 }
