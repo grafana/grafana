@@ -33,23 +33,6 @@
   "rows": [
     {
       "cells": [
-        "ns/g/dash/ccc",
-        "test ccc",
-        [
-          "aa"
-        ],
-        "xxx"
-      ],
-      "object": {
-        "metadata": {
-          "name": "ccc",
-          "namespace": "ns",
-          "creationTimestamp": null
-        }
-      }
-    },
-    {
-      "cells": [
         "ns/g/dash/bbb",
         "test bbb",
         [
@@ -60,6 +43,23 @@
       "object": {
         "metadata": {
           "name": "bbb",
+          "namespace": "ns",
+          "creationTimestamp": null
+        }
+      }
+    },
+    {
+      "cells": [
+        "ns/g/dash/ccc",
+        "test ccc",
+        [
+          "aa"
+        ],
+        "xxx"
+      ],
+      "object": {
+        "metadata": {
+          "name": "ccc",
           "namespace": "ns",
           "creationTimestamp": null
         }

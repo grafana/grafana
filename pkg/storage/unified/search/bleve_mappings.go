@@ -52,7 +52,7 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 	})
 
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "Tags",
+		Name:               "tags",
 		Type:               "text",
 		Analyzer:           keyword.Name,
 		Store:              true, // not stored!

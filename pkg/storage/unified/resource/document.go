@@ -306,6 +306,16 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        ResourceTableColumnDefinition_STRING,
 				Description: "Kubernetes name for the folder",
 			},
+			{
+				Name:        SEARCH_FIELD_RV,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "resource version",
+			},
+			{
+				Name:        SEARCH_FIELD_CREATED,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "created timestamp", // date?
+			},
 		})
 		if err != nil {
 			panic("failed to initialize standard search fields")

@@ -237,8 +237,6 @@ func TestBleveBackend(t *testing.T) {
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
-		t.Skip() // TODO!!
-
 		// The other tests must run first to build the indexes
 		require.NotNil(t, dashboardsIndex)
 		require.NotNil(t, foldersIndex)
@@ -249,7 +247,7 @@ func TestBleveBackend(t *testing.T) {
 				Key: dashboardskey,
 			},
 			Fields: []string{
-				"id", "title", "tags", "labels.region",
+				"title", "tags", "labels.region",
 			},
 			Federated: []*resource.ResourceKey{
 				folderKey, // This will join in the
@@ -270,6 +268,8 @@ func TestBleveBackend(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
+
+		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 
 		facet, ok := rsp.Facet["region"]
 		require.True(t, ok)
@@ -292,7 +292,5 @@ func TestBleveBackend(t *testing.T) {
 				}
 			]
 		}`, string(disp))
-
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 	})
 }

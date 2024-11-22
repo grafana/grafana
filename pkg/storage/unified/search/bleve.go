@@ -123,6 +123,12 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		fields:    fields,
 		standard:  resource.StandardSearchFields(),
 	}
+
+	idx.allFields, err = getAllFields(idx.standard, fields)
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = builder(idx)
 	if err != nil {
 		return nil, err
@@ -145,6 +151,9 @@ type bleveIndex struct {
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
 
+	// The values returned with all
+	allFields []*resource.ResourceTableColumnDefinition
+
 	// only valid in single thread
 	batch     *bleve.Batch
 	batchSize int // ??? not totally sure the units here
@@ -152,6 +161,8 @@ type bleveIndex struct {
 
 // Write implements resource.DocumentIndex.
 func (b *bleveIndex) Write(v *resource.IndexableDocument) error {
+	// remove references (for now!)
+	v.References = nil
 	if b.batch != nil {
 		err := b.batch.Index(v.Key.SearchID(), v)
 		if err != nil {
@@ -445,20 +456,11 @@ func requirementQuery(req *resource.Requirement, prefix string) (query.Query, *r
 	)
 }
 
-func (b *bleveIndex) getAllFields() []*resource.ResourceTableColumnDefinition {
-	return []*resource.ResourceTableColumnDefinition{
-		b.standard.Field(resource.SEARCH_FIELD_ID),
-		b.standard.Field(resource.SEARCH_FIELD_TITLE),
-		b.standard.Field(resource.SEARCH_FIELD_TAGS),
-		b.standard.Field(resource.SEARCH_FIELD_FOLDER),
-	}
-}
-
 func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatchCollection, explain bool) (*resource.ResourceTable, error) {
 	fields := []*resource.ResourceTableColumnDefinition{}
 	for _, name := range selectFields {
 		if name == "_all" {
-			fields = b.getAllFields()
+			fields = b.allFields
 			break
 		}
 
@@ -467,9 +469,19 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 			f = b.fields.Field(name)
 		}
 		if f == nil {
-			continue // OK for now
-			//			return nil, fmt.Errorf("unknown response field: " + name)
+			if strings.HasPrefix(name, "labels.") {
+				f = &resource.ResourceTableColumnDefinition{
+					Name: name,
+					Type: resource.ResourceTableColumnDefinition_STRING,
+				}
+			}
+
+			// return nil, fmt.Errorf("unknown response field: " + name)
+			if f == nil {
+				continue // OK for now
+			}
 		}
+		fields = append(fields, f)
 	}
 	if explain {
 		fields = append(fields, b.standard.Field(resource.SEARCH_FIELD_EXPLAIN))
@@ -522,4 +534,30 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 	// fmt.Printf("TTT %+v\n", ttt)
 
 	return table, nil
+}
+
+func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resource.ResourceTableColumnDefinition, error) {
+	fields := []*resource.ResourceTableColumnDefinition{
+		standard.Field(resource.SEARCH_FIELD_TITLE),
+		standard.Field(resource.SEARCH_FIELD_TAGS),
+		standard.Field(resource.SEARCH_FIELD_FOLDER),
+		standard.Field(resource.SEARCH_FIELD_RV),
+		standard.Field(resource.SEARCH_FIELD_CREATED),
+	}
+
+	if custom != nil {
+		for _, name := range custom.Fields() {
+			f := custom.Field(name)
+			if f.Priority > 10 {
+				continue
+			}
+			fields = append(fields, f)
+		}
+	}
+	for _, field := range fields {
+		if field == nil {
+			return nil, fmt.Errorf("invalid all field")
+		}
+	}
+	return fields, nil
 }
