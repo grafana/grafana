@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useStyles2 } from '../../themes';
 
 import { ComboboxOption } from './Combobox';

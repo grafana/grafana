@@ -1,5 +1,5 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
