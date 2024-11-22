@@ -24,7 +24,7 @@ const tracingPrexfixBleve = "unified_search.bleve."
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
-type bleveOptions struct {
+type BleveOptions struct {
 	// The root folder where file objects are saved
 	Root string
 
@@ -39,14 +39,14 @@ type bleveOptions struct {
 type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
-	opts   bleveOptions
+	opts   BleveOptions
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts bleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
 	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,

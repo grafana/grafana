@@ -35,7 +35,7 @@ func (n *noopService) Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	return nil, ErrNotImplementedYet
 }
 
-func (n *noopService) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+func (n *noopService) Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error) {
 	return nil, ErrNotImplementedYet
 }
 

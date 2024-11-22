@@ -78,9 +78,14 @@ type searchSupport struct {
 	log         *slog.Logger
 	storage     StorageBackend
 	search      SearchBackend
+	client      authz.AccessClient
 	builders    *builderCache
 	initWorkers int
 }
+
+var (
+	_ ResourceIndexServer = (*searchSupport)(nil)
+)
 
 func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
@@ -111,6 +116,46 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	}
 
 	return support, err
+}
+
+// History implements ResourceIndexServer.
+func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+}
+
+// Origin implements ResourceIndexServer.
+func (s *searchSupport) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+	return nil, fmt.Errorf("TBD.. rename to repository")
+}
+
+// Search implements ResourceIndexServer.
+func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	nsr := NamespacedResource{
+		Group:     req.Options.Key.Group,
+		Namespace: req.Options.Key.Namespace,
+		Resource:  req.Options.Key.Resource,
+	}
+	idx, err := s.search.GetIndex(ctx, nsr)
+	if err != nil {
+		return &ResourceSearchResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+
+	// Get the federated indexes
+	var federate []ResourceIndex
+	for _, f := range req.Federated {
+		nsr.Group = f.Group
+		nsr.Resource = f.Resource
+		sub, err := s.search.GetIndex(ctx, nsr)
+		if err != nil {
+			return &ResourceSearchResponse{
+				Error: AsErrorResult(err),
+			}, nil
+		}
+		federate = append(federate, sub)
+	}
+	return idx.Search(ctx, s.client, req, federate)
 }
 
 // init is called during startup.  any failure will block startup and continued execution

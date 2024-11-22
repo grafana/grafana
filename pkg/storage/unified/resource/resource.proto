@@ -749,7 +749,7 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-   rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
