@@ -106,7 +106,7 @@ To add a tag, follow these steps:
 
 {{% admonition type="warning" %}}
 Metrics summary API and the **Aggregate by** feature are deprecated in Grafana Cloud and Grafana 11.3 and later.
-It will be removed in a future release.
+It will be removed in a Grafana 11.5.
 {{% /admonition %}}
 
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
