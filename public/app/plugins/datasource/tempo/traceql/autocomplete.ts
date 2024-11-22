@@ -486,6 +486,8 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
   return { offset, range };
 }
 
+const SUGGEST_REGEXP = /(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/;
+
 /** @internal */
 export function completionItemsToSuggestions(
   items: CompletionItem[],
@@ -497,6 +499,7 @@ export function completionItemsToSuggestions(
   // monaco by-default alphabetically orders the items.
   // to stop it, we use a number-as-string sortkey,
   // so that monaco keeps the order we use
+  const [scope, tag] = modelValue.substring(0, offset).match(SUGGEST_REGEXP) ?? [];
   const maxIndexDigits = items.length.toString().length;
   const suggestions: languages.CompletionItem[] = items.map((item, index) => {
     const suggestion: languages.CompletionItem = {
@@ -514,7 +517,11 @@ export function completionItemsToSuggestions(
         arguments: [item.label, item.type],
       },
     };
-    fixSuggestion(suggestion, item.type, modelValue, offset);
+
+    if (tag != null && item.type === 'TAG_NAME') {
+      fixSuggestion(suggestion, offset, tag, scope);
+    }
+
     return suggestion;
   });
 
@@ -528,35 +535,17 @@ export function completionItemsToSuggestions(
  * This may be doable also when creating the suggestions but for a particular situation this seems to be easier to do
  * here.
  */
-function fixSuggestion(
-  suggestion: monacoTypes.languages.CompletionItem,
-  itemType: CompletionItemType,
-  modelValue: string,
-  offset: number
-) {
-  if (itemType === 'TAG_NAME') {
-    const match = modelValue
-      .substring(0, offset)
-      .match(/(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/);
-
-    if (match) {
-      const scope = match[1];
-      const tag = match[2];
-
-      if (tag) {
-        // Add the default scope if needed.
-        if (!scope && suggestion.insertText[0] !== '.') {
-          suggestion.insertText = '.' + suggestion.insertText;
-        }
-
-        // Adjust the range, so that we will replace the whole tag.
-        suggestion.range = {
-          ...suggestion.range,
-          startColumn: offset - tag.length + 1,
-        };
-      }
-    }
+function fixSuggestion(suggestion: monacoTypes.languages.CompletionItem, offset: number, tag: string, scope?: string) {
+  // Add the default scope if needed.
+  if (scope == null && suggestion.insertText[0] !== '.') {
+    suggestion.insertText = '.' + suggestion.insertText;
   }
+
+  // Adjust the range, so that we will replace the whole tag.
+  suggestion.range = {
+    ...suggestion.range,
+    startColumn: offset - tag.length + 1,
+  };
 }
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
