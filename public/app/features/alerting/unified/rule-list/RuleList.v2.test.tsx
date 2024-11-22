@@ -41,7 +41,12 @@ async function loadMoreResults() {
   await waitForElementToBeRemoved(screen.queryAllByTestId('alert-rule-list-item-loader'), { timeout: 3000 });
 }
 
-describe('RuleList - GroupedView', () => {});
+describe('RuleList - GroupedView', () => {
+  it('should render datasource sections', async () => {
+    render(<RuleList />);
+    expect(await screen.findAllByRole('listitem')).toHaveLength(2);
+  });
+});
 
 describe('RuleList - FilterView', () => {
   it('should render multiple pages of results', async () => {

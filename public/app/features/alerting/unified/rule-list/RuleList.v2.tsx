@@ -34,7 +34,7 @@ import RulesFilter from '../components/rules/Filter/RulesFilter';
 import { SupportedView } from '../components/rules/Filter/RulesFilter.v1';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
-import { getAllRulesSources, getDatasourceAPIUid, isGrafanaRulesSource } from '../utils/datasource';
+import { getDatasourceAPIUid, getExternalRulesSources } from '../utils/datasource';
 import { equal, fromRule, fromRulerRule, hashRule, stringifyIdentifier } from '../utils/rule-id';
 import { getRulePluginOrigin, isAlertingRule, isRecordingRule } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -57,7 +57,6 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useURLSearchParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const ruleSources = getAllRulesSources();
     const view: SupportedView = queryParams.get('view') === 'list' ? 'list' : 'grouped';
     const showListView = hasActiveFilters || view === 'list';
 
@@ -66,21 +65,7 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={null}>
         <RulesFilter onClear={() => {}} />
-        <Stack direction="column" gap={1}>
-          {showListView ? (
-            <FilterView filterState={filterState} />
-          ) : (
-            <>
-              {ruleSources.map((ruleSource) => {
-                if (isGrafanaRulesSource(ruleSource)) {
-                  return <GrafanaDataSourceLoader key={ruleSource} />;
-                } else {
-                  return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
-                }
-              })}
-            </>
-          )}
-        </Stack>
+        {showListView ? <FilterView filterState={filterState} /> : <GroupedView />}
       </AlertingPageWrapper>
     );
   },
@@ -89,20 +74,33 @@ const RuleList = withErrorBoundary(
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
+export function GroupedView() {
+  const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
+
+  return (
+    <Stack direction="column" gap={1} role="list">
+      <GrafanaDataSourceLoader />
+      {externalRuleSources.map((ruleSource) => {
+        return <DataSourceLoader key={ruleSource.uid} uid={ruleSource.uid} name={ruleSource.name} />;
+      })}
+    </Stack>
+  );
+}
+
 interface DataSourceLoaderProps {
   name: string;
   uid: string;
 }
 
 const GrafanaDataSourceLoader = () => {
-  return <DataSourceSection name="Grafana" application="grafana" isLoading={true}></DataSourceSection>;
+  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true}></DataSourceSection>;
 };
 
 const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
   const { data: dataSourceInfo, isLoading } = useDiscoverDsFeaturesQuery({ uid });
 
   if (isLoading) {
-    return <DataSourceSection loader={<Skeleton width={250} height={16} />} />;
+    return <DataSourceSection loader={<Skeleton width={250} height={16} />} uid={uid} name={name} />;
   }
 
   // 2. grab prometheus rule groups with max_groups if supported
@@ -121,7 +119,8 @@ const DataSourceLoader = ({ uid, name }: DataSourceLoaderProps) => {
 };
 
 // TODO Try to use a better rules source identifier
-interface PaginatedDataSourceLoaderProps extends Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'> {
+interface PaginatedDataSourceLoaderProps
+  extends Required<Pick<DataSourceSectionProps, 'application' | 'uid' | 'name'>> {
   ruleSourceName: string;
 }
 
@@ -143,7 +142,10 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
             key={namespace.name}
             title={
               <Stack direction="row" gap={1} alignItems="center">
-                <Icon name="folder" /> {namespace.name}
+                <Icon name="folder" />{' '}
+                <Text variant="body" element="h3">
+                  {namespace.name}
+                </Text>
               </Stack>
             }
           >
@@ -349,8 +351,8 @@ function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: str
 }
 
 interface DataSourceSectionProps extends PropsWithChildren {
-  uid?: string;
-  name?: string;
+  uid: string;
+  name: string;
   loader?: ReactNode;
   application?: RulesSourceApplication;
   isLoading?: boolean;
@@ -369,26 +371,24 @@ const DataSourceSection = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="column" gap={1}>
-      <Stack direction="column" gap={0}>
-        {isLoading && <LoadingIndicator />}
-        <div className={styles.dataSourceSectionTitle}>
-          {loader ?? (
-            <Stack alignItems="center">
-              {application && <DataSourceIcon application={application} />}
-              {name && (
-                <Text variant="body" weight="bold">
+    <section aria-labelledby={`datasource-${uid}-heading`} role="listitem">
+      <Stack direction="column" gap={1}>
+        <Stack direction="column" gap={0}>
+          {isLoading && <LoadingIndicator />}
+          <div className={styles.dataSourceSectionTitle}>
+            {loader ?? (
+              <Stack alignItems="center">
+                {application && <DataSourceIcon application={application} />}
+                <Text variant="body" weight="bold" element="h2" id={`datasource-${uid}-heading`}>
                   {name}
                 </Text>
-              )}
-              {description && (
-                <>
-                  {'·'}
-                  {description}
-                </>
-              )}
-              <Spacer />
-              {uid && (
+                {description && (
+                  <>
+                    {'·'}
+                    {description}
+                  </>
+                )}
+                <Spacer />
                 <WithReturnButton
                   title="alert rules"
                   component={
@@ -397,13 +397,13 @@ const DataSourceSection = ({
                     </LinkButton>
                   }
                 />
-              )}
-            </Stack>
-          )}
-        </div>
+              </Stack>
+            )}
+          </div>
+        </Stack>
+        <div className={styles.itemsWrapper}>{children}</div>
       </Stack>
-      <div className={styles.itemsWrapper}>{children}</div>
-    </Stack>
+    </section>
   );
 };
 

@@ -7,12 +7,7 @@ import {
   AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import {
-  ExternalRulesSourceIdentifier,
-  GrafanaRulesSourceSymbol,
-  RulesSource,
-  RulesSourceIdentifier,
-} from 'app/types/unified-alerting';
+import { ExternalRulesSourceIdentifier, GrafanaRulesSourceSymbol, RulesSource } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
