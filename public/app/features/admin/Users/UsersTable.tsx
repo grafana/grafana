@@ -23,7 +23,7 @@ import { OrgUnits } from './OrgUnits';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
-interface UsersTableProps {
+export interface UsersTableProps {
   users: UserDTO[];
   showPaging?: boolean;
   totalPages: number;
