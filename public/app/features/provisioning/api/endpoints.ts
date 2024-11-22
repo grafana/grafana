@@ -53,6 +53,7 @@ const injectedRtkApi = api.injectEndpoints({
         headers: { 'Content-Type': 'application/merge-patch+json' },
         body,
       }),
+      invalidatesTags: ['RepositoryList'],
     }),
     connectGetRepositoryExport: build.query<ResourceWrapper, RequestArg>({
       query: ({ name }) => ({
