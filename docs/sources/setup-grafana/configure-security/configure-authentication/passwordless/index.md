@@ -38,6 +38,7 @@ By default, the one-time password (OTP) sent to a user's email is valid for 20 m
 
 ```bash
 [auth.passwordless]
+enabled = true
 code_expiration = 20m
 ```
 
