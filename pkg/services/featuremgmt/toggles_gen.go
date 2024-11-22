@@ -900,6 +900,6 @@ const (
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
 
 	// FlagAlertingNotificationsStepMode
-	// Enables simplified step mode in the nottifications section
+	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 )
