@@ -324,7 +324,7 @@ export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<Scope
   return (
     <div className={styles.container}>
       <IconButton
-        name="dashboard"
+        name="web-section-alt"
         className={styles.dashboards}
         aria-label={dashboardsIconLabel}
         tooltip={dashboardsIconLabel}
