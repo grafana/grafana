@@ -101,6 +101,8 @@ export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
+  Path = 'path-dashboard',
+  Repo = 'repo-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',

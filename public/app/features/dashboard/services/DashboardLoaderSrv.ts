@@ -3,7 +3,7 @@ import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-sco
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -52,6 +52,8 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
+    } else if (type === 'repo') {
+      promise = this._loadFromRepository(slug!, uid!)
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
@@ -143,6 +145,51 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Scripted dashboard');
         }
       );
+  }
+
+  /**
+   * Load a dashboard from repository
+   */
+  async _loadFromRepository(repo: string, uid: string) {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref'); // commit hash or branch
+
+    const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${uid}`
+    return getBackendSrv().get(url, ref ? {ref} : undefined).then( (v) => {
+      // raw spec
+      const dashboard = v.resource.dryRun.spec;
+      if (dashboard) {
+        return {
+          meta: {
+            canStar: false,
+            isSnapshot: false,
+            canShare: false,
+
+            // Should come from the repo settings
+            canDelete: true,
+            canSave: true,
+            canEdit: true,
+          },
+          dashboard,
+        }
+      }
+
+      return Promise.resolve({
+        meta: {
+          canStar: false,
+          isSnapshot: false,
+          canDelete: false,
+          canSave: false,
+          canEdit: false,
+          canShare: false,
+          isDashboardNotFound: true // <<<<<<<<
+        },
+        dashboard: { 
+          title: 'Hello: '+ uid + " // " + ref, 
+          schemaVersion: 0, 
+        },
+      })
+    })
   }
 
   _executeScript(result: any) {
