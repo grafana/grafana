@@ -44,6 +44,7 @@ type ProvisioningAPIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
 
+	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
@@ -58,6 +59,7 @@ func NewProvisioningAPIBuilder(
 	urlProvider func(namespace string) string,
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
+	features featuremgmt.FeatureToggles,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
@@ -65,6 +67,7 @@ func NewProvisioningAPIBuilder(
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
+		features:          features,
 	}
 }
 
@@ -84,7 +87,7 @@ func RegisterAPIService(
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities)
+	}, cfg.SecretKey, identities, features)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -258,7 +261,10 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 }
 
 func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
-	// TODO: This needs an integration test.
+	if !b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) && !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) {
+		// Nothing to do: we can't use the folders API.
+		return nil
+	}
 
 	if cfg.Spec.Folder == "" {
 		// The root folder can't not exist, so we don't have to do anything.
@@ -281,7 +287,7 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 	}
 	folderIface := client.Resource(folderResource).Namespace(cfg.GetNamespace())
 
-	_, err = folderIface.Get(ctx, cfg.GetName(), metav1.GetOptions{})
+	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
 	if err == nil {
 		// The folder exists and doesn't need to be created.
 		return nil

@@ -11,7 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -29,8 +32,16 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folderv0alpha1.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesFolders,                    // Required for tests that deal with folders.
+			featuremgmt.FlagKubernetesDashboards,
+			featuremgmt.FlagKubernetesDashboardsAPI,
 		},
 	})
 
@@ -40,6 +51,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 		Namespace: "default", // actually org1
 		GVR: schema.GroupVersionResource{
 			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
+		},
+	})
+
+	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR: schema.GroupVersionResource{
+			Group: "folder.grafana.app", Version: "v0alpha1", Resource: "folders",
 		},
 	})
 
@@ -257,6 +276,21 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Equal(t,
 			"World",
 			mustNestedString(resp.Object, "whom"))
+	})
+
+	t.Run("creating repository creates folder", func(t *testing.T) {
+		// Just make sure the folder doesn't exist in advance.
+		_ = folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+
+		_, err := client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+
+		resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
 	})
 }
 
