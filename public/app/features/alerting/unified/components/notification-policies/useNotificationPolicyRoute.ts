@@ -102,6 +102,7 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
 
   async function updateUsingConfigFileApi({ newRoute, oldRoute }: { newRoute: Route; oldRoute: Route }) {
     const { _metadata, ...oldRouteStripped } = oldRoute;
+    const { _metadata: newMetadata, ...newRouteStripped } = newRoute;
     const lastConfig = await getAlertmanagerConfiguration(selectedAlertmanager).unwrap();
     const latestRouteFromConfig = lastConfig.alertmanager_config.route;
 
@@ -115,7 +116,7 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
       ...lastConfig,
       alertmanager_config: {
         ...lastConfig.alertmanager_config,
-        route: newRoute,
+        route: newRouteStripped,
       },
     };
 
