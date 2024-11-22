@@ -2789,13 +2789,6 @@ exports[`better eslint`] = {
     "public/app/features/datasources/components/DataSourcePluginState.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/datasources/components/DataSourceTestingStatus.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
-    ],
     "public/app/features/datasources/components/DataSourceTypeCard.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
