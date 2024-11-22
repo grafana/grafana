@@ -147,6 +147,14 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case QuotedLabelName: {
+      const strLiteral = node.getChild(StringLiteral);
+      if (visQuery.metric === '') {
+        visQuery.metric = getString(expr, strLiteral);
+      }
+      break;
+    }
+
     case QuotedLabelMatcher: {
       visQuery.labels.push(getLabel(expr, node, QuotedLabelName));
       const err = node.getChild(ErrorId);
