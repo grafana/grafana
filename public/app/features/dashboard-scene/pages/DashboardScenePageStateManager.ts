@@ -104,8 +104,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
           break;
 
-        case DashboardRoutes.Repo: {
-          return await dashboardLoaderSrv.loadDashboard('repo', slug, uid);
+        case DashboardRoutes.Provisioning: {
+          return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
         }
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);

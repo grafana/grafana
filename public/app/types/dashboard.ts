@@ -2,6 +2,7 @@ import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { ProvisioningPreview } from 'app/features/provisioning/types';
 
 export interface DashboardDTO {
   redirectUri?: string;
@@ -75,17 +76,13 @@ export interface DashboardMeta {
   k8s?: Partial<ObjectMeta>;
 
   // If the dashboard was loaded from a remote repository
-  repository?: RepositoryInfo;
+  provisioning?: ProvisioningPreview;
 
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
 }
 
-export interface RepositoryInfo {
-  url: string
-  title: string
-}
 
 
 export interface AnnotationActions {
@@ -110,8 +107,7 @@ export enum DashboardRoutes {
   Home = 'home-dashboard',
   New = 'new-dashboard',
   Normal = 'normal-dashboard',
-  Path = 'path-dashboard',
-  Repo = 'repo-dashboard',
+  Provisioning = 'provisioning-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
