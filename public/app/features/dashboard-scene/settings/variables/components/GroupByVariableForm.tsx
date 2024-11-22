@@ -15,8 +15,8 @@ export interface GroupByVariableFormProps {
   onDefaultOptionsChange: (options?: MetricFindValue[]) => void;
   infoText?: string;
   defaultOptions?: MetricFindValue[];
-  allowCustomValue?: boolean;
-  onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  allowCustomValue: boolean;
+  onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function GroupByVariableForm({
@@ -82,15 +82,13 @@ export function GroupByVariableForm({
         />
       )}
 
-      {onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name="Allow custom values"
-          description="Enables users to add custom values to the list"
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
-      )}
+      <VariableCheckboxField
+        value={allowCustomValue ?? true}
+        name="Allow custom values"
+        description="Enables users to add custom values to the list"
+        onChange={onAllowCustomValueChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+      />
     </>
   );
 }
