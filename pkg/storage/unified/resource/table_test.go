@@ -1,43 +1,14 @@
 package resource
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// AssertTableSnapshot will match a ResourceTable vs the saved value
-func AssertTableSnapshot(t *testing.T, path string, table *ResourceTable) {
-	t.Helper()
-
-	k8sTable, err := table.ToK8s()
-	require.NoError(t, err, "unable to create table response", path)
-	actual, err := json.MarshalIndent(k8sTable, "", "  ")
-	require.NoError(t, err, "unable to write table json", path)
-
-	// Safe to disable, this is a test.
-	// nolint:gosec
-	expected, err := os.ReadFile(path)
-	if err != nil || len(expected) < 1 {
-		assert.Fail(t, "missing file")
-	} else if assert.JSONEq(t, string(expected), string(actual)) {
-		return // everything is OK
-	}
-
-	// Write the snapshot
-	// Safe to disable, this is a test.
-	// nolint:gosec
-	err = os.WriteFile(path, actual, 0600)
-	require.NoError(t, err)
-	fmt.Printf("Updated table snapshot: %s\n", path)
-}
 
 func TestTableFormat(t *testing.T) {
 	columns := []*ResourceTableColumnDefinition{

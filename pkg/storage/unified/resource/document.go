@@ -159,11 +159,8 @@ func NewIndexableDocument(key *ResourceKey, rv int64, obj utils.GrafanaMetaAcces
 	return doc
 }
 
-func StandardDocumentBuilder() DocumentBuilderInfo {
-	return DocumentBuilderInfo{
-		Builder: &standardDocumentBuilder{},
-		Fields:  StandardSearchFields(),
-	}
+func StandardDocumentBuilder() DocumentBuilder {
+	return &standardDocumentBuilder{}
 }
 
 type standardDocumentBuilder struct{}
@@ -294,6 +291,30 @@ func StandardSearchFields() SearchableDocumentFields {
 				Properties: &ResourceTableColumnDefinition_Properties{
 					FreeText: true,
 				},
+			},
+			{
+				Name:        SEARCH_FIELD_TAGS,
+				Type:        ResourceTableColumnDefinition_STRING,
+				IsArray:     true,
+				Description: "Unique tags",
+				Properties: &ResourceTableColumnDefinition_Properties{
+					Filterable: true,
+				},
+			},
+			{
+				Name:        SEARCH_FIELD_FOLDER,
+				Type:        ResourceTableColumnDefinition_STRING,
+				Description: "Kubernetes name for the folder",
+			},
+			{
+				Name:        SEARCH_FIELD_RV,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "resource version",
+			},
+			{
+				Name:        SEARCH_FIELD_CREATED,
+				Type:        ResourceTableColumnDefinition_INT64,
+				Description: "created timestamp", // date?
 			},
 		})
 		if err != nil {

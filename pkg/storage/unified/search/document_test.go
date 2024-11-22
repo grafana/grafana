@@ -80,7 +80,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 	})
 
 	// Standard
-	builder = resource.StandardDocumentBuilder().Builder
+	builder = resource.StandardDocumentBuilder()
 	doSnapshotTests(t, builder, "folder", key, []string{
 		"aaa",
 		"bbb",

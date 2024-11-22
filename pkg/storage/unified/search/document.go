@@ -26,7 +26,11 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 	})
 
 	return []resource.DocumentBuilderInfo{
-		resource.StandardDocumentBuilder(),
+		// The default builder
+		resource.DocumentBuilderInfo{
+			Builder: resource.StandardDocumentBuilder(),
+		},
+		// Dashboard builder
 		dashboards,
 	}, err
 }
