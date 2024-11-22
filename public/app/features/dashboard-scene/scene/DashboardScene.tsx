@@ -633,7 +633,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  public setInitialSaveModel(saveModel: Dashboard) {
+  public setInitialSaveModel(saveModel?: Dashboard) {
     this._initialSaveModel = saveModel;
   }
 
