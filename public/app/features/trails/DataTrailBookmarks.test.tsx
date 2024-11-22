@@ -65,4 +65,24 @@ describe('DataTrailsBookmarks', () => {
     fireEvent.click(screen.getByLabelText('Remove bookmark'));
     expect(onDelete).toHaveBeenCalled();
   });
+
+  it('remembers the expanded/collapsed state for the bookmarks', () => {
+    (getTrailStore as jest.Mock).mockImplementation(() => ({
+      bookmarks: [bookmark],
+      recent: [],
+    }));
+    // Initial render with collapsed state
+    const { unmount } = render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
+    expect(screen.queryByText('bookmark-key')).not.toBeInTheDocument();
+
+    // Expand the bookmarks
+    const button = screen.getByLabelText('bookmarkCarrot');
+    fireEvent.click(button);
+    expect(screen.getByText('bookmark-key')).toBeInTheDocument();
+
+    // Unmount and remount the component
+    unmount();
+    render(<DataTrailsBookmarks onSelect={onSelect} onDelete={onDelete} />);
+    expect(screen.getByText('bookmark-key')).toBeInTheDocument();
+  });
 });
