@@ -184,7 +184,7 @@ export const getPayloadToExport = (
   }
 };
 
-const useGetPayloadToExport = (values: RuleFormValues, uid?: string) => {
+const useGetPayloadToExport = (values: RuleFormValues, ruleUid?: string) => {
   const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
   const payload: PostableRulerRuleGroupDTO = useMemo(() => {
     return getPayloadToExport(values, rulerGroupDto?.value, uid);
