@@ -81,6 +81,12 @@ export function TraceToProfilesSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               });
             }}
+            onClear={() => {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToProfiles', {
+                ...options.jsonData.tracesToProfiles,
+                datasourceUid: undefined,
+              });
+            }}
           />
         </InlineField>
       </InlineFieldRow>
