@@ -40,7 +40,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		res.Message = "Network error: Failed to connect to the server"
-		if opErr, ok := err.(*net.OpError); ok && opErr != nil && opErr.Err != nil {
+		if opErr != nil && opErr.Err != nil {
 			res.Message += fmt.Sprintf(". Error message: %s", opErr.Err.Error())
 		}
 		details["verboseMessage"] = err.Error()
@@ -49,7 +49,7 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	var driverErr *mysql.MySQLError
 	if errors.As(err, &driverErr) {
 		res.Message = "Database error: Failed to connect to the MySQL server"
-		if driverErr, ok := err.(*mysql.MySQLError); ok && driverErr != nil && driverErr.Number > 0 {
+		if driverErr != nil && driverErr.Number > 0 {
 			res.Message += fmt.Sprintf(". MySQL error number: %d", driverErr.Number)
 		}
 		details["verboseMessage"] = err.Error()

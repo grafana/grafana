@@ -26,7 +26,7 @@ func TestErrToHealthCheckResult(t *testing.T) {
 			err:  errors.Join(errors.New("foo"), &net.OpError{Op: "read", Net: "tcp", Err: errors.New("some op")}),
 			want: &backend.CheckHealthResult{
 				Status:      backend.HealthStatusError,
-				Message:     "Network error: Failed to connect to the server",
+				Message:     "Network error: Failed to connect to the server. Error message: some op",
 				JSONDetails: []byte(`{"moreDetailsLink":"https://grafana.com/docs/grafana/latest/datasources/mysql/#configure-the-data-source","verboseMessage":"foo\nread tcp: some op"}`),
 			},
 		},
@@ -35,7 +35,7 @@ func TestErrToHealthCheckResult(t *testing.T) {
 			err:  errors.Join(errors.New("foo"), &mysql.MySQLError{Number: uint16(1045), Message: "Access denied for user"}),
 			want: &backend.CheckHealthResult{
 				Status:      backend.HealthStatusError,
-				Message:     "Database error: Failed to connect to the MySQL server",
+				Message:     "Database error: Failed to connect to the MySQL server. MySQL error number: 1045",
 				JSONDetails: []byte(`{"moreDetailsLink":"https://dev.mysql.com/doc/mysql-errors/8.4/en/","verboseMessage":"foo\nError 1045: Access denied for user"}`),
 			},
 		},
