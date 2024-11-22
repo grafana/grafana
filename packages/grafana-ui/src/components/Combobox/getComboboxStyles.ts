@@ -116,11 +116,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     addaptToParent: css({
       label: 'combobox-addapt-to-parent',
-      maxWidth: `calc(100% - ${theme.spacing(4)})`,
+      maxWidth: '100%',
       '[class*="input-wrapper-grafana-select-input"]': {
         maxWidth: '100%',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
       },
     }),
   };
