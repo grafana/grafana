@@ -922,6 +922,9 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	if s.search == nil {
+		return nil, fmt.Errorf("search index not configured")
+	}
 	return s.search.Search(ctx, req)
 }
 
