@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
-import { FrameSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
+import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { TransformationData } from './TransformationsEditor';
 
@@ -56,7 +56,7 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
             />
           )}
           {opts.showFilter && (
-            <FrameSelectionEditor
+            <FrameMultiSelectionEditor
               value={config.filter!}
               context={opts.context}
               // eslint-disable-next-line

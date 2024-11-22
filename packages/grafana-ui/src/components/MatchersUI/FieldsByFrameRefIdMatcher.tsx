@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import { DataFrame, getFrameDisplayName, FieldMatcherID, fieldMatchers, SelectableValue } from '@grafana/data';
 
-import { Select } from '../Select/Select';
+import { MultiSelect, Select } from '../Select/Select';
 
 import { FieldMatcherUIRegistryItem, MatcherUIProps } from './types';
 
@@ -78,6 +78,95 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
   );
 }
 
+const recoverMultiRefIdMissing = (
+  newRefIds: Array<SelectableValue<string>>,
+  oldRefIds: Array<SelectableValue<string>>,
+  previousValue: Array<SelectableValue<string>> | undefined
+): Array<SelectableValue<string>> | undefined => {
+  if (!previousValue || !previousValue.length) {
+    return;
+  }
+  // Previously selected value is missing from the new list.
+  // Find the value that is in the new list but isn't in the old list
+  const changedTo = newRefIds.filter((newRefId) => {
+    return oldRefIds.some((oldRefId) => {
+      return newRefId === oldRefId;
+    });
+  });
+
+  if (changedTo.length) {
+    // Found the new value, we assume the old value changed to this one, so we'll use it
+    return changedTo;
+  }
+  return;
+};
+
+export interface MultiProps {
+  value?: string; // 1 or more refID in reqExp format /A|B|C/
+  data: DataFrame[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+}
+
+export function RefIDMultiPicker({ value, data, onChange, placeholder }: MultiProps) {
+  const listOfRefIds = useMemo(() => getListOfQueryRefIds(data), [data]);
+
+  const [priorSelectionState, updatePriorSelectionState] = useState<{
+    refIds: SelectableValue[];
+    value: Array<SelectableValue<string>> | undefined;
+  }>({
+    refIds: [],
+    value: undefined,
+  });
+
+  const currentValue = useMemo(() => {
+    let extractedRefIds = new Set<string>();
+
+    if (value) {
+      if (value.startsWith('/^')) {
+        try {
+          extractedRefIds = new Set(regexpToStrings(value));
+        } catch {
+          extractedRefIds.add(value);
+        }
+      } else {
+        extractedRefIds.add(value);
+      }
+    }
+
+    const matchedRefIds = listOfRefIds.filter((refId) => extractedRefIds.has(refId.value || ''));
+
+    if (matchedRefIds.length) {
+      return matchedRefIds;
+    }
+
+    return recoverMultiRefIdMissing(listOfRefIds, priorSelectionState.refIds, priorSelectionState.value);
+  }, [value, listOfRefIds, priorSelectionState]);
+
+  const onFilterChange = useCallback(
+    (v: Array<SelectableValue<string>>) => {
+      onChange(v.map((v) => v.value!));
+    },
+    [onChange]
+  );
+
+  if (listOfRefIds !== priorSelectionState.refIds || currentValue?.length !== priorSelectionState.value?.length) {
+    updatePriorSelectionState({
+      refIds: listOfRefIds,
+      value: currentValue,
+    });
+  }
+  return (
+    <MultiSelect
+      options={listOfRefIds}
+      onChange={onFilterChange}
+      isClearable={true}
+      placeholder={placeholder ?? 'Select query refId'}
+      value={currentValue}
+    />
+  );
+}
+
 function getListOfQueryRefIds(data: DataFrame[]): Array<SelectableValue<string>> {
   const queries = new Map<string, DataFrame[]>();
 
@@ -126,4 +215,29 @@ export const fieldsByFrameRefIdItem: FieldMatcherUIRegistryItem<string> = {
   name: 'Fields returned by query',
   description: 'Set properties for fields from a specific query',
   optionsToLabel: (options) => options,
+};
+
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#escaping
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+// funcs below will parse/unparse a regexp like /^(?:foo|bar)$/ -> ["foo", "bar"]
+
+/** @internal */
+export const regexpToStrings = (regexp: string) => {
+  return (
+    regexp
+      // strip /^(?:)$/ wrapper
+      .slice(5, -3)
+      // split on unescaped |
+      .split(/(?<!\\)\|/g)
+      // unescape remaining escaped chars
+      .map((string) => string.replace(/\\(.)/g, '$1'))
+  );
+};
+
+/** @internal */
+export const stringsToRegexp = (strings: string[]) => {
+  return `/^(?:${strings.map((string) => escapeRegExp(string)).join('|')})$/`;
 };
