@@ -3,6 +3,7 @@ import { ObjectMeta } from 'app/features/apiserver/types';
 import { CloneOptions, DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { SaveDashboardResponseDTO } from 'app/types';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 export interface SaveDashboardData {
   clone: Dashboard; // cloned copy
@@ -27,7 +28,7 @@ export interface SaveDashboardAsOptions {
 }
 
 export interface SaveDashboardCommand {
-  dashboard: Dashboard;
+  dashboard: Dashboard | DashboardV2Spec;
   message?: string;
   folderUid?: string;
   overwrite?: boolean;
