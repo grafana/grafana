@@ -490,6 +490,14 @@
       "alertCondition": "Alert condition"
     },
     "templates": {
+      "editor": {
+        "add-example": "Add example",
+        "auto-complete": "For auto-completion of common templating code, type the following keywords in the content editor:",
+        "goto-docs": "Notification templates documentation"
+      },
+      "help": {
+        "intro": "Notification templates use Go templating language to create notification messages.\n\nIn Grafana, a template group can define multiple notification templates using {{ define \"<NAME>\" }}.\nThese templates can then be used in contact points and within other notification templates by calling {{ template \"<NAME>\" }}.\nFor detailed information about notification templates, refer to our documentation."
+      },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
@@ -665,6 +673,7 @@
     "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
+    "help": "Help",
     "locale": {
       "default": "Default"
     },

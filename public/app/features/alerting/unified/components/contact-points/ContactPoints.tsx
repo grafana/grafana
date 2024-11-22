@@ -155,7 +155,7 @@ const NotificationTemplatesTab = () => {
             href="/alerting/notifications/templates/new"
             disabled={!createTemplateAllowed}
           >
-            Add notification template
+            Add notification template group
           </LinkButton>
         )}
       </Stack>
