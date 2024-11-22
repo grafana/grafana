@@ -107,6 +107,14 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const hideViewRuleLinkText = props.width < 320;
 
+  // backwards compat for "Inactive" state filter
+  useEffect(() => {
+    if (props.options.stateFilter.inactive === true) {
+      props.options.stateFilter.normal = true; // enable the normal filter
+    }
+    props.options.stateFilter.inactive = undefined; // now disable inactive
+  }, [props.options.stateFilter]);
+
   let dashboard: DashboardModel | undefined = undefined;
 
   useEffectOnce(() => {
@@ -296,7 +304,6 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     return (
       (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.inactive && alertingRule.state === PromAlertingRuleState.Inactive) ||
       (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
