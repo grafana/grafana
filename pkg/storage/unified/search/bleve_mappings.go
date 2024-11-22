@@ -17,8 +17,11 @@ func getBleveMappings(fields resource.SearchableDocumentFields) mapping.IndexMap
 func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 	mapper.AddFieldMapping(&mapping.FieldMapping{
-		Name:               "title",
-		Type:               "text",
+		Name: "title",
+		Type: "text",
+		// TODO - if we don't want title to be a keyword, we can use this
+		// set the title field to use keyword analyzer so it sorts by the whole phrase
+		// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
 		Analyzer:           keyword.Name,
 		Store:              true,
 		Index:              true,
@@ -27,24 +30,10 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		DocValues:          false,
 	})
 
-	// TODO - if we don't want title to be a keyword, we can use this
-	// set the title field to use keyword analyzer so it sorts by the whole phrase
-	// https://github.com/blevesearch/bleve/issues/417#issuecomment-245273022
-	// mapper.AddFieldMapping(&mapping.FieldMapping{
-	// 	Name:               "title_sort",
-	// 	Type:               "text",
-	// 	Analyzer:           keyword.Name,
-	// 	Store:              false, // not stored!
-	// 	Index:              true,
-	// 	IncludeTermVectors: false,
-	// 	IncludeInAll:       false,
-	// 	DocValues:          false,
-	// })
-
 	mapper.AddFieldMapping(&mapping.FieldMapping{
 		Name:               "description",
 		Type:               "text",
-		Store:              true, // not but searchable?
+		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
@@ -55,11 +44,22 @@ func getBleveDocMappings(_ resource.SearchableDocumentFields) *mapping.DocumentM
 		Name:               "tags",
 		Type:               "text",
 		Analyzer:           keyword.Name,
-		Store:              true, // not stored!
+		Store:              true,
 		Index:              true,
 		IncludeTermVectors: false,
 		IncludeInAll:       false,
 		DocValues:          false,
+	})
+
+	mapper.AddFieldMapping(&mapping.FieldMapping{
+		Name:               "folder",
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		DocValues:          true, // will be needed for authz client
 	})
 
 	mapper.Dynamic = true
