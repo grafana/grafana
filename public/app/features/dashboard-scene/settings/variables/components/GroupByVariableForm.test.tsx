@@ -38,8 +38,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
 describe('GroupByVariableForm', () => {
   const onDataSourceChangeMock = jest.fn();
   const onDefaultOptionsChangeMock = jest.fn();
+  const onAllowCustomValueChangeMock = jest.fn();
 
   const defaultProps: GroupByVariableFormProps = {
+    allowCustomValue: true,
+    onAllowCustomValueChange: onAllowCustomValueChangeMock,
     onDataSourceChange: onDataSourceChangeMock,
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
   };
