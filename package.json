@@ -437,6 +437,7 @@
   "workspaces": {
     "packages": [
       "packages/*",
+      "apps/playlist/plugin",
       "packages/!(grafana-icons)/**",
       "plugins-bundled/internal/*",
       "public/app/plugins/*/*",
