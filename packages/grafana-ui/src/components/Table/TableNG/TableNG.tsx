@@ -187,7 +187,7 @@ export function TableNG(props: TableNGProps) {
     }
   };
 
-  const mapFrameToDataGrid = (main: DataFrame) => {
+  const mapFrameToDataGrid = (main: DataFrame, rows: TableRow[]) => {
     const columns: TableColumn[] = [];
 
     // Footer calculations
@@ -264,8 +264,8 @@ export function TableNG(props: TableNGProps) {
     });
 
     if (footerOptions?.show && footerOptions.reducer.length > 0) {
-      if (footerOptions.countRows) {
-        footerItems = ['Count', rows.length.toString()];
+      if (footerOptions.countRows && footerOptions.reducer[0] === ReducerID.count) {
+        footerItems = [rows.length.toString()];
       } else {
         footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
       }
@@ -293,13 +293,12 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
 
-  const columns = mapFrameToDataGrid(props.data);
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
+  const columns = mapFrameToDataGrid(props.data, rows);
 
   useLayoutEffect(() => {
     setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
   }, [columns]);
-
-  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
 
   const columnTypes = useMemo(() => {
     return columns.reduce(
