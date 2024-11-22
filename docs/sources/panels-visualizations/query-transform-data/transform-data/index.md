@@ -286,6 +286,8 @@ In the field mapping specify:
 
 Grafana builds value mappings from your query result and applies them to the real data query results. You should see values being mapped and colored according to the config query results.
 
+> **Note:** When you use this transformation for thresholds, the visualization continues to use the panel's base threshold.
+
 ### Convert field type
 
 Use this transformation to modify the field type of a specified field.

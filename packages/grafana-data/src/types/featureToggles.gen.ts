@@ -22,7 +22,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
@@ -159,6 +158,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
+  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;

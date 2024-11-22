@@ -1,5 +1,6 @@
 import * as H from 'history';
 import React, { useContext } from 'react';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
 import { attachDebugger, createLogger } from '@grafana/ui';
@@ -21,6 +22,7 @@ export interface LocationService {
   getHistory: () => H.History;
   getSearch: () => URLSearchParams;
   getSearchObject: () => UrlQueryMap;
+  getLocationObservable: () => Observable<H.Location>;
 
   /**
    * This is from the old LocationSrv interface
@@ -31,6 +33,7 @@ export interface LocationService {
 /** @internal */
 export class HistoryWrapper implements LocationService {
   private readonly history: H.History;
+  private locationObservable: BehaviorSubject<H.Location>;
 
   constructor(history?: H.History) {
     // If no history passed create an in memory one if being called from test
@@ -40,12 +43,22 @@ export class HistoryWrapper implements LocationService {
         ? H.createMemoryHistory({ initialEntries: ['/'] })
         : H.createBrowserHistory({ basename: config.appSubUrl ?? '/' }));
 
+    this.locationObservable = new BehaviorSubject(this.history.location);
+
+    this.history.listen((location) => {
+      this.locationObservable.next(location);
+    });
+
     this.partial = this.partial.bind(this);
     this.push = this.push.bind(this);
     this.replace = this.replace.bind(this);
     this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
     this.getLocation = this.getLocation.bind(this);
+  }
+
+  getLocationObservable() {
+    return this.locationObservable.asObservable();
   }
 
   getHistory() {

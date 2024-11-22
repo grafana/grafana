@@ -414,6 +414,9 @@ export const versionedPages = {
             generalHideSelectV2: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Hide select',
             },
+            selectionOptionsAllowCustomValueSwitch: {
+              [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Allow Custom Value switch',
+            },
             selectionOptionsMultiSwitch: {
               '10.4.0': 'data-testid Variable editor Form Multi switch',
               [MIN_GRAFANA_VERSION]: 'Variable editor Form Multi switch',
