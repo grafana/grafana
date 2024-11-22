@@ -52,9 +52,9 @@ type Requester interface {
 	GetOrgName() string
 	// GetAuthID returns external id for entity.
 	GetAuthID() string
-	// GetAllowedKubernetesNamespace returns either "*" or the single namespace this requester has access to
+	// GetNamespace returns either "*" or the single namespace this requester has access to
 	// An empty value means the implementation has not specified a kubernetes namespace.
-	GetAllowedKubernetesNamespace() string
+	GetNamespace() string
 	// GetAuthenticatedBy returns the authentication method used to authenticate the entity.
 	GetAuthenticatedBy() string
 	// IsAuthenticatedBy returns true if entity was authenticated by any of supplied providers.

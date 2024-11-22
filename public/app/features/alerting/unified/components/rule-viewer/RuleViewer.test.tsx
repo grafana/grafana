@@ -41,9 +41,6 @@ const ELEMENTS = {
   details: {
     pendingPeriod: byText(/Pending period/i),
   },
-  tabs: {
-    details: byRole('tab', { name: /Details/i }),
-  },
   actions: {
     edit: byRole('link', { name: 'Edit' }),
     more: {

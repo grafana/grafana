@@ -134,6 +134,15 @@ export enum AccessControlAction {
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
 
+  // Alerting time intervals actions
+  AlertingTimeIntervalsRead = 'alert.notifications.time-intervals:read',
+  AlertingTimeIntervalsWrite = 'alert.notifications.time-intervals:write',
+
+  // Alerting templates actions
+  AlertingTemplatesRead = 'alert.notifications.templates:read',
+  AlertingTemplatesWrite = 'alert.notifications.templates:write',
+  AlertingTemplatesDelete = 'alert.notifications.templates:delete',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
@@ -158,6 +167,7 @@ export interface Role {
   group: string;
   global: boolean;
   delegatable?: boolean;
+  mapped?: boolean;
   version: number;
   created: string;
   updated: string;

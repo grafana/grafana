@@ -8,7 +8,14 @@ import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-u
 import { DataTrail } from '../DataTrail';
 import { VAR_OTEL_DEPLOYMENT_ENV, VAR_OTEL_GROUP_LEFT, VAR_OTEL_JOIN_QUERY, VAR_OTEL_RESOURCES } from '../shared';
 
-import { sortResources, getOtelJoinQuery, blessedList, limitOtelMatchTerms, updateOtelJoinWithGroupLeft } from './util';
+import {
+  sortResources,
+  getOtelJoinQuery,
+  blessedList,
+  limitOtelMatchTerms,
+  updateOtelJoinWithGroupLeft,
+  getProdOrDefaultOption,
+} from './util';
 
 jest.mock('./api', () => ({
   totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
@@ -152,9 +159,7 @@ describe('limitOtelMatchTerms', () => {
     const jobs = ['a', 'b', 'c'];
     const instances = ['d', 'e', 'f'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
     expect(result.jobsRegex).toEqual('job=~"a"');
@@ -179,9 +184,7 @@ describe('limitOtelMatchTerms', () => {
     const jobs = ['a', 'b', 'c'];
     const instances = ['d', 'e', 'f'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(true);
     expect(result.jobsRegex).toEqual('job=~"a|b"');
@@ -195,9 +198,7 @@ describe('limitOtelMatchTerms', () => {
 
     const instances = ['instance1', 'instance2', 'instance3', 'instance4', 'instance5'];
 
-    const missingOtelTargets = false;
-
-    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances);
 
     expect(result.missingOtelTargets).toEqual(false);
     expect(result.jobsRegex).toEqual('job=~"job1|job2|job3|job4|job5"');
@@ -274,5 +275,44 @@ describe('updateOtelJoinWithGroupLeft', () => {
     const otelJoinQueryVar = getOtelJoinQueryVar(trail);
 
     expect(otelJoinQueryVar.getValue()).toBe('');
+  });
+});
+
+describe('getProdOrDefaultOption', () => {
+  it('should return the value of the option containing "prod"', () => {
+    const options = [
+      { value: 'test1', label: 'Test 1' },
+      { value: 'prod2', label: 'Prod 2' },
+      { value: 'test3', label: 'Test 3' },
+    ];
+    expect(getProdOrDefaultOption(options)).toBe('prod2');
+  });
+
+  it('should return the first option value if no option contains "prod"', () => {
+    const options = [
+      { value: 'test1', label: 'Test 1' },
+      { value: 'test2', label: 'Test 2' },
+      { value: 'test3', label: 'Test 3' },
+    ];
+    expect(getProdOrDefaultOption(options)).toBe('test1');
+  });
+
+  it('should handle case insensitivity', () => {
+    const options = [
+      { value: 'test1', label: 'Test 1' },
+      { value: 'PROD2', label: 'Prod 2' },
+      { value: 'test3', label: 'Test 3' },
+    ];
+    expect(getProdOrDefaultOption(options)).toBe('PROD2');
+  });
+
+  it('should return null if the options array is empty', () => {
+    const options: Array<{ value: string; label: string }> = [];
+    expect(getProdOrDefaultOption(options)).toBeNull();
+  });
+
+  it('should return the first option value if the options array has one element', () => {
+    const options = [{ value: 'test1', label: 'Test 1' }];
+    expect(getProdOrDefaultOption(options)).toBe('test1');
   });
 });

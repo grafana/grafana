@@ -1,7 +1,7 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { labelsMatchMatchers, removeTimeIntervalFromRoute, matchersToString } from './alertmanager';
+import { labelsMatchMatchers, matchersToString, removeTimeIntervalFromRoute } from './alertmanager';
 import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from './matchers';
 
 describe('Alertmanager utils', () => {
@@ -90,6 +90,15 @@ describe('Alertmanager utils', () => {
         email: 'admin@grafana.com',
       };
       const matchers = parsePromQLStyleMatcherLooseSafe('foo!=bazz,bar=~ba.+');
+      expect(labelsMatchMatchers(labels, matchers)).toBe(true);
+    });
+    it('should match when using flags and different operators', () => {
+      const labels: Labels = {
+        foo: 'bar',
+        bar: 'bazz',
+        email: 'admin@grafana.com',
+      };
+      const matchers = parsePromQLStyleMatcherLooseSafe('foo!=bazz,bar=~(?i)Ba.+');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
   });
