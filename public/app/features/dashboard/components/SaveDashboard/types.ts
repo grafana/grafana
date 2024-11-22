@@ -18,6 +18,14 @@ export interface SaveDashboardOptions extends CloneOptions {
   makeEditable?: boolean;
 }
 
+export interface SaveDashboardAsOptions {
+  saveAsCopy?: boolean;
+  isNew?: boolean;
+  copyTags?: boolean;
+  title?: string;
+  description?: string;
+}
+
 export interface SaveDashboardCommand {
   dashboard: Dashboard;
   message?: string;

@@ -30,6 +30,7 @@ import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
+import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -679,6 +680,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   getSaveModel(): Dashboard {
     return transformSceneToSaveModel(this);
+  }
+
+  getSaveAsModel(options: SaveDashboardAsOptions): Dashboard {
+    const saveModel = this.getSaveModel();
+    return {
+      ...saveModel,
+      id: null,
+      uid: '',
+      title: options.title || '',
+      description: options.description || '',
+      tags: options.isNew || options.copyTags ? saveModel.tags : [],
+    };
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
