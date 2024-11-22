@@ -23,6 +23,7 @@ var (
 
 type ErrRateLimited = github.RateLimitError
 
+//go:generate mockery --name Client --structname MockClient --inpackage --filename client_mock.go
 type Client interface {
 	// GetContents returns the metadata and content of a file or directory.
 	// When a file is checked, the first returned value will have a value. For a directory, the second will. The other value is always nil.
