@@ -42,38 +42,38 @@ var (
 	_ rest.SingularNameProvider = (*SearchConnector)(nil)
 )
 
-func (r *SearchConnector) New() runtime.Object {
-	return r.newFunc()
+func (s *SearchConnector) New() runtime.Object {
+	return s.newFunc()
 }
 
-func (r *SearchConnector) Destroy() {
+func (s *SearchConnector) Destroy() {
 }
 
 func (s *SearchConnector) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (r *SearchConnector) GetSingularName() string {
+func (s *SearchConnector) GetSingularName() string {
 	return "Search"
 }
 
-func (r *SearchConnector) ConnectMethods() []string {
+func (s *SearchConnector) ConnectMethods() []string {
 	return []string{"GET"}
 }
 
-func (r *SearchConnector) NewConnectOptions() (runtime.Object, bool, string) {
+func (s *SearchConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (r *SearchConnector) ProducesMIMETypes(verb string) []string {
+func (s *SearchConnector) ProducesMIMETypes(verb string) []string {
 	return nil
 }
 
-func (r *SearchConnector) ProducesObject(verb string) interface{} {
-	return r.newFunc()
+func (s *SearchConnector) ProducesObject(verb string) interface{} {
+	return s.newFunc()
 }
 
-func (r *SearchConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (r *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 		}
 
 		searchRequest := &resource.SearchRequest{
-			Tenant:    user.GetNamespace(),
+			Tenant:    user.GetNamespace(), //<< not necessary it is in the namespace (and user context)
 			Kind:      strings.Split(queryParams.Get("kind"), ","),
 			QueryType: queryParams.Get("queryType"),
 			Query:     queryParams.Get("query"),
@@ -106,13 +106,13 @@ func (r *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 		}
 
 		// TODO... actually query
-		// result, err := r.client.Search(req.Context(), search)
-		// if err != nil {
-		// 	responder.Error(err)
-		// 	return
-		// }
+		result, err := s.client.Search(r.Context(), searchRequest)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
 
-		jj, err := json.Marshal(searchRequest)
+		jj, err := json.Marshal(result)
 		if err != nil {
 			responder.Error(err)
 			return
