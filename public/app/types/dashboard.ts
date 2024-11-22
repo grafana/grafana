@@ -74,10 +74,19 @@ export interface DashboardMeta {
   // until we use the resource as the main container
   k8s?: Partial<ObjectMeta>;
 
+  // If the dashboard was loaded from a remote repository
+  repository?: RepositoryInfo;
+
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes, time range or variables changes
   // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnParamsChange?: boolean;
 }
+
+export interface RepositoryInfo {
+  url: string
+  title: string
+}
+
 
 export interface AnnotationActions {
   canAdd: boolean;

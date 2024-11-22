@@ -48,7 +48,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
-    const { provisioned: isProvisioned, folderTitle } = meta;
+    const { provisioned: isProvisioned, folderTitle, repository } = meta;
 
     const tabs = (
       <TabsBar>
@@ -83,6 +83,14 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
             newFolder={folderTitle}
           />
         );
+      }
+
+      if (repository) {
+        return <div>
+          <h1>SAVE FOR REPOSITORY!</h1>
+          <h3>{repository.title}</h3>
+          <a href={repository.url}>{repository.url}</a>
+        </div>
       }
 
       if (saveAsCopy || changeInfo.isNew) {

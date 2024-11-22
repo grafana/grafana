@@ -9,7 +9,7 @@ import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DashboardDTO } from 'app/types';
+import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
 import { appEvents } from '../../../core/core';
 import { getDashboardAPI } from '../api/dashboard_api';
@@ -150,14 +150,14 @@ export class DashboardLoaderSrv {
   /**
    * Load a dashboard from repository
    */
-  async _loadFromRepository(repo: string, uid: string) {
+  async _loadFromRepository(repo: string, uid: string): Promise<DashboardDTO> {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref'); // commit hash or branch
 
     const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${uid}`
     return getBackendSrv().get(url, ref ? {ref} : undefined).then( (v) => {
       // raw spec
-      const dashboard = v.resource.dryRun.spec;
+      const dashboard = v.resource.dryRun.spec as DashboardDataDTO;
       if (dashboard) {
         return {
           meta: {
@@ -169,6 +169,12 @@ export class DashboardLoaderSrv {
             canDelete: true,
             canSave: true,
             canEdit: true,
+
+            // Indicate that the file came from a repository
+            repository: {
+              url,
+              title: repo,
+            }
           },
           dashboard,
         }
@@ -188,7 +194,7 @@ export class DashboardLoaderSrv {
           title: 'Hello: '+ uid + " // " + ref, 
           schemaVersion: 0, 
         },
-      })
+      } as any)
     })
   }
 
