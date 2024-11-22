@@ -107,14 +107,6 @@ function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const hideViewRuleLinkText = props.width < 320;
 
-  // backwards compat for "Inactive" state filter
-  useEffect(() => {
-    if (props.options.stateFilter.inactive === true) {
-      props.options.stateFilter.normal = true; // enable the normal filter
-    }
-    props.options.stateFilter.inactive = undefined; // now disable inactive
-  }, [props.options.stateFilter]);
-
   let dashboard: DashboardModel | undefined = undefined;
 
   useEffectOnce(() => {
@@ -304,6 +296,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     return (
       (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
+      (options.stateFilter.inactive && alertingRule.state === PromAlertingRuleState.Inactive) ||
       (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
@@ -323,7 +316,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   }
 
-  // Remove rules having 0 instances
+  // Remove rules having 0 instances unless explicitly configured
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
@@ -337,7 +330,12 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
           alertingRule.alerts ?? []
         )
       : [];
-    if (filteredAlerts.length) {
+    if (
+      filteredAlerts.length ||
+      (alertingRule?.state === PromAlertingRuleState.Inactive &&
+        options.showInactiveAlerts &&
+        !options.alertInstanceLabelFilter.length)
+    ) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
       rules.push(rule);
