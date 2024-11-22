@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -43,10 +42,8 @@ const REDACTED = "redacted"
 func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authorize func(accesscontrol.Evaluator) web.Handler) {
 	// #TODO add back auth part
 	apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-		idScope := dashboards.ScopeFoldersProvider.GetResourceScope(accesscontrol.Parameter(":id"))
 		uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
 		folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
-		folderRoute.Get("/id/:id", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
 
 		folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
@@ -160,40 +157,6 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 		return response.Err(err)
 	}
 
-	return response.JSON(http.StatusOK, folderDTO)
-}
-
-// swagger:route GET /folders/id/{folder_id} folders getFolderByID
-//
-// Get folder by id.
-//
-// Returns the folder identified by id. This is deprecated.
-// Please refer to [updated API](#/folders/getFolderByUID) instead
-//
-// Deprecated: true
-//
-// Responses:
-// 200: folderResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Response {
-	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "id is invalid", err)
-	}
-	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolderByID).Inc()
-	// nolint:staticcheck
-	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.SignedInUser.GetOrgID(), SignedInUser: c.SignedInUser})
-	if err != nil {
-		return apierrors.ToFolderErrorResponse(err)
-	}
-
-	folderDTO, err := hs.newToFolderDto(c, folder)
-	if err != nil {
-		return response.Err(err)
-	}
 	return response.JSON(http.StatusOK, folderDTO)
 }
 
