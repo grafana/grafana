@@ -2842,6 +2842,19 @@
     },
     {
       "metadata": {
+        "name": "provisioning",
+        "resourceVersion": "1732265054297",
+        "creationTimestamp": "2024-11-22T08:44:14Z"
+      },
+      "spec": {
+        "description": "Next generation provisioning... and git",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
