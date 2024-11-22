@@ -73,7 +73,7 @@ type RepositoryType string
 const (
 	LocalRepositoryType  RepositoryType = "local"
 	S3RepositoryType     RepositoryType = "s3"
-	GithubRepositoryType RepositoryType = "github"
+	GitHubRepositoryType RepositoryType = "github"
 )
 
 type RepositorySpec struct {

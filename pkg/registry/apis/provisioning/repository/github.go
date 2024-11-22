@@ -1,4 +1,4 @@
-package provisioning
+package repository
 
 import (
 	"context"
@@ -24,7 +24,9 @@ type githubRepository struct {
 	githubClient *github.Client
 }
 
-func newGithubRepository(ctx context.Context, config *provisioning.Repository) *githubRepository {
+var _ Repository = (*githubRepository)(nil)
+
+func NewGitHub(ctx context.Context, config *provisioning.Repository) *githubRepository {
 	tokenSrc := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: config.Spec.GitHub.Token},
 	)

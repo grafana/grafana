@@ -10,6 +10,7 @@ import (
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -227,7 +228,7 @@ func (c *exportConnector) fetchFolderInfo(
 	return folders, nil
 }
 
-func (c *exportConnector) marshalPreferredFormat(obj any, name string, repo Repository) (body []byte, fileName string, err error) {
+func (c *exportConnector) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
 	if repo.Config().Spec.PreferYAML {
 		body, err = yaml.Marshal(obj)
 		return body, name + ".yaml", err

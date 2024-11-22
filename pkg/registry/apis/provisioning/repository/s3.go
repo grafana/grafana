@@ -1,4 +1,4 @@
-package provisioning
+package repository
 
 import (
 	"context"
@@ -16,7 +16,9 @@ type s3Repository struct {
 	config *provisioning.Repository
 }
 
-func newS3Repository(config *provisioning.Repository) *s3Repository {
+var _ Repository = (*s3Repository)(nil)
+
+func NewS3(config *provisioning.Repository) *s3Repository {
 	return &s3Repository{config}
 }
 
