@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -31,6 +32,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesFolders,                    // Required for tests that deal with folders.
 		},
 	})
 
@@ -40,6 +42,14 @@ func TestIntegrationProvisioning(t *testing.T) {
 		Namespace: "default", // actually org1
 		GVR: schema.GroupVersionResource{
 			Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositories",
+		},
+	})
+
+	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR: schema.GroupVersionResource{
+			Group: "folder.grafana.app", Version: "v0alpha1", Resource: "folders",
 		},
 	})
 
@@ -257,6 +267,24 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Equal(t,
 			"World",
 			mustNestedString(resp.Object, "whom"))
+	})
+
+	t.Run("creating repository creates folder", func(t *testing.T) {
+		// Just make sure the folder doesn't exist in advance.
+		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+		}
+
+		_, err = client.Resource.Update(ctx,
+			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+
+		resp, err := folderClient.Resource.Get(ctx, "thisisafolderref", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "thisisafolderref", mustNestedString(resp.Object, "metadata", "name"))
 	})
 }
 
