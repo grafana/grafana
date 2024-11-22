@@ -162,7 +162,7 @@
     },
     "users-table": {
       "last-seen-never": "Never",
-      "no-licensed-role": "Not assigned <2><0></0></2>"
+      "no-licensed-roles": "Not assigned"
     }
   },
   "alert-labels": {

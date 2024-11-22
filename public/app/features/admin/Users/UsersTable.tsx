@@ -102,12 +102,10 @@ export const UsersTable = ({
               cell: ({ cell: { value } }: Cell<'licensedRole'>) => {
                 return value === 'None' ? (
                   <Text color={'disabled'}>
-                    <Trans i18nKey="admin.users-table.no-licensed-role">
-                      Not assigned{' '}
-                      <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                        <Icon name="question-circle" />
-                      </Tooltip>
-                    </Trans>
+                    <Trans i18nKey="admin.users-table.no-licensed-roles">Not assigned</Trans>
+                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                      <Icon name="question-circle" style={{ margin: '0 0 4 4' }} />
+                    </Tooltip>
                   </Text>
                 ) : (
                   value
