@@ -230,8 +230,9 @@ interface GrafanaRuleDesignExporterProps {
 }
 
 export const GrafanaRuleDesignExporter = memo(({ onClose, exportValues, uid }: GrafanaRuleDesignExporterProps) => {
-  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
   const exportingNewRule = !uid;
+  const initialTab = exportingNewRule ? 'hcl' : 'yaml';
+  const [activeTab, setActiveTab] = useState<ExportFormats>(initialTab);
   const formatProviders = exportingNewRule ? [HclExportProvider] : Object.values(allGrafanaExportProviders);
 
   return (
