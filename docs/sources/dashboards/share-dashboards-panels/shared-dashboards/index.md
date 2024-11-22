@@ -215,49 +215,81 @@ Learn more about the kind of information provided in the [dashboard insights doc
 Externally shared dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `plugin.json`. However, this can't always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with externally shared dashboards and data sources that should work, but have not been confirmed as compatible.
 
-### Confirmed:
+### Confirmed
 
-<table>
-  <tr>
-    <td>
-      <ul>
-        <li>ClickHouse</li>
-        <li>CloudWatch</li>
-        <li>Elasticsearch</li>
-        <li>Infinity</li>
-        <li>InfluxDB</li>
-        <li>Loki</li>
-        <li>Microsoft SQL Server</li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li>MongoDB</li>
-        <li>MySQL</li>
-        <li>Oracle Database</li>
-        <li>PostgreSQL</li>
-        <li>Prometheus</li>
-        <li>Redis</li>
-        <li>SQLite</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+{{< column-list >}}
 
-### Unsupported:
+- ClickHouse
+- CloudWatch
+- Elasticsearch
+- Infinity
+- InfluxDB
+- Loki
+- Microsoft SQL Server
+- MongoDB
+- MySQL
+- Oracle Database
+- PostgreSQL
+- Prometheus
+- Redis
+- SQLite
 
-<table>
-  <tr>
-    <td>
-      <ul>
-        <li>Graphite</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+{{< /column-list >}}
 
-### Unconfirmed:
+### Unsupported
 
+- Graphite
+
+### Unconfirmed
+
+{{< column-list >}}
+
+- Altinity plugin for ClickHouse
+- Amazon Athena
+- Amazon Redshift
+- Amazon Timestream
+- Apache Cassandra
+- AppDynamics
+- Azure Data Explorer Datasource
+- Azure Monitor
+- CSV
+- DB2 Datasource
+- Databricks
+- Datadog
+- Dataset
+- Druid
+- Dynatrace
+- GitHub
+- Google BigQuery
+- Grafana for YNAB
+- Honeycomb
+- Jira
+- Mock
+- Neo4j Datasource
+- New Relic
+- OPC UA (Unified Architecture)
+- Open Distro for Elasticsearch
+- OpenSearch
+- OpenTSDB
+- Orbit
+- SAP HANA®
+- Salesforce
+- Sentry
+- ServiceNow
+- Snowflake
+- Splunk
+- Splunk Infrastructure Monitoring
+- Sqlyze data source
+- TDengine
+- Vertica
+- Wavefront
+- X-Ray
+- kdb+
+- simple grpc data source
+
+{{< /column-list >}}
+
+<!--
 <table>
   <tr>
     <td>
@@ -316,6 +348,8 @@ guaranteed because plugin developers can override this functionality. The follow
     </td>
   </tr>
 </table>
+
+-->
 
 ## Limitations
 
