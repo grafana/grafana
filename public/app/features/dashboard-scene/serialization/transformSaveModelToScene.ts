@@ -450,6 +450,7 @@ function getDashboardInteractionCallback(uid: string, title: string) {
         totalJSHeapSize: e.totalJSHeapSize,
         usedJSHeapSize: e.usedJSHeapSize,
         jsHeapSizeLimit: e.jsHeapSizeLimit,
+        timeSinceBoot: performance.measure('time_since_boot', 'frontend_boot_js_done_time_seconds').duration,
       },
       { dashboard: uid, title: title }
     );

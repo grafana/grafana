@@ -296,12 +296,14 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  //const echo = new Echo({ debug: process.env.NODE_ENV === 'development' });
-
-  // TODO: Run only when performing benchmark run
-  // @ts-ignore
-  //window.__grafanaEcho = echo;
-  //setEchoSrv(echo);
+  console.log(process.env);
+  if (process.env.BENCHMARK) {
+    const echo = new Echo({ debug: true });
+    //@ts-ignore
+    window.__grafanaEcho = echo;
+    setEchoSrv(echo);
+    registerEchoBackend(new DashboardBenchmarkBackend({}));
+  }
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
@@ -318,9 +320,6 @@ function initEchoSrv() {
       reportMetricPerformanceMark(cssLoadMetricName);
     }
   });
-
-  // TODO: Run only when performing benchmark run
-  //registerEchoBackend(new DashboardBenchmarkBackend({}));
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
