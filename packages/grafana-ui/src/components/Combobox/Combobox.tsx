@@ -27,7 +27,7 @@ export type ComboboxOption<T extends string | number = string> = {
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-interface ComboboxBaseProps<T extends string | number>
+export interface ComboboxBaseProps<T extends string | number>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
@@ -66,7 +66,7 @@ type ClearableConditionals<T extends number | string> =
     }
   | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
 
-type AutoSizeConditionals =
+export type AutoSizeConditionals =
   | {
       width: 'auto';
       /**
@@ -86,7 +86,7 @@ type AutoSizeConditionals =
 
 type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals & ClearableConditionals<T>;
 
-function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
+export function itemToString<T extends string | number>(item?: ComboboxOption<T> | null) {
   if (!item) {
     return '';
   }
