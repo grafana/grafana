@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { Trans } from 'app/core/internationalization';
 import { OrgRole, Role } from 'app/types';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
@@ -35,7 +36,7 @@ const fixedRoleGroupNames: Record<string, string> = {
 };
 
 const tooltipMessage = (
-  <>
+  <Trans i18nKey="role-picker.menu.tooltip">
     You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
     information in&nbsp;
     <TextLink
@@ -46,7 +47,7 @@ const tooltipMessage = (
       our documentation
     </TextLink>
     .
-  </>
+  </Trans>
 );
 
 interface RolePickerMenuProps {
@@ -275,7 +276,7 @@ export const RolePickerMenu = ({
         <div className={customStyles.menuButtonRow}>
           <Stack justifyContent="flex-end">
             <Button size="sm" fill="text" onClick={onClearInternal} disabled={updateDisabled}>
-              Clear all
+              <Trans i18nKey="role-picker.menu.clear-button">Clear all</Trans>
             </Button>
             <Button size="sm" onClick={onUpdateInternal} disabled={updateDisabled}>
               {apply ? `Apply` : `Update`}

@@ -172,7 +172,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.RemoveSectionByID(navtree.NavIDCfg)
 	}
 
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) && c.IsSignedIn {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
