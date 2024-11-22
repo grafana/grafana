@@ -5,6 +5,7 @@ import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@gr
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -46,27 +47,29 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
   return (
     <div className={styles.content}>
-      Next, you can start to visualize data by{' '}
-      <Link
-        aria-label={`Create a dashboard`}
-        href={`/dashboard/new-with-ds/${dataSourceId}`}
-        className="external-link"
-        onClick={onDashboardLinkClicked}
-      >
-        building a dashboard
-      </Link>
-      , or by querying data in the{' '}
-      <Link
-        aria-label={`Explore data`}
-        className={cx('external-link', {
-          [`${styles.disabled}`]: !canExploreDataSources,
-          'test-disabled': !canExploreDataSources,
-        })}
-        href={exploreUrl}
-      >
-        Explore view
-      </Link>
-      .
+      <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
+        Next, you can start to visualize data by{' '}
+        <Link
+          aria-label={`Create a dashboard`}
+          href={`/dashboard/new-with-ds/${dataSourceId}`}
+          className="external-link"
+          onClick={onDashboardLinkClicked}
+        >
+          building a dashboard
+        </Link>
+        , or by querying data in the{' '}
+        <Link
+          aria-label={`Explore data`}
+          className={cx('external-link', {
+            [`${styles.disabled}`]: !canExploreDataSources,
+            'test-disabled': !canExploreDataSources,
+          })}
+          href={exploreUrl}
+        >
+          Explore view
+        </Link>
+        .
+      </Trans>
     </div>
   );
 };
@@ -98,17 +101,19 @@ const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
   }
   return (
     <div className={styles.content}>
-      Click{' '}
-      <Link
-        aria-label={`More details about the error`}
-        className={'external-link'}
-        href={moreDetailsLink}
-        target="_blank"
-        rel="noreferrer"
-      >
-        here
-      </Link>{' '}
-      to learn more about this error.
+      <Trans i18nKey="data-source-testing-status-page.error-more-details-link">
+        Click{' '}
+        <Link
+          aria-label={`More details about the error`}
+          className={'external-link'}
+          href={moreDetailsLink}
+          target="_blank"
+          rel="noreferrer"
+        >
+          here
+        </Link>{' '}
+        to learn more about this error.
+      </Trans>
     </div>
   );
 };
