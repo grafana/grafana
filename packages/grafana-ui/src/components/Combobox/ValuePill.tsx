@@ -18,7 +18,6 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(({ children
       {children}
       <span className={styles.separator} />
       <IconButton
-        className={styles.icon}
         name="times"
         size="md"
         aria-label={`Remove ${children}`}
@@ -41,10 +40,7 @@ const getValuePillStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.25),
     fontSize: theme.typography.bodySmall.fontSize,
   }),
-  icon: css({
-    //borderLeft: `2px solid ${theme.colors.border.weak}`,
-    //paddingLeft: theme.spacing(0.5),
-  }),
+
   separator: css({
     background: theme.colors.border.weak,
     width: '2px',
