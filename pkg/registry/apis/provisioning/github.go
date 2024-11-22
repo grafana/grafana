@@ -213,6 +213,7 @@ func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 			return
 		}
 
+		eventType := github.WebHookType(req)
 		event, err := github.ParseWebHook(github.WebHookType(req), payload)
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest("invalid payload"))
@@ -230,8 +231,13 @@ func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 				Message: "event processed",
 				Code:    http.StatusOK,
 			})
+		case *github.PingEvent:
+			responder.Object(200, &metav1.Status{
+				Message: "ping received",
+				Code:    http.StatusOK,
+			})
 		default:
-			responder.Error(apierrors.NewBadRequest("unsupported event type"))
+			responder.Error(apierrors.NewBadRequest("unsupported event type: " + eventType))
 		}
 	}
 }
