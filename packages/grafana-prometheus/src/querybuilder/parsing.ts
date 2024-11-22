@@ -148,8 +148,12 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case QuotedLabelName: {
-      const strLiteral = node.getChild(StringLiteral);
+      // Usually we got the metric name above in the Identifier case.
+      // If we didn't get the name that's potentially we have it in curly braces as quoted string.
+      // It must be quoted because that's how utf8 metric names should be defined
+      // See proposal https://github.com/prometheus/proposals/blob/main/proposals/2023-08-21-utf8.md
       if (visQuery.metric === '') {
+        const strLiteral = node.getChild(StringLiteral);
         visQuery.metric = getString(expr, strLiteral);
       }
       break;
