@@ -484,7 +484,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 return;
               }
             }
-            setValue('editorSettings', { simplifiedQueryEditor: !isAdvanced });
+            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
           },
         }
       : undefined;
@@ -688,7 +688,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setValue('editorSettings', { simplifiedQueryEditor: true });
+          setValue('editorSettings.simplifiedNotificationEditor', true);
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}

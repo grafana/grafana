@@ -222,3 +222,4 @@ crashDetection,experimental,@grafana/observability-traces-and-profiling,false,fa
 jaegerBackendMigration,experimental,@grafana/oss-big-tent,false,false,false
 reportingUseRawTimeRange,preview,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
+alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,true

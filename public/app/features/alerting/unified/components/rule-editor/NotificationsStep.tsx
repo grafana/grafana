@@ -41,12 +41,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
-  const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [type, manualRouting] = watch(['type', 'manualRouting']);
   const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
+  const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
@@ -66,6 +67,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const step = !isGrafanaManaged ? 4 : 5;
 
+  const switchMode =
+    isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
+      ? {
+          isAdvancedMode: !manualRouting,
+          setAdvancedMode: (isAdvanced: boolean) => {
+            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
+            setValue('manualRouting', !isAdvanced);
+          },
+        }
+      : undefined;
   const title = isRecordingRuleByType(type)
     ? 'Add labels'
     : isGrafanaManaged
@@ -91,6 +102,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           )}
         </Stack>
       }
+      switchMode={switchMode}
       fullWidth
     >
       {!isGrafanaManaged && (
@@ -106,14 +118,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Notifications</Text>
-          <Text variant="bodySmall" color="secondary">
-            Select who should receive a notification when an alert rule fires.
-          </Text>
+          <Text element="h5">Recipient</Text>
         </div>
       )}
       {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
-        <ManualAndAutomaticRouting alertUid={alertUid} />
+        simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
+          <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
+        ) : (
+          // simplified mode is disabled
+          <ManualAndAutomaticRouting alertUid={alertUid} />
+        )
       ) : // when simplified routing is not enabled, render the notification preview as we did before
       shouldRenderpreview ? (
         <AutomaticRooting alertUid={alertUid} />
@@ -160,6 +174,32 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
         />
       </Stack>
 
+      <RoutingOptionDescription manualRouting={manualRouting} />
+
+      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
+    </Stack>
+  );
+}
+
+/**
+ * Preconditions:
+ * - simplified routing is enabled
+ * - simple mode for notifications step is enabled
+ * - the alert rule is a grafana rule
+ *
+ * This component will render the switch between the select contact point routing and the notification policy routing.
+ * It also renders the section body of the NotificationsStep, depending on the routing option selected.
+ * If select contact point routing is selected, it will render the SimplifiedRouting component.
+ * If notification policy routing is selected, it will render the AutomaticRouting component.
+ *
+ */
+function ManualAndAutomaticRoutingSimplified({ alertUid }: { alertUid?: string }) {
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const [manualRouting] = watch(['manualRouting']);
+
+  return (
+    <Stack direction="column" gap={2}>
       <RoutingOptionDescription manualRouting={manualRouting} />
 
       {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}

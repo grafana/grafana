@@ -224,6 +224,7 @@ export interface GrafanaNotificationSettings {
 
 export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
+  simplified_notifications_section: boolean;
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

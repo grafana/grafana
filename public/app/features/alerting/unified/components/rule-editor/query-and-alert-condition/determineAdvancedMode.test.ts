@@ -9,7 +9,7 @@ const expressionQueries = [reduceExpression, thresholdExpression];
 
 describe('determineAdvancedMode', () => {
   it('should return true if simplifiedQueryEditor is false', () => {
-    const editorSettings = { simplifiedQueryEditor: false };
+    const editorSettings = { simplifiedQueryEditor: false, simplifiedNotificationEditor: true };
     const isGrafanaAlertingType = true;
     const isNewFromQueryParams = false;
 
@@ -25,7 +25,7 @@ describe('determineAdvancedMode', () => {
   });
 
   it('should return true if isGrafanaAlertingType is false', () => {
-    const editorSettings = { simplifiedQueryEditor: true };
+    const editorSettings = { simplifiedQueryEditor: true, simplifiedNotificationEditor: true };
     const isGrafanaAlertingType = false;
     const isNewFromQueryParams = false;
 
@@ -40,8 +40,8 @@ describe('determineAdvancedMode', () => {
     expect(result).toBe(true);
   });
 
+  const editorSettings = { simplifiedQueryEditor: true, simplifiedNotificationEditor: true };
   it('should return true if isNewFromQueryParams is true and queries are not transformable', () => {
-    const editorSettings = { simplifiedQueryEditor: true };
     const isGrafanaAlertingType = true;
     const isNewFromQueryParams = true;
 
@@ -61,7 +61,6 @@ describe('determineAdvancedMode', () => {
   });
 
   it('should return false if all conditions are false', () => {
-    const editorSettings = { simplifiedQueryEditor: true };
     const isGrafanaAlertingType = true;
     const isNewFromQueryParams = false;
 
