@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os/exec"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type helloWorldSubresource struct {
@@ -65,6 +69,52 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		whom := r.URL.Query().Get("whom")
 		if whom == "" {
 			whom = "World"
+		}
+
+		// Exercise rendering
+		renderPath := r.URL.Query().Get("render")
+		if renderPath != "" {
+			if !s.parent.render.IsAvailable(ctx) {
+				responder.Error(fmt.Errorf("render not available"))
+				return
+			}
+
+			// Get a worker identity
+			id, err := s.parent.client.identities.WorkerIdentity(ctx, repo.Namespace)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			sess, err := s.parent.render.CreateRenderingSession(ctx, rendering.AuthOpts{
+				OrgID:  id.GetOrgID(),
+				UserID: 1, // HACK
+			}, rendering.SessionOpts{Expiry: time.Hour})
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			result, err := s.parent.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
+				CommonOpts: rendering.CommonOpts{
+					Path: renderPath,
+				},
+				Theme:  models.ThemeDark,
+				Width:  1024,
+				Height: 1024,
+			}, sess)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			// Show the result
+			w.Write([]byte(result.FilePath))
+
+			// Try opening the file path... HACK HACK HACK!
+			cmd := exec.Command("open", result.FilePath)
+			_ = cmd.Run()
+			return
 		}
 
 		newCommit := r.URL.Query().Get("commit")
