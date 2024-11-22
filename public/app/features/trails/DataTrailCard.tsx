@@ -125,7 +125,7 @@ export function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       width: '318px',
       padding: `12px ${theme.spacing(2)} ${theme.spacing(1)} ${theme.spacing(2)}`,
-      height: '152px',
+      height: '110px',
       alignItems: 'start',
       marginBottom: 0,
       borderTop: `1px solid ${theme.colors.border.weak}`,
