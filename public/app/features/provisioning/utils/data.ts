@@ -5,6 +5,7 @@ export const dataToSpec = (data: RepositoryFormData): RepositorySpec => {
   const spec: RepositorySpec = {
     type: data.type,
     folder: data.folder,
+    title: data.title,
   };
   switch (data.type) {
     case 'github':
