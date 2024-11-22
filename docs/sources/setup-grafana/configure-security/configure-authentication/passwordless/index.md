@@ -44,7 +44,7 @@ code_expiration = 20m
 
 ## Enable SMTP server
 
-The SMTP server must be enabled so that Grafana can send emails. See [SMTP]({{< relref "../../../configure-grafana/_index.md" >}}). for details on configuring the SMTP server.
+The SMTP server must be enabled so that Grafana can send emails. See [SMTP]({{< relref "../../../configure-grafana/_index.md" >}}) for details on configuring the SMTP server.
 
 ```bash
 [smtp]
