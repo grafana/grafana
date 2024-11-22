@@ -389,18 +389,6 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 
 	// Add the sort fields
 	for _, sort := range req.SortBy {
-		// use the parallel sort field
-		if sort.Field == "title" {
-			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
-				Field:   "title",
-				Desc:    sort.Desc,
-				Type:    search.SortFieldAsString, // force for title????
-				Mode:    search.SortFieldDefault,  // ???
-				Missing: search.SortFieldMissingLast,
-			})
-			continue
-		}
-
 		// hardcoded (for now)
 		if strings.HasPrefix(sort.Field, "stats.") {
 			searchrequest.Sort = append(searchrequest.Sort, &search.SortField{
@@ -469,6 +457,7 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 			f = b.fields.Field(name)
 		}
 		if f == nil {
+			// Labels as a string
 			if strings.HasPrefix(name, "labels.") {
 				f = &resource.ResourceTableColumnDefinition{
 					Name: name,
@@ -521,23 +510,18 @@ func (b *bleveIndex) hitsToTable(selectFields []string, hits search.DocumentMatc
 				// Encode the value to protobuf
 				row.Cells[i], err = encoders[i](v)
 				if err != nil {
-					return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v", rowID, i, v)
+					return nil, fmt.Errorf("error encoding (row:%d/col:%d) %v %w", rowID, i, v, err)
 				}
 			}
 		}
 	}
-
-	// ttt, err := builder.ToK8s()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Printf("TTT %+v\n", ttt)
 
 	return table, nil
 }
 
 func getAllFields(standard resource.SearchableDocumentFields, custom resource.SearchableDocumentFields) ([]*resource.ResourceTableColumnDefinition, error) {
 	fields := []*resource.ResourceTableColumnDefinition{
+		standard.Field(resource.SEARCH_FIELD_ID),
 		standard.Field(resource.SEARCH_FIELD_TITLE),
 		standard.Field(resource.SEARCH_FIELD_TAGS),
 		standard.Field(resource.SEARCH_FIELD_FOLDER),

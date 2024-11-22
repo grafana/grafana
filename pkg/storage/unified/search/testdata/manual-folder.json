@@ -28,19 +28,37 @@
       "format": "",
       "description": "Kubernetes name for the folder",
       "priority": 0
+    },
+    {
+      "name": "rv",
+      "type": "number",
+      "format": "int64",
+      "description": "resource version",
+      "priority": 0
+    },
+    {
+      "name": "created",
+      "type": "number",
+      "format": "int64",
+      "description": "created timestamp",
+      "priority": 0
     }
   ],
   "rows": [
     {
       "cells": [
-        "ns/g/folder/xxx",
-        "test xxx",
+        "ns/g/folder/yyy",
+        "yyy (folder)",
         null,
-        null
+        null,
+        2,
+        0
       ],
       "object": {
+        "kind": "folder",
+        "apiVersion": "g",
         "metadata": {
-          "name": "xxx",
+          "name": "yyy",
           "namespace": "ns",
           "creationTimestamp": null
         }
@@ -48,14 +66,18 @@
     },
     {
       "cells": [
-        "ns/g/folder/yyy",
-        "test yyy",
+        "ns/g/folder/zzz",
+        "zzz (folder)",
         null,
-        null
+        null,
+        1,
+        0
       ],
       "object": {
+        "kind": "folder",
+        "apiVersion": "g",
         "metadata": {
-          "name": "yyy",
+          "name": "zzz",
           "namespace": "ns",
           "creationTimestamp": null
         }

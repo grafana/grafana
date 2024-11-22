@@ -67,10 +67,12 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "dash",
 				},
-				Title:  "test aaa",
+				Title:  "bbb (dash)",
 				Folder: "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
+					DASHBOARD_LEGACY_ID:    12,
+					DASHBOARD_PANEL_TYPES:  []string{"timeseries", "table"},
+					DASHBOARD_ERRORS_TODAY: 25,
 				},
 				Tags: []string{"aa", "bb"},
 			})
@@ -82,10 +84,12 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "dash",
 				},
-				Title:  "test bbb",
+				Title:  "aaa (dash)",
 				Folder: "xxx",
 				Fields: map[string]any{
-					DASHBOARD_LEGACY_ID: 12,
+					DASHBOARD_LEGACY_ID:    12,
+					DASHBOARD_PANEL_TYPES:  []string{"timeseries"},
+					DASHBOARD_ERRORS_TODAY: 40,
 				},
 				Tags: []string{"aa"},
 				Labels: map[string]string{
@@ -100,7 +104,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "dash",
 				},
-				Title:  "test ccc",
+				Title:  "ccc (dash)",
 				Folder: "xxx",
 				Fields: map[string]any{
 					DASHBOARD_LEGACY_ID: 12,
@@ -173,12 +177,12 @@ func TestBleveBackend(t *testing.T) {
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 1,
 				Key: &resource.ResourceKey{
-					Name:      "xxx",
+					Name:      "zzz",
 					Namespace: "ns",
 					Group:     "g",
 					Resource:  "folder",
 				},
-				Title: "test xxx",
+				Title: "zzz (folder)",
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -188,7 +192,7 @@ func TestBleveBackend(t *testing.T) {
 					Group:     "g",
 					Resource:  "folder",
 				},
-				Title: "test yyy",
+				Title: "yyy (folder)",
 				Labels: map[string]string{
 					"region": "west",
 				},
@@ -204,34 +208,11 @@ func TestBleveBackend(t *testing.T) {
 				Key: key,
 			},
 			Limit: 100000,
-			Facet: map[string]*resource.ResourceSearchRequest_Facet{
-				"anything": {
-					Field: "origin_name",
-					Limit: 100,
-				},
-			},
 		}, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
-		require.NotNil(t, rsp.Facet)
-
-		// Get the tags facets
-		_, ok := rsp.Facet["anything"]
-		require.True(t, ok)
-		// disp, err := json.MarshalIndent(facet, "", "  ")
-		// require.NoError(t, err)
-		// // fmt.Printf("%s\n", disp)
-		// require.JSONEq(t, `{
-		// 	"field": "origin_name",
-		// 	"total": 2,
-		// 	"terms": [
-		// 		{
-		// 			"term": "sql",
-		// 			"count": 2
-		// 		}
-		// 	]
-		// }`, string(disp))
+		require.Nil(t, rsp.Facet)
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
 	})
@@ -247,16 +228,15 @@ func TestBleveBackend(t *testing.T) {
 				Key: dashboardskey,
 			},
 			Fields: []string{
-				"title", "tags", "labels.region",
+				"title", "_id",
 			},
 			Federated: []*resource.ResourceKey{
 				folderKey, // This will join in the
 			},
 			Limit: 100000,
-			// SortBy: []*resource.ResourceSearchRequest_Sort{
-			// 	{Field: "title", Asc: true},
-			// },
-			// Count across both resources
+			SortBy: []*resource.ResourceSearchRequest_Sort{
+				{Field: "title", Desc: false},
+			},
 			Facet: map[string]*resource.ResourceSearchRequest_Facet{
 				"region": {
 					Field: "labels.region",
@@ -268,6 +248,19 @@ func TestBleveBackend(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
+
+		// Sorted across two indexes
+		sorted := []string{}
+		for _, row := range rsp.Results.Rows {
+			sorted = append(sorted, string(row.Cells[0]))
+		}
+		require.Equal(t, []string{
+			"aaa (dash)",
+			"bbb (dash)",
+			"ccc (dash)",
+			"yyy (folder)",
+			"zzz (folder)",
+		}, sorted)
 
 		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 

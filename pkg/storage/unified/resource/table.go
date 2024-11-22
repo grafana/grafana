@@ -79,6 +79,10 @@ func (x *ResourceTable) ToK8s() (metav1.Table, error) {
 			}
 		} else if r.Key != nil {
 			obj := &metav1.PartialObjectMetadata{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       r.Key.Resource, // :(
+					APIVersion: r.Key.Group,    // :(
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      r.Key.Name,
 					Namespace: r.Key.Namespace,
@@ -411,6 +415,8 @@ func (x *resourceTableColumn) Encode(v any) ([]byte, error) {
 						f = int64(typed)
 					case float32:
 						f = int64(typed)
+					case float64:
+						f = int64(typed)
 					case uint64:
 						f = int64(typed)
 					case uint:
@@ -577,7 +583,7 @@ func AssertTableSnapshot(t *testing.T, path string, table *ResourceTable) {
 	// nolint:gosec
 	expected, err := os.ReadFile(path)
 	if err != nil || len(expected) < 1 {
-		assert.Fail(t, "missing file")
+		assert.Fail(t, "missing file: %s", path)
 	} else if assert.JSONEq(t, string(expected), string(actual)) {
 		return // everything is OK
 	}
