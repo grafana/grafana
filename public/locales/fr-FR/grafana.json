@@ -14,6 +14,9 @@
     "permission-list": {
       "permission": "Autorisation"
     },
+    "permission-list-item": {
+      "inherited": ""
+    },
     "permissions": {
       "add-label": "Ajouter une autorisation",
       "no-permissions": "Il n'y a aucune autorisation",
@@ -23,6 +26,143 @@
       "team": "Équipe",
       "title": "Autorisations",
       "user": "Utilisateur"
+    }
+  },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "",
+      "save-button": ""
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "",
+      "one-click-link": ""
+    }
+  },
+  "admin": {
+    "anon-users": {
+      "not-found": ""
+    },
+    "edit-org": {
+      "access-denied": "",
+      "heading": "",
+      "update-button": "",
+      "users-heading": ""
+    },
+    "feature-toggles": {
+      "sub-title": ""
+    },
+    "get-enterprise": {
+      "contact-us": "",
+      "description": "",
+      "features-heading": "",
+      "included-description": "",
+      "included-heading": "",
+      "service-title": "",
+      "team-sync-details": "",
+      "title": ""
+    },
+    "ldap": {
+      "test-mapping-heading": "",
+      "test-mapping-run-button": ""
+    },
+    "ldap-permissions": {
+      "active": "",
+      "admin": "",
+      "inactive": ""
+    },
+    "ldap-status": {
+      "title": ""
+    },
+    "ldap-sync": {
+      "debug-button": "",
+      "external-sync-description": "",
+      "external-sync-label": "",
+      "next-sync-label": "",
+      "not-enabled": "",
+      "sync-button": "",
+      "title": ""
+    },
+    "ldap-sync-info": {
+      "title": ""
+    },
+    "ldap-user-groups": {
+      "no-org-found": ""
+    },
+    "ldap-user-info": {
+      "no-team": ""
+    },
+    "org-uers": {
+      "last-seen-never": ""
+    },
+    "org-users": {
+      "not-editable": ""
+    },
+    "orgs": {
+      "delete-body": "",
+      "id-header": "",
+      "name-header": "",
+      "new-org-button": ""
+    },
+    "server-settings": {
+      "alerts-button": "",
+      "dashboards-button": "",
+      "data-sources-button": "",
+      "not-found": "",
+      "title": "",
+      "users-button": ""
+    },
+    "settings": {
+      "info-description": ""
+    },
+    "upgrade-info": {
+      "title": ""
+    },
+    "user-orgs": {
+      "add-button": "",
+      "change-role-button": "",
+      "external-user-tooltip": "",
+      "remove-button": "",
+      "role-not-editable": "",
+      "title": ""
+    },
+    "user-orgs-modal": {
+      "add-button": "",
+      "cancel-button": ""
+    },
+    "user-permissions": {
+      "change-button": "",
+      "grafana-admin-key": "",
+      "grafana-admin-no": "",
+      "grafana-admin-yes": "",
+      "title": ""
+    },
+    "user-profile": {
+      "delete-button": "",
+      "disable-button": "",
+      "edit-button": "",
+      "enable-button": "",
+      "title": ""
+    },
+    "user-sessions": {
+      "browser-column": "",
+      "force-logout-all-button": "",
+      "force-logout-button": "",
+      "ip-column": "",
+      "last-seen-column": "",
+      "logged-on-column": "",
+      "title": ""
+    },
+    "users-create": {
+      "create-button": ""
+    },
+    "users-list": {
+      "create-button": ""
+    },
+    "users-table": {
+      "last-seen-never": "",
+      "no-licensed-role": ""
     }
   },
   "alert-labels": {
@@ -371,6 +511,17 @@
       "message": ""
     }
   },
+  "app-chrome": {
+    "skip-content-button": "",
+    "top-bar": {
+      "sign-in": ""
+    }
+  },
+  "app-notification": {
+    "item": {
+      "trace-id": ""
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "",
@@ -442,6 +593,7 @@
       "clear-selection": "Effacer la sélection",
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
+      "non-folder-item": "",
       "search-placeholder": "Rechercher dans les dossiers",
       "unknown-error": "Erreur inconnue"
     },
@@ -883,6 +1035,12 @@
       "time-range-label": ""
     }
   },
+  "empty-list-cta": {
+    "pro-tip": ""
+  },
+  "entity-not-found": {
+    "description": ""
+  },
   "errors": {
     "dashboard-settings": {
       "annotations": {
@@ -1103,8 +1261,28 @@
       "export-as-json-tooltip": ""
     }
   },
+  "folder-filter": {
+    "clear-folder-button": ""
+  },
   "folder-picker": {
+    "create-instructions": "",
     "loading": "Chargement des dossiers..."
+  },
+  "forgot-password": {
+    "back-button": "",
+    "change-password": {
+      "skip-button": "",
+      "submit-button": ""
+    },
+    "contact-admin": "",
+    "email-sent": "",
+    "reset-password-header": "",
+    "send-email-button": ""
+  },
+  "form-prompt": {
+    "continue-button": "",
+    "description": "",
+    "discard-button": ""
   },
   "gen-ai": {
     "apply-suggestion": "",
@@ -1225,6 +1403,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "",
+      "keys": ""
+    },
     "shortcuts-category": {
       "dashboard": "Tableau de bord",
       "focused-panel": "",
@@ -1475,6 +1657,9 @@
     }
   },
   "login": {
+    "divider": {
+      "connecting-text": ""
+    },
     "error": {
       "blocked": "Vous avez dépassé le nombre de tentatives de connexion pour cet utilisateur. Veuillez réessayer plus tard.",
       "invalid-user-or-password": "Nom d'utilisateur ou mot de passe invalide",
@@ -1501,6 +1686,9 @@
       "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur",
       "verify-email-label": "",
       "verify-email-loading-label": ""
+    },
+    "layout": {
+      "update-password": ""
     },
     "services": {
       "sing-in-with-prefix": "Se connecter avec {{serviceName}}"
@@ -2147,6 +2335,9 @@
     "no-matches": "",
     "unsupported-layout": ""
   },
+  "panel-type-filter": {
+    "clear-button": ""
+  },
   "playlist-edit": {
     "error-prefix": "Erreur lors du chargement de la playlist :",
     "form": {
@@ -2240,6 +2431,10 @@
     },
     "empty-state": {
       "message": ""
+    },
+    "plugin-help": {
+      "error": "",
+      "not-found": ""
     }
   },
   "profile": {
@@ -2433,6 +2628,10 @@
       "dashboard-modal-title": "Tableaux de bord publics",
       "shared-dashboard-modal-title": ""
     },
+    "table-body": {
+      "dashboard-count_one": "",
+      "dashboard-count_other": ""
+    },
     "table-header": {
       "activated-label": "Activé",
       "activated-tooltip": "Première heure à laquelle l'utilisateur a été un utilisateur actif sur un tableau de bord",
@@ -2527,6 +2726,19 @@
     "dismissable-button": "Fermer"
   },
   "role-picker": {
+    "built-in": {
+      "basic-roles": ""
+    },
+    "input": {
+      "no-roles": ""
+    },
+    "menu": {
+      "clear-button": "",
+      "tooltip": ""
+    },
+    "sub-menu": {
+      "clear-button": ""
+    },
     "title": {
       "description": ""
     }
@@ -2535,6 +2747,11 @@
     "basic-roles": {
       "label": ""
     }
+  },
+  "route-error": {
+    "description": "",
+    "reload-button": "",
+    "title": ""
   },
   "save-dashboards": {
     "name-exists": {
@@ -2808,6 +3025,17 @@
     },
     "title": "Préférences"
   },
+  "sign-up": {
+    "back-button": "",
+    "submit-button": "",
+    "verify": {
+      "back-button": "",
+      "complete-button": "",
+      "header": "",
+      "info": "",
+      "send-button": ""
+    }
+  },
   "silences": {
     "empty-state": {
       "button-title": "",
@@ -2860,6 +3088,7 @@
     "view-button": "Afficher"
   },
   "tag-filter": {
+    "clear-button": "",
     "loading": "Chargement en cours...",
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
@@ -2979,6 +3208,13 @@
       "add-transformation-body": "Les transformations permettent de modifier les données de différentes manières avant l'affichage de votre visualisation.<1></1>Vous pouvez notamment rassembler des données, renommer des champs, faire des calculs, formater les données à afficher, etc.",
       "add-transformation-header": "Commencer la transformation des données"
     }
+  },
+  "upgrade-box": {
+    "discovery-text": "",
+    "discovery-text-continued": "",
+    "get-started": "",
+    "learn-more": "",
+    "upgrade-button": ""
   },
   "user-orgs": {
     "current-org-button": "Actuel",
