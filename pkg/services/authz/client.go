@@ -45,9 +45,9 @@ func ProvideInProcAuthZClient(
 	return newInProcLegacyClient(server)
 }
 
-// ProvideStandaloneAuthZClient provides a standalone AuthZ client, without registering the AuthZ service.
+// ProvideRemoteAuthZClient provides a standalone AuthZ client (no server), without registering the AuthZ service.
 // You need to provide a remote address in the configuration
-func ProvideStandaloneAuthZClient(
+func ProvideRemoteAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 ) (Client, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
