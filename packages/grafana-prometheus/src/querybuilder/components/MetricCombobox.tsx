@@ -127,15 +127,17 @@ export function MetricCombobox({
         />
       )}
       {variableEditor ? (
-        <InlineFieldRow>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            {asyncSelect()}
-          </InlineField>
-        </InlineFieldRow>
+        <span className={styles.addaptToParent}>
+          <InlineFieldRow>
+            <InlineField
+              label="Metric"
+              labelWidth={20}
+              tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            >
+              {asyncSelect()}
+            </InlineField>
+          </InlineFieldRow>
+        </span>
       ) : (
         <span className={styles.addaptToParent}>
           <EditorFieldGroup>
@@ -176,6 +178,14 @@ const getStyles = () => {
     addaptToParent: css({
       label: 'metric-combobox-addapt-to-parent',
       maxWidth: '100%',
+      '[class*="InlineFieldRow"]': {
+        ' > div': {
+          maxWidth: '100%',
+          '> div': {
+            maxWidth: `calc(100% - 160px)`,
+          },
+        },
+      },
     }),
   };
 };
