@@ -55,15 +55,16 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
-	//
+	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Search = resource.SearchOptions{
 			Backend: search.NewBleveBackend(search.BleveOptions{
 				Root:          filepath.Join(cfg.DataPath, "unified-search", "bleve"),
-				FileThreshold: 10, // more than 10 items will use a file index
-				BatchSize:     500,
+				FileThreshold: 10,  // fewer than X items will use a memory index
+				BatchSize:     500, // This is the batch size for how many objects to add to the index at once
 			}, tracer, reg),
-			Resources: docs,
+			Resources:     docs,
+			WorkerThreads: 5, // from cfg?
 		}
 	}
 

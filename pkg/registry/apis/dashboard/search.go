@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -14,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
+	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -96,13 +97,17 @@ func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 			offset, _ = strconv.Atoi(queryParams.Get("offset"))
 		}
 
-		searchRequest := &resource.SearchRequest{
-			Tenant:    user.GetNamespace(), //<< not necessary it is in the namespace (and user context)
-			Kind:      strings.Split(queryParams.Get("kind"), ","),
-			QueryType: queryParams.Get("queryType"),
-			Query:     queryParams.Get("query"),
-			Limit:     int64(limit),
-			Offset:    int64(offset),
+		searchRequest := &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Key: &resource.ResourceKey{
+					Namespace: user.GetNamespace(),
+					Group:     dashboardv1alpha1.GROUP,
+					Resource:  "dashboards",
+				},
+			},
+			Query:  queryParams.Get("query"),
+			Limit:  int64(limit),
+			Offset: int64(offset),
 		}
 
 		// TODO... actually query
