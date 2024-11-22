@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 import { UserDTO } from '../../../types';
 
 import { UsersTable, UsersTableProps } from './UsersTable';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 const setup = (propOverrides?: object) => {
   const props: UsersTableProps = {
