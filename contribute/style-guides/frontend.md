@@ -145,7 +145,7 @@ type RequestInfo = ...
 
 ### Methods
 
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 class DateCalculator {
