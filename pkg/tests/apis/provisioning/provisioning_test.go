@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -280,9 +281,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	t.Run("creating repository creates folder", func(t *testing.T) {
 		// Just make sure the folder doesn't exist in advance.
-		_ = folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+		err := folderClient.Resource.Delete(ctx, "thisisafolderref", metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			require.NoError(t, err, "deletion should either be OK or fail with NotFound")
+		}
 
-		_, err := client.Resource.Update(ctx,
+		_, err = client.Resource.Update(ctx,
 			helper.LoadYAMLOrJSONFile("testdata/github-example.yaml"),
 			metav1.UpdateOptions{},
 		)
