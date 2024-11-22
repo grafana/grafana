@@ -27,25 +27,26 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
 }
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
-  const initialSaveModel = dashboard.getInitialSaveModel();
-  if (initialSaveModel) {
-    const panels = getPanelCounts(initialSaveModel.panels || []);
-    const variables = getVariables(initialSaveModel.templating?.list || []);
-    DashboardInteractions.dashboardInitialized({
-      uid: initialSaveModel.uid,
-      title: initialSaveModel.title,
-      theme: undefined,
-      schemaVersion: initialSaveModel.schemaVersion,
-      version_before_migration: initialSaveModel.version,
-      panels_count: initialSaveModel.panels?.length || 0,
-      ...panels,
-      ...variables,
-      settings_nowdelay: undefined,
-      settings_livenow: !!initialSaveModel.liveNow,
-      duration,
-      isScene: true,
-    });
-  }
+  // TODO: Implement this with v2 schema
+  // const initialSaveModel = dashboard.getInitialSaveModel();
+  // if (initialSaveModel) {
+  //   const panels = getPanelCounts(initialSaveModel.panels || []);
+  //   const variables = getVariables(initialSaveModel.templating?.list || []);
+  //   DashboardInteractions.dashboardInitialized({
+  //     uid: initialSaveModel.uid,
+  //     title: initialSaveModel.title,
+  //     theme: undefined,
+  //     schemaVersion: initialSaveModel.schemaVersion,
+  //     version_before_migration: initialSaveModel.version,
+  //     panels_count: initialSaveModel.panels?.length || 0,
+  //     ...panels,
+  //     ...variables,
+  //     settings_nowdelay: undefined,
+  //     settings_livenow: !!initialSaveModel.liveNow,
+  //     duration,
+  //     isScene: true,
+  //   });
+  // }
 }
 
 function getPanelCounts(panels: Panel[] | PanelModel[]) {

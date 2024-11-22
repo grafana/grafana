@@ -41,8 +41,10 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { getRawDashboardChanges } from '../saving/getDashboardChanges';
+import { DashboardChangeInfo } from '../saving/shared';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
@@ -674,6 +676,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
   }
+
+  getSaveModel(): Dashboard {
+    return transformSceneToSaveModel(this);
+  }
+
+  getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
+    const changeInfo = getDashboardChangesFromScene(this, saveTimeRange, saveVariables, saveRefresh);
+
+    const hasFolderChanges = this.getInitialState()?.meta.folderUid !== this.state.meta.folderUid;
+
+    return {
+      ...changeInfo,
+      hasFolderChanges,
+      hasChanges: changeInfo.hasChanges || hasFolderChanges,
+    };
+  }
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
@@ -736,4 +754,16 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       }
     }
   }
+}
+
+function getDashboardChangesFromScene(
+  scene: DashboardScene,
+  saveTimeRange?: boolean,
+  saveVariables?: boolean,
+  saveRefresh?: boolean
+) {
+  // ! is a code smell
+  const initialSaveModel = scene.getInitialSaveModel()!;
+  const changedSaveModel = scene.getSaveModel();
+  return getRawDashboardChanges(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
 }

@@ -30,7 +30,7 @@ export function isEqual(a: VariableOption | undefined, b: VariableOption | undef
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
-export function getDashboardChanges(
+export function getRawDashboardChanges(
   initial: Dashboard,
   changed: Dashboard,
   saveTimeRange?: boolean,

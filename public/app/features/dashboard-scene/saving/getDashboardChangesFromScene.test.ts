@@ -13,12 +13,10 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/utils';
 
-import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
-
 describe('getDashboardChangesFromScene', () => {
   it('Can detect no changes', () => {
     const dashboard = setup();
-    const result = getDashboardChangesFromScene(dashboard, false);
+    const result = dashboard.getDashboardChanges(false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
   });
@@ -28,7 +26,7 @@ describe('getDashboardChangesFromScene', () => {
 
     sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-    const result = getDashboardChangesFromScene(dashboard, false);
+    const result = dashboard.getDashboardChanges(false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
     expect(result.hasTimeChanges).toBe(true);
@@ -39,7 +37,7 @@ describe('getDashboardChangesFromScene', () => {
 
     sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-    const result = getDashboardChangesFromScene(dashboard, true);
+    const result = dashboard.getDashboardChanges(true);
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(1);
   });
@@ -49,7 +47,7 @@ describe('getDashboardChangesFromScene', () => {
 
     dashboard.state.meta.folderUid = 'folder-2';
 
-    const result = getDashboardChangesFromScene(dashboard, false);
+    const result = dashboard.getDashboardChanges(false);
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(0); // Diff count is 0 because the diff contemplate only the model
     expect(result.hasFolderChanges).toBe(true);
@@ -63,7 +61,7 @@ describe('getDashboardChangesFromScene', () => {
       refreshPicker.setState({ refresh: '5s' });
     }
 
-    const result = getDashboardChangesFromScene(dashboard, false, false, false);
+    const result = dashboard.getDashboardChanges(false, false, false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
     expect(result.hasRefreshChange).toBe(true);
@@ -77,7 +75,7 @@ describe('getDashboardChangesFromScene', () => {
       refreshPicker.setState({ refresh: '5s' });
     }
 
-    const result = getDashboardChangesFromScene(dashboard, false, false, true);
+    const result = dashboard.getDashboardChanges(false, false, true);
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(1);
   });
@@ -89,7 +87,7 @@ describe('getDashboardChangesFromScene', () => {
       const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
       appVar.changeValueTo('app2');
 
-      const result = getDashboardChangesFromScene(dashboard, false, false);
+      const result = dashboard.getDashboardChanges(false, false);
 
       expect(result.hasVariableValueChanges).toBe(true);
       expect(result.hasChanges).toBe(false);
@@ -102,7 +100,7 @@ describe('getDashboardChangesFromScene', () => {
       const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
       appVar.changeValueTo('app2');
 
-      const result = getDashboardChangesFromScene(dashboard, false, true);
+      const result = dashboard.getDashboardChanges(false, true);
 
       expect(result.hasVariableValueChanges).toBe(true);
       expect(result.hasChanges).toBe(true);
@@ -162,7 +160,7 @@ describe('getDashboardChangesFromScene', () => {
 
         const variable = sceneGraph.lookupVariable('GroupBy', dashboard) as GroupByVariable;
         variable.setState({ defaultOptions: [{ text: 'Host', value: 'host' }] });
-        const result = getDashboardChangesFromScene(dashboard, false, true);
+        const result = dashboard.getDashboardChanges(false, true);
 
         expect(result.hasVariableValueChanges).toBe(false);
         expect(result.hasChanges).toBe(true);
@@ -219,7 +217,7 @@ describe('getDashboardChangesFromScene', () => {
 
         const variable = sceneGraph.lookupVariable('adhoc', dashboard) as AdHocFiltersVariable;
         variable.setState({ defaultKeys: [{ text: 'Host', value: 'host' }] });
-        const result = getDashboardChangesFromScene(dashboard, false, false);
+        const result = dashboard.getDashboardChanges(false, false);
 
         expect(result.hasVariableValueChanges).toBe(false);
         expect(result.hasChanges).toBe(true);
@@ -239,7 +237,7 @@ describe('getDashboardChangesFromScene', () => {
 
       editScene.state.panelRef.resolve().setState({ title: 'changed title' });
 
-      const result = getDashboardChangesFromScene(dashboard, false, true);
+      const result = dashboard.getDashboardChanges(false, true);
       const panelSaveModel = result.changedSaveModel.panels![0];
       expect(panelSaveModel.title).toBe('changed title');
     });
