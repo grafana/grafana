@@ -95,7 +95,7 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 				return
 			}
 
-			result, err := s.parent.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
+			result, err := s.parent.render.Render(context.Background(), rendering.RenderPNG, rendering.Opts{
 				CommonOpts: rendering.CommonOpts{
 					Path: renderPath,
 				},
