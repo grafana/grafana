@@ -99,7 +99,7 @@ For directory names, use dash-case (sometimes called kebab-case).
 
 ### Functions
 
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 // bad
