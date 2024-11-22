@@ -25,6 +25,14 @@ export type RepositorySpec = {
   local?: LocalRepositoryConfig;
   s3?: S3RepositoryConfig;
   type: 'github' | 'local' | 's3';
+  editing: EditingOptions;
+  preferYaml?: boolean;
+};
+
+export type EditingOptions = {
+  create: boolean;
+  delete: boolean;
+  update: boolean;
 };
 
 export type WatchEvent = {
@@ -51,4 +59,40 @@ export type HelloWorld = {
   apiVersion?: string;
   kind?: string;
   whom?: string;
+};
+
+export type WebhookResponse = {
+  apiVersion?: string;
+  kind?: string;
+  status?: string;
+};
+
+export type ResourceObjects = {
+  dryRun?: any;
+  file?: any;
+  store?: any;
+};
+
+export type ResourceWrapper = {
+  apiVersion?: string;
+  kind?: string;
+  errors?: string[];
+  hash?: string;
+  path?: string;
+  ref?: string;
+  resource: ResourceObjects;
+  timestamp?: string;
+};
+
+export type FileOperationArg = {
+  name: string;
+  path: string;
+  body: object;
+  message?: string;
+};
+
+export type GetFileArg = {
+  name: string;
+  path: string;
+  commit?: string;
 };
