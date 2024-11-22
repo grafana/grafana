@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"errors"
+	"slices"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
@@ -187,9 +188,10 @@ func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 }
 
 func authorizerFunc(ctx context.Context, attr authorizer.Attributes) (*authorizerParams, error) {
+	allowedVerbs := []string{utils.VerbCreate, utils.VerbDelete, utils.VerbList}
 	verb := attr.GetVerb()
 	name := attr.GetName()
-	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && verb != utils.VerbList) {
+	if (!attr.IsResourceRequest()) || (name == "" && verb != utils.VerbCreate && slices.Contains(allowedVerbs, verb)) {
 		return nil, errNoResource
 	}
 

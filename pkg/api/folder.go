@@ -52,7 +52,6 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			folderUidRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
 			folderUidRoute.Put("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
 			folderUidRoute.Post("/move", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
-			folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
 			folderUidRoute.Get("/counts", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
 
 			folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
@@ -65,16 +64,21 @@ func (hs *HTTPServer) registerFolderAPI(apiRoute routing.RouteRegister, authoriz
 			handler := newFolderK8sHandler(hs)
 			folderRoute.Post("/", handler.createFolder)
 			folderRoute.Get("/", handler.getFolders)
+			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Delete("/", handler.deleteFolder)
+			})
 		} else {
 			folderRoute.Post("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
 			folderRoute.Get("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+				folderUidRoute.Delete("/", authorize(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
+			})
 		}
 		// Only adding support for some routes with the k8s handler for now. Include the rest here.
 		if false {
 			handler := newFolderK8sHandler(hs)
 			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 				folderUidRoute.Get("/", handler.getFolder)
-				folderUidRoute.Delete("/", handler.deleteFolder)
 				folderUidRoute.Put("/:uid", handler.updateFolder)
 			})
 		}
