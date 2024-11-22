@@ -33,6 +33,8 @@ import (
 	"errors"
 	"net/http"
 
+	"go.opentelemetry.io/otel"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -51,7 +53,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"go.opentelemetry.io/otel"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
@@ -113,10 +114,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagStorage) {
-		r.Get("/admin/storage", reqSignedIn, hs.Index)
-		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
-	}
 
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
 		r.Get("/admin/migrate-to-cloud", reqOrgAdmin, hs.Index)
