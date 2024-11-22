@@ -111,7 +111,7 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
   expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
 });
 
-it('renders panel with an always visible menu icon if prop showMenuAlways is false', () => {
+it('renders panel with an always visible menu icon if prop showMenuAlways is true', () => {
   setup({ menu: <div> Menu </div>, showMenuAlways: true });
 
   expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
