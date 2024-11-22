@@ -841,7 +841,6 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		_, err = io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
-
 	})
 	t.Run("editor can delete rules", func(t *testing.T) {
 		u := fmt.Sprintf("http://editor:editor@%s/api/ruler/grafana/api/v1/rules", grafanaListedAddr)
