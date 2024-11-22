@@ -4,17 +4,49 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Field, Combobox, SecretInput, Input, Button, Switch, TextLink, ControlledCollapse } from '@grafana/ui';
+import {
+  Field,
+  Combobox,
+  SecretInput,
+  Input,
+  Button,
+  Switch,
+  TextLink,
+  ControlledCollapse,
+  FieldSet,
+} from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { RepositoryResource } from './api/types';
+import { RepositoryResource, RepositorySpec } from './api/types';
 import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData } from './types';
 import { dataToSpec, specToData } from './utils/data';
 
 const typeOptions = ['GitHub', 'Local', 'S3'].map((label) => ({ label, value: label.toLowerCase() }));
 const appEvents = getAppEvents();
+
+function getDefaultValues(repository?: RepositorySpec): RepositoryFormData {
+  if (!repository) {
+    return {
+      type: 'github',
+      title: '',
+      token: '',
+      owner: '',
+      repository: '',
+      branchWorkflow: false,
+      editing: {
+        create: false,
+        delete: false,
+        update: false,
+      },
+    };
+  }
+  return {
+    ...specToData(repository),
+    token: '',
+  };
+}
 
 export interface ConfigFormProps {
   data?: RepositoryResource;
@@ -30,7 +62,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
     setValue,
     watch,
     getValues,
-  } = useForm<RepositoryFormData>({ defaultValues: data ? specToData(data.spec) : { type: 'github' } });
+  } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
   const [tokenConfigured, setTokenConfigured] = useState(Boolean(data?.metadata?.name));
   const navigate = useNavigate();
   const watchType = watch('type');
@@ -166,6 +198,17 @@ export function ConfigForm({ data }: ConfigFormProps) {
           }}
         />
       </Field>
+      <FieldSet label={'Editing options'}>
+        <Field label={'Create'} description={'Enable creating files on repository'}>
+          <Switch {...register('editing.create')} id={'editing.create'} />
+        </Field>
+        <Field label={'Update'} description={'Enable updating files on repository'}>
+          <Switch {...register('editing.update')} id={'editing.update'} />
+        </Field>
+        <Field label={'Delete'} description={'Enable deleting files on repository'}>
+          <Switch {...register('editing.delete')} id={'editing.delete'} />
+        </Field>
+      </FieldSet>
       <Button type={'submit'}>Save</Button>
     </form>
   );
