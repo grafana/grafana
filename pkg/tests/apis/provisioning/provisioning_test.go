@@ -12,10 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -33,16 +30,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			folderv0alpha1.RESOURCEGROUP: {
-				DualWriterMode: grafanarest.Mode5,
-			},
-		},
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 			featuremgmt.FlagKubernetesFolders,                    // Required for tests that deal with folders.
-			featuremgmt.FlagKubernetesDashboards,
-			featuremgmt.FlagKubernetesDashboardsAPI,
 		},
 	})
 
