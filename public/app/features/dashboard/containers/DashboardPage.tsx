@@ -518,11 +518,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  sectionNav = getNavModel(
-    props.navIndex,
-    ID_PREFIX + dashboard.uid,
-    getNavModel(props.navIndex, 'dashboards/browse')
-  );
+  sectionNav = getNavModel(props.navIndex, ID_PREFIX + dashboard.uid, getNavModel(props.navIndex, 'dashboards/browse'));
 
   const { folderUid } = dashboard.meta;
   if (folderUid && pageNav && sectionNav.main.id !== 'starred') {
