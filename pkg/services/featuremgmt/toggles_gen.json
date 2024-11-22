@@ -243,6 +243,22 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationsStepMode",
+        "resourceVersion": "1732272457848",
+        "creationTimestamp": "2024-11-06T09:35:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-22 10:47:37.848635 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables simplified step mode in the notifications section",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingPrometheusRulesPrimary",
         "resourceVersion": "1727332930692",
         "creationTimestamp": "2024-09-09T13:56:47Z",
