@@ -55,6 +55,23 @@ describe('GroupByVariableForm', () => {
     jest.clearAllMocks();
   });
 
+  it('should render the form with allow custom value true', async () => {
+    const mockOnAllowCustomValueChange = jest.fn();
+    const {
+      renderer: { getByTestId },
+    } = setup({
+      allowCustomValue: true,
+      onAllowCustomValueChange: mockOnAllowCustomValueChange,
+    });
+
+    const allowCustomValueCheckbox = getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+    );
+
+    expect(allowCustomValueCheckbox).toBeInTheDocument();
+    expect(allowCustomValueCheckbox).toBeChecked();
+  });
+
   it('should call onDataSourceChange when changing the datasource', async () => {
     const {
       renderer: { getByTestId },
