@@ -95,15 +95,15 @@ type checkDashboardsFn func(context.Context, dashboards.FindPersistedDashboardsQ
 func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if len(query.Title) <= listQueryLengthThreshold || query.Limit > listQueryLimitThreshold {
 		checkCompileFn := dr.getCheckCompileFn(ctx, query)
-		return dr.findDashboardsZanzanaCheck(ctx, query, checkCompileFn)
+		return dr.findDashboardsZanzanaGeneric(ctx, query, checkCompileFn)
 	}
 
-	return dr.findDashboardsZanzanaCheck(ctx, query, dr.checkDashboardsBatch)
+	return dr.findDashboardsZanzanaGeneric(ctx, query, dr.checkDashboardsBatch)
 }
 
-// findDashboardsZanzanaCheck implements "Search, then check" strategy. It first performs search query, then filters out results
-// by checking access to each item.
-func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, checkFn checkDashboardsFn) ([]dashboards.DashboardSearchProjection, error) {
+// findDashboardsZanzanaGeneric runs search query in the database and then check if resultls
+// available to user by calling provided checkFn function. It could be check-based or compile (list) - based.
+func (dr *DashboardServiceImpl) findDashboardsZanzanaGeneric(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, checkFn checkDashboardsFn) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
 	defer span.End()
 
