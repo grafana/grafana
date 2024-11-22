@@ -186,7 +186,9 @@ func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCom
 	}
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		upd, err := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
+		upd, err := sess.MustCols("o_auth_expiry", "o_auth_access_token", "o_auth_refresh_token", "o_auth_id_token", "o_auth_token_type").
+			Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).
+			Update(authUser)
 
 		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 

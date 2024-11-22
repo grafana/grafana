@@ -114,7 +114,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(userSync.EnableUserHook, 20)
 	authnSvc.RegisterPostAuthHook(orgSync.SyncOrgRolesHook, 30)
 	authnSvc.RegisterPostAuthHook(userSync.SyncLastSeenHook, 130)
-	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer).SyncOauthTokenHook, 60)
+	authnSvc.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService, tracer, features).SyncOauthTokenHook, 60)
 	authnSvc.RegisterPostAuthHook(userSync.FetchSyncedUserHook, 100)
 
 	rbacSync := sync.ProvideRBACSync(accessControlService, tracer, permRegistry)

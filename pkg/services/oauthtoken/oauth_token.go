@@ -199,6 +199,13 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
 		return nil, false, nil
 	}
+
+	// An extra check to ensure that the user has an OAuth token
+	// It's required to handle the case for when the `improvedExternalSessionHandling` feature flag gets disabled
+	if authInfo.OAuthAccessToken == "" {
+		ctxLogger.Debug("No access token found for user")
+		return nil, false, fmt.Errorf("no access token found for user %d", userID)
+	}
 	return authInfo, true, nil
 }
 
@@ -250,6 +257,9 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 	}
 
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", userID)
+	if o.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+		lockKey = fmt.Sprintf("oauth-refresh-token-%d-%d", userID, sessionToken.ExternalSessionId)
+	}
 
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
@@ -293,6 +303,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 			if !exists {
 				if err != nil {
 					ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
+					cmdErr = err
 				}
 				return
 			}
