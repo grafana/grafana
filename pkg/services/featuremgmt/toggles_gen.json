@@ -2419,6 +2419,18 @@
     },
     {
       "metadata": {
+        "name": "onPremToCloudMigrationsAuthApiMig",
+        "resourceVersion": "1732033809064",
+        "creationTimestamp": "2024-11-19T16:30:09Z"
+      },
+      "spec": {
+        "description": "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "openSearchBackendFlowEnabled",
         "resourceVersion": "1724141158995",
         "creationTimestamp": "2024-06-17T09:41:50Z",
@@ -2843,9 +2855,23 @@
     },
     {
       "metadata": {
+        "name": "provisioning",
+        "resourceVersion": "1732265054297",
+        "creationTimestamp": "2024-11-22T08:44:14Z"
+      },
+      "spec": {
+        "description": "Next generation provisioning... and git",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
+        "deletionTimestamp": "2024-11-15T16:38:53Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -3130,17 +3156,18 @@
     {
       "metadata": {
         "name": "singleTopNav",
-        "resourceVersion": "1731664029942",
+        "resourceVersion": "1732104041490",
         "creationTimestamp": "2024-08-29T08:48:32Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-11-15 09:47:09.942158 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-11-20 12:00:41.490792 +0000 UTC"
         }
       },
       "spec": {
         "description": "Unifies the top search bar and breadcrumb bar into one",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -3385,13 +3412,18 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "resourceVersion": "1731688509416",
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-15 16:35:09.416681 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes error logs to the request logger",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-group"
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-backend-group",
+        "hideFromAdminPage": true,
+        "expression": "true"
       }
     },
     {

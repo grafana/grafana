@@ -72,9 +72,13 @@ refs:
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+    - destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   compatible-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
 ---
 
 # Configure Grafana-managed alert rules
@@ -100,7 +104,7 @@ To make a backup of your configuration and to be able to restore deleted alertin
 If you are using Grafana OSS:
 
 1. Configure your [data sources](ref:data-sources).
-1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+2. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
 
 If you are using Grafana OSS, Enterprise, or Cloud:
 

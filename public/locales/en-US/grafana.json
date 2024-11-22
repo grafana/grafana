@@ -14,6 +14,9 @@
     "permission-list": {
       "permission": "Permission"
     },
+    "permission-list-item": {
+      "inherited": "Inherited from folder"
+    },
     "permissions": {
       "add-label": "Add a permission",
       "no-permissions": "There are no permissions",
@@ -23,6 +26,143 @@
       "team": "Team",
       "title": "Permissions",
       "user": "User"
+    }
+  },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "Cancel",
+      "save-button": "Save"
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "Add action",
+      "one-click-link": "One-click link"
+    }
+  },
+  "admin": {
+    "anon-users": {
+      "not-found": "No anonymous users found."
+    },
+    "edit-org": {
+      "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
+      "heading": "Edit Organization",
+      "update-button": "Update",
+      "users-heading": "Organization users"
+    },
+    "feature-toggles": {
+      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
+    },
+    "get-enterprise": {
+      "contact-us": "Contact us and get a free trial",
+      "description": "You can use the trial version for free for 30 days. We will remind you about it five days before the trial period ends.",
+      "features-heading": "Enhanced functionality",
+      "included-description": "Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.",
+      "included-heading": "Also included:",
+      "service-title": "At your service",
+      "team-sync-details": "LDAP, GitHub OAuth, Auth Proxy, Okta",
+      "title": "Get Grafana Enterprise"
+    },
+    "ldap": {
+      "test-mapping-heading": "Test user mapping",
+      "test-mapping-run-button": "Run"
+    },
+    "ldap-permissions": {
+      "active": "<0></0> Active",
+      "admin": "<0></0> Yes",
+      "inactive": "<0></0> Inactive"
+    },
+    "ldap-status": {
+      "title": "LDAP Connection"
+    },
+    "ldap-sync": {
+      "debug-button": "Debug LDAP Mapping",
+      "external-sync-description": "User synced via LDAP. Some changes must be done in LDAP or mappings.",
+      "external-sync-label": "External sync",
+      "next-sync-label": "Next scheduled synchronization",
+      "not-enabled": "Not enabled",
+      "sync-button": "Sync user",
+      "title": "LDAP Synchronisation"
+    },
+    "ldap-sync-info": {
+      "title": "LDAP Synchronization"
+    },
+    "ldap-user-groups": {
+      "no-org-found": "No match <2><0></0></2>"
+    },
+    "ldap-user-info": {
+      "no-team": "No teams found via LDAP"
+    },
+    "org-uers": {
+      "last-seen-never": "Never"
+    },
+    "org-users": {
+      "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
+    },
+    "orgs": {
+      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
+      "id-header": "ID",
+      "name-header": "Name",
+      "new-org-button": "New org"
+    },
+    "server-settings": {
+      "alerts-button": "Manage alerts",
+      "dashboards-button": "Manage dashboards",
+      "data-sources-button": "Manage data sources",
+      "not-found": "No stats found.",
+      "title": "Instance statistics",
+      "users-button": "Manage users"
+    },
+    "settings": {
+      "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+    },
+    "upgrade-info": {
+      "title": "Enterprise license"
+    },
+    "user-orgs": {
+      "add-button": "Add user to organization",
+      "change-role-button": "Change role",
+      "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "remove-button": "Remove from organization",
+      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "title": "Organizations"
+    },
+    "user-orgs-modal": {
+      "add-button": "Add to organization",
+      "cancel-button": "Cancel"
+    },
+    "user-permissions": {
+      "change-button": "Change",
+      "grafana-admin-key": "Grafana Admin",
+      "grafana-admin-no": "No",
+      "grafana-admin-yes": "Yes",
+      "title": "Permissions"
+    },
+    "user-profile": {
+      "delete-button": "Delete user",
+      "disable-button": "Disable user",
+      "edit-button": "Edit",
+      "enable-button": "Enable user",
+      "title": "User information"
+    },
+    "user-sessions": {
+      "browser-column": "Browser and OS",
+      "force-logout-all-button": "Force logout from all devices",
+      "force-logout-button": "Force logout",
+      "ip-column": "IP address",
+      "last-seen-column": "Last seen",
+      "logged-on-column": "Logged on",
+      "title": "Sessions"
+    },
+    "users-create": {
+      "create-button": "Create user"
+    },
+    "users-list": {
+      "create-button": "New user"
+    },
+    "users-table": {
+      "last-seen-never": "Never",
+      "no-licensed-role": "Not assigned <2><0></0></2>"
     }
   },
   "alert-labels": {
@@ -371,6 +511,17 @@
       "message": "No API keys found"
     }
   },
+  "app-chrome": {
+    "skip-content-button": "Skip to main content",
+    "top-bar": {
+      "sign-in": "Sign in"
+    }
+  },
+  "app-notification": {
+    "item": {
+      "trace-id": "Trace ID: {{traceId}}"
+    }
+  },
   "bookmarks-page": {
     "empty": {
       "message": "It looks like you haven’t created any bookmarks yet",
@@ -406,15 +557,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -442,6 +593,7 @@
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
+      "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
@@ -883,6 +1035,12 @@
       "time-range-label": "Lock time range"
     }
   },
+  "empty-list-cta": {
+    "pro-tip": "ProTip: {{proTip}}"
+  },
+  "entity-not-found": {
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
+  },
   "errors": {
     "dashboard-settings": {
       "annotations": {
@@ -1103,8 +1261,28 @@
       "export-as-json-tooltip": "Export"
     }
   },
+  "folder-filter": {
+    "clear-folder-button": "Clear folders"
+  },
   "folder-picker": {
+    "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
+  },
+  "forgot-password": {
+    "back-button": "Back to login",
+    "change-password": {
+      "skip-button": "Skip",
+      "submit-button": "Submit"
+    },
+    "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
+    "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
+    "reset-password-header": "Reset password",
+    "send-email-button": "Send reset email"
+  },
+  "form-prompt": {
+    "continue-button": "Continue editing",
+    "description": "Changes that you made may not be saved.",
+    "discard-button": "Discard unsaved changes"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -1225,6 +1403,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "Description",
+      "keys": "Keys"
+    },
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -1475,6 +1657,9 @@
     }
   },
   "login": {
+    "divider": {
+      "connecting-text": "or"
+    },
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
@@ -1501,6 +1686,9 @@
       "username-required": "Email or username is required",
       "verify-email-label": "Send a verification email",
       "verify-email-loading-label": "Sending email..."
+    },
+    "layout": {
+      "update-password": "Update your password"
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
@@ -2147,6 +2335,9 @@
     "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
+  "panel-type-filter": {
+    "clear-button": "Clear types"
+  },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
     "form": {
@@ -2240,6 +2431,10 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "plugin-help": {
+      "error": "An error occurred when loading help.",
+      "not-found": "No query help could be found."
     }
   },
   "profile": {
@@ -2433,6 +2628,10 @@
       "dashboard-modal-title": "Public dashboards",
       "shared-dashboard-modal-title": "Shared dashboards"
     },
+    "table-body": {
+      "dashboard-count_one": "{{count}} dashboard",
+      "dashboard-count_other": "{{count}} dashboards"
+    },
     "table-header": {
       "activated-label": "Activated",
       "activated-tooltip": "Earliest time user has been an active user to a dashboard",
@@ -2527,6 +2726,19 @@
     "dismissable-button": "Close"
   },
   "role-picker": {
+    "built-in": {
+      "basic-roles": "Basic roles"
+    },
+    "input": {
+      "no-roles": "No roles assigned"
+    },
+    "menu": {
+      "clear-button": "Clear all",
+      "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
+    },
+    "sub-menu": {
+      "clear-button": "Clear"
+    },
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -2535,6 +2747,11 @@
     "basic-roles": {
       "label": "Basic Roles"
     }
+  },
+  "route-error": {
+    "description": "Grafana has likely been updated. Please try reloading the page.",
+    "reload-button": "Reload",
+    "title": "Unable to find application file"
   },
   "save-dashboards": {
     "name-exists": {
@@ -2808,6 +3025,17 @@
     },
     "title": "Preferences"
   },
+  "sign-up": {
+    "back-button": "Back to login",
+    "submit-button": "Submit",
+    "verify": {
+      "back-button": "Back to login",
+      "complete-button": "Complete signup",
+      "header": "Verify email",
+      "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
+      "send-button": "Send verification email"
+    }
+  },
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -2860,6 +3088,7 @@
     "view-button": "View"
   },
   "tag-filter": {
+    "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
@@ -2979,6 +3208,13 @@
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
     }
+  },
+  "upgrade-box": {
+    "discovery-text": "You’ve discovered a Pro feature!",
+    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
+    "get-started": "Get started with {{featureName}}",
+    "learn-more": "Learn more",
+    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",
