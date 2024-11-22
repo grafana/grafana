@@ -1666,6 +1666,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
 		},
+		{
+			Name:         "alertingNotificationsStepMode",
+			Description:  "Enables simplified step mode in the notifications section",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
