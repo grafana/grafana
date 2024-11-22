@@ -73,6 +73,48 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
+interface AlertErrorMessageProps extends HTMLAttributes<HTMLDivElement> {
+  moreDetailsLink?: string;
+}
+
+const AlertErrorMessage = ({ moreDetailsLink }: AlertErrorMessageProps) => {
+  const theme = useTheme2();
+  const styles = {
+    content: css({
+      color: theme.colors.text.secondary,
+      paddingBlock: theme.spacing(1),
+      maxHeight: '50vh',
+      overflowY: 'auto',
+    }),
+  };
+  if (!moreDetailsLink) {
+    return <></>;
+  }
+  const isValidUrl = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
+    moreDetailsLink
+  );
+  if (!isValidUrl) {
+    return <></>;
+  }
+  return (
+    <div className={styles.content}>
+      Click{' '}
+      <Link
+        aria-label={`More details about the error`}
+        className={'external-link'}
+        href={moreDetailsLink}
+        target="_blank"
+        rel="noreferrer"
+      >
+        here
+      </Link>{' '}
+      to learn more about this error.
+    </div>
+  );
+};
+
+AlertErrorMessage.displayName = 'AlertErrorMessage';
+
 const alertVariants = new Set(['success', 'info', 'warning', 'error']);
 const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str);
 const getAlertVariant = (status: string): AlertVariant => {
@@ -87,6 +129,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
+  const moreDetailsLink = testingStatus?.details?.moreDetailsLink;
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -103,7 +146,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
         <Alert severity={severity} title={message} data-testid={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
-              {detailsMessage}
+              {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
                 <AlertSuccessMessage
                   title={message}
@@ -111,7 +154,9 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                   dataSourceId={dataSource.uid}
                   onDashboardLinkClicked={onDashboardLinkClicked}
                 />
-              ) : null}
+              ) : (
+                <AlertErrorMessage moreDetailsLink={String(moreDetailsLink)} />
+              )}
               {detailsVerboseMessage ? (
                 <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}
@@ -128,5 +173,8 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
   container: css({
     paddingTop: theme.spacing(3),
+  }),
+  moreLink: css({
+    marginBlock: theme.spacing(1),
   }),
 });
