@@ -2,7 +2,7 @@ module github.com/grafana/grafana/kindsv2
 
 go 1.23.1
 
-require github.com/grafana/cog v0.0.4
+require github.com/grafana/cog v0.0.5
 
 require (
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565 // indirect

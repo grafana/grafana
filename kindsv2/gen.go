@@ -37,7 +37,8 @@ func main() {
 				cog.CUEImports(target.cueImportsMap),
 			).
 			Typescript(cog.TypescriptConfig{
-				ImportsMap: target.packagesImportMap,
+				ImportsMap:        target.packagesImportMap,
+				EnumsAsUnionTypes: true,
 			})
 
 		files, err := codegenPipeline.Run(context.Background())
