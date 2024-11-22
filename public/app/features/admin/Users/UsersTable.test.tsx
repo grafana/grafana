@@ -29,7 +29,7 @@ describe('Render', () => {
     expect(() => setup()).not.toThrow();
   });
 
-  it('should render when one user has licensed role None', () => {
+  it('should render when user has licensed role None', () => {
     expect(() =>
       setup({
         users: [
@@ -42,6 +42,25 @@ describe('Render', () => {
             isGrafanaAdmin: false,
             isDisabled: false,
             licensedRole: 'None',
+          },
+        ],
+      })
+    ).not.toThrow();
+  });
+
+  it('should render when user belongs to org', () => {
+    expect(() =>
+      setup({
+        users: [
+          {
+            id: 1,
+            uid: '1',
+            login: '1',
+            email: '1',
+            name: '1',
+            isGrafanaAdmin: false,
+            isDisabled: false,
+            orgs: [{ name: 'test', url: 'test' }],
           },
         ],
       })
