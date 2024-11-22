@@ -12,7 +12,6 @@ import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
 import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
 import { initialSelectorState } from '../../internal/ScopesSelectorScene';
-import { DASHBOARDS_OPENED_KEY } from '../../internal/const';
 
 import { clearMocks } from './actions';
 
@@ -49,6 +48,50 @@ const getDashboardDTO: (
           label: 'Group By',
           name: 'groupBy',
           type: 'groupby',
+        },
+        {
+          current: {
+            text: ['1'],
+            value: ['1'],
+          },
+          multi: true,
+          name: 'myVar',
+          options: [
+            {
+              selected: true,
+              text: '1',
+              value: '1',
+            },
+            {
+              selected: false,
+              text: '2',
+              value: '2',
+            },
+          ],
+          query: '1, 2',
+          type: 'custom',
+        },
+        {
+          current: {
+            text: ['1'],
+            value: ['1'],
+          },
+          multi: true,
+          name: 'myVar2',
+          options: [
+            {
+              selected: true,
+              text: '1',
+              value: '1',
+            },
+            {
+              selected: false,
+              text: '2',
+              value: '2',
+            },
+          ],
+          query: '1, 2',
+          type: 'custom',
         },
       ],
     },
@@ -160,7 +203,6 @@ export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
   scopesSelectorScene?.setState(initialSelectorState);
-  localStorage.removeItem(DASHBOARDS_OPENED_KEY);
   scopesDashboardsScene?.setState(getInitialDashboardsState());
   cleanup();
 }

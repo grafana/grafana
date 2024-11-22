@@ -4,6 +4,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -13,6 +14,8 @@ import { AccessControlAction, NotificationChannelOption } from 'app/types';
 
 import { getTemplateOptions, TemplatesPicker } from './TemplateSelector';
 import { parseTemplates } from './utils';
+
+const alertmanagerConfigMock = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
@@ -98,7 +101,7 @@ describe('TemplatesPicker', () => {
     const input = screen.getByRole('combobox');
     expect(screen.queryByText('slack-template')).not.toBeInTheDocument();
     await userEvent.click(input);
-    expect(screen.getAllByRole('option')).toHaveLength(7); // 4 templates in mock plus 3 in the default template
+    expect(screen.getAllByRole('option')).toHaveLength(Object.keys(alertmanagerConfigMock.template_files).length + 3); // 4 templates in mock plus 3 in the default template
     const template = screen.getByRole('option', { name: 'slack-template' });
     await userEvent.click(template);
     expect(screen.getByText('slack-template')).toBeInTheDocument();

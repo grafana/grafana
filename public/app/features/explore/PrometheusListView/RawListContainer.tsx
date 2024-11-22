@@ -22,33 +22,33 @@ export interface RawListContainerProps {
 }
 
 const styles = {
-  wrapper: css`
-    height: 100%;
-    overflow: scroll;
-  `,
-  switchWrapper: css`
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 0;
-  `,
-  switchLabel: css`
-    margin-left: 15px;
-    margin-bottom: 0;
-  `,
-  switch: css`
-    margin-left: 10px;
-  `,
-  resultCount: css`
-    margin-bottom: 4px;
-  `,
-  header: css`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    font-size: 12px;
-    line-height: 1.25;
-  `,
+  wrapper: css({
+    height: '100%',
+    overflow: 'scroll',
+  }),
+  switchWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    marginBottom: 0,
+  }),
+  switchLabel: css({
+    marginLeft: '15px',
+    marginBottom: 0,
+  }),
+  switch: css({
+    marginLeft: '10px',
+  }),
+  resultCount: css({
+    marginBottom: '4px',
+  }),
+  header: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '10px 0',
+    fontSize: '12px',
+    lineHeight: 1.25,
+  }),
 };
 
 const mobileWidthThreshold = 480;

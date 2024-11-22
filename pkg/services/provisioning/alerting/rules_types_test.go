@@ -102,11 +102,12 @@ func TestRules(t *testing.T) {
 		_, err := rule.mapToModel(1)
 		require.Error(t, err)
 	})
-	t.Run("a rule with out a for duration should error", func(t *testing.T) {
+	t.Run("a rule without a for duration should default to 0s", func(t *testing.T) {
 		rule := validRuleV1(t)
 		rule.For = values.StringValue{}
-		_, err := rule.mapToModel(1)
-		require.Error(t, err)
+		ruleMapped, err := rule.mapToModel(1)
+		require.NoError(t, err)
+		require.Equal(t, time.Duration(0), ruleMapped.For)
 	})
 	t.Run("a rule with an invalid for duration should error", func(t *testing.T) {
 		rule := validRuleV1(t)

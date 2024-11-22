@@ -175,16 +175,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(60),
       marginBottom: theme.spacing(2),
     }),
-    timezoneContainer: css`
-      padding: 5px;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12px;
-    `,
-    timezone: css`
-      margin-right: 5px;
-    `,
+    timezoneContainer: css({
+      padding: '5px',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      fontSize: '12px',
+    }),
+    timezone: css({
+      marginRight: '5px',
+    }),
   };
 };

@@ -3,12 +3,13 @@ import { useObservable } from 'react-use';
 
 import { PluginExtension, usePluginContext } from '@grafana/data';
 import { GetPluginExtensionsOptions, UsePluginExtensionsResult } from '@grafana/runtime';
-import { useSidecar } from 'app/core/context/SidecarContext';
 
+import * as errors from './errors';
 import { getPluginExtensions } from './getPluginExtensions';
+import { log } from './logs/log';
 import { PluginExtensionRegistries } from './registry/types';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode, logWarning } from './utils';
-import { isExtensionPointIdValid } from './validators';
+import { isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 export function createUsePluginExtensions(registries: PluginExtensionRegistries) {
   const observableAddedComponentsRegistry = registries.addedComponentsRegistry.asObservable();
@@ -18,22 +19,23 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
     const pluginContext = usePluginContext();
     const addedComponentsRegistry = useObservable(observableAddedComponentsRegistry);
     const addedLinksRegistry = useObservable(observableAddedLinksRegistry);
-    const { activePluginId } = useSidecar();
     const { extensionPointId, context, limitPerPlugin } = options;
 
     const { extensions } = useMemo(() => {
       // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
       const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
       const pluginId = pluginContext?.meta.id ?? '';
+      const pointLog = log.child({
+        pluginId,
+        extensionPointId,
+      });
 
       if (!addedLinksRegistry && !addedComponentsRegistry) {
         return { extensions: [], isLoading: false };
       }
 
       if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-        logWarning(
-          `Extension point usePluginExtensions("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
-        );
+        pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
         return {
           isLoading: false,
           extensions: [],
@@ -41,9 +43,7 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
       }
 
       if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-        logWarning(
-          `Invalid extension point. Reason: The extension point is not declared in the "plugin.json" file. ExtensionPointId: "${extensionPointId}"`
-        );
+        pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
         return {
           isLoading: false,
           extensions: [],
@@ -61,15 +61,7 @@ export function createUsePluginExtensions(registries: PluginExtensionRegistries)
       // options object so we are checking it's simple value attributes.
       // The context though still has to be memoized though and not mutated.
       // eslint-disable-next-line react-hooks/exhaustive-deps -- TODO: refactor `getPluginExtensions` to accept service dependencies as arguments instead of relying on the sidecar singleton under the hood
-    }, [
-      addedLinksRegistry,
-      addedComponentsRegistry,
-      extensionPointId,
-      context,
-      limitPerPlugin,
-      activePluginId,
-      pluginContext,
-    ]);
+    }, [addedLinksRegistry, addedComponentsRegistry, extensionPointId, context, limitPerPlugin, pluginContext]);
 
     return { extensions, isLoading: false };
   };

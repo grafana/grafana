@@ -100,6 +100,8 @@ The following list contains role-based access control actions.
 | `folders:delete`                      | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Delete one or more folders and their subfolders.                                                                                                                                                                          |
 | `folders:read`                        | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Read one or more folders and their subfolders.                                                                                                                                                                            |
 | `folders:write`                       | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Update one or more folders and their subfolders.                                                                                                                                                                          |
+| `groupsync.mappings:read`                       | None                                                               | List group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                                                                                                          |
+| `groupsync.mappings:write`                       | None                                                               | List, create, update, and delete group attribute sync mappings. To use this permission, enable the `groupAttributeSync` feature toggle.                                                                                                                                                                         |
 | `ldap.config:reload`                  | None                                                                                                                | Reload the LDAP configuration.                                                                                                                                                                                            |
 | `ldap.status:read`                    | None                                                                                                                | Verify the availability of the LDAP server or servers.                                                                                                                                                                    |
 | `ldap.user:read`                      | None                                                                                                                | Read users via LDAP.                                                                                                                                                                                                      |
@@ -188,16 +190,38 @@ The following list contains role-based access control actions used by Grafana Ad
 
 | Action                                               | Applicable scopes | Description                                           |
 | ---------------------------------------------------- | ----------------- | ----------------------------------------------------- |
-| `grafana‑adaptive‑metrics‑app.plugin:access`         | None              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
-| `grafana‑adaptive‑metrics‑app.config:read`           | None              | Read the Adaptive Metrics app configuration.          |
-| `grafana‑adaptive‑metrics‑app.config:write`          | None              | Update the Adaptive Metrics app configuration.        |
-| `grafana‑adaptive‑metrics‑app.recommendations:read`  | None              | Read aggregation recommendations.                     |
-| `grafana‑adaptive‑metrics‑app.recommendations:apply` | None              | Apply aggregation recommendations.                    |
-| `grafana‑adaptive‑metrics‑app.rules:read`            | None              | Read aggregation rules.                               |
-| `grafana‑adaptive‑metrics‑app.rules:write`           | None              | Create aggregation rules.                             |
-| `grafana‑adaptive‑metrics‑app.rules:delete`          | None              | Delete aggregation rules.                             |
-| `grafana‑adaptive‑metrics‑app.exemptions:read`       | None              | Read recommendation exemptions.                       |
-| `grafana‑adaptive‑metrics‑app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
+| `grafana-adaptive-metrics-app.plugin:access`         | None              | Access the Adaptive Metrics plugin in Grafana Cloud.  |
+| `grafana-adaptive-metrics-app.config:read`           | None              | Read the Adaptive Metrics app configuration.          |
+| `grafana-adaptive-metrics-app.config:write`          | None              | Update the Adaptive Metrics app configuration.        |
+| `grafana-adaptive-metrics-app.recommendations:read`  | None              | Read aggregation recommendations.                     |
+| `grafana-adaptive-metrics-app.recommendations:apply` | None              | Apply aggregation recommendations.                    |
+| `grafana-adaptive-metrics-app.rules:read`            | None              | Read aggregation rules.                               |
+| `grafana-adaptive-metrics-app.rules:write`           | None              | Create aggregation rules.                             |
+| `grafana-adaptive-metrics-app.rules:delete`          | None              | Delete aggregation rules.                             |
+| `grafana-adaptive-metrics-app.exemptions:read`       | None              | Read recommendation exemptions.                       |
+| `grafana-adaptive-metrics-app.exemptions:write`      | None              | Create, update, and delete recommendation exemptions. |
+
+### Grafana Alerting Notification action definitions
+
+To use these permissions, enable the `alertingApiServer` feature toggle.
+
+| Action                                       | Applicable scopes                  | Description                                                                                                 |
+| -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points.                                                                                        |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*` | Export contact points with decrypted secrets.                                                               |
+| `alert.notifications.receivers:create`       | None                               | Create a new contact points. The creator is automatically granted full access to the created contact point. |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*` | Update existing contact points.                                                                             |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*` | Update and delete existing contact points.                                                                  |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*` | Read permissions for contact points.                                                                        |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*` | Manage permissions for contact points.                                                                      |
+| `alert.notifications.time-intervals:read`    | None                               | Read mute time intervals.                                                                                   |
+| `alert.notifications.time-intervals:write`   | None                               | Create new or update existing mute time intervals.                                                          |
+| `alert.notifications.time-intervals:delete`  | None                               | Delete existing time intervals.                                                                             |
+| `alert.notifications.templates:read`         | None                               | Read templates.                                                                                             |
+| `alert.notifications.templates:write`        | None                               | Create new or update existing templates.                                                                    |
+| `alert.notifications.templates:delete`       | None                               | Delete existing templates.                                                                                  |
+| `alert.notifications.routes:read`            | None                               | Read notification policies.                                                                                 |
+| `alert.notifications.routes:write`           | None                               | Create new, update or delete notification policies                                                          |
 
 ## Scope definitions
 

@@ -7,8 +7,9 @@ import (
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/otel"
 )
 
 const (
@@ -32,7 +34,10 @@ var errGrafanaDBInstrumentedNotSupported = errors.New("the Resource API is " +
 	grafanaDBInstrumentQueriesKey + "` is enabled in [database], and that" +
 	" setup is currently unsupported. Please, consider disabling that flag")
 
-func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracing.Tracer) (db.DBProvider, error) {
+func ProvideResourceDB(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (db.DBProvider, error) {
+	if tracer == nil {
+		tracer = noop.NewTracerProvider().Tracer("test-tracer")
+	}
 	p, err := newResourceDBProvider(grafanaDB, cfg, tracer)
 	if err != nil {
 		return nil, fmt.Errorf("provide Resource DB: %w", err)
@@ -59,11 +64,12 @@ type resourceDBProvider struct {
 	cfg             *setting.Cfg
 	log             log.Logger
 	migrateFunc     func(context.Context, *xorm.Engine, *setting.Cfg) error
+	tracer          trace.Tracer
 	registerMetrics bool
 	logQueries      bool
 }
 
-func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracing.Tracer) (p *resourceDBProvider, err error) {
+func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer trace.Tracer) (p *resourceDBProvider, err error) {
 	// Resource API has other configs in its section besides database ones, so
 	// we prefix them with "db_". We use the database config from core Grafana
 	// as fallback, and as it uses a dedicated INI section, then keys are not
@@ -76,6 +82,7 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracin
 		log:         log.New("entity-db"),
 		logQueries:  getter.Bool("log_queries"),
 		migrateFunc: migrations.MigrateResourceStore,
+		tracer:      tracer,
 	}
 
 	dbType := getter.String("type")
@@ -85,12 +92,12 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracin
 	// specific to Unified Storage
 	case dbType == dbTypePostgres:
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(getter, tracer)
+		p.engine, err = getEnginePostgres(getter)
 		return p, err
 
 	case dbType == dbTypeMySQL:
 		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(getter, tracer)
+		p.engine, err = getEngineMySQL(getter)
 		return p, err
 
 		// TODO: add support for SQLite
@@ -103,12 +110,12 @@ func newResourceDBProvider(grafanaDB infraDB.DB, cfg *setting.Cfg, tracer tracin
 
 	case grafanaDBType == dbTypePostgres:
 		p.registerMetrics = true
-		p.engine, err = getEnginePostgres(fallbackGetter, tracer)
+		p.engine, err = getEnginePostgres(fallbackGetter)
 		return p, err
 
 	case grafanaDBType == dbTypeMySQL:
 		p.registerMetrics = true
-		p.engine, err = getEngineMySQL(fallbackGetter, tracer)
+		p.engine, err = getEngineMySQL(fallbackGetter)
 		return p, err
 
 	// TODO: add support for SQLite
@@ -144,5 +151,8 @@ func (p *resourceDBProvider) init(ctx context.Context) (db.DB, error) {
 		}
 	}
 
-	return NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName()), nil
+	d := NewDB(p.engine.DB().DB, p.engine.Dialect().DriverName())
+	d = otel.NewInstrumentedDB(d, p.tracer)
+
+	return d, nil
 }

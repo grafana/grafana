@@ -485,6 +485,24 @@ func TestIntegrationGet(t *testing.T) {
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
 	})
+
+	t.Run("get folder withFullpathUIDs should set fullpathUIDs as expected", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:              &subfolderWithSameName.UID,
+			OrgID:            orgID,
+			WithFullpathUIDs: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.UID, subfolderWithSameName.UID), ff.FullpathUIDs)
+		assert.Equal(t, f.UID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
 }
 
 func TestIntegrationGetParents(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -44,7 +45,7 @@ type ResourceAuthorizerOptions struct {
 	Resolver ResourceResolver
 }
 
-var _ claims.AccessClient = (*LegacyAccessClient)(nil)
+var _ authz.AccessClient = (*LegacyAccessClient)(nil)
 
 func NewLegacyAccessClient(ac AccessControl, opts ...ResourceAuthorizerOptions) *LegacyAccessClient {
 	stored := map[string]ResourceAuthorizerOptions{}
@@ -82,35 +83,34 @@ type LegacyAccessClient struct {
 	opts map[string]ResourceAuthorizerOptions
 }
 
-// HasAccess implements claims.AccessClient.
-func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, req claims.AccessRequest) (bool, error) {
+func (c *LegacyAccessClient) Check(ctx context.Context, id claims.AuthInfo, req authz.CheckRequest) (authz.CheckResponse, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
-		return false, errors.New("expected identity.Requester for legacy access control")
+		return authz.CheckResponse{}, errors.New("expected identity.Requester for legacy access control")
 	}
 
 	opts, ok := c.opts[req.Resource]
 	if !ok {
 		// For now we fallback to grafana admin if no options are found for resource.
 		if ident.GetIsGrafanaAdmin() {
-			return true, nil
+			return authz.CheckResponse{Allowed: true}, nil
 		}
-		return false, nil
+		return authz.CheckResponse{}, nil
 	}
 
 	skip := opts.Unchecked[req.Verb]
 	if skip {
-		return true, nil
+		return authz.CheckResponse{Allowed: true}, nil
 	}
 
 	action, ok := opts.Mapping[req.Verb]
 	if !ok {
-		return false, fmt.Errorf("missing action for %s %s", req.Verb, req.Resource)
+		return authz.CheckResponse{}, fmt.Errorf("missing action for %s %s", req.Verb, req.Resource)
 	}
 
 	ns, err := claims.ParseNamespace(req.Namespace)
 	if err != nil {
-		return false, err
+		return authz.CheckResponse{}, err
 	}
 
 	var eval Evaluator
@@ -118,7 +118,7 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 		if opts.Resolver != nil {
 			scopes, err := opts.Resolver.Resolve(ctx, ns, req.Name)
 			if err != nil {
-				return false, err
+				return authz.CheckResponse{}, err
 			}
 			eval = EvalPermission(action, scopes...)
 		} else {
@@ -129,14 +129,18 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 		eval = EvalPermission(action)
 	} else {
 		// Assuming that all non list request should have a valid name
-		return false, fmt.Errorf("unhandled authorization: %s %s", req.Group, req.Verb)
+		return authz.CheckResponse{}, fmt.Errorf("unhandled authorization: %s %s", req.Group, req.Verb)
 	}
 
-	return c.ac.Evaluate(ctx, ident, eval)
+	allowed, err := c.ac.Evaluate(ctx, ident, eval)
+	if err != nil {
+		return authz.CheckResponse{}, err
+	}
+
+	return authz.CheckResponse{Allowed: allowed}, nil
 }
 
-// Compile implements claims.AccessClient.
-func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.AccessRequest) (claims.AccessChecker, error) {
+func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (authz.ItemChecker, error) {
 	ident, ok := id.(identity.Requester)
 	if !ok {
 		return nil, errors.New("expected identity.Requester for legacy access control")
@@ -147,13 +151,13 @@ func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, re
 		return nil, fmt.Errorf("unsupported resource: %s", req.Resource)
 	}
 
-	action, ok := opts.Mapping[req.Verb]
+	action, ok := opts.Mapping[utils.VerbList]
 	if !ok {
-		return nil, fmt.Errorf("missing action for %s %s", req.Verb, req.Resource)
+		return nil, fmt.Errorf("missing action for %s %s", utils.VerbList, req.Resource)
 	}
 
 	check := Checker(ident, action)
-	return func(_, name string) bool {
+	return func(_, name, _ string) bool {
 		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
 	}, nil
 }

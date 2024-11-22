@@ -8,7 +8,7 @@ function checkFolderPermission(action: AccessControlAction, folderDTO?: FolderDT
 
 function checkCanCreateFolders(folderDTO?: FolderDTO) {
   // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
-  if (folderDTO && !config.featureToggles.nestedFolders) {
+  if (folderDTO && folderDTO.uid !== 'general' && !config.featureToggles.nestedFolders) {
     return false;
   }
 

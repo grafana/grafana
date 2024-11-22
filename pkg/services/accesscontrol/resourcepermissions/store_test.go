@@ -351,8 +351,8 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 					assert.Equal(t, accesscontrol.ResourcePermission{}, permissions[i])
 				} else {
 					assert.Len(t, permissions[i].Actions, len(c.Actions))
-					assert.Equal(t, c.TeamID, permissions[i].TeamId)
-					assert.Equal(t, c.User.ID, permissions[i].UserId)
+					assert.Equal(t, c.TeamID, permissions[i].TeamID)
+					assert.Equal(t, c.User.ID, permissions[i].UserID)
 					assert.Equal(t, c.BuiltinRole, permissions[i].BuiltInRole)
 					assert.Equal(t, accesscontrol.Scope(c.Resource, tt.resourceAttribute, c.ResourceID), permissions[i].Scope)
 				}

@@ -1,8 +1,11 @@
 import { Fragment, useState } from 'react';
 
 import { logError } from '@grafana/runtime';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Badge, ConfirmModal, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { t, Trans } from 'app/core/internationalization';
+import { CodeText } from 'app/features/alerting/unified/components/common/TextVariants';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
@@ -27,7 +30,7 @@ interface Props {
 
 export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const appNotification = useAppNotification();
-  const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
+  const [deleteTemplate] = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
 
   const tableStyles = useStyles2(getAlertTableStyles);
 
@@ -36,7 +39,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
       try {
-        await deleteTemplate({ uid: templateToDelete.uid });
+        await deleteTemplate.execute({ uid: templateToDelete.uid });
         appNotification.success('Template deleted', `Template ${templateToDelete.title} has been deleted`);
       } catch (error) {
         appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.title}`);
@@ -112,12 +115,13 @@ interface TemplateRowProps {
 
 function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClick }: TemplateRowProps) {
   const tableStyles = useStyles2(getAlertTableStyles);
+  const isGrafanaAlertmanager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
 
   const [isExpanded, setIsExpanded] = useState(false);
   const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
 
-  const { uid, title: name, content: template } = notificationTemplate;
-
+  const { uid, title: name, content: template, missing } = notificationTemplate;
+  const misconfiguredBadgeText = t('alerting.templates.misconfigured-badge-text', 'Misconfigured');
   return (
     <Fragment key={uid}>
       <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -125,7 +129,25 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
           <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
         </td>
         <td>
-          {name} {isProvisioned && <ProvisioningBadge />}
+          {name} {isProvisioned && <ProvisioningBadge />}{' '}
+          {missing && !isGrafanaAlertmanager && (
+            <Tooltip
+              content={
+                <>
+                  <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
+                  <br />
+                  <Trans i18nKey="alerting.templates.misconfigured-warning-details">
+                    Templates must be defined in both the <CodeText content="template_files" /> and{' '}
+                    <CodeText content="templates" /> sections of your alertmanager configuration.
+                  </Trans>
+                </>
+              }
+            >
+              <span>
+                <Badge text={misconfiguredBadgeText} color="orange" />
+              </span>
+            </Tooltip>
+          )}
         </td>
         <td className={tableStyles.actionsCell}>
           {isProvisioned && (
@@ -144,7 +166,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
               />
             </Authorize>
           )}
-          <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
+          <Authorize actions={[AlertmanagerAction.CreateNotificationTemplate]}>
             <ActionIcon
               to={makeAMLink(
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,

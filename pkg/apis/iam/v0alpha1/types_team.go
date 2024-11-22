@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,6 +17,13 @@ type Team struct {
 type TeamSpec struct {
 	Title string `json:"title,omitempty"`
 	Email string `json:"email,omitempty"`
+
+	// This is currently used for authorization checks but we don't want to expose it
+	InternalID int64 `json:"-"`
+}
+
+func (t Team) AuthID() string {
+	return fmt.Sprintf("%d", t.Spec.InternalID)
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -192,13 +192,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
               >
                 <Trans i18nKey="help-wizard.github-comment">Copy Github comment</Trans>
               </ClipboardButton>
-              <Button
-                icon="eye"
-                onClick={service.onPreviewDashboard}
-                title="Open support snapshot dashboard in a new tab"
-              >
-                <Trans i18nKey="help-wizard.preview-snapshot">Preview snapshot</Trans>
-              </Button>
             </Stack>
           </Field>
 

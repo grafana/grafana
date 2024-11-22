@@ -45,12 +45,12 @@ func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
 }
 
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
-func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.Frame, error) {
+func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat, logLimitDisabled bool) (*data.Frame, error) {
 	if len(table.Rows) == 0 {
 		return nil, nil
 	}
 
-	converterFrame, err := converterFrameForTable(table, queryType, resultFormat)
+	converterFrame, err := converterFrameForTable(table, queryType, resultFormat, logLimitDisabled)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func ResponseTableToFrame(table *types.AzureResponseTable, refID string, execute
 	return converterFrame.Frame, nil
 }
 
-func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat) (*data.FrameInputConverter, error) {
+func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.AzureQueryType, resultFormat dataquery.ResultFormat, logLimitDisabled bool) (*data.FrameInputConverter, error) {
 	converters := []data.FieldConverter{}
 	colNames := make([]string, len(t.Columns))
 	colTypes := make([]string, len(t.Columns)) // for metadata
@@ -84,6 +84,14 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 		converters = append(converters, converter)
 	}
 
+	rowLimit := 30000
+	limitExceeded := false
+	if len(t.Rows) > rowLimit && resultFormat == dataquery.ResultFormatLogs && !logLimitDisabled {
+		// We limit the number of rows to 30k to prevent crashing the browser tab as the logs viz is not virtualised.
+		t.Rows = t.Rows[:rowLimit]
+		limitExceeded = true
+	}
+
 	fic, err := data.NewFrameInputConverter(converters, len(t.Rows))
 	if err != nil {
 		return nil, err
@@ -96,6 +104,13 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 
 	fic.Frame.Meta = &data.FrameMeta{
 		Custom: &LogAnalyticsMeta{ColumnTypes: colTypes},
+	}
+
+	if limitExceeded {
+		fic.Frame.AppendNotices(data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "The number of results in the result set has been limited to 30,000.",
+		})
 	}
 
 	return fic, nil

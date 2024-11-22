@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -24,6 +25,7 @@ func ProvideTestEnv(
 	oAuthTokenService *oauthtokentest.Service,
 	featureMgmt featuremgmt.FeatureToggles,
 	resourceClient resource.ResourceClient,
+	idService auth.IDService,
 ) (*TestEnv, error) {
 	return &TestEnv{
 		Server:              server,
@@ -36,6 +38,7 @@ func ProvideTestEnv(
 		OAuthTokenService:   oAuthTokenService,
 		FeatureToggles:      featureMgmt,
 		ResourceClient:      resourceClient,
+		IDService:           idService,
 	}, nil
 }
 
@@ -51,4 +54,5 @@ type TestEnv struct {
 	RequestMiddleware   web.Middleware
 	FeatureToggles      featuremgmt.FeatureToggles
 	ResourceClient      resource.ResourceClient
+	IDService           auth.IDService
 }

@@ -2,6 +2,7 @@ package setting
 
 import (
 	"slices"
+	"time"
 )
 
 type ZanzanaMode string
@@ -20,11 +21,19 @@ type ZanzanaSettings struct {
 	ListenHTTP bool
 	// OpenFGA http server address which allows to connect with fga cli
 	HttpAddr string
-	// Number of check requests running concurrently
-	ConcurrentChecks int64
 	// If enabled, authorization cheks will be only performed by zanzana.
 	// This bypasses the performance comparison with the legacy system.
 	ZanzanaOnlyEvaluation bool
+	// Number of concurrent check requests running by Grafana.
+	ConcurrentChecks int64
+	// Enable cache for Check() requests
+	CheckQueryCache bool
+	// TTL for cached requests. Default is 10 seconds.
+	CheckQueryCacheTTL time.Duration
+	// Max number of results returned by ListObjects() query. Default is 1000.
+	ListObjectsMaxResults uint32
+	// Deadline for the ListObjects() query. Default is 3 seconds.
+	ListObjectsDeadline time.Duration
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -45,6 +54,10 @@ func (cfg *Cfg) readZanzanaSettings() {
 	s.HttpAddr = sec.Key("http_addr").MustString("127.0.0.1:8080")
 	s.ConcurrentChecks = sec.Key("concurrent_checks").MustInt64(10)
 	s.ZanzanaOnlyEvaluation = sec.Key("zanzana_only_evaluation").MustBool(false)
+	s.CheckQueryCache = sec.Key("check_query_cache").MustBool(true)
+	s.CheckQueryCacheTTL = sec.Key("check_query_cache_ttl").MustDuration(10 * time.Second)
+	s.ListObjectsDeadline = sec.Key("list_objects_deadline").MustDuration(3 * time.Second)
+	s.ListObjectsMaxResults = uint32(sec.Key("list_objects_max_results").MustUint(1000))
 
 	cfg.Zanzana = s
 }

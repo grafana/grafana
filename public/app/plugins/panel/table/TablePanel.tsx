@@ -1,16 +1,21 @@
 import { css } from '@emotion/css';
 
 import {
+  ActionModel,
   DashboardCursorSync,
   DataFrame,
   FieldMatcherID,
   getFrameDisplayName,
+  InterpolateFunction,
   PanelProps,
   SelectableValue,
+  Field,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+
+import { getActions } from '../../../features/actions/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
@@ -18,7 +23,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id, timeRange } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -63,6 +68,8 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
+      getActions={getCellActions}
+      replaceVariables={replaceVariables}
     />
   );
 
@@ -136,14 +143,50 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
   });
 }
 
+// placeholder function; assuming the values are already interpolated
+const replaceVars: InterpolateFunction = (value: string) => value;
+
+const getCellActions = (
+  dataFrame: DataFrame,
+  field: Field,
+  rowIndex: number,
+  replaceVariables: InterpolateFunction | undefined
+) => {
+  if (!config.featureToggles?.vizActions) {
+    return [];
+  }
+
+  const actions: Array<ActionModel<Field>> = [];
+  const actionLookup = new Set<string>();
+
+  const actionsModel = getActions(
+    dataFrame,
+    field,
+    field.state!.scopedVars!,
+    replaceVariables ?? replaceVars,
+    field.config.actions ?? [],
+    { valueRowIndex: rowIndex }
+  );
+
+  actionsModel.forEach((action) => {
+    const key = `${action.title}`;
+    if (!actionLookup.has(key)) {
+      actions.push(action);
+      actionLookup.add(key);
+    }
+  });
+
+  return actions;
+};
+
 const tableStyles = {
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-  `,
-  selectWrapper: css`
-    padding: 8px 8px 0px 8px;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: '100%',
+  }),
+  selectWrapper: css({
+    padding: '8px 8px 0px 8px',
+  }),
 };

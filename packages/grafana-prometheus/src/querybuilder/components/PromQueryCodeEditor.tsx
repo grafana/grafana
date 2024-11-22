@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
+import { QueryEditorHints } from '../shared/QueryEditorHints';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';
 
@@ -33,8 +34,8 @@ export function PromQueryCodeEditor(props: PromQueryCodeEditorProps) {
         data={data}
         app={app}
       />
-
       {showExplain && <PromQueryBuilderExplained query={query.expr} />}
+      <QueryEditorHints query={query} datasource={datasource} data={data} onChange={onChange} onRunQuery={onRunQuery} />
     </div>
   );
 }

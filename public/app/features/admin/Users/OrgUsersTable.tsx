@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import {
   Avatar,
   Box,
@@ -20,8 +21,10 @@ import {
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
+import { RolePickerBadges } from 'app/core/components/RolePickerDrawer/RolePickerBadges';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
@@ -111,7 +114,21 @@ export const OrgUsersTable = ({
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
-          return <>{value && <>{value === '10 years' ? <Text color={'disabled'}>Never</Text> : value}</>}</>;
+          return (
+            <>
+              {value && (
+                <>
+                  {value === '10 years' ? (
+                    <Text color={'disabled'}>
+                      <Trans i18nKey="admin.org-uers.last-seen-never">Never</Trans>
+                    </Text>
+                  ) : (
+                    value
+                  )}
+                </>
+              )}
+            </>
+          );
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
@@ -126,6 +143,10 @@ export const OrgUsersTable = ({
               onUserRolesChange();
             }
           };
+
+          if (config.featureToggles.rolePickerDrawer) {
+            return <RolePickerBadges disabled={basicRoleDisabled} user={original} />;
+          }
 
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
@@ -164,18 +185,20 @@ export const OrgUsersTable = ({
                   interactive={true}
                   content={
                     <div>
-                      This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-                      the&nbsp;
-                      <a
-                        href={
-                          'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
-                        }
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        Grafana authentication docs
-                      </a>
-                      &nbsp;for details.
+                      <Trans i18nKey="admin.org-users.not-editable">
+                        This user&apos;s role is not editable because it is synchronized from your auth provider. Refer
+                        to the&nbsp;
+                        <a
+                          href={
+                            'https://grafana.com/docs/grafana/latest/administration/user-management/manage-org-users/#change-a-users-organization-permissions'
+                          }
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          Grafana authentication docs
+                        </a>
+                        &nbsp;for details.
+                      </Trans>
                     </div>
                   }
                 >

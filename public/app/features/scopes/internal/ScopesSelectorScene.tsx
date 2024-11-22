@@ -22,7 +22,12 @@ import { ScopesInput } from './ScopesInput';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
-import { getBasicScope, getScopeNamesFromSelectedScopes, getTreeScopesFromSelectedScopes } from './utils';
+import {
+  getBasicScope,
+  getScopeNamesFromSelectedScopes,
+  getScopesAndTreeScopesWithPaths,
+  getTreeScopesFromSelectedScopes,
+} from './utils';
 
 export interface ScopesSelectorSceneState extends SceneObjectState {
   dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
@@ -126,7 +131,14 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
           })
         )
         .subscribe((childNodes) => {
-          const persistedNodes = this.state.treeScopes
+          const [scopes, treeScopes] = getScopesAndTreeScopesWithPaths(
+            this.state.scopes,
+            this.state.treeScopes,
+            path,
+            childNodes
+          );
+
+          const persistedNodes = treeScopes
             .map(({ path }) => path[path.length - 1])
             .filter((nodeName) => nodeName in currentNode.nodes && !(nodeName in childNodes))
             .reduce<NodesMap>((acc, nodeName) => {
@@ -140,7 +152,7 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
 
           currentNode.nodes = { ...persistedNodes, ...childNodes };
 
-          this.setState({ nodes });
+          this.setState({ nodes, scopes, treeScopes });
 
           this.nodesFetchingSub?.unsubscribe();
         });
@@ -339,39 +351,44 @@ export function ScopesSelectorSceneRenderer({ model }: SceneComponentProps<Scope
             model.resetDirtyScopeNames();
           }}
         >
-          {isLoadingScopes ? (
-            <Spinner data-testid="scopes-selector-loading" />
-          ) : (
-            <ScopesTree
-              nodes={nodes}
-              nodePath={['']}
-              loadingNodeName={loadingNodeName}
-              scopes={treeScopes}
-              onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
-              onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
-            />
-          )}
-          <div className={styles.buttonGroup}>
-            <Button
-              variant="primary"
-              data-testid="scopes-selector-apply"
-              onClick={() => {
-                model.closePicker();
-                model.updateScopes();
-              }}
-            >
-              <Trans i18nKey="scopes.selector.apply">Apply</Trans>
-            </Button>
-            <Button
-              variant="secondary"
-              data-testid="scopes-selector-cancel"
-              onClick={() => {
-                model.closePicker();
-                model.resetDirtyScopeNames();
-              }}
-            >
-              <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
-            </Button>
+          <div className={styles.drawerContainer}>
+            <div className={styles.treeContainer}>
+              {isLoadingScopes ? (
+                <Spinner data-testid="scopes-selector-loading" />
+              ) : (
+                <ScopesTree
+                  nodes={nodes}
+                  nodePath={['']}
+                  loadingNodeName={loadingNodeName}
+                  scopes={treeScopes}
+                  onNodeUpdate={(path, isExpanded, query) => model.updateNode(path, isExpanded, query)}
+                  onNodeSelectToggle={(path) => model.toggleNodeSelect(path)}
+                />
+              )}
+            </div>
+
+            <div className={styles.buttonsContainer}>
+              <Button
+                variant="primary"
+                data-testid="scopes-selector-apply"
+                onClick={() => {
+                  model.closePicker();
+                  model.updateScopes();
+                }}
+              >
+                <Trans i18nKey="scopes.selector.apply">Apply</Trans>
+              </Button>
+              <Button
+                variant="secondary"
+                data-testid="scopes-selector-cancel"
+                onClick={() => {
+                  model.closePicker();
+                  model.resetDirtyScopeNames();
+                }}
+              >
+                <Trans i18nKey="scopes.selector.cancel">Cancel</Trans>
+              </Button>
+            </div>
           </div>
         </Drawer>
       )}
@@ -398,7 +415,20 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => {
         color: theme.colors.text.primary,
       }),
     }),
-    buttonGroup: css({
+    drawerContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    }),
+    treeContainer: css({
+      display: 'flex',
+      flexDirection: 'column',
+      maxHeight: '100%',
+      overflowY: 'hidden',
+      // Fix for top level search outline overflow due to scrollbars
+      paddingLeft: theme.spacing(0.5),
+    }),
+    buttonsContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
       marginTop: theme.spacing(8),

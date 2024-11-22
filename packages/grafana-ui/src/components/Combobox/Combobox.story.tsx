@@ -1,24 +1,33 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
-import { Chance } from 'chance';
-import React, { ComponentProps, useEffect, useState } from 'react';
+import React, { ComponentProps, useCallback, useEffect, useState } from 'react';
+
+import { SelectableValue } from '@grafana/data';
 
 import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
+import { AsyncSelect } from '../Select/Select';
 
 import { Combobox, ComboboxOption } from './Combobox';
+import mdx from './Combobox.mdx';
 
-const chance = new Chance();
-
-type PropsAndCustomArgs = ComponentProps<typeof Combobox> & { numberOfOptions: number };
+type PropsAndCustomArgs<T extends string | number = string> = ComponentProps<typeof Combobox<T>> & {
+  numberOfOptions: number;
+};
 
 const meta: Meta<PropsAndCustomArgs> = {
   title: 'Forms/Combobox',
   component: Combobox,
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
   args: {
     loading: undefined,
     invalid: undefined,
     width: undefined,
+    isClearable: false,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
@@ -37,9 +46,6 @@ const meta: Meta<PropsAndCustomArgs> = {
       { label: 'Honeydew', value: 'honeydew' },
       { label: 'Iceberg Lettuce', value: 'iceberg-lettuce' },
       { label: 'Jackfruit', value: 'jackfruit' },
-      { label: '1', value: 1 },
-      { label: '2', value: 2 },
-      { label: '3', value: 3 },
     ],
     value: 'banana',
   },
@@ -48,15 +54,16 @@ const meta: Meta<PropsAndCustomArgs> = {
   decorators: [InDevDecorator],
 };
 
-const BasicWithState: StoryFn<typeof Combobox> = (args) => {
-  const [value, setValue] = useState(args.value);
+const BasicWithState: StoryFn<PropsAndCustomArgs> = (args) => {
+  const [value, setValue] = useState<string | null>();
   return (
     <Field label="Test input" description="Input with a few options">
       <Combobox
         id="test-combobox"
         {...args}
         value={value}
-        onChange={(val) => {
+        onChange={(val: ComboboxOption | null) => {
+          // TODO: Figure out how to update value on args
           setValue(val?.value || null);
           action('onChange')(val);
         }}
@@ -71,13 +78,12 @@ export const Basic: Story = {};
 
 async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
-    label: chance.sentence({ words: index % 5 }),
-    value: chance.guid(),
-    //description: chance.sentence(),
+    label: 'Option ' + index,
+    value: index.toString(),
   }));
 }
 
-const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs<string>> = ({ numberOfOptions, ...args }) => {
   const [value, setValue] = useState<string | null>(null);
   const [options, setOptions] = useState<ComboboxOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,18 +94,18 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         setIsLoading(false);
         setOptions(options);
         setValue(options[5].value);
-        console.log("I've set stuff");
       });
     }, 1000);
   }, [numberOfOptions]);
 
+  const { onChange, ...rest } = args;
   return (
     <Combobox
-      {...args}
+      {...rest}
       loading={isLoading}
       options={options}
       value={value}
-      onChange={(opt) => {
+      onChange={(opt: ComboboxOption | null) => {
         setValue(opt?.value || null);
         action('onChange')(opt);
       }}
@@ -130,6 +136,168 @@ export const CustomValue: StoryObj<PropsAndCustomArgs> = {
   },
 };
 
+const loadOptionsAction = action('loadOptions called');
+const AsyncStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  // Combobox
+  const [selectedOption, setSelectedOption] = useState<ComboboxOption<string> | null>(null);
+
+  // AsyncSelect
+  const [asyncSelectValue, setAsyncSelectValue] = useState<SelectableValue<string> | null>(null);
+
+  // This simulates a kind of search API call
+  const loadOptionsWithLabels = useCallback((inputValue: string) => {
+    loadOptionsAction(inputValue);
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+  }, []);
+
+  const loadOptionsOnlyValues = useCallback((inputValue: string) => {
+    return fakeSearchAPI(`http://example.com/search?query=${inputValue}`).then((options) =>
+      options.map((opt) => ({ value: opt.label! }))
+    );
+  }, []);
+
+  const loadOptionsWithErrors = useCallback((inputValue: string) => {
+    if (inputValue.length % 2 === 0) {
+      return fakeSearchAPI(`http://example.com/search?query=${inputValue}`);
+    } else {
+      throw new Error('Could not retrieve options');
+    }
+  }, []);
+
+  const { onChange, ...rest } = args;
+
+  return (
+    <>
+      <Field
+        label="Options with labels"
+        description="This tests when options have both a label and a value. Consumers are required to pass in a full ComboboxOption as a value with a label"
+      >
+        <Combobox
+          {...rest}
+          id="test-combobox-one"
+          placeholder="Select an option"
+          options={loadOptionsWithLabels}
+          value={selectedOption}
+          onChange={(val: ComboboxOption | null) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field
+        label="Options without labels"
+        description="Or without labels, where consumer can just pass in a raw scalar value Value"
+      >
+        <Combobox
+          {...args}
+          id="test-combobox-two"
+          placeholder="Select an option"
+          options={loadOptionsOnlyValues}
+          value={selectedOption?.value ?? null}
+          onChange={(val: ComboboxOption | null) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+          createCustomValue={args.createCustomValue}
+        />
+      </Field>
+
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Compared to AsyncSelect">
+        <AsyncSelect
+          id="test-async-select"
+          placeholder="Select an option"
+          loadOptions={loadOptionsWithLabels}
+          value={asyncSelectValue}
+          defaultOptions
+          onChange={(val) => {
+            action('onChange')(val);
+            setAsyncSelectValue(val);
+          }}
+        />
+      </Field>
+
+      <Field label="Async with error" description="An odd number of characters throws an error">
+        <Combobox
+          {...args}
+          id="test-combobox-error"
+          placeholder="Select an option"
+          options={loadOptionsWithErrors}
+          value={selectedOption}
+          onChange={(val: ComboboxOption | null) => {
+            action('onChange')(val);
+            setSelectedOption(val);
+          }}
+        />
+      </Field>
+    </>
+  );
+};
+
+export const Async: StoryObj<PropsAndCustomArgs> = {
+  render: AsyncStory,
+};
+
+const noop = () => {};
+const PositioningTestStory: StoryFn<PropsAndCustomArgs> = (args) => {
+  if (typeof args.options === 'function') {
+    throw new Error('This story does not support async options');
+  }
+
+  function renderColumnOfComboboxes(pos: string) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          flex: 1,
+        }}
+      >
+        <Combobox {...args} placeholder={`${pos} top`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} middle`} options={args.options} value={null} onChange={noop} />
+        <Combobox {...args} placeholder={`${pos} bottom`} options={args.options} value={null} onChange={noop} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+
+        // approx the height of the dev alert, and three margins. exact doesn't matter
+        minHeight: 'calc(100vh - (105px + 16px + 16px + 16px))',
+        justifyContent: 'space-between',
+        gap: 32,
+      }}
+    >
+      {renderColumnOfComboboxes('Left')}
+      {renderColumnOfComboboxes('Middle')}
+      {renderColumnOfComboboxes('Right')}
+    </div>
+  );
+};
+
+export const PositioningTest: StoryObj<PropsAndCustomArgs> = {
+  render: PositioningTestStory,
+};
+
 export default meta;
 
 function InDevDecorator(Story: React.ElementType) {
@@ -144,4 +312,29 @@ function InDevDecorator(Story: React.ElementType) {
       <Story />
     </div>
   );
+}
+
+let fakeApiOptions: Array<ComboboxOption<string>>;
+async function fakeSearchAPI(urlString: string): Promise<Array<ComboboxOption<string>>> {
+  const searchParams = new URL(urlString).searchParams;
+
+  if (!fakeApiOptions) {
+    fakeApiOptions = await generateOptions(1000);
+  }
+
+  const searchQuery = searchParams.get('query')?.toLowerCase();
+
+  if (!searchQuery || searchQuery.length === 0) {
+    return Promise.resolve(fakeApiOptions.slice(0, 10));
+  }
+
+  const filteredOptions = Promise.resolve(
+    fakeApiOptions.filter((opt) => opt.label?.toLowerCase().includes(searchQuery))
+  );
+
+  const delay = searchQuery.length % 2 === 0 ? 200 : 1000;
+
+  return new Promise<Array<ComboboxOption<string>>>((resolve) => {
+    setTimeout(() => resolve(filteredOptions), delay);
+  });
 }

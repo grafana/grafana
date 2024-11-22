@@ -1,60 +1,69 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { usePageToolbar } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
   isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
-  LogMessages,
   logInfo,
+  LogMessages,
   trackAlertRuleFormCancelled,
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
+  trackNewGrafanaAlertRuleFormCancelled,
+  trackNewGrafanaAlertRuleFormError,
+  trackNewGrafanaAlertRuleFormSavedSuccess,
 } from '../../../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useReturnTo } from '../../../hooks/useReturnTo';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { DataSourceType } from '../../../utils/datasource';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
-  MANUAL_ROUTING_KEY,
-  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
+  MANUAL_ROUTING_KEY,
   normalizeDefaultAnnotations,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
 } from '../../../utils/rule-form';
-import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import * as ruleId from '../../../utils/rule-id';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
+import { isGrafanaRecordingRuleByType } from '../../../utils/rules';
 import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -79,10 +88,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
   const [updateRuleInRuleGroup] = useUpdateRuleInRuleGroup();
 
+  const { returnTo } = useReturnTo();
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
 
-  const uidFromParams = routeParams.id;
+  const uidFromParams = routeParams.id || '';
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -98,12 +108,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (queryParams.has('defaults')) {
       return formValuesFromQueryParams(queryParams.get('defaults') ?? '', ruleType);
     }
+    const defaultRuleType = ruleType || RuleFormType.grafana;
 
     return {
       ...getDefaultFormValues(),
       condition: 'C',
-      queries: getDefaultQueries(),
-      type: ruleType || RuleFormType.grafana,
+      queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
+      type: defaultRuleType,
       evaluateEvery: evaluateEvery,
     };
   }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
@@ -134,47 +145,50 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   };
 
   // @todo why is error not propagated to form?
-  const submit = useCallback(
-    async (values: RuleFormValues, exitOnSave: boolean) => {
-      if (conditionErrorMsg !== '') {
-        notifyApp.error(conditionErrorMsg);
-        return;
+  const submit = async (values: RuleFormValues, exitOnSave: boolean) => {
+    if (conditionErrorMsg !== '') {
+      notifyApp.error(conditionErrorMsg);
+      if (!existing && grafanaTypeRule) {
+        // new Grafana-managed rule
+        trackNewGrafanaAlertRuleFormError();
       }
+      return;
+    }
 
-      trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
+    trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
 
-      const ruleDefinition = grafanaTypeRule
-        ? formValuesToRulerGrafanaRuleDTO(values)
-        : formValuesToRulerRuleDTO(values);
+    const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
 
-      const ruleGroupIdentifier = existing
-        ? getRuleGroupLocationFromRuleWithLocation(existing)
-        : getRuleGroupLocationFromFormValues(values);
+    const ruleGroupIdentifier = existing
+      ? getRuleGroupLocationFromRuleWithLocation(existing)
+      : getRuleGroupLocationFromFormValues(values);
 
-      // @TODO move this to a hook too to make sure the logic here is tested for regressions?
-      if (!existing) {
-        // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
-        storeInLocalStorageValues(values);
-        await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
-      } else {
-        const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-        const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
-        await updateRuleInRuleGroup.execute(
-          ruleGroupIdentifier,
-          ruleIdentifier,
-          ruleDefinition,
-          targetRuleGroupIdentifier,
-          evaluateEvery
-        );
-      }
+    const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
+    // @TODO move this to a hook too to make sure the logic here is tested for regressions?
+    if (!existing) {
+      // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
+      storeInLocalStorageValues(values);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
+      grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
+    } else {
+      const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
+      await updateRuleInRuleGroup.execute(
+        ruleGroupIdentifier,
+        ruleIdentifier,
+        ruleDefinition,
+        targetRuleGroupIdentifier,
+        evaluateEvery
+      );
+    }
 
-      const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
-      if (exitOnSave) {
-        const returnTo = queryParams.get('returnTo') || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+    const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
+    if (exitOnSave) {
+      const returnToUrl = returnTo || getReturnToUrl(targetRuleGroupIdentifier, ruleDefinition);
 
-        locationService.push(returnTo);
-        return;
-      }
+      locationService.push(returnToUrl);
+      return;
+    } else {
+      // we stay in the same page
 
       // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
       // After successful update we need to update the URL to avoid displaying 404 errors
@@ -182,18 +196,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
         locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
       }
-    },
-    [
-      addRuleToRuleGroup,
-      conditionErrorMsg,
-      evaluateEvery,
-      existing,
-      grafanaTypeRule,
-      notifyApp,
-      queryParams,
-      updateRuleInRuleGroup,
-    ]
-  );
+    }
+  };
 
   const deleteRule = async () => {
     if (existing) {
@@ -206,78 +210,77 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     }
   };
 
-  const onInvalid: SubmitErrorHandler<RuleFormValues> = useCallback(
-    (errors): void => {
-      trackAlertRuleFormError({
-        grafana_version: config.buildInfo.version,
-        org_id: contextSrv.user.orgId,
-        user_id: contextSrv.user.id,
-        error: Object.keys(errors).toString(),
-        formAction: existing ? 'update' : 'create',
-      });
-      notifyApp.error('There are errors in the form. Please correct them and try again!');
-    },
-    [existing, notifyApp]
-  );
+  const onInvalid: SubmitErrorHandler<RuleFormValues> = (errors): void => {
+    trackAlertRuleFormError({
+      grafana_version: config.buildInfo.version,
+      org_id: contextSrv.user.orgId,
+      user_id: contextSrv.user.id,
+      error: Object.keys(errors).toString(),
+      formAction: existing ? 'update' : 'create',
+    });
+    notifyApp.error('There are errors in the form. Please correct them and try again!');
+  };
 
-  const cancelRuleCreation = useCallback(() => {
+  const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
     trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
+    if (!existing && grafanaTypeRule) {
+      // new Grafana-managed rule
+      trackNewGrafanaAlertRuleFormCancelled();
+    }
     locationService.getHistory().goBack();
-  }, [existing]);
+  };
 
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
-  const actionButtons = useMemo(
-    () => (
-      <Stack justifyContent="flex-end" alignItems="center">
-        {existing && (
-          <Button
-            variant="primary"
-            type="button"
-            size="sm"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule
-          </Button>
-        )}
+  const actionButtons = (
+    <Stack justifyContent="flex-end" alignItems="center">
+      {existing && (
         <Button
+          data-testid="save-rule"
           variant="primary"
           type="button"
           size="sm"
-          onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
           disabled={isSubmitting}
         >
           {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-          Save rule and exit
+          Save rule
         </Button>
-        <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-          Cancel
+      )}
+      <Button
+        data-testid="save-rule-and-exit"
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+        disabled={isSubmitting}
+      >
+        {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule and exit
+      </Button>
+      <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
+        Cancel
+      </Button>
+      {existing ? (
+        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
+          Delete
         </Button>
-        {existing ? (
-          <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
-            Delete
-          </Button>
-        ) : null}
-        {existing && isCortexLokiOrRecordingRule(watch) && (
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={() => setShowEditYaml(true)}
-            disabled={isSubmitting}
-            size="sm"
-          >
-            Edit YAML
-          </Button>
-        )}
-      </Stack>
-    ),
-    [cancelRuleCreation, existing, handleSubmit, isSubmitting, onInvalid, styles.buttonSpinner, submit, watch]
+      ) : null}
+      {existing && isCortexLokiOrRecordingRule(watch) && (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setShowEditYaml(true)}
+          disabled={isSubmitting}
+          size="sm"
+        >
+          Edit YAML
+        </Button>
+      )}
+    </Stack>
   );
-  usePageToolbar(actionButtons);
 
   const isPaused = existing && isGrafanaRulerRule(existing.rule) && isGrafanaRulerRulePaused(existing.rule);
   if (!type) {
@@ -285,42 +288,41 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   }
   return (
     <FormProvider {...formAPI}>
-      {!config.featureToggles.singleTopNav && <AppChromeUpdate actions={actionButtons} />}
+      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
-          <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <Stack direction="column" gap={3}>
-              {/* Step 1 */}
-              <AlertRuleNameAndMetric />
-              {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {/* Step 3-4-5 */}
-              {showDataSourceDependantStep && (
-                <>
-                  {/* Step 3 */}
-                  {isGrafanaManagedRuleByType(type) && (
-                    <GrafanaEvaluationBehavior
-                      evaluateEvery={evaluateEvery}
-                      setEvaluateEvery={setEvaluateEvery}
-                      existing={Boolean(existing)}
-                      enableProvisionedGroups={false}
-                    />
-                  )}
+          <Stack direction="column" gap={3}>
+            {/* Step 1 */}
+            <AlertRuleNameAndMetric />
+            {/* Step 2 */}
+            <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+            {/* Step 3-4-5 */}
+            {showDataSourceDependantStep && (
+              <>
+                {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
 
-                  {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
+                {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
 
-                  {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
+                {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
 
-                  {/* Step 4 & 5 */}
-                  {/* Notifications step*/}
-                  <NotificationsStep alertUid={uidFromParams} />
-                  {/* Annotations only for cloud and Grafana */}
-                  {!isRecordingRuleByType(type) && <AnnotationsStep />}
-                </>
-              )}
-            </Stack>
-          </CustomScrollbar>
+                {/* Step 4 & 5 & 6*/}
+                {isGrafanaManagedRuleByType(type) && (
+                  <GrafanaEvaluationBehaviorStep
+                    evaluateEvery={evaluateEvery}
+                    setEvaluateEvery={setEvaluateEvery}
+                    existing={Boolean(existing)}
+                    enableProvisionedGroups={false}
+                  />
+                )}
+                {/* Notifications step*/}
+                <NotificationsStep alertUid={uidFromParams} />
+                {/* Annotations only for alerting rules */}
+                {!isRecordingRuleByType(type) && <AnnotationsStep />}
+              </>
+            )}
+          </Stack>
         </div>
       </form>
       {showDeleteModal ? (
@@ -384,14 +386,16 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     };
   }
 
-  return ignoreHiddenQueries({
-    ...getDefaultFormValues(),
-    ...ruleFromQueryParams,
-    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-    queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-    type: type || RuleFormType.grafana,
-    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-  });
+  return setInstantOrRange(
+    ignoreHiddenQueries({
+      ...getDefaultFormValues(),
+      ...ruleFromQueryParams,
+      annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+      queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+      type: type || RuleFormType.grafana,
+      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    })
+  );
 }
 
 function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
@@ -399,6 +403,31 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function setInstantOrRange(values: RuleFormValues): RuleFormValues {
+  return {
+    ...values,
+    queries: values.queries?.map((query) => {
+      if (isExpressionQuery(query.model)) {
+        return query;
+      }
+      // data query
+      const defaultToInstant =
+        query.model.datasource?.type === DataSourceType.Loki ||
+        query.model.datasource?.type === DataSourceType.Prometheus;
+      const isInstant =
+        'instant' in query.model && query.model.instant !== undefined ? query.model.instant : defaultToInstant;
+      return {
+        ...query,
+        model: {
+          ...query.model,
+          instant: isInstant,
+          range: !isInstant, // we cannot have both instant and range queries in alerting
+        },
+      };
+    }),
+  };
 }
 
 function storeInLocalStorageValues(values: RuleFormValues) {

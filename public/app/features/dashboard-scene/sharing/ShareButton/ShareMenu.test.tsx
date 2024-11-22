@@ -28,7 +28,6 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    config.featureToggles.publicDashboards = true;
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
     setup({ meta: { canEdit: true } });
@@ -38,7 +37,6 @@ describe('ShareMenu', () => {
     expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
   it('should not share externally when public dashboard is disabled', async () => {
-    config.featureToggles.publicDashboards = false;
     config.publicDashboardsEnabled = false;
     setup();
 

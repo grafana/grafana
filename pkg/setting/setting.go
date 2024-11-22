@@ -5,11 +5,9 @@ package setting
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -175,12 +173,12 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate            string
-	AngularSupportEnabled            bool
-	DisableFrontendSandboxForPlugins []string
-	DisableGravatar                  bool
-	DataProxyWhiteList               map[string]bool
-	ActionsAllowPostURL              string
+	CSPReportOnlyTemplate           string
+	AngularSupportEnabled           bool
+	EnableFrontendSandboxForPlugins []string
+	DisableGravatar                 bool
+	DataProxyWhiteList              map[string]bool
+	ActionsAllowPostURL             string
 
 	TempDataLifetime time.Duration
 
@@ -271,6 +269,8 @@ type Cfg struct {
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
 
+	PasswordlessMagicLinkAuth AuthPasswordlessMagicLinkSettings
+
 	// SSO Settings Auth
 	SSOSettingsReloadInterval        time.Duration
 	SSOSettingsConfigurableProviders map[string]bool
@@ -291,7 +291,7 @@ type Cfg struct {
 	DataProxyUserAgent             string
 
 	// DistributedCache
-	RemoteCacheOptions *RemoteCacheOptions
+	RemoteCacheOptions *RemoteCacheSettings
 
 	ViewersCanEdit  bool
 	EditorsCanAdmin bool
@@ -382,6 +382,7 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	FrontendAnalyticsConsoleReporting   bool
 
 	// LDAP
 	LDAPAuthEnabled       bool
@@ -477,12 +478,7 @@ type Cfg struct {
 	Zanzana ZanzanaSettings
 
 	// GRPC Server.
-	GRPCServerNetwork        string
-	GRPCServerAddress        string
-	GRPCServerTLSConfig      *tls.Config
-	GRPCServerEnableLogging  bool // log request and response of each unary gRPC call
-	GRPCServerMaxRecvMsgSize int
-	GRPCServerMaxSendMsgSize int
+	GRPCServer GRPCServerSettings
 
 	CustomResponseHeaders map[string]string
 
@@ -531,7 +527,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
+	UnifiedStorage    map[string]UnifiedStorageConfig
+	IndexPath         string
+	IndexWorkers      int
+	IndexMaxBatchSize int
+	IndexListLimit    int
 }
 
 type UnifiedStorageConfig struct {
@@ -1157,6 +1157,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1242,6 +1243,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
 	cfg.readSessionConfig()
+	cfg.readPasswordlessMagicLinkSettings()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
 	}
@@ -1290,19 +1292,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
 
-	cacheServer := iniFile.Section("remote_cache")
-	dbName := valueAsString(cacheServer, "type", "database")
-	connStr := valueAsString(cacheServer, "connstr", "")
-	prefix := valueAsString(cacheServer, "prefix", "")
-	encryption := cacheServer.Key("encryption").MustBool(false)
-
-	cfg.RemoteCacheOptions = &RemoteCacheOptions{
-		Name:       dbName,
-		ConnStr:    connStr,
-		Prefix:     prefix,
-		Encryption: encryption,
-	}
-
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
@@ -1316,6 +1305,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
+	cfg.readRemoteCacheSettings()
 	cfg.readDateFormats()
 	cfg.readGrafanaJavascriptAgentConfig()
 
@@ -1338,7 +1328,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
 
-	// read unifed storage config
+	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
 	return nil
@@ -1346,13 +1336,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
 	return section.Key(keyName).MustString(defaultValue)
-}
-
-type RemoteCacheOptions struct {
-	Name       string
-	ConnStr    string
-	Prefix     string
-	Encryption bool
 }
 
 func (cfg *Cfg) readSAMLConfig() {
@@ -1555,10 +1538,10 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
-	disableFrontendSandboxForPlugins := security.Key("disable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
+	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
+	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
-		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
+		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
@@ -1805,71 +1788,6 @@ func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
 	if err == nil && enabled {
 		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
 		return fmt.Errorf("invalid setting [alerting].enabled")
-	}
-	return nil
-}
-
-func readGRPCServerSettings(cfg *Cfg, iniFile *ini.File) error {
-	server := iniFile.Section("grpc_server")
-	errPrefix := "grpc_server:"
-	useTLS := server.Key("use_tls").MustBool(false)
-	certFile := server.Key("cert_file").String()
-	keyFile := server.Key("cert_key").String()
-	if useTLS {
-		serverCert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return fmt.Errorf("%s error loading X509 key pair: %w", errPrefix, err)
-		}
-		cfg.GRPCServerTLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{serverCert},
-			ClientAuth:   tls.NoClientCert,
-		}
-	}
-
-	cfg.GRPCServerNetwork = valueAsString(server, "network", "tcp")
-	cfg.GRPCServerAddress = valueAsString(server, "address", "")
-	cfg.GRPCServerEnableLogging = server.Key("enable_logging").MustBool(false)
-	cfg.GRPCServerMaxRecvMsgSize = server.Key("max_recv_msg_size").MustInt(0)
-	cfg.GRPCServerMaxSendMsgSize = server.Key("max_send_msg_size").MustInt(0)
-	switch cfg.GRPCServerNetwork {
-	case "unix":
-		if cfg.GRPCServerAddress != "" {
-			// Explicitly provided path for unix domain socket.
-			if stat, err := os.Stat(cfg.GRPCServerAddress); os.IsNotExist(err) {
-				// File does not exist - nice, nothing to do.
-			} else if err != nil {
-				return fmt.Errorf("%s error getting stat for a file: %s", errPrefix, cfg.GRPCServerAddress)
-			} else {
-				if stat.Mode()&fs.ModeSocket == 0 {
-					return fmt.Errorf("%s file %s already exists and is not a unix domain socket", errPrefix, cfg.GRPCServerAddress)
-				}
-				// Unix domain socket file, should be safe to remove.
-				err := os.Remove(cfg.GRPCServerAddress)
-				if err != nil {
-					return fmt.Errorf("%s can't remove unix socket file: %s", errPrefix, cfg.GRPCServerAddress)
-				}
-			}
-		} else {
-			// Use temporary file path for a unix domain socket.
-			tf, err := os.CreateTemp("", "gf_grpc_server_api")
-			if err != nil {
-				return fmt.Errorf("%s error creating tmp file: %v", errPrefix, err)
-			}
-			unixPath := tf.Name()
-			if err := tf.Close(); err != nil {
-				return fmt.Errorf("%s error closing tmp file: %v", errPrefix, err)
-			}
-			if err := os.Remove(unixPath); err != nil {
-				return fmt.Errorf("%s error removing tmp file: %v", errPrefix, err)
-			}
-			cfg.GRPCServerAddress = unixPath
-		}
-	case "tcp":
-		if cfg.GRPCServerAddress == "" {
-			cfg.GRPCServerAddress = "127.0.0.1:10000"
-		}
-	default:
-		return fmt.Errorf("%s unsupported network %s", errPrefix, cfg.GRPCServerNetwork)
 	}
 	return nil
 }

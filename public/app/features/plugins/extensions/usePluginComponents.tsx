@@ -8,8 +8,10 @@ import {
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
-import { isExtensionPointMetaInfoMissing, isGrafanaDevMode, logWarning } from './utils';
-import { isExtensionPointIdValid } from './validators';
+import * as errors from './errors';
+import { log } from './logs/log';
+import { isGrafanaDevMode } from './utils';
+import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginComponents<Props extends object = {}>({
@@ -26,21 +28,17 @@ export function usePluginComponents<Props extends object = {}>({
     const components: Array<React.ComponentType<Props>> = [];
     const extensionsByPlugin: Record<string, number> = {};
     const pluginId = pluginContext?.meta.id ?? '';
+    const pointLog = log.child({
+      pluginId,
+      extensionPointId,
+    });
 
     if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
-      logWarning(
-        `Extension point usePluginComponents("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
-      );
-      return {
-        isLoading: false,
-        components: [],
-      };
+      pointLog.error(errors.INVALID_EXTENSION_POINT_ID);
     }
 
     if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      logWarning(
-        `usePluginComponents("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`
-      );
+      pointLog.error(errors.EXTENSION_POINT_META_INFO_MISSING);
       return {
         isLoading: false,
         components: [],

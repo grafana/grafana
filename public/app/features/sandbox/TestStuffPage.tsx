@@ -19,7 +19,6 @@ export const TestStuffPage = () => {
     <Page navModel={{ node: node, main: node }}>
       <Stack>
         <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
-
         <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
           Success
         </Button>

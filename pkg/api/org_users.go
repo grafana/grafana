@@ -161,6 +161,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 
 	for _, u := range orgUsersResult.OrgUsers {
 		result = append(result, &dtos.UserLookupDTO{
+			UID:       u.UID,
 			UserID:    u.UserID,
 			Login:     u.Login,
 			AvatarURL: u.AvatarURL,

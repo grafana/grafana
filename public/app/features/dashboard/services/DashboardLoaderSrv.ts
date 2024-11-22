@@ -2,7 +2,7 @@ import $ from 'jquery';
 import _, { isFunction } from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
-import { AppEvents, dateMath, UrlQueryValue } from '@grafana/data';
+import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -35,7 +35,12 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
+  loadDashboard(
+    type: UrlQueryValue,
+    slug: string | undefined,
+    uid: string | undefined,
+    params?: UrlQueryMap
+  ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager();
     let promise;
 
@@ -77,13 +82,15 @@ export class DashboardLoaderSrv {
           };
         });
     } else if (uid) {
-      const cachedDashboard = stateManager.getDashboardFromCache(uid);
-      if (cachedDashboard) {
-        return Promise.resolve(cachedDashboard);
+      if (!params) {
+        const cachedDashboard = stateManager.getDashboardFromCache(uid);
+        if (cachedDashboard) {
+          return Promise.resolve(cachedDashboard);
+        }
       }
 
       promise = getDashboardAPI()
-        .getDashboardDTO(uid)
+        .getDashboardDTO(uid, params)
         .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);

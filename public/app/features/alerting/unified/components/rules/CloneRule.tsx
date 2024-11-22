@@ -1,6 +1,5 @@
 import { forwardRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Navigate } from 'react-router-dom-v5-compat';
+import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { Button, ConfirmModal } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';

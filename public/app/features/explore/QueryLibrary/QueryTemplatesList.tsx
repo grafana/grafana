@@ -1,19 +1,21 @@
 import { css } from '@emotion/css';
-import { uniqBy } from 'lodash';
+import { compact, uniq, uniqBy } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { getAppEvents, getDataSourceSrv } from '@grafana/runtime';
-import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack } from '@grafana/ui';
+import { EmptyState, FilterInput, InlineLabel, MultiSelect, Spinner, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createQueryText } from 'app/core/utils/richHistory';
 import { useAllQueryTemplatesQuery } from 'app/features/query-library';
+import { getUserInfo } from 'app/features/query-library/api/user';
 import { QueryTemplate } from 'app/features/query-library/types';
 
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 import { QueryLibraryProps } from './QueryLibrary';
 import { queryLibraryTrackFilterDatasource } from './QueryLibraryAnalyticsEvents';
+import { QueryLibraryExpmInfo } from './QueryLibraryExpmInfo';
 import QueryTemplatesTable from './QueryTemplatesTable';
 import { QueryTemplateRow } from './QueryTemplatesTable/types';
 import { searchQueryLibrary } from './utils/search';
@@ -22,10 +24,13 @@ interface QueryTemplatesListProps extends QueryLibraryProps {}
 
 export function QueryTemplatesList(props: QueryTemplatesListProps) {
   const { data, isLoading, error } = useAllQueryTemplatesQuery();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [datasourceFilters, setDatasourceFilters] = useState<Array<SelectableValue<string>>>(
     props.activeDatasources?.map((ds) => ({ value: ds, label: ds })) || []
   );
+  const [userData, setUserData] = useState<string[]>([]);
+  const [userFilters, setUserFilters] = useState<Array<SelectableValue<string>>>([]);
 
   const [allQueryTemplateRows, setAllQueryTemplateRows] = useState<QueryTemplateRow[]>([]);
   const [isRowsLoading, setIsRowsLoading] = useState(true);
@@ -40,6 +45,26 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
         return;
       }
 
+      let userDataList;
+      const userQtList = uniq(compact(data.map((qt) => qt.user?.uid)));
+      const usersParam = userQtList.map((userUid) => `key=${encodeURIComponent(userUid)}`).join('&');
+      try {
+        userDataList = await getUserInfo(`?${usersParam}`);
+      } catch (error) {
+        getAppEvents().publish({
+          type: AppEvents.alertError.name,
+          payload: [
+            t('query-library.user-info-get-error', 'Error attempting to get user info from the library: {{error}}', {
+              error: JSON.stringify(error),
+            }),
+          ],
+        });
+        setIsRowsLoading(false);
+        return;
+      }
+
+      setUserData(userDataList.display.map((user) => user.displayName));
+
       const rowsPromises = data.map(async (queryTemplate: QueryTemplate, index: number) => {
         try {
           const datasourceRef = queryTemplate.targets[0]?.datasource;
@@ -48,6 +73,9 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           const query = queryTemplate.targets[0];
           const queryText = createQueryText(query, datasourceApi);
           const datasourceName = datasourceApi?.name || '';
+          const extendedUserData = userDataList.display.find(
+            (user) => `${user?.identity.type}:${user?.identity.name}` === queryTemplate.user?.uid
+          );
 
           return {
             index: index.toString(),
@@ -59,7 +87,11 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
             query,
             queryText,
             description: queryTemplate.title,
-            user: queryTemplate.user,
+            user: {
+              uid: queryTemplate.user?.uid || '',
+              displayName: extendedUserData?.displayName || '',
+              avatarUrl: extendedUserData?.avatarUrl || '',
+            },
           };
         } catch (error) {
           getAppEvents().publish({
@@ -97,9 +129,10 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
       searchQueryLibrary(
         allQueryTemplateRows,
         searchQuery,
-        datasourceFilters.map((f) => f.value || '')
+        datasourceFilters.map((f) => f.value || ''),
+        userFilters.map((f) => f.value || '')
       ),
-    [allQueryTemplateRows, searchQuery, datasourceFilters]
+    [allQueryTemplateRows, searchQuery, datasourceFilters, userFilters]
   );
 
   const datasourceNames = useMemo(() => {
@@ -132,6 +165,7 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
 
   return (
     <>
+      <QueryLibraryExpmInfo isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)} />
       <Stack gap={0.5}>
         <FilterInput
           className={styles.searchInput}
@@ -156,6 +190,31 @@ export function QueryTemplatesList(props: QueryTemplatesListProps) {
           })}
           placeholder={'Filter queries for data sources(s)'}
           aria-label={'Filter queries for data sources(s)'}
+        />
+        <InlineLabel className={styles.label} width="auto">
+          <Trans i18nKey="query-library.user-names">User name(s):</Trans>
+        </InlineLabel>
+        <MultiSelect
+          className={styles.multiSelect}
+          onChange={(items, actionMeta) => {
+            setUserFilters(items);
+            actionMeta.action === 'select-option' && queryLibraryTrackFilterDatasource();
+          }}
+          value={userFilters}
+          options={userData.map((r) => {
+            return { value: r, label: r };
+          })}
+          placeholder={'Filter queries for user name(s)'}
+          aria-label={'Filter queries for user name(s)'}
+        />
+        <Badge
+          text=""
+          icon="info"
+          aria-label="info"
+          tooltip={'Click here for more informationn about Query library'}
+          color="blue"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setIsModalOpen(true)}
         />
       </Stack>
       <QueryTemplatesTable queryTemplateRows={queryTemplateRows} />

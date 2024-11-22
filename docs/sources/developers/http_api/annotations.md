@@ -257,8 +257,6 @@ Content-Type: application/json
 
 ## Patch Annotation
 
-> This is available in Grafana 6.0.0-beta2 and above.
-
 `PATCH /api/annotations/:id`
 
 Updates one or more properties of an annotation that matches the specified id.

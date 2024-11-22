@@ -13,6 +13,7 @@ import {
   MetricSelectedEvent,
   VAR_FILTERS,
   VAR_OTEL_DEPLOYMENT_ENV,
+  VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
@@ -507,12 +508,21 @@ describe('DataTrail', () => {
       throw new Error('getOtelResourcesVar failed');
     }
 
+    function getOtelGroupLeftVar(trail: DataTrail) {
+      const variable = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
+      if (variable instanceof ConstantVariable) {
+        return variable;
+      }
+      throw new Error('getOtelResourcesVar failed');
+    }
+
     beforeEach(() => {
       trail = new DataTrail({});
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
       getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
       getOtelDepEnvVar(trail).changeValueTo('production');
+      getOtelGroupLeftVar(trail).setState({ value: 'attribute1,attribute2' });
     });
 
     it('should start with hidden dep env variable', () => {
@@ -545,6 +555,10 @@ describe('DataTrail', () => {
 
     it('should add history step for when updating the dep env variable', () => {
       expect(trail.state.history.state.steps[3].type).toBe('dep_env');
+    });
+
+    it('should have a group left variable for resource attributes', () => {
+      expect(getOtelGroupLeftVar(trail).state.value).toBe('attribute1,attribute2');
     });
   });
 });
