@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -412,7 +413,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 
-	t.Run("Do CRUD (just CR for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+	t.Run("Do CRUD (just CR+List for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
 			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
@@ -462,6 +463,15 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.Equal(t, "New description", description)
 		// #TODO figure out why this breaks just for MySQL integration tests
 		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+
+		// ensure that we get 4 items when listing via k8s
+		l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, l)
+		folders, err := meta.ExtractList(l)
+		require.NoError(t, err)
+		require.NotNil(t, folders)
+		require.Equal(t, len(folders), 4)
 	})
 	return helper
 }

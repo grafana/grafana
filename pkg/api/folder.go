@@ -729,7 +729,7 @@ func (fk8s *folderK8sHandler) getFolders(c *contextmodel.ReqContext) {
 			return
 		}
 
-		// it we are at root level, skip subfolver
+		// it we are at root level, skip subfolder
 		if parentUid == "" && f.ParentUID != "" {
 			continue // query filter
 		}
