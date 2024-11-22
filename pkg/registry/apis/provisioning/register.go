@@ -11,7 +11,7 @@ import (
 	"slices"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -208,6 +208,11 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		return
 	}
 
+	if err := b.ensureRepositoryFolderExists(ctx, cfg); err != nil {
+		b.logger.Error("failed to ensure repository folder exists", "error", err)
+		return
+	}
+
 	if err := repo.AfterCreate(ctx); err != nil {
 		b.logger.Error("failed to run after create", "error", err)
 		return
@@ -234,6 +239,10 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 		return nil, fmt.Errorf("get old repository: %w", err)
 	}
 
+	if err := b.ensureRepositoryFolderExists(ctx, objCfg); err != nil {
+		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
+	}
+
 	undo, err := repo.BeginUpdate(ctx, oldRepo)
 	if err != nil {
 		return nil, err
@@ -246,6 +255,58 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 			}
 		}
 	}, nil
+}
+
+func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
+	// TODO: This needs an integration test.
+
+	if cfg.Spec.Folder == "" {
+		// The root folder can't not exist, so we don't have to do anything.
+		return nil
+	}
+
+	client, err := b.client.Client(cfg.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	lookup := newKindsLookup(client)
+	folderResource, ok := lookup.Resource(schema.GroupVersionKind{
+		Group:   "folder.grafana.app",
+		Version: "v0alpha1",
+		Kind:    "Folder",
+	})
+	if !ok {
+		return fmt.Errorf("failed to get resource client of the Folder kind")
+	}
+	folderIface := client.Resource(folderResource).Namespace(cfg.GetNamespace())
+
+	_, err = folderIface.Get(ctx, cfg.GetName(), metav1.GetOptions{})
+	if err == nil {
+		// The folder exists and doesn't need to be created.
+		return nil
+	} else if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("failed to search for existing repo folder: %w", err)
+	}
+
+	title := cfg.Spec.Title
+	if title == "" {
+		title = cfg.Spec.Folder
+	}
+
+	_, err = folderIface.Create(ctx, &unstructured.Unstructured{
+		Object: map[string]any{
+			"metadata": map[string]any{
+				"name":      cfg.Spec.Folder,
+				"namespace": cfg.GetNamespace(),
+			},
+			"spec": map[string]any{
+				"title":       title,
+				"description": "Repository-managed folder.",
+			},
+		},
+	}, metav1.CreateOptions{})
+	return err
 }
 
 func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.DeleteOptions) {
@@ -357,7 +418,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	}
 
 	if len(list) > 0 {
-		return errors.NewInvalid(schema.GroupKind{
+		return apierrors.NewInvalid(schema.GroupKind{
 			Group: provisioning.GROUP,
 			Kind:  "Repository", //??
 		}, a.GetName(), list)
