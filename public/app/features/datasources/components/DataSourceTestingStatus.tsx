@@ -77,10 +77,10 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
 interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
-  errorDetailsLink?: string;
+  link?: string;
 }
 
-const ErrorDetailsLink = ({ errorDetailsLink }: ErrorDetailsLinkProps) => {
+const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
   const theme = useTheme2();
   const styles = {
     content: css({
@@ -90,12 +90,10 @@ const ErrorDetailsLink = ({ errorDetailsLink }: ErrorDetailsLinkProps) => {
       overflowY: 'auto',
     }),
   };
-  if (!errorDetailsLink) {
+  if (!link) {
     return <></>;
   }
-  const isValidUrl = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(
-    errorDetailsLink
-  );
+  const isValidUrl = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(link);
   if (!isValidUrl) {
     return <></>;
   }
@@ -106,7 +104,7 @@ const ErrorDetailsLink = ({ errorDetailsLink }: ErrorDetailsLinkProps) => {
         <Link
           aria-label={`More details about the error`}
           className={'external-link'}
-          href={errorDetailsLink}
+          href={link}
           target="_blank"
           rel="noreferrer"
         >
@@ -160,9 +158,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                   onDashboardLinkClicked={onDashboardLinkClicked}
                 />
               ) : null}
-              {severity === 'error' && errorDetailsLink ? (
-                <ErrorDetailsLink errorDetailsLink={String(errorDetailsLink)} />
-              ) : null}
+              {severity === 'error' && errorDetailsLink ? <ErrorDetailsLink link={String(errorDetailsLink)} /> : null}
               {detailsVerboseMessage ? (
                 <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}
