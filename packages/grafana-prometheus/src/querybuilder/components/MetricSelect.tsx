@@ -1,8 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/MetricSelect.tsx
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import { RefCallback, useCallback, useState } from 'react';
-import * as React from 'react';
+import { isValidElement, RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
@@ -234,9 +233,9 @@ export function MetricSelect({
     const theme = useTheme2();
     const stylesMenu = getSelectStyles(theme);
 
-    // Show the results trucated warning only if the options are loaded and the results are truncated
+    // Show the results truncated warning only if the options are loaded and the results are truncated
     // The children are a react node(options loading node) or an array(not a valid element)
-    const optionsLoaded = !React.isValidElement(children) && state.resultsTruncated;
+    const optionsLoaded = !isValidElement(children) && state.resultsTruncated;
 
     return (
       <div

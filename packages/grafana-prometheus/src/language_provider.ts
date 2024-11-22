@@ -212,7 +212,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const interpolatedAndEscapedName = escapeForUtf8Support(interpolatedName);
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
-    return value ?? [];
+    return value ? value.map(utf8Support) : [];
   };
 
   async getLabelValues(key: string): Promise<string[]> {

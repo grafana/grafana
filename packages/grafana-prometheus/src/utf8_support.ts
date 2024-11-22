@@ -42,7 +42,7 @@ export const escapeForUtf8Support = (value: string) => {
   return escaped;
 };
 
-function isValidLegacyName(name: string): boolean {
+export const isValidLegacyName = (name: string): boolean => {
   if (name.length === 0) {
     return false;
   }
@@ -55,12 +55,12 @@ function isValidLegacyName(name: string): boolean {
   }
 
   return true;
-}
+};
 
 // const labelNamePriorToUtf8Support = /^[a-zA-Z_:][a-zA-Z0-9_:]*$/;
 // instead of regex we use rune check (converted from prometheus code)
 // https://github.com/prometheus/common/blob/main/model/metric.go#L426-L428
-function isValidLegacyRune(char: string, index: number): boolean {
+const isValidLegacyRune = (char: string, index: number): boolean => {
   const codePoint = char.codePointAt(0);
   if (codePoint === undefined) {
     return false;
@@ -73,9 +73,9 @@ function isValidLegacyRune(char: string, index: number): boolean {
     codePoint === 58 || // ':'
     (codePoint >= 48 && codePoint <= 57 && index > 0) // '0' to '9', but not at the start
   );
-}
+};
 
-function isValidCodePoint(codePoint: number): boolean {
+const isValidCodePoint = (codePoint: number): boolean => {
   // Validate the code point for UTF-8 compliance if needed.
   return codePoint >= 0 && codePoint <= 0x10ffff;
-}
+};

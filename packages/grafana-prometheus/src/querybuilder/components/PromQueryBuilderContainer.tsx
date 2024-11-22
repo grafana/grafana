@@ -83,7 +83,7 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
         data={data}
         showExplain={showExplain}
       />
-      {<QueryPreview query={query.expr} />}
+      <QueryPreview query={query.expr} />
     </>
   );
 }
