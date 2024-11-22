@@ -64,6 +64,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/provisioning/:slug/:path/*',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Provisioning,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "DashboardScenePage" */ '../features/dashboard-scene/pages/DashboardScenePage')
+      ),
+    },
+    {
       path: '/dashboard/:type/:slug',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,

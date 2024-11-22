@@ -43,6 +43,7 @@ interface DashboardCacheEntry {
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
+  slug?: string;
   urlFolderUid?: string;
   params?: {
     version: number;
@@ -68,6 +69,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     route,
     urlFolderUid,
     params,
+    slug,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -101,6 +103,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           }
 
           break;
+
+        case DashboardRoutes.Provisioning: {
+          return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
+        }
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
