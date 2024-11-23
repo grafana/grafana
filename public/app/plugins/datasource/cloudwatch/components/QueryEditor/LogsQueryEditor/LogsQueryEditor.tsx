@@ -14,10 +14,10 @@ type Props = QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
   query: CloudWatchLogsQuery;
 };
 
-const labelClass = css`
-  margin-left: 3px;
-  flex-grow: 0;
-`;
+const labelClass = css({
+  marginLeft: '3px',
+  flexGrow: 0,
+});
 
 export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor(props: Props) {
   const { query, data, datasource } = props;

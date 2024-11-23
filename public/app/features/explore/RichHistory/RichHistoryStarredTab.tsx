@@ -33,39 +33,39 @@ export interface RichHistoryStarredTabProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-    `,
-    containerContent: css`
-      width: 100%;
-    `,
-    selectors: css`
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    `,
-    multiselect: css`
-      width: 100%;
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    filterInput: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    sort: css`
-      width: 170px;
-    `,
-    footer: css`
-      height: 60px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: ${theme.typography.fontWeightLight};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      a {
-        font-weight: ${theme.typography.fontWeightMedium};
-        margin-left: ${theme.spacing(0.25)};
-      }
-    `,
+    container: css({
+      display: 'flex',
+    }),
+    containerContent: css({
+      width: '100%',
+    }),
+    selectors: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    }),
+    multiselect: css({
+      width: '100%',
+      marginBottom: theme.spacing(1),
+    }),
+    filterInput: css({
+      marginBottom: theme.spacing(1),
+    }),
+    sort: css({
+      width: '170px',
+    }),
+    footer: css({
+      height: '60px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      fontWeight: theme.typography.fontWeightLight,
+      fontSize: theme.typography.bodySmall.fontSize,
+      a: {
+        fontWeight: theme.typography.fontWeightMedium,
+        marginLeft: theme.spacing(0.25),
+      },
+    }),
   };
 };
 

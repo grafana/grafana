@@ -213,6 +213,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
 		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
+		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -359,6 +360,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
+		PasswordlessEnabled:           hs.Cfg.PasswordlessMagicLinkAuth.Enabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordlessMagicLinkAuthentication),
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

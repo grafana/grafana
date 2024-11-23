@@ -186,10 +186,7 @@ describe('getPluginExtensions()', () => {
     getPluginExtensions({ ...registries, context, extensionPointId: extensionPoint2 });
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(link2.configure).toHaveBeenCalledWith(
-      context,
-      expect.objectContaining({ isAppOpened: expect.any(Function) })
-    );
+    expect(link2.configure).toHaveBeenCalledWith(context);
   });
 
   test('should be possible to update the basic properties with the configure() function', async () => {

@@ -42,7 +42,7 @@ describe('filterByRefId transformer', () => {
       const cfg = {
         id: DataTransformerID.filterByRefId,
         options: {
-          include: 'A|B',
+          include: '/A|B/',
         },
       };
 

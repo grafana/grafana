@@ -3,8 +3,8 @@ import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 

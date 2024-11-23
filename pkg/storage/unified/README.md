@@ -240,6 +240,14 @@ Make sure you have the gRPC address in the `[grafana-apiserver]` section of your
 address = localhost:10000
 ```
 
+You also need the `[grpc_server_authentication]` section to authenticate incoming requests:
+```ini
+[grpc_server_authentication]
+; http url to Grafana's signing keys to validate incoming id tokens
+signing_keys_url = http://localhost:3000/api/signing-keys/keys
+mode = "on-prem"
+```
+
 This currently only works with a separate database configuration (see previous section).
 
 Start the storage-server with:

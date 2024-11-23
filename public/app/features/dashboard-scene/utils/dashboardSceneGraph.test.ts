@@ -4,9 +4,9 @@ import { DashboardCursorSync } from '@grafana/schema';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';

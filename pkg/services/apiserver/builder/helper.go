@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,6 +23,8 @@ import (
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -49,6 +50,12 @@ var PathRewriters = []filters.PathRewriter{
 	},
 	{
 		Pattern: regexp.MustCompile(`(/apis/iam.grafana.app/v0alpha1/namespaces/.*/display$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/dashboard.grafana.app/v0alpha1/namespaces/.*/search$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
 		},
@@ -103,6 +110,7 @@ func SetupConfig(
 	buildBranch string,
 	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
 ) error {
+	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
@@ -166,7 +174,7 @@ func InstallAPIs(
 	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
-	features featuremgmt.FeatureToggles,
+	optsregister apistore.StorageOptionsRegister,
 ) error {
 	// dual writing is only enabled when the storage type is not legacy.
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
@@ -242,6 +250,7 @@ func InstallAPIs(
 				OptsGetter:       optsGetter,
 				DualWriteBuilder: dualWrite,
 				MetricsRegister:  reg,
+				StorageOptions:   optsregister,
 			}); err != nil {
 				return err
 			}

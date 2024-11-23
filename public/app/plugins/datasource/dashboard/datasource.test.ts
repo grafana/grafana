@@ -6,6 +6,8 @@ import {
   LoadingState,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SafeSerializableSceneObject,
   SceneDataNode,
@@ -21,6 +23,10 @@ import { DashboardDatasource } from './datasource';
 import { DashboardQuery } from './types';
 
 standardTransformersRegistry.setInit(getStandardTransformers);
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
 
 describe('DashboardDatasource', () => {
   it("should look up the other panel and subscribe to it's data", async () => {

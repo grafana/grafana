@@ -77,7 +77,7 @@ export enum PromApplication {
   Thanos = 'Thanos',
 }
 
-export type RulesSourceApplication = PromApplication | 'loki' | 'grafana';
+export type RulesSourceApplication = PromApplication | 'Loki' | 'grafana';
 
 export interface PromBuildInfoResponse {
   data: {
@@ -96,7 +96,7 @@ export interface PromBuildInfoResponse {
 }
 
 export interface PromApiFeatures {
-  application?: PromApplication;
+  application: RulesSourceApplication;
   features: {
     rulerApiEnabled: boolean;
   };
@@ -224,6 +224,7 @@ export interface GrafanaNotificationSettings {
 
 export interface GrafanaEditorSettings {
   simplified_query_and_expressions_section: boolean;
+  simplified_notifications_section: boolean;
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

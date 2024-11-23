@@ -2,7 +2,11 @@ package unifiedSearch
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -147,13 +151,11 @@ func (s *StandardSearchService) DoQuery(ctx context.Context, user *backend.User,
 		return &backend.DataResponse{Error: err}
 	}
 
-	query := s.doQuery(ctx, signedInUser, orgID, q)
-	return query
+	return s.doQuery(ctx, signedInUser, orgID, q)
 }
 
 func (s *StandardSearchService) doQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q Query) *backend.DataResponse {
-	response := s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
-	return response
+	return s.doSearchQuery(ctx, q, s.cfg.AppSubURL, orgID)
 }
 
 func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ string, orgID int64) *backend.DataResponse {
@@ -162,20 +164,165 @@ func (s *StandardSearchService) doSearchQuery(ctx context.Context, qry Query, _ 
 	// will use stack id for cloud and org id for on-prem
 	tenantId := request.GetNamespaceMapper(s.cfg)(orgID)
 
-	req := &resource.SearchRequest{Tenant: tenantId, Query: qry.Query, Limit: int64(qry.Limit), Offset: int64(qry.From)}
+	req := newSearchRequest(tenantId, qry)
 	res, err := s.resourceClient.Search(ctx, req)
 	if err != nil {
-		s.logger.Error("Failed to search resources", "error", err)
-		response.Error = err
-		return response
+		return s.error(err, "Failed to search resources", response)
 	}
 
-	// TODO: implement this correctly
-	frame := data.NewFrame("results", data.NewField("value", nil, []string{}))
-	frame.Meta = &data.FrameMeta{Notices: []data.Notice{{Text: "TODO"}}}
-	for _, r := range res.Items {
-		frame.AppendRow(string(r.Value))
+	frame, err := loadSearchResponse(res, s)
+	if err != nil {
+		return s.error(err, "Failed to load search response", response)
 	}
+
 	response.Frames = append(response.Frames, frame)
+
+	if len(res.Groups) > 0 {
+		tagsFrame := loadTagsResponse(res)
+		response.Frames = append(response.Frames, tagsFrame)
+	}
+
 	return response
+}
+
+func (s *StandardSearchService) error(err error, message string, response *backend.DataResponse) *backend.DataResponse {
+	s.logger.Error(message, "error", err)
+	response.Error = err
+	return response
+}
+
+func loadSearchResponse(res *resource.SearchResponse, s *StandardSearchService) (*data.Frame, error) {
+	frame := newSearchFrame(res)
+	for _, r := range res.Items {
+		doc, err := getDoc(r.Value)
+		if err != nil {
+			s.logger.Error("Failed to parse doc", "error", err)
+			return nil, err
+		}
+		kind := strings.ToLower(doc.Kind)
+		link := dashboardPageItemLink(doc, s.cfg.AppSubURL)
+		frame.AppendRow(kind, doc.UID, doc.Spec.Title, link, doc.Spec.Tags, doc.FolderID)
+	}
+	return frame, nil
+}
+
+func loadTagsResponse(res *resource.SearchResponse) *data.Frame {
+	tagsFrame := newTagsFrame()
+	for _, grp := range res.Groups {
+		tagsFrame.AppendRow(grp.Name, grp.Count)
+	}
+	return tagsFrame
+}
+
+func newSearchFrame(res *resource.SearchResponse) *data.Frame {
+	fUID := newField("uid", data.FieldTypeString)
+	fKind := newField("kind", data.FieldTypeString)
+	fName := newField("name", data.FieldTypeString)
+	fLocation := newField("location", data.FieldTypeString)
+	fTags := newField("tags", data.FieldTypeNullableJSON)
+	fURL := newField("url", data.FieldTypeString)
+	fURL.Config = &data.FieldConfig{
+		Links: []data.DataLink{
+			{Title: "link", URL: "${__value.text}"},
+		},
+	}
+
+	frame := data.NewFrame("Query results", fKind, fUID, fName, fURL, fTags, fLocation)
+
+	frame.SetMeta(&data.FrameMeta{
+		Type: "search-results",
+		Custom: &customMeta{
+			Count: uint64(len(res.Items)),
+		},
+	})
+	return frame
+}
+
+func newTagsFrame() *data.Frame {
+	fTag := newField("tag", data.FieldTypeString)
+	fCount := newField("count", data.FieldTypeInt64)
+	return data.NewFrame("tags", fTag, fCount)
+}
+
+func dashboardPageItemLink(doc *DashboardListDoc, subURL string) string {
+	if doc.FolderID == "" {
+		return fmt.Sprintf("%s/d/%s/%s", subURL, doc.Name, doc.Namespace)
+	}
+	return fmt.Sprintf("%s/dashboards/f/%s/%s", subURL, doc.Name, doc.Namespace)
+}
+
+type customMeta struct {
+	Count    uint64  `json:"count"`
+	MaxScore float64 `json:"max_score,omitempty"`
+	SortBy   string  `json:"sortBy,omitempty"`
+}
+
+type DashboardListDoc struct {
+	UID       string    `json:"Uid"`
+	Group     string    `json:"Group"`
+	Namespace string    `json:"Namespace"`
+	Kind      string    `json:"Kind"`
+	Name      string    `json:"Name"`
+	CreatedAt time.Time `json:"CreatedAt"`
+	CreatedBy string    `json:"CreatedBy"`
+	UpdatedAt time.Time `json:"UpdatedAt"`
+	UpdatedBy string    `json:"UpdatedBy"`
+	FolderID  string    `json:"FolderId"`
+	Spec      struct {
+		Title string           `json:"title"`
+		Tags  *json.RawMessage `json:"tags"`
+	} `json:"Spec"`
+}
+
+func getDoc(data []byte) (*DashboardListDoc, error) {
+	res := &DashboardListDoc{}
+	err := json.Unmarshal(data, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func newSearchRequest(tenant string, qry Query) *resource.SearchRequest {
+	groupBy := make([]*resource.GroupBy, len(qry.Facet))
+	for _, g := range qry.Facet {
+		groupBy = append(groupBy, &resource.GroupBy{Name: g.Field, Limit: int64(g.Limit)})
+	}
+
+	return &resource.SearchRequest{
+		Tenant:  tenant,
+		Query:   qry.Query,
+		Limit:   int64(qry.Limit),
+		Offset:  int64(qry.From),
+		Kind:    qry.Kind,
+		SortBy:  []string{sortField(qry.Sort)},
+		GroupBy: groupBy,
+		Filters: qry.Tags,
+	}
+}
+
+const (
+	sortSuffix = "_sort"
+	descending = "-"
+)
+
+func sortField(sort string) string {
+	sf := strings.TrimSuffix(sort, sortSuffix)
+	if !strings.HasPrefix(sf, descending) {
+		return dashboardListFieldMapping[sf]
+	}
+	sf = strings.TrimPrefix(sf, descending)
+	sf = dashboardListFieldMapping[sf]
+	return descending + sf
+}
+
+// mapping of dashboard list fields to search doc fields
+var dashboardListFieldMapping = map[string]string{
+	"name": "title",
+}
+
+func newField(name string, typ data.FieldType) *data.Field {
+	f := data.NewFieldFromFieldType(typ, 0)
+	f.Name = name
+	return f
 }

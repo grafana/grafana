@@ -60,6 +60,8 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
       types.push(t('migrate-to-cloud.migrated-counts.contact_points', 'contact points'));
     } else if (type === 'NOTIFICATION_POLICY') {
       types.push(t('migrate-to-cloud.migrated-counts.notification_policies', 'notification policies'));
+    } else if (type === 'ALERT_RULE') {
+      types.push(t('migrate-to-cloud.migrated-counts.alert_rules', 'alert rules'));
     }
 
     distinctItems += 1;

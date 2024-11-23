@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState, FormEvent, MouseEvent } from 'react';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, LoadingPlaceholder, EmptyState } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -65,8 +66,12 @@ export function AddNewConnection() {
     if (!canCreateDataSources) {
       e.preventDefault();
       e.stopPropagation();
-
       openModal(item);
+      reportInteraction('connections_plugin_card_clicked', {
+        plugin_id: item.id,
+        creator_team: 'grafana_plugins_catalog',
+        schema_version: '1.0.0',
+      });
     }
   };
 

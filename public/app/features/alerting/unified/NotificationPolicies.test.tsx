@@ -1,4 +1,3 @@
-import 'core-js/stable/structured-clone';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, userEvent } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';

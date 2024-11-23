@@ -34,14 +34,14 @@ export function PluginDetailsHeaderSignature({ plugin }: Props): React.ReactElem
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      flex-wrap: wrap;
-      gap: ${theme.spacing(0.5)};
-    `,
-    link: css`
-      display: inline-flex;
-      align-items: center;
-    `,
+    container: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+    }),
+    link: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+    }),
   };
 };

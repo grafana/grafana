@@ -26,7 +26,7 @@ To enable sending Grafana Cloud audit logs to your Grafana Cloud Logs instance, 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 ## Audit logs
@@ -325,6 +325,17 @@ external group.
 | ------------------------ | ------------------------------------------------------------ |
 | Set licensing token      | `{"action": "create", "requestUri": "/api/licensing/token"}` |
 | Save billing information | `{"action": "billing-information"}`                          |
+
+#### Cloud migration management
+
+{{< docs/public-preview product="Cloud Migration Assistant" featureFlag="onPremToCloudMigrations" >}}
+
+| Action                           | Distinguishing fields                                       |
+| -------------------------------- | ----------------------------------------------------------- |
+| Connect to a cloud instance      | `{"action": "connect-instance"}`                            |
+| Disconnect from a cloud instance | `{"action": "disconnect-instance"}`                         |
+| Build a snapshot                 | `{"action": "build", "resources": [{"type": "snapshot"}]}`  |
+| Upload a snapshot                | `{"action": "upload", "resources": [{"type": "snapshot"}]}` |
 
 #### Generic actions
 

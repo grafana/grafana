@@ -546,7 +546,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return getBackendSrv()
       .fetch(req)
       .pipe(
-        map((result: any) => {
+        map((result: FetchResponse) => {
           const { data } = result;
           if (data) {
             data.executedQueryString = q;

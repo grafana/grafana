@@ -3,7 +3,7 @@ import { cloneDeep } from 'lodash';
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { getDefaultRelativeTimeRange, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -21,7 +21,6 @@ import {
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { t, Trans } from 'app/core/internationalization';
-import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,
@@ -30,12 +29,10 @@ import {
   expressionTypes,
   ReducerMode,
 } from 'app/features/expressions/types';
-import { useDispatch } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
-import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
@@ -55,14 +52,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
-import {
-  getSimpleConditionFromExpressions,
-  SIMPLE_CONDITION_QUERY_ID,
-  SIMPLE_CONDITION_REDUCER_ID,
-  SIMPLE_CONDITION_THRESHOLD_ID,
-  SimpleCondition,
-  SimpleConditionEditor,
-} from './SimpleCondition';
+import { getSimpleConditionFromExpressions, SimpleConditionEditor, SimpleConditionIdentifier } from './SimpleCondition';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import { DESCRIPTIONS } from './descriptions';
 import {
@@ -70,6 +60,7 @@ import {
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
+  optimizeReduceExpression,
   queriesAndExpressionsReducer,
   removeExpression,
   removeExpressions,
@@ -82,6 +73,7 @@ import {
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
 
 export function areQueriesTransformableToSimpleCondition(
@@ -91,19 +83,21 @@ export function areQueriesTransformableToSimpleCondition(
   if (dataQueries.length !== 1) {
     return false;
   }
+  const singleReduceExpressionInInstantQuery =
+    'instant' in dataQueries[0].model && dataQueries[0].model.instant && expressionQueries.length === 1;
 
-  if (expressionQueries.length !== 2) {
+  if (expressionQueries.length !== 2 && !singleReduceExpressionInInstantQuery) {
     return false;
   }
 
   const query = dataQueries[0];
 
-  if (query.refId !== SIMPLE_CONDITION_QUERY_ID) {
+  if (query.refId !== SimpleConditionIdentifier.queryId) {
     return false;
   }
 
   const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SimpleConditionIdentifier.reducerId
   );
   const reduceExpression = expressionQueries.at(reduceExpressionIndex);
   const reduceOk =
@@ -113,13 +107,16 @@ export function areQueriesTransformableToSimpleCondition(
       reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) =>
+      query.model.type === ExpressionQueryType.threshold && query.refId === SimpleConditionIdentifier.thresholdId
   );
   const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
-  const thresholdOk =
-    thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
-  return Boolean(reduceOk) && Boolean(thresholdOk);
+  const thresholdIndexOk = singleReduceExpressionInInstantQuery
+    ? thresholdExpressionIndex === 0
+    : thresholdExpressionIndex === 1;
+  const thresholdOk = thresholdExpression && thresholdIndexOk && conditions[0]?.unloadEvaluator === undefined;
+  return (Boolean(reduceOk) || Boolean(singleReduceExpressionInInstantQuery)) && Boolean(thresholdOk);
 }
 
 interface Props {
@@ -168,25 +165,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
-  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
-
-  const isAdvancedMode =
-    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
-    !isGrafanaAlertingType ||
-    (isNewFromQueryParams && !queryParamsAreTransformable);
-
   const [showResetModeModal, setShowResetModal] = useState(false);
 
-  const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
-      ? getSimpleConditionFromExpressions(expressionQueries)
-      : {
-          whenField: ReducerID.last,
-          evaluator: {
-            params: [0],
-            type: EvalFunction.IsAbove,
-          },
-        }
+  const { isAdvancedMode, simpleCondition, setSimpleCondition } = useAdvancedMode(
+    editorSettings,
+    isGrafanaAlertingType,
+    isNewFromQueryParams,
+    dataQueries,
+    expressionQueries
   );
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
@@ -194,14 +180,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     if (!isAdvancedMode && isGrafanaAlertingType) {
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
-  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
+  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
-  const dispatchReduxAction = useDispatch();
-  useEffect(() => {
-    dispatchReduxAction(fetchAllPromBuildInfoAction());
-  }, [dispatchReduxAction]);
-
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -212,8 +193,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       // we need to be sure the condition is set once we switch to simple mode
       if (!isAdvancedMode) {
-        setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
-        runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
+        setValue('condition', SimpleConditionIdentifier.thresholdId);
+        runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
@@ -284,6 +265,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -297,6 +279,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
+      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+      if (!editingExistingRule && isOptimizeReducerEnabled) {
+        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
+      }
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -306,7 +294,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -328,7 +316,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
-  const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
+  // Using dataSourcesWithRuler[0] gives incorrect types - no undefined
+  // Using at(0) provides a safe type with undefined
+  const recordingRuleDefaultDatasource = rulesSourcesWithRuler.at(0);
 
   useEffect(() => {
     clearPreviewData();
@@ -494,7 +484,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 return;
               }
             }
-            setValue('editorSettings', { simplifiedQueryEditor: !isAdvanced });
+            setValue('editorSettings.simplifiedQueryEditor', !isAdvanced);
           },
         }
       : undefined;
@@ -698,7 +688,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setValue('editorSettings', { simplifiedQueryEditor: true });
+          setValue('editorSettings.simplifiedNotificationEditor', true);
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}

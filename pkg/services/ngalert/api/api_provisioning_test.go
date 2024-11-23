@@ -2035,13 +2035,13 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 	return result, "", nil
 }
 
-func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
+func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	if orgID != 1 {
-		return store.ErrNoAlertmanagerConfiguration
+		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	f.tree = tree
 	f.prov = p
-	return nil
+	return tree, "some", nil
 }
 
 func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
@@ -2055,8 +2055,8 @@ func (f *fakeFailingNotificationPolicyService) GetPolicyTree(ctx context.Context
 	return definitions.Route{}, "", fmt.Errorf("something went wrong")
 }
 
-func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
-	return fmt.Errorf("something went wrong")
+func (f *fakeFailingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
+	return definitions.Route{}, "", fmt.Errorf("something went wrong")
 }
 
 func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
@@ -2069,8 +2069,8 @@ func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Conte
 	return definitions.Route{}, "", nil
 }
 
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, _ string) error {
-	return fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
+func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
+	return definitions.Route{}, "", fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
 }
 
 func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {

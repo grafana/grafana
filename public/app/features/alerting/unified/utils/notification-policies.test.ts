@@ -10,8 +10,6 @@ import {
   unquoteRouteMatchers,
 } from './notification-policies';
 
-import 'core-js/stable/structured-clone';
-
 const CATCH_ALL_ROUTE: Route = {
   receiver: 'ALL',
   object_matchers: [],
@@ -485,6 +483,11 @@ describe('matchLabels', () => {
 
   it('matches regular expressions with wildcards', () => {
     const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
+
+  it('does match regular expressions with flags', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '(?i).*BAr.*']], [['foo', 'barbarbar']]);
     expect(result.matches).toEqual(true);
   });
 });

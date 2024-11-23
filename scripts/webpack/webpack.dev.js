@@ -74,7 +74,7 @@ module.exports = (env = {}) => {
         },
         require('./sass.rule.js')({
           sourceMap: false,
-          preserveUrl: false,
+          preserveUrl: true,
         }),
       ],
     },
@@ -124,6 +124,7 @@ module.exports = (env = {}) => {
             cache: true,
             lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
             extensions: ['.ts', '.tsx'],
+            configType: 'flat',
           }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',

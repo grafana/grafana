@@ -84,12 +84,6 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 			return err
 		}
 
-		isParentFolderChanged, err = getExistingDashboardByTitleAndFolder(sess, dashboard, overwrite,
-			isParentFolderChanged)
-		if err != nil {
-			return err
-		}
-
 		return nil
 	})
 	if err != nil {
@@ -348,49 +342,6 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 	// do not allow plugin dashboard updates without overwrite flag
 	if existing.PluginID != "" && !overwrite {
 		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
-	}
-
-	return isParentFolderChanged, nil
-}
-
-// getExistingDashboardByTitleAndFolder returns a boolean (on whether the parent folder changed) and an error for if the dashboard already exists.
-func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, overwrite,
-	isParentFolderChanged bool) (bool, error) {
-	var existing dashboards.Dashboard
-	condition := "org_id=? AND title=?"
-	args := []any{dash.OrgID, dash.Title}
-	if dash.FolderUID != "" {
-		condition += " AND folder_uid=?"
-		args = append(args, dash.FolderUID)
-	} else {
-		condition += " AND folder_uid IS NULL"
-	}
-	exists, err := sess.Where(condition, args...).Get(&existing)
-	if err != nil {
-		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
-	}
-	if exists && dash.ID != existing.ID {
-		if existing.IsFolder && !dash.IsFolder {
-			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameAsFolder
-		}
-
-		if !existing.IsFolder && dash.IsFolder {
-			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
-		}
-
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
-			isParentFolderChanged = true
-		}
-
-		if overwrite {
-			dash.SetID(existing.ID)
-			dash.SetUID(existing.UID)
-			dash.SetVersion(existing.Version)
-		} else {
-			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameInFolderExists
-		}
 	}
 
 	return isParentFolderChanged, nil
@@ -797,8 +748,8 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 
 		dashboard := dashboards.Dashboard{OrgID: query.OrgID, ID: query.ID, UID: query.UID}
 		mustCols := []string{}
-		if query.Title != nil {
-			dashboard.Title = *query.Title
+		if query.Title != nil { // nolint:staticcheck
+			dashboard.Title = *query.Title // nolint:staticcheck
 			mustCols = append(mustCols, "title")
 		}
 
@@ -806,8 +757,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			dashboard.FolderUID = *query.FolderUID
 			mustCols = append(mustCols, "folder_uid")
 		} else if query.FolderID != nil { // nolint:staticcheck
-			// nolint:staticcheck
-			dashboard.FolderID = *query.FolderID
+			dashboard.FolderID = *query.FolderID // nolint:staticcheck
 			mustCols = append(mustCols, "folder_id")
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		}

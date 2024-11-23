@@ -207,6 +207,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			Metadata: models.AlertRuleMetadata{
 				EditorSettings: models.EditorSettings{
 					SimplifiedQueryAndExpressionsSection: false,
+					SimplifiedNotificationsSection:       false,
 				},
 			},
 		}

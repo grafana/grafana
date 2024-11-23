@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +29,7 @@ func TestExtendClientOpts(t *testing.T) {
 		}
 		ctx := backend.WithGrafanaConfig(context.Background(), cfg)
 		opts := &sdkhttpclient.Options{}
-		err := extendClientOpts(ctx, settings, opts, backend.Logger)
+		err := extendClientOpts(ctx, settings, opts, log.NewNullLogger())
 		require.NoError(t, err)
 		require.Equal(t, 1, len(opts.Middlewares))
 	})
@@ -47,7 +48,7 @@ func TestExtendClientOpts(t *testing.T) {
 				SecretKey: "secretkey",
 			},
 		}
-		err := extendClientOpts(context.Background(), settings, opts, backend.Logger)
+		err := extendClientOpts(context.Background(), settings, opts, log.NewNullLogger())
 		require.NoError(t, err)
 		require.Equal(t, "aps", opts.SigV4.Service)
 	})

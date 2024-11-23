@@ -35,9 +35,11 @@ type flatResourcePermission struct {
 	Action           string
 	Scope            string
 	UserId           int64
+	UserUid          string
 	UserLogin        string
 	UserEmail        string
 	TeamId           int64
+	TeamUid          string
 	TeamEmail        string
 	Team             string
 	BuiltInRole      string
@@ -331,10 +333,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	userSelect := rawSelect + `
 		ur.user_id AS user_id,
 		u.login AS user_login,
+		u.uid AS user_uid,
 		u.is_service_account AS is_service_account,
 		u.email AS user_email,
 		0 AS team_id,
 		'' AS team,
+		'' AS team_uid,
 		'' AS team_email,
 		'' AS built_in_role
 	`
@@ -342,10 +346,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	teamSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		'' AS user_uid,
 		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		tr.team_id AS team_id,
 		t.name AS team,
+		t.uid AS team_uid,
 		t.email AS team_email,
 		'' AS built_in_role
 	`
@@ -353,10 +359,12 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	builtinSelect := rawSelect + `
 		0 AS user_id,
 		'' AS user_login,
+		'' AS user_uid,
 		` + s.sql.GetDialect().BooleanStr(false) + ` AS is_service_account,
 		'' AS user_email,
 		0 as team_id,
 		'' AS team,
+		'' AS team_uid,
 		'' AS team_email,
 		br.role AS built_in_role
 	`
@@ -522,10 +530,12 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 		RoleName:         first.RoleName,
 		Actions:          actions,
 		Scope:            first.Scope,
-		UserId:           first.UserId,
+		UserID:           first.UserId,
+		UserUID:          first.UserUid,
 		UserLogin:        first.UserLogin,
 		UserEmail:        first.UserEmail,
-		TeamId:           first.TeamId,
+		TeamID:           first.TeamId,
+		TeamUID:          first.TeamUid,
 		TeamEmail:        first.TeamEmail,
 		Team:             first.Team,
 		BuiltInRole:      first.BuiltInRole,

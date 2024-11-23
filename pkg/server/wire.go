@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -155,6 +156,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
+	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -172,6 +174,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
+	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 var wireBasicSet = wire.NewSet(
@@ -227,6 +230,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
+	unifiedsearch.ProvideDocumentBuilders,
 	search.ProvideService,
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
@@ -266,6 +270,7 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
+	zipkin.ProvideService,
 	datasourceservice.ProvideCacheService,
 	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
@@ -283,7 +288,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
 	datasourceservice.ProvideLegacyDataSourceLookup,
 	serviceaccountsretriever.ProvideService,
-	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
+	wire.Bind(new(serviceaccounts.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
 	serviceaccountsmanager.ProvideServiceAccountsService,
@@ -390,6 +395,7 @@ var wireBasicSet = wire.NewSet(
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
+	appregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(

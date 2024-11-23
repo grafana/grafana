@@ -148,11 +148,11 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  tableWrap: css`
-    max-height: calc(80vh - 170px);
-    min-height: 40px;
-    overflow: auto;
-  `,
+  tableWrap: css({
+    maxHeight: 'calc(80vh - 170px)',
+    minHeight: '40px',
+    overflow: 'auto',
+  }),
 
   editTable: css({
     width: '100%',

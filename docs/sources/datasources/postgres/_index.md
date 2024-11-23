@@ -81,23 +81,23 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-| Name                        | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                   |
-| **Default**                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                  |
-| **Host**                    | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.                                                                                                                                                                                                                |
-| **Database**                | Name of your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                                                                       |
-| **User**                    | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Password**                | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                |
-| **SSL Mode**                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                                                                |
-| **SSL Auth Details Method** | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+                                                                                                                                                                                                                                                                                                                |
-| **SSL Auth Details Value**  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                                                    |
-| **Max open**                | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                  |
-| **Max idle**                | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                           |
-| **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                  |
-| **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).                                                                                                                                                                                                                                                                                                              |
-| **Version**                 | Determines which functions are available in the query builder (only available in Grafana 5.3+).                                                                                                                                                                                                                                                                                                                         |
-| **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+). For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
+| Name                        | Description                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**                    | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                  |
+| **Default**                 | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                 |
+| **Host**                    | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and it may cause errors.                                                                                                                                                                               |
+| **Database**                | Name of your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                                      |
+| **User**                    | Database user's login/username                                                                                                                                                                                                                                                                                                                                                         |
+| **Password**                | Database user's password                                                                                                                                                                                                                                                                                                                                                               |
+| **SSL Mode**                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                               |
+| **SSL Auth Details Method** | Determines whether the SSL Auth details will be configured as a file path or file content.                                                                                                                                                                                                                                                                                             |
+| **SSL Auth Details Value**  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                   |
+| **Max open**                | The maximum number of open connections to the database, default `100`.                                                                                                                                                                                                                                                                                                                 |
+| **Max idle**                | The maximum number of connections in the idle connection pool, default `100`.                                                                                                                                                                                                                                                                                                          |
+| **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                   |
+| **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.                                                                                                                                                                                                                                                                                             |
+| **Version**                 | Determines which functions are available in the query builder.                                                                                                                                                                                                                                                                                                                         |
+| **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder. For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
 
 ### Min time interval
 
@@ -155,6 +155,8 @@ Using the dropdown, select a column to include in the data. You can also specify
 
 Add further value columns by clicking the plus button and another column dropdown appears.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.
@@ -196,10 +198,10 @@ datasources:
     jsonData:
       database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
-      maxOpenConns: 100 # Grafana v5.4+
-      maxIdleConns: 100 # Grafana v5.4+
-      maxIdleConnsAuto: true # Grafana v9.5.1+
-      connMaxLifetime: 14400 # Grafana v5.4+
+      maxOpenConns: 100
+      maxIdleConns: 100
+      maxIdleConnsAuto: true
+      connMaxLifetime: 14400
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
@@ -249,8 +251,6 @@ Macros can be used within a query to simplify syntax and allow for dynamic parts
 | `$__unixEpochNanoTo()`                                | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                               |
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp (`fillMode` only works with time series queries).                                                                                              |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (`fillMode` only works with time series queries).                                                                                                                 |
-
-We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
 ## Table queries
 
@@ -413,8 +413,6 @@ SELECT hostname FROM host  WHERE region IN($region)
 
 #### Using `__searchFilter` to filter results in Query Variable
 
-> Available from Grafana 6.5 and above
-
 Using `__searchFilter` in the query field will filter the query result based on what the user types in the dropdown select box.
 When nothing has been entered by the user the default value for `__searchFilter` is `%`.
 
@@ -430,9 +428,7 @@ SELECT hostname FROM my_host  WHERE hostname LIKE '$__searchFilter'
 
 ### Using Variables in Queries
 
-From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically. If your template variables are strings, do not wrap them in quotes in where clauses.
-
-From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+Template variable values are only quoted when the template variable is a `multi-value`.
 
 If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
@@ -512,12 +508,12 @@ WHERE
   $__timeFilter(native_date_time)
 ```
 
-| Name      | Description                                                                                                                       |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.                          |
-| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+) |
-| `text`    | Event description field.                                                                                                          |
-| `tags`    | Optional field name to use for event tags as a comma separated string.                                                            |
+| Name      | Description                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.          |
+| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. |
+| `text`    | Event description field.                                                                                          |
+| `tags`    | Optional field name to use for event tags as a comma separated string.                                            |
 
 ## Alerting
 
