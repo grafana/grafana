@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
+	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 )
 
 // The DTO returns everything the UI needs in a single request
@@ -100,35 +101,78 @@ func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: user.GetNamespace(),
-					Group:     dashboardv1alpha1.GROUP,
+					Group:     dashboardv0alpha1.GROUP,
 					Resource:  "dashboards",
 				},
 			},
 			Query:  queryParams.Get("query"),
 			Limit:  int64(limit),
 			Offset: int64(offset),
+			Fields: []string{
+				"title",
+				"folder",
+				"tags",
+			},
 		}
 
-		// TODO... actually query
+		// The facet term fields
+		facets, ok := queryParams["facet"]
+		if ok {
+			searchRequest.Facet = make(map[string]*resource.ResourceSearchRequest_Facet)
+			for _, v := range facets {
+				searchRequest.Facet[v] = &resource.ResourceSearchRequest_Facet{
+					Field: v,
+					Limit: 50,
+				}
+			}
+		}
+
+		// Run the query
 		result, err := s.client.Search(r.Context(), searchRequest)
 		if err != nil {
 			responder.Error(err)
 			return
 		}
 
-		t, err := result.Results.ToK8s()
-		if err != nil {
-			responder.Error(err)
-			return
+		sr := &dashboardv0alpha1.SearchResults{
+			Offset:    searchRequest.Offset,
+			TotalHits: result.TotalHits,
+			QueryCost: result.QueryCost,
+			MaxScore:  result.MaxScore,
+			Hits:      make([]dashboardv0alpha1.DashboardHit, len(result.Results.Rows)),
+		}
+		for i, row := range result.Results.Rows {
+			hit := &dashboardv0alpha1.DashboardHit{
+				Type:   dashboardv0alpha1.HitTypeDash,
+				Name:   row.Key.Name,
+				Title:  string(row.Cells[0]),
+				Folder: string(row.Cells[1]),
+			}
+			if row.Cells[2] != nil {
+				_ = json.Unmarshal(row.Cells[2], &hit.Tags)
+			}
+			sr.Hits[i] = *hit
 		}
 
-		responder.Object(200, &t)
+		// Add facet results
+		if result.Facet != nil {
+			sr.Facets = make(map[string]dashboardv0alpha1.FacetResult)
+			for k, v := range result.Facet {
+				sr.Facets[k] = dashboardv0alpha1.FacetResult{
+					Field:   v.Field,
+					Total:   v.Total,
+					Missing: v.Missing,
+					Terms:   make([]dashboardv0alpha1.TermFacet, len(v.Terms)),
+				}
+				for j, t := range v.Terms {
+					sr.Facets[k].Terms[j] = dashboardv0alpha1.TermFacet{
+						Term:  t.Term,
+						Count: t.Count,
+					}
+				}
+			}
+		}
 
-		// jj, err := json.Marshal(result)
-		// if err != nil {
-		// 	responder.Error(err)
-		// 	return
-		// }
-		// _, _ = w.Write(jj)
+		responder.Object(200, sr)
 	}), nil
 }

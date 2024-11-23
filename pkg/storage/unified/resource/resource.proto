@@ -397,10 +397,10 @@ message ResourceSearchResponse {
   ResourceTable results = 3;
 
   // The total hit count
-  uint64 total_hits = 4;
+  int64 total_hits = 4;
 
   // indicates how expensive was the query with respect to bytes read
-  uint64 query_cost = 5;
+  double query_cost = 5;
 
   // maximum score across all fields
   double max_score = 6;

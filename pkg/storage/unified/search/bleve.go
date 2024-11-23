@@ -247,8 +247,8 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	response.TotalHits = res.Total
-	response.QueryCost = res.Cost
+	response.TotalHits = int64(res.Total)
+	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
 	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
