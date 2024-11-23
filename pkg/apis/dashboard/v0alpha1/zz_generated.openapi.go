@@ -769,20 +769,6 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
-					"hits": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The dashboard body (unstructured for now)",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit"),
-									},
-								},
-							},
-						},
-					},
 					"offset": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Where the query started from",
@@ -796,6 +782,20 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int64",
+						},
+					},
+					"hits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The dashboard body (unstructured for now)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.DashboardHit"),
+									},
+								},
+							},
 						},
 					},
 					"queryCost": {
@@ -834,7 +834,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 						},
 					},
 				},
-				Required: []string{"hits", "totalHits"},
+				Required: []string{"totalHits", "hits"},
 			},
 		},
 		Dependencies: []string{
