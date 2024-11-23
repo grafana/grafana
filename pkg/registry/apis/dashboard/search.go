@@ -2,7 +2,6 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -88,7 +87,7 @@ func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 		}
 
 		// get limit and offset from query params
-		limit := 0
+		limit := 50
 		offset := 0
 		if queryParams.Has("limit") {
 			limit, _ = strconv.Atoi(queryParams.Get("limit"))
@@ -117,11 +116,19 @@ func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		jj, err := json.Marshal(result)
+		t, err := result.Results.ToK8s()
 		if err != nil {
 			responder.Error(err)
 			return
 		}
-		_, _ = w.Write(jj)
+
+		responder.Object(200, &t)
+
+		// jj, err := json.Marshal(result)
+		// if err != nil {
+		// 	responder.Error(err)
+		// 	return
+		// }
+		// _, _ = w.Write(jj)
 	}), nil
 }

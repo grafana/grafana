@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -53,6 +54,12 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err := dashboardinternal.AddToScheme(scheme); err != nil {
 		return err
 	}
+
+	scheme.AddUnversionedTypes(schema.GroupVersion{
+		Group:   "meta",
+		Version: "v1",
+	}, &metav1.Table{})
+
 	return scheme.SetVersionPriority(
 		dashboardv0alpha1.DashboardResourceInfo.GroupVersion(),
 		dashboardv1alpha1.DashboardResourceInfo.GroupVersion(),

@@ -368,7 +368,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
 		// NOTE, we likely want to pass in the already called checker because the resource server
 		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization")
+		fmt.Printf("TODO... check authorization\n")
 	}
 
 	switch len(queries) {
