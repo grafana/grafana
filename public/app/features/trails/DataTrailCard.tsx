@@ -110,34 +110,23 @@ export function DataTrailCard(props: Props) {
 export function getStyles(theme: GrafanaTheme2) {
   return {
     metricLabel: css({
+      // TODO: delete after merging updated styles PR
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
-      fontWeight: 400,
     }),
     metricValue: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '14px',
-      fontStyle: 'normal',
       fontWeight: 500,
       marginLeft: '8px', // Add space between the label and the value
-      wordBreak: 'break-all',
-    }),
-    tag: css({
-      maxWidth: '260px',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
+      wordBreak: 'break-all', // TODO: delete after merging updated styles PR
     }),
     card: css({
       position: 'relative',
+      alignItems: 'start',
       width: '318px',
       padding: `12px ${theme.spacing(2)} ${theme.spacing(1)} ${theme.spacing(2)}`,
       height: '152px',
-      alignItems: 'start',
       marginBottom: 0,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderRight: `1px solid ${theme.colors.border.weak}`,
@@ -148,10 +137,11 @@ export function getStyles(theme: GrafanaTheme2) {
     }),
     secondary: css({
       color: theme.colors.text.secondary,
-      fontSize: '12px',
     }),
     datasource: css({
+      // TODO: delete after merging updated styles PR
       gridArea: 'Description',
+      fontSize: '12px',
     }),
     date: css({
       border: `1px solid ${theme.colors.border.weak}`,
@@ -159,6 +149,7 @@ export function getStyles(theme: GrafanaTheme2) {
       borderRadius: '0 0 2px 2px',
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       backgroundColor: theme.colors.background.primary,
+      fontSize: '12px',
     }),
     meta: css({
       flexWrap: 'wrap',
@@ -174,31 +165,18 @@ export function getStyles(theme: GrafanaTheme2) {
     primaryFont: css({
       display: 'inline',
       color: theme.colors.text.primary,
-      fontFamily: 'Inter',
-      fontSize: '12px',
-      fontStyle: 'normal',
       fontWeight: '500',
-      lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
     }),
     secondaryFont: css({
       display: 'inline',
       color: theme.colors.text.secondary,
-      fontFamily: 'Inter',
-      fontSize: '12px',
-      fontStyle: 'normal',
-      fontWeight: '400',
-      lineHeight: '18px' /* 150% */,
       letterSpacing: '0.018px',
     }),
     deleteButton: css({
       position: 'absolute',
       bottom: theme.spacing(1),
       right: theme.spacing(1),
-    }),
-    wordwrap: css({
-      overflow: 'hidden',
-      overflowWrap: 'anywhere',
     }),
   };
 }
