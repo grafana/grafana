@@ -144,7 +144,7 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 	}
 
 	// Get the federated indexes
-	federate := make([]ResourceIndex, 0)
+	federate := make([]ResourceIndex, len(req.Federated))
 	for i, f := range req.Federated {
 		nsr.Group = f.Group
 		nsr.Resource = f.Resource

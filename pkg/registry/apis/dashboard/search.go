@@ -115,6 +115,33 @@ func (s *SearchConnector) Connect(ctx context.Context, name string, opts runtime
 			},
 		}
 
+		// Add the folder constraint. Note this does not do recursive search
+		folder := queryParams.Get("folder")
+		if folder != "" {
+			searchRequest.Options.Fields = []*resource.Requirement{{
+				Key:      "folder",
+				Operator: "=",
+				Values:   []string{folder},
+			}}
+		}
+
+		// Add sorting
+		if queryParams.Has("sort") {
+			searchRequest.SortBy = append(searchRequest.SortBy, &resource.ResourceSearchRequest_Sort{
+				Field: queryParams.Get("sort"),
+				Desc:  queryParams.Get("sort-desc") == "true",
+			})
+		}
+
+		// Also query folders
+		if searchRequest.Query != "" {
+			searchRequest.Federated = []*resource.ResourceKey{{
+				Namespace: searchRequest.Options.Key.Namespace,
+				Group:     "folder.grafana.app",
+				Resource:  "folders",
+			}}
+		}
+
 		// The facet term fields
 		facets, ok := queryParams["facet"]
 		if ok {
