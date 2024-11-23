@@ -144,17 +144,16 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 	}
 
 	// Get the federated indexes
-	var federate []ResourceIndex
-	for _, f := range req.Federated {
+	federate := make([]ResourceIndex, 0)
+	for i, f := range req.Federated {
 		nsr.Group = f.Group
 		nsr.Resource = f.Resource
-		sub, err := s.getOrCreateIndex(ctx, nsr)
+		federate[i], err = s.getOrCreateIndex(ctx, nsr)
 		if err != nil {
 			return &ResourceSearchResponse{
 				Error: AsErrorResult(err),
 			}, nil
 		}
-		federate = append(federate, sub)
 	}
 
 	return idx.Search(ctx, s.access, req, federate)
