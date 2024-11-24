@@ -127,7 +127,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = location.search.includes('scene-debugger');
 
   if (!model.hasControls()) {
-    return null;
+    // To still have spacing when no controls are rendered
+    return <Box padding={1} />;
   }
 
   return (
@@ -156,6 +157,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'flex-start',
       flex: '100%',
       gap: theme.spacing(1),
+      padding: theme.spacing(2),
       flexDirection: 'row',
       flexWrap: 'nowrap',
       position: 'relative',
