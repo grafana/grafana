@@ -587,14 +587,14 @@ describe('Language completion provider', () => {
     it('should interpolate variable in series', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated_'),
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
       fetchLabelValues('$job');
       expect(requestSpy).toHaveBeenCalled();
       expect(requestSpy).toHaveBeenCalledWith(
-        '/api/v1/label/interpolated-job/values',
+        '/api/v1/label/interpolated_job/values',
         [],
         {
           end: toPrometheusTimeString,
