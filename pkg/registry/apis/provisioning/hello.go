@@ -6,16 +6,12 @@ import (
 	"log/slog"
 	"net/http"
 	"os/exec"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
 type helloWorldSubresource struct {
@@ -65,7 +61,6 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 	if !ok {
 		return nil, fmt.Errorf("expected repository, but got %t", obj)
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		whom := r.URL.Query().Get("whom")
 		if whom == "" {
@@ -75,49 +70,29 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		// Exercise rendering
 		renderPath := r.URL.Query().Get("render")
 		if renderPath != "" {
-			if !s.parent.render.IsAvailable(ctx) {
+			if !s.parent.renderer.IsAvailable(ctx) {
 				responder.Error(fmt.Errorf("render not available"))
 				return
 			}
 
-			// Get a worker identity
-			id, err := s.parent.client.identities.WorkerIdentity(ctx, repo.Namespace)
+			ref := r.URL.Query().Get("ref")
+			r, err := s.parent.GetRepository(ctx, name)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
-			ref := r.URL.Query().Get("ref")
-			url := fmt.Sprintf("dashboard/provisioning/%s/%s?kiosk&ref=%s", name, renderPath, ref)
-			fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
-
-			renderContext := identity.WithRequester(context.Background(), id)
-			result, err := s.parent.render.Render(renderContext, rendering.RenderPNG, rendering.Opts{
-				CommonOpts: rendering.CommonOpts{
-					Path: url,
-					AuthOpts: rendering.AuthOpts{ // TODO!!!, use the context token/credentials
-						OrgID:   1,
-						UserID:  1,
-						OrgRole: identity.RoleAdmin,
-					},
-					TimeoutOpts: rendering.TimeoutOpts{
-						Timeout: time.Second * 30,
-					},
-				},
-				Theme:  models.ThemeDark, // from config?
-				Width:  1024,
-				Height: -1, // full page height
-			}, nil)
+			path, err := s.parent.renderer.RenderDashboardPreview(ctx, r, renderPath, ref)
 			if err != nil {
 				responder.Error(err)
 				return
 			}
 
 			// Show the result
-			w.Write([]byte(result.FilePath))
+			w.Write([]byte(path))
 
 			// Try opening the file path... HACK HACK HACK!
-			cmd := exec.Command("open", result.FilePath)
+			cmd := exec.Command("open", path)
 			_ = cmd.Run()
 			return
 		}

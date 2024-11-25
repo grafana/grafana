@@ -50,7 +50,7 @@ type ProvisioningAPIBuilder struct {
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 	client            *resourceClient
-	render            rendering.Service
+	renderer          *renderer
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -71,7 +71,10 @@ func NewProvisioningAPIBuilder(
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
 		features:          features,
-		render:            render,
+		renderer: &renderer{
+			render:     render,
+			identities: identities,
+		},
 	}
 }
 
