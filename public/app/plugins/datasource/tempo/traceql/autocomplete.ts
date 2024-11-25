@@ -498,7 +498,7 @@ function completionItemsToSuggestions(
   // monaco by-default alphabetically orders the items.
   // to stop it, we use a number-as-string sortkey,
   // so that monaco keeps the order we use
-  const [scope, tag] = modelValue.substring(0, offset).match(SUGGEST_REGEXP) ?? [];
+  const [_, scope, tag] = modelValue.substring(0, offset).match(SUGGEST_REGEXP) ?? [];
   const maxIndexDigits = items.length.toString().length;
   const suggestions: languages.CompletionItem[] = items.map((item, index) => {
     const suggestion: languages.CompletionItem = {
