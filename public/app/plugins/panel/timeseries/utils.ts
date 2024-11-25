@@ -7,7 +7,9 @@ import {
   isBooleanUnit,
   TimeRange,
   cacheFieldDisplayNames,
+  FieldConfigSource,
 } from '@grafana/data';
+import { decoupleHideFromState } from '@grafana/data/src/field/fieldState';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
@@ -72,6 +74,7 @@ function reEnumFields(frames: DataFrame[]): DataFrame[] {
  */
 export function prepareGraphableFields(
   series: DataFrame[],
+  fieldConfig: FieldConfigSource,
   theme: GrafanaTheme2,
   timeRange?: TimeRange,
   // numeric X requires a single frame where the first field is numeric
@@ -82,6 +85,7 @@ export function prepareGraphableFields(
   }
 
   cacheFieldDisplayNames(series);
+  decoupleHideFromState(series, fieldConfig);
 
   let useNumericX = xNumFieldIdx != null;
 

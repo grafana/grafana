@@ -497,7 +497,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
       spanNulls: customConfig.spanNulls || false,
-      show: !customConfig.hideFrom?.viz,
+      show: !customConfig.hideFrom?.viz && !field.state?.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
       hardMin: field.config.min,

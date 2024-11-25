@@ -59,8 +59,8 @@ export const CandlestickPanel = ({
   const theme = useTheme2();
 
   const info = useMemo(() => {
-    return prepareCandlestickFields(data.series, options, theme, timeRange);
-  }, [data.series, options, theme, timeRange]);
+    return prepareCandlestickFields(data.series, fieldConfig, options, theme, timeRange);
+  }, [data.series, fieldConfig, options, theme, timeRange]);
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
