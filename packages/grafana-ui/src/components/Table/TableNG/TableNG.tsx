@@ -18,7 +18,7 @@ import { getTextAlign, getFooterItems } from '../utils';
 import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
-import { getRowHeight } from './utils';
+import { getRowHeight, shouldTextOverflow } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -217,9 +217,7 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
 
-  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
-
-  const mapFrameToDataGrid = (main: DataFrame) => {
+  const mapFrameToDataGrid = (main: DataFrame, rows: TableRow[]) => {
     const columns: TableColumn[] = [];
 
     // Footer calculations
@@ -237,7 +235,6 @@ export function TableNG(props: TableNGProps) {
       columns.push({
         key,
         name: field.name,
-        // rows,
         field,
         cellClass: styles.cell,
         renderCell: (props: any) => {
@@ -255,6 +252,19 @@ export function TableNG(props: TableNGProps) {
               height={defaultRowHeight}
               justifyContent={justifyColumnContent}
               rowIdx={rowIdx}
+              shouldTextOverflow={() =>
+                shouldTextOverflow(
+                  key,
+                  row,
+                  columnTypes,
+                  headerCellRefs,
+                  osContext,
+                  defaultLineHeight,
+                  defaultRowHeight,
+                  DEFAULT_CELL_PADDING,
+                  textWrap
+                )
+              }
             />
           );
         },
@@ -285,8 +295,8 @@ export function TableNG(props: TableNGProps) {
     });
 
     if (footerOptions?.show && footerOptions.reducer.length > 0) {
-      if (footerOptions.countRows) {
-        footerItems = ['Count', rows.length.toString()];
+      if (footerOptions.countRows && footerOptions.reducer[0] === ReducerID.count) {
+        footerItems = [rows.length.toString()];
       } else {
         footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
       }
@@ -295,7 +305,8 @@ export function TableNG(props: TableNGProps) {
     return columns;
   };
 
-  const columns = mapFrameToDataGrid(props.data);
+  const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
+  const columns = mapFrameToDataGrid(props.data, rows);
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
@@ -465,17 +476,6 @@ function getComparator(sortColumnType: string): Comparator {
 }
 
 const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
-  contextMenu: css({
-    position: 'absolute',
-    backgroundColor: '#ffffff',
-    border: '1px solid black',
-    padding: '16px',
-    listStyle: 'none',
-
-    '> li': {
-      padding: 8,
-    },
-  }),
   menuItem: css({
     maxWidth: '200px',
   }),

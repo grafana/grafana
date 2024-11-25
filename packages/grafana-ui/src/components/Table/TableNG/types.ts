@@ -9,6 +9,7 @@ export interface CellNGProps {
   height?: number;
   justifyContent?: Property.JustifyContent;
   rowIdx?: number;
+  shouldTextOverflow?: () => boolean;
 }
 
 export interface BarGaugeCellProps extends CellNGProps {
