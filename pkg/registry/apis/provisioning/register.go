@@ -29,6 +29,8 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -47,22 +49,24 @@ type ProvisioningAPIBuilder struct {
 
 	features          featuremgmt.FeatureToggles
 	getter            rest.Getter
-	localFileResolver *LocalFolderResolver
+	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
 	client            *resourceClient
 	renderer          *renderer
+	ghFactory         github.ClientFactory
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
 // Avoid adding anything that secretly requires additional hidden dependencies
 // like *settings.Cfg or core grafana services that depend on database connections
 func NewProvisioningAPIBuilder(
-	local *LocalFolderResolver,
+	local *repository.LocalFolderResolver,
 	urlProvider func(namespace string) string,
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
 	render rendering.Service,
+	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
@@ -75,6 +79,7 @@ func NewProvisioningAPIBuilder(
 			render:     render,
 			identities: identities,
 		},
+		ghFactory: ghFactory,
 	}
 }
 
@@ -86,16 +91,17 @@ func RegisterAPIService(
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
 	render rendering.Service,
+	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
-	builder := NewProvisioningAPIBuilder(&LocalFolderResolver{
+	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, render)
+	}, cfg.SecretKey, identities, features, render, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -176,7 +182,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	return nil
 }
 
-func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (Repository, error) {
+func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string) (repository.Repository, error) {
 	obj, err := b.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -184,7 +190,7 @@ func (b *ProvisioningAPIBuilder) GetRepository(ctx context.Context, name string)
 	return b.asRepository(ctx, obj)
 }
 
-func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (Repository, error) {
+func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repository.Repository, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("missing repository object")
 	}
@@ -195,13 +201,13 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
-		return newLocalRepository(r, b.localFileResolver), nil
-	case provisioning.GithubRepositoryType:
-		return newGithubRepository(ctx, r), nil
+		return repository.NewLocal(r, b.localFileResolver), nil
+	case provisioning.GitHubRepositoryType:
+		return repository.NewGitHub(ctx, r, b.ghFactory), nil
 	case provisioning.S3RepositoryType:
-		return newS3Repository(r), nil
+		return repository.NewS3(r), nil
 	default:
-		return &unknownRepository{config: r}, nil
+		return repository.NewUnknown(r), nil
 	}
 }
 
@@ -354,7 +360,7 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 		return fmt.Errorf("expected repository configuration")
 	}
 
-	if r.Spec.Type == provisioning.GithubRepositoryType {
+	if r.Spec.Type == provisioning.GitHubRepositoryType {
 		if r.Spec.GitHub == nil {
 			return fmt.Errorf("github configuration is required")
 		}
@@ -421,7 +427,7 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 			cfg.Spec.GitHub, "Local config only valid when type is local"))
 	}
 
-	if cfg.Spec.Type != provisioning.GithubRepositoryType && cfg.Spec.GitHub != nil {
+	if cfg.Spec.Type != provisioning.GitHubRepositoryType && cfg.Spec.GitHub != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github"),
 			cfg.Spec.GitHub, "Github config only valid when type is github"))
 	}

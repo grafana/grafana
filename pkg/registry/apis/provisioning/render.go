@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
@@ -21,7 +22,7 @@ func (r *renderer) IsAvailable(ctx context.Context) bool {
 	return r.render != nil && r.render.IsAvailable(ctx)
 }
 
-func (r *renderer) RenderPreview(ctx context.Context, repo Repository, path string, ref string) (string, error) {
+func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.Repository, path string, ref string) (string, error) {
 	cfg := repo.Config()
 
 	// Get a worker identity

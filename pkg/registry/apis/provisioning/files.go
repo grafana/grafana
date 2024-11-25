@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type filesConnector struct {
@@ -112,7 +113,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) getParser(repo Repository) (*fileParser, error) {
+func (s *filesConnector) getParser(repo repository.Repository) (*fileParser, error) {
 	ns := repo.Config().Namespace
 	if ns == "" {
 		return nil, fmt.Errorf("missing namespace")
@@ -129,7 +130,7 @@ func (s *filesConnector) getParser(repo Repository) (*fileParser, error) {
 	}, nil
 }
 
-func (s *filesConnector) doRead(ctx context.Context, repo Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
 	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
 		return 0, nil, err
@@ -152,7 +153,7 @@ func (s *filesConnector) doRead(ctx context.Context, repo Repository, path strin
 	return code, parsed.AsResourceWrapper(), nil
 }
 
-func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if update && !settings.Update {
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
@@ -166,7 +167,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 		return nil, err
 	}
 
-	info := &FileInfo{
+	info := &repository.FileInfo{
 		Data: data,
 		Path: path,
 		Ref:  ref,
@@ -220,7 +221,7 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 	return parsed.AsResourceWrapper(), err
 }
 
-func (s *filesConnector) doDelete(ctx context.Context, repo Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if !settings.Delete {
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
