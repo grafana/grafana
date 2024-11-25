@@ -7,6 +7,7 @@ import { AlertmanagerGroup, AlertState, ObjectMatcher, RouteWithID } from 'app/p
 
 import { FormAmRoute } from '../../types/amroutes';
 import { MatcherFormatter } from '../../utils/matchers';
+import { stringifyErrorLike } from '../../utils/misc';
 import { InsertPosition } from '../../utils/routeTree';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 
@@ -84,7 +85,7 @@ const useEditPolicyModal = (
   alertManagerSourceName: string,
   handleSave: (route: Partial<FormAmRoute>) => void,
   loading: boolean,
-  error: string | null
+  error?: Error
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
@@ -113,7 +114,7 @@ const useEditPolicyModal = (
           closeOnEscape={true}
           title="Edit notification policy"
         >
-          {error && <NotificationPoliciesErrorAlert error={error} />}
+          {error && <NotificationPoliciesErrorAlert error={stringifyErrorLike(error)} />}
           {isDefaultPolicy && route && (
             <AmRootRouteForm
               // TODO *sigh* this alertmanagersourcename should come from context or something
@@ -302,4 +303,4 @@ const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
   </Modal>
 );
 
-export { useAddPolicyModal, useDeletePolicyModal, useEditPolicyModal, useAlertGroupsModal };
+export { useAddPolicyModal, useAlertGroupsModal, useDeletePolicyModal, useEditPolicyModal };

@@ -7,6 +7,7 @@ import {
   ListNamespacedRoutingTreeApiResponse,
 } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
+import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/utils';
 
 const wrapRoutingTreeResponse: (
   route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree
@@ -22,7 +23,7 @@ const listNamespacedRoutingTreesHandler = () =>
     return HttpResponse.json(wrapRoutingTreeResponse(userDefinedTree));
   });
 
-const HTTP_RESPONSE_CONFLICT = {
+const HTTP_RESPONSE_CONFLICT: ApiMachineryError = {
   kind: 'Status',
   apiVersion: 'v1',
   metadata: {},

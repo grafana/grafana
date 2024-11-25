@@ -23,12 +23,13 @@ import {
 } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
-  PromAlertingRuleState,
   mapStateWithReasonToBaseState,
+  PromAlertingRuleState,
 } from 'app/types/unified-alerting-dto';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import { isApiMachineryError, stringifyApiMachineryError } from './k8s/utils';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
@@ -246,6 +247,10 @@ export function isErrorLike(error: unknown): error is Error {
 export function stringifyErrorLike(error: unknown): string {
   const fetchError = isFetchError(error);
   if (fetchError) {
+    if (isApiMachineryError(error)) {
+      return stringifyApiMachineryError(error);
+    }
+
     if (error.message) {
       return error.message;
     }

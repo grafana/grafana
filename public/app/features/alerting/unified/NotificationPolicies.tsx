@@ -23,8 +23,6 @@ import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/compone
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { useCleanup } from '../../../core/hooks/useCleanup';
-
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
@@ -46,13 +44,14 @@ import {
   useNotificationPolicyRoute,
   useUpdateNotificationPolicyRoute,
 } from './components/notification-policies/useNotificationPolicyRoute';
+import { isLoading as isPending, useAsync } from './hooks/useAsync';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
+import { matchesApiMachineryError } from './utils/k8s/utils';
 import { stringifyErrorLike } from './utils/misc';
 import { computeInheritedTree } from './utils/notification-policies';
-import { initialAsyncRequestState } from './utils/redux';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
@@ -83,10 +82,9 @@ const AmRoutes = () => {
   const { tab } = getActiveTabFromUrl(queryParams, availableTabs[0]);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
-  const [updatingTree, setUpdatingTree] = useState<boolean>(false);
+
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
-  const [errorSaving, setErrorSaving] = useState<string | null>(null);
 
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
@@ -159,7 +157,7 @@ const AmRoutes = () => {
 
   const refetchPolicies = () => {
     refetchNotificationPolicyRoute();
-    setErrorSaving(null);
+    updateRouteTree.reset();
   };
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
@@ -168,7 +166,7 @@ const AmRoutes = () => {
     }
 
     const newRouteTree = mergePartialAmRouteWithRouteTree(selectedAlertmanager ?? '', partialRoute, rootRoute);
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
   function handleDelete(route: RouteWithID) {
@@ -176,7 +174,7 @@ const AmRoutes = () => {
       return;
     }
     const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
   function handleAdd(partialRoute: Partial<FormAmRoute>, referenceRoute: RouteWithID, insertPosition: InsertPosition) {
@@ -191,10 +189,11 @@ const AmRoutes = () => {
       rootRoute,
       insertPosition
     );
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
-  function updateRouteTree(routeTree: Route | RouteWithID) {
+  // this function will make the HTTP request and tracks the state of the request
+  const [updateRouteTree, updateRouteTreeState] = useAsync(async (routeTree: Route | RouteWithID) => {
     if (!rootRoute) {
       return;
     }
@@ -202,29 +201,26 @@ const AmRoutes = () => {
     // make sure we omit all IDs from our routes
     const newRouteTree = cleanRouteIDs(routeTree);
 
-    setUpdatingTree(true);
-    setErrorSaving(null);
-
-    return updateNotificationPolicyRoute({
+    const newTree = await updateNotificationPolicyRoute({
       newRoute: newRouteTree,
       oldRoute: result,
-    })
-      .then(() => {
-        appNotification.success('Updated notification policies');
-        if (selectedAlertmanager) {
-          refetchAlertGroups();
-        }
-        closeEditModal();
-        closeAddModal();
-        closeDeleteModal();
-      })
-      .catch((error) => {
-        setErrorSaving(error?.data?.details?.uid || error?.data?.message || error?.message || 'unknown');
-      })
-      .finally(() => {
-        setUpdatingTree(false);
-      });
-  }
+    });
+
+    appNotification.success('Updated notification policies');
+    if (selectedAlertmanager) {
+      refetchAlertGroups();
+    }
+
+    // close all modals
+    closeEditModal();
+    closeAddModal();
+    closeDeleteModal();
+
+    return newTree;
+  });
+
+  const updatingTree = isPending(updateRouteTreeState);
+  const updateError = updateRouteTreeState.error;
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
@@ -232,12 +228,10 @@ const AmRoutes = () => {
     selectedAlertmanager ?? '',
     handleSave,
     updatingTree,
-    errorSaving
+    updateError
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
-
-  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   if (!selectedAlertmanager) {
     return null;
@@ -286,7 +280,8 @@ const AmRoutes = () => {
                 {stringifyErrorLike(resultError) || 'Unknown error.'}
               </Alert>
             )}
-            {errorSaving === ERROR_NEWER_CONFIGURATION && (
+            {/* show when there is an update error */}
+            {matchesApiMachineryError(updateError, ERROR_NEWER_CONFIGURATION) && (
               <Alert severity="info" title="Notification policies have changed">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Trans i18nKey="alerting.policies.update-errors.conflict">
