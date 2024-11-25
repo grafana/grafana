@@ -1030,6 +1030,10 @@
     },
     "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
+  "data-source-testing-status-page": {
+    "error-more-details-link": "Cľįčĸ <2>ĥęřę</2> ŧő ľęäřŉ mőřę äþőūŧ ŧĥįş ęřřőř.",
+    "success-more-details-links": "Ńęχŧ, yőū čäŉ şŧäřŧ ŧő vįşūäľįžę đäŧä þy <2>þūįľđįŉģ ä đäşĥþőäřđ</2>, őř þy qūęřyįŉģ đäŧä įŉ ŧĥę <5>Ēχpľőřę vįęŵ</5>."
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
