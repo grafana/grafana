@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -23,12 +25,14 @@ import (
 type SearchHandler struct {
 	log    log.Logger
 	client resource.ResourceIndexClient
+	tracer trace.Tracer
 }
 
-func NewSearchHandler(client resource.ResourceIndexClient) *SearchHandler {
+func NewSearchHandler(client resource.ResourceIndexClient, tracer trace.Tracer) *SearchHandler {
 	return &SearchHandler{
 		client: client,
 		log:    log.New("grafana-apiserver.dashboards.search"),
+		tracer: tracer,
 	}
 }
 
@@ -69,9 +73,39 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "folder",
 										In:          "query",
-										Description: "search within a folder",
+										Description: "search/list within a folder (not recursive)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "sort",
+										In:          "query",
+										Description: "sortable field",
+										Example:     "", // not sorted
+										Examples: map[string]*spec3.Example{
+											"": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "default sorting",
+													Value:   "",
+												},
+											},
+											"title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title ascending",
+													Value:   "title",
+												},
+											},
+											"-title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title descending",
+													Value:   "-title",
+												},
+											},
+										},
+										Required: false,
+										Schema:   spec.StringProperty(),
 									},
 								},
 							},
@@ -148,23 +182,27 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 			APIVersion: dashboardv0alpha1.APIVERSION,
 			Kind:       "SortableFields",
 		},
-		Fields: []v1.TableColumnDefinition{
-			{Name: "title", Description: "Title"},
+		Fields: []dashboardv0alpha1.SortableField{
+			{Field: "title", Display: "Title (A-Z)", Type: "string"},
+			{Field: "-title", Display: "Title (Z-A)", Type: "string"},
 		},
 	}
 	s.write(w, sortable)
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
-	user, err := identity.GetRequester(r.Context())
+	ctx, span := s.tracer.Start(r.Context(), "dashboard.search")
+	defer span.End()
+
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	queryParams, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -208,10 +246,14 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 	// Add sorting
 	if queryParams.Has("sort") {
-		searchRequest.SortBy = append(searchRequest.SortBy, &resource.ResourceSearchRequest_Sort{
-			Field: queryParams.Get("sort"),
-			Desc:  queryParams.Get("sort-desc") == "true",
-		})
+		for _, sort := range queryParams["sort"] {
+			s := &resource.ResourceSearchRequest_Sort{Field: sort}
+			if strings.HasPrefix(sort, "-") {
+				s.Desc = true
+				s.Field = s.Field[1:]
+			}
+			searchRequest.SortBy = append(searchRequest.SortBy, s)
+		}
 	}
 
 	// Also query folders
@@ -236,9 +278,9 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Run the query
-	result, err := s.client.Search(r.Context(), searchRequest)
+	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
-		errhttp.Write(r.Context(), err, w)
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -251,7 +293,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, row := range result.Results.Rows {
 		hit := &dashboardv0alpha1.DashboardHit{
-			Type:   dashboardv0alpha1.HitTypeDash,
+			Kind:   dashboardv0alpha1.HitTypeDash,
 			Name:   row.Key.Name,
 			Title:  string(row.Cells[0]),
 			Folder: string(row.Cells[1]),
@@ -286,5 +328,5 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(obj)
+	_ = json.NewEncoder(w).Encode(obj)
 }

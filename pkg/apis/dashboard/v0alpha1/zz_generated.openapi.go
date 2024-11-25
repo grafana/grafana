@@ -30,6 +30,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.LibraryPanelStatus":      schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SearchResults":           schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortBy":                  schema_pkg_apis_dashboard_v0alpha1_SortBy(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField":           schema_pkg_apis_dashboard_v0alpha1_SortableField(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableFields":          schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.TermFacet":               schema_pkg_apis_dashboard_v0alpha1_TermFacet(ref),
 		"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.VersionsQueryOptions":    schema_pkg_apis_dashboard_v0alpha1_VersionsQueryOptions(ref),
@@ -215,18 +216,18 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"type": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Dashboard or folder\n\nPossible enum values:\n - `\"dash\"`\n - `\"folder\"`",
+							Description: "Dashboard or folder\n\nPossible enum values:\n - `\"Dashboard\"`\n - `\"Folder\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"dash", "folder"},
+							Enum:        []interface{}{"Dashboard", "Folder"},
 						},
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The UID",
+							Description: "The k8s \"name\" (eg, grafana UID)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -262,23 +263,9 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"sorted": {
+					"field": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Current sorting supports sort by name, stats and date Name does not need to be returned, and the others can be numbers",
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"score": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When using \"real\" search, this is the score",
-							Type:        []string{"number"},
-							Format:      "double",
-						},
-					},
-					"extra": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Untyped extra fields/values, useful for dynamic development, but do not count on them",
+							Description: "Stick untyped extra fields in this object (including the sort value)",
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
@@ -288,8 +275,15 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Ref:         ref("github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured"),
 						},
 					},
+					"score": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When using \"real\" search, this is the score",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
 				},
-				Required: []string{"type", "name", "title"},
+				Required: []string{"kind", "name", "title"},
 			},
 		},
 		Dependencies: []string{
@@ -868,6 +862,36 @@ func schema_pkg_apis_dashboard_v0alpha1_SortBy(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_pkg_apis_dashboard_v0alpha1_SortableField(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"string": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"display": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -896,7 +920,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField"),
 									},
 								},
 							},
@@ -907,7 +931,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.TableColumnDefinition"},
+			"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1.SortableField"},
 	}
 }
 

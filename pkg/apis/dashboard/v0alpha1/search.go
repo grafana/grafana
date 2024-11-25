@@ -42,23 +42,29 @@ type SortableFields struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// Sortable fields (depends on backend support)
-	Fields []metav1.TableColumnDefinition `json:"fields"`
+	Fields []SortableField `json:"fields"`
+}
+
+type SortableField struct {
+	Field   string `json:"string,omitempty"`
+	Display string `json:"display,omitempty"`
+	Type    string `json:"type,omitempty"` // string or number
 }
 
 // Dashboard or folder hit
 // +enum
-type HitType string
+type HitKind string
 
 // PluginType values
 const (
-	HitTypeDash   HitType = "dash"
-	HitTypeFolder HitType = "folder"
+	HitTypeDash   HitKind = "Dashboard"
+	HitTypeFolder HitKind = "Folder"
 )
 
 type DashboardHit struct {
 	// Dashboard or folder
-	Type HitType `json:"type"`
-	// The UID
+	Kind HitKind `json:"kind"`
+	// The k8s "name" (eg, grafana UID)
 	Name string `json:"name"`
 	// The display nam
 	Title string `json:"title"`
@@ -66,15 +72,12 @@ type DashboardHit struct {
 	Tags []string `json:"tags,omitempty"`
 	// The UID/name for the folder
 	Folder string `json:"folder,omitempty"`
-	// Current sorting supports sort by name, stats and date
-	// Name does not need to be returned, and the others can be numbers
-	SortValue int64 `json:"sorted,omitempty"`
-	// When using "real" search, this is the score
-	Score float64 `json:"score,omitempty"`
-	// Untyped extra fields/values, useful for dynamic development, but do not count on them
-	Extra *common.Unstructured `json:"extra,omitempty"`
+	// Stick untyped extra fields in this object (including the sort value)
+	Field *common.Unstructured `json:"field,omitempty"`
 	// Explain the score (if possible)
 	Explain *common.Unstructured `json:"explain,omitempty"`
+	// When using "real" search, this is the score
+	Score float64 `json:"score,omitempty"`
 }
 
 type FacetResult struct {
