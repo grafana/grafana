@@ -3,11 +3,12 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, TextArea, Field, Input, Alert } from '@grafana/ui';
+import { Button, Stack, TextArea, Field, Input, Alert, LinkButton } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { RepositorySpec } from '../../provisioning/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -34,6 +35,13 @@ function getDefaultValues(meta: DashboardMeta) {
   return { ref, path, repo, comment: '' };
 }
 
+function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
+  if (!spec || spec.type !== 'github' || !ref) {
+    return '';
+  }
+  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}`;
+}
+
 export interface Props {
   meta: DashboardMeta;
   dashboard: DashboardScene;
@@ -44,10 +52,12 @@ export interface Props {
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
   const defaultValues = getDefaultValues(meta);
-  const { register, handleSubmit } = useForm({ defaultValues });
+  const { register, handleSubmit, watch } = useForm({ defaultValues });
   const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
   const repositoryConfig = repositoryConfigQuery?.data?.spec;
   const isGitHub = repositoryConfig?.type === 'github';
+  const [repo, ref] = watch(['repo', 'ref']);
+  const href = createPRLink(repositoryConfig, repo, ref);
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -117,9 +127,9 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
             Cancel
           </Button>
           {isGitHub && (
-            <Button variant="secondary" onClick={() => drawer.setState({ showDiff: true })} fill="outline">
+            <LinkButton variant="secondary" href={href} fill="outline">
               Open pull request
-            </Button>
+            </LinkButton>
           )}
         </Stack>
       </Stack>

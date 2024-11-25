@@ -6,6 +6,7 @@ export type GitHubRepositoryConfig = {
   owner: string;
   repository: string;
   token?: string;
+  branch?: string;
 };
 
 export type LocalRepositoryConfig = {
