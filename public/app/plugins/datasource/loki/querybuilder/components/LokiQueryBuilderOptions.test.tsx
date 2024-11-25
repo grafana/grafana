@@ -123,8 +123,9 @@ describe('LokiQueryBuilderOptions', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows correct options for metric query with invalid step', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
+  it.each(['abc', 10])('shows correct options for metric query with invalid step', async (step: string | number) => {
+    // @ts-expect-error Expected for backward compatibility test
+    setup({ expr: 'rate({foo="bar"}[5m]', step });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: Invalid value')).toBeInTheDocument();

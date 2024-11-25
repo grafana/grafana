@@ -93,10 +93,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     const isValidStep = useMemo(() => {
-      if (!query.step || isValidGrafanaDuration(query.step) || !isNaN(Number(query.step))) {
+      if (!query.step) {
         return true;
       }
-      return false;
+      return typeof query.step === 'string' && isValidGrafanaDuration(query.step) && !isNaN(parseInt(query.step, 10));
     }, [query.step]);
 
     return (
