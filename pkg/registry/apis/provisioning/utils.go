@@ -44,7 +44,7 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 			return &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": gvk.GroupVersion().String(),
-					"kind":       "Dashboard",
+					"kind":       gvk.Kind,
 					"metadata": map[string]any{
 						"name": value["uid"],
 					},
