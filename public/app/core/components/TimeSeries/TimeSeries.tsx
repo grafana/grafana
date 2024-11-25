@@ -31,14 +31,14 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     });
   };
 
-  renderLegend = (config: UPlotConfigBuilder) => {
+  renderLegend = (config: UPlotConfigBuilder, alignedFrame: DataFrame) => {
     const { legend, frames } = this.props;
 
     if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
       return null;
     }
 
-    return <PlotLegend data={frames} config={config} {...legend} />;
+    return <PlotLegend data={[alignedFrame]} config={config} {...legend} />;
   };
 
   render() {

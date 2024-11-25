@@ -42,39 +42,79 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 export const PlotLegend = memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
-    const legendItems = config
-      .getSeries()
-      .map<VizLegendItem | undefined>((s) => {
-        const seriesConfig = s.props;
-        const fieldIndex = seriesConfig.dataFrameFieldIndex;
-        const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
 
-        if (!fieldIndex) {
+    const alignedFrame = data[0]!;
+    const cfgSeries = config.getSeries();
+
+    const legendItems: VizLegendItem[] = alignedFrame.fields
+      .map((field, i) => {
+        if (i === 0 || field.config.custom?.hideFrom.legend) {
           return undefined;
         }
 
-        const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+        const dataFrameFieldIndex = field.state?.origin!;
 
-        if (!field || field.config.custom?.hideFrom?.legend) {
-          return undefined;
-        }
+        const seriesConfig = cfgSeries.find(({ props }) => {
+          const { dataFrameFieldIndex: dataFrameFieldIndexCfg } = props;
 
-        const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+          return (
+            dataFrameFieldIndexCfg?.frameIndex === dataFrameFieldIndex.frameIndex &&
+            dataFrameFieldIndexCfg?.fieldIndex === dataFrameFieldIndex.fieldIndex
+          );
+        })!;
+
+        const axisPlacement = config.getAxisPlacement(seriesConfig.props.scaleKey);
+
+        const label = field.state?.displayName ?? field.name;
         const scaleColor = getFieldSeriesColor(field, theme);
         const seriesColor = scaleColor.color;
 
         return {
-          disabled: !(seriesConfig.show ?? true),
-          fieldIndex,
+          disabled: field.state?.hideFrom?.viz,
+          fieldIndex: dataFrameFieldIndex,
           color: seriesColor,
           label,
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
-          getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
-          lineStyle: seriesConfig.lineStyle,
+          getItemKey: () => `${label}-${dataFrameFieldIndex.frameIndex}-${dataFrameFieldIndex.fieldIndex}`,
+          lineStyle: field.config.custom.lineStyle,
         };
       })
-      .filter((i): i is VizLegendItem => i !== undefined);
+      .filter((item) => item !== undefined);
+
+    // const legendItems = config
+    //   .getSeries()
+    //   .map<VizLegendItem | undefined>((s) => {
+    //     const seriesConfig = s.props;
+    //     const fieldIndex = seriesConfig.dataFrameFieldIndex;
+    //     const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
+
+    //     if (!fieldIndex) {
+    //       return undefined;
+    //     }
+
+    //     const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+    //     if (!field || field.config.custom?.hideFrom?.legend) {
+    //       return undefined;
+    //     }
+
+    //     const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+    //     const scaleColor = getFieldSeriesColor(field, theme);
+    //     const seriesColor = scaleColor.color;
+
+    //     return {
+    //       disabled: !(seriesConfig.show ?? true),
+    //       fieldIndex,
+    //       color: seriesColor,
+    //       label,
+    //       yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
+    //       getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
+    //       getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
+    //       lineStyle: seriesConfig.lineStyle,
+    //     };
+    //   })
+    //   .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>

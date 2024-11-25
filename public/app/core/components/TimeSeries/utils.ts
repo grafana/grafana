@@ -210,7 +210,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
 
     const customConfig: GraphFieldConfig = config.custom!;
 
-    if (field === xField || (field.type !== FieldType.number && field.type !== FieldType.enum)) {
+    const isHidden = config.custom?.hideFrom?.viz || field.state?.hideFrom?.viz;
+
+    if (field === xField || isHidden || (field.type !== FieldType.number && field.type !== FieldType.enum)) {
       continue;
     }
 
@@ -497,7 +499,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       barMaxWidth: customConfig.barMaxWidth,
       pointSize: customConfig.pointSize,
       spanNulls: customConfig.spanNulls || false,
-      show: !customConfig.hideFrom?.viz && !field.state?.hideFrom?.viz,
       gradientMode: customConfig.gradientMode,
       thresholds: config.thresholds,
       hardMin: field.config.min,

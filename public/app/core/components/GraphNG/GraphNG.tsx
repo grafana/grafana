@@ -47,7 +47,7 @@ export interface GraphNGProps extends Themeable2 {
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactElement | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
@@ -245,7 +245,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(config)}>
+      <VizLayout width={width} height={height} legend={renderLegend(config, alignedFrame)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={config}
