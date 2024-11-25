@@ -280,6 +280,12 @@
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
+    "export": {
+      "subtitle": {
+        "formats": "Ŝęľęčŧ ŧĥę ƒőřmäŧ äŉđ đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ",
+        "one-format": "Đőŵŉľőäđ ŧĥę ƒįľę őř čőpy ŧĥę čőŉŧęŉŧş ŧő čľįpþőäřđ"
+      }
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -301,6 +307,7 @@
           "title": "Đäŧä şőūřčę-mäŉäģęđ"
         },
         "grafanaManaged": {
+          "export-new-rule": "Ēχpőřŧ ŉęŵ äľęřŧ řūľę",
           "export-rules": "Ēχpőřŧ řūľęş",
           "loading": "Ŀőäđįŉģ...",
           "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
