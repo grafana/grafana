@@ -58,12 +58,12 @@ func ProvideAuthZClient(
 			return nil, err
 		}
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(authCfg)
+		client, err = newGrpcLegacyClient(authCfg, tracer)
 		if err != nil {
 			return nil, err
 		}
 	case ModeCloud:
-		client, err = newCloudLegacyClient(authCfg)
+		client, err = newCloudLegacyClient(authCfg, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -87,9 +87,9 @@ func ProvideStandaloneAuthZClient(
 	}
 
 	if authCfg.mode == ModeGRPC {
-		return newGrpcLegacyClient(authCfg)
+		return newGrpcLegacyClient(authCfg, tracer)
 	}
-	return newCloudLegacyClient(authCfg)
+	return newCloudLegacyClient(authCfg, tracer)
 }
 
 func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error) {
@@ -114,10 +114,14 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error)
 	)
 }
 
-func newGrpcLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
+func newGrpcLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
 	// This client interceptor is a noop, as we don't send an access token
 	clientConfig := authnlib.GrpcClientConfig{}
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&clientConfig, authnlib.WithDisableAccessTokenOption())
+	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
+		&clientConfig,
+		authnlib.WithDisableAccessTokenOption(),
+		authnlib.WithTracerOption(tracer),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +131,7 @@ func newGrpcLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 		authzlib.WithGrpcDialOptionsClientOption(
 			getDialOpts(clientInterceptor, authCfg.allowInsecure)...,
 		),
+		authzlib.WithTracerClientOption(tracer),
 		// TODO: remove this once access tokens are supported on-prem
 		authzlib.WithDisableAccessTokenClientOption(),
 	)
@@ -137,7 +142,7 @@ func newGrpcLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 	return client, nil
 }
 
-func newCloudLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
+func newCloudLegacyClient(authCfg *Cfg, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
 	grpcClientConfig := authnlib.GrpcClientConfig{
 		TokenClientConfig: &authnlib.TokenExchangeConfig{
 			Token:            authCfg.token,
@@ -149,7 +154,7 @@ func newCloudLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 		},
 	}
 
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig)
+	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig, authnlib.WithTracerOption(tracer))
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +164,7 @@ func newCloudLegacyClient(authCfg *Cfg) (authzlib.AccessChecker, error) {
 		authzlib.WithGrpcDialOptionsClientOption(
 			getDialOpts(clientInterceptor, authCfg.allowInsecure)...,
 		),
+		authzlib.WithTracerClientOption(tracer),
 	)
 	if err != nil {
 		return nil, err
