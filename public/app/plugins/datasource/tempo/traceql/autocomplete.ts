@@ -517,7 +517,7 @@ function completionItemsToSuggestions(
       },
     };
 
-    if (tag != null && item.type === 'TAG_NAME') {
+    if (tag && item.type === 'TAG_NAME') {
       fixSuggestion(suggestion, offset, tag, scope);
     }
 
