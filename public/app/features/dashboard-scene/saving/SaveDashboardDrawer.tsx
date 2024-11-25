@@ -53,7 +53,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const { provisioned: isProvisioned, folderTitle } = meta;
 
     // Provisioned dashboards have k8s metadata annotations
-    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName]
+    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName];
 
     const tabs = (
       <TabsBar>

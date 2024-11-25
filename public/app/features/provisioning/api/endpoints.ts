@@ -6,7 +6,6 @@ import {
   UpdateRequestArg,
   HelloWorld,
   RepositoryForCreate,
-  WatchEvent,
   WebhookResponse,
   ResourceWrapper,
   FileOperationArg,
@@ -55,47 +54,50 @@ const injectedRtkApi = api.injectEndpoints({
       }),
       invalidatesTags: ['RepositoryList'],
     }),
-    connectGetRepositoryExport: build.query<ResourceWrapper, RequestArg>({
+    getRepositoryExport: build.query<ResourceWrapper, RequestArg>({
       query: ({ name }) => ({
         url: `${BASE_PATH}/${name}/export`,
       }),
     }),
-    connectPostRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
+    createRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
       query: ({ name }) => ({
         url: `${BASE_PATH}/${name}/export`,
         method: 'POST',
       }),
     }),
-    connectGetRepositoryFiles: build.query<ResourceWrapper, GetFileArg>({
-      query: ({ name, path, commit }) => ({
+    getRepositoryFiles: build.query<ResourceWrapper, GetFileArg>({
+      query: ({ name, path, ref }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
-        params: { commit },
+        params: { ref },
       }),
     }),
-    connectPutRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
-      query: ({ name, path, body, message }) => ({
+    updateRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
+      query: ({ name, path, body, ref, message }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
         method: 'PUT',
         body,
-        params: { message },
+        params: { ref, message },
       }),
     }),
-    connectPostRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
-      query: ({ name, path, body, message }) => ({
+    createRepositoryFiles: build.mutation<ResourceWrapper, FileOperationArg>({
+      query: ({ name, path, body, ref, message }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
         method: 'POST',
         body,
-        params: { message },
+        params: { ref, message },
       }),
     }),
-    connectDeleteRepositoryFiles: build.mutation<ResourceWrapper, { name: string; path: string; message?: string }>({
-      query: ({ name, path, message }) => ({
+    deleteRepositoryFiles: build.mutation<
+      ResourceWrapper,
+      { name: string; path: string; ref?: string; message?: string }
+    >({
+      query: ({ name, path, ref, message }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
         method: 'DELETE',
-        params: { message },
+        params: { ref, message },
       }),
     }),
-    connectGetRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
+    getRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
       query: ({ name, whom }) => ({
         url: `${BASE_PATH}/${name}/hello`,
         params: { whom },
@@ -121,27 +123,15 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
     }),
-    connectGetRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
+    getRepositoryWebhook: build.query<WebhookResponse, RequestArg>({
       query: ({ name }) => ({
         url: `${BASE_PATH}/${name}/webhook`,
       }),
     }),
-    connectPostRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
+    createRepositoryWebhook: build.mutation<WebhookResponse, RequestArg>({
       query: ({ name }) => ({
         url: `${BASE_PATH}/${name}/webhook`,
         method: 'POST',
-      }),
-    }),
-    watchRepositoryList: build.query<WatchEvent, void>({
-      query: () => ({
-        url: `${BASE_PATH}`,
-        params: { watch: true },
-      }),
-    }),
-    watchRepository: build.query<WatchEvent, RequestArg>({
-      query: ({ name }) => ({
-        url: `${BASE_PATH}/${name}`,
-        params: { watch: true },
       }),
     }),
   }),
@@ -157,18 +147,16 @@ export const {
   useUpdateRepositoryMutation,
   useDeleteRepositoryMutation,
   usePatchRepositoryMutation,
-  useConnectGetRepositoryExportQuery,
-  useConnectPostRepositoryExportMutation,
-  useConnectGetRepositoryFilesQuery,
-  useConnectPutRepositoryFilesMutation,
-  useConnectPostRepositoryFilesMutation,
-  useConnectDeleteRepositoryFilesMutation,
-  useConnectGetRepositoryHelloQuery,
+  useGetRepositoryExportQuery,
+  useCreateRepositoryExportMutation,
+  useGetRepositoryFilesQuery,
+  useUpdateRepositoryFilesMutation,
+  useCreateRepositoryFilesMutation,
+  useDeleteRepositoryFilesMutation,
+  useGetRepositoryHelloQuery,
   useGetRepositoryStatusQuery,
   useUpdateRepositoryStatusMutation,
   usePatchRepositoryStatusMutation,
-  useConnectGetRepositoryWebhookQuery,
-  useConnectPostRepositoryWebhookMutation,
-  useWatchRepositoryListQuery,
-  useWatchRepositoryQuery,
+  useGetRepositoryWebhookQuery,
+  useCreateRepositoryWebhookMutation,
 } = injectedRtkApi;

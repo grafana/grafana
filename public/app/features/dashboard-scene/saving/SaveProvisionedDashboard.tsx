@@ -1,16 +1,38 @@
-import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
-import { config, getBackendSrv } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
+import { useUpdateRepositoryFilesMutation } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './shared';
+
+type FormData = {
+  ref: string;
+  path: string;
+  comment?: string;
+  repo: string;
+};
+
+function getDefaultValues(meta: DashboardMeta) {
+  const anno = meta.k8s?.annotations;
+  let ref = '';
+  let path = anno?.[AnnoKeyRepoPath] ?? '';
+  const repo = anno?.[AnnoKeyRepoName] ?? '';
+  const idx = path.indexOf('#');
+  if (idx > 0) {
+    ref = path.substring(idx + 1);
+    path = path.substring(0, idx);
+  }
+  return { ref, path, repo, comment: '' };
+}
 
 export interface Props {
   meta: DashboardMeta;
@@ -19,55 +41,38 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
-  const dashboardJSON = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
-
-  const [repo, setRepo] = useState<string>();
-  const [path, setPath] = useState<string>();
-  const [ref, setRef] = useState<string>();
-  const [comment, setComment] = useState<string>();
+export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
+  const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
+  const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
 
   useEffect(() => {
-    const anno = meta.k8s?.annotations;
-    if (!anno) {
-      setRepo('');
-      setPath('');
-      setRef('');
+    const appEvents = getAppEvents();
+    if (request.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Dashboard saved'],
+      });
+      dashboard.setState({ isDirty: false });
+      // TODO Avoid full reload
+      window.location.reload();
+    } else if (request.isError) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Error saving dashboard', request.error],
+      });
+    }
+  }, [request.isSuccess, request.isError, request.error, dashboard]);
+
+  const doSave = ({ ref, path, comment, repo }: FormData) => {
+    if (!repo || !path) {
       return;
     }
-    let ref = '';
-    let path = anno[AnnoKeyRepoPath] ?? '';
-    const idx = path.indexOf('#');
-    if (idx > 0) {
-      ref = path.substring(idx + 1);
-      path = path.substring(0, idx);
-    }
-    setRepo(anno[AnnoKeyRepoName]);
-    setPath(path);
-    setRef(ref);
-  }, [meta]);
-
-  const doSave = () => {
-    const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${path}`;
-    const params: Record<string, string> = {};
-    if (ref) {
-      params['ref'] = ref;
-    }
-    if (comment) {
-      params['comment'] = comment;
-    }
-
-    getBackendSrv()
-      .put(url, dashboardJSON, { params })
-      .then((v) => {
-        console.log('WROTE', v);
-        alert('WROTE value');
-      });
+    saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
   return (
-    <div className={styles.container}>
-      <Stack direction="column" gap={2} grow={1}>
+    <form onSubmit={handleSubmit(doSave)}>
+      <Stack direction="column" gap={2}>
         <div>
           <Alert severity="warning" title="Development feature">
             More warnings here... mostly exploratory interfaces.
@@ -77,34 +82,21 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
 
         <Field label="Repository">
-          <div>{repo}</div>
+          <Input {...register('repo')} readOnly />
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input
-            value={path}
-            onChange={(e) => {
-              setPath(e.currentTarget.value);
-            }}
-          />
+          <Input {...register('path')} />
         </Field>
 
-        <Field label="Branch" description="only supported by github right now">
-          <Input
-            value={ref}
-            onChange={(e) => {
-              setRef(e.currentTarget.value);
-            }}
-          />
+        <Field label="Branch" description="Only supported by GitHub right now">
+          <Input {...register('ref')} />
         </Field>
 
         <Field label="Comment">
           <TextArea
+            {...register('comment')}
             aria-label="comment"
-            value={comment ?? ''}
-            onChange={(e) => {
-              setComment(e.currentTarget.value);
-            }}
             placeholder="Add a note to describe your changes (optional)."
             autoFocus
             rows={5}
@@ -113,7 +105,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
 
         <Box paddingTop={2}>
           <Stack gap={2}>
-            <Button variant="primary" onClick={doSave}>
+            <Button variant="primary" type="submit">
               Save
             </Button>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -122,13 +114,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
           </Stack>
         </Box>
       </Stack>
-    </div>
+    </form>
   );
 }
-
-const styles = {
-  container: css({
-    height: '100%',
-    display: 'flex',
-  }),
-};
