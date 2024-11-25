@@ -27,6 +27,7 @@ import { useUnifiedAlertingSelector } from '../hooks/useUnifiedAlertingSelector'
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { createRelativeUrl } from '../utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -119,7 +120,17 @@ const RuleListV1 = () => {
   return (
     // We don't want to show the Loading... indicator for the whole page.
     // We show separate indicators for Grafana-managed and Cloud rules
-    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
+    <AlertingPageWrapper
+      navId="alert-list"
+      isLoading={false}
+      actions={
+        hasAlertRulesCreated && (
+          <Stack gap={1}>
+            <CreateAlertButton /> <ExportNewRuleButton />
+          </Stack>
+        )
+      }
+    >
       <Stack direction="column">
         <RuleListErrors />
         <RulesFilter onClear={onFilterCleared} />
@@ -168,4 +179,22 @@ export function CreateAlertButton() {
     );
   }
   return null;
+}
+
+function ExportNewRuleButton() {
+  const returnTo = location.pathname + location.search;
+  const url = createRelativeUrl(`/alerting/export-new-rule`, {
+    returnTo,
+  });
+  return (
+    <LinkButton
+      href={url}
+      icon="download-alt"
+      variant="secondary"
+      tooltip="Export new grafana rule"
+      onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
+    >
+      <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export new alert rule</Trans>
+    </LinkButton>
+  );
 }
