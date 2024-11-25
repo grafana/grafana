@@ -30,8 +30,14 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 	})
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+		if !errors.As(err, &ghErr) {
+			return nil, nil, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
 			return nil, nil, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, nil, ErrResourceNotFound
 		}
 		return nil, nil, err
 	} else if fc != nil {

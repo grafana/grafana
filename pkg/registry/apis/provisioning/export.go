@@ -157,7 +157,7 @@ func (c *exportConnector) Connect(
 
 			fileName := filepath.Join(folder.CreatePath(), baseFileName)
 			_, err = repo.Read(ctx, logger, fileName, ref)
-			if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
+			if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if file exists before writing: %w", err)))
 				return
 			} else if err != nil { // ErrFileNotFound
