@@ -1,7 +1,7 @@
-import { config, getBackendSrv } from '@grafana/runtime';
-import { DashboardDataDTO, DashboardDTO } from 'app/types';
+import { getBackendSrv } from '@grafana/runtime';
+import { DashboardDTO } from 'app/types';
 
-import { Resource } from '../apiserver/types';
+import { BASE_URL } from './api/baseAPI';
 
 /**
  * Load a dashboard from repository
@@ -10,12 +10,12 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
   const params = new URLSearchParams(window.location.search);
   const ref = params.get('ref') ?? undefined; // commit hash or branch
 
-  const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${path}`;
+  const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
   return getBackendSrv()
     .get(url, ref ? { ref } : undefined)
     .then((v) => {
       // Load the results from dryRun
-      const dryRun = v.resource.dryRun as Resource<DashboardDataDTO, 'Dashboard'>;
+      const dryRun = v.resource.dryRun;
       if (!dryRun) {
         return Promise.reject('failed to read provisioned dashboard');
       }
