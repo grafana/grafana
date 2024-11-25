@@ -28,6 +28,7 @@ import {
   TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
+import { transformNullToString } from '@grafana/runtime/src/utils/queryResponse';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditorLazy } from '../components/QueryEditorLazy';
@@ -230,7 +231,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   private runMetaQuery(request: Partial<SQLQuery>, range: TimeRange): Promise<DataFrame> {
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
-
     return lastValueFrom(
       getBackendSrv()
         .fetch<BackendDataSourceResponse>({
@@ -247,7 +247,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
         .pipe(
           map((res: FetchResponse<BackendDataSourceResponse>) => {
             const rsp = toDataQueryResponse(res, queries);
-            return rsp.data[0] ?? { fields: [] };
+            return rsp.data[0] ? transformNullToString(rsp.data[0]) : { fields: [], length: 0 };
           })
         )
     );

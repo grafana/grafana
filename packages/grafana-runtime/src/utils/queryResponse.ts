@@ -240,3 +240,12 @@ export function frameToMetricFindValue(frame: DataFrame): MetricFindValue[] {
   }
   return values;
 }
+
+export function transformNullToString(data: DataFrame) {
+  data.fields.forEach((field) => {
+    field.values = field.values.map((value) => {
+      return value === null ? '' : value;
+    });
+  });
+  return data;
+}
