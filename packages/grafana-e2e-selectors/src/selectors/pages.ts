@@ -964,6 +964,7 @@ export const versionedPages = {
     },
     org: {
       url: {
+        '10.2.0': '/admin/users',
         '9.5.0': '/org/users',
       },
     },
