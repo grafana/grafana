@@ -12,6 +12,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/authz"
 )
 
 type NamespacedResource struct {
@@ -20,8 +22,52 @@ type NamespacedResource struct {
 	Resource  string
 }
 
+// All fields are set
+func (s *NamespacedResource) Valid() bool {
+	return s.Namespace != "" && s.Group != "" && s.Resource != ""
+}
+
+type ResourceIndex interface {
+	// Add a document to the index.  Note it may not be searchable until after flush is called
+	Write(doc *IndexableDocument) error
+
+	// Mark a resource as deleted.  Note it may not be searchable until after flush is called
+	Delete(key *ResourceKey) error
+
+	// Make sure any changes to the index are flushed and available in the next search/origin calls
+	Flush() error
+
+	// Search within a namespaced resource
+	// When working with federated queries, the additional indexes will be passed in explicitly
+	Search(ctx context.Context, access authz.AccessClient, req *ResourceSearchRequest, federate []ResourceIndex) (*ResourceSearchResponse, error)
+
+	// Execute an origin query -- access control is not not checked for each item
+	// NOTE: this will likely be used for provisioning, or it will be removed
+	Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error)
+}
+
+// SearchBackend contains the technology specific logic to support search
 type SearchBackend interface {
-	// TODO
+	// This will return nil if the key does not exist
+	GetIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error)
+
+	// Build an index from scratch
+	BuildIndex(ctx context.Context,
+		key NamespacedResource,
+
+		// When the size is known, it will be passed along here
+		// Depending on the size, the backend may choose different options (eg: memory vs disk)
+		size int64,
+
+		// The last known resource version (can be used to know that nothing has changed)
+		resourceVersion int64,
+
+		// The non-standard index fields
+		fields SearchableDocumentFields,
+
+		// The builder will write all documents before returning
+		builder func(index ResourceIndex) (int64, error),
+	) (ResourceIndex, error)
 }
 
 const tracingPrexfixSearch = "unified_search."
@@ -119,7 +165,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	return nil
 }
 
-func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (any, int64, error) {
+func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {
 	_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Build")
 	defer span.End()
 
@@ -127,10 +173,57 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	if err != nil {
 		return nil, 0, err
 	}
+	fields := s.builders.GetFields(nsr)
 
 	s.log.Debug(fmt.Sprintf("TODO, build %+v (size:%d, rv:%d) // builder:%+v\n", nsr, size, rv, builder))
 
-	return nil, 0, nil
+	key := &ResourceKey{
+		Group:     nsr.Group,
+		Resource:  nsr.Resource,
+		Namespace: nsr.Namespace,
+	}
+	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
+		rv, err = s.storage.ListIterator(ctx, &ListRequest{
+			Limit: 1000000000000, // big number
+			Options: &ListOptions{
+				Key: key,
+			},
+		}, func(iter ListIterator) error {
+			for iter.Next() {
+				if err = iter.Error(); err != nil {
+					return err
+				}
+
+				// Update the key name
+				// Or should we read it from the body?
+				key.Name = iter.Name()
+
+				// Convert it to an indexable document
+				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
+				if err != nil {
+					return err
+				}
+
+				// And finally write it to the index
+				if err = index.Write(doc); err != nil {
+					return err
+				}
+			}
+			return err
+		})
+		return rv, err
+	})
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if err == nil {
+		err = index.Flush()
+	}
+
+	// rv is the last RV we read.  when watching, we must add all events since that time
+	return index, rv, err
 }
 
 type builderCache struct {
@@ -139,6 +232,9 @@ type builderCache struct {
 
 	// Possible blob support
 	blob BlobSupport
+
+	// searchable fields initialized once on startup
+	fields map[schema.GroupResource]SearchableDocumentFields
 
 	// lookup by group, then resource (namespace)
 	// This is only modified at startup, so we do not need mutex for access
@@ -151,6 +247,7 @@ type builderCache struct {
 
 func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Duration) (*builderCache, error) {
 	cache := &builderCache{
+		fields: make(map[schema.GroupResource]SearchableDocumentFields),
 		lookup: make(map[string]map[string]DocumentBuilderInfo),
 		ns:     expirable.NewLRU[NamespacedResource, DocumentBuilder](nsCacheSize, nil, ttl),
 	}
@@ -173,8 +270,15 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 			cache.lookup[b.GroupResource.Group] = g
 		}
 		g[b.GroupResource.Resource] = b
+
+		// Any custom fields
+		cache.fields[b.GroupResource] = b.Fields
 	}
 	return cache, nil
+}
+
+func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
+	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
 }
 
 // context is typically background.  Holds an LRU cache for a
