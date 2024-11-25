@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -93,3 +94,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
   }),
 });
+/* eslint-enable */

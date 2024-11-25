@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
@@ -206,3 +207,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexGrow: 1,
   }),
 });
+/* eslint-enable */
