@@ -182,6 +182,14 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 // Webhook implements provisioning.Repository.
 func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		// We don't want GitHub's request to cause a cancellation for us, but we also want the request context's data (primarily for logging).
+		// This means we will just ignore when GH closes their connection to us. If we respond in time, fantastic. Otherwise, we'll still do the work.
+		// The cancel we do here is mainly just to make sure that no goroutines can accidentally stay living forever.
+		//
+		// TODO: Should we have our own timeout here? Even if pretty crazy high (e.g. 30 min)?
+		ctx, cancel := context.WithCancel(context.WithoutCancel(req.Context()))
+		defer cancel()
+
 		payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
 		if err != nil {
 			responder.Error(apierrors.NewUnauthorized("invalid signature"))
@@ -197,7 +205,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 
 		switch event := event.(type) {
 		case *github.PushEvent:
-			if err := r.onPushEvent(req.Context(), logger, event); err != nil {
+			if err := r.onPushEvent(ctx, logger, event); err != nil {
 				responder.Error(err)
 				return
 			}
