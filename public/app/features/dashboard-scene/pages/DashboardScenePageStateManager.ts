@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { DashboardSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
@@ -39,7 +39,7 @@ const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry {
-  dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardSpec>;
+  dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>;
   ts: number;
   cacheKey: string;
 }
@@ -72,7 +72,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     route,
     urlFolderUid,
     params,
-  }: LoadDashboardOptions): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardSpec> | null> {
+  }: LoadDashboardOptions): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
     if (!params) {
@@ -83,7 +83,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
     }
 
-    let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardSpec> | null = null;
+    let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null = null;
 
     try {
       switch (route) {
@@ -334,7 +334,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     });
   }
 
-  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardSpec>) {
+  public setDashboardCache(cacheKey: string, dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>) {
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
