@@ -83,8 +83,6 @@ export interface DashboardMeta {
   reloadOnParamsChange?: boolean;
 }
 
-
-
 export interface AnnotationActions {
   canAdd: boolean;
   canEdit: boolean;

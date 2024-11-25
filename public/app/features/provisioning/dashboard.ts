@@ -17,11 +17,11 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
       // Load the results from dryRun
       const dryRun = v.resource.dryRun as Resource<DashboardDataDTO, 'Dashboard'>;
       if (!dryRun) {
-        return Promise.reject("failed to read provisioned dashboard")
+        return Promise.reject('failed to read provisioned dashboard');
       }
 
-      if (!dryRun.apiVersion.startsWith("dashboard.grafana.app")) {
-        return Promise.reject("unexpected resource type: "+dryRun.apiVersion)
+      if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+        return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
       }
 
       return {
@@ -43,9 +43,9 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
             file: url,
             ref: ref,
             repo: repo,
-          }
+          },
         },
-        dashboard: dryRun.spec
-      }
+        dashboard: dryRun.spec,
+      };
     });
 }

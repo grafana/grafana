@@ -89,29 +89,39 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
       // Preview (eg, NOT saved in grafana database)
       if (provisioning) {
-        return <div>
-          <h1>Loaded from external repository</h1>
-          <h3>{provisioning.repo}</h3>
-          <a href={provisioning.file}>{provisioning.file}</a>
+        return (
           <div>
-            <Button onClick={() => {
-              getBackendSrv().put(provisioning.file, changedSaveModel, {
-                params: provisioning.ref ? { ref: provisioning.ref } : undefined,
-              }).then(v => {
-                console.log('WROTE', v)
-                alert('WROTE value')
-              })
-            }}>SAVE</Button>
+            <h1>Loaded from external repository</h1>
+            <h3>{provisioning.repo}</h3>
+            <a href={provisioning.file}>{provisioning.file}</a>
+            <div>
+              <Button
+                onClick={() => {
+                  getBackendSrv()
+                    .put(provisioning.file, changedSaveModel, {
+                      params: provisioning.ref ? { ref: provisioning.ref } : undefined,
+                    })
+                    .then((v) => {
+                      console.log('WROTE', v);
+                      alert('WROTE value');
+                    });
+                }}
+              >
+                SAVE
+              </Button>
+            </div>
           </div>
-        </div>
+        );
       }
 
       // Saved in grafana database, BUT must write to a remote repo for edit
       if (meta.k8s?.annotations?.[AnnoKeyRepoName]) {
-        return <div>
-          <h1>Saved from external repository</h1>
-          <pre>{JSON.stringify(meta.k8s.annotations, null, '  ')}</pre>
-        </div>
+        return (
+          <div>
+            <h1>Saved from external repository</h1>
+            <pre>{JSON.stringify(meta.k8s.annotations, null, '  ')}</pre>
+          </div>
+        );
       }
 
       if (saveAsCopy || changeInfo.isNew) {
