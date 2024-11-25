@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -83,16 +85,19 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		createDashboards(t, service, 100, "test-b")
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, nil)
-		err = zanzanaSyncronizer.Reconcile(context.Background())
-		require.NoError(t, err)
+		tracer := tracing.InitializeTracerForTest()
+		lock := serverlock.ProvideService(db, tracer)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock)
+		zanzanaSyncronizer.ReconcileSync(context.Background())
 
 		query := &dashboards.FindPersistedDashboardsQuery{
 			Title: "test-a",
 			Limit: 1000,
 			SignedInUser: &user.SignedInUser{
-				OrgID:  1,
-				UserID: 1,
+				OrgID:     1,
+				UserID:    1,
+				UserUID:   "test1",
+				Namespace: "default",
 			},
 		}
 		res, err := service.FindDashboardsZanzana(context.Background(), query)
