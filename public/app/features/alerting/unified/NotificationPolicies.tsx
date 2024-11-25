@@ -19,7 +19,6 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
 import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
-import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/components/notification-policies/PolicyUpdateErrorAlert';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -49,7 +48,7 @@ import { useAlertmanager } from './state/AlertmanagerContext';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
-import { matchesApiMachineryError } from './utils/k8s/utils';
+import { ERROR_NEWER_CONFIGURATION, matchesApiMachineryError } from './utils/k8s/errors';
 import { stringifyErrorLike } from './utils/misc';
 import { computeInheritedTree } from './utils/notification-policies';
 import {

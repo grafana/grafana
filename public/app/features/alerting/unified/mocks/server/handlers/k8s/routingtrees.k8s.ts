@@ -7,7 +7,7 @@ import {
   ListNamespacedRoutingTreeApiResponse,
 } from 'app/features/alerting/unified/openapi/routesApi.gen';
 import { ROOT_ROUTE_NAME } from 'app/features/alerting/unified/utils/k8s/constants';
-import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/utils';
+import { ApiMachineryError } from 'app/features/alerting/unified/utils/k8s/errors';
 
 const wrapRoutingTreeResponse: (
   route: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTree

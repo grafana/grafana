@@ -285,7 +285,7 @@ describe.each([
   it('Show error message if loading Alertmanager config fails', async () => {
     const errMessage = "Alertmanager has exploded. it's gone. Forget about it.";
     makeAllAlertmanagerConfigFetchFail(getErrorResponse(errMessage));
-    makeAllK8sGetEndpointsFail(errMessage);
+    makeAllK8sGetEndpointsFail('alerting.config.notfound', errMessage);
 
     renderNotificationPolicies();
     const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });

@@ -1,6 +1,4 @@
-import { get } from 'lodash';
-
-import { config, FetchError, isFetchError } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
@@ -50,33 +48,3 @@ export const canAdminEntity = (k8sEntity: EntityToCheck) =>
 
 export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
   getAnnotation(k8sEntity, K8sAnnotations.AccessDelete) === 'true';
-
-export type ApiMachineryError = {
-  kind: 'Status';
-  apiVersion: string;
-  code: number;
-  details: {
-    uid: string;
-    name?: string;
-    group?: string;
-    kind?: string;
-    retryAfterSeconds?: number;
-    causes?: []; // @TODO type this, see apimachinery@v0.31.1/pkg/apis/meta/v1/types.go
-  };
-  status: 'Failure';
-  metadata?: Record<string, unknown>;
-  message: string;
-  reason: string;
-};
-
-export function isApiMachineryError(error: unknown): error is FetchError<ApiMachineryError> {
-  return isFetchError(error) && get(error.data, 'kind') === 'Status' && get(error.data, 'status') === 'Failure';
-}
-
-export function matchesApiMachineryError(error: unknown, uid: string) {
-  return isApiMachineryError(error) && error.data.details.uid === uid;
-}
-
-export function stringifyApiMachineryError(error: FetchError<ApiMachineryError>): string {
-  return error.data.details.uid ?? error.data.message;
-}

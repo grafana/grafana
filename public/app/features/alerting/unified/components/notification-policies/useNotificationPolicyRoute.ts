@@ -1,7 +1,6 @@
 import memoize from 'micro-memoize';
 
 import { routingTreeApi } from 'app/features/alerting/unified/api/notificationPoliciesApi';
-import { ERROR_NEWER_CONFIGURATION } from 'app/features/alerting/unified/components/notification-policies/PolicyUpdateErrorAlert';
 import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
 import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 
@@ -12,6 +11,7 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1RoutingTreeSpec,
 } from '../../openapi/routesApi.gen';
 import { PROVENANCE_NONE, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { ERROR_NEWER_CONFIGURATION } from '../../utils/k8s/errors';
 import { getK8sNamespace, isK8sEntityProvisioned, shouldUseK8sApi } from '../../utils/k8s/utils';
 const k8sRoutesToRoutesMemoized = memoize(k8sRoutesToRoutes, { maxSize: 1 });
 

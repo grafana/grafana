@@ -23,6 +23,7 @@ import { FolderDTO } from 'app/types';
 import { setupDataSources } from '../../testSetup/datasources';
 import { buildInfoResponse } from '../../testSetup/featureDiscovery';
 import { DataSourceType } from '../../utils/datasource';
+import { ApiMachineryError } from '../../utils/k8s/errors';
 
 import { MIMIR_DATASOURCE_UID } from './constants';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
@@ -148,18 +149,26 @@ export const makeAllAlertmanagerConfigFetchFail = (
   server.use(getAlertmanagerConfigHandler(responseOverride));
 };
 
-export const makeAllK8sGetEndpointsFail = (message = 'could not find an Alertmanager configuration', status = 500) => {
+export const makeAllK8sGetEndpointsFail = (
+  uid: string,
+  message = 'could not find an Alertmanager configuration',
+  status = 500
+) => {
   server.use(
     http.get(ALERTING_API_SERVER_BASE_URL + '/*', () => {
-      const errorResponse = {
+      const errorResponse: ApiMachineryError = {
         kind: 'Status',
         apiVersion: 'v1',
         metadata: {},
         status: 'Failure',
+        details: {
+          uid,
+        },
         message,
         code: status,
+        reason: '',
       };
-      return HttpResponse.json(errorResponse, { status });
+      return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
     })
   );
 };

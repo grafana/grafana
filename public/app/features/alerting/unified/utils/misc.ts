@@ -29,7 +29,7 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
-import { isApiMachineryError, stringifyApiMachineryError } from './k8s/utils';
+import { isApiMachineryError, stringifyApiMachineryError } from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';

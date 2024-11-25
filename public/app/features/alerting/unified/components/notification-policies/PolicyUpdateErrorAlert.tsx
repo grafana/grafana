@@ -1,21 +1,12 @@
 import { Alert } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-type SupportedErrors = 'alerting.notifications.conflict' | string;
+import { stringifyErrorLike } from '../../utils/misc';
 
-export const ERROR_NEWER_CONFIGURATION = 'alerting.notifications.conflict';
-
-export const NotificationPoliciesErrorAlert = ({ error }: { error: SupportedErrors }) => {
-  const errorMessageMap: Record<SupportedErrors, string> = {
-    [ERROR_NEWER_CONFIGURATION]: t(
-      'alerting.policies.update-errors.conflict',
-      'The notification policy tree has been updated by another user.'
-    ),
-  };
-
+export const NotificationPoliciesErrorAlert = ({ error }: { error: unknown }) => {
   const title = t('alerting.policies.update-errors.title', 'Error saving notification policy');
 
-  const errMessage = errorMessageMap[error];
+  const errMessage = stringifyErrorLike(error);
   return (
     <Alert title={title} severity="error">
       <div>
