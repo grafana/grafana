@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -14,6 +15,26 @@ import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { SaveDashboardFormCommonOptions } from './SaveDashboardForm';
 import { DashboardChangeInfo } from './shared';
 
+type FormData = {
+  ref: string;
+  path: string;
+  comment?: string;
+  repo: string;
+};
+
+function getDefaultValues(meta: DashboardMeta) {
+  const anno = meta.k8s?.annotations;
+  let ref = '';
+  let path = anno?.[AnnoKeyRepoPath] ?? '';
+  const repo = anno?.[AnnoKeyRepoName] ?? '';
+  const idx = path.indexOf('#');
+  if (idx > 0) {
+    ref = path.substring(idx + 1);
+    path = path.substring(0, idx);
+  }
+  return { ref, path, repo, comment: '' };
+}
+
 export interface Props {
   meta: DashboardMeta;
   dashboard: DashboardScene;
@@ -23,30 +44,7 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
   const [saveDashboard, request] = useConnectPutRepositoryFilesMutation();
-  const [repo, setRepo] = useState<string>();
-  const [path, setPath] = useState<string>();
-  const [ref, setRef] = useState<string>();
-  const [comment, setComment] = useState<string>();
-
-  useEffect(() => {
-    const anno = meta.k8s?.annotations;
-    if (!anno) {
-      setRepo('');
-      setPath('');
-      setRef('');
-      return;
-    }
-    let ref = '';
-    let path = anno[AnnoKeyRepoPath] ?? '';
-    const idx = path.indexOf('#');
-    if (idx > 0) {
-      ref = path.substring(idx + 1);
-      path = path.substring(0, idx);
-    }
-    setRepo(anno[AnnoKeyRepoName]);
-    setPath(path);
-    setRef(ref);
-  }, [meta]);
+  const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -66,15 +64,16 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
     }
   }, [request.isSuccess, request.isError, request.error]);
 
-  const doSave = () => {
+  const doSave = ({ ref, path, comment, repo }: FormData) => {
     if (!repo || !path) {
       return;
     }
-    saveDashboard({ name: repo, path, body: changeInfo.changedSaveModel });
+    // @ts-expect-error TODO Add ref param
+    saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
   return (
-    <div className={styles.container}>
+    <form onSubmit={handleSubmit(doSave)} className={styles.container}>
       <Stack direction="column" gap={2} grow={1}>
         <div>
           <Alert severity="warning" title="Development feature">
@@ -85,34 +84,21 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
 
         <Field label="Repository">
-          <div>{repo}</div>
+          <Input {...register('repo')} readOnly />
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input
-            value={path}
-            onChange={(e) => {
-              setPath(e.currentTarget.value);
-            }}
-          />
+          <Input {...register('path')} />
         </Field>
 
-        <Field label="Branch" description="only supported by github right now">
-          <Input
-            value={ref}
-            onChange={(e) => {
-              setRef(e.currentTarget.value);
-            }}
-          />
+        <Field label="Branch" description="Only supported by GitHub right now">
+          <Input {...register('ref')} />
         </Field>
 
         <Field label="Comment">
           <TextArea
+            {...register('comment')}
             aria-label="comment"
-            value={comment ?? ''}
-            onChange={(e) => {
-              setComment(e.currentTarget.value);
-            }}
             placeholder="Add a note to describe your changes (optional)."
             autoFocus
             rows={5}
@@ -121,7 +107,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
 
         <Box paddingTop={2}>
           <Stack gap={2}>
-            <Button variant="primary" onClick={doSave}>
+            <Button variant="primary" type="submit">
               Save
             </Button>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -130,7 +116,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
           </Stack>
         </Box>
       </Stack>
-    </div>
+    </form>
   );
 }
 
