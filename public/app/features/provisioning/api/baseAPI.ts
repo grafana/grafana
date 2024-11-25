@@ -31,10 +31,12 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
+export const BASE_URL = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`;
+
 export const baseAPI = createApi({
   reducerPath: 'provisioningAPI',
   baseQuery: createBackendSrvBaseQuery({
-    baseURL: `/apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}`,
+    baseURL: BASE_URL,
   }),
   endpoints: () => ({}),
   tagTypes: ['RepositoryList'],
