@@ -104,6 +104,7 @@ export const handyTestingSchema: DashboardV2Spec = {
       kind: 'AnnotationQuery',
       spec: {
         datasource: { type: 'datasource', uid: 'grafana' },
+        builtIn: true,
         query: {
           kind: 'grafana',
           spec: {
@@ -131,6 +132,7 @@ export const handyTestingSchema: DashboardV2Spec = {
       kind: 'AnnotationQuery',
       spec: {
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        builtIn: true,
         query: {
           kind: 'prometheus',
           spec: {
