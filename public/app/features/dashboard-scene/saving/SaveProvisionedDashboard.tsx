@@ -7,7 +7,7 @@ import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
-import { useConnectPutRepositoryFilesMutation } from '../../provisioning/api';
+import { useUpdateRepositoryFilesMutation } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -42,7 +42,7 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
-  const [saveDashboard, request] = useConnectPutRepositoryFilesMutation();
+  const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
   const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
 
   useEffect(() => {
@@ -67,7 +67,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     if (!repo || !path) {
       return;
     }
-    // @ts-expect-error TODO Add ref param
     saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
