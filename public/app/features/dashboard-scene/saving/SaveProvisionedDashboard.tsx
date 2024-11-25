@@ -6,6 +6,7 @@ import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
+import { useConnectPutRepositoryFilesMutation } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -21,7 +22,7 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
   const dashboardJSON = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
-
+  const [saveDashboard, request] = useConnectPutRepositoryFilesMutation();
   const [repo, setRepo] = useState<string>();
   const [path, setPath] = useState<string>();
   const [ref, setRef] = useState<string>();
@@ -48,21 +49,25 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
   }, [meta]);
 
   const doSave = () => {
-    const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${path}`;
-    const params: Record<string, string> = {};
-    if (ref) {
-      params['ref'] = ref;
+    console.log('saving');
+    if (!repo || !path) {
+      return;
     }
-    if (comment) {
-      params['comment'] = comment;
-    }
+    // const params: Record<string, string> = {};
+    // if (ref) {
+    //   params['ref'] = ref;
+    // }
+    // if (comment) {
+    //   params['comment'] = comment;
+    // }
 
-    getBackendSrv()
-      .put(url, dashboardJSON, { params })
-      .then((v) => {
-        console.log('WROTE', v);
-        alert('WROTE value');
-      });
+    saveDashboard({ name: repo, path, body: changeInfo.changedSaveModel });
+    // getBackendSrv()
+    //   .put(url, dashboardJSON, { params })
+    //   .then((v) => {
+    //     console.log('WROTE', v);
+    //     alert('WROTE value');
+    //   });
   };
 
   return (

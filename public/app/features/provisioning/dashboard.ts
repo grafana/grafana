@@ -1,10 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardDTO } from 'app/types';
 
+import { AnnoKeyRepoName, AnnoKeyRepoPath } from '../apiserver/types';
+
 import { BASE_URL } from './api/baseAPI';
-import { AnnoKeyRepoName, AnnoKeyRepoPath, Resource } from '../apiserver/types';
 
 /**
+ *
  * Load a dashboard from repository
  */
 export async function loadDashboardFromProvisioning(repo: string, path: string): Promise<DashboardDTO> {
@@ -26,14 +28,14 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
       }
 
       // Make sure the annotation key exists
-      let anno = dryRun.metadata.annotations
+      let anno = dryRun.metadata.annotations;
       if (!anno) {
-        dryRun.metadata.annotations = anno = {}
+        dryRun.metadata.annotations = anno = {};
       }
-      anno[AnnoKeyRepoName] = repo
-      anno[AnnoKeyRepoPath] = path
+      anno[AnnoKeyRepoName] = repo;
+      anno[AnnoKeyRepoPath] = path;
       if (ref) {
-        anno[AnnoKeyRepoPath] += path + '#' + ref
+        anno[AnnoKeyRepoPath] += path + '#' + ref;
       }
 
       return {
