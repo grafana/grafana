@@ -74,32 +74,30 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	IDToken       string
-	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+	IDToken string
 
+	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
-func (i *Identity) GetAccess() claims.AccessClaims {
-	if i.AccessTokenClaims != nil {
-		return authn.NewAccessClaims(*i.AccessTokenClaims)
-	}
-	return &identity.IDClaimsWrapper{Source: i}
+func (i *Identity) GetID() string {
+	return i.GetSubject()
 }
 
-func (i *Identity) GetIdentity() claims.IdentityClaims {
-	if i.IDTokenClaims != nil {
-		return authn.NewIdentityClaims(*i.IDTokenClaims)
-	}
-	return &identity.IDClaimsWrapper{Source: i}
+func (i *Identity) GetInternalID() (int64, error) {
+	return identity.IntIdentifier(i.GetID())
+}
+
+func (i *Identity) GetUID() string {
+	return claims.NewTypeID(i.Type, i.UID)
 }
 
 func (i *Identity) GetRawIdentifier() string {
 	return i.UID
 }
 
-func (i *Identity) GetInternalID() (int64, error) {
-	return identity.IntIdentifier(i.GetID())
+func (i *Identity) GetIdentifier() string {
+	return i.UID
 }
 
 func (i *Identity) GetIdentityType() claims.IdentityType {
@@ -108,6 +106,43 @@ func (i *Identity) GetIdentityType() claims.IdentityType {
 
 func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(i.GetIdentityType(), expected...)
+}
+
+func (i *Identity) GetNamespace() string {
+	return i.Namespace
+}
+
+func (i *Identity) GetSubject() string {
+	return claims.NewTypeID(i.Type, i.ID)
+}
+
+func (i *Identity) GetAudience() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Audience
+	}
+	return []string{}
+}
+
+func (i *Identity) GetEmailVerified() bool {
+	return i.EmailVerified
+}
+
+func (i *Identity) GetTokenPermissions() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Rest.Permissions
+	}
+	return []string{}
+}
+
+func (i *Identity) GetTokenDelegatedPermissions() []string {
+	if i.AccessTokenClaims != nil {
+		return i.AccessTokenClaims.Rest.DelegatedPermissions
+	}
+	return []string{}
+}
+
+func (i *Identity) GetGroups() []string {
+	return []string{}
 }
 
 func (i *Identity) GetExtra() map[string][]string {
@@ -121,10 +156,6 @@ func (i *Identity) GetExtra() map[string][]string {
 	return extra
 }
 
-func (i *Identity) GetGroups() []string {
-	return []string{} // teams?
-}
-
 func (i *Identity) GetName() string {
 	if i.Name != "" {
 		return i.Name
@@ -133,14 +164,6 @@ func (i *Identity) GetName() string {
 		return i.Login
 	}
 	return i.Email
-}
-
-func (i *Identity) GetID() string {
-	return claims.NewTypeID(i.Type, i.ID)
-}
-
-func (i *Identity) GetUID() string {
-	return claims.NewTypeID(i.Type, i.UID)
 }
 
 func (i *Identity) GetAuthID() string {
@@ -178,12 +201,12 @@ func (i *Identity) GetIsGrafanaAdmin() bool {
 	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
 }
 
-func (i *Identity) GetLogin() string {
+func (i *Identity) GetUsername() string {
 	return i.Login
 }
 
-func (i *Identity) GetNamespace() string {
-	return i.Namespace
+func (i *Identity) GetLogin() string {
+	return i.Login
 }
 
 func (i *Identity) GetOrgID() int64 {

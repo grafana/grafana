@@ -142,13 +142,12 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	// If no token is found, create an internal token.
 	// This is a workaround for StaticRequester not having a signed ID token.
 	if staticRequester, ok := authInfo.(*identity.StaticRequester); ok {
-		token, idClaims, err := createInternalToken(staticRequester)
+		token, _, err := createInternalToken(staticRequester)
 		if err != nil {
 			return "", fmt.Errorf("failed to create internal token: %w", err)
 		}
 
 		staticRequester.IDToken = token
-		staticRequester.IDTokenClaims = idClaims
 		return token, nil
 	}
 
