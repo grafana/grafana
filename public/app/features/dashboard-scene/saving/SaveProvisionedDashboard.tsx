@@ -41,7 +41,7 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
+export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useConnectPutRepositoryFilesMutation();
   const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
 
@@ -52,7 +52,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
         type: AppEvents.alertSuccess.name,
         payload: ['Dashboard saved'],
       });
-
+      dashboard.setState({ isDirty: false });
       // TODO Avoid full reload
       window.location.reload();
     } else if (request.isError) {
@@ -61,7 +61,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error]);
+  }, [request.isSuccess, request.isError, request.error, dashboard]);
 
   const doSave = ({ ref, path, comment, repo }: FormData) => {
     if (!repo || !path) {
