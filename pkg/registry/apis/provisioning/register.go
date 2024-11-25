@@ -149,11 +149,13 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		getter:        repositoryStorage,
 		statusUpdater: repositoryStatusStorage,
 		parent:        b,
+		logger:        b.logger.With("connector", "hello_world"),
 	}
 
 	exportConnector := &exportConnector{
 		repoGetter: b,
 		client:     b.client,
+		logger:     b.logger.With("connector", "export"),
 	}
 
 	storage := map[string]rest.Storage{}
@@ -164,10 +166,12 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
 		client: b.client.identities,
+		logger: b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
+		logger: b.logger.With("connector", "files"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -222,7 +226,7 @@ func (b *ProvisioningAPIBuilder) afterCreate(obj runtime.Object, opts *metav1.Cr
 		return
 	}
 
-	if err := repo.AfterCreate(ctx); err != nil {
+	if err := repo.AfterCreate(ctx, b.logger); err != nil {
 		b.logger.Error("failed to run after create", "error", err)
 		return
 	}
@@ -252,7 +256,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 		return nil, fmt.Errorf("failed to ensure the configured folder exists: %w", err)
 	}
 
-	undo, err := repo.BeginUpdate(ctx, oldRepo)
+	undo, err := repo.BeginUpdate(ctx, b.logger, oldRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +264,7 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 	return func(ctx context.Context, success bool) {
 		if !success && undo != nil {
 			if err := undo(ctx); err != nil {
-				b.logger.Error("failed to undo failed update", "error", err)
+				b.logger.ErrorContext(ctx, "failed to undo failed update", "error", err)
 			}
 		}
 	}, nil
@@ -335,7 +339,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 
-	if err := repo.AfterDelete(ctx); err != nil {
+	if err := repo.AfterDelete(ctx, b.logger); err != nil {
 		b.logger.Error("failed to run after delete", "error", err)
 		return
 	}

@@ -76,7 +76,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *githubRepository) Test(ctx context.Context) error {
+func (r *githubRepository) Test(ctx context.Context, logger *slog.Logger) error {
 	return &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
@@ -86,7 +86,7 @@ func (r *githubRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*FileInfo, error) {
+func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePath, ref string) (*FileInfo, error) {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
@@ -119,7 +119,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	}, nil
 }
 
-func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
@@ -135,7 +135,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	return err
 }
 
-func (r *githubRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
+func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
@@ -159,7 +159,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	return nil
 }
 
-func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
+func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path, ref, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
@@ -180,7 +180,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 }
 
 // Webhook implements provisioning.Repository.
-func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
+func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		payload, err := github.ValidatePayload(req, []byte(r.config.Spec.GitHub.WebhookSecret))
 		if err != nil {
@@ -197,7 +197,7 @@ func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 
 		switch event := event.(type) {
 		case *github.PushEvent:
-			if err := r.onPushEvent(req.Context(), event); err != nil {
+			if err := r.onPushEvent(req.Context(), logger, event); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -217,7 +217,9 @@ func (r *githubRepository) Webhook(responder rest.Responder) http.HandlerFunc {
 	}
 }
 
-func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEvent) error {
+func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent) error {
+	logger = logger.With("ref", event.GetRef())
+
 	if event.GetRepo() == nil {
 		return fmt.Errorf("missing repository in push event")
 	}
@@ -229,39 +231,44 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
+		logger.DebugContext(ctx, "ignoring push event as it is not for the configured branch")
 		return nil
 	}
 
 	beforeRef := event.GetBefore()
 
 	for _, commit := range event.Commits {
-		r.logger.Info("process commit", "commit", commit.GetID(), "message", commit.GetMessage())
+		logger := logger.With("commit", commit.GetID(), "message", commit.GetMessage())
+		logger.InfoContext(ctx, "processing commit")
 
 		for _, file := range commit.Added {
-			info, err := r.Read(ctx, file, commit.GetID())
+			logger := logger.With("change", "added", "file", file)
+			info, err := r.Read(ctx, logger, file, commit.GetID())
 			if err != nil {
 				return fmt.Errorf("read added resource: %w", err)
 			}
 
-			r.logger.Info("added file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
+			logger.InfoContext(ctx, "added file", "resource", string(info.Data))
 		}
 
 		for _, file := range commit.Modified {
-			info, err := r.Read(ctx, file, commit.GetID())
+			logger := logger.With("change", "modified", "file", file)
+			info, err := r.Read(ctx, logger, file, commit.GetID())
 			if err != nil {
 				return fmt.Errorf("read modified resource: %w", err)
 			}
 
-			r.logger.Info("modified file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
+			logger.InfoContext(ctx, "modified file", "resource", string(info.Data))
 		}
 
 		for _, file := range commit.Removed {
-			info, err := r.Read(ctx, file, beforeRef)
+			logger := logger.With("change", "removed", "file", file)
+			info, err := r.Read(ctx, logger, file, beforeRef)
 			if err != nil {
 				return fmt.Errorf("read removed resource: %w", err)
 			}
 
-			r.logger.Info("removed file", "file", file, "resource", string(info.Data), "commit", commit.GetID())
+			logger.InfoContext(ctx, "removed file", "resource", string(info.Data))
 		}
 
 		beforeRef = commit.GetID()
@@ -270,7 +277,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 	return nil
 }
 
-func (r *githubRepository) createWebhook(ctx context.Context) error {
+func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
 	cfg := pgh.WebhookConfig{
 		URL:         r.config.Spec.GitHub.WebhookURL,
 		Secret:      r.config.Spec.GitHub.WebhookSecret,
@@ -283,11 +290,11 @@ func (r *githubRepository) createWebhook(ctx context.Context) error {
 		return err
 	}
 
-	r.logger.Info("webhook created", "url", cfg.URL)
+	logger.InfoContext(ctx, "webhook created", "url", cfg.URL)
 	return nil
 }
 
-func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRepository) (UndoFunc, error) {
+func (r *githubRepository) updateWebhook(ctx context.Context, logger *slog.Logger, oldRepo *githubRepository) (UndoFunc, error) {
 	owner := r.config.Spec.GitHub.Owner
 	repoName := r.config.Spec.GitHub.Repository
 
@@ -302,30 +309,30 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 	switch {
 	case newCfg.WebhookURL != oldCfg.WebhookURL:
 		// In this case we cannot find out out which webhook to update, so we delete the old one and create a new one
-		if err := r.createWebhook(ctx); err != nil {
+		if err := r.createWebhook(ctx, logger); err != nil {
 			return nil, fmt.Errorf("create new webhook: %w", err)
 		}
 
 		undoFunc := UndoFunc(func(ctx context.Context) error {
-			if err := r.deleteWebhook(ctx); err != nil {
+			if err := r.deleteWebhook(ctx, logger); err != nil {
 				return fmt.Errorf("revert create new webhook: %w", err)
 			}
 
-			r.logger.Info("create new webhook reverted", "url", newCfg.WebhookURL)
+			logger.InfoContext(ctx, "create new webhook reverted", "url", newCfg.WebhookURL)
 
 			return nil
 		})
 
-		if err := oldRepo.deleteWebhook(ctx); err != nil {
+		if err := oldRepo.deleteWebhook(ctx, logger); err != nil {
 			return undoFunc, fmt.Errorf("delete old webhook: %w", err)
 		}
 
 		undoFunc = undoFunc.Chain(ctx, func(ctx context.Context) error {
-			if err := oldRepo.createWebhook(ctx); err != nil {
+			if err := oldRepo.createWebhook(ctx, logger); err != nil {
 				return fmt.Errorf("revert delete old webhook: %w", err)
 			}
 
-			r.logger.Info("delete old webhook reverted", "url", oldCfg.WebhookURL)
+			logger.InfoContext(ctx, "delete old webhook reverted", "url", oldCfg.WebhookURL)
 
 			return nil
 		})
@@ -340,7 +347,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 					return nil, fmt.Errorf("update webhook secret: %w", err)
 				}
 
-				r.logger.Info("webhook secret updated", "url", newCfg.WebhookURL)
+				logger.InfoContext(ctx, "webhook secret updated", "url", newCfg.WebhookURL)
 
 				return func(ctx context.Context) error {
 					hook.Secret = oldCfg.WebhookSecret
@@ -348,7 +355,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 						return fmt.Errorf("revert webhook secret: %w", err)
 					}
 
-					r.logger.Info("webhook secret reverted", "url", oldCfg.WebhookURL)
+					logger.InfoContext(ctx, "webhook secret reverted", "url", oldCfg.WebhookURL)
 					return nil
 				}, nil
 			}
@@ -360,7 +367,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context, oldRepo *githubRep
 	}
 }
 
-func (r *githubRepository) deleteWebhook(ctx context.Context) error {
+func (r *githubRepository) deleteWebhook(ctx context.Context, logger *slog.Logger) error {
 	owner := r.config.Spec.GitHub.Owner
 	name := r.config.Spec.GitHub.Repository
 
@@ -377,23 +384,23 @@ func (r *githubRepository) deleteWebhook(ctx context.Context) error {
 		}
 	}
 
-	r.logger.Info("webhook deleted", "url", r.config.Spec.GitHub.WebhookURL)
+	logger.InfoContext(ctx, "webhook deleted", "url", r.config.Spec.GitHub.WebhookURL)
 	return nil
 }
 
-func (r *githubRepository) AfterCreate(ctx context.Context) error {
-	return r.createWebhook(ctx)
+func (r *githubRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
+	return r.createWebhook(ctx, logger)
 }
 
-func (r *githubRepository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+func (r *githubRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
 	oldGitRepo, ok := old.(*githubRepository)
 	if !ok {
 		return nil, fmt.Errorf("old repository is not a github repository")
 	}
 
-	return r.updateWebhook(ctx, oldGitRepo)
+	return r.updateWebhook(ctx, logger, oldGitRepo)
 }
 
-func (r *githubRepository) AfterDelete(ctx context.Context) error {
-	return r.deleteWebhook(ctx)
+func (r *githubRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
+	return r.deleteWebhook(ctx, logger)
 }

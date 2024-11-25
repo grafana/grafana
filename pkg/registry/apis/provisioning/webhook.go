@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +22,7 @@ import (
 type webhookConnector struct {
 	client auth.BackgroundIdentityService
 	getter RepoGetter
+	logger *slog.Logger
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -69,7 +71,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	if err != nil {
 		return nil, err
 	}
-	webhook := repo.Webhook(responder)
+	webhook := repo.Webhook(ctx, s.logger, responder)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -106,7 +107,7 @@ func (r *localRepository) Validate() (fields field.ErrorList) {
 }
 
 // Test implements provisioning.Repository.
-func (r *localRepository) Test(ctx context.Context) error {
+func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) error {
 	return &apierrors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "test is not yet implemented",
@@ -116,7 +117,7 @@ func (r *localRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
 	if ref != "" {
 		return nil, apierrors.NewBadRequest("local repository does not support ref")
 	}
@@ -150,7 +151,7 @@ func (r *localRepository) Read(ctx context.Context, path string, ref string) (*F
 	}, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -170,7 +171,7 @@ func (r *localRepository) Create(ctx context.Context, path string, ref string, d
 	return fmt.Errorf("file already exists")
 }
 
-func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -187,7 +188,7 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
+func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -201,19 +202,19 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 }
 
 // Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook(responder rest.Responder) http.HandlerFunc {
+func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }
 
-func (r *localRepository) AfterCreate(ctx context.Context) error {
+func (r *localRepository) AfterCreate(ctx context.Context, logger *slog.Logger) error {
 	return nil
 }
 
-func (r *localRepository) BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error) {
+func (r *localRepository) BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error) {
 	return nil, nil
 }
 
-func (r *localRepository) AfterDelete(ctx context.Context) error {
+func (r *localRepository) AfterDelete(ctx context.Context, logger *slog.Logger) error {
 	return nil
 }
