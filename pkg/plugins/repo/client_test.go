@@ -69,4 +69,19 @@ func Test_Download(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 2, count, "should retry on error")
 	})
+
+	t.Run("it should do use gcom token when it's available", func(t *testing.T) {
+		expectedToken := "token-test"
+		fakeServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			require.Equal(t, "Bearer "+expectedToken, token, "gcom token should be set")
+			err := writeFakeZip(w)
+			require.NoError(t, err)
+		}))
+		defer fakeServer.Close()
+		cli := fakeServer.Client()
+		repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test"), gcomToken: expectedToken}
+		_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
+		require.NoError(t, err)
+	})
 }
