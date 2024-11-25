@@ -61,9 +61,23 @@ export const PlotLegend = memo(
             dataFrameFieldIndexCfg?.frameIndex === dataFrameFieldIndex.frameIndex &&
             dataFrameFieldIndexCfg?.fieldIndex === dataFrameFieldIndex.fieldIndex
           );
-        })!;
+        });
 
-        const axisPlacement = config.getAxisPlacement(seriesConfig.props.scaleKey);
+        let axisPlacement = AxisPlacement.Left;
+
+        // there is a bit of a bug here. since we no longer add hidden fields to the uplot config
+        // we cannot determine "auto" axis placement of hidden series
+        // we can fix this in future by decoupling some things
+        if (seriesConfig != null) {
+          axisPlacement = config.getAxisPlacement(seriesConfig.props.scaleKey);
+        } else {
+          let fieldAxisPlacement = field.config.custom?.axisPlacement;
+
+          // respect explicit non-auto placement
+          if (fieldAxisPlacement !== AxisPlacement.Auto) {
+            fieldAxisPlacement = fieldAxisPlacement;
+          }
+        }
 
         const label = field.state?.displayName ?? field.name;
         const scaleColor = getFieldSeriesColor(field, theme);
@@ -81,40 +95,6 @@ export const PlotLegend = memo(
         };
       })
       .filter((item) => item !== undefined);
-
-    // const legendItems = config
-    //   .getSeries()
-    //   .map<VizLegendItem | undefined>((s) => {
-    //     const seriesConfig = s.props;
-    //     const fieldIndex = seriesConfig.dataFrameFieldIndex;
-    //     const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
-
-    //     if (!fieldIndex) {
-    //       return undefined;
-    //     }
-
-    //     const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
-
-    //     if (!field || field.config.custom?.hideFrom?.legend) {
-    //       return undefined;
-    //     }
-
-    //     const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
-    //     const scaleColor = getFieldSeriesColor(field, theme);
-    //     const seriesColor = scaleColor.color;
-
-    //     return {
-    //       disabled: !(seriesConfig.show ?? true),
-    //       fieldIndex,
-    //       color: seriesColor,
-    //       label,
-    //       yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
-    //       getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
-    //       getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
-    //       lineStyle: seriesConfig.lineStyle,
-    //     };
-    //   })
-    //   .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
