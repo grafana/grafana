@@ -80,7 +80,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		runstore = true
 	}
 
-	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(t, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)

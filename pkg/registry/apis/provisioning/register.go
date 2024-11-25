@@ -30,6 +30,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,6 +51,7 @@ type ProvisioningAPIBuilder struct {
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
 	client            *resourceClient
+	ghFactory         github.ClientFactory
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -61,6 +63,7 @@ func NewProvisioningAPIBuilder(
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
+	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
@@ -69,6 +72,7 @@ func NewProvisioningAPIBuilder(
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
 		features:          features,
+		ghFactory:         ghFactory,
 	}
 }
 
@@ -79,6 +83,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
+	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
@@ -88,7 +93,7 @@ func RegisterAPIService(
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features)
+	}, cfg.SecretKey, identities, features, ghFactory)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -190,7 +195,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		return repository.NewGitHub(ctx, r), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:

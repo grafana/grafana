@@ -9,7 +9,6 @@ import (
 	"net/url"
 
 	"github.com/google/go-github/v66/github"
-	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -27,18 +26,11 @@ type githubRepository struct {
 
 var _ Repository = (*githubRepository)(nil)
 
-func NewGitHub(ctx context.Context, config *provisioning.Repository) *githubRepository {
-	tokenSrc := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: config.Spec.GitHub.Token},
-	)
-	tokenClient := oauth2.NewClient(ctx, tokenSrc)
-	githubClient := github.NewClient(tokenClient)
-	// TODO: use a factory or similar for the token
-
+func NewGitHub(ctx context.Context, config *provisioning.Repository, factory pgh.ClientFactory) *githubRepository {
 	return &githubRepository{
 		config: config,
 		logger: slog.Default().With("logger", "github-repository"),
-		gh:     pgh.NewRealClient(githubClient),
+		gh:     factory.New(ctx, config.Spec.GitHub.Token),
 	}
 }
 
