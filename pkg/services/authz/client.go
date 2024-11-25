@@ -53,7 +53,7 @@ func ProvideAuthZClient(
 
 	switch authCfg.mode {
 	case ModeInProc:
-		client, err = newInProcLegacyClient(server)
+		client, err = newInProcLegacyClient(server, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +92,7 @@ func ProvideStandaloneAuthZClient(
 	return newCloudLegacyClient(authCfg, tracer)
 }
 
-func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error) {
+func newInProcLegacyClient(server *legacyServer, tracer tracing.Tracer) (authzlib.AccessChecker, error) {
 	noAuth := func(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
@@ -111,6 +111,7 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.AccessChecker, error)
 		&authzlib.ClientConfig{},
 		authzlib.WithGrpcConnectionClientOption(channel),
 		authzlib.WithDisableAccessTokenClientOption(),
+		authzlib.WithTracerClientOption(tracer),
 	)
 }
 
