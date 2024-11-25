@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
 	"github.com/grafana/authlib/authz"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -149,6 +148,23 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		Resource:  translation.resource,
 		Name:      name,
 		Folder:    folder,
+	}
+
+	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	// FIXME: support different verbs
+	req := &authz.ListRequest{
+		Namespace: namespace,
+		Group:     translation.group,
+		Resource:  translation.resource,
 	}
 
 	return req, true
