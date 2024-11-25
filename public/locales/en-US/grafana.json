@@ -2080,6 +2080,9 @@
       "subtitle": "View and manage your connected data source connections",
       "title": "Data sources"
     },
+    "databases": {
+      "title": "Databases"
+    },
     "datasources": {
       "subtitle": "Add and configure data sources",
       "title": "Data sources"
