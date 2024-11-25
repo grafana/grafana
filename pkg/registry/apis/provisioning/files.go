@@ -191,9 +191,9 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo Reposito
 	}
 
 	if update {
-		err = repo.Update(ctx, path, data, message)
+		err = repo.Update(ctx, path, ref, data, message)
 	} else {
-		err = repo.Create(ctx, path, data, message)
+		err = repo.Create(ctx, path, ref, data, message)
 	}
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (s *filesConnector) doDelete(ctx context.Context, repo Repository, path str
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
 	}
 
-	err := repo.Delete(ctx, path, message)
+	err := repo.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}

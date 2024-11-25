@@ -124,7 +124,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, ref string
 	}, nil
 }
 
-func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+func (r *githubRepository) Create(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	if _, _, err := r.githubClient.Repositories.CreateFile(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentFileOptions{
 		Message: github.String(comment),
 		Content: data,
@@ -146,7 +146,7 @@ func (r *githubRepository) Create(ctx context.Context, path string, data []byte,
 	return nil
 }
 
-func (r *githubRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+func (r *githubRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	file, _, _, err := r.githubClient.Repositories.GetContents(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentGetOptions{
 		Ref: r.config.Spec.GitHub.Branch,
 	})
@@ -177,7 +177,7 @@ func (r *githubRepository) Update(ctx context.Context, path string, data []byte,
 	return nil
 }
 
-func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
+func (r *githubRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	file, _, _, err := r.githubClient.Repositories.GetContents(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, &github.RepositoryContentGetOptions{
 		Ref: r.config.Spec.GitHub.Branch,
 	})
