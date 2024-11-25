@@ -69,12 +69,22 @@ Element snapping and alignment only works when the canvas is not zoomed in.
 
 When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following section describes the different elements available.
 
-<!-- prettier-ignore-start -->
-| Option | Description |
+{{< column-list >}}
 
-<!-- prettier-ignore-end -->
+- [Metric value](#metric-value)
+- [Text](#text)
+- [Ellipse](#basic-shapes)
+- [Rectangle](#basic-shapes)
+- [Icon](#icon)
+- [Server](#server)
+- [Triangle](#basic-shapes)
+- [Cloud](#basic-shapes)
+- [Parallelogram](#basic-shapes)
+- [Button](#button)
 
-### Basic shapes
+{{< /column-list >}}
+
+#### Basic shapes
 
 A basic shape element can display text (both fixed and field data) and its background color can be changed based on data thresholds. You can add the following basic shapes to a canvas:
 
@@ -84,23 +94,23 @@ A basic shape element can display text (both fixed and field data) and its backg
 - Rectangle
 - Triangle
 
-### Metric value
+#### Metric value
 
-The metric value element lets you easily select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
+The metric value element lets you select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" caption="Metric value element demo" >}}
 
-### Text
+#### Text
 
-The text element lets you easily add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
+The text element lets you add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
-### Icon
+#### Icon
 
 The icon element lets you add a supported icon to the canvas. Icons can have their color set based on thresholds or value mappings.
 
-#### Add a custom icon
+##### Add a custom icon
 
 You can add a custom icon by referencing an SVG file. To add a custom icon, follow these steps:
 
@@ -116,13 +126,13 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
 
 If you don't have an SVG file, you can use a rectangle element instead of an icon and set its background image to an image file type. To add a custom image for another element type, follow the steps to [add a custom image](#add-custom-images-to-elements).
 
-### Server
+#### Server
 
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
 
 {{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="750px" caption="Canvas server element" >}}
 
-### Button
+#### Button
 
 The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. API settings are found in the button element editor. You can also pass template variables in the API editor.
 
