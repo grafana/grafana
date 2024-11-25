@@ -1,4 +1,4 @@
-package provisioning
+package repository
 
 import (
 	"context"
@@ -60,7 +60,7 @@ type localRepository struct {
 	path string
 }
 
-func newLocalRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewLocal(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
 	r := &localRepository{
 		config: config,
 	}

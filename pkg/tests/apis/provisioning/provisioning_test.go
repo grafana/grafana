@@ -3,15 +3,16 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -35,6 +36,13 @@ func TestIntegrationProvisioning(t *testing.T) {
 			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
 		},
 	})
+	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
+		client := github.NewMockClient(ttc)
+		client.On("ListWebhooks", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
+		client.On("CreateWebhook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+		// Don't need DeleteWebhook or EditWebhook, because they require that ListWebhooks returns a slice with elements.
+		return client
+	}
 
 	// Scope create+get
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -174,10 +182,10 @@ func TestIntegrationProvisioning(t *testing.T) {
 		}
 
 		js, _ := json.MarshalIndent(found, "", "  ")
-		fmt.Printf("%s", string(js))
 		require.JSONEq(t, `{
 			"github-example": {
 				"description": "load resources from github",
+				"folder": "thisisafolderref",
 				"editing": {
 					"create": true,
 					"delete": true,
@@ -220,6 +228,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"path": "devenv/dev-dashboards"
 				},
 				"title": "Load devenv dashboards",
+				"folder": "testingtesting",
 				"type": "local"
 			},
 			"s3-example": {

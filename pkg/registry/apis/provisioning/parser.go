@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type fileParser struct {
@@ -23,7 +24,7 @@ type fileParser struct {
 	namespace string
 
 	// The target repository
-	repo Repository
+	repo repository.Repository
 
 	// client helper (for this namespace?)
 	client *dynamic.DynamicClient
@@ -33,7 +34,7 @@ type fileParser struct {
 
 type parsedFile struct {
 	// Original file info
-	info *FileInfo
+	info *repository.FileInfo
 	// Parsed contents
 	obj *unstructured.Unstructured
 	// The Kind is defined in the file
@@ -54,7 +55,7 @@ type parsedFile struct {
 	errors []error
 }
 
-func (r *fileParser) parse(ctx context.Context, info *FileInfo, validate bool) (*parsedFile, error) {
+func (r *fileParser) parse(ctx context.Context, info *repository.FileInfo, validate bool) (*parsedFile, error) {
 	obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
 		obj, gvk, err = FallbackResourceLoader(info.Data)
