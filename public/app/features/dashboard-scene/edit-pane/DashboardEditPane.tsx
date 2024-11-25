@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectRef } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -25,22 +25,50 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       this.setState({ selectedObject: dashboard.getRef() });
     }
   }
+}
 
-  public static Component = ({ model }: SceneComponentProps<DashboardEditPane>) => {
-    const { selectedObject } = model.useState();
-    const style = useStyles2(getStyles);
-    const paneRef = useRef<HTMLDivElement>(null);
+export interface Props {
+  editPane: DashboardEditPane;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
 
-    if (!selectedObject) {
-      return null;
-    }
+/**
+ * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
+ */
+export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
+  useEffect(() => {
+    return editPane.activate();
+  }, [editPane]);
 
+  const { selectedObject } = editPane.useState();
+  const styles = useStyles2(getStyles);
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  if (!selectedObject) {
+    return null;
+  }
+
+  if (isCollapsed) {
     return (
-      <div className={cx(style.wrapper)} ref={paneRef}>
-        <ElementEditPane obj={selectedObject.resolve()} />
+      <div className={styles.expandOptionsWrapper}>
+        <ToolbarButton
+          tooltip={'Open options pane'}
+          icon={'arrow-to-right'}
+          onClick={onToggleCollapse}
+          variant="canvas"
+          className={styles.rotate180}
+          aria-label={'Open options pane'}
+        />
       </div>
     );
-  };
+  }
+
+  return (
+    <div className={styles.wrapper} ref={paneRef}>
+      <ElementEditPane obj={selectedObject.resolve()} />
+    </div>
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -50,6 +78,14 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flex: '1 1 0',
       overflow: 'auto',
+    }),
+    rotate180: css({
+      rotate: '180deg',
+    }),
+    expandOptionsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2, 1),
     }),
   };
 }

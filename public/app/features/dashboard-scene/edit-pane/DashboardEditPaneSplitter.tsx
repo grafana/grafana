@@ -3,11 +3,13 @@ import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+
+import { DashboardEditPaneRenderer } from './DashboardEditPane';
 
 interface Props {
   dashboard: DashboardScene;
@@ -63,19 +65,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         <>
           <div {...splitterProps} data-edit-pane-splitter={true} />
           <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
-            {splitterState.collapsed && (
-              <div className={styles.expandOptionsWrapper}>
-                <ToolbarButton
-                  tooltip={'Open options pane'}
-                  icon={'arrow-to-right'}
-                  onClick={onToggleCollapse}
-                  variant="canvas"
-                  className={styles.rotate180}
-                  aria-label={'Open options pane'}
-                />
-              </div>
-            )}
-            {!splitterState.collapsed && <dashboard.state.editPane.Component model={dashboard.state.editPane} />}
+            <DashboardEditPaneRenderer
+              editPane={dashboard.state.editPane}
+              isCollapsed={splitterState.collapsed}
+              onToggleCollapse={onToggleCollapse}
+            />
           </div>
         </>
       )}
@@ -128,14 +122,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-    }),
-    rotate180: css({
-      rotate: '180deg',
-    }),
-    expandOptionsWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      padding: theme.spacing(2, 1),
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {
