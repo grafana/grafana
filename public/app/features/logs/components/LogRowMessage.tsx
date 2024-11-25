@@ -1,4 +1,4 @@
-import { memo, ReactNode, useMemo } from 'react';
+import { memo, ReactNode, SyntheticEvent, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
@@ -44,24 +44,41 @@ interface LogMessageProps {
 }
 
 const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => {
+  const excessCharacters = useMemo(() => entry.length - MAX_CHARACTERS, [entry]);
   const needsHighlighter =
-    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
+    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && excessCharacters > 0;
   const searchWords = highlights ?? [];
+  const [showFull, setShowFull] = useState(excessCharacters < 0);
+  const truncatedEntry = useMemo(() => showFull ? entry : entry.substring(0, MAX_CHARACTERS), [entry, showFull]);
+  
   if (hasAnsi) {
     const highlight = needsHighlighter ? { searchWords, highlightClassName: styles.logsRowMatchHighLight } : undefined;
-    return <LogMessageAnsi value={entry} highlight={highlight} />;
+    return <LogMessageAnsi value={truncatedEntry} highlight={highlight} />;
   } else if (needsHighlighter) {
     return (
       <Highlighter
-        textToHighlight={entry}
+        textToHighlight={truncatedEntry}
         searchWords={searchWords}
         findChunks={findHighlightChunksInText}
         highlightClassName={styles.logsRowMatchHighLight}
       />
     );
   }
-  return <>{entry}</>;
+  return <>{truncatedEntry}{!showFull && <Ellipsis showFull={showFull} toggle={setShowFull} diff={excessCharacters} />}</>;
 };
+
+interface EllipsisProps {
+  showFull: boolean;
+  toggle(state: boolean): void;
+  diff: number;
+}
+const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
+  const handleClick = (e: SyntheticEvent) => {
+    e.stopPropagation();
+    toggle(true);
+  }
+  return <>…{' '}<span onClick={handleClick}>{diff} more</span></>
+}
 
 const restructureLog = (
   line: string,
