@@ -45,7 +45,6 @@ export interface HistogramProps extends Themeable2 {
   height: number;
   structureRev?: number; // a number that will change when the frames[] structure changes
   legend: VizLegendOptions;
-  rawSeries?: DataFrame[];
   children?: (builder: UPlotConfigBuilder, frame: DataFrame, xMinOnlyFrame: DataFrame) => React.ReactNode;
 }
 
@@ -280,8 +279,11 @@ const preparePlotData = (builder: UPlotConfigBuilder, xMinOnlyFrame: DataFrame) 
 };
 
 interface State {
-  alignedData: AlignedData;
+  // includes fields hidden from viz
+  alignedFrameLegend: DataFrame;
+  // excludes fields hidden from viz
   alignedFrame: DataFrame;
+  alignedData: AlignedData;
   config?: UPlotConfigBuilder;
   xMinOnlyFrame: DataFrame;
 }
@@ -299,24 +301,30 @@ export class Histogram extends React.Component<HistogramProps, State> {
     const xMinOnly = xMinOnlyFrame(alignedFrame);
     const alignedData = preparePlotData(config, xMinOnly);
 
+    let alignedFrameLegend = {
+      ...alignedFrame,
+      fields: alignedFrame.fields.filter((field) => field.name !== 'xMin' && field.name !== 'xMax'),
+    };
+
+    // console.log(alignedFrame.fields);
+
     return {
       alignedFrame,
+      alignedFrameLegend,
       alignedData,
       config,
       xMinOnlyFrame: xMinOnly,
     };
   }
 
-  renderLegend(config: UPlotConfigBuilder) {
+  renderLegend(config: UPlotConfigBuilder, alignedFrame: DataFrame) {
     const { legend } = this.props;
 
     if (!config || legend.showLegend === false) {
       return null;
     }
 
-    const frames = this.props.options.combine ? [this.props.alignedFrame] : this.props.rawSeries!;
-
-    return <PlotLegend data={frames} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
+    return <PlotLegend frame={alignedFrame} config={config} maxHeight="35%" maxWidth="60%" {...legend} />;
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
@@ -339,15 +347,15 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   render() {
-    const { width, height, children, alignedFrame } = this.props;
-    const { config } = this.state;
+    const { width, height, children } = this.props;
+    const { config, alignedFrame, alignedFrameLegend } = this.state;
 
     if (!config) {
       return null;
     }
 
     return (
-      <VizLayout width={width} height={height} legend={this.renderLegend(config)}>
+      <VizLayout width={width} height={height} legend={this.renderLegend(config, alignedFrameLegend)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={this.state.config!} data={this.state.alignedData} width={vizWidth} height={vizHeight}>
             {children ? children(config, alignedFrame, this.state.xMinOnlyFrame) : null}

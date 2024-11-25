@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
+import { DataFrame, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -12,7 +12,7 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
-  data: DataFrame[];
+  frame: DataFrame;
   config: UPlotConfigBuilder;
 }
 
@@ -40,13 +40,12 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 export const PlotLegend = memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+  ({ frame, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
 
-    const alignedFrame = data[0]!;
     const cfgSeries = config.getSeries();
 
-    const legendItems: VizLegendItem[] = alignedFrame.fields
+    const legendItems: VizLegendItem[] = frame.fields
       .map((field, i) => {
         if (i === 0 || field.config.custom?.hideFrom.legend) {
           return undefined;

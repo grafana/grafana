@@ -38,7 +38,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       return null;
     }
 
-    return <PlotLegend data={[alignedFrame]} config={config} {...legend} />;
+    return <PlotLegend frame={alignedFrame} config={config} {...legend} />;
   };
 
   render() {
