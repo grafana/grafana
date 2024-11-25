@@ -1052,7 +1052,7 @@ func ruleConstraintViolationToErr(sess *db.Session, rule ngmodels.AlertRule, err
 	} else if strings.Contains(msg, "UQE_alert_rule_org_id_uid") || strings.Contains(msg, "alert_rule.org_id, alert_rule.uid") {
 		// return verbose conflicting alert rule error response
 		// see: https://github.com/grafana/grafana/issues/89755
-		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID, Title: rule.Title, NamespaceUID: rule.NamespaceUID}
+		existingPartialAlertRule := ngmodels.AlertRule{UID: rule.UID}
 		return ngmodels.ErrAlertRuleConflictVerbose(existingPartialAlertRule, rule, errors.New("rule UID under the same organisation should be unique"))
 	} else {
 		return ngmodels.ErrAlertRuleConflict(rule, err)
