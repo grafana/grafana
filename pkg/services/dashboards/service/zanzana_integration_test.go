@@ -88,7 +88,8 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		tracer := tracing.InitializeTracerForTest()
 		lock := serverlock.ProvideService(db, tracer)
 		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock)
-		zanzanaSyncronizer.ReconcileSync(context.Background())
+		err = zanzanaSyncronizer.ReconcileSync(context.Background())
+		require.NoError(t, err)
 
 		query := &dashboards.FindPersistedDashboardsQuery{
 			Title: "test-a",
