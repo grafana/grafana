@@ -87,10 +87,10 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		{
 			name:            "returns true when the auth entry is found",
 			user:            &user.SignedInUser{UserID: 1},
-			want:            &login.UserAuth{AuthModule: login.GenericOAuthModule},
+			want:            &login.UserAuth{AuthModule: login.GenericOAuthModule, OAuthAccessToken: "token"},
 			wantExist:       true,
 			wantErr:         false,
-			getAuthInfoUser: login.UserAuth{AuthModule: login.GenericOAuthModule},
+			getAuthInfoUser: login.UserAuth{AuthModule: login.GenericOAuthModule, OAuthAccessToken: "token"},
 		},
 	}
 	for _, tc := range testCases {

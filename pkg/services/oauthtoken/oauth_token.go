@@ -201,7 +201,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	}
 
 	// An extra check to ensure that the user has an OAuth token
-	// It's required to handle the case for when the `improvedExternalSessionHandling` feature flag gets disabled
+	// It's required to handle the case when the `improvedExternalSessionHandling` feature flag gets disabled
 	if authInfo.OAuthAccessToken == "" {
 		ctxLogger.Debug("No access token found for user")
 		return nil, false, fmt.Errorf("no access token found for user %d", userID)

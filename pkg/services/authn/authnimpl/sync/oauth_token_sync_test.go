@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 )
@@ -118,6 +119,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				singleflightGroup: new(singleflight.Group),
 				tracer:            tracing.InitializeTracerForTest(),
 				cache:             localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				features:          featuremgmt.WithFeatures(),
 			}
 
 			ctx := context.Background()
