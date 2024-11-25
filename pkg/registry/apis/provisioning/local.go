@@ -150,7 +150,7 @@ func (r *localRepository) Read(ctx context.Context, path string, ref string) (*F
 	}, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -170,7 +170,7 @@ func (r *localRepository) Create(ctx context.Context, path string, data []byte, 
 	return fmt.Errorf("file already exists")
 }
 
-func (r *localRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -187,7 +187,7 @@ func (r *localRepository) Update(ctx context.Context, path string, data []byte, 
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Delete(ctx context.Context, path string, comment string) error {
+func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
