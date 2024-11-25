@@ -223,7 +223,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       flexGrow: 0,
       gridArea: 'controls',
-      padding: theme.spacing(2, 0, 2, 2),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

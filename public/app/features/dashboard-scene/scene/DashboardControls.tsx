@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -132,7 +132,10 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   return (
-    <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
+    <div
+      data-testid={selectors.pages.Dashboard.Controls}
+      className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
+    >
       <Stack grow={1} wrap={'wrap'}>
         {!hideVariableControls && variableControls.map((c) => <c.Component model={c} key={c.state.key} />)}
         <Box grow={1} />
@@ -167,6 +170,10 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'column-reverse',
         alignItems: 'stretch',
       },
+    }),
+    controlsPanelEdit: css({
+      // In panel edit we do not need any right padding as the splitter is providing it
+      paddingRight: 0,
     }),
     embedded: css({
       background: 'unset',
