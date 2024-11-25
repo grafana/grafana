@@ -30,7 +30,7 @@ func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
 		SkipTLSVerify: false,
 		BaseURL:       baseURL,
 		Logger:        log.NewPrettyLogger("plugin.repository"),
-		GcomToken:     cfg.GcomToken,
+		GcomToken:     cfg.GrafanaComAPIToken,
 	}), nil
 }
 
