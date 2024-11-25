@@ -1,6 +1,8 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, FieldConfigSource } from '@grafana/data';
 
 import { prepareGraphableFields } from './utils';
+
+const fieldConfig: FieldConfigSource = { defaults: {}, overrides: [] };
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -12,7 +14,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const frames = prepareGraphableFields(input, fieldConfig, createTheme());
     expect(frames).toBeNull();
   });
 
@@ -25,7 +27,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const frames = prepareGraphableFields(input, fieldConfig, createTheme());
     expect(frames).toBeNull();
   });
 
@@ -41,7 +43,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const frames = prepareGraphableFields(input, fieldConfig, createTheme());
     expect(frames![0].fields.map((f) => f.state?.seriesIndex)).toEqual([undefined, undefined, 0, undefined, 1]);
   });
 
@@ -56,7 +58,7 @@ describe('prepare timeseries graph', () => {
         ],
       }),
     ];
-    const frames = prepareGraphableFields(input, createTheme());
+    const frames = prepareGraphableFields(input, fieldConfig, createTheme());
     const out = frames![0];
 
     expect(out.fields.map((f) => f.name)).toEqual(['a', 'b', 'c', 'd']);
@@ -82,7 +84,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const frames = prepareGraphableFields([df], fieldConfig, createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
@@ -103,7 +105,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', values: [1, 2, 3] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const frames = prepareGraphableFields([df], fieldConfig, createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
@@ -127,7 +129,7 @@ describe('prepare timeseries graph', () => {
         { name: 'a', config: { noValue: '20' }, values: [1, 2, 3] },
       ],
     });
-    const frames = prepareGraphableFields([df], createTheme());
+    const frames = prepareGraphableFields([df], fieldConfig, createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values).toMatchInlineSnapshot(`
