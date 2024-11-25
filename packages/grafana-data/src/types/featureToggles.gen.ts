@@ -242,4 +242,5 @@ export interface FeatureToggles {
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
   alertingNotificationsStepMode?: boolean;
+  useV2DashboardsAPI?: boolean;
 }

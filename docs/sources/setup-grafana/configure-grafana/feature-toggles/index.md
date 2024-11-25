@@ -227,6 +227,7 @@ Experimental features might be changed or removed without prior notice.
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
 | `jaegerBackendMigration`                      | Enables querying the Jaeger data source without the proxy                                                                                                                                                                                                                         |
 | `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section                                                                                                                                                                                                                         |
+| `useV2DashboardsAPI`                          | Use the v2 kubernetes API in the frontend for dashboards                                                                                                                                                                                                                          |
 
 ## Development feature toggles
 

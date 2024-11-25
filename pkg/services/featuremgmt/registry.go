@@ -1673,6 +1673,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:            "useV2DashboardsAPI",
+			Description:     "Use the v2 kubernetes API in the frontend for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true, // changes the API routing
+		},
 	}
 )
 
