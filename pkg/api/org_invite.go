@@ -195,6 +195,20 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) RevokeInvite(c *contextmodel.ReqContext) response.Response {
+	query := tempuser.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
+	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
+			return response.Error(http.StatusNotFound, "Invite not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get invite", err)
+	}
+
+	canRevoke := c.SignedInUser.GetOrgID() == queryResult.OrgID || c.SignedInUser.GetIsGrafanaAdmin()
+	if !canRevoke {
+		return response.Error(http.StatusForbidden, "Permission denied: not permitted to revoke invite", nil)
+	}
+
 	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], tempuser.TmpUserRevoked); !ok {
 		return rsp
 	}

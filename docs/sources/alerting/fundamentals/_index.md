@@ -13,6 +13,11 @@ menuTitle: Introduction
 title: Introduction to Alerting
 weight: 100
 refs:
+  notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
   notification-policies:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
@@ -105,11 +110,15 @@ A rule using the PromQL expression above creates as many alert instances as the 
 
 [Contact points](ref:contact-points) determine the notification message and where notifications are sent. For example, you might have a contact point that sends notifications to an email address, to Slack, to an incident management system (IRM) such as Grafana OnCall or Pagerduty, or to a webhook.
 
+### Notification messages
+
+By default, notification messages include alert details, such as the number of alerts, their status, and annotations to help responders address alert issues. Notification messages can also be customized.
+
 In the alert rule, you can choose a contact point to receive the alert notifications or use notification policies instead.
 
 ### Notification policies
 
-[Notification policies](ref:notification-policies) provide a flexible method to handle alert notifications for larger systems.
+[Notification policies](ref:notification-policies) is an advanced option to handle alert notifications for larger systems.
 
 Notification policies routes alerts to contact points via label matching. Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
 
@@ -129,12 +138,8 @@ Each notification policy decides where to send the alert (contact point) and whe
 
 Grafana Alerting is built on the Prometheus model of designing alerting systems. Prometheus-based alerting systems have two main components:
 
-- An alert generator that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
-- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for handling them and sending their notifications.
-
-Grafana Alerting doesn’t use Prometheus as its default alert generator because it works with many other data sources; not just Prometheus.
-
-However, Grafana can also use Prometheus as an alert generator (refer to [alert rule types](ref:alert-rules)), as well as external Alertmanagers.
+- An alert generator that [evaluates alert rules](ref:alert-rule-evaluation) and sends firing and resolved alerts to the alert receiver.
+- An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for sending their [notifications](ref:notifications).
 
 ## Design your Alerting system
 
@@ -147,23 +152,23 @@ Here are some tips on how to create an effective alert management set up for you
 **Which are the key metrics for your business that you want to monitor and alert on?**
 
 - Find events that are important to know about and not so trivial or frequent that recipients ignore them.
-
 - Alerts should only be created for big events that require immediate attention or intervention.
-
 - Consider quality over quantity.
-
-**Which type of Alerting do you want to use?**
-
-- Choose between Grafana-managed Alerting or Grafana Mimir or Loki-managed Alerting; or both.
 
 **How do you want to organize your alerts and notifications?**
 
-- Be selective about who you set to receive alerts. Consider sending them to whoever is on call or a specific Slack channel.
-- Automate as far as possible using the Alerting API or alerts as code (Terraform).
+- Be selective about who you set to receive alerts. Consider sending them to the right teams, whoever is on call, and the specific channels.
+- Think carefully about priority and severity levels.
+- Automate as far as possible provisioning Alerting resources with the API or Terraform.
+
+**Which information should you include in notifications?**
+
+- Consider who the alert receivers and responders are.
+- Share information that helps responders identify and address potential issues.
+- Link alerts to dashboards to guide responders on which data to investigate.
 
 **How can you reduce alert fatigue?**
 
 - Avoid noisy, unnecessary alerts by using silences, mute timings, or pausing alert rule evaluation.
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
-- Think carefully about priority and severity levels.
 - Continually review your thresholds and evaluation rules.

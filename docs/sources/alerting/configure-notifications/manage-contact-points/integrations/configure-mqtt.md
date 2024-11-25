@@ -12,9 +12,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: MQTT notifier
+menuTitle: MQTT
 title: Configure the MQTT notifier for Alerting
-weight: 0
+weight: 140
 ---
 
 # Configure the MQTT notifier for Alerting

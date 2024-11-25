@@ -29,9 +29,11 @@ export const LogMessages = {
   loadedCentralAlertStateHistory: 'loaded central alert state history',
 };
 
-const { logInfo, logError, logMeasurement } = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
+  module: 'Alerting',
+});
 
-export { logError, logInfo, logMeasurement };
+export { logError, logInfo, logMeasurement, logWarning };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(

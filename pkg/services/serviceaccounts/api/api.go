@@ -101,17 +101,6 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 
 	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
 		if c.SignedInUser.IsIdentityType(claims.TypeUser) {
-			userID, err := c.SignedInUser.GetInternalID()
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
-			}
-
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(),
-				c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID},
-				strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
-			}
-
 			// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
 			// Required for cases when caller wants to immediately interact with the newly created object
 			api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)

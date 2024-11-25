@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,6 +33,8 @@ type ServiceAccountsService struct {
 	acService   accesscontrol.Service
 	permissions accesscontrol.ServiceAccountPermissionsService
 
+	cfg               *setting.Cfg
+	db                db.DB
 	store             store
 	log               log.Logger
 	backgroundLog     log.Logger
@@ -58,6 +64,8 @@ func ProvideServiceAccountsService(
 		orgService,
 	)
 	s := &ServiceAccountsService{
+		cfg:           cfg,
+		db:            store,
 		acService:     acService,
 		permissions:   permissions,
 		store:         serviceAccountsStore,
@@ -150,7 +158,39 @@ func (sa *ServiceAccountsService) CreateServiceAccount(ctx context.Context, orgI
 	if err := validOrgID(orgID); err != nil {
 		return nil, err
 	}
-	return sa.store.CreateServiceAccount(ctx, orgID, saForm)
+
+	var serviceAccount *serviceaccounts.ServiceAccountDTO
+	err := sa.db.InTransaction(ctx, func(ctx context.Context) error {
+		var err error
+		serviceAccount, err = sa.store.CreateServiceAccount(ctx, orgID, saForm)
+		if err != nil {
+			return err
+		}
+
+		user, err := identity.GetRequester(ctx)
+		if err == nil && sa.cfg.RBAC.PermissionsOnCreation("service-account") {
+			if user.IsIdentityType(claims.TypeUser) {
+				userID, err := user.GetInternalID()
+				if err != nil {
+					return err
+				}
+
+				if _, err := sa.permissions.SetUserPermission(ctx,
+					orgID, accesscontrol.User{ID: userID},
+					strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
 }
 
 func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, orgID int64, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {

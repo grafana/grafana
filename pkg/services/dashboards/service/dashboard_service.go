@@ -523,7 +523,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser) {
+	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := dto.User.GetInternalID()
 		if err != nil {
 			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "id", dto.User.GetID(), "error", err)

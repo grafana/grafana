@@ -161,7 +161,7 @@ type AlertNG struct {
 
 func (ng *AlertNG) init() error {
 	// AlertNG should be initialized before the cancellation deadline of initCtx
-	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	initCtx, cancelFunc := context.WithTimeout(context.Background(), ng.Cfg.UnifiedAlerting.InitializationTimeout)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log

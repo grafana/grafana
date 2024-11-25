@@ -93,6 +93,7 @@ Related links:
    - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
    - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
    - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
+1. (Optional) Set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
 1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
@@ -103,6 +104,7 @@ root_url = https://grafana.example.com
 
 [auth.saml]
 enabled = true
+name = My IdP
 auto_login = false
 private_key_path = "/path/to/private_key.pem"
 certificate_path = "/path/to/certificate.cert"
