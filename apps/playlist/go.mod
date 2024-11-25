@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/grafana/grafana-app-sdk v0.25.2-0.20241121130914-f68e3b25fbc6
-	github.com/grafana/grafana-app-sdk/plugin v0.25.1
+	github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20241121130914-f68e3b25fbc6
 	github.com/grafana/grafana-plugin-sdk-go v0.259.3
 	k8s.io/apimachinery v0.31.2
 	k8s.io/klog/v2 v2.130.1

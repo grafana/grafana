@@ -11,12 +11,17 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/apps/playlist/pkg/apis"
 	playlistv0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/apps/playlist/pkg/watchers"
 )
 
 type PlaylistConfig struct {
 	EnableWatchers bool
+}
+
+func Provider(appCfg app.SpecificConfig) app.Provider {
+	return simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
 }
 
 func New(cfg app.Config) (app.App, error) {

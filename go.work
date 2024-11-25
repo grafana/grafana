@@ -33,4 +33,4 @@ replace github.com/goccy/go-json => github.com/grafana/go-json v0.0.0-2024110615
 
 replace github.com/grafana/grafana-app-sdk => github.com/grafana/grafana-app-sdk v0.25.2-0.20241121130914-f68e3b25fbc6
 
-replace github.com/grafana/grafana-app-sdk/plugin => github.com/grafana/grafana-app-sdk v0.25.2-0.20241121130914-f68e3b25fbc6
+replace github.com/grafana/grafana-app-sdk/plugin => github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20241121130914-f68e3b25fbc6
