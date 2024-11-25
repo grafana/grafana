@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 )
 
@@ -28,10 +27,6 @@ func (s *Service) GetCurrentOAuthToken(context.Context, identity.Requester, *aut
 
 func (s *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return oauthtoken.IsOAuthPassThruEnabled(ds)
-}
-
-func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
-	return nil, false, nil
 }
 
 func (s *Service) TryTokenRefresh(context.Context, identity.Requester, *auth.UserToken) (*oauth2.Token, error) {

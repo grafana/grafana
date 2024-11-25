@@ -3,7 +3,6 @@ package oauthtoken
 import (
 	"context"
 	"errors"
-	"reflect"
 	"testing"
 	"time"
 
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,78 +38,6 @@ const UNEXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHR
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-func TestService_HasOAuthEntry(t *testing.T) {
-	testCases := []struct {
-		name            string
-		user            *user.SignedInUser
-		want            *login.UserAuth
-		wantExist       bool
-		wantErr         bool
-		err             error
-		getAuthInfoErr  error
-		getAuthInfoUser login.UserAuth
-	}{
-		{
-			name:      "returns false without an error in case user is nil",
-			user:      nil,
-			want:      nil,
-			wantExist: false,
-			wantErr:   false,
-		},
-		{
-			name:           "returns false and an error in case GetAuthInfo returns an error",
-			user:           &user.SignedInUser{UserID: 1},
-			want:           nil,
-			wantExist:      false,
-			wantErr:        true,
-			getAuthInfoErr: errors.New("error"),
-		},
-		{
-			name:           "returns false without an error in case auth entry is not found",
-			user:           &user.SignedInUser{UserID: 1},
-			want:           nil,
-			wantExist:      false,
-			wantErr:        false,
-			getAuthInfoErr: user.ErrUserNotFound,
-		},
-		{
-			name:            "returns false without an error in case the auth entry is not oauth",
-			user:            &user.SignedInUser{UserID: 1},
-			want:            nil,
-			wantExist:       false,
-			wantErr:         false,
-			getAuthInfoUser: login.UserAuth{AuthModule: "auth_saml"},
-		},
-		{
-			name:            "returns true when the auth entry is found",
-			user:            &user.SignedInUser{UserID: 1},
-			want:            &login.UserAuth{AuthModule: login.GenericOAuthModule, OAuthAccessToken: "token"},
-			wantExist:       true,
-			wantErr:         false,
-			getAuthInfoUser: login.UserAuth{AuthModule: login.GenericOAuthModule, OAuthAccessToken: "token"},
-		},
-	}
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			srv, authInfoStore, _ := setupOAuthTokenService(t)
-			authInfoStore.ExpectedOAuth = &tc.getAuthInfoUser
-			authInfoStore.ExpectedError = tc.getAuthInfoErr
-
-			entry, exists, err := srv.HasOAuthEntry(context.Background(), tc.user)
-
-			if tc.wantErr {
-				assert.Error(t, err)
-			}
-
-			if tc.want != nil {
-				assert.True(t, reflect.DeepEqual(tc.want, entry))
-			}
-			assert.Equal(t, tc.wantExist, exists)
-		})
-	}
 }
 
 func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *socialtest.MockSocialConnector) {

@@ -55,7 +55,6 @@ var _ OAuthTokenService = (*Service)(nil)
 type OAuthTokenService interface {
 	GetCurrentOAuthToken(context.Context, identity.Requester, *auth.UserToken) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
-	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
 	TryTokenRefresh(context.Context, identity.Requester, *auth.UserToken) (*oauth2.Token, error)
 	InvalidateOAuthTokens(context.Context, identity.Requester, *auth.UserToken) error
 }
@@ -124,7 +123,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 			return persistedToken
 		}
 	} else {
-		authInfo, ok, _ := o.HasOAuthEntry(ctx, usr)
+		authInfo, ok, _ := o.hasOAuthEntry(ctx, usr)
 		if !ok {
 			return nil
 		}
@@ -162,9 +161,9 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 	return IsOAuthPassThruEnabled(ds)
 }
 
-// HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
-func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
-	ctx, span := o.tracer.Start(ctx, "oauthtoken.HasOAuthEntry")
+// hasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
+func (o *Service) hasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
+	ctx, span := o.tracer.Start(ctx, "oauthtoken.hasOAuthEntry")
 	defer span.End()
 
 	if usr == nil || usr.IsNil() {
@@ -299,7 +298,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, s
 
 			persistedToken = buildOAuthTokenFromExternalSession(externalSession)
 		} else {
-			authInfo, exists, err := o.HasOAuthEntry(ctx, usr)
+			authInfo, exists, err := o.hasOAuthEntry(ctx, usr)
 			if !exists {
 				if err != nil {
 					ctxLogger.Debug("Failed to fetch oauth entry", "error", err)
