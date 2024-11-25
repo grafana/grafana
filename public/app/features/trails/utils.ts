@@ -103,7 +103,9 @@ export function getDatasourceForNewTrail(): string | undefined {
   }
   const promDatasources = getDatasourceSrv().getList({ type: 'prometheus' });
   if (promDatasources.length > 0) {
-    return promDatasources.find((mds) => mds.uid === config.defaultDatasource)?.uid ?? promDatasources[0].uid;
+    const defaultDatasource = promDatasources.find((mds) => mds.isDefault);
+
+    return defaultDatasource?.uid ?? promDatasources[0].uid;
   }
   return undefined;
 }
