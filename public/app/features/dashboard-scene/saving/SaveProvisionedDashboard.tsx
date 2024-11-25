@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -73,8 +72,8 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit(doSave)} className={styles.container}>
-      <Stack direction="column" gap={2} grow={1}>
+    <form onSubmit={handleSubmit(doSave)}>
+      <Stack direction="column" gap={2}>
         <div>
           <Alert severity="warning" title="Development feature">
             More warnings here... mostly exploratory interfaces.
@@ -119,10 +118,3 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
     </form>
   );
 }
-
-const styles = {
-  container: css({
-    height: '100%',
-    display: 'flex',
-  }),
-};
