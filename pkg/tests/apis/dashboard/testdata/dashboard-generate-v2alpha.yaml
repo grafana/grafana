@@ -4,4 +4,3 @@ metadata:
   generateName: x 
 spec:
   title: Just a dummy dashboard (v2) without anything
-  description: In legacy SQL storage, this will be replaced with a dummy 
