@@ -297,7 +297,7 @@ export class LinkSrv implements LinkService {
     const info: LinkModel<T> = {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: link.title ?? '',
-      target: link.targetBlank ? '_blank' : undefined,
+      target: link.targetBlank !== undefined ? (link.targetBlank ? '_blank' : '_self') : undefined,
       origin,
     };
 

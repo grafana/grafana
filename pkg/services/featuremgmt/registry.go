@@ -364,10 +364,12 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Name:              "unifiedRequestLog",
+			Description:       "Writes error logs to the request logger",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaBackendGroup,
+			Expression:        "true",
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "renderAuthJWT",
@@ -505,6 +507,13 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			RequiresDevMode: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "provisioning",
+			Description:     "Next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
@@ -1053,6 +1062,12 @@ var (
 		{
 			Name:        "onPremToCloudMigrationsAlerts",
 			Description: "Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
+			Name:        "onPremToCloudMigrationsAuthApiMig",
+			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOperatorExperienceSquad,
 		},
@@ -1650,6 +1665,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaAlertingSquad,
 			Expression:   "true", // enabled by default
+		},
+		{
+			Name:         "alertingNotificationsStepMode",
+			Description:  "Enables simplified step mode in the notifications section",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 		},
 	}
 )
