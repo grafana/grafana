@@ -23,6 +23,7 @@ func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, err
 			return dash, nil
 		}
 	}
+
 	dash := &dashboard.Dashboard{}
 	err := json.Unmarshal(event.Value, dash)
 	return dash, err

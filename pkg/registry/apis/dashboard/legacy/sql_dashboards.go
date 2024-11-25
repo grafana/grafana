@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -391,13 +392,20 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		}
 	}
 
+	dashboard := dash.Spec.UnstructuredContent()
+
+	// Lets not try saving v2 into legacy storage!
+	if strings.HasPrefix(dash.APIVersion, "v2") {
+		dashboard = newDummyDashboard(dash.Name)
+	}
+
 	meta, err := utils.MetaAccessor(dash)
 	if err != nil {
 		return nil, false, err
 	}
 	out, err := a.dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		Dashboard: simplejson.NewFromAny(dash.Spec.UnstructuredContent()),
+		Dashboard: simplejson.NewFromAny(dashboard),
 		FolderUID: meta.GetFolder(),
 		Overwrite: true, // already passed the revisionVersion checks!
 		UserID:    userID,
