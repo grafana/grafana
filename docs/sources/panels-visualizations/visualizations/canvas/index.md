@@ -61,6 +61,8 @@ You can tie [Elements](#elements) and [Connections](#connections) to data throug
 
 Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas. When you move elements, snapping and alignment guides help you create more precise layouts.
 
+Add elements in the **Layer** section of canvas options.
+
 {{% admonition type="note" %}}
 Element snapping and alignment only works when the canvas is not zoomed in.
 {{% /admonition %}}
@@ -207,41 +209,6 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
-## Data links
-
-Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
-
-1. Enable inline editing.
-1. Click the element you to which you want to add the data link.
-1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
-1. Click **Add link**.
-1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
-1. Enter the **URL** or variable to which you want to link.
-
-   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
-
-1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
-1. Click **Save** to save changes and close the dialog box.
-1. Disable inline editing.
-
-If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
-
-### One-click data link
-
-You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
-
-1. Enable inline editing.
-1. Click the element to which you want to add the data link.
-1. In either the inline editor or panel editor, expand the **Selected element** editor.
-1. Scroll down to the **Data links** section and expand it.
-1. In the **One-click** section, choose **Link**.
-1. Disable inline editing.
-
-The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
-
-{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
-
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -260,7 +227,7 @@ The inline editing toggle lets you lock or unlock the canvas. When turned off th
 
 #### Experimental Element types
 
-<!-- TBA -->
+Toggle the switch to include experimental element types in the available selections.
 
 #### Pan and zoom
 
@@ -280,15 +247,50 @@ You can enable infinite panning in a canvas when pan and zoom is enabled. This a
 Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
 {{% /admonition %}}
 
-<!-- TODO: Add gif -->
-
 ### Layer options
 
-<!-- TBA -->
+The **Layer** options let you add elements to the canvas and control its appearance:
+
+- [Elements](#elements)
+- [Background](#background)
+- [Border](#border)
+
+#### Elements
+
+Use the **Add item** button to open the [element type](#element-types) drop-down list. Elements are listed in the reverse order that you add them to the canvas:
+
+![Canvas elements added in the Layer options](screenshot-canvas-elements-v11.3.png)
+
+By default, the elements have a name that corresponds to the order in which it was added. To update the name of an element, follow these steps:
+
+1. Hover the cursor over the name of the default element name so the **Edit layer name** (pencil) icon is displayed.
+1. Click the **Edit layer name** icon.
+1. Enter a new name.
+1. Click outside of the name field.
+
+You can also take the following actions on elements:
+
+- Change the order of elements. Click and hold the row of the element while moving it up and down in the element list.
+- Duplicate or remove elements by clicking the icons on the element row.
+- Access the element editing options by clicking the element row. This displays the [Selected element](#selected-element-options) section of options. Click **Clear selection** to remove the element from focus and stop displaying that section of options.
+
+#### Background
+
+Use these following options to control the background of the canvas:
+
+- **Color** - Set the background color.
+- **Image** - Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements).
+- **Image size** - Control the size of the image or even set it as a tile.
+
+#### Border
+
+Use these following options to control the border of the canvas:
+
+- **Width** - Set the border width in pixels.
+- **Color** - Set the border color. This option is only displayed when the border width is greater than zero.
+- **Radius** - Add rounded corners to the border and control the degree of curve.
 
 ### Selected element options
-
-<!-- TBA -->
 
 ### Standard options
 
