@@ -94,7 +94,10 @@ type checkDashboardsFn func(context.Context, dashboards.FindPersistedDashboardsQ
 
 func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if len(query.Title) <= listQueryLengthThreshold || query.Limit > listQueryLimitThreshold {
-		checkCompileFn := dr.getCheckCompileFn(ctx, query)
+		checkCompileFn, err := dr.getCheckCompileFn(ctx, query)
+		if err != nil {
+			return nil, err
+		}
 		return dr.findDashboardsZanzanaGeneric(ctx, query, checkCompileFn)
 	}
 
@@ -208,34 +211,26 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 	return result, nil
 }
 
-func (dr *DashboardServiceImpl) getCheckCompileFn(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) checkDashboardsFn {
+func (dr *DashboardServiceImpl) getCheckCompileFn(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) (checkDashboardsFn, error) {
 	// List available folders
 	namespace := query.SignedInUser.GetNamespace()
 	req, ok := zanzana.TranslateToListRequest(namespace, dashboards.ActionFoldersRead, zanzana.KindFolders)
 	if !ok {
-		return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, _ []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
-			return nil, errors.New("resource type not supported")
-		}
+		return nil, errors.New("resource type not supported")
 	}
 	folderChecker, err := dr.zclient.Compile(ctx, query.SignedInUser, *req)
 	if err != nil {
-		return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, _ []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	// List available dashboards
 	req, ok = zanzana.TranslateToListRequest(namespace, dashboards.ActionDashboardsRead, zanzana.KindDashboards)
 	if !ok {
-		return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, _ []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
-			return nil, errors.New("resource type not supported")
-		}
+		return nil, errors.New("resource type not supported")
 	}
 	dashboardChecker, err := dr.zclient.Compile(ctx, query.SignedInUser, *req)
 	if err != nil {
-		return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, _ []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
@@ -256,5 +251,5 @@ func (dr *DashboardServiceImpl) getCheckCompileFn(ctx context.Context, query das
 		}
 
 		return result, nil
-	}
+	}, nil
 }
