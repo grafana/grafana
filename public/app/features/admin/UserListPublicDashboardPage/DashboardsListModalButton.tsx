@@ -57,7 +57,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
                   </Trans>
                 )}
               </a>
-              <span className={styles.urlsDivider}>•</span>
+              <span className={styles.urlsDivider}>{'•'}</span>
               <a
                 className={cx('external-link', styles.url)}
                 href={generatePublicDashboardConfigUrl(dash.dashboardUid, dash.slug)}
@@ -104,42 +104,42 @@ export const DashboardsListModalButton = ({ email }: { email: string }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 590px;
-  `,
-  loading: css`
-    display: flex;
-    justify-content: center;
-  `,
-  listItem: css`
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(0.5)};
-  `,
-  divider: css`
-    margin: ${theme.spacing(1.5, 0)};
-    color: ${theme.colors.text.secondary};
-  `,
-  urlsContainer: css`
-    display: flex;
-    gap: ${theme.spacing(0.5)};
+  modal: css({
+    width: '590px',
+  }),
+  loading: css({
+    display: 'flex',
+    justifyContent: 'center',
+  }),
+  listItem: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.5),
+  }),
+  divider: css({
+    margin: theme.spacing(1.5, 0),
+    color: theme.colors.text.secondary,
+  }),
+  urlsContainer: css({
+    display: 'flex',
+    gap: theme.spacing(0.5),
 
-    ${theme.breakpoints.down('sm')} {
-      flex-direction: column;
-    }
-  `,
-  urlsDivider: css`
-    color: ${theme.colors.text.secondary};
-    ${theme.breakpoints.down('sm')} {
-      display: none;
-    }
-  `,
-  dashboardTitle: css`
-    font-size: ${theme.typography.body.fontSize};
-    font-weight: ${theme.typography.fontWeightBold};
-    margin-bottom: 0;
-  `,
-  url: css`
-    font-size: ${theme.typography.body.fontSize};
-  `,
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+    },
+  }),
+  urlsDivider: css({
+    color: theme.colors.text.secondary,
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  }),
+  dashboardTitle: css({
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: theme.typography.fontWeightBold,
+    marginBottom: 0,
+  }),
+  url: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
 });

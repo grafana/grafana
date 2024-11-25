@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -41,10 +42,18 @@ type DBstore struct {
 	FolderService    folder.Service
 	DashboardService dashboards.DashboardService
 	AccessControl    accesscontrol.AccessControl
+	Bus              bus.Bus
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service, dashboards dashboards.DashboardService, ac accesscontrol.AccessControl) (*DBstore, error) {
+	cfg *setting.Cfg,
+	featureToggles featuremgmt.FeatureToggles,
+	sqlstore db.DB,
+	folderService folder.Service,
+	dashboards dashboards.DashboardService,
+	ac accesscontrol.AccessControl,
+	bus bus.Bus,
+) (*DBstore, error) {
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,
@@ -53,9 +62,14 @@ func ProvideDBStore(
 		FolderService:    folderService,
 		DashboardService: dashboards,
 		AccessControl:    ac,
+		Bus:              bus,
 	}
 	if err := folderService.RegisterService(store); err != nil {
 		return nil, err
 	}
 	return &store, nil
+}
+
+type RuleChangeEvent struct {
+	RuleKeys []models.AlertRuleKey
 }

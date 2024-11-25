@@ -7,6 +7,7 @@ import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { stylesFactory, withTheme2 } from '../../themes';
 import { Themeable2 } from '../../types/theme';
+import { Trans } from '../../utils/i18n';
 import { PopoverContentProps } from '../Tooltip';
 
 import { NamedColorsPalette } from './NamedColorsPalette';
@@ -122,10 +123,10 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
         <div tabIndex={-1} className={styles.colorPickerPopover}>
           <div className={styles.colorPickerPopoverTabs}>
             <button className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')} type="button">
-              Colors
+              <Trans i18nKey="grafana-ui.color-picker-popover.palette-tab">Colors</Trans>
             </button>
             <button className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')} type="button">
-              Custom
+              <Trans i18nKey="grafana-ui.color-picker-popover.spectrum-tab">Custom</Trans>
             </button>
             {this.renderCustomPickerTabs()}
           </div>

@@ -30,6 +30,8 @@ export const InfoBox = React.memo(
       const styles = useStyles2(getStyles);
 
       return (
+        // component is deprecated so no point fixing this
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         <Alert severity={severity} className={className} {...otherProps} ref={ref} title={title as string}>
           <div>{children}</div>
           {url && (

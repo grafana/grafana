@@ -33,7 +33,7 @@ func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr err
 	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
-	})
+	}, featuremgmt.WithFeatures())
 }
 
 func TestAuth_Middleware(t *testing.T) {
@@ -352,7 +352,7 @@ func TestRemoveForceLoginparams(t *testing.T) {
 	}
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
+			require.Equal(t, tc.exp, RemoveForceLoginParams(tc.inp))
 		})
 	}
 }

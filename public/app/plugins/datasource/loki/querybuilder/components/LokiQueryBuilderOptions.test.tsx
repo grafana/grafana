@@ -89,6 +89,7 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: '{foo="bar"}' });
     expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Direction: Backward')).toBeInTheDocument();
     expect(screen.queryByText(/step/i)).not.toBeInTheDocument();
   });
 
@@ -98,6 +99,7 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
     expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
+    expect(screen.queryByText(/Direction/)).not.toBeInTheDocument();
   });
 
   it('does not shows resolution field if resolution is not set', async () => {

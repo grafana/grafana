@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -32,9 +33,10 @@ export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   // When queryLibraryAvailable=true we show the button in the toolbar (see QueriesDrawerDropdown)
-  const showHistoryButton = !props.richHistoryRowButtonHidden && !queryLibraryAvailable;
+  const showHistoryButton = !props.richHistoryRowButtonHidden && !queryLibraryAvailable && !isSingleTopNav;
 
   return (
     <div className={styles.containerMargin}>

@@ -18,19 +18,21 @@ import (
 )
 
 // NewGMSClient returns an implementation of Client that queries GrafanaMigrationService
-func NewGMSClient(cfg *setting.Cfg) (Client, error) {
+func NewGMSClient(cfg *setting.Cfg, httpClient *http.Client) (Client, error) {
 	if cfg.CloudMigration.GMSDomain == "" {
 		return nil, fmt.Errorf("missing GMS domain")
 	}
 	return &gmsClientImpl{
-		cfg: cfg,
-		log: log.New(logPrefix),
+		cfg:        cfg,
+		log:        log.New(logPrefix),
+		httpClient: httpClient,
 	}, nil
 }
 
 type gmsClientImpl struct {
-	cfg *setting.Cfg
-	log *log.ConcreteLogger
+	cfg        *setting.Cfg
+	log        *log.ConcreteLogger
+	httpClient *http.Client
 
 	getStatusMux         sync.Mutex
 	getStatusLastQueried time.Time
@@ -40,88 +42,49 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 	// TODO: there is a lot of boilerplate code in these methods, we should consolidate them when we have a gardening period
 	path := fmt.Sprintf("%s/api/v1/validate-key", c.buildBasePath(cm.ClusterSlug))
 
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSValidateKeyTimeout)
+	defer cancel()
+
 	// validation is an empty POST to GMS with the authorization header included
-	req, err := http.NewRequest("POST", path, bytes.NewReader(nil))
+	req, err := http.NewRequestWithContext(ctx, "POST", path, bytes.NewReader(nil))
 	if err != nil {
 		c.log.Error("error creating http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
+		return cloudmigration.ErrTokenRequestError.Errorf("create http request error")
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
 
-	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSValidateKeyTimeout,
-	}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request for token validation", "err", err.Error())
-		return fmt.Errorf("http request error: %w", err)
+		return cloudmigration.ErrTokenRequestError.Errorf("send http request error")
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
+			c.log.Error("error closing the request body", "err", err.Error())
+			err = errors.Join(err, cloudmigration.ErrTokenRequestError.Errorf("closing response body"))
 		}
 	}()
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token validation failure: %v", string(body))
+		if gmsErr := c.handleGMSErrors(body); gmsErr != nil {
+			return gmsErr
+		}
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 	}
 
 	return nil
 }
 
-// Deprecated
-func (c *gmsClientImpl) MigrateData(ctx context.Context, cm cloudmigration.CloudMigrationSession, request cloudmigration.MigrateDataRequest) (result *cloudmigration.MigrateDataResponse, err error) {
-	path := fmt.Sprintf("%s/api/v1/migrate-data", c.buildBasePath(cm.ClusterSlug))
-
-	reqDTO := convertRequestToDTO(request)
-	body, err := json.Marshal(reqDTO)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling request: %w", err)
-	}
-
-	// Send the request to GMS with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, bytes.NewReader(body))
-	if err != nil {
-		c.log.Error("error creating http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", cm.StackID, cm.AuthToken))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		c.log.Error("error sending http request for cloud migration run", "err", err.Error())
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = errors.Join(err, fmt.Errorf("closing response body: %w", closeErr))
-		}
-	}()
-
-	if resp.StatusCode >= 400 {
-		c.log.Error("received error response for cloud migration run", "statusCode", resp.StatusCode)
-		return nil, fmt.Errorf("http request error: %w", err)
-	}
-
-	var respDTO MigrateDataResponseDTO
-	if err := json.NewDecoder(resp.Body).Decode(&respDTO); err != nil {
-		c.log.Error("unmarshalling response body", "err", err.Error())
-		return nil, fmt.Errorf("unmarshalling migration run response: %w", err)
-	}
-
-	res := convertResponseFromDTO(respDTO)
-	return &res, nil
-}
-
 func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigration.CloudMigrationSession) (out *cloudmigration.StartSnapshotResponse, err error) {
 	path := fmt.Sprintf("%s/api/v1/start-snapshot", c.buildBasePath(session.ClusterSlug))
 
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSStartSnapshotTimeout)
+	defer cancel()
+
 	// Send the request to cms with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 	if err != nil {
 		c.log.Error("error creating http request to start snapshot", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
@@ -129,10 +92,7 @@ func (c *gmsClientImpl) StartSnapshot(ctx context.Context, session cloudmigratio
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
-	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSStartSnapshotTimeout,
-	}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request to start snapshot", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
@@ -165,8 +125,11 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 
 	path := fmt.Sprintf("%s/api/v1/snapshots/%s/status?offset=%d", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID, offset)
 
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSGetSnapshotStatusTimeout)
+	defer cancel()
+
 	// Send the request to gms with the associated auth token
-	req, err := http.NewRequest(http.MethodGet, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 	if err != nil {
 		c.log.Error("error creating http request to get snapshot status", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
@@ -174,11 +137,8 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
-	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSGetSnapshotStatusTimeout,
-	}
 	c.getStatusLastQueried = time.Now()
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request to get snapshot status", "err", err.Error())
 		return nil, fmt.Errorf("http request error: %w", err)
@@ -209,8 +169,11 @@ func (c *gmsClientImpl) GetSnapshotStatus(ctx context.Context, session cloudmigr
 func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cloudmigration.CloudMigrationSession, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {
 	path := fmt.Sprintf("%s/api/v1/snapshots/%s/create-upload-url", c.buildBasePath(session.ClusterSlug), snapshot.GMSSnapshotUID)
 
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSCreateUploadUrlTimeout)
+	defer cancel()
+
 	// Send the request to gms with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, nil)
 	if err != nil {
 		c.log.Error("error creating http request to create upload url", "err", err.Error())
 		return "", fmt.Errorf("http request error: %w", err)
@@ -218,10 +181,7 @@ func (c *gmsClientImpl) CreatePresignedUploadUrl(ctx context.Context, session cl
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
-	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSCreateUploadUrlTimeout,
-	}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request to create an upload url", "err", err.Error())
 		return "", fmt.Errorf("http request error: %w", err)
@@ -254,6 +214,9 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, c.cfg.CloudMigration.GMSReportEventTimeout)
+	defer cancel()
+
 	path := fmt.Sprintf("%s/api/v1/events", c.buildBasePath(session.ClusterSlug))
 
 	var buf bytes.Buffer
@@ -262,7 +225,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		return
 	}
 	// Send the request to gms with the associated auth token
-	req, err := http.NewRequest(http.MethodPost, path, &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, path, &buf)
 	if err != nil {
 		c.log.Error("error creating http request to report event", "err", err.Error())
 		return
@@ -270,10 +233,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %d:%s", session.StackID, session.AuthToken))
 
-	client := &http.Client{
-		Timeout: c.cfg.CloudMigration.GMSReportEventTimeout,
-	}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.log.Error("error sending http request for report event", "err", err.Error())
 		return
@@ -297,42 +257,27 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 
 func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 	domain := c.cfg.CloudMigration.GMSDomain
-	if strings.HasPrefix(domain, "http://localhost") {
+	if strings.HasPrefix(domain, "http://") || strings.HasPrefix(domain, "https://") {
 		return domain
 	}
 	return fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
 }
 
-func convertRequestToDTO(request cloudmigration.MigrateDataRequest) MigrateDataRequestDTO {
-	items := make([]MigrateDataRequestItemDTO, len(request.Items))
-	for i := 0; i < len(request.Items); i++ {
-		item := request.Items[i]
-		items[i] = MigrateDataRequestItemDTO{
-			Type:  MigrateDataType(item.Type),
-			RefID: item.RefID,
-			Name:  item.Name,
-			Data:  item.Data,
-		}
+// handleGMSErrors parses the error message from GMS and translates it to an appropriate error message
+// use ErrTokenValidationFailure for any errors which are not specifically handled
+func (c *gmsClientImpl) handleGMSErrors(responseBody []byte) error {
+	var apiError GMSAPIError
+	if err := json.Unmarshal(responseBody, &apiError); err != nil {
+		return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 	}
-	r := MigrateDataRequestDTO{
-		Items: items,
-	}
-	return r
-}
 
-func convertResponseFromDTO(result MigrateDataResponseDTO) cloudmigration.MigrateDataResponse {
-	items := make([]cloudmigration.CloudMigrationResource, len(result.Items))
-	for i := 0; i < len(result.Items); i++ {
-		item := result.Items[i]
-		items[i] = cloudmigration.CloudMigrationResource{
-			Type:   cloudmigration.MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: cloudmigration.ItemStatus(item.Status),
-			Error:  item.Error,
-		}
+	if strings.Contains(apiError.Message, GMSErrorMessageInstanceUnreachable) {
+		return cloudmigration.ErrInstanceUnreachable.Errorf("instance unreachable")
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceCheckingError) {
+		return cloudmigration.ErrInstanceRequestError.Errorf("instance checking error")
+	} else if strings.Contains(apiError.Message, GMSErrorMessageInstanceFetching) {
+		return cloudmigration.ErrInstanceRequestError.Errorf("fetching instance")
 	}
-	return cloudmigration.MigrateDataResponse{
-		RunUID: result.RunUID,
-		Items:  items,
-	}
+
+	return cloudmigration.ErrTokenValidationFailure.Errorf("token validation failure")
 }

@@ -17,15 +17,13 @@ import * as React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
 
-const getStyles = () => {
-  return {
-    BreakableText: css`
-      label: BreakableText;
-      display: inline-block;
-      white-space: pre;
-    `,
-  };
-};
+const getStyles = () => ({
+  BreakableText: css({
+    label: 'BreakableText',
+    display: 'inline-block',
+    whiteSpace: 'pre',
+  }),
+});
 
 const WORD_RX = /\W*\w+\W*/g;
 

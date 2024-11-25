@@ -27,7 +27,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestReplDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t)
 
 	dash1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
@@ -175,7 +175,7 @@ func TestIntegrationAuthorize(t *testing.T) {
 
 			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle))
 
-			query := &annotations.ItemQuery{SignedInUser: u, OrgID: 1}
+			query := annotations.ItemQuery{SignedInUser: u, OrgID: 1}
 			resources, err := authz.Authorize(context.Background(), query)
 			require.NoError(t, err)
 

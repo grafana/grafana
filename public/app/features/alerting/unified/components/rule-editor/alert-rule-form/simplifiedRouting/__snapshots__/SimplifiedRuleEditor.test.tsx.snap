@@ -5,8 +5,48 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
   {
     "body": {
       "interval": "1m",
-      "name": "empty-group",
+      "name": "grafana-group-1",
       "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
         {
           "annotations": {},
           "for": "1m",
@@ -110,7 +150,7 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
       ],
     ],
     "method": "POST",
-    "url": "http://localhost/api/ruler/grafana/api/v1/rules/6abdb25bc1eb?subtype=cortex",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
   },
 ]
 `;

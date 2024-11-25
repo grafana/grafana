@@ -247,24 +247,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
+          stackingMode: customConfig.stacking?.mode,
           range:
-            customConfig.stacking?.mode === StackingMode.Percent
+            field.type === FieldType.enum
               ? (u: uPlot, dataMin: number, dataMax: number) => {
-                  dataMin = dataMin < 0 ? -1 : 0;
-                  dataMax = dataMax > 0 ? 1 : 0;
-                  return [dataMin, dataMax];
+                  // this is the exhaustive enum (stable)
+                  let len = field.config.type!.enum!.text!.length;
+
+                  return [-1, len];
+
+                  // these are only values that are present
+                  // return [dataMin - 1, dataMax + 1]
                 }
-              : field.type === FieldType.enum
-                ? (u: uPlot, dataMin: number, dataMax: number) => {
-                    // this is the exhaustive enum (stable)
-                    let len = field.config.type!.enum!.text!.length;
-
-                    return [-1, len];
-
-                    // these are only values that are present
-                    // return [dataMin - 1, dataMax + 1]
-                  }
-                : undefined,
+              : undefined,
           decimals: field.config.decimals,
         },
         field

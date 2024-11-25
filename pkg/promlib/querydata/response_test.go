@@ -56,3 +56,15 @@ func TestQueryData_parseResponse(t *testing.T) {
 		assert.Equal(t, result.Error.Error(), "unknown result type: ")
 	})
 }
+
+func TestAddMetadataToMultiFrame(t *testing.T) {
+	t.Run("when you have native histogram result", func(t *testing.T) {
+		qd := QueryData{exemplarSampler: exemplar.NewStandardDeviationSampler}
+		resBody := `{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"rpc_durations_native_histogram_seconds","instance":"nativehisto:8080","job":"prometheus"},"histograms":[[1729529685,{"count":"7243102","sum":"72460202.93145595","buckets":[[0,"1.8340080864093422","2","10"],[0,"2","2.1810154653305154","68"]]}],[1729529700,{"count":"7243490","sum":"72464056.03309634","buckets":[[0,"1.8340080864093422","2","10"],[0,"2","2.1810154653305154","68"]]}],[1729529715,{"count":"7243880","sum":"72467935.35871512","buckets":[[0,"1.8340080864093422","2","10"],[0,"2","2.1810154653305154","68"]]}]]}]}}`
+		res := &http.Response{Body: io.NopCloser(bytes.NewBufferString(resBody))}
+		result := qd.parseResponse(context.Background(), &models.Query{}, res)
+		assert.Nil(t, result.Error)
+		assert.Len(t, result.Frames, 1)
+		assert.Equal(t, "yMin", result.Frames[0].Fields[1].Name)
+	})
+}

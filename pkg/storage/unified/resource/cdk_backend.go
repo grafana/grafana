@@ -2,7 +2,7 @@ package resource
 
 import (
 	"bytes"
-	context "context"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -25,7 +25,7 @@ import (
 
 type CDKBackendOptions struct {
 	Tracer     trace.Tracer
-	Bucket     *blob.Bucket
+	Bucket     CDKBucket
 	RootFolder string
 }
 
@@ -60,7 +60,7 @@ func NewCDKBackend(ctx context.Context, opts CDKBackendOptions) (StorageBackend,
 
 type cdkBackend struct {
 	tracer trace.Tracer
-	bucket *blob.Bucket
+	bucket CDKBucket
 	root   string
 
 	mutex sync.Mutex
@@ -108,6 +108,10 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 	return buffer.String()
 }
 
+func (s *cdkBackend) Namespaces(ctx context.Context) ([]string, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
 func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64, err error) {
 	// Scope the lock
 	{
@@ -134,7 +138,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *BackendReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -162,7 +166,7 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadRe
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
-			return &ReadResponse{
+			return &BackendReadResponse{
 				Error: &ErrorResult{
 					Code:    http.StatusGatewayTimeout,
 					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
@@ -191,9 +195,11 @@ func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadRe
 		raw = nil
 	}
 	if raw == nil {
-		return &ReadResponse{Error: NewNotFoundError(req.Key)}
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	}
-	return &ReadResponse{
+	return &BackendReadResponse{
+		Key:             req.Key,
+		Folder:          "", // TODO: implement this
 		ResourceVersion: rv,
 		Value:           raw,
 	}
@@ -247,7 +253,7 @@ type cdkVersion struct {
 }
 
 type cdkListIterator struct {
-	bucket *blob.Bucket
+	bucket CDKBucket
 	ctx    context.Context
 	err    error
 
@@ -316,6 +322,10 @@ func (c *cdkListIterator) Name() string {
 // Namespace implements ListIterator.
 func (c *cdkListIterator) Namespace() string {
 	return c.currentKey // TODO (parse namespace from key)
+}
+
+func (c *cdkListIterator) Folder() string {
+	return "" // TODO: implement this
 }
 
 var _ ListIterator = (*cdkListIterator)(nil)

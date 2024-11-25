@@ -299,7 +299,7 @@ export class DatasourceSrv implements DataSourceService {
 
       if (!filters.tracing) {
         const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
-        if (grafanaInstanceSettings) {
+        if (grafanaInstanceSettings && filters.filter?.(grafanaInstanceSettings) !== false) {
           base.push(grafanaInstanceSettings);
         }
       }

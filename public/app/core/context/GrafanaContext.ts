@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext } from 'react';
+import { useObservable } from 'react-use';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
@@ -42,17 +43,7 @@ export function useReturnToPreviousInternal() {
   );
 }
 
-const SINGLE_HEADER_BAR_HEIGHT = 40;
-
 export function useChromeHeaderHeight() {
   const { chrome } = useGrafana();
-  const { kioskMode, searchBarHidden, chromeless } = chrome.useState();
-
-  if (kioskMode || chromeless) {
-    return 0;
-  } else if (searchBarHidden) {
-    return SINGLE_HEADER_BAR_HEIGHT;
-  } else {
-    return SINGLE_HEADER_BAR_HEIGHT * 2;
-  }
+  return useObservable(chrome.headerHeightObservable, 0);
 }

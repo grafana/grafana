@@ -10,7 +10,6 @@ import {
   LogRowModel,
   LogsMetaItem,
   DataFrame,
-  DataQuery,
   AbsoluteTimeRange,
   GrafanaTheme2,
   LoadingState,
@@ -37,6 +36,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -58,6 +58,7 @@ import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/logsModel';
 import { getLogLevel, getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
+import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
@@ -78,7 +79,7 @@ import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
 import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { canKeepDisplayedFields, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
 
 interface Props extends Themeable2 {
   width: number;
@@ -220,6 +221,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const cancelFlippingTimer = useRef<number | undefined>(undefined);
   const toggleLegendRef = useRef<(name: string, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const topLogsRef = useRef<HTMLDivElement>(null);
+  const prevLogsQueries = usePrevious(logsQueries);
 
   const tableHeight = getLogsTableHeight();
   const styles = getStyles(theme, wrapLogMessage, tableHeight);
@@ -330,6 +332,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   }, [panelState?.logs?.visualisationType]);
 
   useEffect(() => {
+    let displayedFields: string[] = [];
+    if (Array.isArray(panelState?.logs?.displayedFields)) {
+      displayedFields = panelState?.logs?.displayedFields;
+    } else if (panelState?.logs?.displayedFields && typeof panelState?.logs?.displayedFields === 'object') {
+      displayedFields = Object.values(panelState?.logs?.displayedFields);
+    }
+    setDisplayedFields(displayedFields);
+  }, [panelState?.logs?.displayedFields]);
+
+  useEffect(() => {
     registerLogLevelsWithContentOutline();
   }, [logsVolumeData?.data, hiddenLogLevels, registerLogLevelsWithContentOutline]);
 
@@ -343,8 +355,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   });
 
   useUnmount(() => {
-    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the table specific panel state, otherwise it will persist in the explore url
-    if (panelState?.logs?.columns || panelState?.logs?.refId || panelState?.logs?.labelFieldName) {
+    // If we're unmounting logs (e.g. switching to another datasource), we need to remove the logs specific panel state, otherwise it will persist in the explore url
+    if (
+      panelState?.logs?.columns ||
+      panelState?.logs?.refId ||
+      panelState?.logs?.labelFieldName ||
+      panelState?.logs?.displayedFields
+    ) {
       dispatch(
         changePanelState(exploreId, 'logs', {
           ...panelState?.logs,
@@ -352,6 +369,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           visualisationType: visualisationType,
           labelFieldName: undefined,
           refId: undefined,
+          displayedFields: undefined,
         })
       );
     }
@@ -368,12 +386,34 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             visualisationType: logsPanelState.visualisationType ?? visualisationType,
             labelFieldName: logsPanelState.labelFieldName,
             refId: logsPanelState.refId ?? panelState?.logs?.refId,
+            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
           })
         );
       }
     },
-    [dispatch, exploreId, panelState?.logs?.columns, panelState?.logs?.refId, visualisationType]
+    [
+      dispatch,
+      exploreId,
+      panelState?.logs?.columns,
+      panelState?.logs?.displayedFields,
+      panelState?.logs?.refId,
+      visualisationType,
+    ]
   );
+
+  useEffect(() => {
+    if (!prevLogsQueries) {
+      // Initial load, ignore
+      return;
+    }
+    if (!canKeepDisplayedFields(logsQueries, prevLogsQueries)) {
+      setDisplayedFields([]);
+      updatePanelState({
+        ...panelState?.logs,
+        displayedFields: [],
+      });
+    }
+  }, [logsQueries, panelState?.logs, prevLogsQueries, updatePanelState]);
 
   // actions
   const onLogRowHover = useCallback(
@@ -558,20 +598,30 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       const index = displayedFields.indexOf(key);
 
       if (index === -1) {
-        setDisplayedFields(displayedFields.concat(key));
+        const updatedDisplayedFields = displayedFields.concat(key);
+        setDisplayedFields(updatedDisplayedFields);
+        updatePanelState({
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields.indexOf(key);
       if (index > -1) {
-        setDisplayedFields(displayedFields.filter((k) => key !== k));
+        const updatedDisplayedFields = displayedFields.filter((k) => key !== k);
+        setDisplayedFields(updatedDisplayedFields);
+        updatePanelState({
+          ...panelState?.logs,
+          displayedFields: updatedDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, panelState?.logs, updatePanelState]
   );
 
   const clearDetectedFields = useCallback(() => {
@@ -657,7 +707,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
     urlState.panelsState = {
       ...panelState,
-      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType() },
+      logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
     };
     urlState.range = getPermalinkRange(row);
 
@@ -733,6 +783,9 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const filteredLogs = filterRows(logRows, hiddenLogLevels);
   const { dedupedRows, dedupCount } = dedupRows(filteredLogs, dedupStrategy);
   const navigationRange = createNavigationRange(logRows);
+  const infiniteScrollAvailable = !logsQueries?.some(
+    (query) => 'direction' in query && query.direction === LokiQueryDirection.Scan
+  );
 
   return (
     <>
@@ -932,7 +985,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             >
               <InfiniteScroll
                 loading={loading}
-                loadMoreLogs={loadMoreLogs}
+                loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
                 range={props.range}
                 timeZone={timeZone}
                 rows={logRows}

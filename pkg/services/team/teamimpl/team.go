@@ -17,7 +17,7 @@ type Service struct {
 	tracer tracing.Tracer
 }
 
-func ProvideService(db db.ReplDB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	return &Service{
 		store:  &xormStore{db: db, cfg: cfg, deletes: []string{}},
 		tracer: tracer,
@@ -64,6 +64,7 @@ func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery)
 	ctx, span := s.tracer.Start(ctx, "team.GetTeamByID", trace.WithAttributes(
 		attribute.Int64("orgID", query.OrgID),
 		attribute.Int64("teamID", query.ID),
+		attribute.String("teamUID", query.UID),
 	))
 	defer span.End()
 	return s.store.GetByID(ctx, query)

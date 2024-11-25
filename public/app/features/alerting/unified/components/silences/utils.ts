@@ -2,6 +2,7 @@ import { DefaultTimeZone, addDurationToDate, dateTime, intervalToAbbreviatedDura
 import { config } from '@grafana/runtime';
 import { SilenceFormFields } from 'app/features/alerting/unified/types/silence-form';
 import { matcherToMatcherField } from 'app/features/alerting/unified/utils/alertmanager';
+import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 import { MatcherOperator, Silence } from 'app/plugins/datasource/alertmanager/types';
 
@@ -14,7 +15,9 @@ export const defaultsFromQuery = (searchParams: URLSearchParams): Partial<Silenc
   const comment = searchParams.get('comment');
   const matchers = searchParams.getAll('matcher');
 
-  const formMatchers = parseQueryParamMatchers(matchers);
+  const strippedMatchers = matchers.filter((m) => !m.startsWith(MATCHER_ALERT_RULE_UID));
+
+  const formMatchers = parseQueryParamMatchers(strippedMatchers);
   if (formMatchers.length) {
     defaults.matchers = formMatchers.map(matcherToMatcherField);
   }

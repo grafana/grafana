@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, ConfirmModal, Text, Space } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
@@ -21,6 +21,14 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const deleteIsInvalid = Boolean(data && (data.alertRule || data.libraryPanel));
   const [isDeleting, setIsDeleting] = useState(false);
   const onDelete = async () => {
+    reportInteraction('grafana_manage_dashboards_delete_clicked', {
+      item_counts: {
+        dashboard: Object.keys(selectedItems.dashboard).length,
+        folder: Object.keys(selectedItems.folder).length,
+      },
+      source: 'browse_dashboards',
+      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
+    });
     setIsDeleting(true);
     try {
       await onConfirm();

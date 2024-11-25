@@ -110,7 +110,6 @@ You can also configure settings specific to the Jaeger data source. These option
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
 {{% admonition type="note" %}}
-Available in Grafana v7.4 and higher.
 If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 {{% /admonition %}}
 

@@ -4,7 +4,6 @@ import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
   SceneGridItemLike,
-  SceneGridLayout,
   SceneGridRow,
   VizPanel,
   SceneDataTransformer,
@@ -32,10 +31,11 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
@@ -53,8 +53,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   let panels: Panel[] = [];
   let variables: VariableModel[] = [];
 
-  if (body instanceof SceneGridLayout) {
-    for (const child of body.state.children) {
+  if (body instanceof DefaultGridLayoutManager) {
+    for (const child of body.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         // handle panel repeater scenario
         if (child.state.variableName) {

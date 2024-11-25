@@ -41,15 +41,49 @@ describe('Range Utils', () => {
       expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
     });
 
-    it('should leave the raw part intact if it has calulactions', () => {
+    it('should leave the raw part intact if it has calculations', () => {
+      const timeRange = {
+        from: 'now-6h',
+        to: 'now',
+      };
+
+      const deserialized = convertRawToRange(timeRange);
+      expect(deserialized.from).not.toBe(timeRange.from);
+      expect(deserialized.raw.from).not.toBe(deserialized.from);
+      expect(deserialized.raw.from).toBe(timeRange.from);
+      expect(deserialized.to).not.toBe(timeRange.to);
+      expect(deserialized.raw.to).not.toBe(deserialized.from);
+      expect(deserialized.raw.to).toBe(timeRange.to);
+    });
+
+    it('should leave the raw part intact if it has calculations for "from"', () => {
+      const timeRange = {
+        from: 'now',
+        to: DEFAULT_DATE_VALUE,
+      };
+
+      const deserialized = convertRawToRange(timeRange);
+      expect(deserialized.from).not.toBe(timeRange.from);
+      expect(deserialized.raw.from).not.toBe(deserialized.from);
+      expect(deserialized.raw.from).toBe(timeRange.from);
+      expect(deserialized.to).not.toBe(timeRange.to);
+      expect(deserialized.raw.to).toBe(deserialized.to);
+      expect(deserialized.raw.to).not.toBe(timeRange.to);
+    });
+
+    it('should leave the raw part intact if it has calculations for "to"', () => {
       const timeRange = {
         from: DEFAULT_DATE_VALUE,
         to: 'now',
       };
 
       const deserialized = convertRawToRange(timeRange);
-      expect(deserialized.raw).toStrictEqual(timeRange);
-      expect(deserialized.to.toString()).not.toBe(deserialized.raw.to);
+      expect(deserialized.from).not.toBe(timeRange.from);
+      expect(deserialized.raw.from).toBe(deserialized.from);
+      expect(deserialized.raw.from).not.toBe(timeRange.from);
+      expect(deserialized.to).not.toBe(timeRange.to);
+      expect(deserialized.raw.to).not.toBe(deserialized.to);
+      expect(deserialized.raw.to).toBe(timeRange.to);
     });
   });
 

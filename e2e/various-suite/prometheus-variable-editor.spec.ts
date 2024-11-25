@@ -11,7 +11,8 @@ const DATASOURCE_NAME = 'prometheusVariableDS';
  * Click dashboard settings and then the variables tab
  */
 function navigateToVariables() {
-  e2e.components.PageToolbar.item('Dashboard settings').click();
+  e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
+  e2e.components.NavToolbar.editDashboard.settingsButton().should('be.visible').click();
   e2e.components.Tab.title('Variables').click();
 }
 
@@ -49,7 +50,7 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
 
   // close to return to dashboard
-  e2e.pages.Dashboard.Settings.Actions.close().click();
+  e2e.components.NavToolbar.editDashboard.backToDashboardButton().should('be.visible').click();
 
   // add visualization
   e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible').click();
@@ -76,8 +77,8 @@ function variableFlowToQueryEditor(variableName: string, queryType: string) {
     // do nothing
   }
 }
-
-describe('Prometheus variable query editor', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/prometheus-variable-editor.spec.ts
+describe.skip('Prometheus variable query editor', () => {
   beforeEach(() => {
     createPromDS(DATASOURCE_ID, DATASOURCE_NAME);
   });

@@ -70,7 +70,6 @@ describe('getPanelMenu()', () => {
         },
         {
           "iconClassName": "info-circle",
-          "onClick": [Function],
           "shortcut": "i",
           "subMenu": [
             {
@@ -83,7 +82,6 @@ describe('getPanelMenu()', () => {
         },
         {
           "iconClassName": "cube",
-          "onClick": [Function],
           "subMenu": [
             {
               "onClick": [Function],
@@ -343,7 +341,6 @@ describe('getPanelMenu()', () => {
           },
           {
             "iconClassName": "info-circle",
-            "onClick": [Function],
             "shortcut": "i",
             "subMenu": [
               {
@@ -356,7 +353,6 @@ describe('getPanelMenu()', () => {
           },
           {
             "iconClassName": "cube",
-            "onClick": [Function],
             "subMenu": [
               {
                 "href": undefined,

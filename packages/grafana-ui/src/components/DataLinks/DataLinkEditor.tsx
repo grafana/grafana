@@ -5,6 +5,7 @@ import { VariableSuggestion, GrafanaTheme2, DataLink } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/index';
 import { isCompactUrl } from '../../utils/dataLinks';
+import { Trans } from '../../utils/i18n';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Switch } from '../Switch/Switch';
@@ -64,8 +65,10 @@ export const DataLinkEditor = memo(({ index, value, onChange, suggestions, isLas
 
       {isLast && (
         <div className={styles.infoText}>
-          With data links you can reference data variables like series name, labels and values. Type CMD+Space,
-          CTRL+Space, or $ to open variable suggestions.
+          <Trans i18nKey="grafana-ui.data-link-editor.info">
+            With data links you can reference data variables like series name, labels and values. Type CMD+Space,
+            CTRL+Space, or $ to open variable suggestions.
+          </Trans>
         </div>
       )}
     </div>

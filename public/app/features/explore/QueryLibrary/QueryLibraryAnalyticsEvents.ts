@@ -48,3 +48,9 @@ export function queryLibraryTrackAddOrEditDescription() {
     item: 'add_or_edit_description',
   });
 }
+
+export function queryLibraryTrackFilterDatasource() {
+  reportInteraction(QUERY_LIBRARY_EXPLORE_EVENT, {
+    item: 'filter_datasource',
+  });
+}

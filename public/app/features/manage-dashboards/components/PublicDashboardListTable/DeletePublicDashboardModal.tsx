@@ -47,10 +47,10 @@ export const DeletePublicDashboardModal = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  description: css`
-    font-size: ${theme.typography.body.fontSize};
-  `,
+  title: css({
+    marginBottom: theme.spacing(1),
+  }),
+  description: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
 });

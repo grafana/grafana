@@ -131,54 +131,54 @@ const getStyles = stylesFactory(() => {
   const headerBg = theme.isDark ? theme.palette.gray15 : theme.palette.gray85;
 
   return {
-    metaItem: css`
-      background: ${background};
-      border: 1px solid ${borderColor};
-      margin-bottom: ${theme.spacing.md};
-    `,
-    metaItemHeader: css`
-      background: ${headerBg};
-      padding: ${theme.spacing.xs} ${theme.spacing.md};
-      font-size: ${theme.typography.size.md};
-      display: flex;
-      justify-content: space-between;
-    `,
-    metaItemBody: css`
-      padding: ${theme.spacing.md};
-    `,
-    stepHeading: css`
-      font-size: ${theme.typography.size.md};
-    `,
-    stepDescription: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
-      margin-bottom: ${theme.spacing.sm};
-    `,
-    step: css`
-      margin-bottom: ${theme.spacing.lg};
+    metaItem: css({
+      background: background,
+      border: `1px solid ${borderColor}`,
+      marginBottom: theme.spacing.md,
+    }),
+    metaItemHeader: css({
+      background: headerBg,
+      padding: `${theme.spacing.xs} ${theme.spacing.md}`,
+      fontSize: theme.typography.size.md,
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
+    metaItemBody: css({
+      padding: theme.spacing.md,
+    }),
+    stepHeading: css({
+      fontSize: theme.typography.size.md,
+    }),
+    stepDescription: css({
+      fontSize: theme.typography.size.sm,
+      color: theme.colors.textWeak,
+      marginBottom: theme.spacing.sm,
+    }),
+    step: css({
+      marginBottom: theme.spacing.lg,
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-    `,
-    bucket: css`
-      display: flex;
-      margin-bottom: ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-    `,
-    bucketInterval: css`
-      flex-grow: 0;
-      width: 60px;
-    `,
-    bucketRetention: css`
-      background: linear-gradient(0deg, ${theme.palette.blue85}, ${theme.palette.blue95});
-      text-align: center;
-      color: ${theme.palette.white};
-      margin-right: ${theme.spacing.md};
-      border-radius: ${theme.border.radius.sm};
-    `,
-    bucketRetentionActive: css`
-      background: linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade});
-    `,
+      '&:last-child': {
+        marginBottom: 0,
+      },
+    }),
+    bucket: css({
+      display: 'flex',
+      marginBottom: theme.spacing.sm,
+      borderRadius: theme.border.radius.sm,
+    }),
+    bucketInterval: css({
+      flexGrow: 0,
+      width: '60px',
+    }),
+    bucketRetention: css({
+      background: `linear-gradient(0deg, ${theme.palette.blue85}, ${theme.palette.blue95})`,
+      textAlign: 'center',
+      color: theme.palette.white,
+      marginRight: theme.spacing.md,
+      borderRadius: theme.border.radius.sm,
+    }),
+    bucketRetentionActive: css({
+      background: `linear-gradient(0deg, ${theme.palette.greenBase}, ${theme.palette.greenShade})`,
+    }),
   };
 });

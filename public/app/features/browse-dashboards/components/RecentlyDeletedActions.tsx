@@ -33,7 +33,13 @@ export function RecentlyDeletedActions() {
   if (searchState.result) {
     for (const selectedDashboard of selectedDashboards) {
       const index = searchState.result.view.fields.uid.values.findIndex((e) => e === selectedDashboard);
-      selectedDashboardOrigin.push(searchState.result.view.fields.location.values[index]);
+
+      // SQLSearcher changes the location from empty string to 'general' for items with no parent
+      // but the restore API doesn't work with 'general' folder UID, so we need to convert it back
+      // to an empty string
+      const location = searchState.result.view.fields.location.values[index];
+      const fixedLocation = location === GENERAL_FOLDER_UID ? '' : location;
+      selectedDashboardOrigin.push(fixedLocation);
     }
   }
 

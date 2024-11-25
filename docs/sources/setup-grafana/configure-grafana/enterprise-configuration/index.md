@@ -23,19 +23,11 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
-
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
 the instance.
 
 ### auto_refresh_license
-
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
@@ -43,11 +35,11 @@ side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
 automatically. Defaults to `true`.
 
-### license_validation_type
-
 {{% admonition type="note" %}}
-Available in Grafana Enterprise version 8.3 and later.
+The license only automatically updates once per day. To immediately update the terms for a license, use the Grafana UI to renew your license token.
 {{% /admonition %}}
+
+### license_validation_type
 
 When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
 
@@ -181,6 +173,10 @@ Name of the TrueType font file with italic style.
 ### max_retries_per_panel
 
 Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+
+### allowed_domains
+
+Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 
 ## [auditing]
 
@@ -368,10 +364,6 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.4 and later.
-{{% /admonition %}}
-
 Security egress makes it possible to control outgoing traffic from the Grafana server.
 
 ### host_deny_list
@@ -397,10 +389,6 @@ A list of cookies that are stripped from the outgoing data source and alerting r
 Encryption algorithm used to encrypt secrets stored in the database and cookies. Possible values are `aes-cfb` (default) and `aes-gcm`. AES-CFB stands for _Advanced Encryption Standard_ in _cipher feedback_ mode, and AES-GCM stands for _Advanced Encryption Standard_ in _Galois/Counter Mode_.
 
 ## [caching]
-
-{{% admonition type="note" %}}
-Available in Grafana Enterprise version 7.5 and later.
-{{% /admonition %}}
 
 When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 

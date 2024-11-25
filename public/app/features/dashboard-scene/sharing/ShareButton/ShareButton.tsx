@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { VizPanel } from '@grafana/scenes';
-import { Button, ButtonGroup, Dropdown } from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -15,15 +17,17 @@ import { buildShareUrl } from './utils';
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton;
 
 export default function ShareButton({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
+  const styles = useStyles2(getStyles);
   const [isOpen, setIsOpen] = useState(false);
 
   const [_, buildUrl] = useAsyncFn(async () => {
+    DashboardInteractions.toolbarShareClick();
     return await buildShareUrl(dashboard, panel);
   }, [dashboard]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
-      DashboardInteractions.toolbarShareClick();
+      DashboardInteractions.toolbarShareDropdownClick();
     }
 
     setIsOpen(isOpen);
@@ -32,7 +36,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   const MenuActions = () => <ShareMenu dashboard={dashboard} />;
 
   return (
-    <ButtonGroup data-testid={newShareButtonSelector.container}>
+    <ButtonGroup data-testid={newShareButtonSelector.container} className={styles.container}>
       <Button
         data-testid={newShareButtonSelector.shareLink}
         size="sm"
@@ -46,4 +50,12 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       </Dropdown>
     </ButtonGroup>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      gap: 1,
+    }),
+  };
 }

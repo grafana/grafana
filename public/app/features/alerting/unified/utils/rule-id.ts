@@ -10,7 +10,9 @@ import {
   RuleIdentifier,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
-import { Annotations, Labels, PromRuleType, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { Annotations, Labels, PromRuleType, RulerCloudRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
+import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
@@ -249,18 +251,19 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
   return hash(JSON.stringify(fingerprint)).toString();
 }
 
-function getRulerRuleFingerprint(rule: RulerRuleDTO) {
+function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+  // If the prometheusRulesPrimary feature toggle is enabled, we don't need to hash the query
+  // We need to make fingerprint compatibility between Prometheus and Ruler rules
+  // Query often differs between the two, so we can't use it to generate a fingerprint
+  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.expr);
+  const labelsHash = hashLabelsOrAnnotations(rule.labels);
+
   if (isRecordingRulerRule(rule)) {
-    return [rule.record, PromRuleType.Recording, hashQuery(rule.expr), hashLabelsOrAnnotations(rule.labels)];
+    return [rule.record, PromRuleType.Recording, queryHash, labelsHash];
   }
   if (isAlertingRulerRule(rule)) {
-    return [
-      rule.alert,
-      PromRuleType.Alerting,
-      hashQuery(rule.expr),
-      hashLabelsOrAnnotations(rule.annotations),
-      hashLabelsOrAnnotations(rule.labels),
-    ];
+    return [rule.alert, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting ruler rules can be hashed');
 }
@@ -271,17 +274,16 @@ export function hashRule(rule: Rule): string {
 }
 
 function getPromRuleFingerprint(rule: Rule) {
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+
+  const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.query);
+  const labelsHash = hashLabelsOrAnnotations(rule.labels);
+
   if (isRecordingRule(rule)) {
-    return [rule.name, PromRuleType.Recording, hashQuery(rule.query), hashLabelsOrAnnotations(rule.labels)];
+    return [rule.name, PromRuleType.Recording, queryHash, labelsHash];
   }
   if (isAlertingRule(rule)) {
-    return [
-      rule.name,
-      PromRuleType.Alerting,
-      hashQuery(rule.query),
-      hashLabelsOrAnnotations(rule.annotations),
-      hashLabelsOrAnnotations(rule.labels),
-    ];
+    return [rule.name, PromRuleType.Alerting, queryHash, hashLabelsOrAnnotations(rule.annotations), labelsHash];
   }
   throw new Error('Only recording and alerting rules can be hashed');
 }

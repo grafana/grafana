@@ -5,6 +5,7 @@ import { dateTime, usePluginContext } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { log } from './logs/log';
 import {
   deepFreeze,
   handleErrorsInFn,
@@ -396,7 +397,7 @@ describe('Plugin Extensions / Utils', () => {
       const ModalContent = () => {
         const context = usePluginContext();
 
-        return <div>Version: {context.meta.info.version}</div>;
+        return <div>Version: {context!.meta.info.version}</div>;
       };
 
       openModal({
@@ -415,20 +416,20 @@ describe('Plugin Extensions / Utils', () => {
     };
 
     const ExampleComponent = (props: ExampleComponentProps) => {
-      const { meta } = usePluginContext();
+      const pluginContext = usePluginContext();
 
       const audience = props.audience || 'Grafana';
 
       return (
         <div>
-          <h1>Hello {audience}!</h1> Version: {meta.info.version}
+          <h1>Hello {audience}!</h1> Version: {pluginContext!.meta.info.version}
         </div>
       );
     };
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component />);
 
@@ -438,7 +439,7 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component audience="folks" />);
 

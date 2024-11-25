@@ -40,8 +40,8 @@ const mocks = {
 
 function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
   mocks.useHasRuler.mockReturnValue({
-    hasRuler: () => hasRuler,
-    rulerRulesLoaded: () => rulerRulesLoaded,
+    hasRuler,
+    rulerRulesLoaded,
   });
 }
 
@@ -59,7 +59,6 @@ const ui = {
     header: byText('Delete group'),
     confirmButton: byText('Delete'),
   },
-  moreActionsButton: byRole('button', { name: 'More' }),
   export: {
     dialog: byRole('dialog', { name: /Drawer title Export .* rules/ }),
     jsonTab: byRole('tab', { name: /JSON/ }),
@@ -68,7 +67,6 @@ const ui = {
     copyCodeButton: byRole('button', { name: 'Copy code' }),
     downloadButton: byRole('button', { name: 'Download' }),
   },
-  loadingSpinner: byTestId('spinner'),
 };
 
 const server = setupMswServer();

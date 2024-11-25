@@ -21,7 +21,7 @@ import {
   toDataFrame,
   getSearchFilterScopedVar,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -267,7 +267,7 @@ export class GraphiteDatasource
     }
   }
 
-  convertResponseToDataFrames = (result: any): DataQueryResponse => {
+  convertResponseToDataFrames = (result: FetchResponse): DataQueryResponse => {
     const data: DataFrame[] = [];
     if (!result || !result.data) {
       return { data };
@@ -648,7 +648,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data, (metric) => {
             return {
               text: metric.text,
@@ -689,7 +689,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data.results, (metric) => {
             return {
               text: metric,
@@ -720,7 +720,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           return _map(results.data, (tag) => {
             return {
               text: tag.tag,
@@ -750,7 +750,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           if (results.data && results.data.values) {
             return _map(results.data.values, (value) => {
               return {
@@ -833,7 +833,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           if (results.data) {
             const semver = new SemVersion(results.data);
             return semver.isValid() ? results.data : '';
@@ -880,7 +880,7 @@ export class GraphiteDatasource
 
     return lastValueFrom(
       this.doGraphiteRequest(httpOptions).pipe(
-        map((results: any) => {
+        map((results: FetchResponse) => {
           // Fix for a Graphite bug: https://github.com/graphite-project/graphite-web/issues/2609
           // There is a fix for it https://github.com/graphite-project/graphite-web/pull/2612 but
           // it was merged to master in July 2020 but it has never been released (the last Graphite
@@ -950,7 +950,7 @@ export class GraphiteDatasource
   buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
-      targets: any = {};
+      targets: Record<string, string> = {};
     let target, targetValue, i;
     const regex = /\#([A-Z])/g;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
@@ -977,7 +977,7 @@ export class GraphiteDatasource
       targets[target.refId] = targetValue;
     }
 
-    function nestedSeriesRegexReplacer(match: any, g1: string | number) {
+    function nestedSeriesRegexReplacer(match: string, g1: string | number) {
       return targets[g1] || match;
     }
 
@@ -1022,7 +1022,7 @@ function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
 }
 
-function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
+function mapToTags(): OperatorFunction<FetchResponse, Array<{ text: string }>> {
   return pipe(
     map((results) => {
       if (results.data) {

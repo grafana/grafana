@@ -239,7 +239,7 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   ],
   "export-contact-point": [
     false,
-    true,
+    false,
   ],
   "export-mute-timings": [
     false,

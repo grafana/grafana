@@ -18,9 +18,10 @@ func init() {
 }
 
 const (
-	GROUP      = "notifications.alerting.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
+	GROUP                      = "notifications.alerting.grafana.app"
+	VERSION                    = "v0alpha1"
+	APIVERSION                 = GROUP + "/" + VERSION
+	UserDefinedRoutingTreeName = "user-defined"
 )
 
 var (
@@ -67,6 +68,46 @@ var (
 			},
 		},
 	)
+	TemplateGroupResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+		"templategroups", "templategroup", "TemplateGroup",
+		func() runtime.Object { return &TemplateGroup{} },
+		func() runtime.Object { return &TemplateGroupList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*TemplateGroup)
+				if !ok {
+					return nil, fmt.Errorf("expected resource or info")
+				}
+				return []interface{}{
+					r.Name,
+				}, nil
+			},
+		},
+	)
+	RouteResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+		"routingtrees", "routingtree", "RoutingTree",
+		func() runtime.Object { return &RoutingTree{} },
+		func() runtime.Object { return &RoutingTreeList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				// {Name: "Intervals", Type: "string", Format: "string", Description: "The display name"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*RoutingTree)
+				if !ok {
+					return nil, fmt.Errorf("expected resource or info")
+				}
+				return []interface{}{
+					r.Name,
+					// r.Spec, //TODO implement formatting for Spec, same as UI?
+				}, nil
+			},
+		},
+	)
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}
 	// SchemaBuilder is used by standard codegen
@@ -87,6 +128,10 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		&TimeIntervalList{},
 		&Receiver{},
 		&ReceiverList{},
+		&TemplateGroup{},
+		&TemplateGroupList{},
+		&RoutingTree{},
+		&RoutingTreeList{},
 	)
 	metav1.AddToGroupVersion(scheme, g)
 
@@ -122,6 +167,22 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		return err
 	}
 
+	err = scheme.AddFieldLabelConversionFunc(
+		TemplateGroupResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableTemplateGroupFields(&TemplateGroup{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeNodeResourceInfo.GroupVersionKind(), label)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -136,6 +197,16 @@ func SelectableTimeIntervalsFields(obj *TimeInterval) fields.Set {
 }
 
 func SelectableReceiverFields(obj *Receiver) fields.Set {
+	if obj == nil {
+		return nil
+	}
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"metadata.provenance": obj.GetProvenanceStatus(),
+		"spec.title":          obj.Spec.Title,
+	})
+}
+
+func SelectableTemplateGroupFields(obj *TemplateGroup) fields.Set {
 	if obj == nil {
 		return nil
 	}

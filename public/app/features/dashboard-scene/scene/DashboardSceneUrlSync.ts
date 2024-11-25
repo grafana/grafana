@@ -2,8 +2,9 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridLayout, SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/core';
 import { KioskMode } from 'app/types';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -16,6 +17,7 @@ import { findVizPanelByKey, getLibraryPanelBehavior, isPanelClone } from '../uti
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -29,15 +31,25 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
   getUrlState(): SceneObjectUrlValues {
     const state = this._scene.state;
+
     return {
       inspect: state.inspectPanelKey,
-      autofitpanels: state.body instanceof SceneGridLayout && !!state.body.state.UNSAFE_fitPanels ? 'true' : undefined,
+      autofitpanels: this.getAutoFitPanels(),
       viewPanel: state.viewPanelScene?.getUrlKey(),
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
       kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
       shareView: state.shareView,
+      orgId: contextSrv.user.orgId.toString(),
     };
+  }
+
+  private getAutoFitPanels(): string | undefined {
+    if (this._scene.state.body instanceof DefaultGridLayoutManager) {
+      return this._scene.state.body.state.grid.state.UNSAFE_fitPanels ? 'true' : undefined;
+    }
+
+    return undefined;
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
@@ -142,11 +154,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.shareView = undefined;
     }
 
-    if (this._scene.state.body instanceof SceneGridLayout) {
+    const layout = this._scene.state.body;
+    if (layout instanceof DefaultGridLayoutManager) {
       const UNSAFE_fitPanels = typeof values.autofitpanels === 'string';
 
-      if (!!this._scene.state.body.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
-        this._scene.state.body.setState({ UNSAFE_fitPanels });
+      if (!!layout.state.grid.state.UNSAFE_fitPanels !== UNSAFE_fitPanels) {
+        layout.state.grid.setState({ UNSAFE_fitPanels });
       }
     }
 

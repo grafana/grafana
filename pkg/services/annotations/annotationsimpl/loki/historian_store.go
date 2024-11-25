@@ -80,7 +80,7 @@ func (r *LokiHistorianStore) Type() string {
 	return "loki"
 }
 
-func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+func (r *LokiHistorianStore) Get(ctx context.Context, query annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
 	if query.Type == "annotation" {
 		return make([]*annotations.ItemDTO, 0), nil
 	}
@@ -104,7 +104,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	}
 
 	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(&query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
 	if err != nil {
 		grafanaErr := errutil.Error{}
 		if errors.As(err, &grafanaErr) {
@@ -192,7 +192,7 @@ func (r *LokiHistorianStore) annotationsFromStream(stream historian.Stream, ac a
 	return items
 }
 
-func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+func (r *LokiHistorianStore) GetTags(ctx context.Context, query annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return annotations.FindTagsResult{Tags: []*annotations.TagsDTO{}}, nil
 }
 

@@ -171,6 +171,51 @@ func (_c *SQLTemplate_ArgPlaceholder_Call) RunAndReturn(run func(int) string) *S
 	return _c
 }
 
+// CurrentEpoch provides a mock function with given fields:
+func (_m *SQLTemplate) CurrentEpoch() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CurrentEpoch")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// SQLTemplate_CurrentEpoch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CurrentEpoch'
+type SQLTemplate_CurrentEpoch_Call struct {
+	*mock.Call
+}
+
+// CurrentEpoch is a helper method to define mock.On call
+func (_e *SQLTemplate_Expecter) CurrentEpoch() *SQLTemplate_CurrentEpoch_Call {
+	return &SQLTemplate_CurrentEpoch_Call{Call: _e.mock.On("CurrentEpoch")}
+}
+
+func (_c *SQLTemplate_CurrentEpoch_Call) Run(run func()) *SQLTemplate_CurrentEpoch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *SQLTemplate_CurrentEpoch_Call) Return(_a0 string) *SQLTemplate_CurrentEpoch_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SQLTemplate_CurrentEpoch_Call) RunAndReturn(run func() string) *SQLTemplate_CurrentEpoch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DialectName provides a mock function with given fields:
 func (_m *SQLTemplate) DialectName() string {
 	ret := _m.Called()

@@ -721,6 +721,12 @@ describe('ElasticDatasource', () => {
           const query = ds.addAdHocFilters('', filters);
           expect(query).toBe('field\\:name:"field \\"value\\""');
         });
+
+        it('should not escape backslash in regex', () => {
+          const filters = [{ key: 'field:name', operator: '=~', value: 'field value\\/', condition: '' }];
+          const query = ds.addAdHocFilters('', filters);
+          expect(query).toBe('field\\:name:/field value\\//');
+        });
       });
     });
 

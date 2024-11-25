@@ -40,7 +40,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 			Fields: make(map[string]string),
 		}
 		stream := bytes.NewBuffer(body)
-		dash, err := readDashboard(stream, lookup)
+		dash, err := ReadDashboard(stream, lookup)
 		if err != nil {
 			summary.Error = &entity.EntityErrorInfo{
 				Message: err.Error(),
@@ -74,7 +74,7 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 }
 
 // panelSummary take panel info and returns entity summaries for the given panel and all its collapsed panels.
-func panelSummary(panel panelInfo, uid string, dashboardRefs ReferenceAccumulator) []*entity.EntitySummary {
+func panelSummary(panel PanelSummaryInfo, uid string, dashboardRefs ReferenceAccumulator) []*entity.EntitySummary {
 	panels := []*entity.EntitySummary{}
 
 	panelRefs := NewReferenceAccumulator()

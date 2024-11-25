@@ -46,6 +46,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/explore/explore-inspector/
+  explore-traces-app:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/simplified-exploration/traces/
 ---
 
 # Query tracing data
@@ -54,6 +59,10 @@ The Tempo data source's query editor helps you query and display traces from Tem
 The queries use [TraceQL](/docs/tempo/latest/traceql), the query language designed specifically for tracing.
 
 For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).
+
+{{< admonition type="tip" >}}
+Don't know TraceQL? Try [Explore Traces](ref:explore-traces-app), an intuitive, queryless app that lets you explore your tracing data using RED metrics.
+{{< /admonition >}}
 
 ## Before you begin
 

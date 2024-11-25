@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -14,23 +14,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestResourceAuthorizer_HasAccess(t *testing.T) {
+func TestLegacyAccessClient_Check(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
-	t.Run("should have no opinion for non resource requests", func(t *testing.T) {
-		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{
-			Resource: "dashboards",
-			Attr:     "uid",
-		})
+	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
+		a := accesscontrol.NewLegacyAccessClient(ac)
 
-		ok, err := a.HasAccess(context.Background(), &identity.StaticRequester{}, claims.AccessRequest{
+		res, err := a.Check(context.Background(), &identity.StaticRequester{}, authz.CheckRequest{
 			Verb:      "get",
 			Resource:  "dashboards",
 			Namespace: "default",
 			Name:      "1",
 		})
-		assert.Error(t, err)
-		assert.Equal(t, false, ok)
+		assert.NoError(t, err)
+		assert.Equal(t, false, res.Allowed)
 	})
 
 	t.Run("should reject when user don't have correct scope", func(t *testing.T) {
@@ -46,7 +43,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:2"},
 		)
 
-		ok, err := a.HasAccess(context.Background(), ident, claims.AccessRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -54,7 +51,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, ok)
+		assert.Equal(t, false, res.Allowed)
 	})
 
 	t.Run("should just check action for list requests", func(t *testing.T) {
@@ -70,14 +67,14 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read"},
 		)
 
-		ok, err := a.HasAccess(context.Background(), ident, claims.AccessRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "list",
 			Namespace: "default",
 			Resource:  "dashboards",
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, ok)
+		assert.Equal(t, true, res.Allowed)
 	})
 
 	t.Run("should allow when user have correct scope", func(t *testing.T) {
@@ -93,7 +90,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 			accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:1"},
 		)
 
-		ok, err := a.HasAccess(context.Background(), ident, claims.AccessRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -101,7 +98,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, ok)
+		assert.Equal(t, true, res.Allowed)
 	})
 
 	t.Run("should skip authorization for configured verb", func(t *testing.T) {
@@ -118,7 +115,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 
 		ident := newIdent(accesscontrol.Permission{})
 
-		ok, err := a.HasAccess(context.Background(), ident, claims.AccessRequest{
+		res, err := a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "get",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -126,9 +123,9 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, true, ok)
+		assert.Equal(t, true, res.Allowed)
 
-		ok, err = a.HasAccess(context.Background(), ident, claims.AccessRequest{
+		res, err = a.Check(context.Background(), ident, authz.CheckRequest{
 			Verb:      "create",
 			Namespace: "default",
 			Resource:  "dashboards",
@@ -136,7 +133,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		})
 
 		assert.NoError(t, err)
-		assert.Equal(t, false, ok)
+		assert.Equal(t, false, res.Allowed)
 	})
 }
 

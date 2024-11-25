@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { config } from '../../../../core/config';
-import { DashboardGridItem } from '../../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import ShareMenu from './ShareMenu';
 
@@ -28,7 +28,6 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    config.featureToggles.publicDashboards = true;
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
     setup({ meta: { canEdit: true } });
@@ -38,7 +37,6 @@ describe('ShareMenu', () => {
     expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
   });
   it('should not share externally when public dashboard is disabled', async () => {
-    config.featureToggles.publicDashboards = false;
     config.publicDashboardsEnabled = false;
     setup();
 
@@ -87,18 +85,7 @@ function setup(overrides?: Partial<DashboardSceneState>) {
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
     ...overrides,
   });
 

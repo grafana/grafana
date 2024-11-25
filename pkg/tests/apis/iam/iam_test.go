@@ -58,10 +58,6 @@ func TestIntegrationIdentity(t *testing.T) {
           "apiVersion": "iam.grafana.app/v0alpha1",
           "kind": "Team",
           "metadata": {
-            "annotations": {
-              "grafana.app/originName": "SQL",
-              "grafana.app/originPath": "${originPath}"
-            },
             "creationTimestamp": "${creationTimestamp}",
             "name": "${name}",
             "namespace": "default",

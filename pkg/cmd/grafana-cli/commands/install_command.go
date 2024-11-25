@@ -51,7 +51,10 @@ func validateInput(c utils.CommandLine) error {
 
 	fileInfo, err := os.Stat(pluginsDir)
 	if err != nil {
-		if err = os.MkdirAll(pluginsDir, 0o750); err != nil {
+		// If the directory does not exist, try to create it with permissions enough
+		// so the server running Grafana can write to it to install new plugins.
+		// nolint: gosec
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
 			return fmt.Errorf("pluginsDir (%s) is not a writable directory", pluginsDir)
 		}
 		return nil

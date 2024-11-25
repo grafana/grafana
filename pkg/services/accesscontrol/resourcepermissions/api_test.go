@@ -257,6 +257,7 @@ type setTeamPermissionTestCase struct {
 	expectedStatus int
 	permission     string
 	permissions    []accesscontrol.Permission
+	byUID          bool
 }
 
 func TestApi_setTeamPermission(t *testing.T) {
@@ -308,6 +309,20 @@ func TestApi_setTeamPermission(t *testing.T) {
 				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
 			},
 		},
+		{
+			desc:           "should set View permission for team with id 1 but through UID",
+			teamID:         1,
+			resourceID:     "1",
+			expectedStatus: 200,
+			permission:     "View",
+			byUID:          true,
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboards.permissions:read", Scope: "dashboards:id:1"},
+				{Action: "dashboards.permissions:write", Scope: "dashboards:id:1"},
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -316,10 +331,16 @@ func TestApi_setTeamPermission(t *testing.T) {
 			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}}, service)
 
 			// seed team
-			_, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
+			team, err := teamSvc.CreateTeam(context.Background(), "test", "test@test.com", 1)
 			require.NoError(t, err)
 
-			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "teams", strconv.Itoa(int(tt.teamID)))
+			assignTo := strconv.Itoa(int(tt.teamID))
+			if tt.byUID {
+				if team.ID == tt.teamID {
+					assignTo = team.UID
+				}
+			}
+			recorder := setPermission(t, server, testOptions.Resource, tt.resourceID, tt.permission, "teams", assignTo)
 			assert.Equal(t, tt.expectedStatus, recorder.Code)
 
 			assert.Equal(t, tt.expectedStatus, recorder.Code)

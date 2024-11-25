@@ -101,7 +101,7 @@ func (p *queryParser) parseRequest(ctx context.Context, input *query.QueryDataRe
 			}
 			exp, err := p.reader.ReadQuery(q, iter)
 			if err != nil {
-				return rsp, err
+				return rsp, NewErrorWithRefID(q.RefID, err)
 			}
 			exp.GraphID = int64(len(expressions) + 1)
 			expressions[q.RefID] = &exp
@@ -208,7 +208,7 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSo
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")
 		}
-		if ds.UID == expr.DatasourceType {
+		if expr.IsDataSource(ds.UID) {
 			return ds, nil
 		}
 		if p.legacy == nil {

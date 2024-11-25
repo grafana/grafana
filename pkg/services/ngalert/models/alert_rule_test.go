@@ -137,6 +137,7 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 		name                 string
 		annotations          map[string]string
 		expectedError        error
+		expectedErrContains  string
 		expectedDashboardUID string
 		expectedPanelID      int64
 	}{
@@ -148,41 +149,42 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "dashboardUID is not present",
-			annotations: map[string]string{PanelIDAnnotation: "1234567890"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "dashboardUID is not present",
+			annotations:          map[string]string{PanelIDAnnotation: "1234567890"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "dashboardUID is present but empty",
-			annotations: map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "dashboardUID is present but empty",
+			annotations:          map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "panelID is not present",
-			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "panelID is not present",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
-			name:        "panelID is present but empty",
-			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
-			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
-				DashboardUIDAnnotation, PanelIDAnnotation),
+			name:                 "panelID is present but empty",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  fmt.Sprintf("%s and %s", DashboardUIDAnnotation, PanelIDAnnotation),
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
 		{
 			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
 			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
-			expectedError:        fmt.Errorf("annotation %s must be a valid integer Panel ID", PanelIDAnnotation),
+			expectedError:        ErrAlertRuleFailedValidation,
+			expectedErrContains:  PanelIDAnnotation,
 			expectedDashboardUID: "",
 			expectedPanelID:      -1,
 		},
@@ -203,7 +205,10 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 			).Generate()
 			err := rule.SetDashboardAndPanelFromAnnotations()
 
-			require.Equal(t, tc.expectedError, err)
+			require.ErrorIs(t, err, tc.expectedError)
+			if tc.expectedErrContains != "" {
+				require.ErrorContains(t, err, tc.expectedErrContains)
+			}
 			require.Equal(t, tc.expectedDashboardUID, rule.GetDashboardUID())
 			require.Equal(t, tc.expectedPanelID, rule.GetPanelID())
 		})
@@ -253,10 +258,18 @@ func TestPatchPartialAlertRule(t *testing.T) {
 					r.IsPaused = true
 				},
 			},
+			{
+				name: "No metadata",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.Metadata = AlertRuleMetadata{}
+					r.HasMetadata = false
+				},
+			},
 		}
 
 		gen := RuleGen.With(
-			RuleMuts.WithFor(time.Duration(rand.Int63n(1000) + 1)),
+			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
+			RuleMuts.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		)
 
 		for _, testCase := range testCases {
@@ -876,4 +889,28 @@ func TestTimeRangeYAML(t *testing.T) {
 	serialized, err := yaml.Marshal(rtr)
 	require.NoError(t, err)
 	require.Equal(t, yamlRaw, string(serialized))
+}
+
+func TestAlertRuleGetKey(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.GenerateRef()
+		expected := AlertRuleKey{
+			OrgID: rule.OrgID,
+			UID:   rule.UID,
+		}
+		require.Equal(t, expected, rule.GetKey())
+	})
+}
+
+func TestAlertRuleGetKeyWithGroup(t *testing.T) {
+	t.Run("should return correct key", func(t *testing.T) {
+		rule := RuleGen.With(
+			RuleMuts.WithUniqueGroupIndex(),
+		).GenerateRef()
+		expected := AlertRuleKeyWithGroup{
+			AlertRuleKey: rule.GetKey(),
+			RuleGroup:    rule.RuleGroup,
+		}
+		require.Equal(t, expected, rule.GetKeyWithGroup())
+	})
 }

@@ -17,7 +17,6 @@ func TestBasicEncodeDecode(t *testing.T) {
 		Login:   "test",
 		Type:    claims.TypeUser,
 		OrgID:   456,
-		OrgName: "org",
 		OrgRole: identity.RoleAdmin,
 	}
 

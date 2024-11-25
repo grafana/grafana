@@ -88,83 +88,83 @@ const getStyles = (theme: GrafanaTheme2, step: Threshold, outOfBounds: OutOfBoun
   const isOutOfBounds = outOfBounds !== 'none';
 
   return {
-    handle: css`
-      display: flex;
-      align-items: center;
-      position: absolute;
-      left: 0;
-      width: calc(100% - 9px);
-      height: 18px;
-      margin-top: -9px;
-      border-color: ${mainColor};
-      cursor: ${disabled ? 'initial' : 'grab'};
-      border-top-right-radius: ${theme.shape.radius.default};
-      border-bottom-right-radius: ${theme.shape.radius.default};
-      ${isOutOfBounds &&
-      css`
-        margin-top: 0;
-        border-radius: ${theme.shape.radius.default};
-      `}
-      background: ${mainColor};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      &:before {
-        ${arrowStyles};
+    handle: css(
+      {
+        display: 'flex',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 0,
+        width: 'calc(100% - 9px)',
+        height: '18px',
+        marginTop: '-9px',
+        borderColor: mainColor,
+        cursor: disabled ? 'initial' : 'grab',
+        borderTopRightRadius: theme.shape.radius.default,
+        borderBottomRightRadius: theme.shape.radius.default,
+        background: mainColor,
+        fontSize: theme.typography.bodySmall.fontSize,
+        '&:before': arrowStyles,
+      },
+      isOutOfBounds && {
+        marginTop: 0,
+        borderRadius: theme.shape.radius.default,
       }
-    `,
-    handleText: css`
-      text-align: center;
-      width: 100%;
-      display: block;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-    `,
+    ),
+    handleText: css({
+      textAlign: 'center',
+      width: '100%',
+      display: 'block',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+    }),
   };
 };
 
 function getArrowStyles(outOfBounds: OutOfBounds) {
   const inBounds = outOfBounds === 'none';
 
-  const triangle = (size: number) => css`
-    content: '';
-    position: absolute;
+  const triangle = (size: number) =>
+    ({
+      content: "''",
+      position: 'absolute',
 
-    bottom: 0;
-    top: 0;
-    width: 0;
-    height: 0;
-    left: 0;
+      bottom: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+      left: 0,
 
-    border-right-style: solid;
-    border-right-width: ${size}px;
-    border-right-color: inherit;
-    border-top: ${size}px solid transparent;
-    border-bottom: ${size}px solid transparent;
-  `;
+      borderRightStyle: 'solid',
+      borderRightWidth: `${size}px`,
+      borderRightColor: 'inherit',
+      borderTop: `${size}px solid transparent`,
+      borderBottom: `${size}px solid transparent`,
+    }) as const;
 
   if (inBounds) {
-    return css`
-      ${triangle(9)};
-      left: -9px;
-    `;
+    return css({
+      ...triangle(9),
+      left: '-9px',
+    });
   }
 
   if (outOfBounds === 'top') {
-    return css`
-      ${triangle(5)};
-      left: calc(50% - 2.5px);
-      top: -7px;
-      transform: rotate(90deg);
-    `;
+    return css({
+      ...triangle(5),
+      left: 'calc(50% - 2.5px)',
+      top: '-7px',
+      transform: 'rotate(90deg)',
+    });
   }
 
   if (outOfBounds === 'bottom') {
-    return css`
-      ${triangle(5)};
-      left: calc(50% - 2.5px);
-      top: calc(100% - 2.5px);
-      transform: rotate(-90deg);
-    `;
+    return css({
+      ...triangle(5),
+      left: 'calc(50% - 2.5px)',
+      top: 'calc(100% - 2.5px)',
+      transform: 'rotate(-90deg)',
+    });
   }
 
   return '';

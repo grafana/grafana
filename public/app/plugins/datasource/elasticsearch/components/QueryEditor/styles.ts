@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
 
-export const segmentStyles = css`
-  min-width: 150px;
-`;
+export const segmentStyles = css({
+  minWidth: '150px',
+});

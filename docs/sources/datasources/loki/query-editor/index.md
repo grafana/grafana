@@ -171,6 +171,8 @@ The following options are the same for both **Builder** and **Code** mode:
 
 - **Line limit** -Defines the upper limit for the number of log lines returned by a query. The default is `1000`
 
+- **Direction** - Determines the search order. **Backward** is a backward search starting at the end of the time range. **Forward** is a forward search starting at the beginning of the time range. The default is **Backward**
+
 - **Step** Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__interval` variable, which is calculated using the time range and the width of the graph (the number of pixels).
 
 - **Resolution** Deprecated. Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better.
@@ -249,10 +251,6 @@ In your `server` section, add the following configuration:
       proxy_set_header    X-Forwarded-Proto "https";
   }
 ```
-
-{{% admonition type="note" %}}
-Available in Grafana v6.3 and higher.
-{{% /admonition %}}
 
 ## Create a metric query
 

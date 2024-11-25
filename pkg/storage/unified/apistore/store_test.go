@@ -92,12 +92,13 @@ func TestCreate(t *testing.T) {
 	storagetesting.RunTestCreate(ctx, t, store, checkStorageInvariants(store))
 }
 
-func TestCreateWithTTL(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	assert.NoError(t, err)
-	storagetesting.RunTestCreateWithTTL(ctx, t, store)
-}
+// No TTL support in unifed storage
+// func TestCreateWithTTL(t *testing.T) {
+// 	ctx, store, destroyFunc, err := testSetup(t)
+// 	defer destroyFunc()
+// 	assert.NoError(t, err)
+// 	storagetesting.RunTestCreateWithTTL(ctx, t, store)
+// }
 
 func TestCreateWithKeyExist(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
@@ -134,12 +135,12 @@ func TestDeleteWithSuggestion(t *testing.T) {
 	storagetesting.RunTestDeleteWithSuggestion(ctx, t, store)
 }
 
-//func TestDeleteWithSuggestionAndConflict(t *testing.T) {
-//	ctx, store, destroyFunc, err := testSetup(t)
-//	defer destroyFunc()
-//	assert.NoError(t, err)
-//	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
-//}
+func TestDeleteWithSuggestionAndConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
+}
 
 // TODO: this test relies on update
 //func TestDeleteWithSuggestionOfDeletedObject(t *testing.T) {

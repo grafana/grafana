@@ -20,7 +20,7 @@ import (
 type store interface {
 	Insert(context.Context, *user.User) (int64, error)
 	GetByID(context.Context, int64) (*user.User, error)
-	GetByUID(ctx context.Context, orgId int64, uid string) (*user.User, error)
+	GetByUID(ctx context.Context, uid string) (*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
 	Delete(context.Context, int64) error
@@ -108,14 +108,11 @@ func (ss *sqlStore) GetByID(ctx context.Context, userID int64) (*user.User, erro
 	return &usr, err
 }
 
-func (ss *sqlStore) GetByUID(ctx context.Context, orgId int64, uid string) (*user.User, error) {
+func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error) {
 	var usr user.User
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table("user").
-			Where("org_id = ? AND uid = ?", orgId, uid).
-			Get(&usr)
-
+		has, err := sess.Table("user").Where("uid = ?", uid).Get(&usr)
 		if err != nil {
 			return err
 		} else if !has {

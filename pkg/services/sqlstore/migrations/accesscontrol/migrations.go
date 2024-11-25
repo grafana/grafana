@@ -196,4 +196,18 @@ func AddMigration(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"role_id", "action", "scope"},
 	}))
+
+	mg.AddMigration("add group mapping UID column to user_role table", migrator.NewAddColumnMigration(userRoleV1, &migrator.Column{
+		Name: "group_mapping_uid", Type: migrator.DB_NVarchar, Length: 40, Default: "''", Nullable: true,
+	}))
+
+	mg.AddMigration("add user_role org ID, user ID, role ID, group mapping UID index", migrator.NewAddIndexMigration(userRoleV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "user_id", "role_id", "group_mapping_uid"},
+	}))
+
+	mg.AddMigration("remove user_role org ID, user ID, role ID index", migrator.NewDropIndexMigration(userRoleV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"org_id", "user_id", "role_id"},
+	}))
 }

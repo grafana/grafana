@@ -22,9 +22,9 @@ describe('Dashboards', () => {
     // Then we open and close the panel editor
     e2e.components.Panels.Panel.menu('Panel #50').click({ force: true }); // it only shows on hover
     e2e.components.Panels.Panel.menuItems('Edit').click();
-    e2e.components.PanelEditor.applyButton().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().click();
 
-    // And the last panel should still be visible!
+    // The last panel should still be visible!
     e2e.components.Panels.Panel.title('Panel #50').should('be.visible');
   });
 });

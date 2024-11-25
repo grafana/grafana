@@ -43,7 +43,7 @@ Alert rules in different groups can be evaluated simultaneously.
 
 - **Grafana-managed** alert rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
 
-- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is necessary to ensure that recording rules are evaluated before alert rules.
+- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
 
 ## Pending period
 
@@ -52,19 +52,6 @@ You can set a pending period to prevent unnecessary alerts from temporary issues
 The pending period specifies how long the condition must be met before firing, ensuring the condition is consistently met over a consecutive period.
 
 You can also set the pending period to zero to skip it and have the alert fire immediately once the condition is met.
-
-## Condition operator
-
-There are several condition operators available.
-
-- **and**: Two conditions before and after must be true for the overall condition to be true.
-- **or**: If one of conditions before and after are true, the overall condition is true.
-- **logic-or**: If the condition before logic-or is true, the overall condition is immediately true, without evaluating subsequent conditions.
-
-Here are some examples of operators.
-
-- `TRUE and TRUE or FALSE and FALSE` evaluate to `FALSE`, because last two conditions return `FALSE`.
-- `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`.
 
 ## Evaluation example
 

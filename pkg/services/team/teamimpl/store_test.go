@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -35,7 +34,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
-		sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t)
 		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
@@ -48,7 +47,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				},
 			},
 		}
-		quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(sqlStore.SQLStore), cfg)
+		quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -148,7 +147,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should return latest auth module for users when getting team members", func(t *testing.T) {
-				sqlStore = db.InitTestReplDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				userId := userIds[1]
 
@@ -199,7 +198,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
-				sqlStore = db.InitTestReplDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				userID := userIds[0]
 
@@ -313,7 +312,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
-				sqlStore = db.InitTestReplDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				groupId := team2.ID
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -374,7 +373,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				})
 
 				t.Run("A user should be able to remove the admin permission if there are other admins", func(t *testing.T) {
-					sqlStore = db.InitTestReplDB(t)
+					sqlStore = db.InitTestDB(t)
 					setup()
 
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -393,7 +392,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
-				sqlStore = db.InitTestReplDB(t)
+				sqlStore = db.InitTestDB(t)
 				setup()
 				signedInUser := &user.SignedInUser{
 					Login: "loginuser0",
@@ -434,8 +433,8 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
-				sqlStore = db.InitTestReplDB(t)
-				quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(sqlStore.SQLStore), cfg)
+				sqlStore = db.InitTestDB(t)
+				quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -529,7 +528,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		},
 	}
 
-	store, cfg := db.InitTestReplDBWithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
@@ -566,18 +565,18 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	userIds := make([]int64, 4)
 
 	// Seed 2 teams with 2 members
-	setup := func(store db.ReplDB, cfg *setting.Cfg) {
+	setup := func(store db.DB, cfg *setting.Cfg) {
 		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 		require.NoError(t, err)
 		team1, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group1 name", "test1@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
-		quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store.DB()), cfg)
-		orgSvc, err := orgimpl.ProvideService(store.DB(), cfg, quotaService)
+		quotaService := quotaimpl.ProvideService(store, cfg)
+		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
-			store.DB(), orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
+			store, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
 			quotaService, supportbundlestest.NewFakeBundleService(),
 		)
 		require.NoError(t, err)
@@ -593,7 +592,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			userIds[i] = user.ID
 		}
 
-		errAddMembers := store.DB().WithDbSession(context.Background(), func(sess *db.Session) error {
+		errAddMembers := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, 0)
 			if err != nil {
 				return err
@@ -611,7 +610,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		require.NoError(t, errAddMembers)
 	}
 
-	store, cfg := db.InitTestReplDBWithCfg(t, db.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
 	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
