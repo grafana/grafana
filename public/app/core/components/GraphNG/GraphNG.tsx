@@ -33,7 +33,6 @@ export type PropDiffFn<T extends Record<string, unknown> = {}> = (prev: T, next:
 export interface GraphNGProps extends Themeable2 {
   frames: DataFrame[];
   structureRev?: number; // a number that will change when the frames[] structure changes
-  hideFromVizStates?: string;
   width: number;
   height: number;
   timeRange: TimeRange;
@@ -204,10 +203,9 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, cursorSync, propsToDiff, hideFromVizStates } = this.props;
+    const { frames, structureRev, timeZone, cursorSync, propsToDiff } = this.props;
 
-    const propsChanged =
-      !sameProps(prevProps, this.props, propsToDiff) || hideFromVizStates !== prevProps.hideFromVizStates;
+    const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
     if (
       frames !== prevProps.frames ||

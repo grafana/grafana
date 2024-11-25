@@ -62,7 +62,7 @@ export function prepSeries(
   }
 
   cacheFieldDisplayNames(frames);
-  decoupleHideFromState(frames, fieldConfig);
+  frames = decoupleHideFromState(frames, fieldConfig);
 
   let frame: DataFrame | undefined = { ...frames[0] };
 

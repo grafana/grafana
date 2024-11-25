@@ -85,7 +85,7 @@ export function prepareGraphableFields(
   }
 
   cacheFieldDisplayNames(series);
-  decoupleHideFromState(series, fieldConfig);
+  series = decoupleHideFromState(series, fieldConfig);
 
   let useNumericX = xNumFieldIdx != null;
 
