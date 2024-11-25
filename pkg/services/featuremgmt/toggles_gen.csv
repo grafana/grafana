@@ -224,3 +224,4 @@ reportingUseRawTimeRange,preview,@grafana/sharing-squad,false,false,false
 alertingUIOptimizeReducer,GA,@grafana/alerting-squad,false,false,true
 azureMonitorEnableUserAuth,GA,@grafana/partner-datasources,false,false,false
 alertingNotificationsStepMode,experimental,@grafana/alerting-squad,false,false,true
+useV2DashboardsAPI,experimental,@grafana/dashboards-squad,false,true,false
