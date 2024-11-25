@@ -4,6 +4,7 @@ import React, { CSSProperties } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import NativeScrollbar from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -24,11 +25,13 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
-      <div className={styles.canvasWrappperOld}>
-        <NavToolbarActions dashboard={dashboard} />
-        <div className={styles.controlsWrapperSticky}>{controls}</div>
-        <div className={styles.body}>{body}</div>
-      </div>
+      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+        <div className={styles.canvasWrappperOld}>
+          <NavToolbarActions dashboard={dashboard} />
+          <div className={styles.controlsWrapperSticky}>{controls}</div>
+          <div className={styles.body}>{body}</div>
+        </div>
+      </NativeScrollbar>
     );
   }
 
@@ -52,13 +55,19 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     containerStyle.overflow = 'unset';
   }
 
+  const onBodyRef = (ref: HTMLDivElement) => {
+    dashboard.onSetScrollRef(ref);
+  };
+
   return (
     <div {...containerProps} style={containerStyle}>
       <div {...primaryProps} className={cx(primaryProps.className, styles.canvasWithSplitter)}>
         <NavToolbarActions dashboard={dashboard} />
         <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
         <div className={styles.bodyWrapper}>
-          <div className={cx(styles.body, isEditing && styles.bodyEditing)}>{body}</div>
+          <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+            {body}
+          </div>
         </div>
       </div>
       {isEditing && (
