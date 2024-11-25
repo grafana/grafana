@@ -27,7 +27,7 @@ export const CloudEvaluationBehavior = () => {
     <RuleEditorSection stepNo={3} title="Set evaluation behavior">
       <Field
         label="Pending period"
-        description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
+        description='The period in which the threshold condition must be met. Selecting "None" triggers the alert immediately once the condition is met.'
       >
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
