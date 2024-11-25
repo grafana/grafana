@@ -1,9 +1,10 @@
-import { createTheme, toDataFrame } from '@grafana/data';
+import { createTheme, FieldConfigSource, toDataFrame } from '@grafana/data';
 
 import { prepareCandlestickFields } from './fields';
 import { Options, VizDisplayMode } from './types';
 
 const theme = createTheme();
+const fieldConfig: FieldConfigSource = { defaults: {}, overrides: [] };
 
 describe('Candlestick data', () => {
   const options = {} as Options;
@@ -21,6 +22,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     );
@@ -40,6 +42,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     );
@@ -70,6 +73,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     )!;
@@ -113,6 +117,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     )!;
@@ -162,6 +167,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     )!;
@@ -224,6 +230,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     )!;
@@ -278,6 +285,7 @@ describe('Candlestick data', () => {
           ],
         }),
       ],
+      fieldConfig,
       options,
       theme
     )!;
