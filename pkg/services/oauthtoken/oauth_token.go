@@ -412,11 +412,11 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 
 	if err != nil {
 		ctxLogger.Error("Failed to retrieve oauth access token",
-			"provider", usr.GetAuthenticatedBy(), "userID", userID, "error", err)
+			"provider", usr.GetAuthenticatedBy(), "error", err)
 
 		// token refresh failed, invalidate the old token
 		if err := o.InvalidateOAuthTokens(ctx, usr, sessionToken); err != nil {
-			ctxLogger.Warn("Failed to invalidate OAuth tokens", "id", usr.GetAuthID(), "error", err)
+			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", usr.GetAuthID(), "error", err)
 		}
 
 		return nil, err
