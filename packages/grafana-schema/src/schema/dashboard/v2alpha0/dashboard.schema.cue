@@ -289,7 +289,7 @@ SpecialValueMap: {
 }
 
 // Special value types supported by the `SpecialValueMap`
-SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cuetsy(kind="enum",memberNames="True|False|Null|NaN|NullAndNaN|Empty")
+SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cog(kind="enum",memberNames="True|False|Null|NaN|NullAndNaN|Empty")
 
 // Result used as replacement with text and color when the value matches
 ValueMappingResult: {
