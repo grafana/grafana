@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { config, getBackendSrv } from '@grafana/runtime';
+import { AppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
@@ -21,7 +22,6 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
-  const dashboardJSON = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
   const [saveDashboard, request] = useConnectPutRepositoryFilesMutation();
   const [repo, setRepo] = useState<string>();
   const [path, setPath] = useState<string>();
@@ -48,26 +48,29 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
     setRef(ref);
   }, [meta]);
 
+  useEffect(() => {
+    const appEvents = getAppEvents();
+    if (request.isSuccess) {
+      appEvents.publish({
+        type: AppEvents.alertSuccess.name,
+        payload: ['Dashboard saved'],
+      });
+
+      // TODO Avoid full reload
+      window.location.reload();
+    } else if (request.isError) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: ['Error saving dashboard', request.error],
+      });
+    }
+  }, [request.isSuccess, request.isError, request.error]);
+
   const doSave = () => {
-    console.log('saving');
     if (!repo || !path) {
       return;
     }
-    // const params: Record<string, string> = {};
-    // if (ref) {
-    //   params['ref'] = ref;
-    // }
-    // if (comment) {
-    //   params['comment'] = comment;
-    // }
-
     saveDashboard({ name: repo, path, body: changeInfo.changedSaveModel });
-    // getBackendSrv()
-    //   .put(url, dashboardJSON, { params })
-    //   .then((v) => {
-    //     console.log('WROTE', v);
-    //     alert('WROTE value');
-    //   });
   };
 
   return (
