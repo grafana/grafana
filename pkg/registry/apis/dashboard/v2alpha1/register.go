@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -112,14 +113,30 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
+	defaultOpts, err := optsGetter.GetRESTOptions(b.legacy.Resource.GroupResource(), &dashboardinternal.Dashboard{})
+	if err != nil {
+		return err
+	}
+	storageOpts := apistore.StorageOptions{
+		InternalConversion: (func(b []byte, desiredObj runtime.Object) (runtime.Object, error) {
+			internal := &dashboardinternal.Dashboard{}
+			obj, _, err := defaultOpts.StorageConfig.Config.Codec.Decode(b, nil, internal)
+			if err != nil {
+				return nil, err
+			}
+
+			err = scheme.Convert(obj, desiredObj, nil)
+			return desiredObj, err
+		}),
+	}
+
 	// Split dashboards when they are large
 	var largeObjects apistore.LargeObjectSupport
 	if b.legacy.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageBigObjectsSupport) {
 		largeObjects = dashboard.NewDashboardLargeObjectSupport(scheme)
-		opts.StorageOptions(dash.GroupResource(), apistore.StorageOptions{
-			LargeObjectSupport: largeObjects,
-		})
+		storageOpts.LargeObjectSupport = largeObjects
 	}
+	opts.StorageOptions(dash.GroupResource(), storageOpts)
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore

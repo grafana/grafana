@@ -22,7 +22,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
@@ -87,6 +86,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  provisioning?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
@@ -159,6 +159,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
+  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
@@ -240,4 +241,5 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  alertingNotificationsStepMode?: boolean;
 }
