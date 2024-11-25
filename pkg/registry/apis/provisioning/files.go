@@ -110,7 +110,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodPut:
 			obj, err = s.doWrite(r.Context(), logger, true, repo, filePath, ref, message, r)
 		case http.MethodDelete:
-			obj, err = s.doDelete(r.Context(), repo, filePath, ref, message)
+			obj, err = s.doDelete(r.Context(), logger, repo, filePath, ref, message)
 		default:
 			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 		}
@@ -143,7 +143,7 @@ func (s *filesConnector) getParser(repo repository.Repository) (*fileParser, err
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
-	info, err := repo.Read(ctx, path, ref)
+	info, err := repo.Read(ctx, logger, path, ref)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -204,9 +204,9 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 	}
 
 	if update {
-		err = repo.Update(ctx, path, ref, data, message)
+		err = repo.Update(ctx, logger, path, ref, data, message)
 	} else {
-		err = repo.Create(ctx, path, ref, data, message)
+		err = repo.Create(ctx, logger, path, ref, data, message)
 	}
 	if err != nil {
 		return nil, err
@@ -233,13 +233,13 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 	return parsed.AsResourceWrapper(), err
 }
 
-func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
+func (s *filesConnector) doDelete(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if !settings.Delete {
 		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
 	}
 
-	err := repo.Delete(ctx, path, ref, message)
+	err := repo.Delete(ctx, logger, path, ref, message)
 	if err != nil {
 		return nil, err
 	}
