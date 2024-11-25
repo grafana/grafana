@@ -1,6 +1,7 @@
 import { http } from 'msw';
+import { render, screen } from 'test/test-utils';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../mockApi';
@@ -8,14 +9,17 @@ import { grantUserPermissions } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 import { paginatedHandlerFor } from '../mocks/server/utils';
 
+import { GroupedView } from './GroupedView';
+
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+setReturnToPreviousHook(() => () => {});
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 const server = setupMswServer();
 
-const mimirGroups = alertingFactory.group.buildList(5000, { file: 'test-mimir-namespace' });
+const mimirGroups = alertingFactory.group.buildList(2000, { file: 'test-mimir-namespace' });
 alertingFactory.group.rewindSequence();
 const prometheusGroups = alertingFactory.group.buildList(200, { file: 'test-prometheus-namespace' });
 
@@ -27,4 +31,14 @@ beforeEach(() => {
   server.use(http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, paginatedHandlerFor(prometheusGroups)));
 });
 
-// @TODO: Add tests for RuleList.v2
+describe('RuleList - GroupedView', () => {
+  it('should render datasource sections', async () => {
+    render(<GroupedView />);
+
+    const mimirSection = await screen.findByRole('listitem', { name: /Mimir/ });
+    const prometheusSection = await screen.findByRole('listitem', { name: /Prometheus/ });
+
+    expect(mimirSection).toBeInTheDocument();
+    expect(prometheusSection).toBeInTheDocument();
+  });
+});
