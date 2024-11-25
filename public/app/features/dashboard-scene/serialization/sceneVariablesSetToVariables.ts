@@ -171,6 +171,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({

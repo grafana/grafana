@@ -77,6 +77,7 @@ export interface GroupByVariableModel extends VariableWithOptions {
   type: 'groupby';
   datasource: DataSourceRef | null;
   multi: true;
+  allowCustomValue?: boolean;
 }
 
 export interface VariableOption {

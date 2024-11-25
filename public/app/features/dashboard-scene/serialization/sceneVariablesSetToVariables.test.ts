@@ -652,6 +652,7 @@ describe('sceneVariablesSetToVariables', () => {
         name: 'test',
         label: 'test-label',
         description: 'test-desc',
+        allowCustomValue: true,
         datasource: { uid: 'fake-std', type: 'fake-std' },
         defaultOptions: [
           {
@@ -673,6 +674,7 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchInlineSnapshot(`
       {
+        "allowCustomValue": true,
         "current": {
           "text": [],
           "value": [],

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -6,6 +6,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
 export interface GroupByVariableFormProps {
@@ -14,6 +15,8 @@ export interface GroupByVariableFormProps {
   onDefaultOptionsChange: (options?: MetricFindValue[]) => void;
   infoText?: string;
   defaultOptions?: MetricFindValue[];
+  allowCustomValue: boolean;
+  onAllowCustomValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function GroupByVariableForm({
@@ -22,6 +25,8 @@ export function GroupByVariableForm({
   infoText,
   onDataSourceChange,
   onDefaultOptionsChange,
+  allowCustomValue,
+  onAllowCustomValueChange,
 }: GroupByVariableFormProps) {
   const updateDefaultOptions = useCallback(
     (csvContent: string) => {
@@ -76,6 +81,14 @@ export function GroupByVariableForm({
           showLineNumbers={true}
         />
       )}
+
+      <VariableCheckboxField
+        value={allowCustomValue}
+        name="Allow custom values"
+        description="Enables users to add custom values to the list"
+        onChange={onAllowCustomValueChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+      />
     </>
   );
 }

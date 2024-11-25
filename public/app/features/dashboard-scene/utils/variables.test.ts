@@ -557,6 +557,7 @@ describe('when creating variables objects', () => {
           type: 'prometheus',
         },
         multi: true,
+        allowCustomValue: true,
         options: [
           {
             selected: false,
@@ -608,6 +609,7 @@ describe('when creating variables objects', () => {
         value: [],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
+        allowCustomValue: true,
       });
     });
   });
