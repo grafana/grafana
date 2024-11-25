@@ -482,28 +482,45 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
-		sub.Get.Description = "Read value from upstream repository"
-		sub.Get.Parameters = []*spec3.Parameter{
-			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "commit",
-					In:          "query",
-					Example:     "ca171cc730",
-					Description: "optional commit hash for the requested file",
-					Schema:      spec.StringProperty(),
-					Required:    false,
+		ref := &spec3.Parameter{
+			ParameterProps: spec3.ParameterProps{
+				Name:    "ref",
+				In:      "query",
+				Example: "",
+				Examples: map[string]*spec3.Example{
+					"": {
+						ExampleProps: spec3.ExampleProps{
+							Summary: "The default",
+						},
+					},
+					"branch": {
+						ExampleProps: spec3.ExampleProps{
+							Value:   "my-branch",
+							Summary: "Select branch",
+						},
+					},
+					"commit": {
+						ExampleProps: spec3.ExampleProps{
+							Value:   "7f7cc2153",
+							Summary: "Commit hash (or prefix)",
+						},
+					},
 				},
-			},
-		}
+				Description: "optional branch or commit hash",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			}}
+
+		sub.Get.Description = "Read value from upstream repository"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
 
 		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{
+		comment := []*spec3.Parameter{ref,
 			{
 				ParameterProps: spec3.ParameterProps{
 					Name:        "message",
 					In:          "query",
-					Example:     "My commit message",
-					Description: "for git properties this will be in the commit message",
+					Description: "optional message sent with any changes",
 					Schema:      spec.StringProperty(),
 					Required:    false,
 				},

@@ -5,10 +5,11 @@ import (
 	"io/fs"
 	"net/http"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 var ErrFileNotFound error = fs.ErrNotExist
@@ -57,14 +58,14 @@ type Repository interface {
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
-	Create(ctx context.Context, path, ref string, data []byte, comment string) error
+	Create(ctx context.Context, path, ref string, data []byte, message string) error
 
 	// Update a file in the remote repository
 	// The data has already been validated and is ready for save
-	Update(ctx context.Context, path, ref string, data []byte, comment string) error
+	Update(ctx context.Context, path, ref string, data []byte, message string) error
 
 	// Delete a file in the remote repository
-	Delete(ctx context.Context, path, ref, comment string) error
+	Delete(ctx context.Context, path, ref, message string) error
 
 	// For repositories that support webhooks
 	Webhook(responder rest.Responder) http.HandlerFunc
