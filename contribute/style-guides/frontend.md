@@ -99,9 +99,7 @@ For directory names, use dash-case (sometimes called kebab-case).
 
 ### Functions
 
-Use PascalCase. For example:
-
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 // bad
@@ -147,9 +145,7 @@ type RequestInfo = ...
 
 ### Methods
 
-Use PascalCase. For example:
-
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 class DateCalculator {
@@ -296,9 +292,7 @@ function transform(value?: string): TransformedValue | undefined {
 
 ### Variables
 
-Use PascalCase. For example:
-
-Use camelCase.
+Use camelCase. For example:
 
 ```typescript
 // bad
