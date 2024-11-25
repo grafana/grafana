@@ -53,7 +53,7 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 		}
 	}
 
-	return nil, nil, fmt.Errorf("unable to convert")
+	return nil, nil, ErrUnableToReadResourceBytes
 }
 
 func LoadYAMLOrJSON(input io.Reader) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {

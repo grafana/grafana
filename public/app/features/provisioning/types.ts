@@ -5,7 +5,6 @@ export type RepositoryFormData = GitHubRepositoryConfig &
   LocalRepositoryConfig &
   Omit<RepositorySpec, 'github' | 's3' | 'local'>;
 
-
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
   repo: string;

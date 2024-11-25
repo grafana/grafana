@@ -54,7 +54,7 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Snapshot not found', true);
         });
     } else if (type === 'provisioning') {
-      promise = loadDashboardFromProvisioning(slug!, uid!)
+      promise = loadDashboardFromProvisioning(slug!, uid!);
     } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
