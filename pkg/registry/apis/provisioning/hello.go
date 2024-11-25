@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -86,23 +87,27 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 				return
 			}
 
-			sess, err := s.parent.render.CreateRenderingSession(ctx, rendering.AuthOpts{
-				OrgID:  id.GetOrgID(),
-				UserID: 1, // HACK
-			}, rendering.SessionOpts{Expiry: time.Hour})
-			if err != nil {
-				responder.Error(err)
-				return
-			}
+			ref := r.URL.Query().Get("ref")
+			url := fmt.Sprintf("dashboard/provisioning/%s/%s?kiosk&ref=%s", name, renderPath, ref)
+			fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
 
-			result, err := s.parent.render.Render(context.Background(), rendering.RenderPNG, rendering.Opts{
+			renderContext := identity.WithRequester(context.Background(), id)
+			result, err := s.parent.render.Render(renderContext, rendering.RenderPNG, rendering.Opts{
 				CommonOpts: rendering.CommonOpts{
-					Path: renderPath,
+					Path: url,
+					AuthOpts: rendering.AuthOpts{ // TODO!!!, use the context token/credentials
+						OrgID:   1,
+						UserID:  1,
+						OrgRole: identity.RoleAdmin,
+					},
+					TimeoutOpts: rendering.TimeoutOpts{
+						Timeout: time.Second * 30,
+					},
 				},
-				Theme:  models.ThemeDark,
+				Theme:  models.ThemeDark, // from config?
 				Width:  1024,
-				Height: 1024,
-			}, sess)
+				Height: -1, // full page height
+			}, nil)
 			if err != nil {
 				responder.Error(err)
 				return
