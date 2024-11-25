@@ -1,6 +1,5 @@
-import { getBackendSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
-import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyRepoName } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
@@ -8,6 +7,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
+import { SaveProvisionedDashboard } from './SaveProvisionedDashboard';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
@@ -50,7 +50,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changesCount = diffCount + (hasFolderChanges ? 1 : 0);
     const dashboard = model.state.dashboardRef.resolve();
     const { meta } = dashboard.useState();
-    const { provisioned: isProvisioned, folderTitle, provisioning } = meta;
+    const { provisioned: isProvisioned, folderTitle } = meta;
+
+    // Provisioned dashboards have k8s metadata annotations
+    const isProvisionedNG = meta.k8s?.annotations?.[AnnoKeyRepoName]
 
     const tabs = (
       <TabsBar>
@@ -69,7 +72,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     let title = 'Save dashboard';
     if (saveAsCopy) {
       title = 'Save dashboard copy';
-    } else if (isProvisioned) {
+    } else if (isProvisioned || isProvisionedNG) {
       title = 'Provisioned dashboard';
     }
 
@@ -87,41 +90,8 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         );
       }
 
-      // Preview (eg, NOT saved in grafana database)
-      if (provisioning) {
-        return (
-          <div>
-            <h1>Loaded from external repository</h1>
-            <h3>{provisioning.repo}</h3>
-            <a href={provisioning.file}>{provisioning.file}</a>
-            <div>
-              <Button
-                onClick={() => {
-                  getBackendSrv()
-                    .put(provisioning.file, changedSaveModel, {
-                      params: provisioning.ref ? { ref: provisioning.ref } : undefined,
-                    })
-                    .then((v) => {
-                      console.log('WROTE', v);
-                      alert('WROTE value');
-                    });
-                }}
-              >
-                SAVE
-              </Button>
-            </div>
-          </div>
-        );
-      }
-
-      // Saved in grafana database, BUT must write to a remote repo for edit
-      if (meta.k8s?.annotations?.[AnnoKeyRepoName]) {
-        return (
-          <div>
-            <h1>Saved from external repository</h1>
-            <pre>{JSON.stringify(meta.k8s.annotations, null, '  ')}</pre>
-          </div>
-        );
+      if (isProvisionedNG) {
+        return <SaveProvisionedDashboard meta={meta} dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 
       if (saveAsCopy || changeInfo.isNew) {
