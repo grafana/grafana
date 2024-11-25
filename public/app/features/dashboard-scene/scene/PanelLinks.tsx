@@ -9,7 +9,7 @@ import {
 } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
 
-import { getPanelLinks } from './PanelMenuBehavior';
+import { getPanelLinks } from './behaviors/PanelMenuBehavior';
 
 interface VizPanelLinksState extends SceneObjectState {
   rawLinks?: DataLink[];

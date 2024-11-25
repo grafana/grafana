@@ -15,12 +15,12 @@ import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } fro
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree } from '../../utils/test-utils';
+import { DashboardScene } from '../DashboardScene';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
-import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const grafanaDs = {
   id: 1,

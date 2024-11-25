@@ -18,9 +18,9 @@ import { createWorker } from 'app/features/dashboard-scene/saving/createDetectCh
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { LibraryPanelBehavior } from '../scene/behaviors/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { isSceneVariableInstance } from '../settings/variables/utils';

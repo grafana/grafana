@@ -6,10 +6,9 @@ import { Trans } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-
-import { PanelTimeRange } from './PanelTimeRange';
-import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { createPanelDataProvider } from '../../utils/createPanelDataProvider';
+import { PanelTimeRange } from '../PanelTimeRange';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 
 export interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.

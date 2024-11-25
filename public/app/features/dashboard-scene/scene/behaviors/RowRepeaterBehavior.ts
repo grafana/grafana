@@ -16,11 +16,11 @@ import {
   VizPanelMenu,
 } from '@grafana/scenes';
 
-import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
+import { DashboardRepeatsProcessedEvent } from '../types';
 
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
-import { DashboardGridItem } from './layout-default/DashboardGridItem';
-import { DashboardRepeatsProcessedEvent } from './types';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;

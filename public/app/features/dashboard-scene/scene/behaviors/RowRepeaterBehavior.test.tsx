@@ -15,14 +15,14 @@ import {
 } from '@grafana/scenes';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
-import { activateFullSceneTree } from '../utils/test-utils';
+import { activateFullSceneTree } from '../../utils/test-utils';
+import { DashboardScene } from '../DashboardScene';
+import { DashboardGridItem, RepeatDirection } from '../layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowActions } from '../row-actions/RowActions';
 
-import { DashboardScene } from './DashboardScene';
 import { panelMenuBehavior, repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
-import { DashboardGridItem, RepeatDirection } from './layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { RowActions } from './row-actions/RowActions';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

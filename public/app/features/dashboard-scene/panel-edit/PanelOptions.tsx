@@ -10,7 +10,7 @@ import {
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LibraryPanelBehavior } from '../scene/behaviors/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions } from './getPanelFrameOptions';

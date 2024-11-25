@@ -16,7 +16,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { RowRepeaterBehavior } from '../behaviors/RowRepeaterBehavior';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 

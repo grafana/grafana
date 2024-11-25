@@ -15,8 +15,8 @@ import { ShareModal } from '../sharing/ShareModal';
 import { findVizPanelByKey, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
+import { LibraryPanelBehavior } from './behaviors/LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 

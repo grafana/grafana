@@ -1,6 +1,6 @@
 import { VizPanel } from '@grafana/scenes';
 
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LibraryPanelBehavior } from '../scene/behaviors/LibraryPanelBehavior';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
 

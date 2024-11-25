@@ -25,7 +25,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../../utils/utils';
-import { repeatPanelMenuBehavior } from '../PanelMenuBehavior';
+import { repeatPanelMenuBehavior } from '../behaviors/PanelMenuBehavior';
 import { DashboardLayoutItem, DashboardRepeatsProcessedEvent } from '../types';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
