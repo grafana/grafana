@@ -127,7 +127,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
             Cancel
           </Button>
           {isGitHub && (
-            <LinkButton variant="secondary" href={href} fill="outline">
+            <LinkButton variant="secondary" href={href} fill="outline" target={'_blank'} rel={'noreferrer noopener'}>
               Open pull request
             </LinkButton>
           )}
