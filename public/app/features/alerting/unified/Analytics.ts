@@ -27,6 +27,7 @@ export const LogMessages = {
   unknownMessageFromError: 'unknown messageFromError',
   grafanaRecording: 'creating Grafana recording rule from scratch',
   loadedCentralAlertStateHistory: 'loaded central alert state history',
+  exportNewGrafanaRule: 'exporting new Grafana rule',
 };
 
 const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
