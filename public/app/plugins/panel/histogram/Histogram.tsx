@@ -279,7 +279,7 @@ const preparePlotData = (builder: UPlotConfigBuilder, xMinOnlyFrame: DataFrame) 
 };
 
 interface State {
-  // includes fields hidden from viz
+  // includes fields hidden from viz, but excludes xMin/xMax
   alignedFrameLegend: DataFrame;
   // excludes fields hidden from viz
   alignedFrame: DataFrame;
