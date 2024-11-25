@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,6 +50,7 @@ type ProvisioningAPIBuilder struct {
 	localFileResolver *LocalFolderResolver
 	logger            *slog.Logger
 	client            *resourceClient
+	render            rendering.Service
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -60,6 +62,7 @@ func NewProvisioningAPIBuilder(
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
+	render rendering.Service,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
 		urlProvider:       urlProvider,
@@ -68,6 +71,7 @@ func NewProvisioningAPIBuilder(
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
 		features:          features,
+		render:            render,
 	}
 }
 
@@ -78,6 +82,7 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
+	render rendering.Service,
 ) *ProvisioningAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
@@ -87,7 +92,7 @@ func RegisterAPIService(
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features)
+	}, cfg.SecretKey, identities, features, render)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
