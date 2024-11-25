@@ -540,8 +540,8 @@ func TestHTTPServer_FolderMetadataK8s(t *testing.T) {
 					"creationTimestamp": "2024-09-17T04:16:35Z",
 					"annotations": {
 						"grafana.app/createdBy": "user:fdxsqt7t5ryf4a",
-						"grafana.app/originName": "SQL",
-						"grafana.app/originPath": "3"
+						"grafana.app/repoName": "SQL",
+						"grafana.app/repoPath": "3"
 					}
 				},
 				"spec": {

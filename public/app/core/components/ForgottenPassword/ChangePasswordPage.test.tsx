@@ -10,6 +10,9 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     post: postMock,
   }),
+  locationService: {
+    getSearch: () => new URLSearchParams(),
+  },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     loginError: false,

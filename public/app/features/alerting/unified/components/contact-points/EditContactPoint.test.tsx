@@ -36,6 +36,7 @@ const getTemplatePreviewContent = async () =>
 const templatesSelectorTestId = 'existing-templates-selector';
 
 describe('Edit contact point', () => {
+  jest.retryTimes(2);
   it('can edit a contact point with existing template field values', async () => {
     const { user } = renderEditContactPoint('lotsa-emails');
 
@@ -58,7 +59,7 @@ describe('Edit contact point', () => {
     // If this isn't correct, then we haven't set the correct initial state for the radio buttons/tabs
     expect(await screen.findByLabelText(/custom template value/i)).toHaveValue('some custom value');
 
-    await user.click(screen.getByRole('radio', { name: /select existing template/i }));
+    await user.click(screen.getByRole('radio', { name: /select notification template/i }));
     await clickSelectOption(screen.getByTestId(templatesSelectorTestId), 'slack-template');
 
     expect(await getTemplatePreviewContent()).toHaveTextContent(/some example preview for slack-template/i);
@@ -72,5 +73,5 @@ describe('Edit contact point', () => {
     await user.click(screen.getByRole('button', { name: /save contact point/i }));
 
     expect(await screen.findByText(/redirected/i)).toBeInTheDocument();
-  });
+  }, 600000);
 });

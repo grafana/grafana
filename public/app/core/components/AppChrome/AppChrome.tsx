@@ -7,6 +7,7 @@ import { config, locationSearchToObject, locationService } from '@grafana/runtim
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
@@ -95,7 +96,7 @@ export function AppChrome({ children }: Props) {
       {!state.chromeless && (
         <>
           <LinkButton className={styles.skipLink} href="#pageContent">
-            Skip to main content
+            <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
           {isSingleTopNav && menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
