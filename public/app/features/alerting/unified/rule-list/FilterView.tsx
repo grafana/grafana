@@ -8,8 +8,8 @@ import { Trans } from 'app/core/internationalization';
 import { isLoading, useAsync } from '../hooks/useAsync';
 import { RulesFilter } from '../search/rulesSearchParser';
 
+import { AlertRuleLoader } from './AlertRuleLoader';
 import LoadMoreHelper from './LoadMoreHelper';
-import { AlertRuleLoader } from './RuleList.v2';
 import { ListItem } from './components/ListItem';
 import { ActionsLoader } from './components/RuleActionsButtons.V2';
 import { RuleListIcon } from './components/RuleListIcon';

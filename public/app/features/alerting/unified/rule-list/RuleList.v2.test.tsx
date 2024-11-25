@@ -11,6 +11,7 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { alertingFactory } from '../mocks/server/db';
 
+import { GroupedView } from './GroupedView';
 import RuleList from './RuleList.v2';
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
@@ -43,8 +44,13 @@ async function loadMoreResults() {
 
 describe('RuleList - GroupedView', () => {
   it('should render datasource sections', async () => {
-    render(<RuleList />);
-    expect(await screen.findAllByRole('listitem')).toHaveLength(2);
+    render(<GroupedView />);
+
+    const mimirSection = await screen.findByRole('listitem', { name: /Mimir/ });
+    const prometheusSection = await screen.findByRole('listitem', { name: /Prometheus/ });
+
+    expect(mimirSection).toBeInTheDocument();
+    expect(prometheusSection).toBeInTheDocument();
   });
 });
 
