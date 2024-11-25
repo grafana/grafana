@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { DashboardSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardWithAccessInfo } from './types';
@@ -27,8 +27,8 @@ export function getDashboardsApiVersion() {
 }
 
 export function isDashboardResource(
-  obj?: DashboardDTO | DashboardWithAccessInfo<DashboardSpec> | null
-): obj is DashboardWithAccessInfo<DashboardSpec> {
+  obj?: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null
+): obj is DashboardWithAccessInfo<DashboardV2Spec> {
   if (!obj) {
     return false;
   }

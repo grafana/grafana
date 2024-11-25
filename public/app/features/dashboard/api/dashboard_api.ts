@@ -17,7 +17,7 @@ export interface ApiVersionDTO {
 
 type DashboardAPIClients = Record<
   keyof ApiVersionDTO,
-  DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>>
+  DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>
 >;
 
 let clients: Partial<DashboardAPIClients> | undefined;
@@ -29,7 +29,7 @@ export function setDashboardAPI(override: Partial<DashboardAPIClients> | undefin
   clients = override;
 }
 
-export function getDashboardAPI(): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>> {
+export function getDashboardAPI(): DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
   if (!clients) {
     clients = {
       legacy: new LegacyDashboardAPI(),

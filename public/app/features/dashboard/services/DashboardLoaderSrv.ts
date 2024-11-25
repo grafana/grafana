@@ -4,7 +4,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 
 import { AppEvents, dateMath, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv, locationService } from '@grafana/runtime';
-import { DashboardSpec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import kbn from 'app/core/utils/kbn';
@@ -43,9 +43,9 @@ export class DashboardLoaderSrv {
     slug: string | undefined,
     uid: string | undefined,
     params?: UrlQueryMap
-  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>> {
+  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
     const stateManager = getDashboardScenePageStateManager();
-    let promise: Promise<DashboardDTO | DashboardWithAccessInfo<DashboardSpec>>;
+    let promise: Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>>;
 
     if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
