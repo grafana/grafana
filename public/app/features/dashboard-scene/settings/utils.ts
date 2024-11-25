@@ -1,7 +1,6 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneObject, SceneObjectState } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -14,7 +13,6 @@ import { AnnotationsEditView } from './AnnotationsEditView';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { GeneralSettingsEditView } from './GeneralSettingsEditView';
 import { JsonModelEditView } from './JsonModelEditView';
-import { JsonModelV2EditView } from './JsonModelV2EditView';
 import { PermissionsEditView } from './PermissionsEditView';
 import { VariablesEditView } from './VariablesEditView';
 import { VersionsEditView } from './VersionsEditView';
@@ -90,14 +88,6 @@ export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditVi
     active: currentEditView === 'json-model',
   });
 
-  if (config.featureToggles.dashboardSchemaV2) {
-    pageNav.children!.push({
-      text: 'JSON Model v2 (experimental)',
-      url: locationUtil.getUrlForPartial(location, { editview: 'json-model-v2', editIndex: null }),
-      active: currentEditView === 'json-model-v2',
-    });
-  }
-
   return { navModel, pageNav };
 }
 
@@ -113,9 +103,6 @@ export function createDashboardEditViewFor(editview: string): DashboardEditView 
       return new VersionsEditView({});
     case 'json-model':
       return new JsonModelEditView({});
-      return new VersionsEditView({});
-    case 'json-model-v2':
-      return new JsonModelV2EditView({});
     case 'permissions':
       return new PermissionsEditView({});
     case 'settings':
