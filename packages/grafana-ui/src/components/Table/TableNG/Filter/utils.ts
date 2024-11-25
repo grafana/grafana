@@ -8,24 +8,15 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   const set: Record<string, string> = {};
 
   for (let index = 0; index < rows.length; index++) {
-    const value = rowToFieldValue(rows[index], index, field);
+    const row = rows[index];
+    const fieldValue = row[field.name];
+    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+    const value = field.display ? formattedValueToString(displayValue) : displayValue;
+
     set[value || '(Blanks)'] = value;
   }
 
   return set;
-}
-
-function rowToFieldValue(row: any, rowIndex: number, field?: Field): string {
-  if (!field || !row) {
-    return '';
-  }
-
-  // const fieldValue = field.values[row.index];
-  const fieldValue = field.values[rowIndex];
-  const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-  const value = field.display ? formattedValueToString(displayValue) : displayValue;
-
-  return value;
 }
 
 export function getFilteredOptions(options: SelectableValue[], filterValues?: SelectableValue[]): SelectableValue[] {

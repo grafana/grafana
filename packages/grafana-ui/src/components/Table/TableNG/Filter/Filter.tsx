@@ -11,12 +11,15 @@ import { REGEX_OPERATOR } from './FilterList';
 import { FilterPopup } from './FilterPopup';
 
 interface Props {
-  column: any;
+  name: string;
+  rows: any[];
+  filter: any;
+  setFilter: (value: any) => void;
   field?: Field;
 }
 
-export const Filter = ({ column, field }: Props) => {
-  const { filterValue } = column;
+export const Filter = ({ name, rows, filter, setFilter, field }: Props) => {
+  const filterValue = filter[name]?.filtered;
 
   const ref = useRef<HTMLButtonElement>(null);
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
@@ -26,10 +29,6 @@ export const Filter = ({ column, field }: Props) => {
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
   const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
-
-  // if (!field || !field.config.custom?.filterable) {
-  //   return null;
-  // }
 
   return (
     <button
@@ -43,7 +42,10 @@ export const Filter = ({ column, field }: Props) => {
         <Popover
           content={
             <FilterPopup
-              column={column}
+              name={name}
+              rows={rows}
+              filterValue={filterValue}
+              setFilter={setFilter}
               field={field}
               onClose={onClosePopover}
               searchFilter={searchFilter}

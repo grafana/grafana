@@ -4,7 +4,7 @@ import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -29,7 +29,6 @@ interface TableColumn extends Column<TableRow> {
   key: string;
   name: string;
   field: Field;
-  rows: TableRow[];
 }
 
 interface HeaderCellProps {
@@ -40,10 +39,17 @@ interface HeaderCellProps {
   justifyContent?: Property.JustifyContent;
 }
 
+export type FilterType = {
+  [key: string]: {
+    filteredSet: Set<string>;
+  };
+};
+
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
@@ -80,6 +86,8 @@ export function TableNG(props: TableNGProps) {
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  // const [filter, setFilter] = useState({});
+  const [filter, setFilter] = useState<FilterType>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
@@ -165,8 +173,7 @@ export function TableNG(props: TableNGProps) {
             ))}
         </button>
 
-        {/* put the filter button here */}
-        <Filter column={column} field={field} />
+        {filterable && <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />}
       </div>
     );
   };
@@ -230,7 +237,7 @@ export function TableNG(props: TableNGProps) {
       columns.push({
         key,
         name: field.name,
-        rows,
+        // rows,
         field,
         cellClass: styles.cell,
         renderCell: (props: any) => {
@@ -290,10 +297,12 @@ export function TableNG(props: TableNGProps) {
 
   const columns = mapFrameToDataGrid(props.data);
 
+  // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
     setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
   }, [columns]);
 
+  // Create a map of column key to column type
   const columnTypes = useMemo(() => {
     return columns.reduce(
       (acc, column) => {
@@ -304,6 +313,7 @@ export function TableNG(props: TableNGProps) {
     );
   }, [columns]);
 
+  // Sort rows
   const sortedRows = useMemo((): ReadonlyArray<{ [key: string]: string }> => {
     if (sortColumns.length === 0) {
       return rows;
@@ -321,6 +331,30 @@ export function TableNG(props: TableNGProps) {
       return 0; // false
     });
   }, [rows, sortColumns, columnTypes]);
+
+  const valueToDisplayValue = (value: any, field?: Field): string => {
+    if (field?.display) {
+      return formattedValueToString(field.display(value));
+    }
+
+    return formattedValueToString(value);
+  };
+
+  const filteredRows = useMemo(() => {
+    if (!filterable) {
+      return sortedRows;
+    }
+
+    return sortedRows.filter((row) => {
+      for (const [key, value] of Object.entries(filter)) {
+        const displayedValue = valueToDisplayValue(row[key], columns.find((column) => column.key === key)?.field);
+        if (!value.filteredSet.has(displayedValue)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [rows, filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderMenuItems = () => {
     return (
@@ -341,7 +375,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid
         key={`DataGrid${revId}`}
-        rows={sortedRows}
+        rows={filteredRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
         defaultColumnOptions={{

@@ -7,15 +7,16 @@ import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
+import { FilterType } from '../TableNG';
 
 import { FilterList } from './FilterList';
 import { calculateUniqueFieldValues, getFilteredOptions, valuesToOptions } from './utils';
 
-// import { TableStyles } from './styles';
-
 interface Props {
-  column: any;
-  // tableStyles: TableStyles;
+  name: string;
+  rows: any[];
+  filterValue: any;
+  setFilter: (value: any) => void;
   onClose: () => void;
   field?: Field;
   searchFilter: string;
@@ -25,7 +26,10 @@ interface Props {
 }
 
 export const FilterPopup = ({
-  column,
+  name,
+  rows,
+  filterValue,
+  setFilter,
   onClose,
   field,
   searchFilter,
@@ -33,13 +37,8 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
-  // preFilteredRows: any[]
-  // filterValue: any,
-  // setFilter: (value: any) => void
-  const preFilteredRows = column.rows;
-  const { filterValue, setFilter } = column;
   const theme = useTheme2();
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
@@ -49,20 +48,33 @@ export const FilterPopup = ({
 
   const onFilter = useCallback(
     (event: React.MouseEvent) => {
-      const filtered = values.length ? values : undefined;
+      if (values.length !== 0) {
+        // create a Set for faster filtering
+        const filteredSet = new Set(values.map((item) => item.value));
 
-      setFilter(filtered);
+        setFilter((filter: FilterType) => ({ ...filter, [name]: { filtered: values, filteredSet } }));
+      } else {
+        setFilter((filter: FilterType) => {
+          const newFilter = { ...filter };
+          delete newFilter[name];
+          return newFilter;
+        });
+      }
       onClose();
     },
-    [setFilter, values, onClose]
+    [setFilter, values, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const onClearFilter = useCallback(
     (event: React.MouseEvent) => {
-      setFilter(undefined);
+      setFilter((filter: FilterType) => {
+        const newFilter = { ...filter };
+        delete newFilter[name];
+        return newFilter;
+      });
       onClose();
     },
-    [setFilter, onClose]
+    [setFilter, onClose] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
