@@ -21,7 +21,8 @@ export interface Props
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
-  const { type, slug, uid, path } = params;
+  const { type, slug, uid } = params;
+  const path = params['*'];
   const prevMatch = usePrevious({ params });
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
@@ -31,9 +32,15 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && type === 'snapshot') {
       stateManager.loadSnapshot(slug!);
+    } if (route.routeName === DashboardRoutes.Provisioning) {
+      stateManager.loadDashboard({
+        uid: path ?? '', // the * parameter
+        slug: slug,
+        route: route.routeName as DashboardRoutes,
+      });
     } else {
       stateManager.loadDashboard({
-        uid: path ?? uid ?? '',
+        uid: uid ?? '',
         slug: slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,

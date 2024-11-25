@@ -64,7 +64,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/dashboard/provisioning/:slug/:path/*',
+      path: '/admin/provisioning/:slug/dashboard/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,
       component: SafeDynamicImport(
