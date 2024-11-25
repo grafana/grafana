@@ -252,8 +252,8 @@ Infinite panning is an experimental feature that may not work as expected in all
 The **Layer** options let you add elements to the canvas and control its appearance:
 
 - [Elements](#elements)
-- [Background](#background)
-- [Border](#border)
+- [Background](#background-canvas)
+- [Border](#border-canvas)
 
 #### Elements
 
@@ -261,36 +261,137 @@ Use the **Add item** button to open the [element type](#element-types) drop-down
 
 ![Canvas elements added in the Layer options](screenshot-canvas-elements-v11.3.png)
 
-By default, the elements have a name that corresponds to the order in which it was added. To update the name of an element, follow these steps:
+By default, the elements have a name that corresponds to the order in which it was added, but you can [change the name](#rename-an-element).
+
+You can also take the following actions on elements:
+
+<!--maybe put this in a table? -->
+
+- Change the order of elements. Click and hold the row of the element while moving it up and down in the element list.
+- Duplicate or remove elements by clicking the icons on the element row.
+- Access the element editing options by clicking the element row. This displays the [Selected element](#selected-element-options) section of options. Click **Clear selection** to remove the element from focus and stop displaying that section of options.
+
+##### Rename an element
+
+To update the name of an element, follow these steps:
 
 1. Hover the cursor over the name of the default element name so the **Edit layer name** (pencil) icon is displayed.
 1. Click the **Edit layer name** icon.
 1. Enter a new name.
 1. Click outside of the name field.
 
-You can also take the following actions on elements:
-
-- Change the order of elements. Click and hold the row of the element while moving it up and down in the element list.
-- Duplicate or remove elements by clicking the icons on the element row.
-- Access the element editing options by clicking the element row. This displays the [Selected element](#selected-element-options) section of options. Click **Clear selection** to remove the element from focus and stop displaying that section of options.
-
-#### Background
+#### Background (canvas)
 
 Use these following options to control the background of the canvas:
 
-- **Color** - Set the background color.
-- **Image** - Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements).
-- **Image size** - Control the size of the image or even set it as a tile.
+| Option     | Description                                                                                               |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| Color      | Set the background color.                                                                                 |
+| Image      | Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements). |
+| Image size | Control the size of the image or even set it as a tile.                                                   |
 
-#### Border
+#### Border (canvas)
 
 Use these following options to control the border of the canvas:
+
+| Option | Description                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- |
+| Width  | Set the border width in pixels.                                                                 |
+| Color  | Set the border color. This option is only displayed when the border width is greater than zero. |
+| Radius | Add rounded corners to the border and control the degree of curve.                              |
+
+### Selected element options
+
+The following options allow you to control the appearance of the element you've selected. To access an element so that you can edit it, expand the **Layer** section and select the desired element.
+
+| Option                                      | Description                                                                                     |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| [Element type](#element-type)               | Change the selected element type.                                                               |
+| [Element](#element)                         | Control the appearance of text on the element. This section is named based on the element type. |
+| [Layout](#layout)                           | Control the placement of elements on the canvas.                                                |
+| [Background (element)](#background-element) | Set the background of the element.                                                              |
+| [Border (element)](#border-element)         | Set the border of the element.                                                                  |
+| [Data links](#data-links)                   | Configure data links for elements.                                                              |
+
+#### Element type
+
+You can change the type of the element by making a new selection in the drop-down list:
+
+![Cursor on the element type selection drop-down](/media/docs/grafana/panels-visualizations/screenshot-element-type-select-v11.3.png)
+
+#### Element
+
+This section is named based on the element type. Control the appearance of text on the element with the following options:
+
+| Option         | Description                                                                                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field. |
+| Text color     | Choose a text color.                                                                                                                                           |
+| Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.                                                      |
+| Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**.                                                    |
+| Text size      | Set the text size. Leave the field empty to allow Grafana to automatically set the text size.                                                                  |
+
+#### Layout
+
+<!--rethink format of this section -->
+
+Control the placement of elements on the canvas with the following options.
+
+| Option          | Description                                                                                                                                                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul>               |
+| Constraints     | Set element constraints. Choose from:<ul><li>**Left**</li><li>**Right**</li><li>**Left & Right**</li><li>**Center**</li><li>**Scale** - Use this option to ensure that elements are automatically resized when the panel size changes.</li></ul> |
+| Position        | Use the settings to manually set the position of an element. Set any or all of the following options:<ul><li>**top**</li><li>**left**</li><li>**width**</li><li>**height**</li><li>**rotation**</li></ul>                                        |
+
+#### Background (element)
+
+Use these following options to set the background of the element:
+
+- **Color** - Set the background color.
+- **Image** - Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements).
+
+#### Border (element)
+
+Use these following options to set the border of the element:
 
 - **Width** - Set the border width in pixels.
 - **Color** - Set the border color. This option is only displayed when the border width is greater than zero.
 - **Radius** - Add rounded corners to the border and control the degree of curve.
 
-### Selected element options
+#### Data links
+
+Canvases support [data links](ref:data-links) for all elements except drone and button elements. You can add a data link by following these steps:
+
+1. Enable inline editing.
+1. Click the element you to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. Click **Add link**.
+1. In the dialog box that opens, enter a **Title**. This is a human-readable label for the link, which will be displayed in the UI.
+1. Enter the **URL** or variable to which you want to link.
+
+   To add a data link variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.
+
+1. If you want the link to open in a new tab, toggle the **Open in a new tab** switch.
+1. Click **Save** to save changes and close the dialog box.
+1. Disable inline editing.
+
+If you add multiple data links, you can control the order in which they appear in the visualization. To do this, click and drag the data link to the desired position.
+
+##### One-click data link
+
+You can configure a canvas data link to open with a single click on the element. To enable this feature, follow these steps:
+
+1. Enable inline editing.
+1. Click the element to which you want to add the data link.
+1. In either the inline editor or panel editor, expand the **Selected element** editor.
+1. Scroll down to the **Data links** section and expand it.
+1. In the **One-click** section, choose **Link**.
+1. Disable inline editing.
+
+The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
 ### Standard options
 
