@@ -2,6 +2,8 @@ package provisioning
 
 import (
 	"bytes"
+	"context"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,7 +65,7 @@ spec:
 
 	t.Run("load dashboard json", func(t *testing.T) {
 		// Support dashboard conversion
-		obj, gvk, err := FallbackResourceLoader([]byte(`{
+		obj, gvk, err := FallbackResourceLoader(context.Background(), slog.Default(), []byte(`{
 			"schemaVersion": 7,
 			"panels": [],
 			"tags": []

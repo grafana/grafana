@@ -42,7 +42,7 @@ var RepositoryResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 				target = m.Spec.Local.Path
 			case S3RepositoryType:
 				target = m.Spec.S3.Bucket
-			case GithubRepositoryType:
+			case GitHubRepositoryType:
 				target = fmt.Sprintf("%s/%s", m.Spec.GitHub.Owner, m.Spec.GitHub.Repository)
 			}
 

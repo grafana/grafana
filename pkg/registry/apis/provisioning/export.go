@@ -19,6 +19,7 @@ import (
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type exportConnector struct {
@@ -146,9 +147,14 @@ func (c *exportConnector) Connect(
 				return
 			}
 
+			var ref string
+			if repo.Config().Spec.Type == provisioning.GitHubRepositoryType {
+				ref = repo.Config().Spec.GitHub.Branch
+			}
+
 			fileName := filepath.Join(folder.CreatePath(), baseFileName)
 			// TODO: Upsert
-			if err := repo.Create(ctx, fileName, "", marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
+			if err := repo.Create(ctx, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
 				slog.ErrorContext(ctx, "failed to write dashboard model to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),
@@ -228,7 +234,7 @@ func (c *exportConnector) fetchFolderInfo(
 	return folders, nil
 }
 
-func (c *exportConnector) marshalPreferredFormat(obj any, name string, repo Repository) (body []byte, fileName string, err error) {
+func (c *exportConnector) marshalPreferredFormat(obj any, name string, repo repository.Repository) (body []byte, fileName string, err error) {
 	if repo.Config().Spec.PreferYAML {
 		body, err = yaml.Marshal(obj)
 		return body, name + ".yaml", err

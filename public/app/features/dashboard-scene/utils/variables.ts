@@ -246,6 +246,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       // @ts-expect-error
       defaultOptions: variable.options,
+      allowCustomValue: variable.allowCustomValue ?? true,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
