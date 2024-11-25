@@ -80,7 +80,7 @@ func Test_Download(t *testing.T) {
 		}))
 		defer fakeServer.Close()
 		cli := fakeServer.Client()
-		repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test"), gcomToken: expectedToken}
+		repo := Client{httpClient: *cli, httpClientNoTimeout: *cli, log: log.NewPrettyLogger("test"), grafanaComAPIToken: expectedToken}
 		_, err := repo.Download(context.Background(), fakeServer.URL, "", CompatOpts{})
 		require.NoError(t, err)
 	})
