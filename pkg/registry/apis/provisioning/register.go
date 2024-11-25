@@ -75,11 +75,11 @@ func NewProvisioningAPIBuilder(
 		webhookSecretKey:  webhookSecreteKey,
 		client:            newResourceClient(identities),
 		features:          features,
+		ghFactory:         ghFactory,
 		renderer: &renderer{
 			render:     render,
 			identities: identities,
 		},
-		ghFactory: ghFactory,
 	}
 }
 
