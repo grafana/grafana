@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"go.opentelemetry.io/otel/codes"

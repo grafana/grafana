@@ -5,6 +5,7 @@ import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@gr
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TestingStatus, config } from '@grafana/runtime';
 import { AlertVariant, Alert, useTheme2, Link, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { contextSrv } from '../../../core/core';
 import { trackCreateDashboardClicked } from '../tracking';
@@ -46,32 +47,76 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
   return (
     <div className={styles.content}>
-      Next, you can start to visualize data by{' '}
-      <Link
-        aria-label={`Create a dashboard`}
-        href={`/dashboard/new-with-ds/${dataSourceId}`}
-        className="external-link"
-        onClick={onDashboardLinkClicked}
-      >
-        building a dashboard
-      </Link>
-      , or by querying data in the{' '}
-      <Link
-        aria-label={`Explore data`}
-        className={cx('external-link', {
-          [`${styles.disabled}`]: !canExploreDataSources,
-          'test-disabled': !canExploreDataSources,
-        })}
-        href={exploreUrl}
-      >
-        Explore view
-      </Link>
-      .
+      <Trans i18nKey="data-source-testing-status-page.success-more-details-links">
+        Next, you can start to visualize data by{' '}
+        <Link
+          aria-label={`Create a dashboard`}
+          href={`/dashboard/new-with-ds/${dataSourceId}`}
+          className="external-link"
+          onClick={onDashboardLinkClicked}
+        >
+          building a dashboard
+        </Link>
+        , or by querying data in the{' '}
+        <Link
+          aria-label={`Explore data`}
+          className={cx('external-link', {
+            [`${styles.disabled}`]: !canExploreDataSources,
+            'test-disabled': !canExploreDataSources,
+          })}
+          href={exploreUrl}
+        >
+          Explore view
+        </Link>
+        .
+      </Trans>
     </div>
   );
 };
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
+
+interface ErrorDetailsLinkProps extends HTMLAttributes<HTMLDivElement> {
+  link?: string;
+}
+
+const ErrorDetailsLink = ({ link }: ErrorDetailsLinkProps) => {
+  const theme = useTheme2();
+  const styles = {
+    content: css({
+      color: theme.colors.text.secondary,
+      paddingBlock: theme.spacing(1),
+      maxHeight: '50vh',
+      overflowY: 'auto',
+    }),
+  };
+  if (!link) {
+    return <></>;
+  }
+  const isValidUrl = /^(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/.test(link);
+  if (!isValidUrl) {
+    return <></>;
+  }
+  return (
+    <div className={styles.content}>
+      <Trans i18nKey="data-source-testing-status-page.error-more-details-link">
+        Click{' '}
+        <Link
+          aria-label={`More details about the error`}
+          className={'external-link'}
+          href={link}
+          target="_blank"
+          rel="noreferrer"
+        >
+          here
+        </Link>{' '}
+        to learn more about this error.
+      </Trans>
+    </div>
+  );
+};
+
+ErrorDetailsLink.displayName = 'ErrorDetailsLink';
 
 const alertVariants = new Set(['success', 'info', 'warning', 'error']);
 const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str);
@@ -87,6 +132,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   const message = testingStatus?.message;
   const detailsMessage = testingStatus?.details?.message;
   const detailsVerboseMessage = testingStatus?.details?.verboseMessage;
+  const errorDetailsLink = testingStatus?.details?.errorDetailsLink;
   const onDashboardLinkClicked = () => {
     trackCreateDashboardClicked({
       grafana_version: config.buildInfo.version,
@@ -103,7 +149,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
         <Alert severity={severity} title={message} data-testid={e2eSelectors.pages.DataSource.alert}>
           {testingStatus?.details && (
             <>
-              {detailsMessage}
+              {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
                 <AlertSuccessMessage
                   title={message}
@@ -112,6 +158,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
                   onDashboardLinkClicked={onDashboardLinkClicked}
                 />
               ) : null}
+              {severity === 'error' && errorDetailsLink ? <ErrorDetailsLink link={String(errorDetailsLink)} /> : null}
               {detailsVerboseMessage ? (
                 <details style={{ whiteSpace: 'pre-wrap' }}>{String(detailsVerboseMessage)}</details>
               ) : null}
@@ -128,5 +175,8 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
 const getTestingStatusStyles = (theme: GrafanaTheme2) => ({
   container: css({
     paddingTop: theme.spacing(3),
+  }),
+  moreLink: css({
+    marginBlock: theme.spacing(1),
   }),
 });

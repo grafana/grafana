@@ -137,7 +137,7 @@ func toUserItem(u *user.User, ns string) iamv0.User {
 	}
 	obj, _ := utils.MetaAccessor(item)
 	obj.SetUpdatedTimestamp(&u.Updated)
-	obj.SetOriginInfo(&utils.ResourceOriginInfo{
+	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name: "SQL",
 		Path: strconv.FormatInt(u.ID, 10),
 	})

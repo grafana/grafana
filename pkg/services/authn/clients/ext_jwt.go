@@ -129,21 +129,21 @@ func (s *ExtendedJWT) authenticateAsUser(
 	}
 
 	// For use in service layer, allow higher privilege
-	allowedKubernetesNamespace := accessTokenClaims.Rest.Namespace
+	namespace := accessTokenClaims.Rest.Namespace
 	if len(s.cfg.StackID) > 0 {
 		// For single-tenant cloud use, choose the lower of the two (id token will always have the specific namespace)
-		allowedKubernetesNamespace = idTokenClaims.Rest.Namespace
+		namespace = idTokenClaims.Rest.Namespace
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		Type:                       t,
-		OrgID:                      s.cfg.DefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		IDTokenClaims:              &idTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: allowedKubernetesNamespace,
+		ID:                id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		IDTokenClaims:     &idTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
@@ -184,15 +184,15 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 	}
 
 	return &authn.Identity{
-		ID:                         id,
-		UID:                        id,
-		Name:                       id,
-		Type:                       t,
-		OrgID:                      s.cfg.DefaultOrgID(),
-		AccessTokenClaims:          &accessTokenClaims,
-		AuthenticatedBy:            login.ExtendedJWTModule,
-		AuthID:                     accessTokenClaims.Subject,
-		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
+		ID:                id,
+		UID:               id,
+		Name:              id,
+		Type:              t,
+		OrgID:             s.cfg.DefaultOrgID(),
+		AccessTokenClaims: &accessTokenClaims,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AuthID:            accessTokenClaims.Subject,
+		Namespace:         accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
 			SyncPermissions:        true,
 			FetchPermissionsParams: fetchPermissionsParams,

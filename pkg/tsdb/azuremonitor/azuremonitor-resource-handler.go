@@ -1,10 +1,12 @@
 package azuremonitor
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -27,16 +29,46 @@ type httpServiceProxy struct {
 	logger log.Logger
 }
 
+func (s *httpServiceProxy) writeErrorResponse(rw http.ResponseWriter, statusCode int, message string) error {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(statusCode)
+
+	// Attempt to locate JSON portion in error message
+	re := regexp.MustCompile(`\{.*?\}`)
+	jsonPart := re.FindString(message)
+
+	var jsonData map[string]interface{}
+	if unmarshalErr := json.Unmarshal([]byte(jsonPart), &jsonData); unmarshalErr != nil {
+		errorMsg, _ := json.Marshal(map[string]string{"error": "Invalid JSON format in error message"})
+		_, err := rw.Write(errorMsg)
+		if err != nil {
+			return fmt.Errorf("unable to write HTTP response: %v", err)
+		}
+		return unmarshalErr
+	}
+
+	// Extract relevant fields for a formatted error message
+	errorType, _ := jsonData["error"].(string)
+	errorDescription, _ := jsonData["error_description"].(string)
+	if errorType == "" {
+		errorType = "UnknownError"
+	}
+	formattedError := fmt.Sprintf("%s: %s", errorType, errorDescription)
+
+	errorMsg, _ := json.Marshal(map[string]string{"error": formattedError})
+	_, err := rw.Write(errorMsg)
+	if err != nil {
+		return fmt.Errorf("unable to write HTTP response: %v", err)
+	}
+	return nil
+}
+
 func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	res, err := cli.Do(req)
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
-		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
-		if err != nil {
-			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
-		}
-		return nil, err
+		return nil, s.writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error: %v", err))
 	}
+
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Warn("Failed to close response body", "err", err)
@@ -52,6 +84,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 		return nil, err
 	}
+
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
@@ -64,7 +97,8 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 			rw.Header().Add(k, v)
 		}
 	}
-	// Returning the response write for testing purposes
+
+	// Return the ResponseWriter for testing purposes
 	return rw, nil
 }
 

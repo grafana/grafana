@@ -10,15 +10,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/grafana/authlib/authz"
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ResourceServer implements all gRPC services
@@ -49,8 +51,25 @@ type ListIterator interface {
 	// Used for fast(er) authz filtering
 	Name() string
 
+	// Folder of the current item
+	// Used for fast(er) authz filtering
+	Folder() string
+
 	// Value for the current item
 	Value() []byte
+}
+
+type BackendReadResponse struct {
+	// Metadata
+	Key    *ResourceKey
+	Folder string
+
+	// The new resource version
+	ResourceVersion int64
+	// The properties
+	Value []byte
+	// Error details
+	Error *ErrorResult
 }
 
 // The StorageBackend is an internal abstraction that supports interacting with
@@ -63,7 +82,7 @@ type StorageBackend interface {
 	WriteEvent(context.Context, WriteEvent) (int64, error)
 
 	// Read a resource from storage optionally at an explicit version
-	ReadResource(context.Context, *ReadRequest) *ReadResponse
+	ReadResource(context.Context, *ReadRequest) *BackendReadResponse
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -104,6 +123,18 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
+// Passed as input to the constructor
+type SearchOptions struct {
+	// The raw index backend (eg, bleve, frames, parquet, etc)
+	Backend SearchBackend
+
+	// The supported resource types
+	Resources DocumentBuilderSupplier
+
+	// How many threads should build indexes
+	WorkerThreads int
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
@@ -117,12 +148,18 @@ type ResourceServerOptions struct {
 	// Requests based on a search index
 	Index ResourceIndexServer
 
+	// Search options
+	Search SearchOptions
+
 	// Diagnostics
 	Diagnostics DiagnosticsServer
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
-	WriteAccess WriteAccessHooks
+	WriteHooks WriteAccessHooks
+
+	// Link RBAC
+	AccessClient authz.AccessClient
 
 	// Callbacks for startup and shutdown
 	Lifecycle LifecycleHooks
@@ -141,6 +178,10 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
+	}
+
+	if opts.AccessClient == nil {
+		opts.AccessClient = &staticAuthzClient{allowed: true} // everything OK
 	}
 
 	if opts.Diagnostics == nil {
@@ -191,11 +232,20 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		index:       opts.Index,
 		blob:        blobstore,
 		diagnostics: opts.Diagnostics,
-		access:      opts.WriteAccess,
+		access:      opts.AccessClient,
+		writeHooks:  opts.WriteHooks,
 		lifecycle:   opts.Lifecycle,
 		now:         opts.Now,
 		ctx:         ctx,
 		cancel:      cancel,
+	}
+
+	if opts.Search.Resources != nil {
+		var err error
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return s, nil
@@ -208,9 +258,11 @@ type server struct {
 	log          *slog.Logger
 	backend      StorageBackend
 	blob         BlobSupport
+	search       *searchSupport
 	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
-	access       WriteAccessHooks
+	access       authz.AccessClient
+	writeHooks   WriteAccessHooks
 	lifecycle    LifecycleHooks
 	now          func() int64
 	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
@@ -239,6 +291,11 @@ func (s *server) Init(ctx context.Context) error {
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
+		}
+
+		// initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.initErr = s.search.init(ctx)
 		}
 
 		if s.initErr != nil {
@@ -285,11 +342,20 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	}
 
 	if obj.GetUID() == "" {
+		// TODO! once https://github.com/grafana/grafana/pull/96086 is deployed everywhere
+		// return nil, NewBadRequestError("object is missing UID")
 		s.log.Error("object is missing UID", "key", key)
 	}
 
 	if obj.GetResourceVersion() != "" {
 		s.log.Error("object must not include a resource version", "key", key)
+	}
+
+	check := authz.CheckRequest{
+		Verb:      "create",
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
 	}
 
 	event := &WriteEvent{
@@ -301,6 +367,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		event.Type = WatchEvent_ADDED
 	} else {
 		event.Type = WatchEvent_MODIFIED
+		check.Verb = "update"
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -344,19 +411,24 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
-	folder := obj.GetFolder()
-	if folder != "" {
-		err = s.access.CanWriteFolder(ctx, user, folder)
-		if err != nil {
-			return nil, AsErrorResult(err)
+	check.Folder = obj.GetFolder()
+	check.Name = key.Name
+	a, err := s.access.Check(ctx, user, check)
+	if err != nil {
+		return nil, AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return nil, &ErrorResult{
+			Code: http.StatusForbidden,
 		}
 	}
-	origin, err := obj.GetOriginInfo()
+
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
-		return nil, NewBadRequestError("invalid origin info")
+		return nil, NewBadRequestError("invalid repository info")
 	}
-	if origin != nil {
-		err = s.access.CanWriteOrigin(ctx, user, origin.Name)
+	if repo != nil {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -386,7 +458,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	if found != nil && len(found.Value) > 0 {
 		rsp.Error = &ErrorResult{
 			Code:    http.StatusConflict,
-			Message: "key already exists",
+			Message: "key already exists", // TODO?? soft delete replace?
 		}
 		return rsp, nil
 	}
@@ -396,6 +468,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		rsp.Error = e
 		return rsp, nil
 	}
+
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
@@ -471,6 +544,14 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	if req.ResourceVersion < 0 {
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		rsp.Error = &ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
 
 	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
@@ -481,6 +562,25 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
 		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
+		return rsp, nil
+	}
+
+	access, err := s.access.Check(ctx, user, authz.CheckRequest{
+		Verb:      "delete",
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+		Namespace: req.Key.Namespace,
+		Name:      req.Key.Name,
+		Folder:    latest.Folder,
+	})
+	if err != nil {
+		rsp.Error = AsErrorResult(err)
+		return rsp, nil
+	}
+	if !access.Allowed {
+		rsp.Error = &ErrorResult{
+			Code: http.StatusForbidden,
+		}
 		return rsp, nil
 	}
 
@@ -495,7 +595,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
 	marker := &DeletedMarker{}
-	err := json.Unmarshal(latest.Value, marker)
+	err = json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))
@@ -531,6 +631,14 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return &ReadResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
+	}
 
 	// if req.Key.Group == "" {
 	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
@@ -541,13 +649,43 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 	}
 
 	rsp := s.backend.ReadResource(ctx, req)
-	// TODO, check folder permissions etc
-	return rsp, nil
+
+	a, err := s.access.Check(ctx, user, authz.CheckRequest{
+		Verb:      "get",
+		Group:     req.Key.Group,
+		Resource:  req.Key.Resource,
+		Namespace: req.Key.Namespace,
+		Name:      req.Key.Name,
+		Folder:    rsp.Folder,
+	})
+	if err != nil {
+		return &ReadResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &ReadResponse{
+			Error: &ErrorResult{
+				Code: http.StatusForbidden,
+			}}, nil
+	}
+	return &ReadResponse{
+		ResourceVersion: rsp.ResourceVersion,
+		Value:           rsp.Value,
+		Error:           rsp.Error,
+	}, nil
 }
 
 func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "storage_server.List")
 	defer span.End()
+
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return &ListResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
+	}
 
 	if err := s.Init(ctx); err != nil {
 		return nil, err
@@ -558,17 +696,35 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	maxPageBytes := 1024 * 1024 * 2 // 2mb/page
 	pageBytes := 0
 	rsp := &ListResponse{}
+
+	key := req.Options.Key
+	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	})
+	if err != nil {
+		return &ListResponse{Error: AsErrorResult(err)}, nil
+	}
+	if checker == nil {
+		return &ListResponse{Error: &ErrorResult{
+			Code: http.StatusForbidden,
+		}}, nil
+	}
+
 	rv, err := s.backend.ListIterator(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
 			}
 
-			// TODO: add authz filters
-
 			item := &ResourceWrapper{
 				ResourceVersion: iter.ResourceVersion(),
 				Value:           iter.Value(),
+			}
+
+			if !checker(iter.Namespace(), iter.Name(), iter.Folder()) {
+				continue
 			}
 
 			pageBytes += len(item.Value)
@@ -620,11 +776,30 @@ func (s *server) initWatcher() error {
 	return err
 }
 
+//nolint:gocyclo
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	ctx := srv.Context()
 
 	if err := s.Init(ctx); err != nil {
 		return err
+	}
+
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return apierrors.NewUnauthorized("no user found in context")
+	}
+
+	key := req.Options.Key
+	checker, err := s.access.Compile(ctx, user, authz.ListRequest{
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	})
+	if err != nil {
+		return err
+	}
+	if checker == nil {
+		return apierrors.NewUnauthorized("not allowed to list anything") // ?? or a single error?
 	}
 
 	// Start listening -- this will buffer any changes that happen while we backfill.
@@ -700,6 +875,10 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
+				if !checker(event.Key.Namespace, event.Key.Name, event.Folder) {
+					continue
+				}
+
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
 				if event.Type == WatchEvent_DELETED {
@@ -747,6 +926,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
+	}
+	if s.index == nil {
+		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.index.Search(ctx, req)
 }
@@ -821,6 +1003,10 @@ func (s *server) PutBlob(ctx context.Context, req *PutBlobRequest) (*PutBlobResp
 }
 
 func (s *server) getPartialObject(ctx context.Context, key *ResourceKey, rv int64) (utils.GrafanaMetaAccessor, *ErrorResult) {
+	if r := verifyRequestKey(key); r != nil {
+		return nil, r
+	}
+
 	rsp := s.backend.ReadResource(ctx, &ReadRequest{
 		Key:             key,
 		ResourceVersion: rv,
