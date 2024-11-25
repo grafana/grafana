@@ -43,11 +43,10 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { getRawDashboardChanges } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
+import { DashboardSceneSerializerLike, getDashboardSceneSerializer } from '../serialization/DashboardSceneSerializer';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { gridItemToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
@@ -151,10 +150,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _initialState?: DashboardSceneState;
   /**
-   * The save model which the scene was originally created from
-   */
-  private _initialSaveModel?: Dashboard | DashboardV2Spec;
-  /**
    * Url state before editing started
    */
   private _initialUrlState?: H.Location;
@@ -172,6 +167,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
+
+  // TODO: use feature toggle to allow v2 serializer
+  private _serializer: DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> = getDashboardSceneSerializer(true);
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -264,14 +262,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     if (isV2Dashboard(saveModel)) {
       throw new Error('v2 schema not supported');
+    } else {
+      (this._serializer as DashboardSceneSerializerLike<Dashboard>).initialSaveModel = {
+        ...saveModel,
+        id: result.id,
+        uid: result.uid,
+        version: result.version,
+      };
     }
-
-    this._initialSaveModel = {
-      ...saveModel,
-      id: result.id,
-      uid: result.uid,
-      version: result.version,
-    };
 
     this._changeTracker.stopTrackingChanges();
 
@@ -644,12 +642,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public getInitialSaveModel() {
-    return this._initialSaveModel;
+    return this._serializer.initialSaveModel;
   }
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
   public setInitialSaveModel(saveModel?: Dashboard | DashboardV2Spec) {
-    this._initialSaveModel = saveModel;
+    this._serializer.initialSaveModel = saveModel;
   }
 
   public async onDashboardDelete() {
@@ -694,38 +692,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   getSaveModel(): Dashboard | DashboardV2Spec {
-    if (isV2Dashboard(this._initialSaveModel!)) {
-      return transformSceneToSaveModelSchemaV2(this) as DashboardV2Spec;
-    }
-    return transformSceneToSaveModel(this);
+    return this._serializer.getSaveModel(this);
   }
 
-  getSaveAsModel(options: SaveDashboardAsOptions): Dashboard {
-    const saveModel = this.getSaveModel();
-    if (isV2Dashboard(saveModel)) {
-      throw new Error('Save as is not supported for v2 dashboards');
-    } else {
-      return {
-        ...saveModel,
-        id: null,
-        uid: '',
-        title: options.title || '',
-        description: options.description || '',
-        tags: options.isNew || options.copyTags ? saveModel.tags : [],
-      };
-    }
+  getSaveAsModel(options: SaveDashboardAsOptions): Dashboard | DashboardV2Spec {
+    return this._serializer.getSaveAsModel(this, options);
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
-    const changeInfo = getDashboardChangesFromScene(this, saveTimeRange, saveVariables, saveRefresh);
-
-    const hasFolderChanges = this.getInitialState()?.meta.folderUid !== this.state.meta.folderUid;
-
-    return {
-      ...changeInfo,
-      hasFolderChanges,
-      hasChanges: changeInfo.hasChanges || hasFolderChanges,
-    };
+    return this._serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh });
   }
 }
 
@@ -789,27 +764,6 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       }
     }
   }
-}
-
-function getDashboardChangesFromScene(
-  scene: DashboardScene,
-  saveTimeRange?: boolean,
-  saveVariables?: boolean,
-  saveRefresh?: boolean
-) {
-  // ! is a code smell
-  const initialSaveModel = scene.getInitialSaveModel()!;
-  const changedSaveModel = scene.getSaveModel();
-
-  if (isV2Dashboard(initialSaveModel) && isV2Dashboard(changedSaveModel)) {
-    throw new Error('v2 schema not supported');
-    // return getRawDashboardV2Changes(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
-  }
-  if (!isV2Dashboard(initialSaveModel) && !isV2Dashboard(changedSaveModel)) {
-    return getRawDashboardChanges(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
-  }
-
-  throw new Error('Cannot compare v1 and v2 dashboards');
 }
 
 export function isV2Dashboard(model: Dashboard | DashboardV2Spec): model is DashboardV2Spec {
