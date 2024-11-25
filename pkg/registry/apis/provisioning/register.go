@@ -168,6 +168,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
+		logger: b.logger.With("connector", "files"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
@@ -482,6 +483,17 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
+		sub.Parameters = append(sub.Parameters, &spec3.Parameter{
+			ParameterProps: spec3.ParameterProps{
+				Name:        "ref",
+				In:          "query",
+				Example:     "the ref name of the branch",
+				Description: "the commit hash or branch name to look at (writes must be branch names)",
+				Schema:      spec.StringProperty(),
+				Required:    false,
+			},
+		})
+
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{
 			{

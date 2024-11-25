@@ -229,6 +229,8 @@ func (r *githubRepository) onPushEvent(ctx context.Context, event *github.PushEv
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
+		r.logger.DebugContext(ctx, "ignoring push event as it is not for the configured branch",
+			"ref", event.GetRef())
 		return nil
 	}
 
