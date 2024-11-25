@@ -38,7 +38,7 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!scopesSelectorScene?.state.isEnabled) {
+    if (!values.scopes && !scopesSelectorScene?.state.isEnabled) {
       return;
     }
 

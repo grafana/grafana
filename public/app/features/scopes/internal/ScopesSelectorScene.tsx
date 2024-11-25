@@ -207,6 +207,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
       isLoadingScopes: true,
     });
 
+    this.state.dashboards?.resolve().fetchDashboards(treeScopes.map(({ scopeName }) => scopeName));
+
     const scopes = await fetchSelectedScopes(treeScopes);
 
     this.setState({ scopes, isLoadingScopes: false });
@@ -216,8 +218,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.scopes) });
   }
 
-  public removeAllScopes() {
-    this.setState({ scopes: [], treeScopes: [], isLoadingScopes: false });
+  public async removeAllScopes() {
+    return this.updateScopes([]);
   }
 
   public enterReadOnly() {
