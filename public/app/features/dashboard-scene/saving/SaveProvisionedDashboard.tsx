@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { saveAs } from 'file-saver';
-import { useCallback, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { getBackendSrv } from '@grafana/runtime';
-import { Button, ClipboardButton, Stack, Box } from '@grafana/ui';
+import { config, getBackendSrv } from '@grafana/runtime';
+import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
+import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -19,77 +19,105 @@ export interface Props {
   changeInfo: DashboardChangeInfo;
 }
 
-export function SaveProvisionedDashboard({ meta, dashboard, drawer, changeInfo }: Props) {
+export function SaveProvisionedDashboard({ meta, drawer, changeInfo }: Props) {
   const dashboardJSON = useMemo(() => JSON.stringify(changeInfo.changedSaveModel, null, 2), [changeInfo]);
 
-  const saveToFile = useCallback(() => {
-    const blob = new Blob([dashboardJSON], {
-      type: 'application/json;charset=utf-8',
-    });
-    saveAs(blob, changeInfo.changedSaveModel.title + '-' + new Date().getTime() + '.json');
-  }, [changeInfo.changedSaveModel, dashboardJSON]);
+  const [repo, setRepo] = useState<string>();
+  const [path, setPath] = useState<string>();
+  const [ref, setRef] = useState<string>();
+  const [comment, setComment] = useState<string>();
 
-  const { provisioning } = meta
+  useEffect(() => {
+    const anno = meta.k8s?.annotations;
+    if (!anno) {
+      setRepo('');
+      setPath('');
+      setRef('');
+      return;
+    }
+    let ref = '';
+    let path = anno[AnnoKeyRepoPath] ?? '';
+    const idx = path.indexOf('#');
+    if (idx > 0) {
+      ref = path.substring(idx + 1);
+      path = path.substring(0, idx);
+    }
+    setRepo(anno[AnnoKeyRepoName]);
+    setPath(path);
+    setRef(ref);
+  }, [meta]);
+
+  const doSave = () => {
+    const url = `apis/provisioning.grafana.app/v0alpha1/namespaces/${config.namespace}/repositories/${repo}/files/${path}`;
+    const params: Record<string, string> = {};
+    if (ref) {
+      params['ref'] = ref;
+    }
+    if (comment) {
+      params['comment'] = comment;
+    }
+
+    getBackendSrv()
+      .put(url, dashboardJSON, { params })
+      .then((v) => {
+        console.log('WROTE', v);
+        alert('WROTE value');
+      });
+  };
 
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={2} grow={1}>
         <div>
-          This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
-          the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
-          <br />
-          <i>
-            See{' '}
-            <a
-              className="external-link"
-              href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
-              target="_blank"
-              rel="noreferrer"
-            >
-              documentation
-            </a>{' '}
-            for more information about provisioning.
-          </i>
-          <br /> <br />
-          <strong>File path: </strong> {dashboard.state.meta.provisionedExternalId}
+          <Alert severity="warning" title="Development feature">
+            More warnings here... mostly exploratory interfaces.
+          </Alert>
         </div>
 
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
 
-        {provisioning ? <div>
+        <Field label="Repository">
+          <div>{repo}</div>
+        </Field>
 
-          <div>
-            <Button
-              onClick={() => {
-                getBackendSrv()
-                  .put(provisioning.file, dashboardJSON, {
-                    params: provisioning.ref ? { ref: provisioning.ref } : undefined,
-                  })
-                  .then((v) => {
-                    console.log('WROTE', v);
-                    alert('WROTE value');
-                  });
-              }}
-            >
-              SAVE
-            </Button>
-          </div>
-        </div> : <div>
-          <h1>Missing provisioning info</h1>
-        </div>}
+        <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
+          <Input
+            value={path}
+            onChange={(e) => {
+              setPath(e.currentTarget.value);
+            }}
+          />
+        </Field>
 
+        <Field label="Branch" description="only supported by github right now">
+          <Input
+            value={ref}
+            onChange={(e) => {
+              setRef(e.currentTarget.value);
+            }}
+          />
+        </Field>
 
+        <Field label="Comment">
+          <TextArea
+            aria-label="comment"
+            value={comment ?? ''}
+            onChange={(e) => {
+              setComment(e.currentTarget.value);
+            }}
+            placeholder="Add a note to describe your changes (optional)."
+            autoFocus
+            rows={5}
+          />
+        </Field>
 
         <Box paddingTop={2}>
           <Stack gap={2}>
+            <Button variant="primary" onClick={doSave}>
+              Save
+            </Button>
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               Cancel
-            </Button>
-            <ClipboardButton icon="copy" getText={() => dashboardJSON}>
-              Copy JSON to clipboard
-            </ClipboardButton>
-            <Button type="submit" onClick={saveToFile}>
-              Save JSON to file
             </Button>
           </Stack>
         </Box>
@@ -102,9 +130,5 @@ const styles = {
   container: css({
     height: '100%',
     display: 'flex',
-  }),
-  json: css({
-    flexGrow: 1,
-    maxHeight: '800px',
   }),
 };

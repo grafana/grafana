@@ -60,7 +60,7 @@ func (r *s3Repository) Read(ctx context.Context, path string, ref string) (*File
 	}
 }
 
-func (r *s3Repository) Create(ctx context.Context, path string, data []byte, comment string) error {
+func (r *s3Repository) Create(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -69,7 +69,7 @@ func (r *s3Repository) Create(ctx context.Context, path string, data []byte, com
 	}
 }
 
-func (r *s3Repository) Update(ctx context.Context, path string, data []byte, comment string) error {
+func (r *s3Repository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -78,7 +78,7 @@ func (r *s3Repository) Update(ctx context.Context, path string, data []byte, com
 	}
 }
 
-func (r *s3Repository) Delete(ctx context.Context, path string, comment string) error {
+func (r *s3Repository) Delete(ctx context.Context, path string, ref string, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",

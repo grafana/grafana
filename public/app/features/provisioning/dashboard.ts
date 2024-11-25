@@ -2,6 +2,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { DashboardDTO } from 'app/types';
 
 import { BASE_URL } from './api/baseAPI';
+import { AnnoKeyRepoName, AnnoKeyRepoPath, Resource } from '../apiserver/types';
 
 /**
  * Load a dashboard from repository
@@ -22,6 +23,17 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
 
       if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
         return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+      }
+
+      // Make sure the annotation key exists
+      let anno = dryRun.metadata.annotations
+      if (!anno) {
+        dryRun.metadata.annotations = anno = {}
+      }
+      anno[AnnoKeyRepoName] = repo
+      anno[AnnoKeyRepoPath] = path
+      if (ref) {
+        anno[AnnoKeyRepoPath] += path + '#' + ref
       }
 
       return {
