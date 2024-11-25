@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -125,7 +125,8 @@ func (r *fileParser) parse(ctx context.Context, info *repository.FileInfo, valid
 
 func (f *parsedFile) ToSaveBytes() ([]byte, error) {
 	// TODO... should use the validated one?
-	obj := f.obj
+	obj := f.obj.Object
+	delete(obj, "metadata")
 
 	switch filepath.Ext(f.info.Path) {
 	// JSON pretty print
@@ -134,13 +135,7 @@ func (f *parsedFile) ToSaveBytes() ([]byte, error) {
 
 	// Write the value as yaml
 	case ".yaml", ".yml":
-		buff := bytes.NewBuffer(make([]byte, 0, 1024))
-		err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
-			Encode(obj, buff)
-		if err != nil {
-			return nil, err
-		}
-		return buff.Bytes(), nil
+		return yaml.Marshal(obj)
 
 	default:
 		return nil, fmt.Errorf("unexpected format")

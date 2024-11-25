@@ -86,7 +86,7 @@ func (r *githubRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *githubRepository) Read(ctx context.Context, filePath string, ref string) (*FileInfo, error) {
+func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*FileInfo, error) {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
@@ -119,12 +119,11 @@ func (r *githubRepository) Read(ctx context.Context, filePath string, ref string
 	}, nil
 }
 
-func (r *githubRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+func (r *githubRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	branch := r.config.Spec.GitHub.Branch
 
-	err := r.gh.CreateFile(ctx, owner, repo, path, branch, comment, data)
+	err := r.gh.CreateFile(ctx, owner, repo, path, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -136,12 +135,11 @@ func (r *githubRepository) Create(ctx context.Context, path string, data []byte,
 	return err
 }
 
-func (r *githubRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+func (r *githubRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	branch := r.config.Spec.GitHub.Branch
 
-	file, _, err := r.gh.GetContents(ctx, owner, repo, path, branch)
+	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -155,18 +153,17 @@ func (r *githubRepository) Update(ctx context.Context, path string, data []byte,
 		return fmt.Errorf("get content before file update: %w", err)
 	}
 
-	if err := r.gh.UpdateFile(ctx, owner, repo, path, branch, comment, file.GetSHA(), data); err != nil {
+	if err := r.gh.UpdateFile(ctx, owner, repo, path, ref, comment, file.GetSHA(), data); err != nil {
 		return fmt.Errorf("update file: %w", err)
 	}
 	return nil
 }
 
-func (r *githubRepository) Delete(ctx context.Context, path string, comment string) error {
+func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
-	branch := r.config.Spec.GitHub.Branch
 
-	file, _, err := r.gh.GetContents(ctx, owner, repo, path, branch)
+	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return &apierrors.StatusError{
@@ -179,7 +176,7 @@ func (r *githubRepository) Delete(ctx context.Context, path string, comment stri
 		return fmt.Errorf("finding file to delete: %w", err)
 	}
 
-	return r.gh.DeleteFile(ctx, owner, repo, path, branch, comment, file.GetSHA())
+	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
 }
 
 // Webhook implements provisioning.Repository.

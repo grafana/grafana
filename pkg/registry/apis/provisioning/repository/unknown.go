@@ -48,7 +48,7 @@ func (r *unknownRepository) Test(ctx context.Context) error {
 }
 
 // ReadResource implements provisioning.Repository.
-func (r *unknownRepository) Read(ctx context.Context, path string, ref string) (*FileInfo, error) {
+func (r *unknownRepository) Read(ctx context.Context, path, ref string) (*FileInfo, error) {
 	return nil, &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "read resource is not yet implemented",
@@ -57,7 +57,7 @@ func (r *unknownRepository) Read(ctx context.Context, path string, ref string) (
 	}
 }
 
-func (r *unknownRepository) Create(ctx context.Context, path string, data []byte, comment string) error {
+func (r *unknownRepository) Create(ctx context.Context, path, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -66,7 +66,7 @@ func (r *unknownRepository) Create(ctx context.Context, path string, data []byte
 	}
 }
 
-func (r *unknownRepository) Update(ctx context.Context, path string, data []byte, comment string) error {
+func (r *unknownRepository) Update(ctx context.Context, path, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "write file is not yet implemented",
@@ -75,7 +75,7 @@ func (r *unknownRepository) Update(ctx context.Context, path string, data []byte
 	}
 }
 
-func (r *unknownRepository) Delete(ctx context.Context, path string, comment string) error {
+func (r *unknownRepository) Delete(ctx context.Context, path, ref, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
 			Message: "delete file not yet implemented",

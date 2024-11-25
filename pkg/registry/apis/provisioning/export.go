@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"path/filepath"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"gopkg.in/yaml.v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,6 +16,10 @@ import (
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/dynamic"
+
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 type exportConnector struct {
@@ -148,7 +149,7 @@ func (c *exportConnector) Connect(
 
 			fileName := filepath.Join(folder.CreatePath(), baseFileName)
 			// TODO: Upsert
-			if err := repo.Create(ctx, fileName, marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
+			if err := repo.Create(ctx, fileName, "", marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
 				slog.ErrorContext(ctx, "failed to write dashboard model to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),

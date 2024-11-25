@@ -162,7 +162,7 @@
     },
     "users-table": {
       "last-seen-never": "Never",
-      "no-licensed-role": "Not assigned <2><0></0></2>"
+      "no-licensed-roles": "Not assigned"
     }
   },
   "alert-labels": {
@@ -490,6 +490,14 @@
       "alertCondition": "Alert condition"
     },
     "templates": {
+      "editor": {
+        "add-example": "Add example",
+        "auto-complete": "For auto-completion of common templating code, type the following keywords in the content editor:",
+        "goto-docs": "Notification templates documentation"
+      },
+      "help": {
+        "intro": "Notification templates use Go templating language to create notification messages.\n\nIn Grafana, a template group can define multiple notification templates using {{ define \"<NAME>\" }}.\nThese templates can then be used in contact points and within other notification templates by calling {{ template \"<NAME>\" }}.\nFor detailed information about notification templates, refer to our documentation."
+      },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
@@ -665,6 +673,7 @@
     "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
+    "help": "Help",
     "locale": {
       "default": "Default"
     },
@@ -1020,6 +1029,10 @@
       "title": "Select data source"
     },
     "open-advanced-button": "Open advanced data source picker"
+  },
+  "data-source-testing-status-page": {
+    "error-more-details-link": "Click <2>here</2> to learn more about this error.",
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
   },
   "data-sources": {
     "datasource-add-button": {

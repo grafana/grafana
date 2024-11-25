@@ -53,18 +53,18 @@ type Repository interface {
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
-	Read(ctx context.Context, path string, ref string) (*FileInfo, error)
+	Read(ctx context.Context, path, ref string) (*FileInfo, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
-	Create(ctx context.Context, path string, data []byte, comment string) error
+	Create(ctx context.Context, path, ref string, data []byte, comment string) error
 
 	// Update a file in the remote repository
 	// The data has already been validated and is ready for save
-	Update(ctx context.Context, path string, data []byte, comment string) error
+	Update(ctx context.Context, path, ref string, data []byte, comment string) error
 
 	// Delete a file in the remote repository
-	Delete(ctx context.Context, path string, comment string) error
+	Delete(ctx context.Context, path, ref, comment string) error
 
 	// For repositories that support webhooks
 	Webhook(responder rest.Responder) http.HandlerFunc

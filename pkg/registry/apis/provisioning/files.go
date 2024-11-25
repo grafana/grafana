@@ -2,13 +2,15 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -62,18 +64,18 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		prefix := fmt.Sprintf("/%s/files/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
-			responder.Error(errors.NewBadRequest("invalid request path"))
+			responder.Error(apierrors.NewBadRequest("invalid request path"))
 			return
 		}
 
 		filePath := r.URL.Path[idx+len(prefix):]
 		if filePath == "" {
-			responder.Error(errors.NewBadRequest("missing path"))
+			responder.Error(apierrors.NewBadRequest("missing path"))
 			return
 		}
 
 		if strings.Contains(filePath, "..") {
-			responder.Error(errors.NewBadRequest("invalid path navigation"))
+			responder.Error(apierrors.NewBadRequest("invalid path navigation"))
 			return
 		}
 
@@ -81,18 +83,18 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case ".json", ".yaml", ".yml":
 			// ok
 		default:
-			responder.Error(errors.NewBadRequest("only yaml and json files supported"))
+			responder.Error(apierrors.NewBadRequest("only yaml and json files supported"))
 			return
 		}
 
-		var obj runtime.Object
+		var obj *provisioning.ResourceWrapper
 		ref := r.URL.Query().Get("ref")
 		message := r.URL.Query().Get("message")
 
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			obj, err, code = s.doRead(r.Context(), repo, filePath, ref)
+			code, obj, err = s.doRead(r.Context(), repo, filePath, ref)
 		case http.MethodPost:
 			obj, err = s.doWrite(r.Context(), false, repo, filePath, ref, message, r)
 		case http.MethodPut:
@@ -100,7 +102,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		case http.MethodDelete:
 			obj, err = s.doDelete(r.Context(), repo, filePath, ref, message)
 		default:
-			err = errors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
+			err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 		}
 
 		if err != nil {
@@ -128,35 +130,35 @@ func (s *filesConnector) getParser(repo repository.Repository) (*fileParser, err
 	}, nil
 }
 
-func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository, path string, ref string) (*provisioning.ResourceWrapper, error, int) {
+func (s *filesConnector) doRead(ctx context.Context, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
 	info, err := repo.Read(ctx, path, ref)
 	if err != nil {
-		return nil, err, 0
+		return 0, nil, err
 	}
 
 	parser, err := s.getParser(repo)
 	if err != nil {
-		return nil, err, 0
+		return 0, nil, err
 	}
 
 	parsed, err := parser.parse(ctx, info, true)
 	if err != nil {
-		return nil, err, 0
+		return 0, nil, err
 	}
 
 	code := http.StatusOK
 	if len(parsed.errors) > 0 {
 		code = http.StatusNotAcceptable
 	}
-	return parsed.AsResourceWrapper(), nil, code
+	return code, parsed.AsResourceWrapper(), nil
 }
 
-func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (runtime.Object, error) {
+func (s *filesConnector) doWrite(ctx context.Context, update bool, repo repository.Repository, path string, ref string, message string, req *http.Request) (*provisioning.ResourceWrapper, error) {
 	settings := repo.Config().Spec.Editing
 	if update && !settings.Update {
-		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
+		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "updating files not enabled", nil)
 	} else if !settings.Create {
-		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
+		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "creating files not enabled", nil)
 	}
 
 	defer func() { _ = req.Body.Close() }()
@@ -178,6 +180,9 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 
 	parsed, err := parser.parse(ctx, info, true)
 	if err != nil {
+		if errors.Is(err, ErrUnableToReadResourceBytes) {
+			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
+		}
 		return nil, err
 	}
 
@@ -187,26 +192,42 @@ func (s *filesConnector) doWrite(ctx context.Context, update bool, repo reposito
 	}
 
 	if update {
-		err = repo.Update(ctx, path, data, message)
+		err = repo.Update(ctx, path, ref, data, message)
 	} else {
-		err = repo.Create(ctx, path, data, message)
+		err = repo.Create(ctx, path, ref, data, message)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("TODO! write the file into real storage %s\n", path)
-
-	return parsed.obj, err
-}
-
-func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (runtime.Object, error) {
-	settings := repo.Config().Spec.Editing
-	if !settings.Delete {
-		return nil, errors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
+	// Which context?  request of background???
+	// Behaves the same running sync after writing
+	if parsed.existing == nil {
+		obj, err := parsed.client.Create(ctx, parsed.obj, metav1.CreateOptions{})
+		if err != nil {
+			parsed.errors = append(parsed.errors, err)
+		} else {
+			parsed.obj = obj
+		}
+	} else {
+		obj, err := parsed.client.Update(ctx, parsed.obj, metav1.UpdateOptions{})
+		if err != nil {
+			parsed.errors = append(parsed.errors, err)
+		} else {
+			parsed.obj = obj
+		}
 	}
 
-	err := repo.Delete(ctx, path, message)
+	return parsed.AsResourceWrapper(), err
+}
+
+func (s *filesConnector) doDelete(ctx context.Context, repo repository.Repository, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
+	settings := repo.Config().Spec.Editing
+	if !settings.Delete {
+		return nil, apierrors.NewForbidden(provisioning.RepositoryResourceInfo.GroupResource(), "deleting is not supported", nil)
+	}
+
+	err := repo.Delete(ctx, path, ref, message)
 	if err != nil {
 		return nil, err
 	}
