@@ -89,10 +89,11 @@ export type FileOperationArg = {
   path: string;
   body: object;
   message?: string;
+  ref?: string;
 };
 
 export type GetFileArg = {
   name: string;
   path: string;
-  commit?: string;
+  ref?: string;
 };
