@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -155,8 +156,16 @@ func (c *exportConnector) Connect(
 			}
 
 			fileName := filepath.Join(folder.CreatePath(), baseFileName)
-			// TODO: Upsert
-			if err := repo.Create(ctx, logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
+			_, err = repo.Read(ctx, logger, fileName, ref)
+			if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
+				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if file exists before writing: %w", err)))
+				return
+			} else if err != nil { // ErrFileNotFound
+				err = repo.Create(ctx, logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+			} else {
+				err = repo.Update(ctx, logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+			}
+			if err != nil {
 				logger.ErrorContext(ctx, "failed to write dashboard model to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),
