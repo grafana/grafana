@@ -1,8 +1,8 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectRef } from '@grafana/scenes';
+import { SceneObjectState, SceneObjectBase, SceneObject, SceneObjectRef } from '@grafana/scenes';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
@@ -37,9 +37,8 @@ export interface Props {
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
-  useEffect(() => {
-    return editPane.activate();
-  }, [editPane]);
+  // Activate the edit pane
+  useEffect(() => editPane.activate(), [editPane]);
 
   const { selectedObject } = editPane.useState();
   const styles = useStyles2(getStyles);
