@@ -152,6 +152,10 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 }
 
 func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+	if ref != "" {
+		return apierrors.NewBadRequest("local repository does not support ref")
+	}
+
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -172,6 +176,10 @@ func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+	if ref != "" {
+		return apierrors.NewBadRequest("local repository does not support ref")
+	}
+
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -189,6 +197,10 @@ func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
+	if ref != "" {
+		return apierrors.NewBadRequest("local repository does not support ref")
+	}
+
 	if r.path == "" {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{

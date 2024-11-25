@@ -59,6 +59,9 @@ type Client interface {
 	// If ".." appears in the "path", this method will return an error.
 	DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error
 
+	// CreateBranch creates a new branch in the repository.
+	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
+
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
 	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error

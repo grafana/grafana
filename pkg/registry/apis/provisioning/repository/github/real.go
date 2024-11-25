@@ -148,6 +148,30 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
+func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
+	// Fail if the branch already exists
+	if _, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0); err == nil {
+		return ErrResourceAlreadyExists
+	}
+
+	// Branch out based on the repository branch
+	baseRef, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, sourceBranch, 0)
+	if err != nil {
+		return fmt.Errorf("get base branch: %w", err)
+	}
+
+	if _, _, err := r.gh.Git.CreateRef(ctx, owner, repository, &github.Reference{
+		Ref: github.String(fmt.Sprintf("refs/heads/%s", branchName)),
+		Object: &github.GitObject{
+			SHA: baseRef.Commit.SHA,
+		},
+	}); err != nil {
+		return fmt.Errorf("create branch ref: %w", err)
+	}
+
+	return nil
+}
+
 func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
 	hooks, _, err := r.gh.Repositories.ListHooks(ctx, owner, repository, nil)
 	if err != nil {

@@ -120,6 +120,14 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 }
 
 func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	} else {
+		if err := r.createBranch(ctx, ref); err != nil {
+			return fmt.Errorf("create branch on create: %w", err)
+		}
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
@@ -136,6 +144,14 @@ func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path
 }
 
 func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	} else {
+		if err := r.createBranch(ctx, ref); err != nil {
+			return fmt.Errorf("create branch on update: %w", err)
+		}
+	}
+
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
@@ -163,6 +179,14 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	} else {
+		if err := r.createBranch(ctx, ref); err != nil {
+			return fmt.Errorf("create branch on delete: %w", err)
+		}
+	}
+
 	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -177,6 +201,42 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	}
 
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
+}
+
+// isValidBranchName checks if a branch name is valid.
+func isValidBranchName(branch string) bool {
+	// TODO: add branch validation here as well as in the frontend using the same restrictions
+	return branch != ""
+}
+
+func (r *githubRepository) createBranch(ctx context.Context, branchName string) error {
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+
+	if !isValidBranchName(branchName) {
+		return &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Code:    http.StatusBadRequest,
+				Message: "invalid branch name",
+			},
+		}
+	}
+
+	srcBranch := r.config.Spec.GitHub.Branch
+	if err := r.gh.CreateBranch(ctx, owner, repo, srcBranch, branchName); err != nil {
+		if errors.Is(err, pgh.ErrResourceAlreadyExists) {
+			return &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusConflict,
+					Message: "branch already exists",
+				},
+			}
+		}
+
+		return fmt.Errorf("create branch: %w", err)
+	}
+
+	return nil
 }
 
 // Webhook implements provisioning.Repository.
