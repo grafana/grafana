@@ -103,6 +103,10 @@ Filter alerts from the selected data source.
 
 Filter alerts by the selected folder. Only alerts from dashboards in this folder are displayed.
 
+### Show inactive
+
+Filter alerts with no instances. Prometheus alerts will have 0 instances when in the Normal (inactive) state. By default these are hidden, if you choose you can show them by toggling this switch.
+
 ## Alert state filter
 
 Choose which alert states to display in this visualization.
