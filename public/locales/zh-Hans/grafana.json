@@ -162,7 +162,7 @@
     },
     "users-table": {
       "last-seen-never": "",
-      "no-licensed-role": ""
+      "no-licensed-roles": ""
     }
   },
   "alert-labels": {
@@ -486,6 +486,14 @@
       "alertCondition": ""
     },
     "templates": {
+      "editor": {
+        "add-example": "",
+        "auto-complete": "",
+        "goto-docs": ""
+      },
+      "help": {
+        "intro": ""
+      },
       "misconfigured-badge-text": "",
       "misconfigured-warning": "",
       "misconfigured-warning-details": ""
@@ -656,6 +664,7 @@
     "close": "",
     "collapse": "",
     "edit": "",
+    "help": "",
     "locale": {
       "default": "默认"
     },
@@ -1011,6 +1020,10 @@
       "title": "选择数据源"
     },
     "open-advanced-button": "打开高级数据源选择器"
+  },
+  "data-source-testing-status-page": {
+    "error-more-details-link": "",
+    "success-more-details-links": ""
   },
   "data-sources": {
     "datasource-add-button": {
