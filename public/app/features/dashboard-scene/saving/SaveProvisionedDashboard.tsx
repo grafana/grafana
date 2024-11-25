@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
+import { Button, Stack, TextArea, Field, Input, Alert } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
-import { useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -43,7 +43,11 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
-  const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
+  const defaultValues = getDefaultValues(meta);
+  const { register, handleSubmit } = useForm({ defaultValues });
+  const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
+  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const isGitHub = repositoryConfig?.type === 'github';
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -89,9 +93,11 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           <Input {...register('path')} />
         </Field>
 
-        <Field label="Branch" description="Only supported by GitHub right now">
-          <Input {...register('ref')} />
-        </Field>
+        {isGitHub && (
+          <Field label="Branch" description="Only supported by GitHub right now">
+            <Input {...register('ref')} />
+          </Field>
+        )}
 
         <Field label="Comment">
           <TextArea
@@ -103,16 +109,19 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           />
         </Field>
 
-        <Box paddingTop={2}>
-          <Stack gap={2}>
-            <Button variant="primary" type="submit">
-              Save
+        <Stack gap={2}>
+          <Button variant="primary" type="submit">
+            Save
+          </Button>
+          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+            Cancel
+          </Button>
+          {isGitHub && (
+            <Button variant="secondary" onClick={() => drawer.setState({ showDiff: true })} fill="outline">
+              Open pull request
             </Button>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              Cancel
-            </Button>
-          </Stack>
-        </Box>
+          )}
+        </Stack>
       </Stack>
     </form>
   );
