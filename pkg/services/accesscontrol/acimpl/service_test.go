@@ -694,7 +694,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action prefix filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "teams",
-				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
+				TypedID:      claims.NewTypeID(claims.TypeUser, "1"),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -716,7 +716,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action filter works correctly",
 			searchOption: accesscontrol.SearchOptions{
 				Action:  accesscontrol.ActionTeamsRead,
-				TypedID: identity.NewTypedID(claims.TypeUser, 1),
+				TypedID: claims.NewTypeID(claims.TypeUser, "1"),
 			},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(identity.RoleEditor): {Permissions: []accesscontrol.Permission{
@@ -738,7 +738,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action sets are correctly included if an action is specified",
 			searchOption: accesscontrol.SearchOptions{
 				Action:  "dashboards:read",
-				TypedID: identity.NewTypedID(claims.TypeUser, 1),
+				TypedID: claims.NewTypeID(claims.TypeUser, "1"),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
@@ -771,7 +771,7 @@ func TestService_SearchUserPermissions(t *testing.T) {
 			name: "check action sets are correctly included if an action prefix is specified",
 			searchOption: accesscontrol.SearchOptions{
 				ActionPrefix: "dashboards",
-				TypedID:      identity.NewTypedID(claims.TypeUser, 1),
+				TypedID:      claims.NewTypeID(claims.TypeUser, "1"),
 			},
 			withActionSets: true,
 			actionSets: map[string][]string{
