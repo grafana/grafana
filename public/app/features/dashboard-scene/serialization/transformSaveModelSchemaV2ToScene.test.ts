@@ -1,11 +1,15 @@
+import { deepClone } from 'fast-json-patch';
+
 import { config } from '@grafana/runtime';
-import { behaviors, sceneGraph } from '@grafana/scenes';
+import { behaviors, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getQueryRunnerFor } from '../utils/utils';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
@@ -110,7 +114,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // expect(dataTransformer.state.transformations).toEqual([{ id: 'transform1', options: {} }]);
 
     // expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
-    // const queryRunner = dataTransformer.state.$data as SceneQueryRunner;
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
+    expect(queryRunner?.state.datasource).toBeUndefined();
     // expect(queryRunner.state.queries).toEqual([{ query: 'test-query', datasource: { uid: 'datasource1', type: 'prometheus' } }]);
     // expect(queryRunner.state.maxDataPoints).toBe(100);
     // expect(queryRunner.state.cacheTimeout).toBe('1m');
@@ -122,5 +128,48 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
 
     // FIXME: Tests for layout
+  });
+
+  it('should set panel ds if it is mixed DS', () => {
+    const dashboard = deepClone(defaultDashboard);
+    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        datasource: {
+          type: 'graphite',
+          uid: 'datasource1',
+        },
+        query: {},
+      },
+    });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
+    expect(vizPanels.length).toBe(1);
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  it('should set panel ds as undefined if it is not mixed DS', () => {
+    const dashboard = deepClone(defaultDashboard);
+    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+      kind: 'PanelQuery',
+      spec: {
+        refId: 'A',
+        datasource: {
+          type: 'prometheus',
+          uid: 'datasource1',
+        },
+        query: {},
+      },
+    });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
+    expect(vizPanels.length).toBe(1);
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
   });
 });

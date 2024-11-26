@@ -36,9 +36,52 @@ export const handyTestingSchema: DashboardV2Spec = {
         data: {
           kind: 'QueryGroup',
           spec: {
-            queries: [],
-            queryOptions: {},
-            transformations: [],
+            queries: [
+              {
+                kind: 'PanelQuery',
+                spec: {
+                  refId: 'A',
+                  datasource: {
+                    type: 'prometheus',
+                    uid: 'datasource1',
+                  },
+                  query: {
+                    kind: 'prometheus',
+                    spec: {
+                      expr: 'test-query',
+                    },
+                  },
+                  hidden: false,
+                },
+              },
+            ],
+            queryOptions: {
+              timeFrom: '1h',
+              maxDataPoints: 100,
+              timeShift: '1h',
+              queryCachingTTL: 60,
+              interval: '1m',
+              cacheTimeout: '1m',
+              hideTimeOverride: false,
+            },
+            transformations: [
+              {
+                kind: 'limit',
+                spec: {
+                  id: 'limit',
+                  disabled: false,
+                  filter: {
+                    id: 'byValue',
+                    options: {
+                      reducer: 'sum',
+                    },
+                  },
+                  options: {
+                    limit: 10,
+                  },
+                },
+              },
+            ],
           },
         },
         description: 'Test Description',

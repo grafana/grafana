@@ -12,6 +12,7 @@ import {
   QueryVariable,
   SceneDataLayerControls,
   SceneDataProvider,
+  SceneDataQuery,
   SceneDataTransformer,
   SceneGridItemLike,
   SceneGridLayout,
@@ -46,6 +47,7 @@ import {
   GroupByVariableKind,
   IntervalVariableKind,
   PanelKind,
+  PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
@@ -295,12 +297,21 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       datasource = query.spec.datasource;
-    } else if (datasource !== query.spec.datasource) {
+    } else if (datasource.uid !== query.spec.datasource.uid || datasource.type !== query.spec.datasource.type) {
       isMixedDatasource = true;
     }
   });
 
   return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
+}
+
+function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+  return {
+    refId: query.spec.refId,
+    datasource: query.spec.datasource,
+    hide: query.spec.hidden,
+    ...query.spec.query.spec,
+  };
 }
 
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
@@ -321,7 +332,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
 
   dataProvider = new SceneQueryRunner({
     datasource,
-    queries: targets.map((query) => query.spec),
+    queries: targets.map(panelQueryKindToSceneQuery),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
     cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
