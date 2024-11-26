@@ -33,7 +33,7 @@ export function transformCursorSynctoEnum(cursorSync?: DashboardCursorSyncV1): D
   }
 }
 
-function transformDashboardLinkTypeToEnum(linkType: DashboardLinkTypeV1): DashboardLinkType {
+export function transformDashboardLinkTypeToEnum(linkType: DashboardLinkTypeV1): DashboardLinkType {
   switch (linkType) {
     case 'link':
       return DashboardLinkType.Link;

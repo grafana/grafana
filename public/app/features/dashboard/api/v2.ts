@@ -7,10 +7,10 @@ import { SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { ResponseTransformers } from './ResponseTransformers';
 import { DashboardAPI, DashboardWithAccessInfo } from './types';
 
 export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec>> {
-  // @ts-ignore
   private client: ResourceClient<DashboardV2Spec>;
 
   constructor() {
@@ -22,7 +22,10 @@ export class K8sDashboardV2APIStub implements DashboardAPI<DashboardWithAccessIn
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
-    return await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+    const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+
+    // For dev purposes only now, the conversion should happen in the API. This is just to stub v2 api responses.
+    return ResponseTransformers.transformV1ToV2(dashboard);
   }
 
   deleteDashboard(uid: string, showSuccessAlert: boolean): Promise<DeleteDashboardResponse> {

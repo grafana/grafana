@@ -21,8 +21,8 @@ import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
@@ -515,13 +515,11 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
+
     const dashboard = await getDashboardAPI().getDashboardDTO(uid);
 
-    // TODO[schema]: should we support v2 in this deprecated method? Should we convert v2->v1 here?
-    if (isDashboardResource(dashboard)) {
-      throw new Error('v2 dashboard schema not supported');
-    }
-    return dashboard;
+    // Since we have a deprecated method here, let's transoform the response to the format that the consumers are using (v1 schema)
+    return ResponseTransformers.transformV2ToV1(dashboard);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
