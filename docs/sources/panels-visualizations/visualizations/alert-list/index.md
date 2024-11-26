@@ -105,7 +105,7 @@ Filter alerts by the selected folder. Only alerts from dashboards in this folder
 
 ### Show inactive
 
-Filter for Prometheus alerts with no instances. Prometheus alerts have zero (0) instances when in the Normal (inactive) state and these are hidden by default. You can choose to show them by toggling this switch. If the Alert instance label filter is configured, it will take precedence and inactive alert rules will be hidden.
+Filter for Prometheus alerts with no instances. Prometheus alerts have zero (0) instances when in the Normal (inactive) state and these are hidden by default. You can choose to show them by toggling this switch. If the **Alert instance label** filter is configured, it takes precedence and inactive alert rules are hidden.
 
 ## Alert state filter
 
