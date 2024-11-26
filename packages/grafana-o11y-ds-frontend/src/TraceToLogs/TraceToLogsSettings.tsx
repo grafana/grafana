@@ -126,6 +126,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
                 datasourceUid: ds.uid,
               })
             }
+            onClear={() => updateTracesToLogs({ datasourceUid: undefined })}
           />
         </InlineField>
       </InlineFieldRow>

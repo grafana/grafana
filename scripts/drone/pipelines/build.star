@@ -1,6 +1,11 @@
 """This module contains the comprehensive build pipeline."""
 
 load(
+    "scripts/drone/steps/github.star",
+    "github_app_generate_token_step",
+    "github_app_pipeline_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "build_frontend_package_step",
     "build_storybook_step",
@@ -57,6 +62,7 @@ def build_e2e(trigger, ver_mode):
 
     environment = {"EDITION": "oss"}
     init_steps = [
+        github_app_generate_token_step(),
         identify_runner_step(),
         download_grabpl_step(),
         compile_build_cmd(),
@@ -173,4 +179,5 @@ def build_e2e(trigger, ver_mode):
         services = [],
         steps = init_steps + build_steps,
         trigger = trigger,
+        volumes = github_app_pipeline_volumes(),
     )

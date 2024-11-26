@@ -6,6 +6,7 @@ import { VizPanel } from '@grafana/scenes';
 import { IconName, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
+import { AccessControlAction } from 'app/types';
 
 import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
@@ -69,14 +70,17 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareSnapshot,
       icon: 'camera',
       label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
-      renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
+      renderCondition:
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate),
       onClick: () => {
         onMenuItemClick(shareDashboardType.snapshot);
       },
     });
 
     return menuItems.filter((item) => item.renderCondition);
-  }, [panel, dashboard]);
+  }, [panel]);
 
   const onClick = (item: ShareDrawerMenuItem) => {
     DashboardInteractions.sharingCategoryClicked({

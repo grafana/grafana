@@ -1,3 +1,114 @@
+<!-- 11.3.1 START -->
+
+# 11.3.1 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96135](https://github.com/grafana/grafana/pull/96135), [@fayzal-g](https://github.com/fayzal-g)
+- **MigrationAssistant:** Restrict dashboards, folders and datasources by the org id of the signed in user [#96345](https://github.com/grafana/grafana/pull/96345), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95490](https://github.com/grafana/grafana/pull/95490), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Alerting:** Fix escaping of silence matchers in utf8 mode [#95347](https://github.com/grafana/grafana/pull/95347), [@tomratcliffe](https://github.com/tomratcliffe)
+- **Alerting:** Fix overflow for long receiver names [#95133](https://github.com/grafana/grafana/pull/95133), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix saving advanced mode toggle state in the alert rule editor [#95981](https://github.com/grafana/grafana/pull/95981), [@alexander-akhmetov](https://github.com/alexander-akhmetov)
+- **Alerting:** Fix setting datasource uid, when datasource is string in old version [#96273](https://github.com/grafana/grafana/pull/96273), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Alerting:** Force refetch prom rules when refreshing panel [#96125](https://github.com/grafana/grafana/pull/96125), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Anonymous User:** Adds validator service for anonymous users [#94994](https://github.com/grafana/grafana/pull/94994), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95155](https://github.com/grafana/grafana/pull/95155), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95247](https://github.com/grafana/grafana/pull/95247), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95909](https://github.com/grafana/grafana/pull/95909), [@aangelisc](https://github.com/aangelisc)
+- **CloudWatch:** Interpolate region in log context query [#94990](https://github.com/grafana/grafana/pull/94990), [@iwysiu](https://github.com/iwysiu)
+- **Dashboard datasource:** Return annotations as series when query topic is "annotations" [#95971](https://github.com/grafana/grafana/pull/95971), [@kaydelaney](https://github.com/kaydelaney)
+- **Dashboard:** Append orgId to URL [#95963](https://github.com/grafana/grafana/pull/95963), [@bfmatei](https://github.com/bfmatei)
+- **Dashboards:** Fixes performance issue expanding a row [#95321](https://github.com/grafana/grafana/pull/95321), [@torkelo](https://github.com/torkelo)
+- **Flame Graph:** Fix crash when it receives empty data [#96211](https://github.com/grafana/grafana/pull/96211), [@yincongcyincong](https://github.com/yincongcyincong)
+- **Folders:** Add admin permissions upon creation of a folder w. SA [#95365](https://github.com/grafana/grafana/pull/95365), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Folders:** Don't show error pop-up if the user can't fetch the root folder [#95600](https://github.com/grafana/grafana/pull/95600), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95232](https://github.com/grafana/grafana/pull/95232), [@kalleep](https://github.com/kalleep)
+- **ServerLock:** Fix pg concurrency/locking issue [#95935](https://github.com/grafana/grafana/pull/95935), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Service Accounts:** Run service account creation in transaction [#94803](https://github.com/grafana/grafana/pull/94803), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **Table:** Fix text wrapping applying to wrong field [#95425](https://github.com/grafana/grafana/pull/95425), [@codeincarnate](https://github.com/codeincarnate)
+- **Unified Storage:** Use ssl_mode instead of sslmode [#95662](https://github.com/grafana/grafana/pull/95662), [@chaudyg](https://github.com/chaudyg)
+
+<!-- 11.3.1 END -->
+<!-- 11.2.4 START -->
+
+# 11.2.4 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96133](https://github.com/grafana/grafana/pull/96133), [@fayzal-g](https://github.com/fayzal-g)
+- **MigrationAssistant:** Restrict dashboards, folders and datasources by the org id of the signed in user [#96344](https://github.com/grafana/grafana/pull/96344), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Transformations:** Add 'transpose' transform [#95076](https://github.com/grafana/grafana/pull/95076), [@jmdane](https://github.com/jmdane)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95489](https://github.com/grafana/grafana/pull/95489), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Alerting:** Force refetch prom rules when refreshing panel [#96124](https://github.com/grafana/grafana/pull/96124), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Anonymous User:** Adds validator service for anonymous users [#94993](https://github.com/grafana/grafana/pull/94993), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95154](https://github.com/grafana/grafana/pull/95154), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95246](https://github.com/grafana/grafana/pull/95246), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95908](https://github.com/grafana/grafana/pull/95908), [@aangelisc](https://github.com/aangelisc)
+- **Folders:** Add admin permissions upon creation of a folder w. SA [#95416](https://github.com/grafana/grafana/pull/95416), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95231](https://github.com/grafana/grafana/pull/95231), [@kalleep](https://github.com/kalleep)
+- **ServerLock:** Fix pg concurrency/locking issue [#95934](https://github.com/grafana/grafana/pull/95934), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94959](https://github.com/grafana/grafana/pull/94959), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.2.4 END -->
+<!-- 11.1.9 START -->
+
+# 11.1.9 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96132](https://github.com/grafana/grafana/pull/96132), [@fayzal-g](https://github.com/fayzal-g)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95488](https://github.com/grafana/grafana/pull/95488), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Alerting:** Force refetch prom rules when refreshing panel [#96123](https://github.com/grafana/grafana/pull/96123), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **Anonymous User:** Adds validator service for anonymous users [#94992](https://github.com/grafana/grafana/pull/94992), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95153](https://github.com/grafana/grafana/pull/95153), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95245](https://github.com/grafana/grafana/pull/95245), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95907](https://github.com/grafana/grafana/pull/95907), [@aangelisc](https://github.com/aangelisc)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95230](https://github.com/grafana/grafana/pull/95230), [@kalleep](https://github.com/kalleep)
+- **Prometheus:** Fix interpolating adhoc filters with template variables [#95977](https://github.com/grafana/grafana/pull/95977), [@cazeaux](https://github.com/cazeaux)
+- **ServerLock:** Fix pg concurrency/locking issue [#95933](https://github.com/grafana/grafana/pull/95933), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94969](https://github.com/grafana/grafana/pull/94969), [@scottlepp](https://github.com/scottlepp)
+
+<!-- 11.1.9 END -->
+<!-- 11.0.8 START -->
+
+# 11.0.8 (2024-11-19)
+
+### Features and enhancements
+
+- **Alerting:** Make context deadline on AlertNG service startup configurable [#96131](https://github.com/grafana/grafana/pull/96131), [@fayzal-g](https://github.com/fayzal-g)
+- **User:** Check SignedInUser OrgID in RevokeInvite [#95487](https://github.com/grafana/grafana/pull/95487), [@mgyongyosi](https://github.com/mgyongyosi)
+
+### Bug fixes
+
+- **Anonymous User:** Adds validator service for anonymous users [#95151](https://github.com/grafana/grafana/pull/95151), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **Anonymous User:** Adds validator service for anonymous users (Enterprise)
+- **Azure Monitor:** Support metric namespaces fallback [#95152](https://github.com/grafana/grafana/pull/95152), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Fix duplicated traces in multi-resource trace query [#95244](https://github.com/grafana/grafana/pull/95244), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Handle namespace request rejection [#95906](https://github.com/grafana/grafana/pull/95906), [@aangelisc](https://github.com/aangelisc)
+- **Migration:** Remove table aliasing in delete statement to make it work for mariadb [#95229](https://github.com/grafana/grafana/pull/95229), [@kalleep](https://github.com/kalleep)
+- **Prometheus:** Fix interpolating adhoc filters with template variables [#95986](https://github.com/grafana/grafana/pull/95986), [@cazeaux](https://github.com/cazeaux)
+- **ServerLock:** Fix pg concurrency/locking issue [#95932](https://github.com/grafana/grafana/pull/95932), [@mgyongyosi](https://github.com/mgyongyosi)
+- **ServerSideExpressions:** Disable SQL Expressions to prevent RCE and LFI vulnerability [#94971](https://github.com/grafana/grafana/pull/94971), [@samjewell](https://github.com/samjewell)
+
+<!-- 11.0.8 END -->
+<!-- 10.4.13 START -->
+
+# 10.4.13 (2024-11-19)
+
+<!-- 10.4.13 END -->
 <!-- 11.3.0+security-01 START -->
 
 # 11.3.0+security-01 (2024-11-12)
