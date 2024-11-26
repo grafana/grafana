@@ -35,7 +35,7 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
       anno[AnnoKeyRepoName] = repo;
       anno[AnnoKeyRepoPath] = path;
       if (ref) {
-        anno[AnnoKeyRepoPath] += path + '#' + ref;
+        anno[AnnoKeyRepoPath] = path + '#' + ref;
       }
 
       return {
