@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
@@ -11,6 +11,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
+import { useEditPaneCollapsed } from './shared';
 
 interface Props {
   dashboard: DashboardScene;
@@ -22,6 +23,7 @@ interface Props {
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -39,12 +41,19 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.75,
+      initialSize: 0.8,
+      handleSize: 'sm',
+      collapsed: isCollapsed,
+
       paneOptions: {
         collapseBelowPixels: 250,
         snapOpenToPixels: 400,
       },
     });
+
+  useEffect(() => {
+    setIsCollapsed(splitterState.collapsed);
+  }, [splitterState.collapsed, setIsCollapsed]);
 
   const containerStyle: CSSProperties = {};
 
