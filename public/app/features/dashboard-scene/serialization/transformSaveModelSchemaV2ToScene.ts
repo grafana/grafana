@@ -23,12 +23,12 @@ import {
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  UserActionEvent,
   VariableValueSelectors,
   VizPanel,
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
@@ -50,6 +50,7 @@ import {
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -68,10 +69,10 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
+import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,
@@ -283,18 +284,23 @@ function trackIfEmpty(grid: SceneGridLayout) {
   };
 }
 
-function registerPanelInteractionsReporter(scene: DashboardScene) {
-  scene.subscribeToEvent(UserActionEvent, (e) => {
-    const { interaction } = e.payload;
-    switch (interaction) {
-      case 'panel-status-message-clicked':
-        DashboardInteractions.panelStatusMessageClicked();
-        break;
-      case 'panel-cancel-query-clicked':
-        DashboardInteractions.panelCancelQueryClicked();
-        break;
+function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
+  if (!panel.spec.data?.spec.queries?.length) {
+    return undefined;
+  }
+
+  let datasource: DataSourceRef | undefined = undefined;
+  let isMixedDatasource = false;
+
+  panel.spec.data.spec.queries.forEach((query) => {
+    if (!datasource) {
+      datasource = query.spec.datasource;
+    } else if (datasource !== query.spec.datasource) {
+      isMixedDatasource = true;
     }
   });
+
+  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : undefined;
 }
 
 export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
@@ -311,10 +317,10 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   let dataProvider: SceneDataProvider | undefined = undefined;
-  const datasource = panel.data.spec.queries[0]?.spec.datasource;
+  const datasource = getPanelDataSource(panelKind);
 
   dataProvider = new SceneQueryRunner({
-    datasource: datasource ?? undefined,
+    datasource,
     queries: targets.map((query) => query.spec),
     maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
     maxDataPointsFromWidth: true,
