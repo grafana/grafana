@@ -44,7 +44,6 @@ var _ storage.Interface = (*Storage)(nil)
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	LargeObjectSupport LargeObjectSupport
-	InternalConversion func([]byte, runtime.Object) (runtime.Object, error)
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -131,14 +130,6 @@ func NewStorage(
 
 func (s *Storage) Versioner() storage.Versioner {
 	return s.versioner
-}
-
-func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Object, error) {
-	if s.opts.InternalConversion != nil {
-		return s.opts.InternalConversion(data, obj)
-	}
-	obj, _, err := s.codec.Decode(data, nil, obj)
-	return obj, err
 }
 
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
@@ -319,7 +310,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 		return resource.GetError(rsp.Error)
 	}
 
-	_, err = s.convertToObject(rsp.Value, objPtr)
+	_, _, err = s.codec.Decode(rsp.Value, nil, objPtr)
 	if err != nil {
 		return err
 	}
@@ -369,7 +360,7 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	for _, item := range rsp.Items {
-		obj, err := s.convertToObject(item.Value, s.newFunc())
+		obj, _, err := s.codec.Decode(item.Value, nil, s.newFunc())
 		if err != nil {
 			return err
 		}
@@ -470,7 +461,7 @@ func (s *Storage) GuaranteedUpdate(
 		existingObj = s.newFunc()
 		if len(rsp.Value) > 0 {
 			created = false
-			_, err = s.convertToObject(rsp.Value, existingObj)
+			_, _, err = s.codec.Decode(rsp.Value, nil, existingObj)
 			if err != nil {
 				return err
 			}
