@@ -587,7 +587,7 @@ describe('Language completion provider', () => {
     it('should interpolate variable in series', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        interpolateString: (string: string) => string.replace(/\$/, 'interpolated_'),
+        interpolateString: (string: string) => string.replace(/\$/g, 'interpolated_'),
       } as PrometheusDatasource);
       const fetchLabelValues = languageProvider.fetchLabelValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
