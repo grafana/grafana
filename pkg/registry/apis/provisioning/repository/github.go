@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
+	"text/template"
 
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -282,7 +284,16 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 			}
 
 			responder.Object(200, &metav1.Status{
-				Message: "event processed",
+				Message: "push event processed",
+				Code:    http.StatusOK,
+			})
+		case *github.PullRequestEvent:
+			if err := r.onPullRequestEvent(ctx, logger, event); err != nil {
+				responder.Error(err)
+				return
+			}
+			responder.Object(200, &metav1.Status{
+				Message: "pull request event processed",
 				Code:    http.StatusOK,
 			})
 		case *github.PingEvent:
@@ -356,12 +367,93 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	return nil
 }
 
+// onPullRequestEvent is called when a pull request event is received
+// If the pull request is opened, reponed or synchronize, we read the files changed.
+func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent) error {
+	if event.GetRepo() == nil {
+		return fmt.Errorf("missing repository in pull request event")
+	}
+
+	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository) {
+		return fmt.Errorf("repository mismatch")
+	}
+
+	action := event.GetAction()
+	if action != "opened" && action != "reopened" && action != "synchronize" {
+		logger.InfoContext(ctx, "ignore pull request event", "action", event.GetAction())
+		return nil
+	}
+
+	// Get the files changed in the pull request
+	files, err := r.gh.ListPullRequestFiles(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber())
+	if err != nil {
+		return fmt.Errorf("list pull request files: %w", err)
+	}
+
+	// TODO: implement the real handling of the files
+	for _, file := range files {
+		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
+		switch file.GetStatus() {
+		case "added":
+			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
+			if err != nil {
+				r.logger.ErrorContext(ctx, "read added file", "file", file.GetFilename(), "error", err)
+				continue
+			}
+			r.logger.InfoContext(ctx, "added file", "file", file.GetFilename(), "resource", string(f.Data))
+		case "modified":
+			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
+			if err != nil {
+				r.logger.ErrorContext(ctx, "read modified file", "file", file.GetFilename(), "error", err)
+				continue
+			}
+			r.logger.InfoContext(ctx, "modified file", "file", file.GetFilename(), "resource", string(f.Data))
+		case "removed":
+			r.logger.InfoContext(ctx, "removed file", "file", file.GetFilename())
+		case "renamed":
+			r.logger.InfoContext(ctx, "renamed file", "file", file.GetFilename(), "previous", file.GetPreviousFilename())
+		case "changed":
+			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
+			if err != nil {
+				r.logger.ErrorContext(ctx, "read changed file", "file", file.GetFilename(), "error", err)
+				continue
+			}
+			r.logger.InfoContext(ctx, "changed file", "file", file.GetFilename(), "resource", string(f.Data))
+		case "unchanged":
+			r.logger.InfoContext(ctx, "ignore unchanged file", "file", file.GetFilename())
+		default:
+			r.logger.ErrorContext(ctx, "unhandled pull request file", "status", file.GetStatus(), "file", file.GetFilename())
+		}
+	}
+
+	commentTemplate := `Grafana detected that the following files have been changed in this pull request:
+{{range .}}- {{.GetFilename}} **{{.GetStatus }}** {{end}}
+`
+	tmpl, err := template.New("comment").Parse(commentTemplate)
+	if err != nil {
+		return fmt.Errorf("parse comment template: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, files); err != nil {
+		return fmt.Errorf("execute comment template: %w", err)
+	}
+
+	comment := buf.String()
+
+	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
+		return fmt.Errorf("create pull request comment: %w", err)
+	}
+
+	return nil
+}
+
 func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
 	cfg := pgh.WebhookConfig{
 		URL:         r.config.Spec.GitHub.WebhookURL,
 		Secret:      r.config.Spec.GitHub.WebhookSecret,
 		ContentType: "json",
-		Events:      []string{"push"},
+		Events:      []string{"push", "pull_request"},
 		Active:      true,
 	}
 
