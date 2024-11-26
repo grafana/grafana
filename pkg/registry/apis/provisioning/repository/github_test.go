@@ -13,6 +13,11 @@ func TestIsValidGitBranchName(t *testing.T) {
 		expected bool
 	}{
 		{"Valid branch name", "feature/add-tests", true},
+		{"Valid branch name with numbers", "feature/123-add-tests", true},
+		{"Valid branch name with dots", "feature.add.tests", true},
+		{"Valid branch name with hyphens", "feature-add-tests", true},
+		{"Valid branch name with underscores", "feature_add_tests", true},
+		{"Valid branch name with mixed characters", "feature/add_tests-123", true},
 		{"Starts with /", "/feature", false},
 		{"Ends with /", "feature/", false},
 		{"Ends with .", "feature.", false},
