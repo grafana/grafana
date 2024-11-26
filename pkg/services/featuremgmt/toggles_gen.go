@@ -171,10 +171,6 @@ const (
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
 
-	// FlagLokiMetricDataplane
-	// Changes metric responses from Loki to be compliant with the dataplane specification.
-	FlagLokiMetricDataplane = "lokiMetricDataplane"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
