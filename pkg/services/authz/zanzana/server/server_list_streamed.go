@@ -1,14 +1,44 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/gob"
 	"errors"
+	"hash/fnv"
 	"io"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	if !s.cfg.CheckQueryCache {
+		return s.streamedListObjectsWrapper(ctx, req)
+	}
+	return s.streamedListObjectsCached(ctx, req)
+}
+
+func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ttl := s.cfg.CheckQueryCacheTTL
+	reqHash, err := getRequestHash(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if res, ok := s.cache.Get(reqHash); ok {
+		return res.(*openfgav1.ListObjectsResponse), nil
+	}
+
+	res, err := s.streamedListObjectsWrapper(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.cache.Set(reqHash, res, ttl)
+	return res, nil
+}
+
+func (s *Server) streamedListObjectsWrapper(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "authzServer.streamedListObjects")
 	defer span.End()
 
@@ -53,4 +83,23 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 	return &openfgav1.ListObjectsResponse{
 		Objects: streamedObjectIDs,
 	}, nil
+}
+
+func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
+	if req == nil {
+		return "", errors.New("request must not be empty")
+	}
+
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	if err := encoder.Encode(req); err != nil {
+		return "", err
+	}
+	hash := fnv.New64a()
+	_, err := hash.Write(buf.Bytes())
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(hash.Sum(nil)), nil
 }

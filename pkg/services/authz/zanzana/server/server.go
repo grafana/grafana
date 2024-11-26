@@ -9,6 +9,7 @@ import (
 	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,11 +33,12 @@ type Server struct {
 	openfga       openfgav1.OpenFGAServiceServer
 	openfgaClient openfgav1.OpenFGAServiceClient
 
+	cfg      setting.ZanzanaSettings
 	logger   log.Logger
 	modules  []transformer.ModuleFile
 	stores   map[string]storeInfo
 	storesMU *sync.Mutex
-	cfg      setting.ZanzanaSettings
+	cache    *localcache.CacheService
 }
 
 type storeInfo struct {
