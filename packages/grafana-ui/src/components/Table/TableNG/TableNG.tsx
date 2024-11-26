@@ -381,7 +381,7 @@ export function TableNG(props: TableNGProps) {
       }
       return true;
     });
-  }, [rows, filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, filter, sortedRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const renderMenuItems = () => {
     return (
