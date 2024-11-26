@@ -1,10 +1,8 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/gob"
 	"errors"
 	"hash/fnv"
 	"io"
@@ -89,13 +87,8 @@ func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
 		return "", errors.New("request must not be empty")
 	}
 
-	var buf bytes.Buffer
-	encoder := gob.NewEncoder(&buf)
-	if err := encoder.Encode(req); err != nil {
-		return "", err
-	}
 	hash := fnv.New64a()
-	_, err := hash.Write(buf.Bytes())
+	_, err := hash.Write([]byte(req.String()))
 	if err != nil {
 		return "", err
 	}
