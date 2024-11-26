@@ -17,7 +17,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const docsLink = (
     <a
       className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/)"
+      href="https://grafana.com/docs/grafana/latest/administration/service-accounts/migrate-api-keys/"
       target="_blank"
       rel="noopener noreferrer"
     >
@@ -27,10 +27,6 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const migrationBoxDesc = (
     <span>
       Migrating all API keys will hide the API keys tab.
-      <br></br>
-      <br></br>
-      The API keys API will remain available for you to create new API keys, but we strongly encourage you to use
-      Service accounts instead.
     </span>
   );
 
@@ -39,7 +35,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
       {apikeysCount > 0 && (
         <Alert title="Switch from API keys to service accounts" severity="warning">
           <div className={styles.text}>
-            We will soon deprecate API keys. Each API key will be migrated into a service account with a token and will
+            API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will
             continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
           </div>
           <div className={styles.actionRow}>
