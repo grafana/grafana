@@ -171,10 +171,6 @@ const (
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
 
-	// FlagLokiMetricDataplane
-	// Changes metric responses from Loki to be compliant with the dataplane specification.
-	FlagLokiMetricDataplane = "lokiMetricDataplane"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
@@ -278,6 +274,10 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
+
+	// FlagProvisioning
+	// Next generation provisioning... and git
+	FlagProvisioning = "provisioning"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -566,6 +566,10 @@ const (
 	// FlagOnPremToCloudMigrationsAlerts
 	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
 	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
+
+	// FlagOnPremToCloudMigrationsAuthApiMig
+	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
 
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
@@ -890,4 +894,8 @@ const (
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
+
+	// FlagAlertingNotificationsStepMode
+	// Enables simplified step mode in the notifications section
+	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 )

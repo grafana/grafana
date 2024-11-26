@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +14,10 @@ import (
 
 const (
 	defaultQueryLimit = 1000
+	// If search query string shorter than this value, then "List, then check" strategy will be used
+	listQueryLengthThreshold = 8
+	// If query limit set to value higher than this value, then "List, then check" strategy will be used
+	listQueryLimitThreshold = 50
 )
 
 type searchResult struct {
@@ -85,13 +90,23 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 	return first.result, first.err
 }
 
+type checkDashboardsFn func(context.Context, dashboards.FindPersistedDashboardsQuery, []dashboards.DashboardSearchProjection, int64) ([]dashboards.DashboardSearchProjection, error)
+
 func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	return dr.findDashboardsZanzanaCheck(ctx, query)
+	if len(query.Title) <= listQueryLengthThreshold || query.Limit > listQueryLimitThreshold {
+		checkCompileFn, err := dr.getCheckCompileFn(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		return dr.findDashboardsZanzanaGeneric(ctx, query, checkCompileFn)
+	}
+
+	return dr.findDashboardsZanzanaGeneric(ctx, query, dr.checkDashboardsBatch)
 }
 
-// findDashboardsZanzanaCheck implements "Search, then check" strategy. It first performs search query, then filters out results
-// by checking access to each item.
-func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+// findDashboardsZanzanaGeneric runs search query in the database and then check if resultls
+// available to user by calling provided checkFn function. It could be check-based or compile (list) - based.
+func (dr *DashboardServiceImpl) findDashboardsZanzanaGeneric(ctx context.Context, query dashboards.FindPersistedDashboardsQuery, checkFn checkDashboardsFn) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
 	defer span.End()
 
@@ -113,7 +128,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}
 
 		remains := limit - int64(len(result))
-		res, err := dr.checkDashboardsBatch(ctx, query, findRes, remains)
+		res, err := checkFn(ctx, query, findRes, remains)
 		if err != nil {
 			return nil, err
 		}
@@ -194,4 +209,47 @@ func (dr *DashboardServiceImpl) checkDashboardsBatch(ctx context.Context, query 
 	}
 
 	return result, nil
+}
+
+func (dr *DashboardServiceImpl) getCheckCompileFn(ctx context.Context, query dashboards.FindPersistedDashboardsQuery) (checkDashboardsFn, error) {
+	// List available folders
+	namespace := query.SignedInUser.GetNamespace()
+	req, ok := zanzana.TranslateToListRequest(namespace, dashboards.ActionFoldersRead, zanzana.KindFolders)
+	if !ok {
+		return nil, errors.New("resource type not supported")
+	}
+	folderChecker, err := dr.zclient.Compile(ctx, query.SignedInUser, *req)
+	if err != nil {
+		return nil, err
+	}
+
+	// List available dashboards
+	req, ok = zanzana.TranslateToListRequest(namespace, dashboards.ActionDashboardsRead, zanzana.KindDashboards)
+	if !ok {
+		return nil, errors.New("resource type not supported")
+	}
+	dashboardChecker, err := dr.zclient.Compile(ctx, query.SignedInUser, *req)
+	if err != nil {
+		return nil, err
+	}
+
+	return func(_ context.Context, _ dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
+		result := make([]dashboards.DashboardSearchProjection, 0)
+		for _, d := range searchRes {
+			if len(result) >= int(remains) {
+				break
+			}
+			allowed := false
+			if d.IsFolder {
+				allowed = folderChecker(namespace, d.UID, d.FolderUID)
+			} else {
+				allowed = dashboardChecker(namespace, d.UID, d.FolderUID)
+			}
+			if allowed {
+				result = append(result, d)
+			}
+		}
+
+		return result, nil
+	}, nil
 }
