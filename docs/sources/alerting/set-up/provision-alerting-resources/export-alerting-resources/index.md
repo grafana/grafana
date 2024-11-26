@@ -199,19 +199,19 @@ All notification policies are provisioned through a single resource: the root of
 
 {{% admonition type="warning" %}}
 
-Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
+Since the policy tree is a single resource, provisioning it overwrites a policy tree created through any other means.
 
 {{< /admonition >}}
 
 To export the notification policy tree from the Grafana UI, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Notification policies**.
-1. In the **Default notification policy** section, click **...** -> **Export**.
-1. Choose the format to export in.
+2. In the **Default notification policy** section, click **...** -> **Export**.
+3. Choose the format to export in.
 
    The exported contact point appears in different formats - YAML, JSON, Terraform.
 
-1. Click **Copy Code** or **Download**.
+4. Click **Copy Code** or **Download**.
 
 ### Export mute timings
 
