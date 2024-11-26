@@ -113,6 +113,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'unset',
     }),
     bodyWrapper: css({
+      label: 'body-wrapper',
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
@@ -125,7 +126,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       gap: '8px',
       boxSizing: 'border-box',
       flexDirection: 'column',
-      padding: theme.spacing(0.5, 2, 0.5, 2),
+      padding: theme.spacing(0, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',
