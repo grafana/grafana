@@ -5,17 +5,9 @@ export function sharedWorkersSupported() {
 }
 
 /**
- * The base class is created dynamically here to allow later on syntax like:
- * import { CorsSharedWorker as SharedWorker } from '../utils/CorsSharedWorker';
- * And also take into account cases where SharedWorked is not available in the browser (mainly mobile browsers)
- *
- * It's important to use: new SharedWorker(...) syntax instead of new CorsSharedWorker(...) due to how web-workers
- * are processing workers syntax (more details https://webpack.js.org/guides/web-workers/)
+ * Creating CorsSharedWorker should be called only if sharedWorkersSupported() is truthy
  */
-const BaseSharedWorkerClass = sharedWorkersSupported() ? window.SharedWorker : null;
-
-// @ts-ignore
-export class CorsSharedWorker extends BaseSharedWorkerClass {
+export class CorsSharedWorker {
   constructor(url: URL, options?: WorkerOptions) {
     // by default, worker inherits HTML document's location and pathname which leads to wrong public path value
     // the CorsWorkerPlugin will override it with the value based on the initial worker chunk, ie.
@@ -33,7 +25,8 @@ export class CorsSharedWorker extends BaseSharedWorkerClass {
         type: 'application/javascript',
       })
     );
-    super(objectURL, options);
+    const worker = new SharedWorker(objectURL, options);
     URL.revokeObjectURL(objectURL);
+    return worker;
   }
 }

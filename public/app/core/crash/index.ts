@@ -48,9 +48,8 @@ export function initializeCrashDetection() {
     // Ignore that SharedWorker possibly does not implement window.SharedWorker
     // It will be the case only if SharedWorker is not supported by the browser and
     // in such case the code below won't run because we check sharedWorkersSupported above
-    // @ts-ignore
-    createDetectorWorker(): SharedWorker {
-      return new SharedWorker(new URL('./detector.worker', import.meta.url));
+    createDetectorWorker() {
+      return new SharedWorker(new URL('./detector.worker', import.meta.url)) as globalThis.SharedWorker;
     },
 
     reportCrash: async (report) => {
