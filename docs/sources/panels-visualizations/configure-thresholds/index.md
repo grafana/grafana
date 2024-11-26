@@ -128,17 +128,6 @@ You can set thresholds in the following visualizations:
 
 {{< /column-list >}}
 
-<!--
-|                                |                                      |                                      |
-| ------------------------------ | ------------------------------------ | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)                 | [Status history](ref:status-history) |
-| [Bar gauge](ref:bar-gauge)     | [Histogram](ref:histogram)           | [Table](ref:table)                   |
-| [Candlestick](ref:candlestick) | [Stat](ref:stat)                     | [Time series](ref:time-series)       |
-| [Canvas](ref:canvas)           | [State timeline](ref:state-timeline) | [Trend](ref:trend)                   |
-| [Gauge](ref:gauge)             |
-
--->
-
 ## Default thresholds
 
 On visualizations that support thresholds, Grafana has the following default threshold settings:
