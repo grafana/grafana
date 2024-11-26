@@ -158,6 +158,15 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
+	// GVR will exist for anything we can actually save (dashboard/playlist for now)
+	if parsed.gvr == nil {
+		if parsed.gvk != nil {
+			parsed.errors = append(parsed.errors, fmt.Errorf("unknown resource for Kind: "+parsed.gvk.Kind))
+		} else {
+			parsed.errors = append(parsed.errors, fmt.Errorf("unknown resource"))
+		}
+	}
+
 	code := http.StatusOK
 	if len(parsed.errors) > 0 {
 		code = http.StatusNotAcceptable
@@ -196,6 +205,11 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
 		}
 		return nil, err
+	}
+
+	// GVR will exist for anything we can actually save (dashboard/playlist for now)
+	if parsed.gvr == nil {
+		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
 
 	data, err = parsed.ToSaveBytes()
