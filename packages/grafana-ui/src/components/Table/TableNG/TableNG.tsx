@@ -86,7 +86,6 @@ export function TableNG(props: TableNGProps) {
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
-  // const [filter, setFilter] = useState({});
   const [filter, setFilter] = useState<FilterType>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
@@ -152,8 +151,16 @@ export function TableNG(props: TableNGProps) {
     const headerRef = useRef(null);
 
     let isColumnFilterable = filterable;
-    if (field.config.custom.filterable !== undefined) {
-      isColumnFilterable = field.config.custom.filterable;
+    if (field.config.custom.filterable !== filterable) {
+      isColumnFilterable = field.config.custom.filterable || false;
+    }
+    // we have to remove/reset the filter if the column is not filterable
+    if (!isColumnFilterable && filter[field.name]) {
+      setFilter((filter: FilterType) => {
+        const newFilter = { ...filter };
+        delete newFilter[field.name];
+        return newFilter;
+      });
     }
 
     const handleSort = () => {
@@ -359,12 +366,14 @@ export function TableNG(props: TableNGProps) {
   };
 
   const filteredRows = useMemo(() => {
-    if (!filterable) {
+    const filterValues = Object.entries(filter);
+
+    if (filterValues.length === 0) {
       return sortedRows;
     }
 
     return sortedRows.filter((row) => {
-      for (const [key, value] of Object.entries(filter)) {
+      for (const [key, value] of filterValues) {
         const displayedValue = valueToDisplayValue(row[key], columns.find((column) => column.key === key)?.field);
         if (!value.filteredSet.has(displayedValue)) {
           return false;
