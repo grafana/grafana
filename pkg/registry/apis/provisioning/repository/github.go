@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,6 +55,9 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
+	}
+	if !isValidGitBranchName(gh.Branch) {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
@@ -203,10 +208,31 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
 }
 
+// basicGitBranchNameRegex is a regular expression to validate a git branch name
+// it does not cover all cases as positive lookaheads are not supported in Go's regexp
+var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
+
 // isValidGitBranchName checks if a branch name is valid.
+// It uses the following regexp `^[a-zA-Z0-9\-\_\/\.]+$` to validate the branch name with some additional checks that must satisfy the following rules:
+// 1. The branch name must have at least one character and must not be empty.
+// 2. The branch name cannot start with `/` or end with `/`, `.`, or whitespace.
+// 3. The branch name cannot contain consecutive slashes (`//`).
+// 4. The branch name cannot contain consecutive dots (`..`).
+// 5. The branch name cannot contain `@{`.
+// 6. The branch name cannot include the following characters: `~`, `^`, `:`, `?`, `*`, `[`, `\`, or `]`.
 func isValidGitBranchName(branch string) bool {
-	// TODO: add branch validation here as well as in the frontend using the same restrictions
-	return branch != ""
+	if !basicGitBranchNameRegex.MatchString(branch) {
+		return false
+	}
+
+	// Additional checks for invalid patterns
+	if strings.HasPrefix(branch, "/") || strings.HasSuffix(branch, "/") ||
+		strings.HasSuffix(branch, ".") || strings.Contains(branch, "..") ||
+		strings.Contains(branch, "//") || strings.HasSuffix(branch, ".lock") {
+		return false
+	}
+
+	return true
 }
 
 func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
