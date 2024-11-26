@@ -250,7 +250,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Switch to edit mode
     this.setState({ isEditing: true });
 
-    // Propagate change edit mode change to children)
+    // Propagate change edit mode change to children
     this.state.body.editModeChanged(true);
 
     // Propagate edit mode to scopes
