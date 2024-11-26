@@ -280,6 +280,12 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "export": {
+      "subtitle": {
+        "formats": "Select the format and download the file or copy the contents to clipboard",
+        "one-format": "Download the file or copy the contents to clipboard"
+      }
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -301,6 +307,7 @@
           "title": "Data source-managed"
         },
         "grafanaManaged": {
+          "export-new-rule": "Export new alert rule",
           "export-rules": "Export rules",
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
@@ -2072,6 +2079,9 @@
     "data-sources": {
       "subtitle": "View and manage your connected data source connections",
       "title": "Data sources"
+    },
+    "databases": {
+      "title": "Databases"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",

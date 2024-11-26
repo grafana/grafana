@@ -139,11 +139,11 @@ func (i *Identity) GetName() string {
 }
 
 func (i *Identity) GetID() string {
-	return identity.NewTypedIDString(i.Type, i.ID)
+	return claims.NewTypeID(i.Type, i.ID)
 }
 
 func (i *Identity) GetUID() string {
-	return identity.NewTypedIDString(i.Type, i.UID)
+	return claims.NewTypeID(i.Type, i.UID)
 }
 
 func (i *Identity) GetAuthID() string {
