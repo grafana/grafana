@@ -52,6 +52,12 @@ export interface GraphNGProps extends Themeable2 {
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
 
+  // this is a temporary hack that only works when:
+  // 1. renderLegend (above) does not render <PlotLegend>
+  // 2. does not have legend series toggle
+  // 3. passes through all fields required for link/action gen (including those with hideFrom.viz)
+  omitHideFromViz?: boolean;
+
   /**
    * needed for propsToDiff to re-init the plot & config
    * this is a generic approach to plot re-init, without having to specify which panel-level options
@@ -175,12 +181,14 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         };
       }
 
-      const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
-      alignedFrameFinal = {
-        ...alignedFrameFinal,
-        fields: nonHiddenFields,
-        length: nonHiddenFields.length,
-      };
+      if (props.omitHideFromViz) {
+        const nonHiddenFields = alignedFrameFinal.fields.filter((field) => field.config.custom?.hideFrom?.viz !== true);
+        alignedFrameFinal = {
+          ...alignedFrameFinal,
+          fields: nonHiddenFields,
+          length: nonHiddenFields.length,
+        };
+      }
 
       let config = this.state?.config;
 
