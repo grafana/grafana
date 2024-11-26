@@ -194,7 +194,7 @@ function ExportNewRuleButton() {
       tooltip="Export new grafana rule"
       onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
     >
-      <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export new alert rule</Trans>
+      <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export rule definition</Trans>
     </LinkButton>
   );
 }
