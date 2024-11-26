@@ -47,7 +47,7 @@ export interface GraphNGProps extends Themeable2 {
   prepConfig: (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => UPlotConfigBuilder;
   propsToDiff?: Array<string | PropDiffFn>;
   preparePlotFrame?: (frames: DataFrame[], dimFields: XYFieldMatchers) => DataFrame | null;
-  renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
+  renderLegend: (config: UPlotConfigBuilder, alignedFrame: DataFrame) => React.ReactElement | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
@@ -83,6 +83,9 @@ function sameProps<T extends Record<string, unknown>>(
  * @internal -- not a public API
  */
 export interface GraphNGState {
+  // includes fields hidden from viz
+  alignedFrameLegend: DataFrame;
+  // excludes fields hidden from viz
   alignedFrame: DataFrame;
   alignedData?: AlignedData;
   config?: UPlotConfigBuilder;
@@ -175,6 +178,17 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         };
       }
 
+      const alignedFrameLegend = alignedFrameFinal;
+
+      const nonHiddenFields = alignedFrameFinal.fields.filter(
+        (field, i) => i === 0 || (!field.config.custom?.hideFrom?.viz && !field.state?.hideFrom?.viz)
+      );
+      alignedFrameFinal = {
+        ...alignedFrameFinal,
+        fields: nonHiddenFields,
+        length: nonHiddenFields.length,
+      };
+
       let config = this.state?.config;
 
       if (withConfig) {
@@ -184,6 +198,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
       state = {
         alignedFrame: alignedFrameFinal,
+        alignedFrameLegend,
         config,
       };
 
@@ -229,14 +244,14 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
   render() {
     const { width, height, children, renderLegend } = this.props;
-    const { config, alignedFrame, alignedData } = this.state;
+    const { config, alignedFrame, alignedFrameLegend, alignedData } = this.state;
 
     if (!config) {
       return null;
     }
 
     return (
-      <VizLayout width={width} height={height} legend={renderLegend(config)}>
+      <VizLayout width={width} height={height} legend={renderLegend(config, alignedFrameLegend)}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart
             config={config}

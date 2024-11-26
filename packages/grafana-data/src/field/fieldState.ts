@@ -62,11 +62,32 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
 /**
  *
  * moves each field's config.custom.hideFrom to field.state.hideFrom
- * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
+ * and sets field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
  */
 export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource) {
-  frames.forEach((frame) => {
-    frame.fields.forEach((field) => {
+  return frames.map((frame) => {
+    const frameCopy: DataFrame = { ...frame };
+
+    frameCopy.fields = frame.fields.map((field) => {
+      const fieldCopy: Field = {
+        ...field,
+        state: {
+          ...field.state,
+          hideFrom: {
+            ...(field.state?.hideFrom ?? { legend: false, tooltip: false, viz: false }),
+          },
+        },
+        config: {
+          ...field.config,
+          custom: {
+            ...field.config.custom,
+            hideFrom: {
+              ...field.config.custom?.hideFrom,
+            },
+          },
+        },
+      };
+
       const hideFrom = {
         legend: false,
         tooltip: false,
@@ -75,7 +96,7 @@ export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldCon
       };
 
       // with ad hoc __system override applied
-      const hideFromState = field.config.custom?.hideFrom;
+      const hideFromState = fieldCopy.config.custom?.hideFrom;
 
       fieldConfig.overrides.forEach((o) => {
         if ('__systemRef' in o) {
@@ -93,16 +114,20 @@ export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldCon
         }
       });
 
-      field.state = {
-        ...field.state,
+      fieldCopy.state = {
+        ...fieldCopy.state,
         hideFrom: {
           ...hideFromState,
         },
       };
 
       // original with perm overrides
-      field.config.custom.hideFrom = hideFrom;
+      fieldCopy.config.custom.hideFrom = hideFrom;
+
+      return fieldCopy;
     });
+
+    return frameCopy;
   });
 }
 

@@ -1,6 +1,7 @@
 import {
   DataFrame,
   Field,
+  FieldConfigSource,
   FieldType,
   getFieldDisplayName,
   GrafanaTheme2,
@@ -96,6 +97,7 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
+  fieldConfig: FieldConfigSource,
   options: Partial<Options>,
   theme: GrafanaTheme2,
   timeRange?: TimeRange
@@ -120,7 +122,7 @@ export function prepareCandlestickFields(
   const data: CandlestickData = { aligned, frame: aligned, names: {} };
 
   // Apply same filter as everything else in timeseries
-  const timeSeriesFrames = prepareGraphableFields([aligned], theme, timeRange);
+  const timeSeriesFrames = prepareGraphableFields([aligned], fieldConfig, theme, timeRange);
   if (!timeSeriesFrames) {
     return null;
   }

@@ -19,7 +19,12 @@ export class CandlestickSuggestionsSupplier {
       return;
     }
 
-    const info = prepareCandlestickFields(builder.data.series, defaultOptions, config.theme2);
+    const info = prepareCandlestickFields(
+      builder.data.series,
+      { defaults: {}, overrides: [] },
+      defaultOptions,
+      config.theme2
+    );
     if (!info) {
       return;
     }

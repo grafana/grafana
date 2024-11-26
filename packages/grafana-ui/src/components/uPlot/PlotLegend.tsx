@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
+import { DataFrame, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -12,7 +12,7 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { getDisplayValuesForCalcs } from './utils';
 
 interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
-  data: DataFrame[];
+  frame: DataFrame;
   config: UPlotConfigBuilder;
 }
 
@@ -40,41 +40,60 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
 }
 
 export const PlotLegend = memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
+  ({ frame, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
-    const legendItems = config
-      .getSeries()
-      .map<VizLegendItem | undefined>((s) => {
-        const seriesConfig = s.props;
-        const fieldIndex = seriesConfig.dataFrameFieldIndex;
-        const axisPlacement = config.getAxisPlacement(s.props.scaleKey);
 
-        if (!fieldIndex) {
+    const cfgSeries = config.getSeries();
+
+    const legendItems: VizLegendItem[] = frame.fields
+      .map((field, i) => {
+        if (i === 0 || field.config.custom?.hideFrom.legend) {
           return undefined;
         }
 
-        const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+        const dataFrameFieldIndex = field.state?.origin!;
 
-        if (!field || field.config.custom?.hideFrom?.legend) {
-          return undefined;
+        const seriesConfig = cfgSeries.find(({ props }) => {
+          const { dataFrameFieldIndex: dataFrameFieldIndexCfg } = props;
+
+          return (
+            dataFrameFieldIndexCfg?.frameIndex === dataFrameFieldIndex.frameIndex &&
+            dataFrameFieldIndexCfg?.fieldIndex === dataFrameFieldIndex.fieldIndex
+          );
+        });
+
+        let axisPlacement = AxisPlacement.Left;
+
+        // there is a bit of a bug here. since we no longer add hidden fields to the uplot config
+        // we cannot determine "auto" axis placement of hidden series
+        // we can fix this in future by decoupling some things
+        if (seriesConfig != null) {
+          axisPlacement = config.getAxisPlacement(seriesConfig.props.scaleKey);
+        } else {
+          let fieldAxisPlacement = field.config.custom?.axisPlacement;
+
+          // respect explicit non-auto placement
+          if (fieldAxisPlacement !== AxisPlacement.Auto) {
+            fieldAxisPlacement = fieldAxisPlacement;
+          }
         }
 
-        const label = getFieldDisplayName(field, data[fieldIndex.frameIndex]!, data);
+        const label = field.state?.displayName ?? field.name;
         const scaleColor = getFieldSeriesColor(field, theme);
         const seriesColor = scaleColor.color;
 
         return {
-          disabled: !(seriesConfig.show ?? true),
-          fieldIndex,
+          disabled: field.state?.hideFrom?.viz,
+          fieldIndex: dataFrameFieldIndex,
           color: seriesColor,
           label,
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
-          getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
-          lineStyle: seriesConfig.lineStyle,
+          getItemKey: () => `${label}-${dataFrameFieldIndex.frameIndex}-${dataFrameFieldIndex.fieldIndex}`,
+          lineStyle: field.config.custom.lineStyle,
         };
       })
-      .filter((i): i is VizLegendItem => i !== undefined);
+      .filter((item) => item !== undefined);
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>

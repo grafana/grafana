@@ -80,8 +80,8 @@ export const TrendPanel = ({
       }
     }
 
-    return { frames: prepareGraphableFields(frames, config.theme2, undefined, xFieldIdx) };
-  }, [data.series, options.xField]);
+    return { frames: prepareGraphableFields(frames, fieldConfig, config.theme2, undefined, xFieldIdx) };
+  }, [data.series, fieldConfig, options.xField]);
 
   if (info.warning || !info.frames) {
     return (

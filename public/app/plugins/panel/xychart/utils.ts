@@ -43,7 +43,7 @@ export function prepSeries(
   fieldConfig: FieldConfigSource
 ) {
   cacheFieldDisplayNames(frames);
-  decoupleHideFromState(frames, fieldConfig);
+  frames = decoupleHideFromState(frames, fieldConfig);
 
   let series: XYSeries[] = [];
 
