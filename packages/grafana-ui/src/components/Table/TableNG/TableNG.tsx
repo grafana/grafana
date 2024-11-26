@@ -151,6 +151,11 @@ export function TableNG(props: TableNGProps) {
   const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
     const headerRef = useRef(null);
 
+    let isColumnFilterable = filterable;
+    if (field.config.custom.filterable !== undefined) {
+      isColumnFilterable = field.config.custom.filterable;
+    }
+
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
     };
@@ -173,7 +178,9 @@ export function TableNG(props: TableNGProps) {
             ))}
         </button>
 
-        {filterable && <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />}
+        {isColumnFilterable && (
+          <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />
+        )}
       </div>
     );
   };
