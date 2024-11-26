@@ -52,6 +52,8 @@ export interface GraphNGProps extends Themeable2 {
   dataLinkPostProcessor?: DataLinkPostProcessor;
   cursorSync?: DashboardCursorSync;
 
+  // Remove fields that are hidden from the visualization before rendering
+  // The fields will still be available for other things like data links
   // this is a temporary hack that only works when:
   // 1. renderLegend (above) does not render <PlotLegend>
   // 2. does not have legend series toggle
