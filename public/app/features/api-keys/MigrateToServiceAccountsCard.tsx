@@ -24,19 +24,16 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
       Find out more about the migration here.
     </a>
   );
-  const migrationBoxDesc = (
-    <span>
-      Migrating all API keys will hide the API keys tab.
-    </span>
-  );
+  const migrationBoxDesc = <span>Migrating all API keys will hide the API keys tab.</span>;
 
   return (
     <>
       {apikeysCount > 0 && (
         <Alert title="Switch from API keys to service accounts" severity="warning">
           <div className={styles.text}>
-            API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into a service account with a token and will
-            continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
+            API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into
+            a service account with a token and will continue to work as they were. We encourage you to migrate your API
+            keys to service accounts now. {docsLink}
           </div>
           <div className={styles.actionRow}>
             <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
