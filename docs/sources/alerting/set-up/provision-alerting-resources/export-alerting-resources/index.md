@@ -129,7 +129,7 @@ To export your alert rule definition into Terraform (HCL) format, complete the f
 1. Click **Export rule definition**.
 1. Fill out the alert rule details.
 1. Choose a provisioned folder and group to add your alert rule definition to.
-1. Click **Export new alert rule**.
+1. Click **Export**.
 1. Copy and paste the code into your Terraform pipeline to create your new alert rule.
 
 ### Export alert rules
