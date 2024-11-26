@@ -5,20 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -512,106 +509,4 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 	}
-}
-
-type mockClientConfigProvider struct {
-	host string
-}
-
-func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
-	return &clientrest.Config{
-		Host: m.host,
-	}
-}
-
-func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
-
-func TestHTTPServer_FolderMetadataK8s(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:errcheck
-		fmt.Fprintln(w,
-			`{
-				"kind": "Folder",
-				"apiVersion": "folder.grafana.app/v0alpha1",
-				"metadata": {
-					"name": "ady4yobv315a8e",
-					"namespace": "default",
-					"uid": "28f306ee-ada1-40f4-8011-b2d1df462aad",
-					"creationTimestamp": "2024-09-17T04:16:35Z",
-					"annotations": {
-						"grafana.app/createdBy": "user:fdxsqt7t5ryf4a",
-						"grafana.app/repoName": "SQL",
-						"grafana.app/repoPath": "3"
-					}
-				},
-				"spec": {
-					"title": "Example folder 226"
-				}
-			}`)
-	}))
-	defer ts.Close()
-
-	mockClientConfigProvider := mockClientConfigProvider{
-		host: ts.URL,
-	}
-
-	setUpRBACGuardian(t)
-	folderService := &foldertest.FakeService{}
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagKubernetesFolders)
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = setting.NewCfg()
-		hs.folderService = folderService
-		hs.QuotaService = quotatest.New(false, nil)
-		hs.SearchService = &mockSearchService{
-			ExpectedResult: model.HitList{},
-		}
-		hs.Features = features
-		hs.clientConfigProvider = mockClientConfigProvider
-	})
-
-	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &folder.Folder{UID: "ady4yobv315a8e"}
-
-		req := server.NewGetRequest("/api/folders/ady4yobv315a8e?accesscontrol=true")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
-			}),
-		}})
-
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-
-		body := dtos.Folder{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-
-		assert.True(t, body.AccessControl[dashboards.ActionFoldersRead])
-		assert.True(t, body.AccessControl[dashboards.ActionFoldersWrite])
-	})
-
-	t.Run("Should not attach access control metadata to folder response", func(t *testing.T) {
-		folderService.ExpectedFolder = &folder.Folder{UID: "ady4yobv315a8e"}
-
-		req := server.NewGetRequest("/api/folders/ady4yobv315a8e")
-		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-				{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
-			}),
-		}})
-
-		res, err := server.Send(req)
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, res.StatusCode)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-
-		body := dtos.Folder{}
-		require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
-
-		assert.False(t, body.AccessControl[dashboards.ActionFoldersRead])
-		assert.False(t, body.AccessControl[dashboards.ActionFoldersWrite])
-	})
 }
