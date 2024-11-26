@@ -144,6 +144,22 @@ A button click will only trigger an API call when [inline editing](#inline-editi
 
 {{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
 
+##### Button API options
+
+The following options let you configure basic, unauthenticated API calls:
+
+<!-- prettier-ignore-start -->
+| Option  | Description  |
+| ------- | ------------ |
+| Endpoint | Enter the endpoint URL. |
+| Method | Choose from **GET**, **POST**, and **PUT**. |
+| Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| Query parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Header parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Payload | Enter the body of the API call. |
+
+<!-- prettier-ignore-end -->
+
 ### Add custom images to elements
 
 You can add custom background images to all elements except **Button** by referencing an image URL.
@@ -296,6 +312,8 @@ Use these following options to control the border of the canvas:
 
 ### Selected element options
 
+<!-- test a version of this with this section under Elements -->
+
 The following options allow you to control the appearance of the element you've selected. To access an element so that you can edit it, expand the **Layer** section and select the desired element.
 
 | Option                                      | Description                                                                                     |
@@ -315,19 +333,20 @@ You can change the type of the element by making a new selection in the drop-dow
 
 #### Element
 
+<!-- This section differs for button and icon -->
+
 This section is named based on the element type. Control the appearance of text on the element with the following options:
 
-| Option         | Description                                                                                                                                                    |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field. |
-| Text color     | Choose a text color.                                                                                                                                           |
-| Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.                                                      |
-| Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**.                                                    |
-| Text size      | Set the text size. Leave the field empty to allow Grafana to automatically set the text size.                                                                  |
+| Option         | Description                                                                                                                                                                                                                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Style          | This option only applies to button elements. Select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. For the other API options for buttons, refer to [Button API options](#button-api-options). |
+| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field.                                                                                                                                                             |
+| Text color     | Choose a text color.                                                                                                                                                                                                                                                                                                       |
+| Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.                                                                                                                                                                                                                  |
+| Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**.                                                                                                                                                                                                                |
+| Text size      | Set the text size. Leave the field empty to allow Grafana to automatically set the text size.                                                                                                                                                                                                                              |
 
 #### Layout
-
-<!--rethink format of this section -->
 
 Control the placement of elements on the canvas with the following options.
 
@@ -343,6 +362,8 @@ Use these following options to set the background of the element:
 
 - **Color** - Set the background color.
 - **Image** - Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements).
+
+This option does not apply to the button element.
 
 #### Border (element)
 
@@ -386,6 +407,24 @@ You can configure a canvas data link to open with a single click on the element.
 The first data link in the list will be configured as your one-click data link. If you want to change the one-click data link, simply drag the desired data link to the top of the list.
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
+
+### Selected connection options
+
+<!--test a version of this with this section under Connectors; this should be consolidated with the connector style section -->
+
+You can style connectors using the following options:
+
+- **Color** - Set the connector color.
+- **Size** - Control the size of the connector by entering a number in the **Value** field.
+- **Radius** - Add curve to the connector by entering a value to represent the degree.
+- **Arrow Direction** - Control how the arrow head of the connector is set. Choose from:
+
+  - **Forward** - The direction in which the connector was drawn.
+  - **Reverse** - The opposite of the direction in which the connector was drawn.
+  - **Both** - Add arrow heads to both ends of the connector.
+  - **None** - Remove the arrow head.
+
+- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
 
 ### Standard options
 
