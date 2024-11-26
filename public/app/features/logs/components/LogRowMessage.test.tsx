@@ -223,7 +223,7 @@ line3`;
   describe('Extremely long log lines', () => {
     let entry = '';
     beforeEach(() => {
-      entry = (new Array(MAX_CHARACTERS)).fill('a').join('')+'b';
+      entry = new Array(MAX_CHARACTERS).fill('a').join('') + 'b';
     });
     it('Displays an ellipsis for log lines above the character limit', async () => {
       setup({
@@ -233,5 +233,5 @@ line3`;
       await userEvent.click(screen.getByText(/1 more/));
       expect(screen.queryByText(/1 more/)).not.toBeInTheDocument();
     });
-  })
+  });
 });

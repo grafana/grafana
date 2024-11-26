@@ -50,8 +50,8 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
     highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && excessCharacters > 0;
   const searchWords = highlights ?? [];
   const [showFull, setShowFull] = useState(excessCharacters < 0);
-  const truncatedEntry = useMemo(() => showFull ? entry : entry.substring(0, MAX_CHARACTERS), [entry, showFull]);
-  
+  const truncatedEntry = useMemo(() => (showFull ? entry : entry.substring(0, MAX_CHARACTERS)), [entry, showFull]);
+
   if (hasAnsi) {
     const highlight = needsHighlighter ? { searchWords, highlightClassName: styles.logsRowMatchHighLight } : undefined;
     return <LogMessageAnsi value={truncatedEntry} highlight={highlight} />;
@@ -65,7 +65,12 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
       />
     );
   }
-  return <>{truncatedEntry}{!showFull && <Ellipsis showFull={showFull} toggle={setShowFull} diff={excessCharacters} />}</>;
+  return (
+    <>
+      {truncatedEntry}
+      {!showFull && <Ellipsis showFull={showFull} toggle={setShowFull} diff={excessCharacters} />}
+    </>
+  );
 };
 
 interface EllipsisProps {
@@ -77,9 +82,16 @@ const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
   const handleClick = (e: SyntheticEvent) => {
     e.stopPropagation();
     toggle(true);
-  }
-  return <>…{' '}<span onClick={handleClick}>({diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>)</span></>
-}
+  };
+  return (
+    <>
+      …{' '}
+      <span onClick={handleClick}>
+        ({diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>)
+      </span>
+    </>
+  );
+};
 
 const restructureLog = (
   line: string,
