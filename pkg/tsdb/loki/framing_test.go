@@ -72,7 +72,7 @@ func TestSuccessResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			runTest("testdata_metric_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: false})
+			runTest("test_non_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: false})
 			runTest("testdata_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: true})
 		})
 	}
