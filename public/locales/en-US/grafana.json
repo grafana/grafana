@@ -332,9 +332,16 @@
     "policies": {
       "default-policy": {
         "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
-        "title": "Default policy"
+        "title": "Default policy",
+        "update": "Update default policy"
+      },
+      "delete": {
+        "confirm": "Yes, delete policy",
+        "warning-1": "Deleting this notification policy will permanently remove it.",
+        "warning-2": "Are you sure you want to delete this policy?"
       },
       "generated-policies": "Auto-generated policies",
+      "matchers": "Matchers",
       "metadata": {
         "active-time": "Active when",
         "delivered-to": "Delivered to",
@@ -366,7 +373,21 @@
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
-      "no-matchers": "No matchers"
+      "no-matchers": "No matchers",
+      "reload-policies": "Reload policies",
+      "save-policy": "Save policy",
+      "update": {
+        "please-wait": "Please wait while we update your notification policies.",
+        "update-policy": "Update policy",
+        "updating": "Updating..."
+      },
+      "update-errors": {
+        "conflict": "The notification policy tree has been updated by another user.",
+        "error-code": "Error message: \"{{error}}\"",
+        "fallback": "Something went wrong when updating your notification policies.",
+        "suffix": "Please refresh the page and try again.",
+        "title": "Error saving notification policy"
+      }
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
