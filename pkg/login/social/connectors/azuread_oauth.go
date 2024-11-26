@@ -216,7 +216,7 @@ func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context, oauthCfg so
 		return "", fmt.Errorf("ManagedIdentityClientID is required for Managed Identity authentication")
 	}
 	if oauthCfg.Audience == "" {
-		return "", fmt.Errorf("Audience is required for Managed Identity authentication")
+		return "", fmt.Errorf("audience is required for Managed Identity authentication")
 	}
 	if err := validateAudience(oauthCfg.Audience); err != nil {
 		return "", err
@@ -231,7 +231,7 @@ func (s *SocialAzureAD) ManagedIdentityCallback(ctx context.Context, oauthCfg so
 	}
 
 	// Request token and return
-	tk, err := mic.GetToken(context.Background(), policy.TokenRequestOptions{
+	tk, err := mic.GetToken(ctx, policy.TokenRequestOptions{
 		Scopes: []string{fmt.Sprintf("%s/.default", oauthCfg.Audience)},
 	})
 	if err != nil {
