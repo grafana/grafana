@@ -27,8 +27,8 @@ export const Filter = ({ name, rows, filter, setFilter, field }: Props) => {
   const filterEnabled = useMemo(() => Boolean(filterValue), [filterValue]);
   const onShowPopover = useCallback(() => setPopoverVisible(true), [setPopoverVisible]);
   const onClosePopover = useCallback(() => setPopoverVisible(false), [setPopoverVisible]);
-  const [searchFilter, setSearchFilter] = useState('');
-  const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
+  const [searchFilter, setSearchFilter] = useState(filter[name]?.searchFilter || '');
+  const [operator, setOperator] = useState<SelectableValue<string>>(filter[name]?.operator || REGEX_OPERATOR);
 
   return (
     <button

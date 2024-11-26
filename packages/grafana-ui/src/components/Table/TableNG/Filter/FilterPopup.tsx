@@ -52,7 +52,10 @@ export const FilterPopup = ({
         // create a Set for faster filtering
         const filteredSet = new Set(values.map((item) => item.value));
 
-        setFilter((filter: FilterType) => ({ ...filter, [name]: { filtered: values, filteredSet } }));
+        setFilter((filter: FilterType) => ({
+          ...filter,
+          [name]: { filtered: values, filteredSet, searchFilter, operator },
+        }));
       } else {
         setFilter((filter: FilterType) => {
           const newFilter = { ...filter };
