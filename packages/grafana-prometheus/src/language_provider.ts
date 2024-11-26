@@ -333,7 +333,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-    return possibleLabelNames.filter((l) => !usedLabelNames.has(l)).map(utf8Support);
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
   };
 
   /**
