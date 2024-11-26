@@ -77,6 +77,9 @@ export enum AccessControlAction {
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
+  SnapshotsCreate = 'snapshots:create',
+  SnapshotsDelete = 'snapshots:delete',
+  SnapshotsRead = 'snapshots:read',
 
   FoldersRead = 'folders:read',
   FoldersWrite = 'folders:write',
