@@ -159,9 +159,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         }),
       },
 
-      /*[theme.breakpoints.down('md')]: {
+      [theme.breakpoints.down('md')]: {
         width: 'auto !important'
-      },*/
+      },
 
       '&:focus, &:focus-visible': {
         ...getFocusStyles(theme),
