@@ -173,17 +173,12 @@ func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBr
 }
 
 func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error) {
-	_, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	_, resp, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
 	if err == nil {
 		return true, nil
 	}
 
-	var ghErr *github.ErrorResponse
-	if !errors.As(err, &ghErr) {
-		return false, err
-	}
-
-	if ghErr.Response.StatusCode == http.StatusNotFound {
+	if resp.StatusCode == http.StatusNotFound {
 		return false, nil
 	}
 
