@@ -19,8 +19,6 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
-import { dashboardSceneGraph } from './dashboardSceneGraph';
-
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
 
@@ -216,12 +214,9 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
-export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
-  const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
+export function getDefaultVizPanel(): VizPanel {
   return new VizPanel({
     title: 'Panel Title',
-    key: getVizPanelKeyForPanelId(panelId),
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
@@ -254,11 +249,11 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 /**
- * Activates any inactive parents of the scene object.
+ * Activates any inactive ancestors of the scene object.
  * Useful when rendering a scene object out of context of it's parent
  * @returns
  */
-export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+export function activateSceneObjectAndParentTree(so: SceneObject): CancelActivationHandler | undefined {
   let cancel: CancelActivationHandler | undefined;
   let parentCancel: CancelActivationHandler | undefined;
 
@@ -267,7 +262,7 @@ export function activateInActiveParents(so: SceneObject): CancelActivationHandle
   }
 
   if (so.parent) {
-    parentCancel = activateInActiveParents(so.parent);
+    parentCancel = activateSceneObjectAndParentTree(so.parent);
   }
 
   cancel = so.activate();
@@ -277,3 +272,10 @@ export function activateInActiveParents(so: SceneObject): CancelActivationHandle
     cancel();
   };
 }
+
+/**
+ * @deprecated use activateSceneObjectAndParentTree instead.
+ * Activates any inactive ancestors of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ */
+export const activateInActiveParents = activateSceneObjectAndParentTree;

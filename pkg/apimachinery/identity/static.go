@@ -14,21 +14,21 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Type                       claims.IdentityType
-	UserID                     int64
-	UserUID                    string
-	OrgID                      int64
-	OrgName                    string
-	OrgRole                    RoleType
-	Login                      string
-	Name                       string
-	DisplayName                string
-	Email                      string
-	EmailVerified              bool
-	AuthID                     string
-	AuthenticatedBy            string
-	AllowedKubernetesNamespace string
-	IsGrafanaAdmin             bool
+	Type            claims.IdentityType
+	UserID          int64
+	UserUID         string
+	OrgID           int64
+	OrgName         string
+	OrgRole         RoleType
+	Login           string
+	Name            string
+	DisplayName     string
+	Email           string
+	EmailVerified   bool
+	AuthID          string
+	AuthenticatedBy string
+	Namespace       string
+	IsGrafanaAdmin  bool
 	// Permissions grouped by orgID and actions
 	Permissions   map[int64]map[string][]string
 	IDToken       string
@@ -175,8 +175,8 @@ func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
 }
 
-func (u *StaticRequester) GetAllowedKubernetesNamespace() string {
-	return u.AllowedKubernetesNamespace
+func (u *StaticRequester) GetNamespace() string {
+	return u.Namespace
 }
 
 func (u *StaticRequester) GetAuthenticatedBy() string {

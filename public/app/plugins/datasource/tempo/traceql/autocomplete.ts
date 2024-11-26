@@ -1,4 +1,4 @@
-import { IMarkdownString } from 'monaco-editor';
+import { IMarkdownString, languages } from 'monaco-editor';
 
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
@@ -276,29 +276,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
 
     return completionItems.then((items) => {
-      // monaco by-default alphabetically orders the items.
-      // to stop it, we use a number-as-string sortkey,
-      // so that monaco keeps the order we use
-      const maxIndexDigits = items.length.toString().length;
-      const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
-        const suggestion: monacoTypes.languages.CompletionItem = {
-          kind: getMonacoCompletionItemKind(item.type, this.monaco!),
-          label: item.label,
-          insertText: item.insertText,
-          insertTextRules: item.insertTextRules,
-          detail: item.detail,
-          documentation: item.documentation,
-          sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
-          range,
-          command: {
-            id: this.registerInteractionCommandId || 'noOp',
-            title: 'Report Interaction',
-            arguments: [item.label, item.type],
-          },
-        };
-        fixSuggestion(suggestion, item.type, model, offset);
-        return suggestion;
-      });
+      const suggestions = completionItemsToSuggestions(
+        items,
+        range,
+        this.registerInteractionCommandId ?? undefined,
+        model.getValue(),
+        offset
+      );
       return { suggestions };
     });
   }
@@ -368,7 +352,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
-          insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+          insertTextRules: languages.CompletionItemInsertTextRule.InsertAsSnippet,
           type: 'FUNCTION' as const,
         }));
         const tags = this.getScopesCompletions()
@@ -427,13 +411,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
   private getTagsCompletions(prepend?: string, scope?: string): CompletionItem[] {
     const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
-    return tags
-      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
-      .map((key) => ({
-        label: key,
-        insertText: (prepend || '') + key,
-        type: 'TAG_NAME',
-      }));
+    return tagsToCompletionItems(tags, prepend);
   }
 
   private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
@@ -441,7 +419,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'KEYWORD',
-      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+      insertTextRules: languages.CompletionItemInsertTextRule?.InsertAsSnippet,
     }));
   }
 
@@ -450,7 +428,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       label: key,
       insertText: (prepend || '') + key + (append || ''),
       type: 'SCOPE',
-      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+      insertTextRules: languages.CompletionItemInsertTextRule?.InsertAsSnippet,
     }));
   }
 
@@ -467,23 +445,20 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
  * @param type
  * @param monaco
  */
-function getMonacoCompletionItemKind(
-  type: CompletionItemType,
-  monaco: Monaco
-): monacoTypes.languages.CompletionItemKind {
+function getMonacoCompletionItemKind(type: CompletionItemType): languages.CompletionItemKind {
   switch (type) {
     case 'TAG_NAME':
-      return monaco.languages.CompletionItemKind.Enum;
+      return languages.CompletionItemKind.Enum;
     case 'KEYWORD':
-      return monaco.languages.CompletionItemKind.Keyword;
+      return languages.CompletionItemKind.Keyword;
     case 'OPERATOR':
-      return monaco.languages.CompletionItemKind.Operator;
+      return languages.CompletionItemKind.Operator;
     case 'TAG_VALUE':
-      return monaco.languages.CompletionItemKind.EnumMember;
+      return languages.CompletionItemKind.EnumMember;
     case 'SCOPE':
-      return monaco.languages.CompletionItemKind.Class;
+      return languages.CompletionItemKind.Class;
     case 'FUNCTION':
-      return monaco.languages.CompletionItemKind.Function;
+      return languages.CompletionItemKind.Function;
     default:
       throw new Error(`Unexpected CompletionItemType: ${type}`);
   }
@@ -511,6 +486,47 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
   return { offset, range };
 }
 
+const SUGGEST_REGEXP = /(event\.|instrumentation\.|link\.|resource\.|span\.|\.)?([\w./-]*)$/;
+
+function completionItemsToSuggestions(
+  items: CompletionItem[],
+  range: monacoTypes.IRange | languages.CompletionItemRanges,
+  registerInteractionCommandId = 'noOp',
+  modelValue: string,
+  offset: number
+) {
+  // monaco by-default alphabetically orders the items.
+  // to stop it, we use a number-as-string sortkey,
+  // so that monaco keeps the order we use
+  const [_, scope, tag] = modelValue.substring(0, offset).match(SUGGEST_REGEXP) ?? [];
+  const maxIndexDigits = items.length.toString().length;
+  const suggestions: languages.CompletionItem[] = items.map((item, index) => {
+    const suggestion: languages.CompletionItem = {
+      kind: getMonacoCompletionItemKind(item.type),
+      label: item.label,
+      insertText: item.insertText,
+      insertTextRules: item.insertTextRules,
+      detail: item.detail,
+      documentation: item.documentation,
+      sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
+      range,
+      command: {
+        id: registerInteractionCommandId,
+        title: 'Report Interaction',
+        arguments: [item.label, item.type],
+      },
+    };
+
+    if (tag && item.type === 'TAG_NAME') {
+      fixSuggestion(suggestion, offset, tag, scope);
+    }
+
+    return suggestion;
+  });
+
+  return suggestions;
+}
+
 /**
  * Fix the suggestions range and insert text. For the range we have to adjust because monaco by default replaces just
  * the last word which stops at dot while traceQL tags contain dots themselves and we want to replace the whole tag
@@ -518,34 +534,25 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  * This may be doable also when creating the suggestions but for a particular situation this seems to be easier to do
  * here.
  */
-function fixSuggestion(
-  suggestion: monacoTypes.languages.CompletionItem,
-  itemType: CompletionItemType,
-  model: monacoTypes.editor.ITextModel,
-  offset: number
-) {
-  if (itemType === 'TAG_NAME') {
-    const match = model
-      .getValue()
-      .substring(0, offset)
-      .match(/(span\.|resource\.|\.)?([\w./-]*)$/);
-
-    if (match) {
-      const scope = match[1];
-      const tag = match[2];
-
-      if (tag) {
-        // Add the default scope if needed.
-        if (!scope && suggestion.insertText[0] !== '.') {
-          suggestion.insertText = '.' + suggestion.insertText;
-        }
-
-        // Adjust the range, so that we will replace the whole tag.
-        suggestion.range = {
-          ...suggestion.range,
-          startColumn: offset - tag.length + 1,
-        };
-      }
-    }
+function fixSuggestion(suggestion: monacoTypes.languages.CompletionItem, offset: number, tag: string, scope?: string) {
+  // Add the default scope if needed.
+  if (scope == null && suggestion.insertText[0] !== '.') {
+    suggestion.insertText = '.' + suggestion.insertText;
   }
+
+  // Adjust the range, so that we will replace the whole tag.
+  suggestion.range = {
+    ...suggestion.range,
+    startColumn: offset - tag.length + 1,
+  };
+}
+
+const collator = new Intl.Collator('en', { sensitivity: 'accent' });
+
+function tagsToCompletionItems(tags: string[], prepend = ''): CompletionItem[] {
+  return tags.sort(collator.compare).map((key) => ({
+    label: key,
+    insertText: `${prepend}${key}`,
+    type: 'TAG_NAME',
+  }));
 }

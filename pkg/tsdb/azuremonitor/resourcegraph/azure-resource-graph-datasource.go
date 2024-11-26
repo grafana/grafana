@@ -163,7 +163,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -172,7 +172,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return nil, err
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat), false)
 	if err != nil {
 		return nil, err
 	}

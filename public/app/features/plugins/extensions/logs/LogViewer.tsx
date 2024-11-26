@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { ReactElement, useState } from 'react';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { sceneUtils, VizConfigBuilders } from '@grafana/scenes';
 import {
@@ -21,7 +22,7 @@ const DATASOURCE_REF = {
   type: 'grafana-extensionslog-datasource',
 };
 
-const logsViz = VizConfigBuilders.logs().build();
+const logsViz = VizConfigBuilders.logs().setOption('wrapLogMessage', true).build();
 
 sceneUtils.registerRuntimeDataSource({
   dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
@@ -54,9 +55,13 @@ function LogViewScene(): ReactElement | null {
       navId="extensions"
       actions={<LogViewFilters provider={data} filteredProvider={filteredData} filter={filter} onChange={setFilter} />}
     >
-      <VizGridLayout>
-        <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
-      </VizGridLayout>
+      <AutoSizer>
+        {({ height, width }) => (
+          <VizGridLayout minHeight={height} minWidth={width}>
+            <VizPanel title="" viz={logsViz} dataProvider={filteredData} />
+          </VizGridLayout>
+        )}
+      </AutoSizer>
     </Page>
   );
 }

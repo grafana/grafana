@@ -56,7 +56,7 @@ export const intrinsics = intrinsicsV1.concat([
   'trace:rootName',
   'trace:rootService',
 ]);
-export const scopes: string[] = ['resource', 'span'];
+export const scopes: string[] = ['event', 'instrumentation', 'link', 'resource', 'span'];
 
 const aggregatorFunctions = ['avg', 'count', 'max', 'min', 'sum'];
 const functions = aggregatorFunctions.concat([
@@ -198,13 +198,14 @@ export const traceqlGrammar: Grammar = {
     pattern: /\{[^}]*}/,
     inside: {
       filter: {
-        pattern: /([\w.\/-]+)?(\s*)(([!=+\-<>~]+)\s*("([^"\n&]+)?"?|([^"\n\s&|}]+))?)/g,
+        pattern:
+          /([\w:.\/-]+)\s*(=|!=|<=|>=|=~|!~|>|<)\s*("[^"]*"|[\w.\/-]+)(\s*(\&\&|\|\|)\s*([\w:.\/-]+)\s*(=|!=|<=|>=|=~|!~|>|<)\s*("[^"]*"|[\w.\/-]+))*/g,
         inside: {
           comment: {
             pattern: /#.*/,
           },
           'label-key': {
-            pattern: /[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/,
+            pattern: /[a-z_.][\w./_-]*(:[\w./_-]+)?(?=\s*(=|!=|>|<|>=|<=|=~|!~))/,
             alias: 'attr-name',
           },
           'label-value': {

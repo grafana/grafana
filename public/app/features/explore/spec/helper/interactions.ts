@@ -75,9 +75,9 @@ export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History'
 };
 
 export const selectStarredTabFirst = async () => {
-  const checkbox = withinQueryHistory().getByRole('checkbox', {
-    name: /Change the default active tab from “Query history” to “Starred”/,
-  });
+  const checkbox = withinQueryHistory().getByLabelText(
+    /Change the default active tab from “Query history” to “Starred”/
+  );
   await userEvent.click(checkbox);
 };
 

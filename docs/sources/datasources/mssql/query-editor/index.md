@@ -129,6 +129,8 @@ You can select an optional aggregation function for the column in the **Aggregat
 
 To add more value columns, click the plus (`+`) button to the right of the column's row.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.
@@ -169,18 +171,16 @@ To simplify syntax and to allow for dynamic components, such as date range filte
 | `$__timeGroup(dateColumn,'5m'[, fillvalue])`          | An expression usable in GROUP BY clause. Providing a _fillValue_ of _NULL_ or _floating value_ will automatically fill empty series in timerange with that value.<br/>For example, _CAST(ROUND(DATEDIFF(second, '1970-01-01', time_column)/300.0, 0) as bigint)\*300_. |
 | `$__timeGroup(dateColumn,'5m', 0)`                    | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.                                                                                                                                         |
 | `$__timeGroup(dateColumn,'5m', NULL)`                 | Same as above but NULL will be used as value for missing points.                                                                                                                                                                                                       |
-| `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).                                                                                                       |
-| `$__timeGroupAlias(dateColumn,'5m')`                  | Same as `$__timeGroup` but with an added column alias (only available in Grafana 5.3+).                                                                                                                                                                                |
+| `$__timeGroup(dateColumn,'5m', previous)`             | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used.                                                                                                                                        |
+| `$__timeGroupAlias(dateColumn,'5m')`                  | Same as `$__timeGroup` but with an added column alias.                                                                                                                                                                                                                 |
 | `$__unixEpochFilter(dateColumn)`                      | A time range filter using the specified column name with times represented as Unix timestamp. For example, _dateColumn > 1494410783 AND dateColumn < 1494497183_                                                                                                       |
 | `$__unixEpochFrom()`                                  | The start of the currently active time selection as Unix timestamp. For example, _1494410783_                                                                                                                                                                          |
 | `$__unixEpochTo()`                                    | The end of the currently active time selection as Unix timestamp. For example, _1494497183_                                                                                                                                                                            |
 | `$__unixEpochNanoFilter(dateColumn)`                  | A time range filter using the specified column name with times represented as nanosecond timestamp. For example, _dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872_                                                                               |
 | `$__unixEpochNanoFrom()`                              | The start of the currently active time selection as nanosecond timestamp. For example, _1494410783152415214_                                                                                                                                                           |
 | `$__unixEpochNanoTo()`                                | The end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                                                                                                             |
-| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as `$__timeGroup` but for times stored as Unix timestamp (only available in Grafana 5.3+).                                                                                                                                                                        |
-| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias (only available in Grafana 5.3+).                                                                                                                                                                                           |
-
-To suggest more macros, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
+| `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as `$__timeGroup` but for times stored as Unix timestamp.                                                                                                                                                                                                         |
+| `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias.                                                                                                                                                                                                                            |
 
 ### View the interpolated query
 
@@ -358,12 +358,12 @@ You can add annotation queries in the Dashboard menu's Annotations view.
 
 **Columns:**
 
-| Name      | Description                                                                                                                       |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.                          |
-| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+) |
-| `text`    | Event description field.                                                                                                          |
-| `tags`    | Optional field name to use for event tags as a comma separated string.                                                            |
+| Name      | Description                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `time`    | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.          |
+| `timeend` | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. |
+| `text`    | Event description field.                                                                                          |
+| `tags`    | Optional field name to use for event tags as a comma separated string.                                            |
 
 **Example database tables:**
 

@@ -1,4 +1,6 @@
-import { locationUtil } from '@grafana/data';
+import { isEqual } from 'lodash';
+
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -7,7 +9,6 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
-import { getSelectedScopesNames } from 'app/features/scopes';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
@@ -20,6 +21,7 @@ import { updateNavModel } from './utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  options?: LoadDashboardOptions;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -42,6 +44,15 @@ export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
   urlFolderUid?: string;
+  params?: {
+    version: number;
+    scopes: string[];
+    timeRange: {
+      from: string;
+      to: string;
+    };
+    variables: UrlQueryMap;
+  };
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -52,12 +63,20 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions): Promise<DashboardDTO | null> {
+  public async fetchDashboard({
+    uid,
+    route,
+    urlFolderUid,
+    params,
+  }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
-    const cachedDashboard = this.getDashboardFromCache(cacheKey);
 
-    if (cachedDashboard) {
-      return cachedDashboard;
+    if (!params) {
+      const cachedDashboard = this.getDashboardFromCache(cacheKey);
+
+      if (cachedDashboard) {
+        return cachedDashboard;
+      }
     }
 
     let rsp: DashboardDTO;
@@ -86,7 +105,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
         default:
-          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+          const queryParams = params
+            ? {
+                version: params.version,
+                scopes: params.scopes,
+                from: params.timeRange.from,
+                to: params.timeRange.to,
+                ...params.variables,
+              }
+            : undefined;
+          rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
@@ -159,7 +187,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         restoreDashboardStateFromLocalStorage(dashboard);
       }
 
-      this.setState({ dashboard: dashboard, isLoading: false });
+      this.setState({ dashboard: dashboard, isLoading: false, options });
       const measure = stopMeasure(LOAD_SCENE_MEASUREMENT);
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
@@ -171,6 +199,56 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           id: dashboard.state.id,
         });
       }
+    } catch (err) {
+      const msg = getMessageFromError(err);
+      this.setState({ isLoading: false, loadError: msg });
+    }
+  }
+
+  public async reloadDashboard(params: LoadDashboardOptions['params']) {
+    const stateOptions = this.state.options;
+
+    if (!stateOptions) {
+      return;
+    }
+
+    const options = {
+      ...stateOptions,
+      params,
+    };
+
+    // We shouldn't check all params since:
+    // - version doesn't impact the new dashboard, and it's there for increased compatibility
+    // - time range is almost always different for relative time ranges and absolute time ranges do not trigger subsequent reloads
+    // - other params don't affect the dashboard content
+    if (
+      isEqual(options.params?.variables, stateOptions.params?.variables) &&
+      isEqual(options.params?.scopes, stateOptions.params?.scopes)
+    ) {
+      return;
+    }
+
+    try {
+      this.setState({ isLoading: true });
+
+      const rsp = await this.fetchDashboard(options);
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+        this.setState({ isLoading: false });
+        return;
+      }
+
+      if (!rsp?.dashboard) {
+        this.setState({ isLoading: false, loadError: 'Dashboard not found' });
+        return;
+      }
+
+      const scene = transformSaveModelToScene(rsp);
+
+      this.setSceneCache(options.uid, scene);
+
+      this.setState({ dashboard: scene, isLoading: false, options });
     } catch (err) {
       const msg = getMessageFromError(err);
       this.setState({ isLoading: false, loadError: msg });
@@ -209,7 +287,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public getDashboardFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
-    cacheKey = this.getCacheKey(cacheKey);
 
     if (
       cachedDashboard &&
@@ -234,8 +311,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
   }
 
@@ -244,29 +319,15 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public getSceneFromCache(cacheKey: string) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     return this.cache[cacheKey];
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
-    cacheKey = this.getCacheKey(cacheKey);
-
     this.cache[cacheKey] = scene;
   }
 
   public clearSceneCache() {
     this.cache = {};
-  }
-
-  public getCacheKey(cacheKey: string): string {
-    const scopesCacheKey = getSelectedScopesNames().sort().join('__scp__');
-
-    if (!scopesCacheKey) {
-      return cacheKey;
-    }
-
-    return `${cacheKey}__scp__${scopesCacheKey}`;
   }
 }
 

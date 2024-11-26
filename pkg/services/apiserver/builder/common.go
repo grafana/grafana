@@ -1,19 +1,21 @@
 package builder
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
@@ -46,11 +48,24 @@ type APIGroupBuilder interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
+type APIGroupMutation interface {
+	// Mutate allows the builder to make changes to the object before it is persisted.
+	// Context is used only for timeout/deadline/cancellation and tracing information.
+	Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
+}
+
+type APIGroupValidation interface {
+	// Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate
+	// Context is used only for timeout/deadline/cancellation and tracing information.
+	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
+}
+
 type APIGroupOptions struct {
 	Scheme           *runtime.Scheme
 	OptsGetter       generic.RESTOptionsGetter
 	DualWriteBuilder grafanarest.DualWriteBuilder
 	MetricsRegister  prometheus.Registerer
+	StorageOptions   apistore.StorageOptionsRegister
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly

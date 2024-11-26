@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -16,6 +15,7 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import { defaultPageNav } from '../../RuleViewer';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { usePrometheusCreationConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { useReturnTo } from '../../hooks/useReturnTo';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
@@ -65,18 +65,17 @@ const RuleViewer = () => {
   // we want to be able to show a modal if the rule has been provisioned explain the limitations
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
+  const { annotations, promRule, rulerRule } = rule;
 
-  const { annotations, promRule } = rule;
-  const hasError = isErrorHealth(rule.promRule?.health);
-
+  const hasError = isErrorHealth(promRule?.health);
   const isAlertType = isAlertingRule(promRule);
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+  const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
 
   const showError = hasError && !isPaused;
-  const ruleOrigin = getRulePluginOrigin(rule);
+  const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
 
   const summary = annotations[Annotation.summary];
 
@@ -90,12 +89,12 @@ const RuleViewer = () => {
           name={title}
           paused={isPaused}
           state={isAlertType ? promRule.state : undefined}
-          health={rule.promRule?.health}
-          ruleType={rule.promRule?.type}
+          health={promRule?.health}
+          ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}
         />
       )}
-      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
+      actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
@@ -243,15 +242,14 @@ interface TitleProps {
 }
 
 export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
-  const styles = useStyles2(getStyles);
-  const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
-  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
+
+  const { returnTo } = useReturnTo('/alerting/list');
 
   return (
-    <div className={styles.title}>
+    <Stack direction="row" gap={1} minWidth={0} alignItems="center">
       <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
-      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
       </Text>
@@ -264,7 +262,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
           {isRecordingRule && <RecordingBadge health={health} />}
         </>
       )}
-    </div>
+    </Stack>
   );
 };
 
@@ -328,7 +326,7 @@ function isValidTab(tab: UrlQueryValue): tab is ActiveTab {
 function usePageNav(rule: CombinedRule) {
   const [activeTab, setActiveTab] = useActiveTab();
 
-  const { annotations, promRule } = rule;
+  const { annotations, promRule, rulerRule } = rule;
 
   const summary = annotations[Annotation.summary];
   const isAlertType = isAlertingRule(promRule);
@@ -337,8 +335,8 @@ function usePageNav(rule: CombinedRule) {
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
-  const isGrafanaAlertRule = isGrafanaRulerRule(rule.rulerRule) && isAlertType;
-  const isRecordingRuleType = isRecordingRule(rule.promRule);
+  const isGrafanaAlertRule = isGrafanaRulerRule(rulerRule) && isAlertType;
+  const isRecordingRuleType = isRecordingRule(promRule);
 
   const pageNav: NavModelItem = {
     ...defaultPageNav,
@@ -398,22 +396,19 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
-const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
   return chain(stats)
-    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .pick([
+      AlertInstanceTotalState.Alerting,
+      AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Normal,
+      AlertInstanceTotalState.NoData,
+      AlertInstanceTotalState.Error,
+    ])
     .values()
     .sum()
     .value();
 };
-
-const getStyles = () => ({
-  title: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    minWidth: 0,
-  }),
-});
 
 function isValidRunbookURL(url: string) {
   const isRelative = url.startsWith('/');

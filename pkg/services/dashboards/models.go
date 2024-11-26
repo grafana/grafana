@@ -252,8 +252,9 @@ type DeleteOrphanedProvisionedDashboardsCommand struct {
 //
 // Multiple constraints can be combined.
 type GetDashboardQuery struct {
-	ID    int64
-	UID   string
+	ID  int64
+	UID string
+	// Deprecated: this is no-longer a unique constraint and should not be used
 	Title *string
 	// Deprecated: use FolderUID instead
 	FolderID  *int64
@@ -387,10 +388,12 @@ type DashboardACLInfoDTO struct {
 	Updated time.Time `json:"updated"`
 
 	UserID         int64                          `json:"userId" xorm:"user_id"`
+	UserUID        string                         `json:"userUid"`
 	UserLogin      string                         `json:"userLogin"`
 	UserEmail      string                         `json:"userEmail"`
 	UserAvatarURL  string                         `json:"userAvatarUrl" xorm:"user_avatar_url"`
 	TeamID         int64                          `json:"teamId" xorm:"team_id"`
+	TeamUID        string                         `json:"teamUid"`
 	TeamEmail      string                         `json:"teamEmail"`
 	TeamAvatarURL  string                         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
 	Team           string                         `json:"team"`

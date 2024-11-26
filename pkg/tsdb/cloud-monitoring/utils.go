@@ -90,7 +90,7 @@ func doRequestPage(_ context.Context, r *http.Request, dsInfo datasourceInfo, pa
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 

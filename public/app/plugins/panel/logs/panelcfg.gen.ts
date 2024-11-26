@@ -15,6 +15,8 @@ export interface Options {
   displayedFields?: Array<string>;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
+  logRowMenuIconsAfter?: unknown;
+  logRowMenuIconsBefore?: unknown;
   /**
    * TODO: figure out how to define callbacks
    */

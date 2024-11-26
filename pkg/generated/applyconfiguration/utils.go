@@ -24,10 +24,20 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &alertingnotificationsv0alpha1.IntegrationApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Interval"):
 		return &alertingnotificationsv0alpha1.IntervalApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Matcher"):
+		return &alertingnotificationsv0alpha1.MatcherApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("Receiver"):
 		return &alertingnotificationsv0alpha1.ReceiverApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ReceiverSpec"):
 		return &alertingnotificationsv0alpha1.ReceiverSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("Route"):
+		return &alertingnotificationsv0alpha1.RouteApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RouteDefaults"):
+		return &alertingnotificationsv0alpha1.RouteDefaultsApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RoutingTree"):
+		return &alertingnotificationsv0alpha1.RoutingTreeApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("RoutingTreeSpec"):
+		return &alertingnotificationsv0alpha1.RoutingTreeSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroup"):
 		return &alertingnotificationsv0alpha1.TemplateGroupApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroupSpec"):

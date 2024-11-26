@@ -7,14 +7,7 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  DataSourceSrv,
-  getPluginLinkExtensions,
-  locationService,
-  setAppEvents,
-  setDataSourceSrv,
-  usePluginLinks,
-} from '@grafana/runtime';
+import { DataSourceSrv, locationService, setAppEvents, setDataSourceSrv, usePluginLinks } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { mockUserApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -27,7 +20,7 @@ import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerti
 
 import * as analytics from './Analytics';
 import RuleList from './RuleList';
-import { discoverFeatures } from './api/buildInfo';
+import { discoverFeaturesByUid } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import * as apiRuler from './api/ruler';
 import { fetchRulerRules } from './api/ruler';
@@ -71,12 +64,11 @@ setupPluginsExtensionsHook();
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
-  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   usePluginLinksMock: jest.mocked(usePluginLinks),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
+    discoverFeaturesByUid: jest.mocked(discoverFeaturesByUid),
     fetchRules: jest.mocked(fetchRules),
     fetchRulerRules: jest.mocked(fetchRulerRules),
     rulerBuilderMock: jest.mocked(apiRuler.rulerUrlBuilder),
@@ -128,7 +120,7 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byText(/new alert rule/i),
+  newRuleButton: byRole('link', { name: 'New alert rule' }),
   exportButton: byText(/export rules/i),
   editGroupModal: {
     dialog: byRole('dialog'),
@@ -146,7 +138,6 @@ const ui = {
     more: byRole('button', { name: /More/ }),
   },
   moreActionItems: {
-    pause: byRole('menuitem', { name: /pause evaluation/i }),
     resume: byRole('menuitem', { name: /resume evaluation/i }),
   },
 };
@@ -194,7 +185,7 @@ describe('RuleList', () => {
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
 
-    mocks.api.discoverFeatures.mockResolvedValue({
+    mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Prometheus,
       features: {
         rulerApiEnabled: true,
@@ -288,7 +279,7 @@ describe('RuleList', () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
-    mocks.api.discoverFeatures.mockResolvedValue({
+    mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
@@ -439,7 +430,7 @@ describe('RuleList', () => {
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
-    mocks.api.discoverFeatures.mockResolvedValue({
+    mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
@@ -586,7 +577,7 @@ describe('RuleList', () => {
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
-    mocks.api.discoverFeatures.mockResolvedValue({
+    mocks.api.discoverFeaturesByUid.mockResolvedValue({
       application: PromApplication.Cortex,
       features: {
         rulerApiEnabled: true,
@@ -697,7 +688,7 @@ describe('RuleList', () => {
         mocks.getAllDataSourcesMock.mockReturnValue(Object.values(testDatasources));
         setDataSourceSrv(new MockDataSourceSrv(testDatasources));
 
-        mocks.api.discoverFeatures.mockResolvedValue({
+        mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
@@ -864,7 +855,7 @@ describe('RuleList', () => {
 
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
-        mocks.api.discoverFeatures.mockResolvedValue({
+        mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,
@@ -889,7 +880,7 @@ describe('RuleList', () => {
 
         mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
         setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
-        mocks.api.discoverFeatures.mockResolvedValue({
+        mocks.api.discoverFeaturesByUid.mockResolvedValue({
           application: PromApplication.Cortex,
           features: {
             rulerApiEnabled: true,

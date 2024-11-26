@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { Field, StandardEditorProps } from '@grafana/data';
+import { Field, GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { Button, ColorPicker, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
@@ -65,14 +65,14 @@ export const ArcOptionsEditor = ({ value, onChange, context }: ArcOptionsEditorP
   );
 };
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    section: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0 8px;
-      margin-bottom: 8px;
-    `,
+    section: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: `0 ${theme.spacing(1)}`,
+      marginBottom: theme.spacing(1),
+    }),
   };
 };

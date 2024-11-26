@@ -9,7 +9,6 @@ import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { contextSrv } from 'app/core/core';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 
@@ -18,6 +17,7 @@ interface FormModel {
   name?: string;
   username: string;
   password?: string;
+  orgName?: string;
 }
 
 const navModel = {
@@ -46,6 +46,7 @@ export const SignupInvitedPage = () => {
       email: invite.email,
       name: invite.name,
       username: invite.email,
+      orgName: invite.orgName,
     });
 
     setGreeting(invite.name || invite.email || invite.username);
@@ -68,7 +69,7 @@ export const SignupInvitedPage = () => {
 
         <div className={cx('modal-tagline', styles.tagline)}>
           <em>{invitedBy || 'Someone'}</em> has invited you to join Grafana and the organization{' '}
-          <span className="highlight-word">{contextSrv.user.orgName}</span>
+          <span className="highlight-word">{initFormModel.orgName}</span>
           <br />
           Please complete the following and choose a password to accept your invitation and continue:
         </div>

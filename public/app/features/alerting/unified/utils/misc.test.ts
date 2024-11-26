@@ -1,7 +1,5 @@
 import {
   sortAlerts,
-  wrapWithQuotes,
-  escapeQuotes,
   createExploreLink,
   makeLabelBasedSilenceLink,
   makeDataSourceLink,
@@ -45,24 +43,6 @@ function permute(inputArray: any[]): any[] {
     );
   }, []);
 }
-
-describe('wrapWithQuotes', () => {
-  it('should work as expected', () => {
-    expect(wrapWithQuotes('"hello, world!"')).toBe('\\"hello, world!\\"');
-    expect(wrapWithQuotes('hello, world!')).toBe('"hello, world!"');
-    expect(wrapWithQuotes('hello, "world"!')).toBe('"hello, \\"world\\"!"');
-    expect(wrapWithQuotes('"hello""')).toBe('\\"hello\\"\\"');
-  });
-});
-
-describe('escapeQuotes', () => {
-  it('should escape all quotes', () => {
-    expect(escapeQuotes('"hello, world!"')).toBe('\\"hello, world!\\"');
-    expect(escapeQuotes('hello, world!')).toBe('hello, world!');
-    expect(escapeQuotes('hello, "world"!')).toBe('hello, \\"world\\"!');
-    expect(escapeQuotes('hello"')).toBe('hello\\"');
-  });
-});
 
 describe('Unified Altering misc', () => {
   describe('sortAlerts', () => {

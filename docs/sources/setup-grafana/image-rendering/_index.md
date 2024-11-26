@@ -35,10 +35,16 @@ Alert notifications can include images, but rendering many images at the same ti
 ## Install Grafana Image Renderer plugin
 
 {{% admonition type="note" %}}
-Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
+All PhantomJS support has been removed. Instead, use the Grafana Image Renderer plugin or remote rendering service.
 {{% /admonition %}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
+
+### Memory requirements
+
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Grafana recommends a minimum of 16GB of free memory on the system rendering images.
+
+Rendering multiple images in parallel requires an even bigger memory footprint. You can use the remote rendering service in order to render images on a remote system, so your local system resources are not affected.
 
 ## Configuration
 

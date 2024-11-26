@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { LogContextButtons } from './LogContextButtons';
 
 describe('LogContextButtons', () => {
-  it('should call onChangeWrapLines when the checkbox is used, case 1', async () => {
+  it('should call onChangeWrapLines when the switch is used, case 1', async () => {
     const onChangeWrapLines = jest.fn();
     render(<LogContextButtons onChangeWrapLines={onChangeWrapLines} onScrollCenterClick={jest.fn()} />);
-    const wrapLinesBox = screen.getByRole('checkbox', {
+    const wrapLinesBox = screen.getByRole('switch', {
       name: 'Wrap lines',
     });
     await userEvent.click(wrapLinesBox);
@@ -15,10 +15,10 @@ describe('LogContextButtons', () => {
     expect(onChangeWrapLines).toHaveBeenCalledWith(true);
   });
 
-  it('should call onChangeWrapLines when the checkbox is used, case 2', async () => {
+  it('should call onChangeWrapLines when the switch is used, case 2', async () => {
     const onChangeWrapLines = jest.fn();
     render(<LogContextButtons onChangeWrapLines={onChangeWrapLines} onScrollCenterClick={jest.fn()} wrapLines />);
-    const wrapLinesBox = screen.getByRole('checkbox', {
+    const wrapLinesBox = screen.getByRole('switch', {
       name: 'Wrap lines',
     });
     await userEvent.click(wrapLinesBox);

@@ -181,8 +181,8 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Stack alignItems="center" gap={1}>
-          <Text element="h2" variant="body" weight="medium">
+        <Stack alignItems="center" gap={1} minWidth={0}>
+          <Text element="h2" variant="body" weight="medium" truncate>
             {name}
           </Text>
         </Stack>

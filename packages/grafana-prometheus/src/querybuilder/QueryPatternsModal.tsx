@@ -77,19 +77,26 @@ export const QueryPatternsModal = (props: Props) => {
         Kick start your query by selecting one of these queries. You can then continue to complete your query.
       </div>
       {Object.values(PromQueryPatternType).map((patternType) => {
+        const isOpen = openTabs.includes(patternType);
         return (
           <Collapse
             aria-label={`open and close ${patternType} query starter card`}
             key={patternType}
             label={`${capitalize(patternType)} query starters`}
-            isOpen={openTabs.includes(patternType)}
+            isOpen={isOpen}
             collapsible={true}
-            onToggle={() =>
+            onToggle={() => {
+              const action = isOpen ? 'close' : 'open';
+              reportInteraction(`grafana_prom_kickstart_toggle_pattern_card`, {
+                action,
+                patternType,
+              });
+
               setOpenTabs((tabs) =>
                 // close tab if it's already open, otherwise open it
                 tabs.includes(patternType) ? tabs.filter((t) => t !== patternType) : [...tabs, patternType]
-              )
-            }
+              );
+            }}
           >
             <div className={styles.cardsContainer}>
               {promQueryModeller
