@@ -177,7 +177,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     expressionQueries
   );
 
-  const simplifiedQueryStep = getValues('editorSettings.simplifiedQueryEditor');
+  const simplifiedQueryStep = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') : false;
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
