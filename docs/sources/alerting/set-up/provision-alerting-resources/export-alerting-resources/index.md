@@ -126,7 +126,7 @@ Add a new alert rule definition to an existing provisioned rule groups rather th
 To export your alert rule definition into Terraform (HCL) format, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-1. Click **+ New alert rule**.
+1. Click **Export rule definition**.
 1. Fill out the alert rule details.
 1. Choose a provisioned folder and group to add your alert rule definition to.
 1. Click **Export new alert rule**.
