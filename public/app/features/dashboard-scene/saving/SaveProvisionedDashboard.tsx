@@ -72,6 +72,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
   const isGitHub = repositoryConfig?.type === 'github';
   const [repo, ref, workflow] = watch(['repo', 'ref', 'workflow']);
   const href = createPRLink(repositoryConfig, repo, ref);
+  const { isDirty } = dashboard.state;
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -149,14 +150,14 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           />
         </Field>
 
-        {workflow === WorkflowOption.PullRequest && dashboard.state.isDirty && (
+        {workflow === WorkflowOption.PullRequest && isDirty && (
           <Alert severity="warning" title="Unsaved changes">
             You have unsaved changes. Please save them before opening a pull request.
           </Alert>
         )}
 
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={!dashboard.state.isDirty}>
+          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
             {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
@@ -169,7 +170,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
               fill="outline"
               target={'_blank'}
               rel={'noreferrer noopener'}
-              disabled={dashboard.state.isDirty}
+              disabled={isDirty}
             >
               Open pull request
             </LinkButton>
