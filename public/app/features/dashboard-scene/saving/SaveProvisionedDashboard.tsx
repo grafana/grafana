@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, TextArea, Field, Input, Alert, LinkButton } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -20,6 +21,7 @@ type FormData = {
   path: string;
   comment?: string;
   repo: string;
+  workflow?: WorkflowOption;
 };
 
 function getDefaultValues(meta: DashboardMeta) {
@@ -32,7 +34,20 @@ function getDefaultValues(meta: DashboardMeta) {
     ref = path.substring(idx + 1);
     path = path.substring(0, idx);
   }
-  return { ref, path, repo, comment: '' };
+  return {
+    ref: ref || `dashboard/${Date.now()}`,
+    path,
+    repo,
+    comment: '',
+    workflow: WorkflowOption.Branch,
+  };
+}
+
+function getWorkflowOptions(branch = 'main') {
+  return [
+    { label: `Commit to ${branch}`, value: WorkflowOption.Branch },
+    { label: 'Create pull request', value: WorkflowOption.PullRequest },
+  ];
 }
 
 export interface Props {
@@ -50,11 +65,12 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     handleSubmit,
     watch,
     formState: { errors },
+    control,
   } = useForm({ defaultValues });
   const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
   const repositoryConfig = repositoryConfigQuery?.data?.spec;
   const isGitHub = repositoryConfig?.type === 'github';
-  const [repo, ref] = watch(['repo', 'ref']);
+  const [repo, ref, workflow] = watch(['repo', 'ref', 'workflow']);
   const href = createPRLink(repositoryConfig, repo, ref);
 
   useEffect(() => {
@@ -65,8 +81,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-      // TODO Avoid full reload
-      window.location.reload();
     } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -98,18 +112,31 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} />
+          <Input {...register('path')} readOnly />
         </Field>
 
         {isGitHub && (
-          <Field
-            label="Branch"
-            description="Branch name in GitHub"
-            invalid={!!errors?.ref}
-            error={errors.ref ? <BranchValidationError /> : ''}
-          >
-            <Input {...register('ref', { validate: validateBranchName })} />
-          </Field>
+          <>
+            <Field label="Workflow">
+              <Controller
+                control={control}
+                name={'workflow'}
+                render={({ field: { ref, ...field } }) => (
+                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig.github?.branch)} />
+                )}
+              />
+            </Field>
+            {workflow === WorkflowOption.PullRequest && (
+              <Field
+                label="Branch"
+                description="Branch name in GitHub"
+                invalid={!!errors?.ref}
+                error={errors.ref ? <BranchValidationError /> : ''}
+              >
+                <Input {...register('ref', { validate: validateBranchName })} />
+              </Field>
+            )}
+          </>
         )}
 
         <Field label="Comment">
@@ -122,15 +149,28 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           />
         </Field>
 
+        {workflow === WorkflowOption.PullRequest && dashboard.state.isDirty && (
+          <Alert severity="warning" title="Unsaved changes">
+            You have unsaved changes. Please save them before opening a pull request.
+          </Alert>
+        )}
+
         <Stack gap={2}>
-          <Button variant="primary" type="submit">
-            Save
+          <Button variant="primary" type="submit" disabled={!dashboard.state.isDirty}>
+            {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
             Cancel
           </Button>
-          {isGitHub && (
-            <LinkButton variant="secondary" href={href} fill="outline" target={'_blank'} rel={'noreferrer noopener'}>
+          {isGitHub && workflow === WorkflowOption.PullRequest && (
+            <LinkButton
+              variant="secondary"
+              href={href}
+              fill="outline"
+              target={'_blank'}
+              rel={'noreferrer noopener'}
+              disabled={dashboard.state.isDirty}
+            >
               Open pull request
             </LinkButton>
           )}
