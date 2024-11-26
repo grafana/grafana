@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
@@ -12,7 +13,7 @@ import {
   RulerRecordingRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { hashRulerRule, parse, stringifyIdentifier, getRuleIdFromPathname, hashRule, equal } from './rule-id';
+import { equal, getRuleIdFromPathname, hashRule, hashRulerRule, parse, stringifyIdentifier } from './rule-id';
 
 const alertingRule = {
   prom: {
@@ -242,5 +243,17 @@ describe('useRuleIdFromPathname', () => {
     });
 
     expect(result.current).toBe(undefined);
+  });
+
+  it('should decode percent character properly', () => {
+    locationService.push('/alerting/gdev-cortex/abc%25def/view');
+    const { result } = renderHook(
+      () => {
+        return getRuleIdFromPathname({ id: 'abc%25def' });
+      },
+      { wrapper: TestProvider }
+    );
+
+    expect(result.current).toBe('abc%25def');
   });
 });
