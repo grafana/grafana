@@ -1,4 +1,4 @@
-import { GrafanaRulesSourceSymbol, RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { GrafanaRulesSourceSymbol, RulerDataSourceConfig, RulesSourceUid } from 'app/types/unified-alerting';
 
 import {
   AlertmanagerApiFeatures,
@@ -35,10 +35,7 @@ export const featureDiscoveryApi = alertingApi.injectEndpoints({
       },
     }),
 
-    discoverDsFeatures: build.query<
-      RulesSourceFeatures,
-      { rulesSourceName: string } | { uid: string | typeof GrafanaRulesSourceSymbol }
-    >({
+    discoverDsFeatures: build.query<RulesSourceFeatures, { rulesSourceName: string } | { uid: RulesSourceUid }>({
       queryFn: async (rulesSourceIdentifier) => {
         const dataSourceUID = getDataSourceUID(rulesSourceIdentifier);
         if (!dataSourceUID) {

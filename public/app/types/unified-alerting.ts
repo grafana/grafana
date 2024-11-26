@@ -163,13 +163,6 @@ export interface GrafanaRulesSourceIdentifier {
 }
 
 export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
-// export interface NamespaceIdentifier {
-//   name: string;
-//   /**
-//    * Folder UID for Grafana-managed rules and name for datasource-managed rules
-//    */
-//   uid: string;
-// }
 
 // identifier for where we can find a RuleGroup
 export interface RuleGroupIdentifier {
@@ -186,12 +179,6 @@ export interface GrafanaNamespaceIdentifier {
 export interface DataSourceNamespaceIdentifier {
   name: string;
 }
-
-// export interface RuleGroupIdentifierV2<T extends GrafanaNamespaceIdentifier | DataSourceNamespaceIdentifier> {
-//   rulesSource: RulesSourceIdentifier;
-//   namespace: T;
-//   groupName: string;
-// }
 
 export interface GrafanaRuleGroupIdentifier {
   rulesSource: { uid: typeof GrafanaRulesSourceSymbol; name: typeof GRAFANA_RULES_SOURCE_NAME };
