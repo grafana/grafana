@@ -5,7 +5,7 @@ import { ComponentProps } from 'react';
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { LogRowMessage } from './LogRowMessage';
+import { LogRowMessage, MAX_CHARACTERS } from './LogRowMessage';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
@@ -217,6 +217,21 @@ line3`;
 
       expect(onBefore).toHaveBeenCalledWith(expect.anything(), row);
       expect(onAfter).toHaveBeenCalledWith(expect.anything(), row);
+    });
+  });
+
+  describe('Extremely long log lines', () => {
+    let entry = '';
+    beforeEach(() => {
+      entry = new Array(MAX_CHARACTERS).fill('a').join('') + 'b';
+    });
+    it('Displays an ellipsis for log lines above the character limit', async () => {
+      setup({
+        row: createLogRow({ entry, logLevel: LogLevel.error, timeEpochMs: 1546297200000 }),
+      });
+      expect(screen.getByText(/1 more/)).toBeInTheDocument();
+      await userEvent.click(screen.getByText(/1 more/));
+      expect(screen.queryByText(/1 more/)).not.toBeInTheDocument();
     });
   });
 });

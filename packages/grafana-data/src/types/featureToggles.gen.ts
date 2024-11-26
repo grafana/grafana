@@ -59,7 +59,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
