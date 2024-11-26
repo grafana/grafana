@@ -122,7 +122,6 @@ export const AzureCredentialsForm = (props: Props) => {
           disabled={disabled}
           managedIdentityEnabled={managedIdentityEnabled}
           workloadIdentityEnabled={workloadIdentityEnabled}
-          userIdentityEnabled={userIdentityEnabled}
         />
       )}
     </ConfigSection>
