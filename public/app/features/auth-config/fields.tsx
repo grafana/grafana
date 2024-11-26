@@ -1,5 +1,6 @@
 import { validate as uuidValidate } from 'uuid';
 
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -26,6 +27,7 @@ export const sectionFields: Section = {
       id: 'general',
       fields: [
         'name',
+        'clientAuthentication',
         'clientId',
         'clientSecret',
         'managedIdentityClientId',
@@ -250,6 +252,18 @@ export const sectionFields: Section = {
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
   return {
+    clientAuthentication: {
+      label: 'Client authentication',
+      type: 'select',
+      description: 'The client authentication method used to authenticate to the token endpoint.',
+      multi: false,
+      options: orgMappingClientAuthentication(provider),
+      defaultValue: { value: 'client_secret_post', label: 'Client secret' },
+      validation: {
+        required: true,
+        message: 'This field is required',
+      },
+    },
     clientId: {
       label: 'Client Id',
       type: 'text',
@@ -662,5 +676,18 @@ function orgMappingDescription(provider: string): string {
     default:
       // Generic OAuth, Okta
       return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';
+  }
+}
+
+function orgMappingClientAuthentication(provider: string): Array<SelectableValue<string>> {
+  switch (provider) {
+    case 'azuread':
+      return [
+        { value: 'client_secret_post', label: 'Client secret' },
+        { value: 'managed_identity', label: 'Managed identity' },
+      ];
+    // Other providers ...
+    default:
+      return [{ value: 'client_secret_post', label: 'Client secret' }];
   }
 }
