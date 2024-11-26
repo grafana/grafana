@@ -127,9 +127,9 @@ To customize branding in an air-gapped deployment:
    - on macOS:
      ``
 
-1. Remove the semicolon to include one of the following configuration options in your `custom.ini` or `grafana.ini` file:
-   - `login_logo = /public/img/<your-logo.png>`
-   - `login_background = url(<grafana_base_url>/public/img/<your_logo>.jpg)`
+1. Specify images for the desired options in the `[white_labeling]` section of your `custom.ini` or `grafana.ini` file using one of the following patterns:
+   - `/public/img/<your-logo.png>`
+   - `url(<grafana_base_url>/public/img/<your_logo>.jpg)`
 
 ## Custom branding for shared dashboards
 
