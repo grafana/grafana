@@ -10,7 +10,7 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
 
-export const MAX_CHARACTERS = 100000;
+export const MAX_CHARACTERS = 90;
 
 interface Props {
   row: LogRowModel;
@@ -86,7 +86,7 @@ const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
   return (
     <>
       …{' '}
-      <Button fill="text" size="sm" variant="secondary" onClick={handleClick}>
+      <Button fill="outline" size="sm" variant="secondary" onClick={handleClick}>
         {diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>
       </Button>
     </>
