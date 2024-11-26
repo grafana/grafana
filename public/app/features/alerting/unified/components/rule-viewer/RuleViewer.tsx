@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -153,12 +154,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const hasLabels = !isEmpty(labels);
 
   const interval = group.interval;
+  const styles = useStyles2(getStyles);
 
   if (runbookUrl) {
     /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
     const truncatedUrl = truncate(runbookUrl, { length: 42 });
     const valueToAdd = isValidRunbookURL(runbookUrl) ? (
-      <TextLink variant="bodySmall" href={runbookUrl} external>
+      <TextLink variant="bodySmall" className={styles.url} href={runbookUrl} external>
         {truncatedUrl}
       </TextLink>
     ) : (
@@ -409,6 +411,18 @@ export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) =
     .sum()
     .value();
 };
+
+const getStyles = () => ({
+  title: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  }),
+  url: css({
+    wordBreak: 'break-all',
+  }),
+});
 
 function isValidRunbookURL(url: string) {
   const isRelative = url.startsWith('/');
