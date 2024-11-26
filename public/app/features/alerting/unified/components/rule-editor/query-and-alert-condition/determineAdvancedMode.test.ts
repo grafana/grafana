@@ -9,12 +9,11 @@ const expressionQueries = [reduceExpression, thresholdExpression];
 
 describe('determineAdvancedMode', () => {
   it('should return true if simplifiedQueryEditor is false', () => {
-    const editorSettings = { simplifiedQueryEditor: false, simplifiedNotificationEditor: true };
     const isGrafanaAlertingType = true;
     const isNewFromQueryParams = false;
 
     const result = determineAdvancedMode(
-      editorSettings,
+      false,
       isGrafanaAlertingType,
       isNewFromQueryParams,
       dataQueries,
@@ -25,12 +24,11 @@ describe('determineAdvancedMode', () => {
   });
 
   it('should return true if isGrafanaAlertingType is false', () => {
-    const editorSettings = { simplifiedQueryEditor: true, simplifiedNotificationEditor: true };
     const isGrafanaAlertingType = false;
     const isNewFromQueryParams = false;
 
     const result = determineAdvancedMode(
-      editorSettings,
+      true,
       isGrafanaAlertingType,
       isNewFromQueryParams,
       dataQueries,
@@ -40,7 +38,6 @@ describe('determineAdvancedMode', () => {
     expect(result).toBe(true);
   });
 
-  const editorSettings = { simplifiedQueryEditor: true, simplifiedNotificationEditor: true };
   it('should return true if isNewFromQueryParams is true and queries are not transformable', () => {
     const isGrafanaAlertingType = true;
     const isNewFromQueryParams = true;
@@ -50,7 +47,7 @@ describe('determineAdvancedMode', () => {
     });
 
     const result = determineAdvancedMode(
-      editorSettings,
+      true,
       isGrafanaAlertingType,
       isNewFromQueryParams,
       [newQuery],
@@ -65,7 +62,7 @@ describe('determineAdvancedMode', () => {
     const isNewFromQueryParams = false;
 
     const result = determineAdvancedMode(
-      editorSettings,
+      true,
       isGrafanaAlertingType,
       isNewFromQueryParams,
       dataQueries,

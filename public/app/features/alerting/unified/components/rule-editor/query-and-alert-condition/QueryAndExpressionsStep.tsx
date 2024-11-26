@@ -167,13 +167,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
   const [showResetModeModal, setShowResetModal] = useState(false);
 
+  const simplifiedQueryInForm = editorSettings?.simplifiedQueryEditor;
+
   const { isAdvancedMode, simpleCondition, setSimpleCondition } = useAdvancedMode(
-    editorSettings,
+    simplifiedQueryInForm,
     isGrafanaAlertingType,
     isNewFromQueryParams,
     dataQueries,
     expressionQueries
   );
+
+  useEffect(() => {
+    setValue('editorSettings.simplifiedQueryEditor', !isAdvancedMode);
+  }, [isAdvancedMode, setValue]);
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
@@ -688,7 +694,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setValue('editorSettings.simplifiedNotificationEditor', true);
+          setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}

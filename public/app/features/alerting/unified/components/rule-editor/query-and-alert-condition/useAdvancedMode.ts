@@ -5,8 +5,6 @@ import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { SimplifiedEditor } from '../../../types/rule-form';
-
 import { areQueriesTransformableToSimpleCondition } from './QueryAndExpressionsStep';
 import { getSimpleConditionFromExpressions, SimpleCondition } from './SimpleCondition';
 
@@ -28,7 +26,7 @@ function initializeSimpleCondition(
   }
 }
 export function determineAdvancedMode(
-  editorSettings: SimplifiedEditor | undefined,
+  simplifiedQueryEditor: boolean | undefined,
   isGrafanaAlertingType: boolean,
   isNewFromQueryParams: boolean,
   dataQueries: Array<AlertQuery<ExpressionQuery | AlertDataQuery>>,
@@ -36,7 +34,7 @@ export function determineAdvancedMode(
 ) {
   const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
   return (
-    Boolean(editorSettings?.simplifiedQueryEditor) === false ||
+    Boolean(simplifiedQueryEditor) === false ||
     !isGrafanaAlertingType ||
     (isNewFromQueryParams && !queryParamsAreTransformable)
   );
@@ -47,14 +45,14 @@ export function determineAdvancedMode(
   depending on the editor settings, the alert type, and the queries.
    */
 export const useAdvancedMode = (
-  editorSettings: SimplifiedEditor | undefined,
+  simplifiedQueryEditor: boolean | undefined,
   isGrafanaAlertingType: boolean,
   isNewFromQueryParams: boolean,
   dataQueries: Array<AlertQuery<ExpressionQuery | AlertDataQuery>>,
   expressionQueries: Array<AlertQuery<ExpressionQuery>>
 ) => {
   const isAdvancedMode = determineAdvancedMode(
-    editorSettings,
+    simplifiedQueryEditor,
     isGrafanaAlertingType,
     isNewFromQueryParams,
     dataQueries,
