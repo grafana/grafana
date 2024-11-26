@@ -13,19 +13,7 @@ export interface DashboardEditPaneState extends SceneObjectState {
   selectedObject?: SceneObjectRef<SceneObject>;
 }
 
-export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
-  public constructor(state: DashboardEditPaneState) {
-    super(state);
-    this.addActivationHandler(() => this._activationHandler());
-  }
-
-  private _activationHandler() {
-    if (!this.state.selectedObject) {
-      const dashboard = getDashboardSceneFor(this);
-      this.setState({ selectedObject: dashboard.getRef() });
-    }
-  }
-}
+export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {}
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -38,7 +26,13 @@ export interface Props {
  */
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
   // Activate the edit pane
-  useEffect(() => editPane.activate(), [editPane]);
+  useEffect(() => {
+    if (!editPane.state.selectedObject) {
+      const dashboard = getDashboardSceneFor(editPane);
+      editPane.setState({ selectedObject: dashboard.getRef() });
+    }
+    editPane.activate();
+  }, [editPane]);
 
   const { selectedObject } = editPane.useState();
   const styles = useStyles2(getStyles);
