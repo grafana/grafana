@@ -35,6 +35,7 @@ describe('ShareMenu', () => {
 
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
+    config.externalUserMngLinkUrl = 'http://localhost:3000';
     setup({ meta: { canEdit: true } });
 
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
@@ -55,7 +56,15 @@ describe('ShareMenu', () => {
       value: true,
     });
 
-    setup({ meta: { canEdit: true } });
+    expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
+  });
+
+  it('should not render invite user when externalUserMngLinkUrl is not provided', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+    grantUserPermissions([AccessControlAction.OrgUsersRead]);
+    config.externalUserMngLinkUrl = '';
 
     expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
   });
