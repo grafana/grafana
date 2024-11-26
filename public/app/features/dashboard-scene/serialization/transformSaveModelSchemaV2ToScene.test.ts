@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph } from '@grafana/scenes';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
 
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -9,7 +10,19 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
-const defaultDashboard: DashboardV2Spec = handyTestingSchema;
+const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+  kind: 'DashboardWithAccessInfo',
+  metadata: {
+    name: 'dashboard-uid',
+    namespace: 'default',
+    labels: {},
+    resourceVersion: '',
+    creationTimestamp: '',
+  },
+  spec: handyTestingSchema,
+  access: {},
+  apiVersion: 'v2',
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -28,11 +41,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   it('should initialize the DashboardScene with the model state', () => {
-    const dash = { ...defaultDashboard };
-
-    const scene = transformSaveModelSchemaV2ToScene(dash);
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
     const dashboardControls = scene.state.controls!;
+    const dash = defaultDashboard.spec;
 
+    expect(scene.state.uid).toEqual(defaultDashboard.metadata.name);
     expect(scene.state.title).toEqual(dash.title);
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);

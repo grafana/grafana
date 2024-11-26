@@ -2,32 +2,32 @@ import { uniqueId } from 'lodash';
 
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
-  VizPanel,
-  SceneTimePicker,
-  SceneGridLayout,
-  SceneTimeRange,
-  VariableValueSelectors,
-  SceneRefreshPicker,
-  SceneObject,
-  VizPanelMenu,
+  AdHocFiltersVariable,
   behaviors,
-  VizPanelState,
-  SceneGridItemLike,
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  GroupByVariable,
+  IntervalVariable,
+  QueryVariable,
   SceneDataLayerControls,
-  UserActionEvent,
   SceneDataProvider,
-  SceneQueryRunner,
   SceneDataTransformer,
+  SceneGridItemLike,
+  SceneGridLayout,
+  SceneObject,
+  SceneQueryRunner,
+  SceneRefreshPicker,
+  SceneTimePicker,
+  SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
-  AdHocFiltersVariable,
-  CustomVariable,
-  QueryVariable,
-  DataSourceVariable,
-  IntervalVariable,
-  ConstantVariable,
   TextBoxVariable,
-  GroupByVariable,
+  UserActionEvent,
+  VariableValueSelectors,
+  VizPanel,
+  VizPanelMenu,
+  VizPanelState,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -49,6 +49,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_api';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -91,7 +92,9 @@ type TypedVariableModelv2 =
   | GroupByVariableKind
   | AdhocVariableKind;
 
-export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): DashboardScene {
+export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
+  const { spec: dashboard, metadata } = dto;
+
   const annotationLayers = dashboard.annotations.map((annotation) => {
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
@@ -109,10 +112,11 @@ export function transformSaveModelSchemaV2ToScene(dashboard: DashboardV2Spec): D
     id: dashboard.id,
     isDirty: false,
     links: dashboard.links,
+    // TODO: Combine access and metadata to compose the V1 meta object
     meta: {},
     tags: dashboard.tags,
     title: dashboard.title,
-    uid: dashboard.id?.toString(),
+    uid: metadata.name,
     version: dashboard.schemaVersion,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
