@@ -129,7 +129,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       showIf: (options) => options.datasource === GRAFANA_DATASOURCE_NAME || !Boolean(options.datasource),
       path: 'folder',
       name: 'Folder',
-      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
+      description: 'Filter for alerts in the selected folder (for Grafana alerts only)',
       id: 'folder',
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
@@ -152,7 +152,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'showInactiveAlerts',
       name: 'Show alerts with 0 instances',
       description:
-        'Show inactive alert rules (only for Prometheus alerts). If an Alert instance label filter is configured, inactive alert rules will be hidden',
+        'Show inactive alert rules (for Prometheus alerts only). If the Alert instance label filter is configured, it will take precedence and inactive alert rules will be hidden.',
       defaultValue: false,
       category: ['Filter'],
     })
