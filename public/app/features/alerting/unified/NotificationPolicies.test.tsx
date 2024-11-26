@@ -1,12 +1,15 @@
+import { produce } from 'immer';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent } from 'test/test-utils';
-import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
+import { render, screen, userEvent, within } from 'test/test-utils';
+import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   getErrorResponse,
   makeAllAlertmanagerConfigFetchFail,
+  makeAllK8sGetEndpointsFail,
 } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   getAlertmanagerConfig,
@@ -17,6 +20,7 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
   TIME_INTERVAL_NAME_HAPPY_PATH,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import {
   AlertManagerCortexConfig,
@@ -134,7 +138,13 @@ const getRootRoute = async () => {
   return ui.rootRouteContainer.find();
 };
 
-describe('NotificationPolicies', () => {
+describe.each([
+  // k8s API enabled
+  true,
+  // k8s API disabled
+  false,
+])('NotificationPolicies with alertingApiServer=%p', (apiServerEnabled) => {
+  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
   beforeEach(() => {
     setupDataSources(...Object.values(dataSources));
     grantUserPermissions([
@@ -147,6 +157,7 @@ describe('NotificationPolicies', () => {
       AccessControlAction.AlertingNotificationsWrite,
       AccessControlAction.AlertingNotificationsExternalRead,
       AccessControlAction.AlertingNotificationsExternalWrite,
+      ...PERMISSIONS_NOTIFICATION_POLICIES,
     ]);
   });
 
@@ -272,27 +283,40 @@ describe('NotificationPolicies', () => {
   });
 
   it('Show error message if loading Alertmanager config fails', async () => {
-    makeAllAlertmanagerConfigFetchFail(getErrorResponse("Alertmanager has exploded. it's gone. Forget about it."));
+    const errMessage = "Alertmanager has exploded. it's gone. Forget about it.";
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse(errMessage));
+    makeAllK8sGetEndpointsFail('alerting.config.notfound', errMessage);
 
     renderNotificationPolicies();
-    await screen.findByText(/error loading alertmanager config/i);
-    expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
+    const alert = await screen.findByRole('alert', { name: /error loading alertmanager config/i });
+    expect(await within(alert).findByText(errMessage)).toBeInTheDocument();
     expect(ui.rootRouteContainer.query()).not.toBeInTheDocument();
   });
 
-  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
-    const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+  it('allows user to reload and update policies if its been changed by another user', async () => {
+    const { user } = renderNotificationPolicies();
 
-    const policyIndex = 0;
-    await openEditModal(policyIndex);
+    await getRootRoute();
 
-    // Save policy to test that format is converted to object_matchers
-    await user.click(await ui.saveButton.find());
+    const existingConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    const modifiedConfig = produce(existingConfig, (draft) => {
+      draft.alertmanager_config.route!.group_interval = '12h';
+    });
+    setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, modifiedConfig);
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+    await openDefaultPolicyEditModal();
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
 
-    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
+    expect(
+      (await screen.findAllByText(/the notification policy tree has been updated by another user/i))[0]
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /reload policies/i }));
+
+    await openDefaultPolicyEditModal();
+    await user.click(await screen.findByRole('button', { name: /update default policy/i }));
+    expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
   });
 
   it('Should be able to delete an empty route', async () => {
@@ -322,6 +346,51 @@ describe('NotificationPolicies', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
 
     expect(ui.row.query()).not.toBeInTheDocument();
+  });
+
+  it('Can add a mute timing to a route', async () => {
+    const { user } = renderNotificationPolicies();
+
+    await openEditModal(0);
+
+    const muteTimingSelect = ui.muteTimingSelect.get();
+    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_HAPPY_PATH);
+    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_FILE_PROVISIONED);
+
+    await user.click(ui.saveButton.get());
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+
+    const policy = (await ui.row.findAll())[0];
+    expect(policy).toHaveTextContent(
+      `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
+    );
+  });
+});
+
+describe('Grafana alertmanager - config API', () => {
+  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
+    const { user } = renderNotificationPolicies();
+
+    const policyIndex = 0;
+    await openEditModal(policyIndex);
+
+    // Save policy to test that format is converted to object_matchers
+    await user.click(await ui.saveButton.find());
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
+
+    const updatedConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
+    expect(updatedConfig.alertmanager_config.route?.routes?.[policyIndex].object_matchers).toMatchSnapshot();
+  });
+});
+describe('Non-Grafana alertmanagers', () => {
+  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
+    setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
+    renderNotificationPolicies(dataSources.mimir.name);
+
+    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
   });
 
   it('Keeps matchers for non-grafana alertmanager sources', async () => {
@@ -393,33 +462,6 @@ describe('NotificationPolicies', () => {
 
     expect(ui.newChildPolicyButton.query()).not.toBeInTheDocument();
     expect(ui.newSiblingPolicyButton.query()).not.toBeInTheDocument();
-  });
-
-  it('Can add a mute timing to a route', async () => {
-    const { user } = renderNotificationPolicies();
-
-    await openEditModal(0);
-
-    const muteTimingSelect = ui.muteTimingSelect.get();
-    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_HAPPY_PATH);
-    await clickSelectOption(muteTimingSelect, TIME_INTERVAL_NAME_FILE_PROVISIONED);
-
-    await user.click(ui.saveButton.get());
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/updated notification policies/i);
-
-    const policy = (await ui.row.findAll())[0];
-    expect(policy).toHaveTextContent(
-      `Muted when ${TIME_INTERVAL_NAME_HAPPY_PATH}, ${TIME_INTERVAL_NAME_FILE_PROVISIONED}`
-    );
-  });
-
-  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
-    makeAllAlertmanagerConfigFetchFail(getErrorResponse('alertmanager storage object not found'));
-    setAlertmanagerStatus(dataSources.mimir.uid, someCloudAlertManagerStatus);
-    renderNotificationPolicies(dataSources.mimir.name);
-
-    expect(await ui.rootRouteContainer.find()).toBeInTheDocument();
   });
 });
 

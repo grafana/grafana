@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NotificationPolicies Converts matchers to object_matchers for grafana alertmanager 1`] = `
+exports[`Grafana alertmanager - config API Converts matchers to object_matchers for grafana alertmanager 1`] = `
 [
   [
     "sub1matcher1",
@@ -25,7 +25,7 @@ exports[`NotificationPolicies Converts matchers to object_matchers for grafana a
 ]
 `;
 
-exports[`NotificationPolicies Keeps matchers for non-grafana alertmanager sources 1`] = `
+exports[`Non-Grafana alertmanagers Keeps matchers for non-grafana alertmanager sources 1`] = `
 [
   "hello="world"",
   "foo!="bar"",

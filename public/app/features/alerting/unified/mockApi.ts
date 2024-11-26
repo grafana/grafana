@@ -9,6 +9,7 @@ import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
 import {
   PromBuildInfoResponse,
@@ -297,6 +298,7 @@ export function setupMswServer() {
     // Reset any other necessary mock entities/state
     setupAlertmanagerConfigMapDefaultState();
     setupAlertmanagerStatusMapDefaultState();
+    resetRoutingTreeMap();
   });
 
   afterAll(() => {

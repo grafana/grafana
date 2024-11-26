@@ -3,14 +3,24 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { Alert, LoadingPlaceholder, Stack, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  LoadingPlaceholder,
+  Stack,
+  Tab,
+  TabContent,
+  TabsBar,
+  useStyles2,
+  withErrorBoundary,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Trans } from 'app/core/internationalization';
+import { useContactPointsWithStatus } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { useMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
+import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
-
-import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
@@ -29,14 +39,18 @@ import {
   useEditPolicyModal,
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
-import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
+import {
+  useNotificationPolicyRoute,
+  useUpdateNotificationPolicyRoute,
+} from './components/notification-policies/useNotificationPolicyRoute';
+import { isLoading as isPending, useAsync } from './hooks/useAsync';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
+import { ERROR_NEWER_CONFIGURATION } from './utils/k8s/errors';
+import { isErrorMatchingCode, stringifyErrorLike } from './utils/misc';
 import { computeInheritedTree } from './utils/notification-policies';
-import { initialAsyncRequestState } from './utils/redux';
 import {
   InsertPosition,
   addRouteToReferenceRoute,
@@ -51,50 +65,75 @@ enum ActiveTab {
 }
 
 const AmRoutes = () => {
-  const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const appNotification = useAppNotification();
-
+  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
+  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [contactPointsSupported, canSeeContactPointsStatus] = useAlertmanagerAbility(
+    AlertmanagerAction.ViewContactPoint
+  );
+  const availableTabs = [
+    canSeePoliciesTab && ActiveTab.NotificationPolicies,
+    canSeeTimingsTab && ActiveTab.MuteTimings,
+  ].filter((tab) => !!tab);
+  const [_, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
   const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
 
   const [queryParams, setQueryParams] = useQueryParams();
-  const { tab } = getActiveTabFromUrl(queryParams);
+  const { tab } = getActiveTabFromUrl(queryParams, availableTabs[0]);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
-  const [updatingTree, setUpdatingTree] = useState<boolean>(false);
+
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { data: muteTimings = [] } = useMuteTimings({ alertmanager: selectedAlertmanager ?? '' });
-
-  const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
-
-  const {
-    currentData: result,
-    isLoading: resultLoading,
-    error: resultError,
-  } = useAlertmanagerConfig(selectedAlertmanager, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
+  const { data: muteTimings = [] } = useMuteTimings({
+    alertmanager: selectedAlertmanager ?? '',
+    skip: !canSeeTimingsTab,
   });
 
-  const config = result?.alertmanager_config;
+  const shouldFetchContactPoints =
+    policiesSupported && canSeePoliciesTab && contactPointsSupported && canSeeContactPointsStatus;
+
+  const contactPointsState = useGetContactPointsState(
+    // Workaround to not try and call this API when we don't have access to the policies tab
+    shouldFetchContactPoints ? (selectedAlertmanager ?? '') : ''
+  );
+
+  const {
+    currentData,
+    isLoading,
+    error: resultError,
+    refetch: refetchNotificationPolicyRoute,
+  } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' }, { skip: !canSeePoliciesTab });
+
+  // We make the assumption that the first policy is the default one
+  // At the time of writing, this will be always the case for the AM config response, and the K8S API
+  // TODO in the future: Generalise the component to support any number of "root" policies
+  const [defaultPolicy] = currentData ?? [];
+
+  const updateNotificationPolicyRoute = useUpdateNotificationPolicyRoute(selectedAlertmanager ?? '');
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
-    { skip: !selectedAlertmanager }
+    { skip: !canSeePoliciesTab || !canSeeAlertGroups || !selectedAlertmanager }
   );
 
-  const receivers = config?.receivers ?? [];
+  const { contactPoints: receivers } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager ?? '',
+    fetchPolicies: false,
+    fetchStatuses: canSeeContactPointsStatus,
+    skip: !canSeePoliciesTab,
+  });
 
   const rootRoute = useMemo(() => {
-    if (config?.route) {
-      return addUniqueIdentifierToRoute(config.route);
+    if (defaultPolicy) {
+      return addUniqueIdentifierToRoute(defaultPolicy);
     }
     return;
-  }, [config?.route]);
+  }, [defaultPolicy]);
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -123,14 +162,18 @@ const AmRoutes = () => {
     return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
-  const isProvisioned = Boolean(config?.route?.provenance);
+  const refetchPolicies = () => {
+    refetchNotificationPolicyRoute();
+    updateRouteTree.reset();
+  };
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
       return;
     }
+
     const newRouteTree = mergePartialAmRouteWithRouteTree(selectedAlertmanager ?? '', partialRoute, rootRoute);
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
   function handleDelete(route: RouteWithID) {
@@ -138,7 +181,7 @@ const AmRoutes = () => {
       return;
     }
     const newRouteTree = omitRouteFromRouteTree(route, rootRoute);
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
   function handleAdd(partialRoute: Partial<FormAmRoute>, referenceRoute: RouteWithID, insertPosition: InsertPosition) {
@@ -153,67 +196,57 @@ const AmRoutes = () => {
       rootRoute,
       insertPosition
     );
-    updateRouteTree(newRouteTree);
+    updateRouteTree.execute(newRouteTree);
   }
 
-  function updateRouteTree(routeTree: Route | RouteWithID) {
-    if (!result) {
+  // this function will make the HTTP request and tracks the state of the request
+  const [updateRouteTree, updateRouteTreeState] = useAsync(async (routeTree: Route | RouteWithID) => {
+    if (!rootRoute) {
       return;
     }
 
     // make sure we omit all IDs from our routes
     const newRouteTree = cleanRouteIDs(routeTree);
 
-    setUpdatingTree(true);
+    const newTree = await updateNotificationPolicyRoute({
+      newRoute: newRouteTree,
+      oldRoute: defaultPolicy,
+    });
 
-    dispatch(
-      updateAlertManagerConfigAction({
-        newConfig: {
-          ...result,
-          alertmanager_config: {
-            ...result.alertmanager_config,
-            route: newRouteTree,
-          },
-        },
-        oldConfig: result,
-        alertManagerSourceName: selectedAlertmanager!,
-      })
-    )
-      .unwrap()
-      .then(() => {
-        appNotification.success('Updated notification policies');
-        if (selectedAlertmanager) {
-          refetchAlertGroups();
-        }
-        closeEditModal();
-        closeAddModal();
-        closeDeleteModal();
-      })
-      .finally(() => {
-        setUpdatingTree(false);
-      });
-  }
+    appNotification.success('Updated notification policies');
+    if (selectedAlertmanager) {
+      refetchAlertGroups();
+    }
+
+    // close all modals
+    closeEditModal();
+    closeAddModal();
+    closeDeleteModal();
+
+    return newTree;
+  });
+
+  const updatingTree = isPending(updateRouteTreeState);
+  const updateError = updateRouteTreeState.error;
 
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
     handleSave,
-    updatingTree
+    updatingTree,
+    updateError
   );
   const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal(selectedAlertmanager ?? '');
-
-  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   if (!selectedAlertmanager) {
     return null;
   }
 
   const numberOfMuteTimings = muteTimings.length;
-  const haveData = result && !resultError && !resultLoading;
-  const isFetching = !result && resultLoading;
-  const haveError = resultError && !resultLoading;
+  const hasPoliciesData = rootRoute && !resultError && !isLoading;
+  const hasPoliciesError = !!resultError && !isLoading;
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
@@ -222,34 +255,52 @@ const AmRoutes = () => {
     <>
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
-        <Tab
-          label={'Notification Policies'}
-          active={policyTreeTabActive}
-          onChangeTab={() => {
-            setActiveTab(ActiveTab.NotificationPolicies);
-            setQueryParams({ tab: ActiveTab.NotificationPolicies });
-          }}
-        />
-        <Tab
-          label={'Mute Timings'}
-          active={muteTimingsTabActive}
-          counter={numberOfMuteTimings}
-          onChangeTab={() => {
-            setActiveTab(ActiveTab.MuteTimings);
-            setQueryParams({ tab: ActiveTab.MuteTimings });
-          }}
-        />
+        {policiesSupported && canSeePoliciesTab && (
+          <Tab
+            label={'Notification Policies'}
+            active={policyTreeTabActive}
+            onChangeTab={() => {
+              setActiveTab(ActiveTab.NotificationPolicies);
+              setQueryParams({ tab: ActiveTab.NotificationPolicies });
+            }}
+          />
+        )}
+        {timingsSupported && canSeeTimingsTab && (
+          <Tab
+            label={'Mute Timings'}
+            active={muteTimingsTabActive}
+            counter={numberOfMuteTimings}
+            onChangeTab={() => {
+              setActiveTab(ActiveTab.MuteTimings);
+              setQueryParams({ tab: ActiveTab.MuteTimings });
+            }}
+          />
+        )}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {isFetching && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+        {isLoading && <LoadingPlaceholder text="Loading notification policies..." />}
+
         {policyTreeTabActive && (
           <>
-            {haveError && (
+            {hasPoliciesError && (
               <Alert severity="error" title="Error loading Alertmanager config">
-                {resultError.message || 'Unknown error.'}
+                {stringifyErrorLike(resultError) || 'Unknown error.'}
               </Alert>
             )}
-            {haveData && (
+            {/* show when there is an update error */}
+            {isErrorMatchingCode(updateError, ERROR_NEWER_CONFIGURATION) && (
+              <Alert severity="info" title="Notification policies have changed">
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Trans i18nKey="alerting.policies.update-errors.conflict">
+                    The notification policy tree has been updated by another user.
+                  </Trans>
+                  <Button onClick={refetchPolicies}>
+                    <Trans i18nKey="alerting.policies.reload-policies">Reload policies</Trans>
+                  </Button>
+                </Stack>
+              </Alert>
+            )}
+            {hasPoliciesData && (
               <Stack direction="column" gap={1}>
                 {rootRoute && (
                   <NotificationPoliciesFilter
@@ -264,14 +315,17 @@ const AmRoutes = () => {
                     currentRoute={rootRoute}
                     contactPointsState={contactPointsState.receivers}
                     readOnly={!hasConfigurationAPI}
-                    provisioned={isProvisioned}
+                    provisioned={rootRoute._metadata?.provisioned}
                     alertManagerSourceName={selectedAlertmanager}
                     onAddPolicy={openAddModal}
                     onEditPolicy={openEditModal}
                     onDeletePolicy={openDeleteModal}
                     onShowAlertInstances={showAlertGroupsModal}
                     routesMatchingFilters={routesMatchingFilters}
-                    matchingInstancesPreview={{ groupsMap: routeAlertGroupsMap, enabled: !instancesPreviewError }}
+                    matchingInstancesPreview={{
+                      groupsMap: routeAlertGroupsMap,
+                      enabled: Boolean(canSeeAlertGroups && !instancesPreviewError),
+                    }}
                     isAutoGenerated={false}
                     isDefaultPolicy
                   />
@@ -386,8 +440,8 @@ interface QueryParamValues {
   tab: ActiveTab;
 }
 
-function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
-  let tab = ActiveTab.NotificationPolicies; // default tab
+function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): QueryParamValues {
+  let tab = defaultTab;
 
   if (queryParams.tab === ActiveTab.NotificationPolicies) {
     tab = ActiveTab.NotificationPolicies;

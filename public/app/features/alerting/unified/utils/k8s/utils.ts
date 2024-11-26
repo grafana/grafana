@@ -27,8 +27,10 @@ type EntityToCheck = {
  * Check the metadata of a kubernetes entity and check if has the necessary annotations
  * that denote it as provisioned
  */
-export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) =>
-  getAnnotation(k8sEntity, K8sAnnotations.Provenance) !== PROVENANCE_NONE;
+export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) => {
+  const provenance = getAnnotation(k8sEntity, K8sAnnotations.Provenance);
+  return Boolean(provenance && provenance !== PROVENANCE_NONE);
+};
 
 export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
 

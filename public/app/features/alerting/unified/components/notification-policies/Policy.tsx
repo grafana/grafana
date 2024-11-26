@@ -713,6 +713,7 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   timings,
   alertManagerSourceName,
 }) => {
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
   /* TODO make a better mute timing overview, allow combining multiple in to one overview */
   /*
     <HoverCard
@@ -733,19 +734,22 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   */
   return (
     <div>
-      {timings.map((timing, index) => (
-        <Fragment key={timing}>
-          <TextLink
-            href={createMuteTimingLink(timing, alertManagerSourceName)}
-            color="primary"
-            variant="bodySmall"
-            inline={false}
-          >
-            {timing}
-          </TextLink>
-          {index < timings.length - 1 && ', '}
-        </Fragment>
-      ))}
+      {timings.map((timing, index) => {
+        const Wrapper = canSeeMuteTimings ? TextLink : Text;
+        return (
+          <Fragment key={timing}>
+            <Wrapper
+              href={createMuteTimingLink(timing, alertManagerSourceName)}
+              color={canSeeMuteTimings ? 'primary' : 'secondary'}
+              variant="bodySmall"
+              inline={false}
+            >
+              {timing}
+            </Wrapper>
+            {index < timings.length - 1 && ', '}
+          </Fragment>
+        );
+      })}
     </div>
   );
 };
