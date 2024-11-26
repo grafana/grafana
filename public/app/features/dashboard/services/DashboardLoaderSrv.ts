@@ -98,7 +98,7 @@ export class DashboardLoaderSrv {
         })
         .catch(() => {
           const dash = this._dashboardLoadFailed('Not found', true);
-          dash.dashboard.uid = uid;
+          dash.dashboard.uid = '';
           return dash;
         });
     } else {
