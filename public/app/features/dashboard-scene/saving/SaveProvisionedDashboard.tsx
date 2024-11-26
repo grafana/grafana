@@ -3,11 +3,12 @@ import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, Box, TextArea, Field, Input, Alert } from '@grafana/ui';
+import { Button, Stack, TextArea, Field, Input, Alert, LinkButton } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
-import { useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { RepositorySpec } from '../../provisioning/api/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -34,6 +35,13 @@ function getDefaultValues(meta: DashboardMeta) {
   return { ref, path, repo, comment: '' };
 }
 
+function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
+  if (!spec || spec.type !== 'github' || !ref) {
+    return '';
+  }
+  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}`;
+}
+
 export interface Props {
   meta: DashboardMeta;
   dashboard: DashboardScene;
@@ -43,7 +51,13 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
-  const { register, handleSubmit } = useForm({ defaultValues: getDefaultValues(meta) });
+  const defaultValues = getDefaultValues(meta);
+  const { register, handleSubmit, watch } = useForm({ defaultValues });
+  const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
+  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const isGitHub = repositoryConfig?.type === 'github';
+  const [repo, ref] = watch(['repo', 'ref']);
+  const href = createPRLink(repositoryConfig, repo, ref);
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -89,9 +103,11 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           <Input {...register('path')} />
         </Field>
 
-        <Field label="Branch" description="Only supported by GitHub right now">
-          <Input {...register('ref')} />
-        </Field>
+        {isGitHub && (
+          <Field label="Branch" description="Branch name in GitHub">
+            <Input {...register('ref')} />
+          </Field>
+        )}
 
         <Field label="Comment">
           <TextArea
@@ -103,16 +119,19 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           />
         </Field>
 
-        <Box paddingTop={2}>
-          <Stack gap={2}>
-            <Button variant="primary" type="submit">
-              Save
-            </Button>
-            <Button variant="secondary" onClick={drawer.onClose} fill="outline">
-              Cancel
-            </Button>
-          </Stack>
-        </Box>
+        <Stack gap={2}>
+          <Button variant="primary" type="submit">
+            Save
+          </Button>
+          <Button variant="secondary" onClick={drawer.onClose} fill="outline">
+            Cancel
+          </Button>
+          {isGitHub && (
+            <LinkButton variant="secondary" href={href} fill="outline" target={'_blank'} rel={'noreferrer noopener'}>
+              Open pull request
+            </LinkButton>
+          )}
+        </Stack>
       </Stack>
     </form>
   );
