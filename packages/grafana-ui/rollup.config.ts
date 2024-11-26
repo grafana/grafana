@@ -25,5 +25,24 @@ export default [
     ],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
   },
+  {
+    input: 'src/unstable.ts',
+    plugins: [
+      ...plugins,
+      svg({ stringify: true }),
+      copy({
+        targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
+        flatten: false,
+      }),
+    ],
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-ui')],
+  },
   tsDeclarationOutput(pkg),
+  tsDeclarationOutput(pkg, {
+    input: './compiled/unstable.d.ts',
+    output: {
+      file: './dist/unstable.d.ts',
+      format: 'es',
+    },
+  }),
 ];
