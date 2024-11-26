@@ -169,7 +169,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 			Data: map[string]any{
 				"Name":      user.NameOrFallback(),
 				"OrgName":   c.SignedInUser.GetOrgName(),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 
