@@ -189,9 +189,9 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   });
 
   const { plugin = new AppPlugin() } = pluginExports;
-  plugin.setComponentsFromLegacyExports(pluginExports);
   plugin.init(meta);
   plugin.meta = meta;
+  plugin.setComponentsFromLegacyExports(pluginExports);
 
   exposedComponentsRegistry.register({
     pluginId,
