@@ -603,7 +603,7 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={evaluateForId}
-            description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
           </Label>

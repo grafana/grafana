@@ -25,7 +25,7 @@ func (i *IDClaimsWrapper) AuthenticatedBy() string {
 
 // GetDisplayName implements claims.IdentityClaims.
 func (i *IDClaimsWrapper) DisplayName() string {
-	return i.Source.GetDisplayName()
+	return i.Source.GetName()
 }
 
 // GetEmail implements claims.IdentityClaims.

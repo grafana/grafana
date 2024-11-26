@@ -262,7 +262,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.GetLogin() != c.SignedInUser.GetDisplayName() {
+	if c.SignedInUser.GetLogin() != c.SignedInUser.GetName() {
 		login = c.SignedInUser.GetLogin()
 	}
 	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
@@ -297,7 +297,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.GetDisplayName(),
+		Text:       c.SignedInUser.GetName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -452,6 +452,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if hasAccess(ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {
