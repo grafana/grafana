@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -245,6 +246,12 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	}
 
 	obj := a.GetObject()
+
+	fObj := obj.(*v0alpha1.Folder)
+
+	if strings.TrimSpace(fObj.Spec.Title) == "" {
+		return dashboards.ErrFolderTitleEmpty
+	}
 
 	for i := 1; i <= folderValidationRules.maxDepth; i++ {
 		parent := getParent(obj)
