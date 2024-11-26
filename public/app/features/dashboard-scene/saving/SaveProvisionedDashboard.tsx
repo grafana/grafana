@@ -104,7 +104,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         {isGitHub && (
-          <Field label="Branch" description="Only supported by GitHub right now">
+          <Field label="Branch" description="Branch name in GitHub">
             <Input {...register('ref')} />
           </Field>
         )}
