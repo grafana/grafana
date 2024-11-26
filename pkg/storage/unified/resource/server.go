@@ -123,6 +123,18 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
+// Passed as input to the constructor
+type SearchOptions struct {
+	// The raw index backend (eg, bleve, frames, parquet, etc)
+	Backend SearchBackend
+
+	// The supported resource types
+	Resources DocumentBuilderSupplier
+
+	// How many threads should build indexes
+	WorkerThreads int
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
@@ -135,6 +147,9 @@ type ResourceServerOptions struct {
 
 	// Requests based on a search index
 	Index ResourceIndexServer
+
+	// Search options
+	Search SearchOptions
 
 	// Diagnostics
 	Diagnostics DiagnosticsServer
@@ -225,6 +240,14 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:      cancel,
 	}
 
+	if opts.Search.Resources != nil {
+		var err error
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.blob, opts.Tracer)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return s, nil
 }
 
@@ -235,6 +258,7 @@ type server struct {
 	log          *slog.Logger
 	backend      StorageBackend
 	blob         BlobSupport
+	search       *searchSupport
 	index        ResourceIndexServer
 	diagnostics  DiagnosticsServer
 	access       authz.AccessClient
@@ -267,6 +291,11 @@ func (s *server) Init(ctx context.Context) error {
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
+		}
+
+		// initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.initErr = s.search.init(ctx)
 		}
 
 		if s.initErr != nil {
@@ -394,12 +423,12 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 
-	origin, err := obj.GetOriginInfo()
+	repo, err := obj.GetRepositoryInfo()
 	if err != nil {
-		return nil, NewBadRequestError("invalid origin info")
+		return nil, NewBadRequestError("invalid repository info")
 	}
-	if origin != nil {
-		err = s.writeHooks.CanWriteOrigin(ctx, user, origin.Name)
+	if repo != nil {
+		err = s.writeHooks.CanWriteValueFromRepository(ctx, user, repo.Name)
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -897,6 +926,9 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
+	}
+	if s.index == nil {
+		return nil, fmt.Errorf("search index not configured")
 	}
 	return s.index.Search(ctx, req)
 }

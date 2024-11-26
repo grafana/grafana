@@ -10,48 +10,47 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 var (
-	_ rest.Scoper               = (*libraryPanelStore)(nil)
-	_ rest.SingularNameProvider = (*libraryPanelStore)(nil)
-	_ rest.Getter               = (*libraryPanelStore)(nil)
-	_ rest.Lister               = (*libraryPanelStore)(nil)
-	_ rest.Storage              = (*libraryPanelStore)(nil)
+	_ rest.Scoper               = (*LibraryPanelStore)(nil)
+	_ rest.SingularNameProvider = (*LibraryPanelStore)(nil)
+	_ rest.Getter               = (*LibraryPanelStore)(nil)
+	_ rest.Lister               = (*LibraryPanelStore)(nil)
+	_ rest.Storage              = (*LibraryPanelStore)(nil)
 )
 
-var lpr = dashboard.LibraryPanelResourceInfo
-
-type libraryPanelStore struct {
-	access legacy.DashboardAccess
+type LibraryPanelStore struct {
+	Access       legacy.DashboardAccess
+	ResourceInfo utils.ResourceInfo
 }
 
-func (s *libraryPanelStore) New() runtime.Object {
-	return lpr.NewFunc()
+func (s *LibraryPanelStore) New() runtime.Object {
+	return s.ResourceInfo.NewFunc()
 }
 
-func (s *libraryPanelStore) Destroy() {}
+func (s *LibraryPanelStore) Destroy() {}
 
-func (s *libraryPanelStore) NamespaceScoped() bool {
+func (s *LibraryPanelStore) NamespaceScoped() bool {
 	return true // namespace == org
 }
 
-func (s *libraryPanelStore) GetSingularName() string {
-	return lpr.GetSingularName()
+func (s *LibraryPanelStore) GetSingularName() string {
+	return s.ResourceInfo.GetSingularName()
 }
 
-func (s *libraryPanelStore) NewList() runtime.Object {
-	return lpr.NewListFunc()
+func (s *LibraryPanelStore) NewList() runtime.Object {
+	return s.ResourceInfo.NewListFunc()
 }
 
-func (s *libraryPanelStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return lpr.TableConverter().ConvertToTable(ctx, object, tableOptions)
+func (s *LibraryPanelStore) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+	return s.ResourceInfo.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *libraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *LibraryPanelStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -69,10 +68,10 @@ func (s *libraryPanelStore) List(ctx context.Context, options *internalversion.L
 	if query.Limit < 1 {
 		query.Limit = 25
 	}
-	return s.access.GetLibraryPanels(ctx, query)
+	return s.Access.GetLibraryPanels(ctx, query)
 }
 
-func (s *libraryPanelStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *LibraryPanelStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -83,12 +82,12 @@ func (s *libraryPanelStore) Get(ctx context.Context, name string, options *metav
 		UID:   name,
 		Limit: 1,
 	}
-	found, err := s.access.GetLibraryPanels(ctx, query)
+	found, err := s.Access.GetLibraryPanels(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	if len(found.Items) == 1 {
 		return &found.Items[0], nil
 	}
-	return nil, lpr.NewNotFound(name)
+	return nil, s.ResourceInfo.NewNotFound(name)
 }

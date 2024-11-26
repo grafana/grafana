@@ -13,6 +13,8 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isCloudAlertingRuleByType,
+  isCloudRecordingRuleByType,
   isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
@@ -60,7 +62,8 @@ import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
 import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { GrafanaEvaluationBehaviorStep } from '../GrafanaEvaluationBehavior';
+import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
@@ -160,6 +163,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ? getRuleGroupLocationFromRuleWithLocation(existing)
       : getRuleGroupLocationFromFormValues(values);
 
+    const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
@@ -168,7 +172,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       grafanaTypeRule && trackNewGrafanaAlertRuleFormSavedSuccess(); // new Grafana-managed rule
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
-      const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
       await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,
         ruleIdentifier,
@@ -178,19 +181,21 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       );
     }
 
-    const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
+    const { dataSourceName, namespaceName, groupName } = targetRuleGroupIdentifier;
     if (exitOnSave) {
-      const returnToUrl = returnTo || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+      const returnToUrl = returnTo || getReturnToUrl(targetRuleGroupIdentifier, ruleDefinition);
 
       locationService.push(returnToUrl);
       return;
-    }
+    } else {
+      // we stay in the same page
 
-    // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
-    // After successful update we need to update the URL to avoid displaying 404 errors
-    if (isCloudRulerRule(ruleDefinition)) {
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+      // After successful update we need to update the URL to avoid displaying 404 errors
+      if (isCloudRulerRule(ruleDefinition)) {
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      }
     }
   };
 
@@ -296,23 +301,24 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
             {showDataSourceDependantStep && (
               <>
                 {/* Step 3 */}
+                {isGrafanaManagedRuleByType(type) && <GrafanaFolderAndLabelsStep />}
+
+                {isCloudAlertingRuleByType(type) && <CloudEvaluationBehavior />}
+
+                {isCloudRecordingRuleByType(type) && <RecordingRulesNameSpaceAndGroupStep />}
+
+                {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehavior
+                  <GrafanaEvaluationBehaviorStep
                     evaluateEvery={evaluateEvery}
                     setEvaluateEvery={setEvaluateEvery}
                     existing={Boolean(existing)}
                     enableProvisionedGroups={false}
                   />
                 )}
-
-                {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
-
-                {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
-
-                {/* Step 4 & 5 */}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />
-                {/* Annotations only for cloud and Grafana */}
+                {/* Annotations only for alerting rules */}
                 {!isRecordingRuleByType(type) && <AnnotationsStep />}
               </>
             )}

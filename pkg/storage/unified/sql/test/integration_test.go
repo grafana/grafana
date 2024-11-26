@@ -357,8 +357,8 @@ func TestClientServer(t *testing.T) {
 	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServerAddress = "localhost:0" // get a free address
-	cfg.GRPCServerNetwork = "tcp"
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
 
 	features := featuremgmt.WithFeatures()
 

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo } from 'react';
+import { memo, ReactNode, useMemo } from 'react';
 
 import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
@@ -21,10 +21,23 @@ export interface Props {
   pinned?: boolean;
   mouseIsOver: boolean;
   onBlur: () => void;
+  logRowMenuIconsBefore?: ReactNode[];
+  logRowMenuIconsAfter?: ReactNode[];
 }
 
 export const LogRowMessageDisplayedFields = memo((props: Props) => {
-  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, mouseIsOver, pinned, ...rest } = props;
+  const {
+    row,
+    detectedFields,
+    getFieldLinks,
+    wrapLogMessage,
+    styles,
+    mouseIsOver,
+    pinned,
+    logRowMenuIconsBefore,
+    logRowMenuIconsAfter,
+    ...rest
+  } = props;
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   const fields = useMemo(() => getAllFields(row, getFieldLinks), [getFieldLinks, row]);
   // only single key/value rows are filterable, so we only need the first field key for filtering
@@ -63,6 +76,8 @@ export const LogRowMessageDisplayedFields = memo((props: Props) => {
             styles={styles}
             pinned={pinned}
             mouseIsOver={mouseIsOver}
+            addonBefore={logRowMenuIconsBefore}
+            addonAfter={logRowMenuIconsAfter}
             {...rest}
           />
         )}
