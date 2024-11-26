@@ -6,6 +6,7 @@ import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { isPublicDashboardsEnabled } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { AccessControlAction } from 'app/types';
 
 import { getTrackingSource } from '../../dashboard/components/ShareModal/utils';
 import { DashboardInteractions } from '../utils/interactions';
@@ -58,7 +59,11 @@ export class ShareModal extends SceneObjectBase<ShareModalState> implements Moda
       tabs.push(new ShareExportTab({ modalRef }));
     }
 
-    if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+    if (
+      contextSrv.isSignedIn &&
+      config.snapshotEnabled &&
+      contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+    ) {
       tabs.push(new ShareSnapshotTab({ panelRef, dashboardRef: dashboard.getRef(), modalRef }));
     }
 

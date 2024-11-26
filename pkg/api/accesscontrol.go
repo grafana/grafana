@@ -606,6 +606,45 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	snapshotsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:snapshots:creator",
+			DisplayName: "Creator",
+			Description: "Create snapshots",
+			Group:       "Snapshots",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionSnapshotsCreate},
+			},
+		},
+		Grants: []string{string(org.RoleEditor)},
+	}
+
+	snapshotsDeleterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:snapshots:deleter",
+			DisplayName: "Deleter",
+			Description: "Delete snapshots",
+			Group:       "Snapshots",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionSnapshotsDelete},
+			},
+		},
+		Grants: []string{string(org.RoleEditor)},
+	}
+
+	snapshotsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:snapshots:reader",
+			DisplayName: "Reader",
+			Description: "Read snapshots",
+			Group:       "Snapshots",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionSnapshotsRead},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
 	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
@@ -613,7 +652,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
-		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole}
+		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole}
 
 	if hs.Features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
 		allAnnotationsReaderRole := ac.RoleRegistration{

@@ -327,7 +327,9 @@ font_regular = DejaVuSansCondensed.ttf
 font_bold = DejaVuSansCondensed-Bold.ttf
 # Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
-# Allowed domains to receive reports. Use * to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
+# Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+max_retries_per_panel = 3
+# Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 allowed_domains = *
 ```
 
