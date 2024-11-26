@@ -320,6 +320,31 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with aggregation by utf8 labels', () => {
+    const visQuery = {
+      metric: 'metric_name',
+      labels: [
+        {
+          label: 'instance',
+          op: '=',
+          value: 'internal:3000',
+        },
+      ],
+      operations: [
+        {
+          id: '__sum_by',
+          params: ['cluster', '"app.version"'],
+        },
+      ],
+    };
+    expect(
+      buildVisualQueryFromString('sum(metric_name{instance="internal:3000"}) by ("app.version", cluster)')
+    ).toEqual(noErrors(visQuery));
+    expect(
+      buildVisualQueryFromString('sum by ("app.version", cluster)(metric_name{instance="internal:3000"})')
+    ).toEqual(noErrors(visQuery));
+  });
+
   it('parses aggregation with params', () => {
     expect(buildVisualQueryFromString('topk(5, http_requests_total)')).toEqual(
       noErrors({
