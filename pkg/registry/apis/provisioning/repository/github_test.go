@@ -36,6 +36,7 @@ func TestIsValidGitBranchName(t *testing.T) {
 		{"Empty branch name", "", false},
 		{"Only whitespace", " ", false},
 		{"Single valid character", "a", true},
+		{"Ends with .lock", "feature.lock", false},
 	}
 
 	for _, tt := range tests {

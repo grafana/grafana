@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-github/v66/github"
@@ -207,7 +208,12 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
 }
 
+// basicGitBranchNameRegex is a regular expression to validate a git branch name
+// it does not cover all cases as positive lookaheads are not supported in Go's regexp
+var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
+
 // isValidGitBranchName checks if a branch name is valid.
+// It uses the following regexp `^[a-zA-Z0-9\-\_\/\.]+$` to validate the branch name with some additional checks that must satisfy the following rules:
 // 1. The branch name must have at least one character and must not be empty.
 // 2. The branch name cannot start with `/` or end with `/`, `.`, or whitespace.
 // 3. The branch name cannot contain consecutive slashes (`//`).
@@ -215,28 +221,14 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 // 5. The branch name cannot contain `@{`.
 // 6. The branch name cannot include the following characters: `~`, `^`, `:`, `?`, `*`, `[`, `\`, or `]`.
 func isValidGitBranchName(branch string) bool {
-	if len(branch) == 0 {
+	if !basicGitBranchNameRegex.MatchString(branch) {
 		return false
 	}
 
-	if strings.HasPrefix(branch, "/") {
-		return false
-	}
-
-	disallowedSequences := []string{"..", "//", "@{"}
-	for _, seq := range disallowedSequences {
-		if strings.Contains(branch, seq) {
-			return false
-		}
-	}
-
-	for _, r := range branch {
-		if r <= 0x1F || r == 0x7F || strings.ContainsRune(" ~^:?*[]\\", r) {
-			return false
-		}
-	}
-
-	if strings.HasSuffix(branch, ".") || strings.HasSuffix(branch, "/") || strings.HasSuffix(branch, ".lock") {
+	// Additional checks for invalid patterns
+	if strings.HasPrefix(branch, "/") || strings.HasSuffix(branch, "/") ||
+		strings.HasSuffix(branch, ".") || strings.Contains(branch, "..") ||
+		strings.Contains(branch, "//") || strings.HasSuffix(branch, ".lock") {
 		return false
 	}
 
