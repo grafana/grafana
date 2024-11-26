@@ -31,7 +31,7 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    grantUserPermissions([AccessControlAction.SnapshotsCreate]);
+    grantUserPermissions([AccessControlAction.SnapshotsCreate, AccessControlAction.OrgUsersRead]);
 
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
@@ -40,6 +40,7 @@ describe('ShareMenu', () => {
     expect(await screen.findByTestId(selector.shareInternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareExternally)).toBeInTheDocument();
     expect(await screen.findByTestId(selector.shareSnapshot)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.inviteUser)).toBeInTheDocument();
   });
 
   it('should not share externally when public dashboard is disabled', async () => {
@@ -47,6 +48,16 @@ describe('ShareMenu', () => {
     setup();
 
     expect(screen.queryByTestId(selector.shareExternally)).not.toBeInTheDocument();
+  });
+
+  it('should not render invite user when user does not have access', async () => {
+    Object.defineProperty(contextSrv, 'isSignedIn', {
+      value: true,
+    });
+
+    setup({ meta: { canEdit: true } });
+
+    expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
   });
 
   describe('ShareSnapshot', () => {

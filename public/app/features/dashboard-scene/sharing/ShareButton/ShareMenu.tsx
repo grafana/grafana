@@ -79,6 +79,18 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       },
     });
 
+    menuItems.push({
+      shareId: shareDashboardType.inviteUser,
+      testId: newShareButtonSelector.inviteUser,
+      icon: 'add-user',
+      label: t('share-dashboard.menu.invite-user-title', 'Invite user'),
+      renderCondition:
+        config.externalUserMngLinkUrl !== '' && contextSrv.hasPermission(AccessControlAction.OrgUsersRead),
+      onClick: () => {
+        window.open(config.externalUserMngLinkUrl, '_blank');
+      },
+    });
+
     return menuItems.filter((item) => item.renderCondition);
   }, [panel]);
 

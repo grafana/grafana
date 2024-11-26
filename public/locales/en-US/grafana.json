@@ -2881,6 +2881,7 @@
   "share-dashboard": {
     "menu": {
       "export-json-title": "Export as JSON",
+      "invite-user-title": "Invite user",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
