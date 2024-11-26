@@ -131,17 +131,19 @@ export function MetricCombobox({
         />
       )}
       {variableEditor ? (
-        <InlineFieldRow>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            {asyncSelect()}
-          </InlineField>
-        </InlineFieldRow>
+        <span className={styles.addaptToParentVariableEditor}>
+          <InlineFieldRow>
+            <InlineField
+              label="Metric"
+              labelWidth={20}
+              tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
+            >
+              {asyncSelect()}
+            </InlineField>
+          </InlineFieldRow>
+        </span>
       ) : (
-        <span className={styles.addaptToParent}>
+        <span className={styles.addaptToParentQueryEditor}>
           <EditorFieldGroup>
             <EditorField label="Metric">{asyncSelect()}</EditorField>
           </EditorFieldGroup>
@@ -176,8 +178,22 @@ const formatKeyValueStringsForLabelValuesQuery = (query: string, labelsFilters?:
 };
 
 const getMectricComboboxStyles = () => ({
-  addaptToParent: css({
+  addaptToParentQueryEditor: css({
     // Take metrics explorer button into account
     maxWidth: `calc(100% - 32px)`,
+  }),
+  addaptToParentVariableEditor: css({
+    maxWidth: '100%',
+    display: 'flex',
+    '[class*="InlineFieldRow"]': {
+      maxWidth: '100%',
+      '> div': {
+        maxWidth: '100%',
+        'label + div': {
+          // Take label and the metrics explorer button into account
+          maxWidth: `calc(100% - (160px + 32px))`,
+        },
+      },
+    },
   }),
 });
