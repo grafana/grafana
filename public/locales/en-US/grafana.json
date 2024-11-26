@@ -1721,6 +1721,9 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Older logs"
+    },
+    "log-row-message": {
+      "more": "more"
     }
   },
   "migrate-to-cloud": {

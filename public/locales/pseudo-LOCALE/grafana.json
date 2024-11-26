@@ -1721,6 +1721,9 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Øľđęř ľőģş"
+    },
+    "log-row-message": {
+      "more": "mőřę"
     }
   },
   "migrate-to-cloud": {
