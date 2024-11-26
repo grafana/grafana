@@ -72,6 +72,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	interval := (rand.Int63n(6) + 1) * 10
 	forInterval := time.Duration(interval*rand.Int63n(6)) * time.Second
+	keepFiringFor := time.Duration(interval*rand.Int63n(6)) * time.Second
 
 	var annotations map[string]string = nil
 	if rand.Int63()%2 == 0 {
@@ -114,6 +115,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 		NoDataState:          randNoDataState(),
 		ExecErrState:         randErrState(),
 		For:                  forInterval,
+		KeepFiringFor:        keepFiringFor,
 		Annotations:          annotations,
 		Labels:               labels,
 		NotificationSettings: ns,
@@ -323,6 +325,18 @@ func (a *AlertRuleMutators) WithFor(duration time.Duration) AlertRuleMutator {
 func (a *AlertRuleMutators) WithForNTimes(timesOfInterval int64) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringFor(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = interval
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
 	}
 }
 
@@ -627,6 +641,7 @@ func CopyRule(r *AlertRule, mutators ...AlertRuleMutator) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		KeepFiringFor:   r.KeepFiringFor,
 		Record:          r.Record,
 	}
 

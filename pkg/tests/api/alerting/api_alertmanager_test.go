@@ -757,6 +757,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 							{
 								"expr": "",
 								"for": "2m",
+								"keep_firing_for": "15s",
 								"labels": {
 									"label1": "val1"
 								},
@@ -886,6 +887,9 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 	apiClient.CreateFolder(t, "default", "default")
 
 	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+
+	keepFiringFor, err := model.ParseDuration("15s")
 	require.NoError(t, err)
 
 	invalidInterval, err := model.ParseDuration("1s")
@@ -1145,9 +1149,10 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:         &interval,
-						Labels:      map[string]string{"label1": "val1"},
-						Annotations: map[string]string{"annotation1": "val1"},
+						For:           &interval,
+						KeepFiringFor: &keepFiringFor,
+						Labels:        map[string]string{"label1": "val1"},
+						Annotations:   map[string]string{"annotation1": "val1"},
 					},
 					// this rule does not explicitly set no data and error states
 					// therefore it should get the default values
@@ -1239,6 +1244,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 					   "expr":"",
 					   "for": "1m",
+					   "keep_firing_for": "15s",
 					   "labels": {
 							"label1": "val1"
 					   },
@@ -1284,6 +1290,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					{
 					   "expr":"",
 					   "for": "0s",
+					   "keep_firing_for": "0s",
 					   "grafana_alert":{
 						  "id":2,
 						  "orgId":1,
@@ -1594,6 +1601,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					   },
 		               "expr":"",
 					   "for": "30s",
+					   "keep_firing_for": "15s",
 					   "labels": {
 							"label1": "val1",
 							"label2": "val2"
@@ -1713,6 +1721,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
 				       "for": "30s",
+					   "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "id":1,
 					  "orgId":1,
@@ -1807,6 +1816,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				    {
 				       "expr":"",
                        "for": "30s",
+					   "keep_firing_for": "15s",
 				       "grafana_alert":{
 					  "id":1,
 					  "orgId":1,
@@ -2340,6 +2350,7 @@ func TestIntegrationQuota(t *testing.T) {
 					    {
 					       "expr":"",
 						   "for": "2m",
+						   "keep_firing_for": "15s",
 					       "grafana_alert":{
 						  "id":1,
 						  "orgId":1,

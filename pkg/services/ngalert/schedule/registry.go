@@ -317,6 +317,7 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeInt(rule.ID)
 	writeInt(rule.OrgID)
 	writeInt(int64(rule.For))
+	writeInt(int64(rule.KeepFiringFor))
 	if rule.DashboardUID != nil {
 		writeString(*rule.DashboardUID)
 	}

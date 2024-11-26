@@ -750,6 +750,66 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 			},
 		},
 		{
+			desc:      "t1[{}:alerting] t2[{}:normal] t3[{}:normal] and 'keep_firing_for'>0  at t2,t3",
+			alertRule: baseRuleWith(ngmodels.RuleMuts.WithKeepFiringForNTimes(1), ngmodels.RuleMuts.WithFor(0)),
+			results: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t3: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+			},
+			expectedTransitions: map[time.Time][]StateTransition{
+				t1: {
+					{
+						PreviousState: eval.Normal,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t1, eval.Alerting),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t1,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t2: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Alerting,
+							LatestResult:       newEvaluation(t2, eval.Normal),
+							StartsAt:           t1,
+							EndsAt:             t1.Add(ResendDelay * 4),
+							LastEvaluationTime: t2,
+							LastSentAt:         &t1,
+						},
+					},
+				},
+				t3: {
+					{
+						PreviousState: eval.Alerting,
+						State: &State{
+							Labels:             labels["system + rule"],
+							State:              eval.Normal,
+							LatestResult:       newEvaluation(t3, eval.Normal),
+							StartsAt:           t3,
+							EndsAt:             t3,
+							LastEvaluationTime: t3,
+							LastSentAt:         &t3,
+							ResolvedAt:         &t3,
+						},
+					},
+				},
+			},
+		},
+		{
 			desc:      "t1[{}:normal] t2[{}:alerting] at t2",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{

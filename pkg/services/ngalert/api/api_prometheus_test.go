@@ -343,6 +343,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -409,6 +410,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -468,6 +470,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"type": "alerting",
 				"lastEvaluation": "2022-03-10T14:01:00Z",
 				"duration": 180,
+				"keepFiringFor": 10,
 				"evaluationTime": 60
 			}],
 			"totals": {
@@ -1553,6 +1556,7 @@ func asFixture() ngmodels.AlertRuleMutator {
 		r.Annotations = nil
 		r.IntervalSeconds = 60
 		r.For = 180 * time.Second
+		r.KeepFiringFor = 10 * time.Second
 	}
 }
 

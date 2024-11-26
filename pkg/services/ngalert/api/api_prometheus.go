@@ -506,11 +506,12 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		alertingRule := apimodels.AlertingRule{
-			State:       "inactive",
-			Name:        rule.Title,
-			Query:       ruleToQuery(log, rule),
-			Duration:    rule.For.Seconds(),
-			Annotations: apimodels.LabelsFromMap(rule.Annotations),
+			State:         "inactive",
+			Name:          rule.Title,
+			Query:         ruleToQuery(log, rule),
+			Duration:      rule.For.Seconds(),
+			KeepFiringFor: rule.KeepFiringFor.Seconds(),
+			Annotations:   apimodels.LabelsFromMap(rule.Annotations),
 		}
 
 		newRule := apimodels.Rule{

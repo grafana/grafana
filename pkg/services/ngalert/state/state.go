@@ -294,22 +294,28 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]float6
 	return result
 }
 
-func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
-	if state.State == eval.Normal {
+func resultNormal(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
+	switch state.State {
+	case eval.Normal:
 		logger.Debug("Keeping state", "state", state.State)
-	} else {
-		nextEndsAt := result.EvaluatedAt
-		logger.Debug("Changing state",
-			"previous_state",
-			state.State,
-			"next_state",
-			eval.Normal,
-			"previous_ends_at",
-			state.EndsAt,
-			"next_ends_at",
-			nextEndsAt)
-		// Normal states have the same start and end timestamps
-		state.SetNormal(reason, nextEndsAt, nextEndsAt)
+	default:
+		// If previous state is Alerting, check if KeepFirignFor is set
+		if result.EvaluatedAt.Sub(state.StartsAt) <= rule.KeepFiringFor {
+			logger.Debug("Keeping Alerting state, keep firing for is set", "state", state.State, "keep_firing_for", rule.KeepFiringFor)
+		} else {
+			nextEndsAt := result.EvaluatedAt
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.Normal,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			// Normal states have the same start and end timestamps
+			state.SetNormal(reason, nextEndsAt, nextEndsAt)
+		}
 	}
 }
 

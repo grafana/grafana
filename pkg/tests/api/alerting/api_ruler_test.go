@@ -682,16 +682,23 @@ func createRule(t *testing.T, client apiClient, folder string) (apimodels.Postab
 
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
-	doubleInterval := 2 * interval
+
+	doubleInterval, err := model.ParseDuration("2m")
+	require.NoError(t, err)
+
+	keepFiringFor, err := model.ParseDuration("15s")
+	require.NoError(t, err)
+
 	rules := apimodels.PostableRuleGroupConfig{
 		Name:     "arulegroup",
 		Interval: interval,
 		Rules: []apimodels.PostableExtendedRuleNode{
 			{
 				ApiRuleNode: &apimodels.ApiRuleNode{
-					For:         &doubleInterval,
-					Labels:      map[string]string{"label1": "val1"},
-					Annotations: map[string]string{"annotation1": "val1"},
+					For:           &doubleInterval,
+					KeepFiringFor: &keepFiringFor,
+					Labels:        map[string]string{"label1": "val1"},
+					Annotations:   map[string]string{"annotation1": "val1"},
 				},
 				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 					Title:     fmt.Sprintf("rule under folder %s", folder),
@@ -828,9 +835,10 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 		require.NoError(t, err)
 		alertRule := apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
-				For:         &interval,
-				Labels:      map[string]string{"label1": "val1"},
-				Annotations: map[string]string{"annotation1": "val1"},
+				For:           &interval,
+				KeepFiringFor: &interval,
+				Labels:        map[string]string{"label1": "val1"},
+				Annotations:   map[string]string{"annotation1": "val1"},
 			},
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     "AlwaysFiring",
@@ -1096,8 +1104,9 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For:    &interval,
-						Labels: map[string]string{},
+						For:           &interval,
+						KeepFiringFor: &interval,
+						Labels:        map[string]string{},
 						Annotations: map[string]string{
 							"__dashboardUid__": dashboardUID,
 							"__panelId__":      "1",
@@ -1159,6 +1168,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1202,6 +1212,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		}, {
 			"expr": "",
 			"for":"0s",
+            "keep_firing_for": "0s",
 			"grafana_alert": {
 				"id": 2,
 				"orgId": 1,
@@ -1249,6 +1260,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		"rules": [{
 			"expr": "",
 			"for": "10s",
+            "keep_firing_for": "10s",
 			"annotations": {
 				"__dashboardUid__": "%s",
 				"__panelId__": "1"
@@ -1548,7 +1560,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 			Rules: []apimodels.PostableExtendedRuleNode{
 				{
 					ApiRuleNode: &apimodels.ApiRuleNode{
-						For: util.Pointer(model.Duration(2 * time.Minute)),
+						For:           util.Pointer(model.Duration(2 * time.Minute)),
+						KeepFiringFor: util.Pointer(model.Duration(1 * time.Minute)),
 						Labels: map[string]string{
 							"foo🙂":  "bar",
 							"_bar1": "baz🙂",
@@ -1657,6 +1670,27 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		getGroup = client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
 	})
+
+	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		keepFiringFor := model.Duration(10 * time.Second)
+		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		newKeepFiringFor := model.Duration(0)
+		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup = client.GetRulesGroup(t, folderUID, group.Name)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+	})
+
 	t.Run("when data source missing", func(t *testing.T) {
 		var groupName string
 		{
@@ -1742,11 +1776,15 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	interval, err := model.ParseDuration("1m")
 	require.NoError(t, err)
 
+	doubleInterval, err := model.ParseDuration("2m")
+	require.NoError(t, err)
+
 	firstRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         &interval,
-			Labels:      map[string]string{"label1": "val1"},
-			Annotations: map[string]string{"annotation1": "val1"},
+			For:           &interval,
+			KeepFiringFor: &doubleInterval,
+			Labels:        map[string]string{"label1": "val1"},
+			Annotations:   map[string]string{"annotation1": "val1"},
 		},
 		// this rule does not explicitly set no data and error states
 		// therefore it should get the default values
@@ -1771,9 +1809,10 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 	}
 	secondRule := apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
-			For:         &interval,
-			Labels:      map[string]string{"label1": "val1"},
-			Annotations: map[string]string{"annotation1": "val1"},
+			For:           &interval,
+			KeepFiringFor: &interval,
+			Labels:        map[string]string{"label1": "val1"},
+			Annotations:   map[string]string{"annotation1": "val1"},
 		},
 		// this rule does not explicitly set no data and error states
 		// therefore it should get the default values

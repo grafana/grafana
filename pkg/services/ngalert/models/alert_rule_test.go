@@ -511,6 +511,13 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.For, diff[0].Right.Interface())
 			difCnt++
 		}
+		if rule1.KeepFiringFor != rule2.KeepFiringFor {
+			diff := diffs.GetDiffsForField("KeepFiringFor")
+			assert.Len(t, diff, 1)
+			assert.Equal(t, rule1.KeepFiringFor, diff[0].Left.Interface())
+			assert.Equal(t, rule2.KeepFiringFor, diff[0].Right.Interface())
+			difCnt++
+		}
 		if rule1.RuleGroupIndex != rule2.RuleGroupIndex {
 			diff := diffs.GetDiffsForField("RuleGroupIndex")
 			assert.Len(t, diff, 1)

@@ -42,11 +42,12 @@ func TestToModel(t *testing.T) {
 			Interval:  10,
 			Rules: []definitions.ProvisionedAlertRule{
 				{
-					UID:          "1",
-					Condition:    "A",
-					ExecErrState: definitions.ErrorErrState,
-					NoDataState:  definitions.NoData,
-					For:          10,
+					UID:           "1",
+					Condition:     "A",
+					ExecErrState:  definitions.ErrorErrState,
+					NoDataState:   definitions.NoData,
+					For:           10,
+					KeepFiringFor: 20,
 					NotificationSettings: &definitions.AlertRuleNotificationSettings{
 						Receiver: "receiver",
 					},
@@ -63,6 +64,7 @@ func TestToModel(t *testing.T) {
 		rule := tm.Rules[0]
 		require.Empty(t, rule.NoDataState)
 		require.Empty(t, rule.For)
+		require.Empty(t, rule.KeepFiringFor)
 		require.Empty(t, rule.Condition)
 		require.Empty(t, rule.ExecErrState)
 		require.Nil(t, rule.NotificationSettings)
