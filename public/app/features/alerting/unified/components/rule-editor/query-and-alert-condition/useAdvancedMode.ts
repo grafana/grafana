@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { ReducerID } from '@grafana/data';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { RuleFormValues } from '../../../types/rule-form';
 
 import { areQueriesTransformableToSimpleCondition } from './QueryAndExpressionsStep';
 import { getSimpleConditionFromExpressions, SimpleCondition } from './SimpleCondition';
@@ -51,6 +54,7 @@ export const useAdvancedMode = (
   dataQueries: Array<AlertQuery<ExpressionQuery | AlertDataQuery>>,
   expressionQueries: Array<AlertQuery<ExpressionQuery>>
 ) => {
+  const { setValue } = useFormContext<RuleFormValues>();
   const isAdvancedMode = determineAdvancedMode(
     simplifiedQueryEditor,
     isGrafanaAlertingType,
@@ -64,10 +68,13 @@ export const useAdvancedMode = (
   );
 
   useEffect(() => {
-    if (!isAdvancedMode && isGrafanaAlertingType) {
-      setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
+    if (isGrafanaAlertingType) {
+      setValue('editorSettings.simplifiedQueryEditor', !isAdvancedMode);
+      if (!isAdvancedMode) {
+        setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
+      }
     }
-  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
+  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType, setValue]);
 
-  return { isAdvancedMode, simpleCondition, setSimpleCondition };
+  return { simpleCondition, setSimpleCondition };
 };
