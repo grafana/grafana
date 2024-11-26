@@ -5,7 +5,6 @@ import { PureComponent } from 'react';
 import { SelectableValue, parseDuration } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import theme from "../../themes/default";
 import { t } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
@@ -30,11 +29,7 @@ export interface Props {
   isOnCanvas?: boolean;
 }
 
-interface State {
-  isWideScreen: boolean;
-}
-
-export class RefreshPicker extends PureComponent<Props, State> {
+export class RefreshPicker extends PureComponent<Props> {
   static offOption = {
     label: 'Off',
     value: '',
@@ -53,28 +48,9 @@ export class RefreshPicker extends PureComponent<Props, State> {
 
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
 
-  private md: number = parseInt(theme.breakpoints.md, 10);
-
   constructor(props: Props) {
     super(props);
-
-
-    this.state = {
-      isWideScreen: window.innerWidth >= this.md,
-    };
   }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
-  }
-
-  handleResize = () => {
-    this.setState({ isWideScreen: window.innerWidth >= this.md });
-  };
 
   onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
@@ -98,7 +74,6 @@ export class RefreshPicker extends PureComponent<Props, State> {
   render() {
     const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval } =
       this.props;
-    const { isWideScreen } = this.state;
 
     const currentValue = value || '';
     const variant = this.getVariant();
@@ -135,7 +110,7 @@ export class RefreshPicker extends PureComponent<Props, State> {
           onClick={onRefresh}
           variant={variant}
           icon={isLoading ? 'spinner' : 'sync'}
-          style={width && isWideScreen ? { width } : undefined}
+          style={width ? { width } : undefined}
           data-testid={selectors.components.RefreshPicker.runButtonV2}
         >
           {text}
