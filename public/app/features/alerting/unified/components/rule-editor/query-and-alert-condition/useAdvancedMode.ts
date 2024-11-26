@@ -37,9 +37,7 @@ export function determineAdvancedMode(
 ) {
   const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
   return (
-    Boolean(simplifiedQueryEditor) === false ||
-    !isGrafanaAlertingType ||
-    (isNewFromQueryParams && !queryParamsAreTransformable)
+    simplifiedQueryEditor === false || !isGrafanaAlertingType || (isNewFromQueryParams && !queryParamsAreTransformable)
   );
 }
 
