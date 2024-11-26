@@ -21,7 +21,7 @@ Anonymous users are charged as active users in Grafana Enterprise
 
 ## Before you begin
 
-To follow this guide, you need:
+To see the devices, you need:
 
 - Permissions `users:read` which is normally only granted to server admins, that allow you to read users and devices tab.
 
