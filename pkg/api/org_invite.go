@@ -129,7 +129,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 				"OrgName":   c.SignedInUser.GetOrgName(),
 				"Email":     c.SignedInUser.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 
