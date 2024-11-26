@@ -195,24 +195,24 @@ func (i *Index) InitForTenant(ctx context.Context, namespace string) (int, error
 	resourceTypes := fetchResourceTypes()
 	totalObjectsFetched := 0
 	for _, rt := range resourceTypes {
-		logger.Debug("indexing resource", "kind", rt.Key.Resource, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
-		r := &ListRequest{Options: rt, Limit: int64(i.opts.ListLimit)}
+		logger.Debug("indexing resource", "kind", rt.Kind, "list_limit", i.opts.ListLimit, "batch_size", i.opts.BatchSize, "workers", i.opts.Workers, "namespace", namespace)
+		r := &ListRequest{Options: rt.ListOptions, Limit: int64(i.opts.ListLimit)}
 		r.Options.Key.Namespace = namespace // scope the list to a tenant or this will take forever when US has 1M+ resources
 
 		// Paginate through the list of resources and index each page
 		for {
-			logger.Debug("fetching resource list", "kind", rt.Key.Resource, "namespace", namespace)
+			logger.Debug("fetching resource list", "kind", rt.Kind, "namespace", namespace)
 			list, err := i.s.List(ctx, r)
 			if err != nil {
 				return totalObjectsFetched, err
 			}
 
 			// Record the number of objects indexed for the kind
-			IndexServerMetrics.IndexedKinds.WithLabelValues(rt.Key.Resource).Add(float64(len(list.Items)))
+			IndexServerMetrics.IndexedKinds.WithLabelValues(rt.Kind).Add(float64(len(list.Items)))
 
 			totalObjectsFetched += len(list.Items)
 
-			logger.Debug("indexing batch", "kind", rt.Key.Resource, "count", len(list.Items), "namespace", namespace)
+			logger.Debug("indexing batch", "kind", rt.Kind, "count", len(list.Items), "namespace", namespace)
 			//add changes to batches for shards with changes in the List
 			err = i.writeBatch(ctx, list)
 			if err != nil {
@@ -309,6 +309,9 @@ func (i *Index) Delete(ctx context.Context, uid string, key *ResourceKey) error 
 	if err != nil {
 		return err
 	}
+
+	IndexServerMetrics.IndexedKinds.WithLabelValues(key.Resource).Dec()
+
 	return nil
 }
 
@@ -474,29 +477,43 @@ func createInMemoryIndex() (bleve.Index, string, error) {
 	return index, "", err
 }
 
+type IndexerListOptions struct {
+	*ListOptions
+	Kind string
+}
+
 // TODO - fetch from api
-func fetchResourceTypes() []*ListOptions {
-	items := []*ListOptions{}
-	items = append(items,
-		&ListOptions{
-			Key: &ResourceKey{
-				Group:    "playlist.grafana.app",
-				Resource: "playlists",
+// Folders need to be indexed first as dashboards depend on them to be indexed already.
+func fetchResourceTypes() []*IndexerListOptions {
+	return []*IndexerListOptions{
+		{
+			ListOptions: &ListOptions{
+				Key: &ResourceKey{
+					Group:    "folder.grafana.app",
+					Resource: "folders",
+				},
 			},
+			Kind: "Folder",
 		},
-		&ListOptions{
-			Key: &ResourceKey{
-				Group:    "folder.grafana.app",
-				Resource: "folders",
+		{
+			ListOptions: &ListOptions{
+				Key: &ResourceKey{
+					Group:    "playlist.grafana.app",
+					Resource: "playlists",
+				},
 			},
+			Kind: "Playlist",
 		},
-		&ListOptions{
-			Key: &ResourceKey{
-				Group:    "dashboard.grafana.app",
-				Resource: "dashboards",
+		{
+			ListOptions: &ListOptions{
+				Key: &ResourceKey{
+					Group:    "dashboard.grafana.app",
+					Resource: "dashboards",
+				},
 			},
-		})
-	return items
+			Kind: "Dashboard",
+		},
+	}
 }
 
 func getSortFields(request *SearchRequest) []string {
