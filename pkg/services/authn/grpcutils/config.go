@@ -31,10 +31,8 @@ type GrpcServerConfig struct {
 	AllowInsecure    bool
 }
 
-func (*GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.String("grpc_server_authentication.mode", string(ModeCloud), "gRPC server authentication mode")
-	fs.String("grpc_server_authentication.signing_keys_url", "", "gRPC server authentication signing keys URL")
-	fs.StringSlice("grpc_server_authentication.allowed_audiences", []string{}, "gRPC server authentication allowed audiences")
+func (c *GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.SigningKeysURL, "grpc-server-authentication.signing-keys-url", "", "gRPC server authentication signing keys URL")
 }
 
 func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
@@ -50,6 +48,7 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		Mode:             mode,
 		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
+		AllowInsecure:    cfg.Env == setting.Dev,
 	}, nil
 }
 

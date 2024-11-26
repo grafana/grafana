@@ -38,7 +38,7 @@ func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*au
 	}
 
 	client := http.DefaultClient
-	if cfg.Env == setting.Dev {
+	if authCfg.AllowInsecure {
 		// allow insecure connections in development mode to facilitate testing
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	}
@@ -83,7 +83,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return nil, err
 	}
 
-	authenticator, err := NewGrpcAuthenticator(cfg, tracer)
+	authenticator, err := NewGrpcAuthenticator(authCfg, tracer)
 	if err != nil {
 		return nil, err
 	}
