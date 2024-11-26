@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack } from '@grafana/ui';
+import { Card, EmptySearchResult, EmptyState, FilterInput, LinkButton, Stack, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Resource } from '../apiserver/types';
@@ -54,11 +54,13 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
             return (
               <Card key={item.metadata.name} className={css({ alignItems: 'center' })}>
                 <Stack direction={'column'}>
-                  <Card.Heading>{item.spec.title}</Card.Heading>
+                  <Card.Heading>
+                    <TextLink href={`${PROVISIONING_URL}/${item.metadata.name}`}>{item.spec.title}</TextLink>
+                  </Card.Heading>
                   <Card.Meta>{item.spec.type}</Card.Meta>
                 </Stack>
                 <Stack>
-                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/edit/${item.metadata.name}`}>
+                  <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${item.metadata.name}/edit`}>
                     Edit
                   </LinkButton>
                   <DeleteRepositoryButton name={item.metadata.name} />
