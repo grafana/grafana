@@ -362,7 +362,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 			})
 		}
 
-		if s.cfg.SnapshotEnabled {
+		if s.cfg.SnapshotEnabled && hasAccess(ac.EvalPermission(dashboards.ActionSnapshotsRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Snapshots",
 				SubTitle: "Interactive, publicly available, point-in-time representations of dashboards",
@@ -452,6 +452,8 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	if hasAccess(ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesRead),
+		ac.EvalPermission(ac.ActionAlertingRoutesWrite),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
 	)) {

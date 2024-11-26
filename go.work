@@ -29,4 +29,4 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56
 
-replace github.com/goccy/go-json => github.com/grafana/go-json v0.0.0-20241106155216-71a03f133f5c
+replace github.com/goccy/go-json => github.com/grafana/go-json v0.0.0-20241115232854-f14426c40ff2
