@@ -1,4 +1,4 @@
-import { deepClone } from 'fast-json-patch';
+import { cloneDeep } from 'lodash';
 
 import { config } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
@@ -131,7 +131,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   it('should set panel ds if it is mixed DS', () => {
-    const dashboard = deepClone(defaultDashboard);
+    const dashboard = cloneDeep(defaultDashboard);
     dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
@@ -140,7 +140,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           type: 'graphite',
           uid: 'datasource1',
         },
-        query: {},
+        hidden: false,
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
       },
     });
 
@@ -153,7 +159,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   it('should set panel ds as undefined if it is not mixed DS', () => {
-    const dashboard = deepClone(defaultDashboard);
+    const dashboard = cloneDeep(defaultDashboard);
     dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
       spec: {
@@ -162,7 +168,39 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           type: 'prometheus',
           uid: 'datasource1',
         },
-        query: {},
+        hidden: false,
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
+      },
+    });
+
+    const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+    const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
+    expect(vizPanels.length).toBe(1);
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
+  });
+
+  // Skipping the test because the schema doesn't accept the ds to be undefined.
+  // In future PR, we will mark it as optional so, this test should pass and the runtime code should be updated.
+  it.skip('should set panel ds as undefined if it is not mixed DS', () => {
+    const dashboard = cloneDeep(defaultDashboard);
+    dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
+      kind: 'PanelQuery',
+      // @ts-expect-error TODO: When marking DS as optional, this should be fixed
+      spec: {
+        refId: 'A',
+        hidden: false,
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
       },
     });
 
