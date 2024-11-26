@@ -317,14 +317,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:           "lokiMetricDataplane",
-			Description:    "Changes metric responses from Loki to be compliant with the dataplane specification.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
