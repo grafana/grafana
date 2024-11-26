@@ -165,11 +165,6 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
-func (u *SignedInUser) IsEmailVerified() bool {
-	return u.EmailVerified
-}
-
-// GetEmailVerified implements identity.Requester.
 func (u *SignedInUser) GetEmailVerified() bool {
 	return u.EmailVerified
 }

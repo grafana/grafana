@@ -189,10 +189,6 @@ func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
-func (i *Identity) IsEmailVerified() bool {
-	return i.EmailVerified
-}
-
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
@@ -292,8 +288,10 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:             i.Login,
 		Name:              i.Name,
 		Email:             i.Email,
+		EmailVerified:     i.EmailVerified,
 		AuthID:            i.AuthID,
 		AuthenticatedBy:   i.AuthenticatedBy,
+		Namespace:         i.Namespace,
 		IsGrafanaAdmin:    i.GetIsGrafanaAdmin(),
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
@@ -301,11 +299,10 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		LastSeenAt:        i.LastSeenAt,
 		Teams:             i.Teams,
 		Permissions:       i.Permissions,
-		FallbackType:      i.Type,
-		Namespace:         i.Namespace,
 		IDToken:           i.IDToken,
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
+		FallbackType:      i.Type,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {

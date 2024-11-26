@@ -102,7 +102,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		if id.IsIdentityType(claims.TypeUser) {
 			idClaims.Rest.Email = id.GetEmail()
-			idClaims.Rest.EmailVerified = id.IsEmailVerified()
+			idClaims.Rest.EmailVerified = id.GetEmailVerified()
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
 			idClaims.Rest.DisplayName = id.GetName()

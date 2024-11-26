@@ -33,10 +33,6 @@ type Requester interface {
 	// GetInternalID returns only the identifier part of the ID, excluding the type
 	GetInternalID() (int64, error)
 
-	// FIXME: Remove and use GetEmailVerified instead.
-	// IsEmailVerified returns if email is verified for entity.
-	IsEmailVerified() bool
-
 	// GetIsGrafanaAdmin returns true if the user is a server admin
 	GetIsGrafanaAdmin() bool
 
