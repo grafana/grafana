@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
-	"context"
 	"time"
 )
 
