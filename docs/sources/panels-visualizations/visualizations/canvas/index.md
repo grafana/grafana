@@ -100,13 +100,11 @@ A basic shape element can display text (both fixed and field data) and its backg
 
 The metric value element lets you select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" caption="Metric value element demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" alt="Metric value element demo" >}}
 
 #### Text
 
 The text element lets you add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
-
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-text-9-2-0.mp4" max-width="750px" caption="Text element demo" >}}
 
 #### Icon
 
@@ -121,7 +119,7 @@ You can add a custom icon by referencing an SVG file. To add a custom icon, foll
 1. In the dialog box that opens, click the **URL** tab.
 1. Enter the URL in the field below the **URL** tab.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="250px" alt="Add a custom image URL" >}}
 
 1. Click **Select**.
 1. (Optional) Add a background image to your icon with the **Background (icon)** option by following the steps to [add a custom image](#add-custom-images-to-elements).
@@ -132,7 +130,7 @@ If you don't have an SVG file, you can use a rectangle element instead of an ico
 
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
 
-{{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="750px" caption="Canvas server element" >}}
+{{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="650px" alt="Canvas server element" >}}
 
 #### Button
 
@@ -142,7 +140,7 @@ The button element lets you add a basic button to the canvas. Button elements su
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
 {{% /admonition %}}
 
-{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="750px" caption="Canvas button element demo" >}}
+{{< video-embed src="/media/docs/grafana/2023-20-10-Canvas-Button-Element-Enablement-Video.mp4" max-width="650px" alt="Canvas button element demo" >}}
 
 {{< docs/play title="Canvas Visualization: Buttons" url="https://play.grafana.org/d/c9ea65f5-ed5a-45cf-8fb7-f82af7c3afdf/" >}}
 
@@ -161,7 +159,7 @@ To upload a custom image, follow these steps:
 1. In the dialog box that opens, click the **URL** tab.
 1. Enter the URL in the field below the **URL** tab.
 
-   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="300px" alt="Add a custom image URL" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-canvas-custom-image-v11.3.png" max-width="250px" alt="Add a custom image URL" >}}
 
 1. Click **Select**.
 
@@ -171,7 +169,7 @@ When building a canvas, you can connect elements together to create more complex
 
 To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
-{{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
+{{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="650px" alt="Canvas connections demo" >}}
 
 ### Connector adjustments
 
@@ -187,15 +185,13 @@ If you move a connector so that it's almost a right angle or a straight line, th
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
-
 ## Canvas editing
 
 ### Inline editor
 
 You can edit your canvas inline while in the context of dashboard mode.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" caption="Inline editor demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" alt="Inline editor demo" >}}
 
 ### Context menu
 
@@ -203,11 +199,11 @@ The context menu lets you perform common tasks quickly and efficiently. Supporte
 
 The context menu is triggered by a right click action over the panel / over a given canvas element. When right clicking the panel, you are able to set a background image and easily add elements to the canvas.
 
-{{< figure src="/static/img/docs/canvas-panel/canvas-panel-context-menu-9-3-0.png" max-width="750px" caption="Canvas panel context menu" >}}
+{{< figure src="/static/img/docs/canvas-panel/canvas-panel-context-menu-9-3-0.png" max-width="350px" alt="Canvas panel context menu" >}}
 
 When right clicking an element, you are able to edit, delete, duplicate, and modify the element's layer positioning.
 
-{{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
+{{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="250px"  alt="Canvas element context menu" >}}
 
 ## Configuration options
 
@@ -223,7 +219,7 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 The inline editing toggle lets you lock or unlock the canvas. When turned off the canvas becomes “locked”, freezing elements in place and preventing unintended modifications.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" alt="Inline editing toggle demo" >}}
 
 #### Experimental Element types
 
@@ -235,9 +231,7 @@ You can enable panning and zooming in a canvas. This allows you to both create a
 
 {{< docs/public-preview product="Canvas pan and zoom" featureFlag="`canvasPanelPanZoom`" >}}
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-3-canvas-pan-zoom-setting.png" max-width="300px" alt="Canvas pan zoom control" >}}
-
-{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" caption="Canvas pan and zoom enablement video" >}}
+{{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
 
 ##### Infinite panning
 
@@ -259,7 +253,7 @@ The **Layer** options let you add elements to the canvas and control its appeara
 
 Use the **Add item** button to open the [element type](#element-types) drop-down list. Elements are listed in the reverse order that you add them to the canvas:
 
-![Canvas elements added in the Layer options](screenshot-canvas-elements-v11.3.png)
+![Canvas elements added in the Layer options](/media/docs/grafana/panels-visualizations/screenshot-canvas-elements-v11.3.png)
 
 By default, the elements have a name that corresponds to the order in which it was added, but you can [change the name](#rename-an-element).
 
