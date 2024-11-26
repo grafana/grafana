@@ -87,7 +87,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
 	// Installation token for managed plugins
-	cfg.PluginInstallToken = pluginsSection.Key("install_token").MustString("")
+	cfg.GrafanaComAPIToken = pluginsSection.Key("install_token").MustString("")
 
 	return nil
 }

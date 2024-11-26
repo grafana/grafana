@@ -195,7 +195,6 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
-	PluginInstallToken               string
 	ForwardHostEnvVars               []string
 	PreinstallPlugins                []InstallPlugin
 	PreinstallPluginsAsync           bool
@@ -441,6 +440,9 @@ type Cfg struct {
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+
+	// Token to access Grafana.com API.
+	GrafanaComAPIToken string
 
 	// Grafana.com SSO API token used for Unified SSO between instances and Grafana.com.
 	GrafanaComSSOAPIToken string
@@ -1286,6 +1288,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
 	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+
+	if cfg.GrafanaComAPIToken == "" {
+		cfg.GrafanaComAPIToken = valueAsString(iniFile.Section("grafana_com"), "api_token", "")
+	}
+
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 
