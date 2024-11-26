@@ -47,7 +47,7 @@ interface LogMessageProps {
 const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => {
   const excessCharacters = useMemo(() => entry.length - MAX_CHARACTERS, [entry]);
   const needsHighlighter =
-    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && excessCharacters > 0;
+    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && excessCharacters <= 0;
   const searchWords = highlights ?? [];
   const [showFull, setShowFull] = useState(excessCharacters < 0);
   const truncatedEntry = useMemo(() => (showFull ? entry : entry.substring(0, MAX_CHARACTERS)), [entry, showFull]);
