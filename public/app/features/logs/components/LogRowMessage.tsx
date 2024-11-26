@@ -67,7 +67,9 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   }
   return (
     <>
-      {truncatedEntry}{truncatedEntry}{truncatedEntry}
+      {truncatedEntry}
+      {truncatedEntry}
+      {truncatedEntry}
       {!showFull && <Ellipsis showFull={showFull} toggle={setShowFull} diff={excessCharacters} />}
     </>
   );
