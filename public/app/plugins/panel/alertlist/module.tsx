@@ -152,7 +152,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       path: 'showInactiveAlerts',
       name: 'Show alerts with 0 instances',
       description:
-        'Show inactive alert rules (for Prometheus alerts only). If the Alert instance label filter is configured, it will take precedence and inactive alert rules will be hidden.',
+        'Show inactive alert rules (for Prometheus alerts only). If the Alert instance label filter is configured, it takes precedence and inactive alert rules are hidden.',
       defaultValue: false,
       category: ['Filter'],
     })
