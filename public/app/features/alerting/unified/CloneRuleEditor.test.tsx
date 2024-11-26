@@ -4,6 +4,7 @@ import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from '
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
+import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { AccessControlAction } from '../../../types';
@@ -16,7 +17,7 @@ import {
 
 import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
+import { setupMswServer } from './mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
@@ -29,7 +30,6 @@ import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { setupDataSources } from './testSetup/datasources';
-import { buildInfoResponse } from './testSetup/featureDiscovery';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
 import { getDefaultFormValues } from './utils/rule-form';
@@ -109,10 +109,10 @@ describe('CloneRuleEditor', function () {
     it('should populate form values from the existing alert rule', async function () {
       const dsSettings = mockDataSource({
         name: 'my-prom-ds',
-        uid: 'my-prom-ds',
+        uid: MIMIR_DATASOURCE_UID,
       });
       setupDataSources(dsSettings);
-      mockFeatureDiscoveryApi(server).discoverDsFeatures(dsSettings, buildInfoResponse.mimir);
+
       const originRule = mockRulerAlertingRule({
         for: '1m',
         alert: 'First Ruler Rule',
@@ -121,11 +121,11 @@ describe('CloneRuleEditor', function () {
         annotations: { [Annotation.summary]: 'This is a very important alert rule' },
       });
 
-      mockRulerRulesApiResponse(server, 'my-prom-ds', {
+      mockRulerRulesApiResponse(server, MIMIR_DATASOURCE_UID, {
         'namespace-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
       });
 
-      mockRulerRulesGroupApiResponse(server, 'my-prom-ds', 'namespace-one', 'group1', {
+      mockRulerRulesGroupApiResponse(server, MIMIR_DATASOURCE_UID, 'namespace-one', 'group1', {
         name: 'group1',
         interval: '20s',
         rules: [originRule],
