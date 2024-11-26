@@ -122,10 +122,10 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
-	} else {
-		if err := r.createBranch(ctx, ref); err != nil {
-			return fmt.Errorf("create branch on create: %w", err)
-		}
+	}
+
+	if err := r.ensureBranchExists(ctx, ref); err != nil {
+		return fmt.Errorf("create branch on create: %w", err)
 	}
 
 	owner := r.config.Spec.GitHub.Owner
@@ -146,10 +146,10 @@ func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path
 func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
-	} else {
-		if err := r.createBranch(ctx, ref); err != nil {
-			return fmt.Errorf("create branch on update: %w", err)
-		}
+	}
+
+	if err := r.ensureBranchExists(ctx, ref); err != nil {
+		return fmt.Errorf("create branch on update: %w", err)
 	}
 
 	owner := r.config.Spec.GitHub.Owner
@@ -176,16 +176,16 @@ func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path
 }
 
 func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path, ref, comment string) error {
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
-	} else {
-		if err := r.createBranch(ctx, ref); err != nil {
-			return fmt.Errorf("create branch on delete: %w", err)
-		}
 	}
+
+	if err := r.ensureBranchExists(ctx, ref); err != nil {
+		return fmt.Errorf("create branch on delete: %w", err)
+	}
+
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
 
 	file, _, err := r.gh.GetContents(ctx, owner, repo, path, ref)
 	if err != nil {
@@ -203,17 +203,14 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
 }
 
-// isValidBranchName checks if a branch name is valid.
-func isValidBranchName(branch string) bool {
+// isValidGitBranchName checks if a branch name is valid.
+func isValidGitBranchName(branch string) bool {
 	// TODO: add branch validation here as well as in the frontend using the same restrictions
 	return branch != ""
 }
 
-func (r *githubRepository) createBranch(ctx context.Context, branchName string) error {
-	owner := r.config.Spec.GitHub.Owner
-	repo := r.config.Spec.GitHub.Repository
-
-	if !isValidBranchName(branchName) {
+func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
+	if !isValidGitBranchName(branchName) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Code:    http.StatusBadRequest,
@@ -221,6 +218,20 @@ func (r *githubRepository) createBranch(ctx context.Context, branchName string) 
 			},
 		}
 	}
+
+	ok, err := r.gh.BranchExists(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, branchName)
+	if err != nil {
+		return fmt.Errorf("check branch exists: %w", err)
+	}
+
+	if ok {
+		r.logger.InfoContext(ctx, "branch already exists", "branch", branchName)
+
+		return nil
+	}
+
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
 
 	srcBranch := r.config.Spec.GitHub.Branch
 	if err := r.gh.CreateBranch(ctx, owner, repo, srcBranch, branchName); err != nil {

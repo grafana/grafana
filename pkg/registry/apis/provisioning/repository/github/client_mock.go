@@ -31,6 +31,26 @@ func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository
 	return r0
 }
 
+func (_m *MockClient) BranchExists(ctx context.Context, owner string, repository string, branchName string) (bool, error) {
+	ret := _m.Called(ctx, owner, repository, branchName)
+	if len(ret) == 0 {
+		panic("no return value specified for BranchExists")
+	}
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) bool); ok {
+		r0 = rf(ctx, owner, repository, branchName)
+	} else {
+		r0 = ret.Bool(0)
+	}
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branchName)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
 // CreateFile provides a mock function with given fields: ctx, owner, repository, path, branch, message, content
 func (_m *MockClient) CreateFile(ctx context.Context, owner string, repository string, path string, branch string, message string, content []byte) error {
 	ret := _m.Called(ctx, owner, repository, path, branch, message, content)
@@ -213,7 +233,8 @@ func (_m *MockClient) UpdateFile(ctx context.Context, owner string, repository s
 func NewMockClient(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockClient {
+},
+) *MockClient {
 	mock := &MockClient{}
 	mock.Mock.Test(t)
 

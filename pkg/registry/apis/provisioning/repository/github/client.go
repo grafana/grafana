@@ -61,6 +61,8 @@ type Client interface {
 
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
+	// BranchExists checks if a branch exists in the repository.
+	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error

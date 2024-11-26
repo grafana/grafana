@@ -172,6 +172,24 @@ func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBr
 	return nil
 }
 
+func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error) {
+	_, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	if err == nil {
+		return true, nil
+	}
+
+	var ghErr *github.ErrorResponse
+	if !errors.As(err, &ghErr) {
+		return false, err
+	}
+
+	if ghErr.Response.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	return false, err
+}
+
 func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
 	hooks, _, err := r.gh.Repositories.ListHooks(ctx, owner, repository, nil)
 	if err != nil {
