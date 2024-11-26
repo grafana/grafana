@@ -18,7 +18,8 @@ export async function loadDashboardFromProvisioning(repo: string, path: string):
     .get(url, ref ? { ref } : undefined)
     .then((v) => {
       // Load the results from dryRun
-      const dryRun = v.resource.dryRun;
+      // TODO Some dashboards have a file resource, others have a dashboard resource :shrug:
+      const dryRun = v.resource.dryRun || v.resource.file?.resource?.dryRun;
       if (!dryRun) {
         return Promise.reject('failed to read provisioned dashboard');
       }

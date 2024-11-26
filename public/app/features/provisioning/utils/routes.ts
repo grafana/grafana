@@ -29,7 +29,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/provisioning/repo/:name/dashboard/preview/:path',
+      path: '/admin/provisioning/:slug/dashboard/preview/*',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Provisioning,
       component: SafeDynamicImport(
