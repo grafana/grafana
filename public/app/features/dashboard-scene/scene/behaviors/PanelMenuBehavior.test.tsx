@@ -25,12 +25,12 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
+import { DashboardScene } from '../DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../PanelLinks';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
-import { DashboardScene } from './DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
-import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
   contextSrv: jest.mocked(contextSrv),

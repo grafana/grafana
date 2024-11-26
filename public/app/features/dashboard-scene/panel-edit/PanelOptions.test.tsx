@@ -11,7 +11,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { overrideRuleTooltipDescription } from 'app/features/dashboard/components/PanelEditor/state/getOptionOverrides';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { LibraryPanelBehavior } from '../scene/behaviors/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';

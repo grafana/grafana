@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 
-import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { DashboardDatasourceBehaviour } from '../scene/behaviors/DashboardDatasourceBehaviour';
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries

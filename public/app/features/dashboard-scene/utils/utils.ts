@@ -13,11 +13,11 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { DashboardDatasourceBehaviour } from '../scene/behaviors/DashboardDatasourceBehaviour';
+import { LibraryPanelBehavior } from '../scene/behaviors/LibraryPanelBehavior';
+import { panelMenuBehavior } from '../scene/behaviors/PanelMenuBehavior';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;

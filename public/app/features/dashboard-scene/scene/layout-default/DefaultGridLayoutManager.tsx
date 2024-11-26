@@ -22,7 +22,7 @@ import {
   getVizPanelKeyForPanelId,
   getDefaultVizPanel,
 } from '../../utils/utils';
-import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { RowRepeaterBehavior } from '../behaviors/RowRepeaterBehavior';
 import { LayoutEditChrome } from '../layouts-shared/LayoutEditChrome';
 import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, LayoutEditorProps, LayoutRegistryItem } from '../types';

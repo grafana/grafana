@@ -13,7 +13,7 @@ import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, toggleVizPanelLegend } from './behaviors/PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {

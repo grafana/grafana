@@ -4,7 +4,7 @@ import { UrlQueryMap } from '@grafana/data';
 import { sceneGraph, SceneObjectBase, SceneObjectState, VariableDependencyConfig } from '@grafana/scenes';
 import { getClosestScopesFacade } from 'app/features/scopes';
 
-import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
+import { getDashboardScenePageStateManager } from '../../pages/DashboardScenePageStateManager';
 
 export interface DashboardReloadBehaviorState extends SceneObjectState {
   reloadOnParamsChange?: boolean;

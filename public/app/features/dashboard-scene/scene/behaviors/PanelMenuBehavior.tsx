@@ -27,15 +27,14 @@ import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashbo
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareModal } from '../sharing/ShareModal';
-import { DashboardInteractions } from '../utils/interactions';
-import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
-
-import { DashboardScene } from './DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { ShareDrawer } from '../../sharing/ShareDrawer/ShareDrawer';
+import { ShareModal } from '../../sharing/ShareModal';
+import { DashboardInteractions } from '../../utils/interactions';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../../utils/urlBuilders';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../PanelLinks';
+import { UnlinkLibraryPanelModal } from '../UnlinkLibraryPanelModal';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).

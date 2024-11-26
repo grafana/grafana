@@ -9,9 +9,9 @@ import {
   getLibraryPanelBehavior,
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
-} from '../utils/utils';
+} from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
-import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
