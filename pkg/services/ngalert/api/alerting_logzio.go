@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
+	"context"
+	"time"
 )
 
 type LogzioAlertingService struct {
@@ -42,7 +44,8 @@ func NewLogzioAlertingService(
 
 func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext, evalRequests []apimodels.AlertEvaluationRequest) response.Response {
 	c.Logger.Info(fmt.Sprintf("Evaluate Alert API: got requests for %d evaluations", len(evalRequests)))
-	var evaluationsErrors []apimodels.AlertEvalRunResult
+
+	var results []apimodels.AlertEvalRunResult
 
 	for _, evalRequest := range evalRequests {
 		c.Logger.Info("Evaluate Alert API", "eval_time", evalRequest.EvalTime, "rule_title", evalRequest.AlertRule.Title, "rule_uid", evalRequest.AlertRule.UID, "org_id", evalRequest.AlertRule.OrgID)
@@ -53,17 +56,18 @@ func (srv *LogzioAlertingService) RouteEvaluateAlert(c *contextmodel.ReqContext,
 			FolderTitle: evalRequest.FolderTitle,
 			LogzHeaders: srv.addQuerySourceHeader(c),
 		}
-		err := srv.Schedule.RunRuleEvaluation(c.Req.Context(), evalReq)
 
-		if err != nil {
-			evaluationsErrors = append(evaluationsErrors, apimodels.AlertEvalRunResult{UID: evalRequest.AlertRule.UID, EvalTime: evalRequest.EvalTime, RunResult: err.Error()})
-		} else {
-			evaluationsErrors = append(evaluationsErrors, apimodels.AlertEvalRunResult{UID: evalRequest.AlertRule.UID, EvalTime: evalRequest.EvalTime, RunResult: "success"})
-		}
+		var step = evalRequest.AlertRule.ID % 30
+
+		time.AfterFunc(time.Duration(step * time.Second.Nanoseconds()), func() {
+			srv.Schedule.RunRuleEvaluation(c.Req.Context(), evalReq)
+		})
+
+		results = append(results, apimodels.AlertEvalRunResult{UID: evalRequest.AlertRule.UID, EvalTime: evalRequest.EvalTime, RunResult: "success"})
 	}
 
-	c.Logger.Info("Evaluate Alert API - Done", "evalErrors", evaluationsErrors)
-	return response.JSON(http.StatusOK, apimodels.EvalRunsResponse{RunResults: evaluationsErrors})
+	c.Logger.Info("Evaluate Alert API - Done", "results", results)
+	return response.JSON(http.StatusOK, apimodels.EvalRunsResponse{RunResults: results})
 }
 
 func (srv *LogzioAlertingService) addQuerySourceHeader(c *contextmodel.ReqContext) http.Header {
