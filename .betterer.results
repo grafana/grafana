@@ -833,6 +833,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`TimeSeries\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`updateLegendValues\`)", "7"]
     ],
+    "public/app/core/crash/index.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
