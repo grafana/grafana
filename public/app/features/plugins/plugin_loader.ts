@@ -169,9 +169,6 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   });
 }
 
-export class DisabledAppPlugin extends Error {}
-export class NotAnAppPlugin extends Error {}
-
 // Only successfully loaded plugins are cached
 const importedAppPlugins: Record<string, AppPlugin> = {};
 
