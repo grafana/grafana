@@ -370,6 +370,9 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
 func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent) error {
+	action := event.GetAction()
+	r.logger.InfoContext(ctx, "processing pull request event", "number", event.GetNumber(), "action", action)
+
 	if event.GetRepo() == nil {
 		return fmt.Errorf("missing repository in pull request event")
 	}
@@ -378,7 +381,6 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("repository mismatch")
 	}
 
-	action := event.GetAction()
 	if action != "opened" && action != "reopened" && action != "synchronize" {
 		logger.InfoContext(ctx, "ignore pull request event", "action", event.GetAction())
 		return nil
@@ -427,7 +429,9 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 	}
 
 	commentTemplate := `Grafana detected that the following files have been changed in this pull request:
-{{range .}}- {{.GetFilename}} **{{.GetStatus }}** {{end}}
+{{range .}}
+- {{.GetFilename}} **{{.GetStatus }}**
+{{end}}
 `
 	tmpl, err := template.New("comment").Parse(commentTemplate)
 	if err != nil {
@@ -444,6 +448,8 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
+
+	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber())
 
 	return nil
 }
