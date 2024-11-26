@@ -119,6 +119,19 @@ If you need to modify provisioned alerting resources in Grafana, refer to [edit 
 
 The export options listed below enable you to download resources in YAML, JSON, or Terraform format, facilitating their provisioning through [configuration files](ref:alerting_file_provisioning) or [Terraform](ref:alerting_tf_provisioning).
 
+### Export a new alert rule definition in Terraform (HCL) format
+
+Add new alert rule definitions to existing provisioned rule groups rather than creating the code manually. You can then copy it to your Terraform pipeline, and quickly deploy and manage alert rules as part of your infrastructure as code.
+
+To export your alert rule definition into Terraform (HCL) format, complete the following steps.
+
+1. Click **Alerts & IRM** -> **Alert rules**.
+1. Click **+ New alert rule**.
+1. Fill out the alert rule details.
+1. Choose a provisioned folder and group to add your alert rule definition to.
+1. Click **Export**.
+1. Copy and paste the code into your Terraform pipeline to create your new alert rule.
+
 ### Export alert rules
 
 To export alert rules from the Grafana UI, complete the following steps.
