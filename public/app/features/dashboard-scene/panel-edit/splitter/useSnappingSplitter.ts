@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-import { DragHandlePosition, useSplitter } from '@grafana/ui';
+import { ComponentSize, DragHandlePosition, useSplitter } from '@grafana/ui';
 
 export interface UseSnappingSplitterOptions {
   /**
@@ -10,6 +10,10 @@ export interface UseSnappingSplitterOptions {
   direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
   paneOptions: PaneOptions;
+  collapsed?: boolean;
+  // Size of the region left of the handle indicator that is responsive to dragging. At the same time acts as a margin
+  // pushing the left pane content left.
+  handleSize?: ComponentSize;
 }
 
 interface PaneOptions {
@@ -25,7 +29,10 @@ interface PaneState {
 export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
   const { paneOptions } = options;
 
-  const [state, setState] = useState<PaneState>({ collapsed: false });
+  const [state, setState] = useState<PaneState>({
+    collapsed: options.collapsed ?? false,
+    snapSize: options.collapsed ? 0 : undefined,
+  });
 
   const onResizing = useCallback(
     (flexSize: number, pixelSize: number) => {
@@ -76,7 +83,10 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
   }, [state.collapsed]);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
-    ...options,
+    direction: options.direction,
+    dragPosition: options.dragPosition,
+    handleSize: options.handleSize,
+    initialSize: options.initialSize,
     onResizing,
     onSizeChanged,
   });
