@@ -149,6 +149,42 @@ func TestFolderAPIBuilder_getAuthorizerFunc(t *testing.T) {
 				allow: false,
 			},
 		},
+		{
+			name: "user with write permissions should be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{
+				eval:  "folders:write",
+				allow: true,
+			},
+		},
+		{
+			name: "user without write permissions should NOT be able to update a folder",
+			input: input{
+				user: &user.SignedInUser{
+					UserID: 1,
+					OrgID:  orgID,
+					Name:   "123",
+					Permissions: map[int64]map[string][]string{
+						orgID: {},
+					},
+				},
+				verb: string(utils.VerbUpdate),
+			},
+			expect: expect{
+				eval:  "folders:write",
+				allow: false,
+			},
+		},
 	}
 
 	b := &FolderAPIBuilder{
