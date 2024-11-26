@@ -327,7 +327,7 @@ func (ng *AlertNG) init() error {
 		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
 	}
 	stateManager := state.NewManager(cfg, statePersister)
-	scheduler := schedule.NewScheduler(schedCfg, stateManager)
+	scheduler := schedule.NewScheduler(schedCfg, stateManager, ng.store) // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {

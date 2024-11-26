@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/store" // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
 	"math/rand"
 	"net/url"
 	"testing"
@@ -94,7 +95,7 @@ func TestProcessTicks(t *testing.T) {
 	}
 	st := state.NewManager(managerCfg, state.NewNoopPersister())
 
-	sched := NewScheduler(schedCfg, st)
+	sched := NewScheduler(schedCfg, st, &store.DBstore{}) // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
 
 	evalAppliedCh := make(chan evalAppliedInfo, 1)
 	stopAppliedCh := make(chan models.AlertRuleKey, 1)
@@ -921,7 +922,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
 
-	return NewScheduler(schedCfg, st)
+	return NewScheduler(schedCfg, st, &store.DBstore{}) // LOGZ.IO GRAFANA CHANGE :: DEV-47243 Handle state cache inconsistency on eval - warm cache in scheduler as temporary solution
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {
