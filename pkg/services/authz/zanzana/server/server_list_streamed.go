@@ -20,7 +20,6 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 }
 
 func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ttl := s.cfg.CheckQueryCacheTTL
 	reqHash, err := getRequestHash(req)
 	if err != nil {
 		return nil, err
@@ -34,7 +33,7 @@ func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.L
 	if err != nil {
 		return nil, err
 	}
-	s.cache.Set(reqHash, res, ttl)
+	s.cache.Set(reqHash, res, 0)
 	return res, nil
 }
 

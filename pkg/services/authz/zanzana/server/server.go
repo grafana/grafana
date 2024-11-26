@@ -2,6 +2,7 @@ package server
 
 import (
 	"sync"
+	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -75,6 +76,7 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg.Zanzana,
+		cache:         localcache.New(cfg.Zanzana.CheckQueryCacheTTL, 2*time.Minute),
 	}
 
 	for _, o := range opts {
