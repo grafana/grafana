@@ -3092,6 +3092,7 @@
       "copy-link-button": "Copy link",
       "delete-button": "Delete snapshot",
       "delete-description": "Are you sure you want to delete this snapshot?",
+      "delete-permission-tooltip": "You don't have permission to delete snapshots",
       "delete-title": "Delete snapshot",
       "deleted-alert": "Snapshot deleted. It could take an hour to be cleared from CDN caches.",
       "expiration-label": "Expires in",
