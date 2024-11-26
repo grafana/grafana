@@ -86,7 +86,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		idClaims := &auth.IDClaims{
-			Claims: &jwt.Claims{
+			Claims: jwt.Claims{
 				Issuer:   s.cfg.AppURL,
 				Audience: getAudience(id.GetOrgID()),
 				Subject:  id.GetID(),
