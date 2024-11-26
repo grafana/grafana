@@ -67,12 +67,14 @@ enum ActiveTab {
 const AmRoutes = () => {
   const styles = useStyles2(getStyles);
   const appNotification = useAppNotification();
-  const [, showPoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [, showTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
-  const [, canSeeContactPointsStatus] = useAlertmanagerAbility(AlertmanagerAction.ViewContactPoint);
+  const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
+  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [contactPointsSupported, canSeeContactPointsStatus] = useAlertmanagerAbility(
+    AlertmanagerAction.ViewContactPoint
+  );
   const availableTabs = [
-    showPoliciesTab && ActiveTab.NotificationPolicies,
-    showTimingsTab && ActiveTab.MuteTimings,
+    canSeePoliciesTab && ActiveTab.NotificationPolicies,
+    canSeeTimingsTab && ActiveTab.MuteTimings,
   ].filter((tab) => !!tab);
   const [_, canSeeAlertGroups] = useAlertmanagerAbility(AlertmanagerAction.ViewAlertGroups);
   const { useGetAlertmanagerAlertGroupsQuery } = alertmanagerApi;
@@ -89,12 +91,15 @@ const AmRoutes = () => {
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
   const { data: muteTimings = [] } = useMuteTimings({
     alertmanager: selectedAlertmanager ?? '',
-    skip: !showTimingsTab,
+    skip: !canSeeTimingsTab,
   });
+
+  const shouldFetchContactPoints =
+    policiesSupported && canSeePoliciesTab && contactPointsSupported && canSeeContactPointsStatus;
 
   const contactPointsState = useGetContactPointsState(
     // Workaround to not try and call this API when we don't have access to the policies tab
-    showPoliciesTab && canSeeContactPointsStatus ? (selectedAlertmanager ?? '') : ''
+    shouldFetchContactPoints ? (selectedAlertmanager ?? '') : ''
   );
 
   const {
@@ -102,30 +107,33 @@ const AmRoutes = () => {
     isLoading,
     error: resultError,
     refetch: refetchNotificationPolicyRoute,
-  } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' }, { skip: !showPoliciesTab });
+  } = useNotificationPolicyRoute({ alertmanager: selectedAlertmanager ?? '' }, { skip: !canSeePoliciesTab });
 
-  const [result] = currentData ?? [];
+  // We make the assumption that the first policy is the default one
+  // At the time of writing, this will be always the case for the AM config response, and the K8S API
+  // TODO in the future: Generalise the component to support any number of "root" policies
+  const [defaultPolicy] = currentData ?? [];
 
   const updateNotificationPolicyRoute = useUpdateNotificationPolicyRoute(selectedAlertmanager ?? '');
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
-    { skip: !showPoliciesTab || !canSeeAlertGroups || !selectedAlertmanager }
+    { skip: !canSeePoliciesTab || !canSeeAlertGroups || !selectedAlertmanager }
   );
 
   const { contactPoints: receivers } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager ?? '',
     fetchPolicies: false,
     fetchStatuses: canSeeContactPointsStatus,
-    skip: !showPoliciesTab,
+    skip: !canSeePoliciesTab,
   });
 
   const rootRoute = useMemo(() => {
-    if (result) {
-      return addUniqueIdentifierToRoute(result);
+    if (defaultPolicy) {
+      return addUniqueIdentifierToRoute(defaultPolicy);
     }
     return;
-  }, [result]);
+  }, [defaultPolicy]);
 
   // useAsync could also work but it's hard to wait until it's done in the tests
   // Combining with useEffect gives more predictable results because the condition is in useEffect
@@ -202,7 +210,7 @@ const AmRoutes = () => {
 
     const newTree = await updateNotificationPolicyRoute({
       newRoute: newRouteTree,
-      oldRoute: result,
+      oldRoute: defaultPolicy,
     });
 
     appNotification.success('Updated notification policies');
@@ -247,7 +255,7 @@ const AmRoutes = () => {
     <>
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
       <TabsBar>
-        {showPoliciesTab && (
+        {policiesSupported && canSeePoliciesTab && (
           <Tab
             label={'Notification Policies'}
             active={policyTreeTabActive}
@@ -257,7 +265,7 @@ const AmRoutes = () => {
             }}
           />
         )}
-        {showTimingsTab && (
+        {timingsSupported && canSeeTimingsTab && (
           <Tab
             label={'Mute Timings'}
             active={muteTimingsTabActive}
