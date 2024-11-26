@@ -22,7 +22,6 @@ type Requester interface {
 	// GetRawIdentifier returns only the identifier part of the UID, excluding the type
 	GetRawIdentifier() string
 
-	// FIXME: GetSubject?
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead
 	GetID() string
