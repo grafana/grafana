@@ -24,6 +24,8 @@ export type SSOProviderSettingsBase = {
   autoLogin?: boolean;
   clientId: string;
   clientSecret: string;
+  managedIdentityClientId?: string;
+  audience?: string;
   emailAttributeName?: string;
   emailAttributePath?: string;
   emptyScopes?: boolean;
