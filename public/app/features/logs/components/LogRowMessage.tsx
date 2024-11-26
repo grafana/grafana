@@ -10,7 +10,7 @@ import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
 
-export const MAX_CHARACTERS = 90;
+export const MAX_CHARACTERS = 100000;
 
 interface Props {
   row: LogRowModel;
