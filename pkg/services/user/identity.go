@@ -45,8 +45,9 @@ type SignedInUser struct {
 	Permissions map[int64]map[string][]string `json:"-"`
 
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	IDToken       string                                   `json:"-" xorm:"-"`
-	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
+	IDToken           string                                       `json:"-" xorm:"-"`
+	IDTokenClaims     *authnlib.Claims[authnlib.IDTokenClaims]     `json:"-" xorm:"-"`
+	AccessTokenClaims *authnlib.Claims[authnlib.AccessTokenClaims] `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
@@ -98,7 +99,6 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
-<<<<<<< HEAD
 func (u *SignedInUser) GetName() string {
 	// kubernetesAggregator feature flag which allows Cloud Apps to become available
 	// in single tenant Grafana requires that GetName() returns something and not an empty string
@@ -110,7 +110,8 @@ func (u *SignedInUser) GetName() string {
 		return u.Login
 	}
 	return u.Email
-=======
+}
+
 func (u *SignedInUser) GetNamespace() string {
 	return u.Namespace
 }
@@ -120,8 +121,10 @@ func (u *SignedInUser) GetSubject() string {
 }
 
 func (u *SignedInUser) GetAudience() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Audience
+	}
 	return []string{}
->>>>>>> 6c8f77892f6 (Update to use update interface)
 }
 
 func (u *SignedInUser) GetExtra() map[string][]string {
@@ -144,20 +147,18 @@ func (u *SignedInUser) GetGroups() []string {
 
 }
 
-func (u *SignedInUser) GetTokenDelegatedPermissions() []string {
-	return []string{}
-}
-
 func (u *SignedInUser) GetTokenPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.Permissions
+	}
 	return []string{}
 }
 
-func (u *SignedInUser) GetName() string {
-	return u.NameOrFallback()
-}
-
-func (u *SignedInUser) GetDisplayName() string {
-	return u.NameOrFallback()
+func (u *SignedInUser) GetTokenDelegatedPermissions() []string {
+	if u.AccessTokenClaims != nil {
+		return u.AccessTokenClaims.Rest.DelegatedPermissions
+	}
+	return []string{}
 }
 
 func (u *SignedInUser) GetEmail() string {
@@ -328,19 +329,6 @@ func (u *SignedInUser) IsNil() bool {
 	return u == nil
 }
 
-<<<<<<< HEAD
-// GetEmail returns the email of the active entity
-// Can be empty.
-func (u *SignedInUser) GetEmail() string {
-	return u.Email
-}
-
-func (u *SignedInUser) IsEmailVerified() bool {
-	return u.EmailVerified
-}
-
-=======
->>>>>>> 6c8f77892f6 (Update to use update interface)
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
 }
