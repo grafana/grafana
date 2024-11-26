@@ -221,7 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'stretch',
-      padding: theme.spacing(0.5, 2),
+      padding: theme.spacing(0.5, 1.5),
       minHeight: theme.spacing(4),
       margin: 0,
       border: 'none',
