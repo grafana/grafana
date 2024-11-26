@@ -8,7 +8,7 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
-import { RepositorySpec } from '../../provisioning/api/types';
+import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -35,13 +35,6 @@ function getDefaultValues(meta: DashboardMeta) {
   return { ref, path, repo, comment: '' };
 }
 
-function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
-  if (!spec || spec.type !== 'github' || !ref) {
-    return '';
-  }
-  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}`;
-}
-
 export interface Props {
   meta: DashboardMeta;
   dashboard: DashboardScene;
@@ -52,7 +45,12 @@ export interface Props {
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
   const defaultValues = getDefaultValues(meta);
-  const { register, handleSubmit, watch } = useForm({ defaultValues });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({ defaultValues });
   const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
   const repositoryConfig = repositoryConfigQuery?.data?.spec;
   const isGitHub = repositoryConfig?.type === 'github';
@@ -104,8 +102,13 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         {isGitHub && (
-          <Field label="Branch" description="Branch name in GitHub">
-            <Input {...register('ref')} />
+          <Field
+            label="Branch"
+            description="Branch name in GitHub"
+            invalid={!!errors?.ref}
+            error={errors.ref ? <BranchValidationError /> : ''}
+          >
+            <Input {...register('ref', { validate: validateBranchName })} />
           </Field>
         )}
 
@@ -136,3 +139,16 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     </form>
   );
 }
+const BranchValidationError = () => {
+  return (
+    <>
+      Invalid branch name.
+      <ul style={{ padding: '0 20px' }}>
+        <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
+        <li>It cannot contain '//' or '..'.</li>
+        <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
+        <li>It must have at least one valid character.</li>
+      </ul>
+    </>
+  );
+};
