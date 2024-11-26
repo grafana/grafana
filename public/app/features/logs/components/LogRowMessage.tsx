@@ -3,14 +3,14 @@ import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { PopoverContent } from '@grafana/ui';
+import { Button, PopoverContent } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
 
-export const MAX_CHARACTERS = 100000;
+export const MAX_CHARACTERS = 90;
 
 interface Props {
   row: LogRowModel;
@@ -67,7 +67,7 @@ const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => 
   }
   return (
     <>
-      {truncatedEntry}
+      {truncatedEntry}{truncatedEntry}{truncatedEntry}
       {!showFull && <Ellipsis showFull={showFull} toggle={setShowFull} diff={excessCharacters} />}
     </>
   );
@@ -86,9 +86,9 @@ const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
   return (
     <>
       …{' '}
-      <span onClick={handleClick}>
-        ({diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>)
-      </span>
+      <Button fill="text" size="sm" variant="secondary" onClick={handleClick}>
+        {diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>
+      </Button>
     </>
   );
 };
