@@ -85,7 +85,7 @@ const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
   };
   return (
     <>
-      …{' '}
+      <Trans i18nKey="logs.log-row-message.ellipsis">… </Trans>
       <Button fill="outline" size="sm" variant="secondary" onClick={handleClick}>
         {diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>
       </Button>
