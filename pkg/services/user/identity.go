@@ -268,7 +268,7 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() string {
 	ns, id := u.getTypeAndID()
-	return identity.NewTypedIDString(ns, id)
+	return claims.NewTypeID(ns, id)
 }
 
 func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
