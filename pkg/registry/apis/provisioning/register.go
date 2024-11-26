@@ -413,9 +413,9 @@ func (b *ProvisioningAPIBuilder) Validate(ctx context.Context, a admission.Attri
 	}
 
 	// Reserved names (for now)
-	reserved := []string{"classic", "SQL", "plugins", "legacy"}
+	reserved := []string{"classic", "sql", "SQL", "plugins", "legacy", "new", "job", "github", "s3", "gcs", "file"}
 	if slices.Contains(reserved, cfg.Name) {
-		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved"))
+		list = append(list, field.Invalid(field.NewPath("metadata", "name"), cfg.Name, "Name is reserved, choose a different identifier"))
 	}
 
 	if cfg.Spec.Type != provisioning.LocalRepositoryType && cfg.Spec.Local != nil {
