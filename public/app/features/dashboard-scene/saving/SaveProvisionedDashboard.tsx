@@ -97,11 +97,9 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
 
       if (workflow === 'pr') {
         console.log("TODO, show Link in the UI...");
-        alert('about to auto navigate...');
-        window.open(
-          prhref,
-          '_blank' // <- This is what makes it open in a new window.
-        );
+        alert('about to auto navigate...<br>'+prhref);
+        window.location.href = prhref
+        return
       }
 
       // TODO Avoid full reload
