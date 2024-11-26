@@ -1742,6 +1742,10 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Older logs"
+    },
+    "log-row-message": {
+      "ellipsis": "… ",
+      "more": "more"
     }
   },
   "migrate-to-cloud": {
