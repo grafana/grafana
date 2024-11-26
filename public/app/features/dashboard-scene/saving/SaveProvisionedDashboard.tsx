@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { AppEvents, SelectableValue } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Button, Stack, TextArea, Field, Input, Alert, RadioButtonGroup } from '@grafana/ui';
+import { Button, Stack, TextArea, Field, Input, Alert, LinkButton } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
-import { RepositorySpec } from '../../provisioning/api/types';
+import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
@@ -35,13 +35,6 @@ function getDefaultValues(meta: DashboardMeta) {
   return { ref, path, repo, comment: '' };
 }
 
-function createPRLink(spec?: RepositorySpec, dashboardName?: string, ref?: string) {
-  if (!spec || spec.type !== 'github' || !ref) {
-    return '';
-  }
-  return `https://github.com/${spec.github?.owner}/${spec.github?.repository}/compare/${spec.github?.branch}...${ref}?quick_pull=1&labels=grafana&title=Update dashboard ${dashboardName}`;
-}
-
 export interface Props {
   meta: DashboardMeta;
   dashboard: DashboardScene;
@@ -52,39 +45,17 @@ export interface Props {
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
   const defaultValues = getDefaultValues(meta);
-  const { register, handleSubmit, watch, setValue } = useForm({ defaultValues });
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({ defaultValues });
   const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
   const repositoryConfig = repositoryConfigQuery?.data?.spec;
-  const [workflow, setWorkflow] = useState<string>('main');
+  const isGitHub = repositoryConfig?.type === 'github';
   const [repo, ref] = watch(['repo', 'ref']);
-  const prhref = createPRLink(repositoryConfig, repo, ref);
-
-  const workflowOptions = useMemo(() => {
-    let options: Array<SelectableValue<string>> = [{
-      label: `Write to repository`,
-      value: 'main',
-    }]
-    if (repositoryConfig?.github) {
-      options = [{
-        label: `Commit to ${repositoryConfig?.github.branch ?? 'main'}`,
-        value: 'main',
-      }, {
-        label: `Create pull request`,
-        value: 'pr',
-      }];
-    }
-    return options
-  }, [repositoryConfig]);
-
-  useEffect(() => {
-    if (!workflow) {
-      setWorkflow(workflowOptions[0].value!)
-      return
-    }
-    if (workflow === 'pr') {
-      setValue('ref', 'dashboard_pr_'+Date.now())
-    }
-  }, [workflow, workflowOptions, setValue])
+  const href = createPRLink(repositoryConfig, repo, ref);
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -94,14 +65,6 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-
-      if (workflow === 'pr') {
-        console.log("TODO, show Link in the UI...");
-        alert('about to auto navigate...<br>'+prhref);
-        window.location.href = prhref
-        return
-      }
-
       // TODO Avoid full reload
       window.location.reload();
     } else if (request.isError) {
@@ -110,17 +73,14 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard, workflow, prhref]);
+  }, [request.isSuccess, request.isError, request.error, dashboard]);
 
   const doSave = ({ ref, path, comment, repo }: FormData) => {
     if (!repo || !path) {
       return;
     }
-
     saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
-
-  console.log('RENDER', { defaultValues, meta })
 
   return (
     <form onSubmit={handleSubmit(doSave)}>
@@ -138,16 +98,17 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly />
+          <Input {...register('path')} />
         </Field>
 
-        <Field label="Workflow">
-          <RadioButtonGroup value={workflow} options={workflowOptions} onChange={v => setWorkflow(v)} />
-        </Field>
-
-        {workflow === 'pr' && (
-          <Field label="Branch" description="Branch name in GitHub">
-            <Input {...register('ref')} />
+        {isGitHub && (
+          <Field
+            label="Branch"
+            description="Branch name in GitHub"
+            invalid={!!errors?.ref}
+            error={errors.ref ? <BranchValidationError /> : ''}
+          >
+            <Input {...register('ref', { validate: validateBranchName })} />
           </Field>
         )}
 
@@ -162,19 +123,32 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         </Field>
 
         <Stack gap={2}>
-          {workflow === 'pr' ? (
-            <Button variant="primary" type="submit">
-            Open Pull Request
-            </Button>
-          ) : (<Button variant="primary" type="submit">
+          <Button variant="primary" type="submit">
             Save
-          </Button>)}
-
+          </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
             Cancel
           </Button>
+          {isGitHub && (
+            <LinkButton variant="secondary" href={href} fill="outline" target={'_blank'} rel={'noreferrer noopener'}>
+              Open pull request
+            </LinkButton>
+          )}
         </Stack>
       </Stack>
     </form>
   );
 }
+const BranchValidationError = () => {
+  return (
+    <>
+      Invalid branch name.
+      <ul style={{ padding: '0 20px' }}>
+        <li>It cannot start with '/' or end with '/', '.', or whitespace.</li>
+        <li>It cannot contain '//' or '..'.</li>
+        <li>It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.</li>
+        <li>It must have at least one valid character.</li>
+      </ul>
+    </>
+  );
+};
