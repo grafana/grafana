@@ -78,6 +78,10 @@ module.exports = [
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
       'import/external-module-folders': ['node_modules', '.yarn'],
+      // Silences a warning when linting enterprise code
+      react: {
+        version: 'detect',
+      },
     },
 
     rules: {
