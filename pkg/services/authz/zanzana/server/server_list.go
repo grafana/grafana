@@ -102,22 +102,6 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 		return nil, err
 	}
 
-	_, err = s.listObjectsStreamed(ctx, &openfgav1.ListObjectsRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		Type:                 common.TypeResource,
-		Relation:             relation,
-		User:                 subject,
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": groupResource,
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	return &authzextv1.ListResponse{
 		Folders: folderObject(folders.GetObjects()),
 		Items:   directObjects(group, resource, direct.GetObjects()),

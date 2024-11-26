@@ -2,65 +2,13 @@ package server
 
 import (
 	"context"
+	"errors"
+	"io"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
 )
 
-var _ grpc.ServerStream = (*streamServer)(nil)
-
-func NewStreamServer(ctx context.Context) *streamServer {
-	channel := make(chan *openfgav1.StreamedListObjectsResponse, streamedBufferSize)
-	return &streamServer{
-		ctx:     ctx,
-		channel: channel,
-	}
-}
-
-const streamedBufferSize = 100
-
-// streamServer implements grpc.ServerStream
-type streamServer struct {
-	ctx     context.Context
-	channel chan *openfgav1.StreamedListObjectsResponse
-}
-
-func (s *streamServer) Send(m *openfgav1.StreamedListObjectsResponse) error {
-	s.channel <- m
-	return nil
-}
-
-func (s *streamServer) Recv() (*openfgav1.StreamedListObjectsResponse, error) {
-	m := <-s.channel
-	return m, nil
-}
-
-func (s *streamServer) Context() context.Context {
-	return s.ctx
-}
-
-func (s *streamServer) RecvMsg(m any) error {
-	return nil
-}
-
-func (s *streamServer) SendHeader(metadata.MD) error {
-	return nil
-}
-
-func (s *streamServer) SendMsg(m any) error {
-	return nil
-}
-
-func (s *streamServer) SetHeader(metadata.MD) error {
-	return nil
-}
-
-func (s *streamServer) SetTrailer(metadata.MD) {
-	return
-}
-
-func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*streamServer, error) {
+func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
 		AuthorizationModelId: req.GetAuthorizationModelId(),
@@ -70,34 +18,36 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 		Context:              req.GetContext(),
 	}
 
-	srv := NewStreamServer(ctx)
-	err := s.openfga.StreamedListObjects(r, srv)
-	if err != nil {
-		return nil, err
-	}
-
-	return srv, nil
-}
-
-func (s *Server) listObjectsStreamed(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	stream, err := s.streamedListObjects(ctx, req)
+	clientStream, err := s.openfgaClient.StreamedListObjects(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
 	done := make(chan struct{})
-	result := make([]string, 0)
+	var streamedObjectIDs []string
+	var streamingErr error
+	var streamingResp *openfgav1.StreamedListObjectsResponse
 	go func() {
 		for {
-			m, err := stream.Recv()
-			if err != nil {
+			streamingResp, streamingErr = clientStream.Recv()
+			if streamingErr == nil {
+				streamedObjectIDs = append(streamedObjectIDs, streamingResp.GetObject())
+			} else {
+				if errors.Is(streamingErr, io.EOF) {
+					streamingErr = nil
+				}
 				break
 			}
-			result = append(result, m.Object)
 		}
 		done <- struct{}{}
 	}()
 	<-done
 
-	return &openfgav1.ListObjectsResponse{Objects: result}, nil
+	if streamingErr != nil {
+		return nil, streamingErr
+	}
+
+	return &openfgav1.ListObjectsResponse{
+		Objects: streamedObjectIDs,
+	}, nil
 }

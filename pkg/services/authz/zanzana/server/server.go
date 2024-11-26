@@ -3,6 +3,7 @@ package server
 import (
 	"sync"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/language/pkg/go/transformer"
@@ -28,7 +29,8 @@ type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga openfgav1.OpenFGAServiceServer
+	openfga       openfgav1.OpenFGAServiceServer
+	openfgaClient openfgav1.OpenFGAServiceClient
 
 	logger   log.Logger
 	modules  []transformer.ModuleFile
@@ -60,10 +62,15 @@ func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*
 }
 
 func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
+	channel := &inprocgrpc.Channel{}
+	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
+
 	s := &Server{
-		openfga:  openfga,
-		storesMU: &sync.Mutex{},
-		stores:   make(map[string]storeInfo),
+		openfga:       openfga,
+		openfgaClient: openFGAClient,
+		storesMU:      &sync.Mutex{},
+		stores:        make(map[string]storeInfo),
 	}
 
 	for _, o := range opts {
