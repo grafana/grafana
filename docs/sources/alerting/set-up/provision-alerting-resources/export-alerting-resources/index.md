@@ -123,7 +123,7 @@ The export options listed below enable you to download resources in YAML, JSON, 
 
 Add a new alert rule definition to an existing provisioned rule groups rather than creating the code manually. You can then copy it to your Terraform pipeline, and quickly deploy and manage alert rules as part of your infrastructure as code.
 
-An alert rule definition is not an alert rule.  You define your alert rule, but you do not save it as an alert rule. It only becomes a saved alert rule once you provision it using Terraform.
+An alert rule definition differs from an alert rule in the sense that you define your alert rule, but you do not save it. It only becomes a saved alert rule once you provision it using Terraform.
 
 To export your alert rule definition into Terraform (HCL) format, complete the following steps.
 
