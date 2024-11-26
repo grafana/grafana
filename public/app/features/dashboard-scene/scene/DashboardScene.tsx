@@ -367,6 +367,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (this._initialState) {
       this._initialState.body.cleanUpStateFromExplore?.();
     }
+
+    console.log('test');
   }
 
   public canDiscard() {
