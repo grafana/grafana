@@ -35,7 +35,7 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 	if user != nil {
 		u = &backend.User{
 			Login: user.GetLogin(),
-			Name:  user.GetDisplayName(),
+			Name:  user.GetName(),
 			Email: user.GetEmail(),
 		}
 	}

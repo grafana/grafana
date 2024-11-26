@@ -105,7 +105,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			idClaims.Rest.EmailVerified = id.IsEmailVerified()
 			idClaims.Rest.AuthenticatedBy = id.GetAuthenticatedBy()
 			idClaims.Rest.Username = id.GetLogin()
-			idClaims.Rest.DisplayName = id.GetDisplayName()
+			idClaims.Rest.DisplayName = id.GetName()
 		}
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)

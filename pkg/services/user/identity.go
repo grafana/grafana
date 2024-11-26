@@ -102,7 +102,6 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
-// GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
 	// kubernetesAggregator feature flag which allows Cloud Apps to become available
 	// in single tenant Grafana requires that GetName() returns something and not an empty string
@@ -110,11 +109,9 @@ func (u *SignedInUser) GetName() string {
 	if u.Name != "" {
 		return u.Name
 	}
-
 	if u.Login != "" {
 		return u.Login
 	}
-
 	return u.Email
 }
 
@@ -141,16 +138,6 @@ func (u *SignedInUser) GetGroups() []string {
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
-}
-
-func (u *SignedInUser) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
 }
 
 func (u *SignedInUser) HasRole(role identity.RoleType) bool {
@@ -322,12 +309,6 @@ func (u *SignedInUser) GetEmail() string {
 
 func (u *SignedInUser) IsEmailVerified() bool {
 	return u.EmailVerified
-}
-
-// GetDisplayName returns the display name of the active entity
-// The display name is the name if it is set, otherwise the login or email
-func (u *SignedInUser) GetDisplayName() string {
-	return u.NameOrFallback()
 }
 
 func (u *SignedInUser) GetIDToken() string {

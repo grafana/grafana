@@ -22,7 +22,6 @@ type StaticRequester struct {
 	OrgRole         RoleType
 	Login           string
 	Name            string
-	DisplayName     string
 	Email           string
 	EmailVerified   bool
 	AuthID          string
@@ -89,7 +88,13 @@ func (u *StaticRequester) GetGroups() []string {
 
 // GetName implements Requester.
 func (u *StaticRequester) GetName() string {
-	return u.DisplayName
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 func (u *StaticRequester) HasRole(role RoleType) bool {
@@ -211,25 +216,6 @@ func (u *StaticRequester) GetCacheKey() string {
 	return u.CacheKey
 }
 
-// GetDisplayName returns the display name of the active entity
-// The display name is the name if it is set, otherwise the login or email
-func (u *StaticRequester) GetDisplayName() string {
-	if u.DisplayName != "" {
-		return u.DisplayName
-	}
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
-}
-
-func (u *StaticRequester) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
-	return u.IDTokenClaims
 }
