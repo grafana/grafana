@@ -140,7 +140,7 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
           <div className={styles.rowLabelWrap}>
             {isLegacyMetric && <span>{__name__}</span>}
             <span>{`{`}</span>
-            {!isLegacyMetric && (
+            {!isLegacyMetric && __name__ !== '' && (
               <span>
                 "{__name__}"{', '}
               </span>
