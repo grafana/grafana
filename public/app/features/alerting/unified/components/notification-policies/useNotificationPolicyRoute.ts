@@ -109,7 +109,7 @@ export function useUpdateNotificationPolicyRoute(selectedAlertmanager: string) {
     const configChangedInMeantime = JSON.stringify(oldRouteStripped) !== JSON.stringify(latestRouteFromConfig);
 
     if (configChangedInMeantime) {
-      throw new Error(ERROR_NEWER_CONFIGURATION);
+      throw new Error('configuration modification conflict', { cause: ERROR_NEWER_CONFIGURATION });
     }
 
     const newConfig = {

@@ -3,12 +3,12 @@ import { get } from 'lodash';
 import { FetchError, isFetchError } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
-type SupportedErrors = 'alerting.notifications.conflict' | string;
+export type SupportedErrors = 'alerting.notifications.conflict' | string;
 
 export const ERROR_NEWER_CONFIGURATION = 'alerting.notifications.conflict';
 
 /** This function gives us the opportunity to translate or transform error codes that are returned from the Kubernetes APIs */
-export function getApiMachineryErrorMessage(uid: string): string | undefined {
+export function getErrorMessageFromCode(code: string): string | undefined {
   const errorMessageMap: Record<SupportedErrors, string> = {
     [ERROR_NEWER_CONFIGURATION]: t(
       'alerting.policies.update-errors.conflict',
@@ -16,7 +16,7 @@ export function getApiMachineryErrorMessage(uid: string): string | undefined {
     ),
   };
 
-  return errorMessageMap[uid];
+  return errorMessageMap[code];
 }
 
 export type ApiMachineryError = {
@@ -43,8 +43,4 @@ export function isApiMachineryError(error: unknown): error is FetchError<ApiMach
 
 export function matchesApiMachineryError(error: unknown, uid: string) {
   return isApiMachineryError(error) && error.data.details.uid === uid;
-}
-
-export function stringifyApiMachineryError(error: FetchError<ApiMachineryError>): string {
-  return getApiMachineryErrorMessage(error.data.details.uid) ?? error.data.message;
 }

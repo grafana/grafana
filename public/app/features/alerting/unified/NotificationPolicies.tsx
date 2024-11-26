@@ -48,8 +48,8 @@ import { useAlertmanager } from './state/AlertmanagerContext';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
-import { ERROR_NEWER_CONFIGURATION, matchesApiMachineryError } from './utils/k8s/errors';
-import { stringifyErrorLike } from './utils/misc';
+import { ERROR_NEWER_CONFIGURATION } from './utils/k8s/errors';
+import { isErrorMatchingCode, stringifyErrorLike } from './utils/misc';
 import { computeInheritedTree } from './utils/notification-policies';
 import {
   InsertPosition,
@@ -280,7 +280,7 @@ const AmRoutes = () => {
               </Alert>
             )}
             {/* show when there is an update error */}
-            {matchesApiMachineryError(updateError, ERROR_NEWER_CONFIGURATION) && (
+            {isErrorMatchingCode(updateError, ERROR_NEWER_CONFIGURATION) && (
               <Alert severity="info" title="Notification policies have changed">
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Trans i18nKey="alerting.policies.update-errors.conflict">
