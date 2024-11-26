@@ -97,4 +97,10 @@ describe('Sandbox eligibility checks', () => {
     const result = await isPluginFrontendSandboxEligible({ pluginId: 'test-plugin' });
     expect(result).toBe(false);
   });
+
+  test('isPluginFrontendSandboxEligible returns false for plugins with grafana org', async () => {
+    getPluginSettingsMock.mockResolvedValue(fakePlugin);
+    const result = await isPluginFrontendSandboxEligible({ pluginId: 'grafana-test-plugin' });
+    expect(result).toBe(false);
+  });
 });
