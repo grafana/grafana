@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -20,10 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,32 +34,6 @@ const UNEXPIRED_ID_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHR
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *socialtest.MockSocialConnector) {
-	t.Helper()
-
-	socialConnector := &socialtest.MockSocialConnector{}
-	socialService := &socialtest.FakeSocialService{
-		ExpectedConnector: socialConnector,
-		ExpectedAuthInfoProvider: &social.OAuthInfo{
-			UseRefreshToken: true,
-		},
-	}
-
-	authInfoStore := &FakeAuthInfoStore{ExpectedOAuth: &login.UserAuth{}}
-	authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(), secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
-
-	store := db.InitTestDB(t)
-
-	return &Service{
-		Cfg:                  setting.NewCfg(),
-		SocialService:        socialService,
-		AuthInfoService:      authInfoService,
-		serverLock:           serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
-		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-		tracer:               tracing.InitializeTracerForTest(),
-	}, authInfoStore, socialConnector
 }
 
 type FakeAuthInfoStore struct {
