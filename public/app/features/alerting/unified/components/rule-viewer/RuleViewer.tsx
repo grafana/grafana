@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
