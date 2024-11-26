@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -53,6 +54,9 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
+	}
+	if !isValidGitBranchName(gh.Branch) {
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
@@ -204,9 +208,39 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 }
 
 // isValidGitBranchName checks if a branch name is valid.
+// 1. The branch name must have at least one character and must not be empty.
+// 2. The branch name cannot start with `/` or end with `/`, `.`, or whitespace.
+// 3. The branch name cannot contain consecutive slashes (`//`).
+// 4. The branch name cannot contain consecutive dots (`..`).
+// 5. The branch name cannot contain `@{`.
+// 6. The branch name cannot include the following characters: `~`, `^`, `:`, `?`, `*`, `[`, `\`, or `]`.
 func isValidGitBranchName(branch string) bool {
-	// TODO: add branch validation here as well as in the frontend using the same restrictions
-	return branch != ""
+	if len(branch) == 0 {
+		return false
+	}
+
+	if strings.HasPrefix(branch, "/") {
+		return false
+	}
+
+	disallowedSequences := []string{"..", "//", "@{"}
+	for _, seq := range disallowedSequences {
+		if strings.Contains(branch, seq) {
+			return false
+		}
+	}
+
+	for _, r := range branch {
+		if r <= 0x1F || r == 0x7F || strings.ContainsRune(" ~^:?*[]\\", r) {
+			return false
+		}
+	}
+
+	if strings.HasSuffix(branch, ".") || strings.HasSuffix(branch, "/") || strings.HasSuffix(branch, ".lock") {
+		return false
+	}
+
+	return true
 }
 
 func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName string) error {
