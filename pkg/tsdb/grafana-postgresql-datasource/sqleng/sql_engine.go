@@ -212,6 +212,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 			logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
 			if theErr, ok := r.(error); ok {
 				queryResult.dataResponse.Error = theErr
+				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
 			} else if theErrString, ok := r.(string); ok {
 				queryResult.dataResponse.Error = errors.New(theErrString)
 			} else {
