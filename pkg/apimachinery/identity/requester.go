@@ -23,9 +23,6 @@ type Requester interface {
 	// GetID returns namespaced internalID for the entity
 	// Deprecated: use GetUID instead
 	GetID() string
-	// GetDisplayName returns the display name of the active entity.
-	// The display name is the name if it is set, otherwise the login or email.
-	GetDisplayName() string
 	// GetEmail returns the email of the active entity.
 	// Can be empty.
 	GetEmail() string
@@ -62,6 +59,8 @@ type Requester interface {
 	// IsNil returns true if the identity is nil
 	// FIXME: remove this method once all services are using an interface
 	IsNil() bool
+	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
+	GetIDToken() string
 
 	// Legacy
 
@@ -72,8 +71,6 @@ type Requester interface {
 	GetCacheKey() string
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
-	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
-	GetIDToken() string
 }
 
 // IntIdentifier converts a typeID to an int64.
