@@ -60,7 +60,7 @@
 /pkg/README.md @grafana/grafana-backend-group
 /pkg/ruleguard.rules.go @grafana/grafana-backend-group
 /.bra.toml @grafana/grafana-backend-group
-/.golangci.toml @grafana/grafana-backend-group
+/.golangci.yml @grafana/grafana-backend-group
 /build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
@@ -749,7 +749,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
-/.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
+/.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge
 /.github/workflows/actions/changelog @zserge
