@@ -2,6 +2,7 @@ package loki
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -64,6 +65,9 @@ func TestSuccessResponse(t *testing.T) {
 		bytes, err := os.ReadFile(responseFileName)
 		require.NoError(t, err)
 
+		fmt.Println("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+		fmt.Println(goldenFileName, responseFileName)
+
 		dr, err := runQuery(context.Background(), makeMockedAPI(http.StatusOK, "application/json", bytes, nil, false), &query, responseOpts, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 
@@ -72,8 +76,8 @@ func TestSuccessResponse(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			runTest("testdata", test.filepath, test.query, ResponseOpts{logsDataplane: false})
-			runTest("testdata_logs_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: true})
+			runTest("testdata_metric_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: false})
+			runTest("testdata_dataplane", test.filepath, test.query, ResponseOpts{logsDataplane: true})
 		})
 	}
 }
