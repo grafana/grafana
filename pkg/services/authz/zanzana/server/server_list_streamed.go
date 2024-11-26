@@ -9,6 +9,9 @@ import (
 )
 
 func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.streamedListObjects")
+	defer span.End()
+
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
 		AuthorizationModelId: req.GetAuthorizationModelId(),

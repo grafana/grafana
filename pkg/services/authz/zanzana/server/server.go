@@ -36,6 +36,7 @@ type Server struct {
 	modules  []transformer.ModuleFile
 	stores   map[string]storeInfo
 	storesMU *sync.Mutex
+	cfg      setting.ZanzanaSettings
 }
 
 type storeInfo struct {
@@ -58,10 +59,10 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 }
 
 func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
-	return NewAuthz(openfga)
+	return NewAuthz(cfg, openfga)
 }
 
-func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
+func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
 	channel := &inprocgrpc.Channel{}
 	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
 	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
@@ -71,6 +72,7 @@ func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Se
 		openfgaClient: openFGAClient,
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
+		cfg:           cfg.Zanzana,
 	}
 
 	for _, o := range opts {
