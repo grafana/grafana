@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -206,7 +205,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 			desc:        "should return error for invalid type",
 			id:          "1",
 			typ:         claims.TypeUser,
-			expectedErr: identity.ErrInvalidTypedID,
+			expectedErr: errAPIKeyInvalidType,
 		},
 		{
 			desc: "should return error when api key has expired",
@@ -240,7 +239,7 @@ func TestAPIKey_ResolveIdentity(t *testing.T) {
 				OrgID:            1,
 				ServiceAccountId: intPtr(1),
 			},
-			expectedErr: identity.ErrInvalidTypedID,
+			expectedErr: errAPIKeyInvalidType,
 		},
 		{
 			desc: "should return error when api key is belongs to different org",

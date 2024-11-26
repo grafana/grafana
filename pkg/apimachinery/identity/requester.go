@@ -80,7 +80,7 @@ type Requester interface {
 // Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if type is not recognized.
 func IntIdentifier(typedID string) (int64, error) {
-	typ, id, err := ParseTypeAndID(typedID)
+	typ, id, err := claims.ParseTypeID(typedID)
 	if err != nil {
 		return 0, err
 	}
@@ -92,7 +92,7 @@ func IntIdentifier(typedID string) (int64, error) {
 // Errors if the identifier is not initialized or if namespace is not recognized.
 // Returns 0 if the type is not user or service account
 func UserIdentifier(typedID string) (int64, error) {
-	typ, id, err := ParseTypeAndID(typedID)
+	typ, id, err := claims.ParseTypeID(typedID)
 	if err != nil {
 		return 0, err
 	}

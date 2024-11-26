@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/authlib/claims"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -110,7 +109,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTMisMatchedNamespaceClaims.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	accessType, _, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
+	accessType, _, err := claims.ParseTypeID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
@@ -119,7 +118,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		return nil, errExtJWTInvalid.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
-	t, id, err := identity.ParseTypeAndID(idTokenClaims.Subject)
+	t, id, err := claims.ParseTypeID(idTokenClaims.Subject)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to parse id token subject: %w", err)
 	}
@@ -160,7 +159,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
-	t, id, err := identity.ParseTypeAndID(accessTokenClaims.Subject)
+	t, id, err := claims.ParseTypeID(accessTokenClaims.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse access token subject: %w", err)
 	}

@@ -111,7 +111,7 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	typ, id, err := identity.ParseTypeAndID(s.TypedID)
+	typ, id, err := claims.ParseTypeID(s.TypedID)
 	if err != nil {
 		return 0, err
 	}

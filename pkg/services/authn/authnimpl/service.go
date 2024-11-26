@@ -408,7 +408,7 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 	ctx, span := s.tracer.Start(ctx, "authn.resolveIdentity")
 	defer span.End()
 
-	t, i, err := identity.ParseTypeAndID(typedID)
+	t, i, err := claims.ParseTypeID(typedID)
 	if err != nil {
 		return nil, err
 	}

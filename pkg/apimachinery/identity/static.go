@@ -168,7 +168,7 @@ func (u *StaticRequester) HasUniqueId() bool {
 
 // GetID returns typed id for the entity
 func (u *StaticRequester) GetID() string {
-	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
+	return claims.NewTypeID(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
 func (u *StaticRequester) GetAuthID() string {

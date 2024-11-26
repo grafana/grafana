@@ -89,7 +89,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return user, nil
 	}
 
-	typ, id, err := identity.ParseTypeAndID(getter(mdUserID))
+	typ, id, err := authClaims.ParseTypeID(getter(mdUserID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
@@ -99,7 +99,7 @@ func (f *Authenticator) decodeMetadata(ctx context.Context, meta metadata.MD) (i
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
 
-	_, id, err = identity.ParseTypeAndID(getter(mdUserUID))
+	_, id, err = authClaims.ParseTypeID(getter(mdUserUID))
 	if err != nil {
 		return nil, fmt.Errorf("invalid user id: %w", err)
 	}
