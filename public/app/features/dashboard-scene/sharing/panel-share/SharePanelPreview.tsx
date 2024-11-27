@@ -7,11 +7,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, Field, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { t, Trans } from '../../../../core/internationalization';
-
-import { SharePanelInternally } from './SharePanelInternally';
 
 type ImageSettingsForm = {
   width: number;
@@ -24,10 +22,9 @@ type Props = {
   buildUrl: (urlParams: UrlQueryMap) => void;
   imageUrl: string;
   disabled: boolean;
-  model: SharePanelInternally;
 };
 
-export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }: Props) {
+export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props) {
   const styles = useStyles2(getStyles);
 
   const {
@@ -48,7 +45,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
     buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
   }, [buildUrl, watch]);
 
-  const [{ loading, value: image }, renderImage] = useAsyncFn(async () => {
+  const [{ loading, value: image, error }, renderImage] = useAsyncFn(async () => {
     const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
     return new Blob([response.data], { type: 'image/png' });
   }, [imageUrl, watch('width'), watch('height')]);
@@ -56,6 +53,8 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
   const onDowloadImageClick = () => {
     saveAs(image!, `${title}.png`);
   };
+
+  console.log('error', error);
 
   const onChange = async () => {
     await buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
@@ -90,8 +89,11 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
           >
             <Input
               {...register('width', {
-                required: t('share-panel-image.settings.width-error', 'Width is required'),
-                min: 1,
+                required: t('share-panel-image.settings.width-required', 'Width is required'),
+                min: {
+                  value: 1,
+                  message: t('share-panel-image.settings.width-min', 'Width must be equal or greater than 1'),
+                },
                 onChange: onChange,
               })}
               placeholder="1000"
@@ -109,8 +111,11 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
           >
             <Input
               {...register('height', {
-                required: t('share-panel-image.settings.height-error', 'Height is required'),
-                min: 1,
+                required: t('share-panel-image.settings.height-required', 'Height is required'),
+                min: {
+                  value: 1,
+                  message: t('share-panel-image.settings.height-min', 'Height must be equal or greater than 1'),
+                },
                 onChange: onChange,
               })}
               placeholder="500"
@@ -127,8 +132,14 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
           >
             <Input
               {...register('scaleFactor', {
-                required: t('share-panel-image.settings.scale-factor-error', 'Scale factor is required'),
-                min: 1,
+                required: t('share-panel-image.settings.scale-factor-required', 'Scale factor is required'),
+                min: {
+                  value: 1,
+                  message: t(
+                    'share-panel-image.settings.scale-factor-min',
+                    'Scale factor must be equal or greater than 1'
+                  ),
+                },
                 onChange: onChange,
               })}
               placeholder="1"
@@ -164,10 +175,9 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, model }
           </div>
         </div>
       )}
-      {image && !loading && (
-        <>
-          <img src={URL.createObjectURL(image)} alt="panel-img" className={styles.image} />
-        </>
+      {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-img" className={styles.image} />}
+      {error && (
+        <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')} />
       )}
     </Stack>
   );

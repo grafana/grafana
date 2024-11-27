@@ -101,7 +101,6 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
         )}
         <SharePanelPreview
           title={panelTitle || ''}
-          model={model}
           buildUrl={onBuildUrl}
           imageUrl={imageUrl}
           disabled={!isDashboardSaved}
