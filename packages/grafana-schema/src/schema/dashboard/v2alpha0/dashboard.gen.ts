@@ -245,7 +245,7 @@ export const defaultMatcherConfig = (): MatcherConfig => ({
 });
 
 export interface Threshold {
-	value: number | null;
+	value: number;
 	color: string;
 }
 
@@ -502,6 +502,7 @@ export interface QueryOptionsSpec {
 	queryCachingTTL?: number;
 	interval?: string;
 	cacheTimeout?: string;
+	hideTimeOverride?: boolean;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
