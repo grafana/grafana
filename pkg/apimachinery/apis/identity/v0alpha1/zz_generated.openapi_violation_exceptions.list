@@ -1,3 +1,0 @@
-API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1,IdentityDisplay,IdentityType
-API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1,IdentityDisplay,LegacyID
-API rule violation: names_match,github.com/grafana/grafana/pkg/apimachinery/apis/identity/v0alpha1,TeamSpec,Title

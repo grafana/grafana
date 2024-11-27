@@ -7,10 +7,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
@@ -103,10 +102,10 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				{
 					cmd: accesscontrol.SaveExternalServiceRoleCommand{
 						ExternalServiceID: "app1",
-						AssignmentOrgID:   1,
+						AssignmentOrgID:   2,
 						ServiceAccountID:  2,
 					},
-					wantErr: true,
+					wantErr: false,
 				},
 			},
 		},
@@ -115,7 +114,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestReplDB(t),
+				sql: db.InitTestDB(t),
 			}
 
 			for i := range tt.runs {
@@ -126,7 +125,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				}
 				require.NoError(t, err)
 
-				errDBSession := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+				errDBSession := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 					storedRole, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.runs[i].cmd.ExternalServiceID)))
 					require.NoError(t, err)
 					require.NotNil(t, storedRole)
@@ -188,13 +187,13 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			s := &AccessControlStore{
-				sql: db.InitTestReplDB(t),
+				sql: db.InitTestDB(t),
 			}
 			if tt.init != nil {
 				tt.init(t, ctx, s)
 			}
 			roleID := int64(-1)
-			err := s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+			err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 				role, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.id)))
 				if err != nil && !errors.Is(err, accesscontrol.ErrRoleNotFound) {
 					return err
@@ -218,7 +217,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			}
 
 			// Assignments should be deleted
-			_ = s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+			_ = s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 				var assignment accesscontrol.UserRole
 				count, err := sess.Where("role_id = ?", roleID).Count(&assignment)
 				require.NoError(t, err)
@@ -227,7 +226,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			})
 
 			// Permissions should be deleted
-			_ = s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+			_ = s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 				var permission accesscontrol.Permission
 				count, err := sess.Where("role_id = ?", roleID).Count(&permission)
 				require.NoError(t, err)
@@ -236,7 +235,7 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			})
 
 			// Role should be deleted
-			_ = s.sql.DB().WithDbSession(ctx, func(sess *db.Session) error {
+			_ = s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 				storedRole, err := getRoleByUID(ctx, sess, accesscontrol.PrefixedRoleUID(extServiceRoleName(tt.id)))
 				require.ErrorIs(t, err, accesscontrol.ErrRoleNotFound)
 				require.Nil(t, storedRole)

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useMeasure } from 'react-use';
 
-import { DataFrameJSON, GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
+import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -25,18 +25,17 @@ import {
 import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEventsReached } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { usePagination } from '../../../hooks/usePagination';
-import { combineMatcherStrings, labelsMatchMatchers } from '../../../utils/alertmanager';
+import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
 import { createRelativeUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
 import { CollapseToggle } from '../../CollapseToggle';
 import { LogRecord } from '../state-history/common';
-import { isLine, isNumbers } from '../state-history/useRuleHistoryRecords';
 
-import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO, StateFilterValues } from './CentralAlertHistoryScene';
+import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAlertHistoryScene';
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
+import { useRuleHistoryRecords } from './useRuleHistoryRecords';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -75,12 +74,11 @@ export const HistoryEventsList = ({
     limit: LIMIT_EVENTS,
   });
 
-  const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(
-    valueInLabelFilter.toString(),
-    valueInStateToFilter.toString(),
-    valueInStateFromFilter.toString(),
-    stateHistory
-  );
+  const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
+    labels: valueInLabelFilter.toString(),
+    stateFrom: valueInStateFromFilter.toString(),
+    stateTo: valueInStateToFilter.toString(),
+  });
 
   const historyRecords = historyRecordsNotSorted.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -541,55 +539,4 @@ export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<H
       valueInStateFromFilter={valueInStateFromFilter}
     />
   );
-}
-/**
- * This hook filters the history records based on the label, stateTo and stateFrom filters.
- * @param filterInLabel
- * @param filterInStateTo
- * @param filterInStateFrom
- * @param stateHistory the original history records
- * @returns the filtered history records
- */
-function useRuleHistoryRecords(
-  filterInLabel: string,
-  filterInStateTo: string,
-  filterInStateFrom: string,
-  stateHistory?: DataFrameJSON
-) {
-  return useMemo(() => {
-    if (!stateHistory?.data) {
-      return { historyRecords: [] };
-    }
-
-    const filterMatchers = filterInLabel ? parsePromQLStyleMatcherLooseSafe(filterInLabel) : [];
-
-    const [tsValues, lines] = stateHistory.data.values;
-    const timestamps = isNumbers(tsValues) ? tsValues : [];
-
-    // merge timestamp with "line"
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      if (!isLine(line)) {
-        return acc;
-      }
-      // values property can be undefined for some instance states (e.g. NoData)
-      const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
-      if (!isGrafanaAlertState(line.current) || !isGrafanaAlertState(line.previous)) {
-        return acc;
-      }
-      const baseStateTo = mapStateWithReasonToBaseState(line.current);
-      const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
-      const stateToMatch = filterInStateTo !== StateFilterValues.all ? filterInStateTo === baseStateTo : true;
-      const stateFromMatch = filterInStateFrom !== StateFilterValues.all ? filterInStateFrom === baseStateFrom : true;
-      if (filterMatch && stateToMatch && stateFromMatch) {
-        acc.push({ timestamp, line });
-      }
-
-      return acc;
-    }, []);
-
-    return {
-      historyRecords: logRecords,
-    };
-  }, [stateHistory, filterInLabel, filterInStateTo, filterInStateFrom]);
 }

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
 
+import { contextSrv } from '../../../../core/core';
+import { AccessControlAction } from '../../../../types';
 import { ROUTES } from '../../constants';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -22,7 +24,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export function ConnectionsRedirectNotice() {
   const styles = useStyles2(getStyles);
-  const [showNotice, setShowNotice] = useState(true);
+  const canAccessDataSources =
+    contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ||
+    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const [showNotice, setShowNotice] = useState(canAccessDataSources);
 
   return showNotice ? (
     <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>

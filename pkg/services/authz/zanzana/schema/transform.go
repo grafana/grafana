@@ -6,9 +6,19 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	language "github.com/openfga/language/pkg/go/transformer"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func TransformToModel(dsl string) (*openfgav1.AuthorizationModel, error) {
+func TransformModulesToModel(modules []language.ModuleFile) (*openfgav1.AuthorizationModel, error) {
+	parsedAuthModel, err := language.TransformModuleFilesToModel(modules, "1.2")
+	if err != nil {
+		return nil, fmt.Errorf("failed to transform dsl to model: %w", err)
+	}
+
+	return parsedAuthModel, nil
+}
+
+func TransformDSLToModel(dsl string) (*openfgav1.AuthorizationModel, error) {
 	parsedAuthModel, err := language.TransformDSLToProto(dsl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to transform dsl to model: %w", err)
@@ -17,27 +27,32 @@ func TransformToModel(dsl string) (*openfgav1.AuthorizationModel, error) {
 	return parsedAuthModel, nil
 }
 
-func TransformToDSL(model *openfgav1.AuthorizationModel) (string, error) {
-	return language.TransformJSONProtoToDSL(model)
+func TransformToDSL(model *openfgav1.AuthorizationModel, opts ...language.TransformOption) (string, error) {
+	return language.TransformJSONProtoToDSL(model, opts...)
 }
 
-// FIXME(kalleep): We need to figure out a better way to compare equality of two different
-// authorization model. For now the easiest way I found to comparing different schemas was
-// to convert them into their json representation but this requires us to first convert dsl into
-// openfgav1.AuthorizationModel and then later parse it as json.
-// Comparing parsed authorization model with authorization model from store directly by parsing them as
-// as json won't work because stored model will have some fields set such as id that are not present in a parsed
-// dsl from disk.
-func EqualModels(a, b string) bool {
-	astr, err := language.TransformDSLToJSON(a)
+// EqualModels compares two authorization models.
+// Id is not comparing since model loaded from disk doesn't contain Id.
+func EqualModels(a, b *openfgav1.AuthorizationModel) bool {
+	aCopy := openfgav1.AuthorizationModel{
+		SchemaVersion:   a.SchemaVersion,
+		TypeDefinitions: a.TypeDefinitions,
+		Conditions:      a.Conditions,
+	}
+	aJSONBytes, err := protojson.Marshal(&aCopy)
 	if err != nil {
 		return false
 	}
 
-	bstr, err := language.TransformDSLToJSON(b)
+	bCopy := openfgav1.AuthorizationModel{
+		SchemaVersion:   b.SchemaVersion,
+		TypeDefinitions: b.TypeDefinitions,
+		Conditions:      b.Conditions,
+	}
+	bJSONBytes, err := protojson.Marshal(&bCopy)
 	if err != nil {
 		return false
 	}
 
-	return astr == bstr
+	return string(aJSONBytes) == string(bJSONBytes)
 }

@@ -9,7 +9,7 @@ import * as logsTimeSplit from './logsTimeSplitting';
 import * as metricTimeSplit from './metricTimeSplitting';
 import { runSplitQuery } from './querySplitting';
 import { trackGroupedQueries } from './tracking';
-import { LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 jest.mock('./tracking');
 jest.mock('uuid', () => ({
@@ -547,6 +547,41 @@ describe('runSplitQuery()', () => {
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E, 3 * F+G
         expect(datasource.runQuery).toHaveBeenCalledTimes(16);
+      });
+    });
+  });
+
+  describe('Forward search queries', () => {
+    const request = createRequest([
+      { expr: '{a="b"}', refId: 'A', direction: LokiQueryDirection.Backward },
+      { expr: '{c="d"}', refId: 'A', direction: undefined },
+      { expr: '{e="f"}', refId: 'B', direction: LokiQueryDirection.Forward },
+    ]);
+    const { logFrameA } = getMockFrames();
+    beforeEach(() => {
+      jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
+    });
+    test('Sends forward and backward queries in different groups', async () => {
+      jest.spyOn(datasource, 'runQuery');
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // Forward
+        expect(jest.mocked(datasource.runQuery).mock.calls[1][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[1][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[3][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[3][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[5][0].targets[0].expr).toBe('{e="f"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[5][0].range.from.toString()).toContain('Feb 09 2023');
+
+        // Backward
+        expect(jest.mocked(datasource.runQuery).mock.calls[0][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[0][0].range.from.toString()).toContain('Feb 09 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[2][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[2][0].range.from.toString()).toContain('Feb 08 2023');
+        expect(jest.mocked(datasource.runQuery).mock.calls[4][0].targets[0].expr).toBe('{a="b"}');
+        expect(jest.mocked(datasource.runQuery).mock.calls[4][0].range.from.toString()).toContain('Feb 08 2023');
+
+        // 3 days, 3 chunks, 2 groups logs, 6 requests
+        expect(datasource.runQuery).toHaveBeenCalledTimes(6);
       });
     });
   });

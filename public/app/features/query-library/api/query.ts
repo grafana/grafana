@@ -23,11 +23,12 @@ export enum QueryTemplateKinds {
  *
  * @alpha
  */
-export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates/`;
+export const BASE_URL = `/apis/${API_VERSION}/namespaces/${config.namespace}/querytemplates`;
 
 // URL is optional for these requests
 interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'method'> {
   url?: string;
+  headers?: { [key: string]: string };
 }
 
 /**
@@ -42,6 +43,7 @@ export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRes
       showErrorAlert: true,
       method: requestOptions.method || 'GET',
       data: requestOptions.data,
+      headers: { ...requestOptions.headers },
     });
     return await lastValueFrom(responseObservable);
   } catch (error) {

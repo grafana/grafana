@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/textproto"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -30,7 +31,7 @@ func TestBuildMail(t *testing.T) {
 
 	message := &Message{
 		To:      []string{"to@address.com"},
-		From:    "from@address.com",
+		From:    "Mr. Foo <from@address.com>",
 		Subject: "Some subject",
 		Body: map[string]string{
 			"text/html":  "Some HTML body",
@@ -51,7 +52,8 @@ func TestBuildMail(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Contains(t, buf.String(), "Foo-Header: foo_value")
-		assert.Contains(t, buf.String(), "From: from@address.com")
+		assert.Contains(t, buf.String(), "From: Mr. Foo <from@address.com>")
+		assert.Regexp(t, "Message-ID: <.*@address.com>", buf.String())
 		assert.Contains(t, buf.String(), "Some HTML body")
 		assert.Contains(t, buf.String(), "Some plain text body")
 		assert.Less(t, strings.Index(buf.String(), "Some plain text body"), strings.Index(buf.String(), "Some HTML body"))
@@ -294,16 +296,21 @@ func TestSmtpSend(t *testing.T) {
 
 		count, err := client.Send(ctx, msgs...)
 		require.NoError(t, err)
-		require.Equal(t, 3, count)
+		assert.Equal(t, 3, count)
 
 		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
 		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
-		require.Len(t, messages, 3)
+		assert.Len(t, messages, 3)
+
+		// sort for test consistency
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].RcpttoRequestResponse()[0][0] < messages[j].RcpttoRequestResponse()[0][0]
+		})
 
 		for i, sentMsg := range messages {
 			rcpts := sentMsg.RcpttoRequestResponse()
-			require.EqualValues(t, [][]string{
+			assert.EqualValues(t, [][]string{
 				{fmt.Sprintf("RCPT TO:<rcpt%d@example.com>", i+1), "250 Received"},
 			}, rcpts)
 
@@ -316,7 +323,7 @@ func TestSmtpSend(t *testing.T) {
 			// make sure the trace is propagated
 			traceId := span.SpanContext().TraceID().String()
 			hasPrefix := strings.HasPrefix(hdr.Get("traceparent"), "00-"+traceId+"-")
-			require.True(t, hasPrefix)
+			assert.True(t, hasPrefix)
 
 			// one of the lines should be the body we expect!
 			found := false
@@ -334,7 +341,7 @@ func TestSmtpSend(t *testing.T) {
 				}
 			}
 
-			require.True(t, found)
+			assert.True(t, found)
 		}
 	})
 }

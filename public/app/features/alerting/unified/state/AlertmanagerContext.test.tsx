@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import * as React from 'react';
 import { MemoryRouter, Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import store from 'app/core/store';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
@@ -34,7 +35,9 @@ describe('useAlertmanager', () => {
       .mockReturnValueOnce({ availableExternalDataSources: [], availableInternalDataSources: [] });
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </MemoryRouter>
     );
 
@@ -50,7 +53,9 @@ describe('useAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </MemoryRouter>
     );
 
@@ -68,7 +73,9 @@ describe('useAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </Router>
     );
 
@@ -86,7 +93,9 @@ describe('useAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </Router>
     );
 
@@ -101,7 +110,9 @@ describe('useAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </MemoryRouter>
     );
 
@@ -122,7 +133,9 @@ describe('useAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        <CompatRouter>
+          <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
+        </CompatRouter>
       </Router>
     );
 

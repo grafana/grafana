@@ -193,10 +193,9 @@ const AmRoutes = () => {
   }
 
   // edit, add, delete modals
-  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
+  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(handleAdd, updatingTree);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
-    receivers,
     handleSave,
     updatingTree
   );
@@ -253,7 +252,6 @@ const AmRoutes = () => {
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
-                      receivers={receivers}
                       onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
                       matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}

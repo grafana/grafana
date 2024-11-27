@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
@@ -68,18 +68,18 @@ func TestStatusSourceMiddleware(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithMiddlewares(
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				handlertest.WithMiddlewares(
 					NewPluginRequestMetaMiddleware(),
 					NewStatusSourceMiddleware(),
 				),
 			)
-			cdt.TestClient.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+			cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				cdt.QueryDataCtx = ctx
 				return tc.queryDataResponse, nil
 			}
 
-			_, _ = cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{})
+			_, _ = cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{})
 
 			ss := pluginrequestmeta.StatusSourceFromContext(cdt.QueryDataCtx)
 			require.Equal(t, tc.expStatusSource, ss)

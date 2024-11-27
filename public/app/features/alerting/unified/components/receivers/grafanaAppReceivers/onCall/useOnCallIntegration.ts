@@ -142,7 +142,8 @@ export function useOnCallIntegration() {
         return receiver;
       }
 
-      const onCallIntegrations = receiver.grafana_managed_receiver_configs?.filter((c) => c.type === 'oncall') ?? [];
+      const onCallIntegrations =
+        receiver.grafana_managed_receiver_configs?.filter((c) => c.type === ReceiverTypes.OnCall) ?? [];
       const newOnCallIntegrations = onCallIntegrations.filter(
         (c) => c.settings[OnCallIntegrationSetting.IntegrationType] === OnCallIntegrationType.NewIntegration
       );

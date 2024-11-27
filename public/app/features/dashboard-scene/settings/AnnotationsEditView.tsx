@@ -1,11 +1,11 @@
-import { AnnotationQuery, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { AnnotationQuery, getDataSourceRef, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -51,11 +51,23 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public onNew = () => {
+  public getDataSourceRefForAnnotation = () => {
+    // get current default datasource ref from instance settings
+    // null is passed to get the default datasource
+    const defaultInstanceDS = getDataSourceSrv().getInstanceSettings(null);
+    // check for an annotation flag in the plugin json to see if it supports annotations
+    if (!defaultInstanceDS || !defaultInstanceDS.meta.annotations) {
+      console.error('Default datasource does not support annotations');
+      return undefined;
+    }
+    return getDataSourceRef(defaultInstanceDS);
+  };
+
+  public onNew = async () => {
     const newAnnotationQuery: AnnotationQuery = {
       name: newAnnotationName,
       enable: true,
-      datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
     };
 
@@ -69,7 +81,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     data.addAnnotationLayer(newAnnotation);
-
     this.setState({ editIndex: data.state.annotationLayers.length - 1 });
   };
 
@@ -122,6 +133,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(annotationLayers);
 
@@ -142,8 +154,13 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   }
 
   return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
+    <Page
+      navModel={navModel}
+      pageNav={pageNav}
+      layout={PageLayoutType.Standard}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+    >
+      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
       <AnnotationSettingsList
         annotations={annotations}
         onNew={model.onNew}
@@ -179,6 +196,7 @@ function AnnotationsSettingsEditView({
   onDelete,
 }: AnnotationsSettingsEditViewProps) {
   const { name, query } = annotationLayer.useState();
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const editAnnotationPageNav = {
     text: name,
@@ -186,8 +204,13 @@ function AnnotationsSettingsEditView({
   };
 
   return (
-    <Page navModel={navModel} pageNav={editAnnotationPageNav} layout={PageLayoutType.Standard}>
-      <NavToolbarActions dashboard={dashboard} />
+    <Page
+      navModel={navModel}
+      pageNav={editAnnotationPageNav}
+      layout={PageLayoutType.Standard}
+      toolbar={isSingleTopNav ? <ToolbarActions dashboard={dashboard} /> : undefined}
+    >
+      {!isSingleTopNav && <NavToolbarActions dashboard={dashboard} />}
       <AnnotationSettingsEdit
         annotation={query}
         editIndex={editIndex}

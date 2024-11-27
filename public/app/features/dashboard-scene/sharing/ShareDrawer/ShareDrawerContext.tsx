@@ -4,6 +4,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 
 interface Context {
   dashboard: DashboardScene;
+  onDismiss: () => void;
 }
 
 export const ShareDrawerContext = createContext<Context | undefined>(undefined);

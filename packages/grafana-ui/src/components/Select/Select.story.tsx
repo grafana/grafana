@@ -311,6 +311,33 @@ MultiSelectBasic.args = {
   noMultiValueWrap: false,
 };
 
+export const MultiSelectBasicWithSelectAll: StoryFn = (args) => {
+  const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
+
+  return (
+    <div style={{ maxWidth: '450px' }}>
+      <MultiSelect
+        options={generateOptions()}
+        value={value}
+        toggleAllOptions={{ enabled: true }}
+        onChange={(v) => {
+          setValue(v);
+          action('onChange')(v);
+        }}
+        prefix={getPrefix(args.icon)}
+        {...args}
+      />
+    </div>
+  );
+};
+
+MultiSelectBasicWithSelectAll.args = {
+  isClearable: false,
+  closeMenuOnSelect: false,
+  maxVisibleValues: 5,
+  noMultiValueWrap: false,
+};
+
 export const MultiSelectAsync: StoryFn = (args) => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>();
 

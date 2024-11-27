@@ -98,6 +98,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		secretsService.GetDecryptedValue,
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
+		ngfakes.NewFakeReceiverPermissionsService(),
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),

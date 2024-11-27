@@ -45,6 +45,22 @@ To install Grafana on macOS using Homebrew, complete the following steps:
    brew services start grafana
    ```
 
+### Using the Grafana CLI with Homebrew
+
+To use the Grafana CLI with Homebrew, you need to append the home path, the config file path and - based on the command - some other configurations to the `cli` command:
+
+For `admin` commands, you need to append the `--configOverrides cfg:default.paths.data=/opt/homebrew/var/lib/grafana` configuration. Example:
+
+```bash
+/opt/homebrew/opt/grafana/bin/grafana cli --config /opt/homebrew/etc/grafana/grafana.ini --homepath /opt/homebrew/opt/grafana/share/grafana --configOverrides cfg:default.paths.data=/opt/homebrew/var/lib/grafana admin reset-admin-password <new password>
+```
+
+For `plugins` commands, you need to append the `--pluginsDir /opt/homebrew/var/lib/grafana/plugins` configuration. Example:
+
+```bash
+/opt/homebrew/opt/grafana/bin/grafana cli --config /opt/homebrew/etc/grafana/grafana.ini --homepath /opt/homebrew/opt/grafana/share/grafana --pluginsDir "/opt/homebrew/var/lib/grafana/plugins" plugins install <plugin-id>
+```
+
 ## Install standalone macOS binaries
 
 To install Grafana on macOS using the standalone binaries, complete the following steps:

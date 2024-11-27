@@ -153,6 +153,8 @@ func ProvideService(
 
 		// all externally-defined storages lie under the "content" root
 		root.UnderContentRoot = true
+
+		// TODO: remove unused second argument
 		s, err := newStorage(root, filepath.Join(cfg.DataPath, "storage", "cache", root.Prefix))
 		if err != nil {
 			grafanaStorageLogger.Warn("Error loading storage config", "error", err)

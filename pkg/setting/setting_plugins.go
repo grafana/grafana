@@ -39,6 +39,21 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
 	cfg.HideAngularDeprecation = util.SplitString(pluginsSection.Key("hide_angular_deprecation").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
+	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
+	if !disablePreinstall {
+		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
+		cfg.PreinstallPlugins = make([]InstallPlugin, len(rawInstallPlugins))
+		for i, plugin := range rawInstallPlugins {
+			parts := strings.Split(plugin, "@")
+			id := parts[0]
+			v := ""
+			if len(parts) == 2 {
+				v = parts[1]
+			}
+			cfg.PreinstallPlugins[i] = InstallPlugin{id, v}
+		}
+		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
+	}
 
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)

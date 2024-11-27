@@ -253,10 +253,18 @@ func TestPatchPartialAlertRule(t *testing.T) {
 					r.IsPaused = true
 				},
 			},
+			{
+				name: "No metadata",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.Metadata = AlertRuleMetadata{}
+					r.HasMetadata = false
+				},
+			},
 		}
 
 		gen := RuleGen.With(
-			RuleMuts.WithFor(time.Duration(rand.Int63n(1000) + 1)),
+			RuleMuts.WithFor(time.Duration(rand.Int63n(1000)+1)),
+			RuleMuts.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		)
 
 		for _, testCase := range testCases {

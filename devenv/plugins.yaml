@@ -1,19 +1,23 @@
 apiVersion: 1
 
 apps:
-  - type: myorg-extensions-app
+  - type: grafana-extensionstest-app
     org_id: 1
     org_name: Main Org.
     disabled: false
-  - type: myorg-a-app
+    jsonData:
+      apiUrl: http://default-url.com
+    secureJsonData:
+      apiKey: secret-key
+  - type: grafana-extensionexample1-app
     org_id: 1
     org_name: Main Org.
     disabled: false
-  - type: myorg-b-app
+  - type: grafana-extensionexample2-app
     org_id: 1
     org_name: Main Org.
     disabled: false
-  - type: myorg-extensionpoint-app
+  - type: grafana-extensionexample3-app
     org_id: 1
     org_name: Main Org.
     disabled: false

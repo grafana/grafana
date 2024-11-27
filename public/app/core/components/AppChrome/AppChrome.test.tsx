@@ -16,7 +16,7 @@ import { AppChrome } from './AppChrome';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 const searchData: DataFrame = {

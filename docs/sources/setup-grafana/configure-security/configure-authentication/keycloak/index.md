@@ -53,6 +53,12 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
 
+To configure the `kc_idp_hint` parameter for Keycloak, you need to change the `auth_url` configuration to include the `kc_idp_hint` parameter. For example if you want to hint the Google identity provider:
+
+```ini
+auth_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/auth?kc_idp_hint=google
+```
+
 {{% admonition type="note" %}}
 api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
 It is useful as a fallback or if the user has more than 150 group memberships.

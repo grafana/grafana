@@ -1,12 +1,9 @@
-import { each, template } from 'lodash';
+import { template } from 'lodash';
 
 import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
-import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
 import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-
-import { angularMocks } from '../lib/common';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -30,75 +27,16 @@ export function ControllerTestContext(this: any) {
   };
   this.isUtc = false;
 
-  this.providePhase = (mocks: any) => {
-    return angularMocks.module(($provide: any) => {
-      $provide.value('contextSrv', self.contextSrv);
-      $provide.value('datasourceSrv', self.datasourceSrv);
-      $provide.value('annotationsSrv', self.annotationsSrv);
-      $provide.value('timeSrv', self.timeSrv);
-      $provide.value('templateSrv', self.templateSrv);
-      $provide.value('$element', self.$element);
-      $provide.value('$sanitize', self.$sanitize);
-      each(mocks, (value, key) => {
-        $provide.value(key, value);
-      });
-    });
-  };
-
   this.createPanelController = (Ctrl: any) => {
-    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $browser: any) => {
-      self.scope = $rootScope.$new();
-      self.$browser = $browser;
+    return () => {
       self.panel = new PanelModel({ type: 'test' });
       self.dashboard = { meta: {} };
       self.isUtc = false;
       self.dashboard.getTimezone = () => {
         return self.isUtc ? 'utc' : 'browser';
       };
-
-      $rootScope.appEvent = jest.fn();
-      $rootScope.onAppEvent = jest.fn();
-      $rootScope.colors = [];
-
-      for (let i = 0; i < 50; i++) {
-        $rootScope.colors.push('#' + i);
-      }
-
       config.panels['test'] = { info: {} } as PanelPluginMeta;
-      self.ctrl = $controller(
-        Ctrl,
-        { $scope: self.scope },
-        {
-          panel: self.panel,
-          dashboard: self.dashboard,
-        }
-      );
-    });
-  };
-
-  this.createControllerPhase = (controllerName: string) => {
-    return angularMocks.inject(($controller: any, $rootScope: GrafanaRootScope, $browser: any) => {
-      self.scope = $rootScope.$new();
-      self.$browser = $browser;
-      self.scope.contextSrv = {};
-      self.scope.panel = {};
-      self.scope.dashboard = { meta: {} };
-      self.scope.dashboardMeta = {};
-      self.scope.dashboardViewState = DashboardViewStateStub();
-      self.scope.appEvent = jest.fn();
-      self.scope.onAppEvent = jest.fn();
-
-      $rootScope.colors = [];
-      for (let i = 0; i < 50; i++) {
-        $rootScope.colors.push('#' + i);
-      }
-
-      self.scope.skipDataOnInit = true;
-      self.scope.skipAutoInit = true;
-      self.controller = $controller(controllerName, {
-        $scope: self.scope,
-      });
-    });
+    };
   };
 
   this.setIsUtc = (isUtc = false) => {

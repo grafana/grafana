@@ -1,5 +1,4 @@
 ---
-draft: true
 keywords:
   - grafana
   - announcement
@@ -52,9 +51,6 @@ To create or update an announcement banner, follow these steps:
 1. Select the banner's end date and time in the **Ends at** field.
    By default, the banner is displayed indefinitely.
    You can set a date and time for the banner to stop displaying.
-1. Select the banner's visibility.
-   **Everyone** - The banner is visible to all users, including on login page.
-   **Authenticated users** - The banner is visible to only authenticated users.
 1. Select the type of banner in the **Variant** field.
    This determines the color of the banner's background.
 1. Click **Save** to save the banner settings.

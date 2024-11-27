@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
 
+import { encodeMatcher } from 'app/features/alerting/unified/utils/matchers';
 import { dispatch } from 'app/store/store';
 import { ReceiversStateDTO } from 'app/types/alerting';
 
@@ -17,13 +18,13 @@ import {
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
-import { matcherToOperator } from '../utils/alertmanager';
+import { matcherToMatcherField } from '../utils/alertmanager';
 import {
   GRAFANA_RULES_SOURCE_NAME,
   getDatasourceAPIUid,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
-import { retryWhile, wrapWithQuotes } from '../utils/misc';
+import { retryWhile } from '../utils/misc';
 import { messageFromError, withSerializedError } from '../utils/redux';
 
 import { alertingApi } from './alertingApi';
@@ -47,6 +48,20 @@ interface AlertmanagerAlertsFilter {
   matchers?: Matcher[];
 }
 
+/**
+ * List of tags corresponding to entities that are implicitly provided by an alert manager configuration.
+ *
+ * i.e. "things that should be fetched fresh if the AM config has changed"
+ */
+export const ALERTMANAGER_PROVIDED_ENTITY_TAGS = [
+  'AlertingConfiguration',
+  'AlertmanagerConfiguration',
+  'AlertmanagerConnectionStatus',
+  'ContactPoint',
+  'ContactPointsStatus',
+  'Receiver',
+] as const;
+
 // Based on https://github.com/prometheus/alertmanager/blob/main/api/v2/openapi.yaml
 export const alertmanagerApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -58,7 +73,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
-          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${wrapWithQuotes(matcher.value)}`);
+          .map((matcher) => {
+            return encodeMatcher(matcherToMatcherField(matcher));
+          });
 
         const { silenced, inhibited, unprocessed, active } = filter || {};
 
@@ -120,7 +137,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         data: config,
         showSuccessAlert: false,
       }),
-      invalidatesTags: ['AlertingConfiguration', 'AlertmanagerConfiguration', 'AlertmanagerConnectionStatus'],
+      invalidatesTags: [...ALERTMANAGER_PROVIDED_ENTITY_TAGS],
     }),
 
     getAlertmanagerConfigurationHistory: build.query<AlertManagerCortexConfig[], void>({
@@ -248,7 +265,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         data: config,
         showSuccessAlert: false,
       }),
-      invalidatesTags: ['AlertmanagerConfiguration'],
+      invalidatesTags: ['AlertmanagerConfiguration', 'ContactPoint', 'ContactPointsStatus', 'Receiver'],
     }),
 
     // Grafana Managed Alertmanager only
@@ -274,14 +291,17 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           }),
         }));
       },
+      providesTags: ['ContactPointsStatus'],
     }),
     // Grafana Managed Alertmanager only
     // TODO: Remove as part of migration to k8s API for receivers
     getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
       query: () => ({ url: '/api/v1/notifications/receivers' }),
+      providesTags: ['ContactPoint'],
     }),
     getMuteTimingList: build.query<MuteTimeInterval[], void>({
       query: () => ({ url: '/api/v1/notifications/time-intervals' }),
+      providesTags: ['AlertmanagerConfiguration'],
     }),
   }),
 });

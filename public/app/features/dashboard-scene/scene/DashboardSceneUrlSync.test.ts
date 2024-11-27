@@ -1,10 +1,11 @@
 import { AppEvents } from '@grafana/data';
-import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 describe('DashboardSceneUrlSync', () => {
@@ -30,14 +31,17 @@ describe('DashboardSceneUrlSync', () => {
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ autofitpanels: '' });
-      expect((scene.state.body as SceneGridLayout).state.UNSAFE_fitPanels).toBe(true);
+      const layout = scene.state.body as DefaultGridLayoutManager;
+
+      expect(layout.state.grid.state.UNSAFE_fitPanels).toBe(true);
     });
 
     it('Should get the autofitpanels from the scene state', () => {
       const scene = buildTestScene();
 
       expect(scene.urlSync?.getUrlState().autofitpanels).toBeUndefined();
-      (scene.state.body as SceneGridLayout).setState({ UNSAFE_fitPanels: true });
+      const layout = scene.state.body as DefaultGridLayoutManager;
+      layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
     });
 
@@ -89,8 +93,9 @@ describe('DashboardSceneUrlSync', () => {
     expect(errorNotice).toBe(0);
 
     // fake adding clone panel
-    const layout = scene.state.body as SceneGridLayout;
-    layout.setState({
+    const layout = scene.state.body as DefaultGridLayoutManager;
+
+    layout.state.grid.setState({
       children: [
         new DashboardGridItem({
           key: 'griditem-1',
@@ -114,27 +119,20 @@ function buildTestScene() {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-          }),
-        }),
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel B',
-            key: 'panel-2',
-            pluginId: 'table',
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+      }),
+
+      new VizPanel({
+        title: 'Panel B',
+        key: 'panel-2',
+        pluginId: 'table',
+      }),
+    ]),
   });
 
   return scene;

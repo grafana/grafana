@@ -1,5 +1,5 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, getUrlSyncManager, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
@@ -17,6 +17,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('TrailStore', () => {
   beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
+
     let localStore: Record<string, string> = {};
 
     const localStorageMock = {
@@ -303,7 +305,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
         trail.activate();
         trail.state.history.activate();
@@ -356,7 +358,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
 
         trail.activate();
@@ -494,6 +496,8 @@ describe('TrailStore', () => {
               from: 'now-1h',
               to: 'now',
               'var-ds': 'prom-mock',
+              'var-deployment_environment': ['undefined'],
+              'var-otel_resources': [''],
               'var-filters': [],
               refresh: '',
             },
@@ -691,6 +695,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -702,6 +708,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -713,6 +721,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -732,6 +742,8 @@ describe('TrailStore', () => {
               from: 'now-1h',
               to: 'now',
               'var-ds': 'prom-mock',
+              'var-deployment_environment': ['undefined'],
+              'var-otel_resources': [''],
               'var-filters': [],
               refresh: '',
             },

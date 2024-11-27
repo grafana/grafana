@@ -12,13 +12,21 @@ import { config } from '@grafana/runtime';
 import { queryLibraryApi } from './api/factory';
 import { mockData } from './api/mocks';
 
-export const { useAllQueryTemplatesQuery, useAddQueryTemplateMutation, useDeleteQueryTemplateMutation } =
-  queryLibraryApi;
+export const {
+  useAllQueryTemplatesQuery,
+  useAddQueryTemplateMutation,
+  useDeleteQueryTemplateMutation,
+  useEditQueryTemplateMutation,
+} = queryLibraryApi;
 
 export function isQueryLibraryEnabled() {
   return config.featureToggles.queryLibrary;
 }
 
 export const QueryLibraryMocks = {
-  data: mockData,
+  data: mockData.all,
+};
+
+export const IdentityServiceMocks = {
+  data: mockData.identityDisplay,
 };

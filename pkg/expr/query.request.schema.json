@@ -559,7 +559,8 @@
                           "type": "string",
                           "enum": [
                             "and",
-                            "or"
+                            "or",
+                            "logic-or"
                           ],
                           "x-enum-description": {}
                         }

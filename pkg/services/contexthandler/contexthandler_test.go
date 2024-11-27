@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,6 +29,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
+			featuremgmt.WithFeatures(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -43,11 +46,12 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		id := &authn.Identity{ID: identity.NewTypedID(identity.TypeUser, 1), OrgID: 1}
+		id := &authn.Identity{ID: "1", Type: claims.TypeUser, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: id},
+			featuremgmt.WithFeatures(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -68,11 +72,12 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
-		identity := &authn.Identity{ID: identity.AnonymousTypedID, OrgID: 1}
+		identity := &authn.Identity{ID: "0", Type: claims.TypeAnonymous, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
+			featuremgmt.WithFeatures(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -94,6 +99,7 @@ func TestContextHandler(t *testing.T) {
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
+			featuremgmt.WithFeatures(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -124,6 +130,7 @@ func TestContextHandler(t *testing.T) {
 			cfg,
 			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
+			featuremgmt.WithFeatures(),
 		)
 
 		server := webtest.NewServer(t, routing.NewRouteRegister())
@@ -145,10 +152,14 @@ func TestContextHandler(t *testing.T) {
 
 	t.Run("id response headers", func(t *testing.T) {
 		run := func(cfg *setting.Cfg, id string) *http.Response {
+			typ, i, err := identity.ParseTypeAndID(id)
+			require.NoError(t, err)
+
 			handler := contexthandler.ProvideService(
 				cfg,
 				tracing.InitializeTracerForTest(),
-				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: identity.MustParseTypedID(id)}},
+				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: i, Type: typ}},
+				featuremgmt.WithFeatures(),
 			)
 
 			server := webtest.NewServer(t, routing.NewRouteRegister())

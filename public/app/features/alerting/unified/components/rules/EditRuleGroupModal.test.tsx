@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'test/test-utils';
+import { render } from 'test/test-utils';
 import { byLabelText, byTestId, byText, byTitle } from 'testing-library-selector';
 
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -157,13 +157,5 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
     renderWithGrafanaGroup();
     expect(await ui.input.namespace.find()).toHaveValue('namespace1');
     expect(ui.folderLink.query()).not.toBeInTheDocument();
-  });
-
-  it('does not allow slashes in the group name', async () => {
-    const user = userEvent.setup();
-    renderWithGrafanaGroup();
-    await user.type(await ui.input.group.find(), 'group/with/slashes');
-    await user.click(ui.input.interval.get());
-    expect(await screen.findByText(/cannot contain \"\/\"/i)).toBeInTheDocument();
   });
 });

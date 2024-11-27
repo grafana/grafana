@@ -33,8 +33,8 @@ func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.Use
 	return nil, false, nil
 }
 
-func (s *Service) TryTokenRefresh(context.Context, identity.Requester) error {
-	return nil
+func (s *Service) TryTokenRefresh(context.Context, identity.Requester) (*oauth2.Token, error) {
+	return s.Token, nil
 }
 
 func (s *Service) InvalidateOAuthTokens(context.Context, *login.UserAuth) error {

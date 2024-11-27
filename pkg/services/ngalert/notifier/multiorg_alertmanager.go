@@ -12,6 +12,7 @@ import (
 	alertingCluster "github.com/grafana/alerting/cluster"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -68,7 +69,7 @@ type Alertmanager interface {
 
 	// Receivers
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// Lifecycle
@@ -100,6 +101,8 @@ type MultiOrgAlertmanager struct {
 
 	metrics *metrics.MultiOrgAlertmanager
 	ns      notifications.Service
+
+	receiverResourcePermissions ac.ReceiverPermissionsService
 }
 
 type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
@@ -121,6 +124,7 @@ func NewMultiOrgAlertmanager(
 	decryptFn alertingNotify.GetDecryptedValueFn,
 	m *metrics.MultiOrgAlertmanager,
 	ns notifications.Service,
+	receiverResourcePermissions ac.ReceiverPermissionsService,
 	l log.Logger,
 	s secrets.Service,
 	featureManager featuremgmt.FeatureToggles,
@@ -130,17 +134,18 @@ func NewMultiOrgAlertmanager(
 		Crypto:    NewCrypto(s, configStore, l),
 		ProvStore: provStore,
 
-		logger:         l,
-		settings:       cfg,
-		featureManager: featureManager,
-		alertmanagers:  map[int64]Alertmanager{},
-		configStore:    configStore,
-		orgStore:       orgStore,
-		kvStore:        kvStore,
-		decryptFn:      decryptFn,
-		metrics:        m,
-		ns:             ns,
-		peer:           &NilPeer{},
+		logger:                      l,
+		settings:                    cfg,
+		featureManager:              featureManager,
+		alertmanagers:               map[int64]Alertmanager{},
+		configStore:                 configStore,
+		orgStore:                    orgStore,
+		kvStore:                     kvStore,
+		decryptFn:                   decryptFn,
+		receiverResourcePermissions: receiverResourcePermissions,
+		metrics:                     m,
+		ns:                          ns,
+		peer:                        &NilPeer{},
 	}
 
 	if cfg.UnifiedAlerting.SkipClustering {
@@ -157,7 +162,7 @@ func NewMultiOrgAlertmanager(
 		if exist {
 			return nil, fmt.Errorf("registry is already registered for org - %d, don't register again", orgID)
 		}
-		m := metrics.NewAlertmanagerMetrics(reg)
+		m := metrics.NewAlertmanagerMetrics(reg, l)
 		stateStore := NewFileStore(orgID, kvStore)
 		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
 	}
@@ -215,7 +220,6 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			true,
 			cfg.UnifiedAlerting.HALabel,
 		)
-
 		if err != nil {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
@@ -362,7 +366,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 // active organizations. The original intention for this was the cleanup deleted orgs, that have had their states
 // saved to the kvstore after deletion on instance shutdown.
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
-	activeOrganizations map[int64]struct{}) {
+	activeOrganizations map[int64]struct{},
+) {
 	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)

@@ -1,10 +1,13 @@
-import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { withErrorBoundary } from '@grafana/ui';
 import {
   defaultsFromQuery,
   getDefaultSilenceFormValues,
 } from 'app/features/alerting/unified/components/silences/utils';
+import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
@@ -28,21 +31,10 @@ const Silences = () => {
           <SilencesTable alertManagerSourceName={selectedAlertmanager} />
         </Route>
         <Route exact path="/alerting/silence/new">
-          {({ location }) => {
-            const queryParams = new URLSearchParams(location.search);
-            const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
-
-            return <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} />;
-          }}
+          <SilencesEditorComponent selectedAlertmanager={selectedAlertmanager} />
         </Route>
         <Route exact path="/alerting/silence/:id/edit">
-          {({ match }: RouteChildrenProps<{ id: string }>) => {
-            return (
-              match?.params.id && (
-                <ExistingSilenceEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
-              )
-            );
-          }}
+          <ExistingSilenceEditor alertManagerSourceName={selectedAlertmanager} />
         </Route>
       </Switch>
     </>
@@ -60,3 +52,23 @@ function SilencesPage() {
 }
 
 export default withErrorBoundary(SilencesPage, { style: 'page' });
+
+type SilencesEditorComponentProps = {
+  selectedAlertmanager: string;
+};
+const SilencesEditorComponent = ({ selectedAlertmanager }: SilencesEditorComponentProps) => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
+    (m) => m.name === MATCHER_ALERT_RULE_UID
+  );
+
+  const potentialRuleUid = potentialAlertRuleMatcher?.value;
+
+  const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
+
+  return (
+    <SilencesEditor formValues={formValues} alertManagerSourceName={selectedAlertmanager} ruleUid={potentialRuleUid} />
+  );
+};

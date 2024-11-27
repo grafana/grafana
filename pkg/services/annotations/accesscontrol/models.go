@@ -8,6 +8,8 @@ type AccessResources struct {
 	CanAccessDashAnnotations bool
 	// CanAccessOrgAnnotations true if the user is allowed to access organization annotations
 	CanAccessOrgAnnotations bool
+	// Skip filtering
+	SkipAccessControlFilter bool
 }
 
 type dashboardProjection struct {

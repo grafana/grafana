@@ -142,6 +142,38 @@ describe('AzureMonitorUrlBuilder', () => {
         '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=global'
       );
     });
+
+    it('builds a getMetricNamesnamespace url with a specific region', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+        '',
+        '2017-05-01-preview',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+        },
+        false,
+        templateSrv,
+        'testregion'
+      );
+      expect(url).toBe(
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
+      );
+    });
+
+    it('builds a getMetricNamesnamespace url with a specific region (overriding global)', () => {
+      const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
+        '',
+        '2017-05-01-preview',
+        {
+          resourceUri: '/subscriptions/sub/resource-uri/resource',
+        },
+        true,
+        templateSrv,
+        'testregion'
+      );
+      expect(url).toBe(
+        '/subscriptions/sub/resource-uri/resource/providers/microsoft.insights/metricNamespaces?api-version=2017-05-01-preview&region=testregion'
+      );
+    });
   });
 
   describe('when a resource uri and metric namespace is provided', () => {

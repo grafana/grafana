@@ -26,8 +26,8 @@ type RuleStore interface {
 	UpdateAlertRules(ctx context.Context, rule []ngmodels.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 
-	// IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-	IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error)
+	// IncreaseVersionForAllRulesInNamespaces Increases version for all rules that have specified namespace uids
+	IncreaseVersionForAllRulesInNamespaces(ctx context.Context, orgID int64, namespaceUIDs []string) ([]ngmodels.AlertRuleKeyWithVersion, error)
 
 	accesscontrol.RuleUIDToNamespaceStore
 }

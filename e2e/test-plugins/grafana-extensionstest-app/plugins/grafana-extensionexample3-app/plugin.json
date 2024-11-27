@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "app",
+  "name": "D App",
+  "id": "grafana-extensionexample3-app",
+  "preload": true,
+  "info": {
+    "keywords": ["app"],
+    "description": "Will extend root app with ui extensions",
+    "author": {
+      "name": "grafana"
+    },
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "includes": [
+    {
+      "type": "page",
+      "name": "Default",
+      "path": "/a/grafana-extensionexample3-app",
+      "role": "Admin",
+      "addToNav": false,
+      "defaultNav": false
+    }
+  ],
+  "dependencies": {
+    "grafanaDependency": ">=10.3.3",
+    "plugins": []
+  }
+}

@@ -46,6 +46,7 @@ const (
 	}
 }
 `
+	alertingDefaultInitializationTimeout    = 30 * time.Second
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
 	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulerDefaultExecuteAlerts           = true
@@ -91,6 +92,7 @@ type UnifiedAlertingSettings struct {
 	HARedisMaxConns                 int
 	HARedisTLSEnabled               bool
 	HARedisTLSConfig                dstls.ClientConfig
+	InitializationTimeout           time.Duration
 	MaxAttempts                     int64
 	MinInterval                     time.Duration
 	EvaluationTimeout               time.Duration
@@ -122,9 +124,15 @@ type UnifiedAlertingSettings struct {
 
 	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
 	ResolvedAlertRetention time.Duration
+
+	// RuleVersionRecordLimit defines the limit of how many alert rule versions
+	// should be stored in the database for each alert_rule in an organization including the current one.
+	// 0 value means no limit
+	RuleVersionRecordLimit int
 }
 
 type RecordingRuleSettings struct {
+	Enabled           bool
 	URL               string
 	BasicAuthUsername string
 	BasicAuthPassword string
@@ -228,6 +236,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			return err
 		}
 		uaCfg.DisabledOrgs[orgID] = struct{}{}
+	}
+
+	uaCfg.InitializationTimeout, err = gtime.ParseDuration(valueAsString(ua, "initialization_timeout", (alertingDefaultInitializationTimeout).String()))
+	if err != nil {
+		return err
 	}
 
 	uaCfg.AdminConfigPollInterval, err = gtime.ParseDuration(valueAsString(ua, "admin_config_poll_interval", (schedulerDefaultAdminConfigPollInterval).String()))
@@ -434,6 +447,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
+		Enabled:           rr.Key("enabled").MustBool(false),
 		URL:               rr.Key("url").MustString(""),
 		BasicAuthUsername: rr.Key("basic_auth_username").MustString(""),
 		BasicAuthPassword: rr.Key("basic_auth_password").MustString(""),
@@ -464,6 +478,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ResolvedAlertRetention, err = gtime.ParseDuration(valueAsString(ua, "resolved_alert_retention", (15 * time.Minute).String()))
 	if err != nil {
 		return err
+	}
+
+	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
+	if uaCfg.RuleVersionRecordLimit < 0 {
+		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg

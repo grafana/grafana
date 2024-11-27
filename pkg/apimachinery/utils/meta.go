@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -92,6 +93,13 @@ type GrafanaMetaAccessor interface {
 	GetOriginTimestamp() (*time.Time, error)
 
 	GetSpec() (any, error)
+	SetSpec(any) error
+
+	GetStatus() (any, error)
+
+	// Used by the generic strategy to keep the status value unchanged on an update
+	// NOTE the type must match the existing value, or an error will be thrown
+	SetStatus(any) error
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -500,7 +508,93 @@ func (m *grafanaMetaAccessor) GetSpec() (spec any, err error) {
 			err = fmt.Errorf("error reading spec")
 		}
 	}()
-	spec = m.r.FieldByName("Spec").Interface()
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		spec = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		spec, ok = u.Object["spec"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read spec")
+	return
+}
+
+func (m *grafanaMetaAccessor) SetSpec(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting spec")
+		}
+	}()
+
+	f := m.r.FieldByName("Spec")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["spec"] = s
+	} else {
+		err = fmt.Errorf("unable to set spec")
+	}
+	return
+}
+
+func (m *grafanaMetaAccessor) GetStatus() (status any, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error reading status")
+		}
+	}()
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		status = f.Interface()
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		status, ok = u.Object["status"]
+		if ok {
+			return // no error
+		}
+	}
+	err = fmt.Errorf("unable to read status")
+	return
+}
+
+func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting status")
+		}
+	}()
+
+	f := m.r.FieldByName("Status")
+	if f.IsValid() {
+		f.Set(reflect.ValueOf(s))
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		u.Object["status"] = s
+	} else {
+		err = fmt.Errorf("unable to read status")
+	}
 	return
 }
 

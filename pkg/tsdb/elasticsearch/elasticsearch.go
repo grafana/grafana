@@ -102,11 +102,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
-			return nil, errors.New("timeField cannot be cast to string")
+			return nil, exp.DownstreamError(errors.New("timeField cannot be cast to string"), false)
 		}
 
 		if timeField == "" {
-			return nil, errors.New("elasticsearch time field name is required")
+			return nil, exp.DownstreamError(errors.New("elasticsearch time field name is required"), false)
 		}
 
 		logLevelField, ok := jsonData["logLevelField"].(string)

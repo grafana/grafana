@@ -22,7 +22,7 @@ labels:
     - oss
 menuTitle: Manage dashboard links
 title: Manage dashboard links
-weight: 500
+weight: 200
 refs:
   data-links:
     - pattern: /docs/grafana/

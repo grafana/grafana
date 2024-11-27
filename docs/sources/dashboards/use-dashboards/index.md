@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../features/dashboard/dashboards/
   - ../reference/search/
   - dashboard-ui/
   - dashboard-ui/dashboard-header/
@@ -20,7 +19,7 @@ labels:
 menuTitle: Use dashboards
 title: Use dashboards
 description: Learn about the features of a Grafana dashboard
-weight: 1
+weight: 100
 refs:
   dashboard-analytics:
     - pattern: /docs/grafana/

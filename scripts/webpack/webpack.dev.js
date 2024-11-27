@@ -6,11 +6,12 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const { DefinePlugin } = require('webpack');
+const { DefinePlugin, EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
 
+const getEnvConfig = require('./env-util.js');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 // esbuild-loader 3.0.0+ requires format to be set to prevent it
@@ -26,6 +27,8 @@ function getDecoupledPlugins() {
   const { packages } = getPackagesSync(process.cwd());
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
 }
+
+const envConfig = getEnvConfig();
 
 module.exports = (env = {}) => {
   return merge(common, {
@@ -139,6 +142,7 @@ module.exports = (env = {}) => {
         color: '#eb7b18',
         name: 'Grafana',
       }),
+      new EnvironmentPlugin(envConfig),
     ],
 
     stats: 'minimal',

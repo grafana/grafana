@@ -130,6 +130,11 @@ describe('extractLevelLikeLabelFromDataFrame', () => {
     input.fields[1].values = [{ error_level: 'info' }];
     expect(extractLevelLikeLabelFromDataFrame(input)).toBe('error_level');
   });
+  it('returns label if detected_level label is present', () => {
+    const input = cloneDeep(frame);
+    input.fields[1].values = [{ detected_level: 'info' }];
+    expect(extractLevelLikeLabelFromDataFrame(input)).toBe('detected_level');
+  });
   it('returns undefined if no level-like label is present', () => {
     const input = cloneDeep(frame);
     input.fields[1].values = [{ foo: 'info' }];

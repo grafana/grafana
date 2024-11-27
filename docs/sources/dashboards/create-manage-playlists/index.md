@@ -15,7 +15,7 @@ labels:
 menuTitle: Manage playlists
 title: Manage playlists
 description: Create and manage dashboard playlists
-weight: 9
+weight: 500
 ---
 
 # Manage playlists
@@ -25,6 +25,10 @@ A _playlist_ is a list of dashboards that are displayed in a sequence. You might
 Grafana automatically scales dashboards to any resolution, which makes them perfect for big screens.
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
+
+{{< admonition type="note" >}}
+You must have at least Editor role permissions to create and manage playlists.
+{{< /admonition >}}
 
 ## Access, share, and control a playlist
 

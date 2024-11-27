@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useState } from 'react';
 import * as React from 'react';
+import { ReactNode, useState } from 'react';
 
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, Input, FieldValidationMessage, useStyles2 } from '@grafana/ui';
+import { FieldValidationMessage, Icon, Input, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
@@ -18,10 +18,11 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
+  hideRefId?: boolean;
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onChange, collapsedText, renderExtras, hidden } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, hidden, hideRefId = false } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -85,7 +86,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
   return (
     <>
       <div className={styles.wrapper}>
-        {!isEditing && (
+        {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
             aria-label={selectors.components.QueryEditorRow.title(query.refId)}
@@ -99,7 +100,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
           </button>
         )}
 
-        {isEditing && (
+        {!hideRefId && isEditing && (
           <>
             <Input
               type="text"

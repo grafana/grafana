@@ -7,7 +7,7 @@ import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
 import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
 
@@ -29,7 +29,7 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
         ))}
         {/* TODO hover state to show all matchers we're not showing */}
         {hasMoreMatchers && (
-          <HoverCard
+          <PopupCard
             arrow
             placement="top"
             content={
@@ -43,7 +43,7 @@ const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
             <span>
               <div className={styles.metadata}>{`and ${rest.length} more`}</div>
             </span>
-          </HoverCard>
+          </PopupCard>
         )}
       </Stack>
     </span>

@@ -11,17 +11,16 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneFlexLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const grafanaDs = {
   id: 1,
@@ -164,18 +163,7 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-          ],
-        }),
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel]),
       });
 
       activateFullSceneTree(scene);
@@ -184,22 +172,10 @@ describe('DashboardDatasourceBehaviour', () => {
 
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
-      const layout = scene.state.body as SceneGridLayout;
+      //const layout = scene.state.body as DefaultGridLayoutManager;
 
       // we add the new panel, it should run it's query as usual
-      layout.setState({
-        children: [
-          ...layout.state.children,
-          new DashboardGridItem({
-            key: 'griditem-2',
-            x: 0,
-            y: 0,
-            width: 10,
-            height: 12,
-            body: dashboardDSPanel,
-          }),
-        ],
-      });
+      scene.addPanel(dashboardDSPanel);
 
       dashboardDSPanel.activate();
 
@@ -238,26 +214,7 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: dashboardDSPanel,
-            }),
-          ],
-        }),
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
       });
 
       const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
@@ -275,14 +232,12 @@ describe('DashboardDatasourceBehaviour', () => {
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
-      const vizPanelManager = new VizPanelManager({
-        panel: dashboardDSPanel.clone(),
+      const scene = new SceneFlexLayout({
         $data: dashboardDSPanel.state.$data?.clone(),
-        sourcePanel: dashboardDSPanel.getRef(),
-        pluginId: dashboardDSPanel.state.pluginId,
+        children: [],
       });
 
-      vizPanelManager.activate();
+      scene.activate();
 
       expect(spy).not.toHaveBeenCalled();
     });
@@ -316,26 +271,7 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: dashboardDSPanel,
-            }),
-          ],
-        }),
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
       });
 
       const sceneDeactivate = activateFullSceneTree(scene);
@@ -385,26 +321,7 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: anotherPanel,
-            }),
-          ],
-        }),
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, anotherPanel]),
       });
 
       const sceneDeactivate = activateFullSceneTree(scene);
@@ -460,26 +377,7 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: dashboardDSPanel,
-            }),
-          ],
-        }),
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
       });
 
       try {
@@ -491,16 +389,23 @@ describe('DashboardDatasourceBehaviour', () => {
   });
 
   describe('Library panels', () => {
-    it('should wait for library panel to be loaded', async () => {
-      const sourcePanel = new LibraryVizPanel({
-        name: 'My Library Panel',
+    it('should re-run queries when library panel re-runs query', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
         title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-1',
-          title: 'Panel A',
-          pluginId: 'table',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
         }),
       });
 
@@ -522,52 +427,88 @@ describe('DashboardDatasourceBehaviour', () => {
         meta: {
           canEdit: true,
         },
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: sourcePanel,
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              x: 0,
-              y: 0,
-              width: 10,
-              height: 12,
-              body: dashboardDSPanel,
-            }),
-          ],
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+      });
+
+      const sceneDeactivate = activateFullSceneTree(scene);
+
+      // spy on runQueries
+      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+
+      // deactivate scene to mimic going into panel edit
+      sceneDeactivate();
+
+      // run source panel queries and update request ID
+      (sourcePanel.state.$data as SceneQueryRunner).runQueries();
+
+      // // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should wait for library panel to load before running queries', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
         }),
+      });
+
+      // query references inexistent panel
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneQueryRunner({
+          datasource: { uid: SHARED_DASHBOARD_QUERY },
+          queries: [{ refId: 'A', panelId: 1 }],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: {
+          canEdit: true,
+        },
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
       });
 
       activateFullSceneTree(scene);
 
       // spy on runQueries
-      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+      const spyRunQueries = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(spy).not.toHaveBeenCalled();
+      expect(spyRunQueries).not.toHaveBeenCalled();
 
       // Simulate library panel being loaded
-      sourcePanel.setState({
+      libPanelBehavior.setState({
         isLoaded: true,
-        panel: new VizPanel({
-          title: 'Panel A',
-          pluginId: 'table',
-          key: 'panel-1',
-          $data: new SceneQueryRunner({
-            datasource: { uid: 'grafana' },
-            queries: [{ refId: 'A', queryType: 'randomWalk' }],
-          }),
-        }),
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
       });
 
-      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spyRunQueries).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -606,26 +547,7 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: sourcePanel,
-        }),
-        new DashboardGridItem({
-          key: 'griditem-2',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: dashboardDSPanel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
   });
 
   const sceneDeactivate = activateFullSceneTree(scene);

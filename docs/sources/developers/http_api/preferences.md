@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - oss
-title: 'HTTP Preferences API '
+title: 'Preferences API'
 ---
 
 # User and Org Preferences API

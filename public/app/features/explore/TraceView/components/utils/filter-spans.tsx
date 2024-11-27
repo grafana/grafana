@@ -14,9 +14,11 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
+import { TraceKeyValuePair } from '@grafana/data';
+
 import { SearchProps, Tag } from '../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
-import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
+import { TNil, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
@@ -76,7 +78,7 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
     kvs
       ? kvs.some((kv) => {
-          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, kv.value.toString());
+          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, getStringValue(kv.value));
         })
       : false;
 
@@ -90,7 +92,8 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
     (span.instrumentationLibraryName && isTextInQuery(queryParts, span.instrumentationLibraryName)) ||
     (span.instrumentationLibraryVersion && isTextInQuery(queryParts, span.instrumentationLibraryVersion)) ||
     (span.traceState && isTextInQuery(queryParts, span.traceState)) ||
-    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+    (span.logs !== null &&
+      span.logs.some((log) => (log.name && isTextInQuery(queryParts, log.name)) || isTextInKeyValues(log.fields))) ||
     isTextInKeyValues(span.process.tags) ||
     queryParts.some((queryPart) => queryPart === span.spanID);
 
@@ -109,17 +112,15 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       // match against every tag filter
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
-          if (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) {
-            return getReturnValue(tag.operator, true);
-          } else if (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else if (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else if (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span)) {
-            return getReturnValue(tag.operator, false);
-          } else {
-            return false;
+          if (
+            (tag.operator === '=' && checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '=~' && checkKeyValConditionForRegex(tag, span)) ||
+            (tag.operator === '!=' && !checkKeyValConditionForMatch(tag, span)) ||
+            (tag.operator === '!~' && !checkKeyValConditionForRegex(tag, span))
+          ) {
+            return true;
           }
+          return false;
         } else if (tag.key) {
           if (
             span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
@@ -133,10 +134,11 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
             (span.traceState && tag.key === TRACE_STATE) ||
             tag.key === ID
           ) {
-            return getReturnValue(tag.operator, true);
+            return tag.operator === '=' || tag.operator === '=~' ? true : false;
           }
+          return tag.operator === '=' || tag.operator === '=~' ? false : true;
         }
-        return getReturnValue(tag.operator, false);
+        return false;
       });
     });
   }
@@ -184,30 +186,19 @@ const checkKeyValConditionForMatch = (tag: Tag, span: TraceSpan) => {
 };
 
 const checkKeyForMatch = (tagKey: string, key: string) => {
-  return tagKey === key.toString() ? true : false;
+  return tagKey === key.toString();
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
+  return tag.key === kv.key && tag.value === getStringValue(kv.value);
 };
 
 const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
-  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '') ? true : false;
+  return kv.key.includes(tag.key || '') && getStringValue(kv.value).includes(tag.value || '');
 };
 
-const getReturnValue = (operator: string, found: boolean) => {
-  switch (operator) {
-    case '=':
-      return found;
-    case '!=':
-      return !found;
-    case '~=':
-      return !found;
-    case '!~':
-      return !found;
-    default:
-      return !found;
-  }
+const getStringValue = (value: string | number | boolean | undefined) => {
+  return value ? value.toString() : '';
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {

@@ -31,6 +31,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
   private labelsCache = new LRUCache<string, string[]>({ max: 10 });
+  private labelsPromisesCache = new LRUCache<string, Promise<string[]>>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -56,11 +57,14 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = (timeRange?: TimeRange) => {
     const range = timeRange ?? this.getDefaultTimeRange();
+    const newRangeParams = this.datasource.getTimeRangeParams(range);
+    const prevRangeParams = this.startedTimeRange ? this.datasource.getTimeRangeParams(this.startedTimeRange) : null;
     // refetch labels if either there's not already a start task or the time range has changed
     if (
       !this.startTask ||
-      this.startedTimeRange?.from.isSame(range.from) === false ||
-      this.startedTimeRange?.to.isSame(range.to) === false
+      !prevRangeParams ||
+      newRangeParams.start !== prevRangeParams.start ||
+      newRangeParams.end !== prevRangeParams.end
     ) {
       this.startedTimeRange = range;
       this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
@@ -272,18 +276,34 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     const cacheKey = this.generateCacheKey(url, start, end, paramCacheKey);
 
-    let labelValues = this.labelsCache.get(cacheKey);
-    if (!labelValues) {
-      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-      this.labelsCache.set(cacheKey, []);
-      const res = await this.request(url, params);
-      if (Array.isArray(res)) {
-        labelValues = res.slice().sort();
-        this.labelsCache.set(cacheKey, labelValues);
-      }
+    // Values in cache, return
+    const labelValues = this.labelsCache.get(cacheKey);
+    if (labelValues) {
+      return labelValues;
     }
 
-    return labelValues ?? [];
+    // Promise in cache, return
+    let labelValuesPromise = this.labelsPromisesCache.get(cacheKey);
+    if (labelValuesPromise) {
+      return labelValuesPromise;
+    }
+
+    labelValuesPromise = new Promise(async (resolve) => {
+      try {
+        const data = await this.request(url, params);
+        if (Array.isArray(data)) {
+          const labelValues = data.slice().sort();
+          this.labelsCache.set(cacheKey, labelValues);
+          this.labelsPromisesCache.delete(cacheKey);
+          resolve(labelValues);
+        }
+      } catch (error) {
+        console.error(error);
+        resolve([]);
+      }
+    });
+    this.labelsPromisesCache.set(cacheKey, labelValuesPromise);
+    return labelValuesPromise;
   }
 
   /**

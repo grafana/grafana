@@ -847,6 +847,7 @@ type testPlugin struct {
 	backend.QueryDataHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 }
 
 func (tp *testPlugin) PluginID() string {
@@ -953,9 +954,9 @@ func (tp *testPlugin) MutateAdmission(ctx context.Context, req *backend.Admissio
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (tp *testPlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if tp.AdmissionHandler != nil {
-		return tp.AdmissionHandler.ConvertObject(ctx, req)
+func (tp *testPlugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if tp.ConversionHandler != nil {
+		return tp.ConversionHandler.ConvertObjects(ctx, req)
 	}
 
 	return nil, plugins.ErrMethodNotImplemented

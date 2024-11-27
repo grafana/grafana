@@ -30,22 +30,24 @@ var receiversKind = v0alpha1.SchemeGroupVersion.WithKind("Receiver")
 
 // Get takes name of the receiver, and returns the corresponding receiver object, and an error if there is any.
 func (c *FakeReceivers) Get(ctx context.Context, name string, options v1.GetOptions) (result *v0alpha1.Receiver, err error) {
+	emptyResult := &v0alpha1.Receiver{}
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(receiversResource, c.ns, name), &v0alpha1.Receiver{})
+		Invokes(testing.NewGetActionWithOptions(receiversResource, c.ns, name, options), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.Receiver), err
 }
 
 // List takes label and field selectors, and returns the list of Receivers that match those selectors.
 func (c *FakeReceivers) List(ctx context.Context, opts v1.ListOptions) (result *v0alpha1.ReceiverList, err error) {
+	emptyResult := &v0alpha1.ReceiverList{}
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(receiversResource, receiversKind, c.ns, opts), &v0alpha1.ReceiverList{})
+		Invokes(testing.NewListActionWithOptions(receiversResource, receiversKind, c.ns, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 
 	label, _, _ := testing.ExtractFromListOptions(opts)
@@ -64,28 +66,30 @@ func (c *FakeReceivers) List(ctx context.Context, opts v1.ListOptions) (result *
 // Watch returns a watch.Interface that watches the requested receivers.
 func (c *FakeReceivers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
-		InvokesWatch(testing.NewWatchAction(receiversResource, c.ns, opts))
+		InvokesWatch(testing.NewWatchActionWithOptions(receiversResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a receiver and creates it.  Returns the server's representation of the receiver, and an error, if there is any.
 func (c *FakeReceivers) Create(ctx context.Context, receiver *v0alpha1.Receiver, opts v1.CreateOptions) (result *v0alpha1.Receiver, err error) {
+	emptyResult := &v0alpha1.Receiver{}
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(receiversResource, c.ns, receiver), &v0alpha1.Receiver{})
+		Invokes(testing.NewCreateActionWithOptions(receiversResource, c.ns, receiver, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.Receiver), err
 }
 
 // Update takes the representation of a receiver and updates it. Returns the server's representation of the receiver, and an error, if there is any.
 func (c *FakeReceivers) Update(ctx context.Context, receiver *v0alpha1.Receiver, opts v1.UpdateOptions) (result *v0alpha1.Receiver, err error) {
+	emptyResult := &v0alpha1.Receiver{}
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(receiversResource, c.ns, receiver), &v0alpha1.Receiver{})
+		Invokes(testing.NewUpdateActionWithOptions(receiversResource, c.ns, receiver, opts), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.Receiver), err
 }
@@ -100,7 +104,7 @@ func (c *FakeReceivers) Delete(ctx context.Context, name string, opts v1.DeleteO
 
 // DeleteCollection deletes a collection of objects.
 func (c *FakeReceivers) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(receiversResource, c.ns, listOpts)
+	action := testing.NewDeleteCollectionActionWithOptions(receiversResource, c.ns, opts, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v0alpha1.ReceiverList{})
 	return err
@@ -108,11 +112,12 @@ func (c *FakeReceivers) DeleteCollection(ctx context.Context, opts v1.DeleteOpti
 
 // Patch applies the patch and returns the patched receiver.
 func (c *FakeReceivers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v0alpha1.Receiver, err error) {
+	emptyResult := &v0alpha1.Receiver{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(receiversResource, c.ns, name, pt, data, subresources...), &v0alpha1.Receiver{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(receiversResource, c.ns, name, pt, data, opts, subresources...), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.Receiver), err
 }
@@ -130,11 +135,12 @@ func (c *FakeReceivers) Apply(ctx context.Context, receiver *alertingnotificatio
 	if name == nil {
 		return nil, fmt.Errorf("receiver.Name must be provided to Apply")
 	}
+	emptyResult := &v0alpha1.Receiver{}
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(receiversResource, c.ns, *name, types.ApplyPatchType, data), &v0alpha1.Receiver{})
+		Invokes(testing.NewPatchSubresourceActionWithOptions(receiversResource, c.ns, *name, types.ApplyPatchType, data, opts.ToPatchOptions()), emptyResult)
 
 	if obj == nil {
-		return nil, err
+		return emptyResult, err
 	}
 	return obj.(*v0alpha1.Receiver), err
 }

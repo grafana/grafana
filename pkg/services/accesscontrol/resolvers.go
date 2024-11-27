@@ -62,6 +62,9 @@ func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttri
 
 func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator {
 	return func(ctx context.Context, scope string) ([]string, error) {
+		ctx, span := tracer.Start(ctx, "accesscontrol.GetScopeAttributeMutator")
+		defer span.End()
+
 		key := getScopeCacheKey(orgID, scope)
 		// Check cache before computing the scope
 		if cachedScope, ok := s.cache.Get(key); ok {

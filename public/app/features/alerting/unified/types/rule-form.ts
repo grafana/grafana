@@ -25,6 +25,10 @@ export interface AlertManagerManualRouting {
   [key: string]: ContactPoint;
 }
 
+export interface SimplifiedEditor {
+  simplifiedQueryEditor: boolean;
+}
+
 export interface RuleFormValues {
   // common
   name: string;
@@ -46,6 +50,7 @@ export interface RuleFormValues {
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
+  editorSettings?: SimplifiedEditor;
   metric?: string;
 
   // cortex / loki rules

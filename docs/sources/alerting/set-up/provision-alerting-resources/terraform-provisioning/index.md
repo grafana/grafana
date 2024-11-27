@@ -60,6 +60,8 @@ refs:
   service-accounts:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   rbac-role-definitions:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/

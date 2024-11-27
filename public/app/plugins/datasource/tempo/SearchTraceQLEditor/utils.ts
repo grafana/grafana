@@ -81,7 +81,14 @@ const adHocValueHelper = (f: AdHocVariableFilter) => {
   if (intrinsics.find((t) => t === f.key)) {
     return f.value;
   }
+  if (parseInt(f.value, 10).toString() === f.value) {
+    return f.value;
+  }
   return `"${f.value}"`;
+};
+
+export const getTagWithoutScope = (tag: string) => {
+  return tag.replace(/^(event|link|resource|span)\./, '');
 };
 
 export const filterScopedTag = (f: TraceqlFilter) => {

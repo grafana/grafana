@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import history from 'history';
 import { useEffect, useState } from 'react';
-import { Prompt, Redirect } from 'react-router-dom';
+import { Prompt } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { Button, Modal } from '@grafana/ui';
 
@@ -80,7 +81,7 @@ export const FormPrompt = ({ confirmRedirect, onDiscard, onLocationChange }: Pro
   return (
     <>
       <Prompt when={true} message={handleRedirect} />
-      {blockedLocation && changesDiscarded && <Redirect to={blockedLocation} />}
+      {blockedLocation && changesDiscarded && <Navigate replace to={blockedLocation} />}
       <UnsavedChangesModal isOpen={modalIsOpen} onDiscard={onDiscardChanges} onBackToForm={onBackToForm} />
     </>
   );

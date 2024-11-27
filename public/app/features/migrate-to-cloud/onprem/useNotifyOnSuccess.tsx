@@ -45,6 +45,8 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
       types.push(t('migrate-to-cloud.migrated-counts.datasources', 'data sources'));
     } else if (type === 'FOLDER') {
       types.push(t('migrate-to-cloud.migrated-counts.folders', 'folders'));
+    } else if (type === 'LIBRARY_ELEMENT') {
+      types.push(t('migrate-to-cloud.migrated-counts.library_elements', 'library elements'));
     }
   }
 

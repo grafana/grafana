@@ -6,7 +6,6 @@ package definitions
 //
 //     Responses:
 //       200: NotificationTemplates
-//       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
@@ -14,7 +13,7 @@ package definitions
 //
 //     Responses:
 //       200: NotificationTemplate
-//       404: description: Not found.
+//       404: PublicError
 
 // swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
@@ -25,8 +24,8 @@ package definitions
 //
 //     Responses:
 //       202: NotificationTemplate
-//       400: ValidationError
-//       409: GenericPublicError
+//       400: PublicError
+//       409: PublicError
 
 // swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
@@ -34,7 +33,7 @@ package definitions
 //
 //     Responses:
 //       204: description: The template was deleted successfully.
-//       409: GenericPublicError
+//       409: PublicError
 
 // swagger:parameters RouteGetTemplate RoutePutTemplate RouteDeleteTemplate
 type RouteGetTemplateParam struct {
@@ -56,6 +55,7 @@ type RouteDeleteTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
+	UID             string     `json:"-" yaml:"-"`
 	Name            string     `json:"name"`
 	Template        string     `json:"template"`
 	Provenance      Provenance `json:"provenance,omitempty"`

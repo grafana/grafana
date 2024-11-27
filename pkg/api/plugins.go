@@ -123,7 +123,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// Compute metadata
-	pluginsMetadata := hs.getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+	pluginsMetadata := getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			AngularDetected: pluginDef.Angular.Detected,
 		}
 
-		if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+		if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 			listItem.IAM = pluginDef.IAM
 		}
 
@@ -201,6 +201,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		Includes:         plugin.Includes,
 		BaseUrl:          plugin.BaseURL,
 		Module:           plugin.Module,
+		ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 		DefaultNavUrl:    path.Join(hs.Cfg.AppSubURL, plugin.DefaultNavURL),
 		State:            plugin.State,
 		Signature:        plugin.Signature,
@@ -208,6 +209,8 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
 		AngularDetected:  plugin.Angular.Detected,
+		LoadingStrategy:  hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+		Extensions:       plugin.Extensions,
 	}
 
 	if plugin.IsApp() {
@@ -458,8 +461,15 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 	hs.log.Info("Plugin install/update requested", "pluginId", pluginID, "user", c.Login)
 
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID && preinstalled.Version != "" {
+			return response.Error(http.StatusConflict, "Cannot update a pinned pre-installed plugin", nil)
+		}
+	}
+
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
+	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
+	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -476,7 +486,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
+	if hs.Cfg.ManagedServiceAccountsEnabled && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagExternalServiceAccounts) {
 		// This is a non-blocking function that verifies that the installer has
 		// the permissions that the plugin requests to have on Grafana.
 		// If we want to make this blocking, the check will have to happen before or during the installation.
@@ -494,6 +504,12 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
+	}
+
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID {
+			return response.Error(http.StatusConflict, "Cannot uninstall a pre-installed plugin", nil)
+		}
 	}
 
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID, plugin.Info.Version)

@@ -1,3 +1,5 @@
+import { AnnotationQuery, AnnotationSupport } from '@grafana/data';
+
 import { InfluxQuery, InfluxQueryTag } from './types';
 
 type LegacyAnnotation = {
@@ -52,8 +54,9 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   return target;
 };
 
-// eslint-ignore-next-line
-export const prepareAnnotation = (json: any) => {
+export const prepareAnnotation: AnnotationSupport<InfluxQuery, AnnotationQuery<InfluxQuery>>['prepareAnnotation'] = (
+  json
+) => {
   // make sure that any additional target fields are migrated
   json.target = json.target && !json.target?.query ? migrateLegacyAnnotation(json) : json.target;
 

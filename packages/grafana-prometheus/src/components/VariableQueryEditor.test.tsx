@@ -265,6 +265,8 @@ describe('PromVariableQueryEditor', () => {
     const labelSelect = screen.getByLabelText('label-select');
     await userEvent.type(labelSelect, 'this');
     await selectOptionInTest(labelSelect, 'this');
+    //display label in label select
+    await waitFor(() => expect(screen.getByText('this')).toBeInTheDocument());
 
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({

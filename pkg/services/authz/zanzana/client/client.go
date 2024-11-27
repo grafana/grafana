@@ -5,14 +5,18 @@ import (
 	"errors"
 	"fmt"
 
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/openfga/language/pkg/go/transformer"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/schema"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/client")
 
 type ClientOption func(c *Client)
 
@@ -28,16 +32,16 @@ func WithLogger(logger log.Logger) ClientOption {
 	}
 }
 
-func WithSchema(dsl string) ClientOption {
+func WithSchema(modules []transformer.ModuleFile) ClientOption {
 	return func(c *Client) {
-		c.dsl = dsl
+		c.modules = modules
 	}
 }
 
 type Client struct {
 	logger   log.Logger
 	client   openfgav1.OpenFGAServiceClient
-	dsl      string
+	modules  []transformer.ModuleFile
 	tenantID string
 	storeID  string
 	modelID  string
@@ -60,8 +64,8 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 		c.tenantID = "stack-default"
 	}
 
-	if c.dsl == "" {
-		c.dsl = schema.DSL
+	if len(c.modules) == 0 {
+		c.modules = schema.SchemaModules
 	}
 
 	store, err := c.getOrCreateStore(ctx, c.tenantID)
@@ -71,7 +75,7 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 
 	c.storeID = store.GetId()
 
-	modelID, err := c.loadModel(ctx, c.storeID, c.dsl)
+	modelID, err := c.loadModel(ctx, c.storeID, c.modules)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +86,19 @@ func New(ctx context.Context, cc grpc.ClientConnInterface, opts ...ClientOption)
 }
 
 func (c *Client) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	return c.client.Check(ctx, in)
 }
 
 func (c *Client) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.ListObjects")
+	span.SetAttributes(attribute.String("resource.type", in.Type))
+	defer span.End()
+
 	in.StoreId = c.storeID
 	in.AuthorizationModelId = c.modelID
 	return c.client.ListObjects(ctx, in)
@@ -151,8 +162,13 @@ func (c *Client) getStore(ctx context.Context, name string) (*openfgav1.Store, e
 	}
 }
 
-func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (string, error) {
+func (c *Client) loadModel(ctx context.Context, storeID string, modules []transformer.ModuleFile) (string, error) {
 	var continuationToken string
+
+	model, err := schema.TransformModulesToModel(modules)
+	if err != nil {
+		return "", err
+	}
 
 	for {
 		// ReadAuthorizationModels returns authorization models for a store sorted in descending order of creation.
@@ -167,16 +183,10 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 			return "", fmt.Errorf("failed to load authorization model: %w", err)
 		}
 
-		for _, model := range res.GetAuthorizationModels() {
-			// We need to first convert stored model into dsl and compare it to provided dsl.
-			storedDSL, err := schema.TransformToDSL(model)
-			if err != nil {
-				return "", err
-			}
-
+		for _, m := range res.GetAuthorizationModels() {
 			// If provided dsl is equal to a stored dsl we use that as the authorization id
-			if schema.EqualModels(dsl, storedDSL) {
-				return model.GetId(), nil
+			if schema.EqualModels(m, model) {
+				return m.GetId(), nil
 			}
 		}
 
@@ -186,11 +196,6 @@ func (c *Client) loadModel(ctx context.Context, storeID string, dsl string) (str
 		}
 
 		continuationToken = res.GetContinuationToken()
-	}
-
-	model, err := schema.TransformToModel(dsl)
-	if err != nil {
-		return "", err
 	}
 
 	writeRes, err := c.client.WriteAuthorizationModel(ctx, &openfgav1.WriteAuthorizationModelRequest{

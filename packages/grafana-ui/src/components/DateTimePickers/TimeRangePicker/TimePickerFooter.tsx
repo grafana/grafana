@@ -9,8 +9,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../../themes';
 import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
+import { Combobox } from '../../Combobox/Combobox';
 import { Field } from '../../Forms/Field';
-import { Select } from '../../Select/Select';
 import { Tab, TabContent, TabsBar } from '../../Tabs';
 import { TimeZonePicker } from '../TimeZonePicker';
 import { TimeZoneDescription } from '../TimeZonePicker/TimeZoneDescription';
@@ -142,13 +142,12 @@ export const TimePickerFooter = (props: Props) => {
                   className={style.fiscalYearField}
                   label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
                 >
-                  <Select
-                    value={fiscalYearStartMonth}
-                    menuShouldPortal={false}
+                  <Combobox
+                    value={fiscalYearStartMonth ?? null}
                     options={monthOptions}
                     onChange={(value) => {
                       if (onChangeFiscalYearStartMonth) {
-                        onChangeFiscalYearStartMonth(value.value ?? 0);
+                        onChangeFiscalYearStartMonth(value?.value ?? 0);
                       }
                     }}
                   />

@@ -138,16 +138,12 @@ func TestIntegrationSimpleQuery(t *testing.T) {
 		//fmt.Printf("OUT: %s", string(body))
 
 		require.Error(t, err, "expecting a 400")
-		require.JSONEq(t, `{
-			"kind": "Status",
-			"apiVersion": "v1",
-			"metadata": {},
-			"status": "Failure",
-			"message": "did not execute expression [Y] due to a failure to of the dependent expression or query [X]",
-			"reason": "BadRequest",
-			"details": { "uid": "sse.dependencyError" },
-			"code": 400
-		  }`, string(body))
+		responseBody := map[string]any{}
+		require.NoError(t, json.Unmarshal(body, &responseBody))
+		require.EqualValues(t, 400, responseBody["code"])
+		require.Equal(t, "Failure", responseBody["status"])
+		require.Equal(t, "did not execute expression [Y] due to a failure to of the dependent expression or query [X]", responseBody["message"])
+		require.Equal(t, "BadRequest", responseBody["reason"])
 		// require.JSONEq(t, `{
 		// 	"status": "Failure",
 		// 	"metadata": {},

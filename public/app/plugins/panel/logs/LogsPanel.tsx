@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -36,6 +36,8 @@ import {
   isOnClickFilterOutLabel,
   isOnClickFilterOutString,
   isOnClickFilterString,
+  isOnClickHideField,
+  isOnClickShowField,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -56,6 +58,15 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Determines if a given key => value filter is active in a given query. Used by Log details.
    * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+   *
+   * Array of field names to display instead of the log line. Pass a list of fields or an empty array to enable hide/show fields in Log Details.
+   * displayedFields?: string[]
+   *
+   * Called from the "eye" icon in Log Details to request showing the displayed field. If ommited, a default implementation is used.
+   * onClickShowField?: (key: string) => void;
+   *
+   * Called from the "eye" icon in Log Details to request hiding the displayed field. If ommited, a default implementation is used.
+   * onClickHideField?: (key: string) => void;
    */
 }
 interface LogsPermalinkUrlState {
@@ -85,6 +96,7 @@ export const LogsPanel = ({
     onClickFilterOutString,
     onClickFilterString,
     isFilterLabelActive,
+    ...options
   },
   id,
 }: LogsPanelProps) => {
@@ -96,14 +108,13 @@ export const LogsPanel = ({
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+  const [displayedFields, setDisplayedFields] = useState<string[]>(options.displayedFields ?? []);
   let closeCallback = useRef<() => void>();
 
   const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
-      if (!row) {
-        eventBus.publish(new DataHoverClearEvent());
-      } else {
+      if (row) {
         eventBus.publish(
           new DataHoverEvent({
             point: {
@@ -115,6 +126,10 @@ export const LogsPanel = ({
     },
     [eventBus]
   );
+
+  const onLogContainerMouseLeave = useCallback(() => {
+    eventBus.publish(new DataHoverClearEvent());
+  }, [eventBus]);
 
   const onCloseContext = useCallback(() => {
     setContextRow(null);
@@ -272,6 +287,32 @@ export const LogsPanel = ({
     [onAddAdHocFilter]
   );
 
+  const showField = useCallback(
+    (key: string) => {
+      const index = displayedFields?.indexOf(key);
+      if (index === -1) {
+        setDisplayedFields(displayedFields?.concat(key));
+      }
+    },
+    [displayedFields]
+  );
+
+  const hideField = useCallback(
+    (key: string) => {
+      const index = displayedFields?.indexOf(key);
+      if (index !== undefined && index > -1) {
+        setDisplayedFields(displayedFields?.filter((k) => key !== k));
+      }
+    },
+    [displayedFields]
+  );
+
+  useEffect(() => {
+    if (options.displayedFields) {
+      setDisplayedFields(options.displayedFields);
+    }
+  }, [options.displayedFields]);
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -289,6 +330,9 @@ export const LogsPanel = ({
   // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
   const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
   const defaultOnClickFilterOutLabel = onAddAdHocFilter ? handleOnClickFilterOutLabel : undefined;
+
+  const onClickShowField = isOnClickShowField(options.onClickShowField) ? options.onClickShowField : showField;
+  const onClickHideField = isOnClickHideField(options.onClickHideField) ? options.onClickHideField : hideField;
 
   return (
     <>
@@ -308,7 +352,7 @@ export const LogsPanel = ({
         scrollTop={scrollTop}
         scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
       >
-        <div className={style.container} ref={logsContainerRef}>
+        <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
             containerRendered={logsContainerRef.current !== null}
@@ -342,6 +386,9 @@ export const LogsPanel = ({
               isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
             }
             isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            displayedFields={displayedFields}
+            onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
+            onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

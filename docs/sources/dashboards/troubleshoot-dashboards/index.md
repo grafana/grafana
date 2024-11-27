@@ -16,7 +16,7 @@ labels:
 menuTitle: Troubleshoot dashboards
 title: Troubleshoot dashboards
 description: Learn how to troubleshoot common dashboard issues
-weight: 300
+weight: 1000
 ---
 
 # Troubleshoot dashboards

@@ -299,7 +299,7 @@ func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueFi
 // NOTE: applicable only to some datas ources (datasources.DS_GRAPHITE, datasources.DS_TESTDATA, etc.); a more general solution should be investigated
 // returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
 func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
-	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE}
+	supportedDatasources := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA, datasources.DS_DYNATRACE, datasources.DS_INFLUXDB}
 	checkdatasourceType := func(ds string) bool {
 		return datasourceType == ds
 	}

@@ -424,7 +424,7 @@ export function logSeriesToLogsModel(
       }
 
       let logLevel = LogLevel.unknown;
-      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels && labels['level']);
+      const logLevelKey = (logLevelField && logLevelField.values[j]) || (labels?.detected_level ?? labels?.level);
       if (typeof logLevelKey === 'number' || typeof logLevelKey === 'string') {
         logLevel = getLogLevelFromKey(logLevelKey);
       } else {
@@ -633,7 +633,7 @@ function defaultExtractLevel(dataFrame: DataFrame): LogLevel {
 }
 
 function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const level = labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
+  const level = labels['detected_level'] ?? labels['level'] ?? labels['lvl'] ?? labels['loglevel'] ?? '';
   return level ? getLogLevelFromKey(level) : LogLevel.unknown;
 }
 

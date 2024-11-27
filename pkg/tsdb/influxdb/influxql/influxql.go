@@ -194,7 +194,7 @@ func execute(ctx context.Context, tracer trace.Tracer, dsInfo *models.Datasource
 		resp = buffered.ResponseParse(res.Body, res.StatusCode, query)
 	}
 
-	if resp.Frames != nil && len(resp.Frames) > 0 {
+	if len(resp.Frames) > 0 {
 		resp.Frames[0].Meta.Custom = readCustomMetadata(res)
 	}
 

@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
-// TimeIntervalApplyConfiguration represents an declarative configuration of the TimeInterval type for use
+// TimeIntervalApplyConfiguration represents a declarative configuration of the TimeInterval type for use
 // with apply.
 type TimeIntervalApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
@@ -18,7 +18,7 @@ type TimeIntervalApplyConfiguration struct {
 	Spec                             *TimeIntervalSpecApplyConfiguration `json:"spec,omitempty"`
 }
 
-// TimeInterval constructs an declarative configuration of the TimeInterval type for use with
+// TimeInterval constructs a declarative configuration of the TimeInterval type for use with
 // apply.
 func TimeInterval(name, namespace string) *TimeIntervalApplyConfiguration {
 	b := &TimeIntervalApplyConfiguration{}
@@ -193,4 +193,10 @@ func (b *TimeIntervalApplyConfiguration) ensureObjectMetaApplyConfigurationExist
 func (b *TimeIntervalApplyConfiguration) WithSpec(value *TimeIntervalSpecApplyConfiguration) *TimeIntervalApplyConfiguration {
 	b.Spec = value
 	return b
+}
+
+// GetName retrieves the value of the Name field in the declarative configuration.
+func (b *TimeIntervalApplyConfiguration) GetName() *string {
+	b.ensureObjectMetaApplyConfigurationExists()
+	return b.Name
 }

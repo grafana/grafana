@@ -57,6 +57,7 @@ interface ImportOptions {
 
 interface RestoreDashboardArgs {
   dashboardUID: string;
+  targetFolderUID: string;
 }
 
 interface HardDeleteDashboardArgs {
@@ -65,12 +66,15 @@ interface HardDeleteDashboardArgs {
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
   async function backendSrvBaseQuery(requestOptions: RequestOptions) {
+    // Suppress error pop-up for root (aka 'general') folder
+    const isGeneralFolder = requestOptions.url === `/folders/general`;
+    requestOptions = isGeneralFolder ? { ...requestOptions, showErrorAlert: false } : requestOptions;
+
     try {
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
           url: baseURL + requestOptions.url,
-          showErrorAlert: requestOptions.showErrorAlert,
         })
       );
       return { data: responseData, meta };
@@ -394,8 +398,11 @@ export const browseDashboardsAPI = createApi({
 
     // restore a dashboard that got soft deleted
     restoreDashboard: builder.mutation<void, RestoreDashboardArgs>({
-      query: ({ dashboardUID }) => ({
+      query: ({ dashboardUID, targetFolderUID }) => ({
         url: `/dashboards/uid/${dashboardUID}/trash`,
+        data: {
+          folderUid: targetFolderUID,
+        },
         method: 'PATCH',
       }),
     }),

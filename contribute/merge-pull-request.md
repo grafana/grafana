@@ -30,7 +30,7 @@ The pull request title should be formatted according to `<Area>: <Summary>` (Bot
 
 Keep the summary short and understandable for the community as a whole.
 
-All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for the [changelog](#include-in-changelog-and-release-notes).
+All commits in a pull request are squashed when merged and the pull request title will be the default subject line of the squashed commit message. It's also used for the [changelog](#what-to-include-in-changelog-and-release-notes).
 
 **Example:**
 
@@ -40,7 +40,7 @@ See [formatting guidelines](create-pull-request.md#formatting-guidelines) for mo
 
 ### Assign a milestone (automated)
 
-The Grafana release process uses a bot to automatically assign pull requests to a milestone to make it easier for release managers to track changes. For example, [generating changelog (release note)](#include-in-changelog-and-release-notes) must be in a milestone.
+The Grafana release process uses a bot to automatically assign pull requests to a milestone to make it easier for release managers to track changes. For example, [generating changelog (release note)](#what-to-include-in-changelog-and-release-notes) must be in a milestone.
 
 That being said, _you don't have to assign a milestone manually_ to a pull request. Instead, when it is merged and closed, a bot will then look for the most appropriate milestone and assign it to the pull request.
 
@@ -104,7 +104,7 @@ In case the pull request introduces a deprecation you should document this. Labe
 <Deprecation description>
 ```
 
-**Breaking changes:**
+**Breaking changes:**<a name="breaking-changes"></a>
 
 In case the pull request introduces a breaking change you should document this. Label the pull request with `add to changelog` and `breaking change` and use the following template at the end of the pull request description describing the breaking change:
 

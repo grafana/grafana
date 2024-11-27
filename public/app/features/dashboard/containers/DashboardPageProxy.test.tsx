@@ -1,16 +1,13 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { act, screen, waitFor } from '@testing-library/react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { config, locationService } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import {
   HOME_DASHBOARD_CACHE_KEY,
   getDashboardScenePageStateManager,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { configureStore } from 'app/store/configureStore';
 import { DashboardDTO, DashboardRoutes } from 'app/types';
 
 import DashboardPageProxy, { DashboardPageProxyProps } from './DashboardPageProxy';
@@ -65,6 +62,7 @@ jest.mock('@grafana/runtime', () => ({
     },
     get: jest.fn().mockResolvedValue({}),
   }),
+  useChromeHeaderHeight: jest.fn(),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
@@ -83,25 +81,21 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 
-function setup(props: Partial<DashboardPageProxyProps>) {
-  const context = getGrafanaContextMock();
-  const store = configureStore({});
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({}),
+}));
 
+function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
+  (useParams as jest.Mock).mockReturnValue({ uid: props.uid });
   return render(
-    <GrafanaContext.Provider value={context}>
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <DashboardPageProxy
-            location={locationService.getLocation()}
-            history={locationService.getHistory()}
-            queryParams={{}}
-            route={{ routeName: DashboardRoutes.Home, component: () => null, path: '/' }}
-            match={{ params: {}, isExact: true, path: '/', url: '/' }}
-            {...props}
-          />
-        </Router>
-      </Provider>
-    </GrafanaContext.Provider>
+    <DashboardPageProxy
+      location={locationService.getLocation()}
+      history={locationService.getHistory()}
+      queryParams={{}}
+      route={{ routeName: DashboardRoutes.Home, component: () => null, path: '/' }}
+      {...props}
+    />
   );
 }
 
@@ -116,7 +110,6 @@ describe('DashboardPageProxy', () => {
       act(() => {
         setup({
           route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-          match: { params: {}, isExact: true, path: '/', url: '/' },
         });
       });
 
@@ -131,7 +124,7 @@ describe('DashboardPageProxy', () => {
       act(() => {
         setup({
           route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-          match: { params: { uid: 'abc-def' }, isExact: true, path: '/', url: '/' },
+          uid: 'abc-def',
         });
       });
 
@@ -152,7 +145,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: { params: { uid: '' }, isExact: true, path: '/', url: '/' },
+            uid: '',
           });
         });
 
@@ -166,7 +159,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'abc-def' }, isExact: true, path: '/', url: '/' },
+            uid: 'abc-def',
           });
         });
         await waitFor(() => {
@@ -181,14 +174,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
-            match: {
-              params: {
-                uid: '',
-              },
-              isExact: true,
-              path: '/',
-              url: '/',
-            },
+            uid: '',
           });
         });
 
@@ -202,7 +188,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'uid' }, isExact: true, path: '/', url: '/' },
+            uid: 'uid',
           });
         });
         await waitFor(() => {
@@ -215,7 +201,7 @@ describe('DashboardPageProxy', () => {
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
-            match: { params: { uid: 'wrongUID' }, isExact: true, path: '/', url: '/' },
+            uid: 'wrongUID',
           });
         });
         await waitFor(() => {

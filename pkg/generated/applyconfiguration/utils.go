@@ -8,8 +8,11 @@ import (
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	alertingnotificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/alerting_notifications/v0alpha1"
+	internal "github.com/grafana/grafana/pkg/generated/applyconfiguration/internal"
 	applyconfigurationservicev0alpha1 "github.com/grafana/grafana/pkg/generated/applyconfiguration/service/v0alpha1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
+	testing "k8s.io/client-go/testing"
 )
 
 // ForKind returns an apply configuration type for the given GroupVersionKind, or nil if no
@@ -25,6 +28,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &alertingnotificationsv0alpha1.ReceiverApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ReceiverSpec"):
 		return &alertingnotificationsv0alpha1.ReceiverSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroup"):
+		return &alertingnotificationsv0alpha1.TemplateGroupApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroupSpec"):
+		return &alertingnotificationsv0alpha1.TemplateGroupSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeInterval"):
 		return &alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeIntervalSpec"):
@@ -40,4 +47,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 
 	}
 	return nil
+}
+
+func NewTypeConverter(scheme *runtime.Scheme) *testing.TypeConverter {
+	return &testing.TypeConverter{Scheme: scheme, TypeResolver: internal.Parser()}
 }

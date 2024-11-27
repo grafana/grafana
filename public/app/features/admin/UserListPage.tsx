@@ -29,7 +29,11 @@ const selectors = e2eSelectors.pages.UserListPage;
 
 const PublicDashboardsTab = ({ view, setView }: { view: TabView | null; setView: (v: TabView | null) => void }) => (
   <Tab
-    label={t('users-access-list.tabs.public-dashboard-users-tab-title', 'Public dashboard users')}
+    label={
+      config.featureToggles.newDashboardSharingComponent
+        ? t('users-access-list.tabs.shared-dashboard-users-tab-title', 'Shared dashboard users')
+        : t('users-access-list.tabs.public-dashboard-users-tab-title', 'Public dashboard users')
+    }
     active={view === TabView.PUBLIC_DASHBOARDS}
     onChangeTab={() => setView(TabView.PUBLIC_DASHBOARDS)}
     data-testid={selectors.tabs.publicDashboardsUsers}

@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
@@ -12,10 +11,16 @@ import { NAMESPACE_2, namespace2, GROUP_1, NAMESPACE_1 } from '../../mocks/mimir
 import { mimirDataSource } from '../../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../../mocks/server/events';
+import { SwapOperation } from '../../reducers/ruler/ruleGroups';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { SerializeState } from '../useAsync';
 
-import { useMoveRuleGroup, useRenameRuleGroup, useUpdateRuleGroupConfiguration } from './useUpdateRuleGroup';
+import {
+  useMoveRuleGroup,
+  useRenameRuleGroup,
+  useReorderRuleForRuleGroup,
+  useUpdateRuleGroupConfiguration,
+} from './useUpdateRuleGroup';
 
 setupMswServer();
 
@@ -27,8 +32,8 @@ describe('useUpdateRuleGroupConfiguration', () => {
   it('should update a rule group interval', async () => {
     const capture = captureRequests();
 
-    render(<UpdateRuleGroupComponent />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<UpdateRuleGroupComponent />);
+    await user.click(byRole('button').get());
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
     const requests = await capture;
@@ -39,8 +44,8 @@ describe('useUpdateRuleGroupConfiguration', () => {
   it('should rename a rule group', async () => {
     const capture = captureRequests();
 
-    render(<RenameRuleGroupComponent />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<RenameRuleGroupComponent />);
+    await user.click(byRole('button').get());
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
     const requests = await capture;
@@ -49,14 +54,14 @@ describe('useUpdateRuleGroupConfiguration', () => {
   });
 
   it('should throw if we are trying to merge rule groups', async () => {
-    render(<RenameRuleGroupComponent group={grafanaRulerGroupName2} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<RenameRuleGroupComponent group={grafanaRulerGroupName2} />);
+    await user.click(byRole('button').get());
     expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
   });
 
   it('should not be able to move a Grafana managed rule group', async () => {
-    render(<MoveGrafanaManagedRuleGroupComponent />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(<MoveGrafanaManagedRuleGroupComponent />);
+    await user.click(byRole('button').get());
     expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
   });
 
@@ -64,8 +69,10 @@ describe('useUpdateRuleGroupConfiguration', () => {
     mimirDataSource();
     const capture = captureRequests();
 
-    render(<MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={'a-new-group'} interval={'2m'} />);
-    await userEvent.click(byRole('button').get());
+    const { user } = render(
+      <MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={'a-new-group'} interval={'2m'} />
+    );
+    await user.click(byRole('button').get());
     expect(await byText(/success/i).find()).toBeInTheDocument();
 
     const requests = await capture;
@@ -76,11 +83,30 @@ describe('useUpdateRuleGroupConfiguration', () => {
   it('should not move a Data Source managed rule group to namespace with existing target group name', async () => {
     mimirDataSource();
 
-    render(
+    const { user } = render(
       <MoveDataSourceManagedRuleGroupComponent namespace={NAMESPACE_2} group={namespace2[0].name} interval={'2m'} />
     );
-    await userEvent.click(byRole('button').get());
+    await user.click(byRole('button').get());
     expect(await byText(/error:.+not supported.+/i).find()).toBeInTheDocument();
+  });
+});
+
+describe('reorder rules for rule group', () => {
+  it('should correctly reorder rules', async () => {
+    mimirDataSource();
+    const capture = captureRequests();
+
+    const swaps: SwapOperation[] = [[1, 0]];
+
+    const { user } = render(
+      <ReorderRuleGroupComponent namespace={NAMESPACE_2} group={namespace2[0].name} swaps={swaps} />
+    );
+    await user.click(byRole('button').get());
+    expect(await byText(/success/i).find()).toBeInTheDocument();
+
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
   });
 });
 
@@ -157,6 +183,29 @@ const MoveDataSourceManagedRuleGroupComponent = ({
   return (
     <>
       <button onClick={() => moveRuleGroup.execute(ruleGroupID, namespace, group, interval)} />
+      <SerializeState state={requestState} />
+    </>
+  );
+};
+
+type ReorderRuleGroupComponentProps = {
+  namespace: string;
+  group: string;
+  swaps: SwapOperation[];
+};
+
+const ReorderRuleGroupComponent = ({ namespace, group, swaps }: ReorderRuleGroupComponentProps) => {
+  const [reorderRules, requestState] = useReorderRuleForRuleGroup();
+
+  const ruleGroupID: RuleGroupIdentifier = {
+    dataSourceName: MIMIR_DATASOURCE_UID,
+    groupName: group,
+    namespaceName: namespace,
+  };
+
+  return (
+    <>
+      <button onClick={() => reorderRules.execute(ruleGroupID, swaps)} />
       <SerializeState state={requestState} />
     </>
   );

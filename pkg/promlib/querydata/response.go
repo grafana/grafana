@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, enablePrometheusDataplaneFlag bool) backend.DataResponse {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -29,9 +29,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		Dataplane: enablePrometheusDataplaneFlag,
-	})
+	r := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: true})
 	r.Status = backend.Status(res.StatusCode)
 
 	// Add frame to attach metadata
@@ -41,7 +39,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
-		addMetadataToMultiFrame(q, frame, enablePrometheusDataplaneFlag)
+		addMetadataToMultiFrame(q, frame)
 		if i == 0 {
 			frame.Meta.ExecutedQueryString = executedQueryString(q)
 		}
@@ -106,7 +104,7 @@ func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr ba
 	}
 }
 
-func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane bool) {
+func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -120,13 +118,9 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 		frame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: customName}
 	}
 
-	if enableDataplane {
-		valueField := frame.Fields[1]
-		if n, ok := valueField.Labels["__name__"]; ok {
-			valueField.Name = n
-		}
-	} else {
-		frame.Name = customName
+	valueField := frame.Fields[1]
+	if n, ok := valueField.Labels["__name__"]; ok {
+		valueField.Name = n
 	}
 }
 

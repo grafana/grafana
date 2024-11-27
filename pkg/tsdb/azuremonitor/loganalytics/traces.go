@@ -201,7 +201,8 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 	if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
 		subscription, err := utils.GetFirstSubscriptionOrDefault(ctx, dsInfo, logger)
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
+			errorMessage := fmt.Errorf("failed to retrieve subscription for trace exemplars query: %w", err)
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 		resources = []string{fmt.Sprintf("/subscriptions/%s", subscription)}
 	}
@@ -222,7 +223,8 @@ func buildAppInsightsQuery(ctx context.Context, query backend.DataQuery, dsInfo 
 		operationId = *queryJSONModel.AzureTraces.OperationId
 		resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
+			errorMessage := fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 	}
 

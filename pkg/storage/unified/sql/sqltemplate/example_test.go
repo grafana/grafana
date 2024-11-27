@@ -47,7 +47,7 @@ type GetUserResponse struct {
 // the methods to achieve our purpose::
 
 type GetUserQuery struct {
-	*SQLTemplate
+	SQLTemplate
 	Request  *GetUserRequest
 	Response *GetUserResponse
 }
@@ -109,11 +109,11 @@ func Example() {
 	// As we're not actually running a database in this example, let's verify
 	// that we find our arguments populated as expected instead:
 	if len(queryData.GetArgs()) != 1 {
-		panic(fmt.Sprintf("unexpected number of args: %#v", queryData.Args))
+		panic(fmt.Sprintf("unexpected number of args: %#v", queryData.GetArgs()...))
 	}
 	id, ok := queryData.GetArgs()[0].(int)
 	if !ok || id != queryData.Request.ID {
-		panic(fmt.Sprintf("unexpected args: %#v", queryData.Args))
+		panic(fmt.Sprintf("unexpected args: %#v", queryData.GetArgs()...))
 	}
 
 	// In your code you would now have "row" populated with the row data,
@@ -127,19 +127,19 @@ func Example() {
 	// the expected data, which should be pointers to each of the fields of
 	// Response so that the Scan method can write to them:
 	if len(queryData.GetScanDest()) != 3 {
-		panic(fmt.Sprintf("unexpected number of scan dest: %#v", queryData.ScanDest))
+		panic(fmt.Sprintf("unexpected number of scan dest: %#v", queryData.GetScanDest()...))
 	}
 	idPtr, ok := queryData.GetScanDest()[0].(*int)
 	if !ok || idPtr != &queryData.Response.ID {
-		panic(fmt.Sprintf("unexpected response 'id' pointer: %#v", queryData.ScanDest))
+		panic(fmt.Sprintf("unexpected response 'id' pointer: %#v", queryData.GetScanDest()...))
 	}
 	typePtr, ok := queryData.GetScanDest()[1].(*string)
 	if !ok || typePtr != &queryData.Response.Type {
-		panic(fmt.Sprintf("unexpected response 'type' pointer: %#v", queryData.ScanDest))
+		panic(fmt.Sprintf("unexpected response 'type' pointer: %#v", queryData.GetScanDest()...))
 	}
 	namePtr, ok := queryData.GetScanDest()[2].(*string)
 	if !ok || namePtr != &queryData.Response.Name {
-		panic(fmt.Sprintf("unexpected response 'name' pointer: %#v", queryData.ScanDest))
+		panic(fmt.Sprintf("unexpected response 'name' pointer: %#v", queryData.GetScanDest()...))
 	}
 
 	// Remember the variable "query"? Well, we didn't check it. We will now make
@@ -152,5 +152,5 @@ func Example() {
 	fmt.Println(query)
 
 	// Output:
-	// SELECT "id", "type", "name" FROM "users" WHERE "id" = ?;
+	// SELECT `id`, `type`, `name` FROM `users` WHERE `id` = ?;
 }

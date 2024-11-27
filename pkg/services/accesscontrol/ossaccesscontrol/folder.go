@@ -84,7 +84,7 @@ func registerFolderRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggles, 
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
@@ -95,6 +95,9 @@ func ProvideFolderPermissions(
 		Resource:          "folders",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideFolderPermissions.ResourceValidator")
+			defer span.End()
+
 			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
 			queryResult, err := dashboardStore.GetDashboard(ctx, query)
 			if err != nil {
@@ -108,7 +111,7 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
+			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderStore)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -137,7 +138,12 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 			}
 		}
 
-		c.Redirect(hs.GetRedirectURL(c))
+		if !c.UseSessionStorageRedirect {
+			c.Redirect(hs.GetRedirectURL(c))
+			return
+		}
+
+		c.Redirect(hs.Cfg.AppSubURL + "/")
 		return
 	}
 
@@ -176,6 +182,9 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 	for providerName, provider := range oauthInfos {
 		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
+				redirectUrl += hs.getRedirectToForAutoLogin(c)
+			}
 			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 			c.Redirect(redirectUrl, 307)
 			return true
@@ -184,12 +193,30 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 	if samlAutoLogin {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
+			redirectUrl += hs.getRedirectToForAutoLogin(c)
+		}
 		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
 
 	return false
+}
+
+func (hs *HTTPServer) getRedirectToForAutoLogin(c *contextmodel.ReqContext) string {
+	redirectTo := c.Req.FormValue("redirectTo")
+	if hs.Cfg.AppSubURL != "" && strings.HasPrefix(redirectTo, hs.Cfg.AppSubURL) {
+		redirectTo = strings.TrimPrefix(redirectTo, hs.Cfg.AppSubURL)
+	}
+
+	if redirectTo == "/" {
+		return ""
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = middleware.RemoveForceLoginParams(redirectTo)
+	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
 
 func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
@@ -211,7 +238,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 	}
 
 	metrics.MApiLoginPost.Inc()
-	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
@@ -228,7 +255,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 
 	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
 	ctx := context.WithValue(c.Req.Context(), loginservice.RequestURIKey{}, c.Req.RequestURI)
-	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
+	userToken, err := hs.AuthTokenService.CreateToken(ctx, &auth.CreateTokenCommand{User: user, ClientIP: ip, UserAgent: c.Req.UserAgent()})
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create auth token", err)
 	}

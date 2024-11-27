@@ -390,6 +390,10 @@ The Alerting Provisioning HTTP API can only be used to manage Grafana-managed al
 - [cortex-tools](https://github.com/grafana/cortex-tools#cortextool): to interact with the Cortex alertmanager and ruler configuration.
 - [lokitool](https://grafana.com/docs/loki/<GRAFANA_VERSION>/alert/#lokitool): to configure the Loki Ruler.
 
+Alternatively, the [Grafana Alerting API](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json) can be used to access data from data source-managed alerts. This API is primarily intended for internal usage, with the exception of the `/api/v1/provisioning/` endpoints. It's important to note that internal APIs may undergo changes without prior notice and are not officially supported for user consumption.
+
+For Prometheus, `amtool` can also be used to interact with the [AlertManager API](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/prometheus/alertmanager/main/api/v2/openapi.yaml#/).
+
 ## Paths
 
 ### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)
@@ -1060,7 +1064,7 @@ GET /api/v1/provisioning/templates/:name
 | Code                           | Status    | Description          | Has headers | Schema                                   |
 | ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
 | [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | Not found.           |             | [schema](#route-get-template-404-schema) |
+| [404](#route-get-template-404) | Not Found | GenericPublicError   |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
@@ -1074,7 +1078,7 @@ Status: OK
 
 ##### <span id="route-get-template-404"></span> 404 - Not found.
 
-Status: Not Found
+[GenericPublicError](#generic-public-error)
 
 ###### <span id="route-get-template-404-schema"></span> Schema
 
@@ -1086,10 +1090,9 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status    | Description           | Has headers | Schema                                    |
-| ------------------------------- | --------- | --------------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK        | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
-| [404](#route-get-templates-404) | Not Found | Not found.            |             | [schema](#route-get-templates-404-schema) |
+| Code                            | Status | Description           | Has headers | Schema                                    |
+| ------------------------------- | ------ | --------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK     | NotificationTemplates |             | [schema](#route-get-templates-200-schema) |
 
 #### Responses
 
@@ -1100,12 +1103,6 @@ Status: OK
 ###### <span id="route-get-templates-200-schema"></span> Schema
 
 [NotificationTemplates](#notification-templates)
-
-##### <span id="route-get-templates-404"></span> 404 - Not found.
-
-Status: Not Found
-
-###### <span id="route-get-templates-404-schema"></span> Schema
 
 ### <span id="route-post-alert-rule"></span> Create a new alert rule. (_RoutePostAlertRule_)
 
@@ -1154,6 +1151,8 @@ Status: Bad Request
 ```
 POST /api/v1/provisioning/contact-points
 ```
+
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 #### Parameters
 
@@ -1480,7 +1479,7 @@ PUT /api/v1/provisioning/templates/:name
 | Code                           | Status      | Description          | Has headers | Schema                                   |
 | ------------------------------ | ----------- | -------------------- | :---------: | ---------------------------------------- |
 | [202](#route-put-template-202) | Accepted    | NotificationTemplate |             | [schema](#route-put-template-202-schema) |
-| [400](#route-put-template-400) | Bad Request | ValidationError      |             | [schema](#route-put-template-400-schema) |
+| [400](#route-put-template-400) | Bad Request | GenericPublicError   |             | [schema](#route-put-template-400-schema) |
 | [409](#route-put-template-409) | Conflict    | GenericPublicError   |             | [schema](#route-put-template-409-schema) |
 
 #### Responses
@@ -1499,7 +1498,7 @@ Status: Bad Request
 
 ###### <span id="route-put-template-400-schema"></span> Schema
 
-[ValidationError](#validation-error)
+[GenericPublicError](#generic-public-error)
 
 ##### <span id="route-put-template-409"></span> 409 - Conflict
 
@@ -1655,29 +1654,28 @@ Status: Accepted
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
-| Duration | int64 (formatted integer) | int64   |         |             |         |
+| Name     | Type   | Go type | Default | Description | Example |
+| -------- | ------ | ------- | ------- | ----------- | ------- |
+| Duration | string | int64   |         |             |         |
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
-> EmbeddedContactPoint is the contact point type that is used
-> by grafanas embedded alertmanager implementation.
+EmbeddedContactPoint is the contact point type used by Grafana-managed alerts.
+
+When creating a contact point, the `EmbeddedContactPoint.name` property determines if the new contact point is added to an existing one. In the UI, contact points with the same name are grouped together under a single contact point.
 
 **Properties**
 
 {{% responsive-table %}}
 
-| Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
-| ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
-| disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
-| name                                 | string                  | `string` |          |         | Name is used as grouping key in the UI. Contact points with the   |
-| same name will be grouped in the UI. | `webhook_1`             |
-| provenance                           | string                  | `string` |          |         |                                                                   |           |
-| settings                             | [JSON](#json)           | `JSON`   |    ✓     |         |                                                                   |           |
-| type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
-| uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
-| set by the user.                     | `my_external_reference` |
+| Name                  | Type          | Go type  | Required | Default | Description                                                                        | Example                 |
+| --------------------- | ------------- | -------- | :------: | ------- | ---------------------------------------------------------------------------------- | ----------------------- |
+| disableResolveMessage | boolean       | `bool`   |          |         |                                                                                    | `false`                 |
+| name                  | string        | `string` |          |         | `name` groups multiple contact points with the same name in the UI.                | `webhook_1`             |
+| provenance            | string        | `string` |          |         |                                                                                    |                         |
+| settings              | [JSON](#json) | `JSON`   |    ✓     |         |                                                                                    |                         |
+| type                  | string        | `string` |    ✓     |         |                                                                                    | `webhook`               |
+| uid                   | string        | `string` |          |         | UID is the unique identifier of the contact point. The UID can be set by the user. | `my_external_reference` |
 
 {{% /responsive-table %}}
 
@@ -1810,24 +1808,24 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
-| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
-| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| isPaused     | boolean                      | `bool`              |          |         |             | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
-| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Name         | Type                         | Go type             | Required | Default | Description                                                                                                       | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         | Optional key-value pairs. `dashboardUId` and `panelId` must be set together; one cannot be set without the other. | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| condition    | string                       | `string`            |    ✓     |         |                                                                                                                   | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |                                                                                                                   | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| folderUID    | string                       | `string`            |    ✓     |         |                                                                                                                   | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| id           | int64 (formatted integer)    | `int64`             |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| isPaused     | boolean                      | `bool`              |          |         |                                                                                                                   | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| labels       | map of string                | `map[string]string` |          |         |                                                                                                                   | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| noDataState  | string                       | `string`            |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ruleGroup    | string                       | `string`            |    ✓     |         |                                                                                                                   | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| title        | string                       | `string`            |    ✓     |         |                                                                                                                   | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| uid          | string                       | `string`            |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |                                                                                                                   |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 {{% /responsive-table %}}
 

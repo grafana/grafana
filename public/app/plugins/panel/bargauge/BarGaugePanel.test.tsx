@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 
 import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, LegendDisplayMode, LegendPlacement } from '@grafana/schema';
 import { BarGaugeNamePlacement, BarGaugeSizing } from '@grafana/schema/dist/esm/common/common.gen';
 
 import { BarGaugePanel, BarGaugePanelProps } from './BarGaugePanel';
@@ -105,6 +105,12 @@ function buildPanelData(overrideValues?: Partial<BarGaugePanelProps>): BarGaugeP
       valueMode: BarGaugeValueMode.Color,
       namePlacement: BarGaugeNamePlacement.Auto,
       sizing: BarGaugeSizing.Auto,
+      legend: {
+        showLegend: false,
+        placement: 'bottom' as LegendPlacement,
+        calcs: [],
+        displayMode: LegendDisplayMode.List,
+      },
     },
     transparent: false,
     timeRange,

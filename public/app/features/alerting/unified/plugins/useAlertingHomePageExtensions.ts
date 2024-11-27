@@ -1,8 +1,8 @@
 import { PluginExtensionPoints } from '@grafana/data';
-import { usePluginComponentExtensions } from '@grafana/runtime';
+import { usePluginComponents } from '@grafana/runtime';
 
 export function useAlertingHomePageExtensions() {
-  return usePluginComponentExtensions({
+  return usePluginComponents({
     extensionPointId: PluginExtensionPoints.AlertingHomePage,
     limitPerPlugin: 1,
   });

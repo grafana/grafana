@@ -4,7 +4,7 @@
 
 package v0alpha1
 
-// IntervalApplyConfiguration represents an declarative configuration of the Interval type for use
+// IntervalApplyConfiguration represents a declarative configuration of the Interval type for use
 // with apply.
 type IntervalApplyConfiguration struct {
 	DaysOfMonth []string                      `json:"days_of_month,omitempty"`
@@ -15,7 +15,7 @@ type IntervalApplyConfiguration struct {
 	Years       []string                      `json:"years,omitempty"`
 }
 
-// IntervalApplyConfiguration constructs an declarative configuration of the Interval type for use with
+// IntervalApplyConfiguration constructs a declarative configuration of the Interval type for use with
 // apply.
 func Interval() *IntervalApplyConfiguration {
 	return &IntervalApplyConfiguration{}

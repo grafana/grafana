@@ -67,6 +67,10 @@ var (
 	ErrCorePluginMsg  = "plugin {{.Public.PluginID}} is a core plugin and cannot be installed separately"
 	ErrCorePluginBase = errutil.Forbidden("plugin.forbiddenCorePluginInstall").
 				MustTemplate(ErrCorePluginMsg, errutil.WithPublic(ErrCorePluginMsg))
+
+	ErrNotCompatibledMsg = "{{.Public.PluginID}} is not compatible with your Grafana version: {{.Public.GrafanaVersion}}"
+	ErrNotCompatibleBase = errutil.NotFound("plugin.grafanaVersionNotCompatible").
+				MustTemplate(ErrNotCompatibledMsg, errutil.WithPublic(ErrNotCompatibledMsg))
 )
 
 func ErrVersionUnsupported(pluginID, requestedVersion, systemInfo string) error {
@@ -87,4 +91,8 @@ func ErrChecksumMismatch(archiveURL string) error {
 
 func ErrCorePlugin(pluginID string) error {
 	return ErrCorePluginBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID}})
+}
+
+func ErrNoCompatibleVersions(pluginID, grafanaVersion string) error {
+	return ErrNotCompatibleBase.Build(errutil.TemplateData{Public: map[string]any{"PluginID": pluginID, "GrafanaVersion": grafanaVersion}})
 }

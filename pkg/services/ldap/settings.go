@@ -34,44 +34,44 @@ type ServersConfig struct {
 // ServerConfig holds connection data to LDAP
 type ServerConfig struct {
 	Host string `toml:"host" json:"host"`
-	Port int    `toml:"port" json:"port,omitempty"`
+	Port int    `toml:"port" json:"port"`
 
-	UseSSL          bool     `toml:"use_ssl" json:"use_ssl,omitempty"`
-	StartTLS        bool     `toml:"start_tls" json:"start_tls,omitempty"`
-	SkipVerifySSL   bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify,omitempty"`
-	MinTLSVersion   string   `toml:"min_tls_version" json:"min_tls_version,omitempty"`
+	UseSSL          bool     `toml:"use_ssl" json:"use_ssl"`
+	StartTLS        bool     `toml:"start_tls" json:"start_tls"`
+	SkipVerifySSL   bool     `toml:"ssl_skip_verify" json:"ssl_skip_verify"`
+	MinTLSVersion   string   `toml:"min_tls_version" json:"min_tls_version"`
 	MinTLSVersionID uint16   `toml:"-" json:"-"`
-	TLSCiphers      []string `toml:"tls_ciphers" json:"tls_ciphers,omitempty"`
+	TLSCiphers      []string `toml:"tls_ciphers" json:"tls_ciphers"`
 	TLSCipherIDs    []uint16 `toml:"-" json:"-"`
 
-	RootCACert      string       `toml:"root_ca_cert" json:"root_ca_cert,omitempty"`
-	RootCACertValue []string     `json:"root_ca_cert_value,omitempty"`
-	ClientCert      string       `toml:"client_cert" json:"client_cert,omitempty"`
-	ClientCertValue string       `json:"client_cert_value,omitempty"`
-	ClientKey       string       `toml:"client_key" json:"client_key,omitempty"`
-	ClientKeyValue  string       `json:"client_key_value,omitempty"`
-	BindDN          string       `toml:"bind_dn" json:"bind_dn,omitempty"`
-	BindPassword    string       `toml:"bind_password" json:"bind_password,omitempty"`
-	Timeout         int          `toml:"timeout" json:"timeout,omitempty"`
-	Attr            AttributeMap `toml:"attributes" json:"attributes,omitempty"`
+	RootCACert      string       `toml:"root_ca_cert" json:"root_ca_cert"`
+	RootCACertValue []string     `json:"root_ca_cert_value"`
+	ClientCert      string       `toml:"client_cert" json:"client_cert"`
+	ClientCertValue string       `json:"client_cert_value"`
+	ClientKey       string       `toml:"client_key" json:"client_key"`
+	ClientKeyValue  string       `json:"client_key_value"`
+	BindDN          string       `toml:"bind_dn" json:"bind_dn"`
+	BindPassword    string       `toml:"bind_password" json:"bind_password"`
+	Timeout         int          `toml:"timeout" json:"timeout"`
+	Attr            AttributeMap `toml:"attributes" json:"attributes"`
 
-	SearchFilter  string   `toml:"search_filter" json:"search_filter,omitempty"`
-	SearchBaseDNs []string `toml:"search_base_dns" json:"search_base_dns,omitempty"`
+	SearchFilter  string   `toml:"search_filter" json:"search_filter"`
+	SearchBaseDNs []string `toml:"search_base_dns" json:"search_base_dns"`
 
-	GroupSearchFilter              string   `toml:"group_search_filter" json:"group_search_filter,omitempty"`
-	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute" json:"group_search_filter_user_attribute,omitempty"`
-	GroupSearchBaseDNs             []string `toml:"group_search_base_dns" json:"group_search_base_dns,omitempty"`
+	GroupSearchFilter              string   `toml:"group_search_filter" json:"group_search_filter"`
+	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute" json:"group_search_filter_user_attribute"`
+	GroupSearchBaseDNs             []string `toml:"group_search_base_dns" json:"group_search_base_dns"`
 
-	Groups []*GroupToOrgRole `toml:"group_mappings" json:"group_mappings,omitempty"`
+	Groups []*GroupToOrgRole `toml:"group_mappings" json:"group_mappings"`
 }
 
 // AttributeMap is a struct representation for LDAP "attributes" setting
 type AttributeMap struct {
-	Username string `toml:"username" json:"username,omitempty"`
-	Name     string `toml:"name" json:"name,omitempty"`
-	Surname  string `toml:"surname" json:"surname,omitempty"`
-	Email    string `toml:"email" json:"email,omitempty"`
-	MemberOf string `toml:"member_of" json:"member_of,omitempty"`
+	Username string `toml:"username" json:"username"`
+	Name     string `toml:"name" json:"name"`
+	Surname  string `toml:"surname" json:"surname"`
+	Email    string `toml:"email" json:"email"`
+	MemberOf string `toml:"member_of" json:"member_of"`
 }
 
 // GroupToOrgRole is a struct representation of LDAP
@@ -83,7 +83,7 @@ type GroupToOrgRole struct {
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin" json:"grafana_admin,omitempty"`
 
-	OrgRole org.RoleType `toml:"org_role" json:"org_role,omitempty"`
+	OrgRole org.RoleType `toml:"org_role" json:"org_role"`
 }
 
 // logger for all LDAP stuff
@@ -114,11 +114,7 @@ func GetLDAPConfig(cfg *setting.Cfg) *Config {
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
 func GetConfig(cfg *Config) (*ServersConfig, error) {
-	if cfg != nil {
-		if !cfg.Enabled {
-			return nil, nil
-		}
-	} else if !cfg.Enabled {
+	if cfg == nil || !cfg.Enabled {
 		return nil, nil
 	}
 

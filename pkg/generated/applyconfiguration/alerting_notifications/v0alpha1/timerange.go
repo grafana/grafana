@@ -4,14 +4,14 @@
 
 package v0alpha1
 
-// TimeRangeApplyConfiguration represents an declarative configuration of the TimeRange type for use
+// TimeRangeApplyConfiguration represents a declarative configuration of the TimeRange type for use
 // with apply.
 type TimeRangeApplyConfiguration struct {
 	EndTime   *string `json:"end_time,omitempty"`
 	StartTime *string `json:"start_time,omitempty"`
 }
 
-// TimeRangeApplyConfiguration constructs an declarative configuration of the TimeRange type for use with
+// TimeRangeApplyConfiguration constructs a declarative configuration of the TimeRange type for use with
 // apply.
 func TimeRange() *TimeRangeApplyConfiguration {
 	return &TimeRangeApplyConfiguration{}

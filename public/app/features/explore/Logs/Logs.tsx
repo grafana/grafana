@@ -938,6 +938,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 rows={logRows}
                 scrollElement={logsContainerRef.current}
                 sortOrder={logsSortOrder}
+                app={CoreApp.Explore}
               >
                 <LogRows
                   pinnedLogs={pinnedLogs}
@@ -1053,6 +1054,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-between',
+      position: 'relative',
     }),
     logsTable: css({
       maxHeight: `${tableHeight}px`,

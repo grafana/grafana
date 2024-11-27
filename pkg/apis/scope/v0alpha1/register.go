@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ScopeResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"scopes", "scope", "Scope",
 	func() runtime.Object { return &Scope{} },
 	func() runtime.Object { return &ScopeList{} },
@@ -43,7 +42,7 @@ var ScopeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	}, // default table converter
 )
 
-var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ScopeDashboardBindingResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"scopedashboardbindings", "scopedashboardbinding", "ScopeDashboardBinding",
 	func() runtime.Object { return &ScopeDashboardBinding{} },
 	func() runtime.Object { return &ScopeDashboardBindingList{} },
@@ -69,7 +68,7 @@ var ScopeDashboardBindingResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var ScopeNodeResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ScopeNodeResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"scopenodes", "scopenode", "ScopeNode",
 	func() runtime.Object { return &ScopeNode{} },
 	func() runtime.Object { return &ScopeNodeList{} },

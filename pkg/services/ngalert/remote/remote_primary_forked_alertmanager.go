@@ -2,6 +2,7 @@ package remote
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -72,16 +73,30 @@ func (fam *RemotePrimaryForkedAlertmanager) GetStatus(ctx context.Context) (apim
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	uid, err := fam.remote.CreateSilence(ctx, silence)
+	originalID := silence.ID
+	id, err := fam.remote.CreateSilence(ctx, silence)
 	if err != nil {
 		return "", err
 	}
 
-	silence.ID = uid
+	if originalID != "" && originalID != id {
+		// ID has changed, expire the old silence before creating a new one.
+		if err := fam.internal.DeleteSilence(ctx, originalID); err != nil {
+			if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
+				// This can happen if the silence was created in the remote AM without using the Grafana UI
+				// in remote primary mode, or if the silence failed to be replicated in the internal AM.
+				fam.log.Warn("Failed to delete silence in the internal Alertmanager", "err", err, "id", originalID)
+			} else {
+				fam.log.Error("Failed to delete silence in the internal Alertmanager", "err", err, "id", originalID)
+			}
+		}
+	}
+
+	silence.ID = id
 	if _, err := fam.internal.CreateSilence(ctx, silence); err != nil {
 		fam.log.Error("Error creating silence in the internal Alertmanager", "err", err, "silence", silence)
 	}
-	return uid, nil
+	return id, nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
@@ -118,14 +133,12 @@ func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([
 	return fam.remote.GetReceivers(ctx)
 }
 
-func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	// TODO: change to remote AM once it's implemented there.
-	return fam.internal.TestReceivers(ctx, c)
+func (fam *RemotePrimaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
+	return fam.remote.TestReceivers(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	// TODO: change to remote AM once it's implemented there.
-	return fam.internal.TestTemplate(ctx, c)
+	return fam.remote.TestTemplate(ctx, c)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {

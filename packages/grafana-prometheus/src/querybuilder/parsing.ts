@@ -11,7 +11,6 @@ import {
   FunctionIdentifier,
   GroupingLabels,
   Identifier,
-  LabelMatcher,
   LabelName,
   MatchingModifierClause,
   MatchOp,
@@ -20,6 +19,7 @@ import {
   ParenExpr,
   parser,
   StringLiteral,
+  UnquotedLabelMatcher,
   VectorSelector,
   Without,
 } from '@prometheus-io/lezer-promql';
@@ -145,7 +145,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case LabelMatcher: {
+    case UnquotedLabelMatcher: {
       // Same as MetricIdentifier should be just one per query.
       visQuery.labels.push(getLabel(expr, node));
       const err = node.getChild(ErrorId);

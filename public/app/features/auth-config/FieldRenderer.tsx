@@ -147,6 +147,12 @@ export const FieldRenderer = ({
           className={css({ marginBottom: theme.spacing(2) })}
         />
       );
+    case 'custom':
+      return (
+        <Field key={name} {...fieldProps}>
+          {fieldData.content ? fieldData.content(setValue) : <></>}
+        </Field>
+      );
     default:
       console.error(`Unknown field type: ${fieldData.type}`);
       return null;

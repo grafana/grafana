@@ -1,4 +1,4 @@
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 
 import { NavModel } from '@grafana/data';
 import { IconName } from '@grafana/ui';
@@ -17,4 +17,5 @@ export interface SettingsPageProps {
   dashboard: DashboardModel;
   sectionNav: NavModel;
   editIndex?: number;
+  toolbar?: ReactNode;
 }

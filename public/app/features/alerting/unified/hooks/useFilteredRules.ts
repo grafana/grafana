@@ -1,13 +1,14 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../Analytics';
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
@@ -27,6 +28,8 @@ import { useURLSearchParams } from './useURLSearchParams';
 // if the search term is longer than MAX_NEEDLE_SIZE we disable Levenshtein distance
 const MAX_NEEDLE_SIZE = 25;
 const INFO_THRESHOLD = Infinity;
+
+const SEARCH_FAILED_ERR = new Error('Failed to search rules');
 
 /**
  * Escape query strings so that regex characters don't interfere
@@ -102,8 +105,11 @@ export function useRulesFilter() {
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
+  const deferredNamespaces = useDeferredValue(namespaces);
+  const deferredFilterState = useDeferredValue(filterState);
+
   return useMemo(() => {
-    const filteredRules = filterRules(namespaces, filterState);
+    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -122,7 +128,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     });
 
     return filteredRules;
-  }, [namespaces, filterState]);
+  }, [deferredNamespaces, deferredFilterState]);
 };
 
 export const filterRules = (
@@ -160,7 +166,20 @@ export const filterRules = (
   }
 
   // If a namespace and group have rules that match the rules filters then keep them.
-  return filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+  const filteredRuleNamespaces: CombinedRuleNamespace[] = [];
+
+  try {
+    const matches = filteredNamespaces.reduce<CombinedRuleNamespace[]>(reduceNamespaces(filterState), []);
+    matches.forEach((match) => {
+      filteredRuleNamespaces.push(match);
+    });
+  } catch {
+    logError(SEARCH_FAILED_ERR, {
+      search: JSON.stringify(filterState),
+    });
+  }
+
+  return filteredRuleNamespaces;
 };
 
 const reduceNamespaces = (filterState: RulesFilter) => {
@@ -234,7 +253,16 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
+        .pick([
+          'ruleType',
+          'dataSourceNames',
+          'ruleHealth',
+          'labels',
+          'ruleState',
+          'dashboardUid',
+          'plugins',
+          'contactPoint',
+        ])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
@@ -245,6 +273,17 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
         matchesFilterFor.plugins = !isPluginProvidedRule(rule);
+      }
+
+      if ('contactPoint' in matchesFilterFor) {
+        const contactPoint = filterState.contactPoint;
+        const hasContactPoint =
+          isGrafanaRulerRule(rule.rulerRule) &&
+          rule.rulerRule.grafana_alert.notification_settings?.receiver === contactPoint;
+
+        if (hasContactPoint) {
+          matchesFilterFor.contactPoint = true;
+        }
       }
 
       if ('dataSourceNames' in matchesFilterFor) {

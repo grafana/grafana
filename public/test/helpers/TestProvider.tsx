@@ -2,6 +2,7 @@ import { Store } from '@reduxjs/toolkit';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { locationService } from '@grafana/runtime';
@@ -35,8 +36,10 @@ export function TestProvider(props: Props) {
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
         <ModalsContextProvider>
-          <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
-          <ModalRoot />
+          <CompatRouter>
+            <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
+            <ModalRoot />
+          </CompatRouter>
         </ModalsContextProvider>
       </Router>
     </Provider>

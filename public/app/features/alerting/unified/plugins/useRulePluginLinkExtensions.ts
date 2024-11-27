@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { usePluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -23,7 +23,7 @@ export interface RecordingRuleExtensionContext extends BaseRuleExtensionContext 
 
 export function useRulePluginLinkExtension(rule: CombinedRule) {
   const ruleExtensionPoint = useRuleExtensionPoint(rule);
-  const { extensions } = usePluginLinkExtensions(ruleExtensionPoint);
+  const { links } = usePluginLinks(ruleExtensionPoint);
 
   const ruleOrigin = getRulePluginOrigin(rule);
   const ruleType = rule.promRule?.type;
@@ -33,7 +33,7 @@ export function useRulePluginLinkExtension(rule: CombinedRule) {
 
   const { pluginId } = ruleOrigin;
 
-  return extensions.filter((extension) => extension.pluginId === pluginId);
+  return links.filter((link) => link.pluginId === pluginId);
 }
 
 export interface PluginRuleExtensionParam {

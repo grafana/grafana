@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { pickBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
 import {
@@ -41,7 +42,6 @@ import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 import { getDefaultSilenceFormValues, getFormFieldsForSilence } from './utils';
 
 interface Props {
-  silenceId: string;
   alertManagerSourceName: string;
 }
 
@@ -50,7 +50,8 @@ interface Props {
  *
  * Fetches silence details from API, based on `silenceId`
  */
-const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => {
+const ExistingSilenceEditor = ({ alertManagerSourceName }: Props) => {
+  const { id: silenceId = '' } = useParams();
   const {
     data: silence,
     isLoading: getSilenceIsLoading,
@@ -61,7 +62,6 @@ const ExistingSilenceEditor = ({ silenceId, alertManagerSourceName }: Props) => 
     ruleMetadata: true,
     accessControl: true,
   });
-
   const ruleUid = silence?.matchers?.find((m) => m.name === MATCHER_ALERT_RULE_UID)?.value;
   const isGrafanaAlertManager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
 

@@ -252,10 +252,22 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       imgUrl: 'public/img/plugins/drone.svg',
     }),
     getPhantomPlugin({
+      id: 'grafana-zendesk-datasource',
+      description: 'Zendesk datasource',
+      name: 'Zendesk',
+      imgUrl: 'public/img/plugins/zendesk.svg',
+    }),
+    getPhantomPlugin({
       id: 'grafana-atlassianstatuspage-datasource',
       description: 'Atlassian Statuspage datasource',
       name: 'Atlassian Statuspage',
       imgUrl: 'public/img/plugins/atlassian-statuspage.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-aurora-datasource',
+      description: 'Aurora data source',
+      name: 'Aurora',
+      imgUrl: 'public/img/plugins/aurora.svg',
     }),
   ];
 }

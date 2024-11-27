@@ -17,7 +17,7 @@ labels:
     - cloud
     - enterprise
 title: Assess dashboard usage
-weight: 200
+weight: 900
 refs:
   grafana-enterprise:
     - pattern: /docs/grafana/

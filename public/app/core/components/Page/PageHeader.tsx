@@ -58,8 +58,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'row',
       maxWidth: '100%',
+      flex: 1,
       h1: {
-        display: 'flex',
         marginBottom: 0,
       },
     }),

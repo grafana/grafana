@@ -1,0 +1,32 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "private",
+  "signedByOrg": "giuseppeguerra",
+  "signedByOrgName": "giuseppeguerra",
+  "rootUrls": [
+    "http://127.0.0.1:3000/"
+  ],
+  "plugin": "test-datasource",
+  "version": "1.0.0",
+  "time": 1725959570435,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "module.js": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+    "plugin.json": "129fab4e0584d18c778ebdfa5fe1a68edf2e5c5aeb8290b2c68182c857cb59f8"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.11
+Comment: https://openpgpjs.org
+
+wrkEARMKAAYFAmbgDZIAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5wbfAgkAXmKJcM8uAKb3TepYW/oyGhRLR8L6eM9mCoYwKkatITKJ6bRe
+Wnz37AMcPx0DahgfCzCXRLo4CspPJylr2JV8DagCCQCfCjHgLFhKGpBP71Y1
+mgcQ1/CJefb6B2H45G25MwUFTlSTGLDqW4QMi2kQvXnnUMjXquv2+iVd6qyz
+0Rqvpou/QQ==
+=QNmr
+-----END PGP SIGNATURE-----

@@ -1,3 +1,4 @@
+import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { RuleGroupIdentifier } from 'app/types/unified-alerting';
 
@@ -47,6 +48,20 @@ describe('getRuleOrigin', () => {
         path: '',
         preload: true,
         angular: { detected: false, hideDeprecation: false },
+        loadingStrategy: PluginLoadingStrategy.script,
+        extensions: {
+          addedLinks: [],
+          addedComponents: [],
+          extensionPoints: [],
+          exposedComponents: [],
+        },
+        dependencies: {
+          grafanaVersion: '',
+          plugins: [],
+          extensions: {
+            exposedComponents: [],
+          },
+        },
       },
     };
     const rule = mockCombinedRule({

@@ -55,6 +55,7 @@ describe('filterSpans', () => {
     ],
     logs: [
       {
+        name: 'logName0',
         fields: [
           {
             key: 'logFieldKey0',
@@ -314,6 +315,10 @@ describe('filterSpans', () => {
     expect(
       filterSpans({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2', operator: '!=' }] }, spans)
     ).toEqual(new Set([spanID0]));
+  });
+
+  it('it should return logs have a name which matches the filter', () => {
+    expect(filterSpans({ ...defaultFilters, query: 'logName0' }, spans)).toEqual(new Set([spanID0]));
   });
 
   it('should return no spans when logs is null', () => {

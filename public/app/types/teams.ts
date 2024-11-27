@@ -15,6 +15,7 @@ export interface TeamDTO {
 // This is the team resource with permissions and metadata expanded
 export interface Team {
   id: number; // TODO switch to UUID
+  uid: string; // Prefer UUID
 
   /**
    * AccessControl metadata associated with a given resource.

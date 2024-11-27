@@ -6,12 +6,12 @@ import { IconButton } from '../IconButton/IconButton';
 import { Stack } from '../Layout/Stack/Stack';
 import { TooltipPlacement } from '../Tooltip';
 
-import { TableCellInspector } from './TableCellInspector';
+import { TableCellInspector, TableCellInspectorMode } from './TableCellInspector';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
-  previewMode: 'text' | 'code';
+  previewMode: TableCellInspectorMode;
 }
 
 interface CommonButtonProps {

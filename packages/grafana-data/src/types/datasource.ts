@@ -142,6 +142,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  multiValueFilterOperators?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -558,6 +559,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   panelPluginId?: string;
   dashboardUID?: string;
+  headers?: Record<string, string>;
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];

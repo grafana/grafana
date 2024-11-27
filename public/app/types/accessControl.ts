@@ -127,6 +127,13 @@ export enum AccessControlAction {
   AlertingProvisioningRead = 'alert.provisioning:read',
   AlertingProvisioningWrite = 'alert.provisioning:write',
 
+  // Alerting receivers actions
+  AlertingReceiversPermissionsRead = 'receivers.permissions:read',
+  AlertingReceiversPermissionsWrite = 'receivers.permissions:write',
+  AlertingReceiversCreate = 'alert.notifications.receivers:create',
+  AlertingReceiversWrite = 'alert.notifications.receivers:write',
+  AlertingReceiversRead = 'alert.notifications.receivers:read',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
@@ -137,6 +144,10 @@ export enum AccessControlAction {
   // Settings
   SettingsRead = 'settings:read',
   SettingsWrite = 'settings:write',
+
+  // GroupSync
+  GroupSyncMappingsRead = 'groupsync.mappings:read',
+  GroupSyncMappingsWrite = 'groupsync.mappings:write',
 }
 
 export interface Role {

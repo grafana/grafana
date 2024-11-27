@@ -69,7 +69,7 @@ export function HelpWizard({ panel, onClose }: Props) {
 
   return (
     <Drawer
-      title={`Get help with this panel`}
+      title="Get help with this panel"
       size="lg"
       onClose={onClose}
       subtitle={
@@ -150,7 +150,7 @@ export function HelpWizard({ panel, onClose }: Props) {
         <>
           <Field
             label="Randomize data"
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            description="Modify the original data to hide sensitive information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
             <Stack>
               <InlineSwitch

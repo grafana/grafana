@@ -93,6 +93,7 @@ Related links:
    - [`assertion_attribute_email`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_email" >}})
    - [`assertion_attribute_name`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_name" >}})
    - [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}})
+1. (Optional) Set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
 1. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
@@ -103,6 +104,7 @@ root_url = https://grafana.example.com
 
 [auth.saml]
 enabled = true
+name = My IdP
 auto_login = false
 private_key_path = "/path/to/private_key.pem"
 certificate_path = "/path/to/certificate.cert"
@@ -209,11 +211,10 @@ In order to validate Azure AD users with Grafana, you need to configure the SAML
 1. In the Set up **Single Sign-On with SAML** pane, select the pencil icon for **Basic SAML Configuration** to edit the settings.
 1. In the **Basic SAML Configuration** pane, click on the **Edit** button and update the following fields:
    - In the **Identifier (Entity ID)** field, enter `https://localhost/saml/metadata`.
-   - In the **Identifier (Entity ID)** field, remove the default value.
    - In the **Reply URL (Assertion Consumer Service URL)** field, enter `https://localhost/saml/acs`.
-   - In the **Sign on URL** field, enter `https://localhost/saml/auth`.
-   - In the **Relay State** field, enter `https://localhost/saml/slo`.
-   - In the **Logout URL** field, enter `https://localhost/logout`.
+   - In the **Sign on URL** field, enter `https://localhost`.
+   - In the **Relay State** field, enter `https://localhost`.
+   - In the **Logout URL** field, enter `https://localhost/saml/slo`.
 1. Select **Save**.
 1. At the **SAML Certificate** section, copy the **App Federation Metadata Url**.
    - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
@@ -241,7 +242,7 @@ This app registration will be used as a Service Account to retrieve more informa
 #### Set up permissions for the application
 
 1. In the overview pane, look for **API permissions** section and select **Add a permission**.
-1. In the **Request API permissions** pane, select **Microsoft Graph**.
+1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Application permissions**.
 1. In the **Select permissions** pane, under the **GroupMember** section, select **GroupMember.Read.All**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Select **Add permissions** at the bottom of the page.
@@ -281,13 +282,13 @@ Grafana supports user authentication through Okta, which is useful when you want
    - In the **Single sign on URL** field, use the `/saml/acs` endpoint URL of your Grafana instance, for example, `https://grafana.example.com/saml/acs`.
    - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
    - Leave the default values for **Name ID format** and **Application username**.
-   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana, for example:
+   - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
-     | Attribute name (in Grafana) | Value (in Okta profile)                |
-     | --------------------------- | -------------------------------------- |
-     | Login                       | `user.login`                           |
-     | Email                       | `user.email`                           |
-     | DisplayName                 | `user.firstName + " " + user.lastName` |
+     | Attribute name (in Grafana) | Name and value (in Okta profile)                   |
+     | --------------------------- | -------------------------------------------------- |
+     | Login                       | Login `user.login`                                 |
+     | Email                       | Email `user.email`                                 |
+     | DisplayName                 | DisplayName `user.firstName + " " + user.lastName` |
 
    - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
 
@@ -329,7 +330,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `name_id_format`                                           | No       | The Name ID Format to request within the SAML assertion                                                                                                                                                      | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` |
 | `client_id`                                                | No       | Client ID of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                      |                                                       |
 | `client_secret`                                            | No       | Client secret of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                  |                                                       |
-| `access_token_url`                                         | No       | URL to retrieve the access token from the IdP.                                                                                                                                                               |                                                       |
+| `token_url`                                                | No       | URL to retrieve the access token from the IdP.                                                                                                                                                               |                                                       |
 | `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP.                                                                                                            | `false`                                               |
 
 ### Signature algorithm

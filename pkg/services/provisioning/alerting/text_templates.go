@@ -32,7 +32,7 @@ func (c *defaultTextTemplateProvisioner) Provision(ctx context.Context,
 	for _, file := range files {
 		for _, template := range file.Templates {
 			template.Data.Provenance = definitions.Provenance(models.ProvenanceFile)
-			_, err := c.templateService.SetTemplate(ctx, template.OrgID, template.Data)
+			_, err := c.templateService.UpsertTemplate(ctx, template.OrgID, template.Data)
 			if err != nil {
 				return err
 			}

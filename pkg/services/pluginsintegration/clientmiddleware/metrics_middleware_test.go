@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
@@ -34,36 +34,36 @@ func TestInstrumentationMiddleware(t *testing.T) {
 	t.Run("should instrument requests", func(t *testing.T) {
 		for _, tc := range []struct {
 			expEndpoint                 backend.Endpoint
-			fn                          func(cdt *clienttest.ClientDecoratorTest) error
+			fn                          func(cdt *handlertest.HandlerMiddlewareTest) error
 			shouldInstrumentRequestSize bool
 		}{
 			{
 				expEndpoint: backend.EndpointCheckHealth,
-				fn: func(cdt *clienttest.ClientDecoratorTest) error {
-					_, err := cdt.Decorator.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: pCtx})
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					_, err := cdt.MiddlewareHandler.CheckHealth(context.Background(), &backend.CheckHealthRequest{PluginContext: pCtx})
 					return err
 				},
 				shouldInstrumentRequestSize: false,
 			},
 			{
 				expEndpoint: backend.EndpointCallResource,
-				fn: func(cdt *clienttest.ClientDecoratorTest) error {
-					return cdt.Decorator.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: pCtx}, nopCallResourceSender)
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					return cdt.MiddlewareHandler.CallResource(context.Background(), &backend.CallResourceRequest{PluginContext: pCtx}, nopCallResourceSender)
 				},
 				shouldInstrumentRequestSize: true,
 			},
 			{
 				expEndpoint: backend.EndpointQueryData,
-				fn: func(cdt *clienttest.ClientDecoratorTest) error {
-					_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 					return err
 				},
 				shouldInstrumentRequestSize: true,
 			},
 			{
 				expEndpoint: backend.EndpointCollectMetrics,
-				fn: func(cdt *clienttest.ClientDecoratorTest) error {
-					_, err := cdt.Decorator.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: pCtx})
+				fn: func(cdt *handlertest.HandlerMiddlewareTest) error {
+					_, err := cdt.MiddlewareHandler.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{PluginContext: pCtx})
 					return err
 				},
 				shouldInstrumentRequestSize: false,
@@ -77,9 +77,9 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				}))
 
 				mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
-				cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
-					plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-						mw.next = next
+				cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
+					backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+						mw.BaseHandler = backend.NewBaseHandler(next)
 						return mw
 					}),
 				))
@@ -154,10 +154,10 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 	}))
 	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry)
-	cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
+	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
 		NewPluginRequestMetaMiddleware(),
-		plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
-			metricsMw.next = next
+		backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
+			metricsMw.BaseHandler = backend.NewBaseHandler(next)
 			return metricsMw
 		}),
 		NewStatusSourceMiddleware(),
@@ -166,10 +166,10 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	t.Run("Metrics", func(t *testing.T) {
 		metricsMw.pluginMetrics.pluginRequestCounter.Reset()
 
-		cdt.TestClient.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			return &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{"A": downstreamErrorResponse}}, nil
 		}
-		_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
+		_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 		require.NoError(t, err)
 		counter, err := metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
 			queryDataErrorCounterLabels,
@@ -235,12 +235,12 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 					cdt.QueryDataCtx = nil
 					cdt.QueryDataReq = nil
 				})
-				cdt.TestClient.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 					cdt.QueryDataCtx = ctx
 					cdt.QueryDataReq = req
 					return &backend.QueryDataResponse{Responses: tc.responses}, nil
 				}
-				_, err := cdt.Decorator.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
+				_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 				require.NoError(t, err)
 				ctxStatusSource := pluginrequestmeta.StatusSourceFromContext(cdt.QueryDataCtx)
 				require.Equal(t, tc.expStatusSource, ctxStatusSource)

@@ -81,10 +81,10 @@ export function saveCurrentCorrelation(
         targetUID: targetDatasource.uid,
         label: label || (await generateDefaultLabel(sourcePane, targetPane)),
         description,
+        type: 'query',
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
           target: targetPane.queries[0],
-          type: 'query',
           transformations: transformations,
         },
       };

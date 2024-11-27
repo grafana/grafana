@@ -26,8 +26,14 @@ export const alertSilencesApi = alertingApi.injectEndpoints({
           accesscontrol: accessControl,
         },
       }),
-      providesTags: (result) =>
-        result ? result.map(({ id }) => ({ type: 'AlertmanagerSilences', id })) : ['AlertmanagerSilences'],
+      providesTags: (result) => {
+        return result
+          ? [
+              ...result.map(({ id }) => ({ type: 'AlertmanagerSilences' as const, id })),
+              { type: 'AlertmanagerSilences' },
+            ]
+          : [{ type: 'AlertmanagerSilences' }];
+      },
     }),
 
     getSilence: build.query<

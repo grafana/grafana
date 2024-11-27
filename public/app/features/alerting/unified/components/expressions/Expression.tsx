@@ -20,7 +20,7 @@ import {
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
@@ -51,7 +51,7 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
+  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);
@@ -327,10 +327,6 @@ const Header: FC<HeaderProps> = ({
               autoFocus
               defaultValue={refId}
               minWidth={5}
-              onChange={(event) => {
-                onUpdateRefId(event.currentTarget.value);
-                setEditMode(false);
-              }}
               onFocus={(event) => event.target.select()}
               onBlur={(event) => {
                 onUpdateRefId(event.currentTarget.value);
@@ -424,7 +420,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
           {name}
         </span>
         <div className={styles.expression.resultValue}>
-          <HoverCard
+          <PopupCard
             placement="right"
             wrapperClassName={styles.timeseriesTableWrapper}
             content={
@@ -447,7 +443,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
             }
           >
             <span>Time series data</span>
-          </HoverCard>
+          </PopupCard>
         </div>
       </Stack>
     </div>

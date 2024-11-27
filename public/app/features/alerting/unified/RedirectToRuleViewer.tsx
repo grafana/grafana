@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -53,7 +53,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   } = useCloudCombinedRulesMatching(name, sourceName, { namespace, groupName: group });
 
   if (!name || !sourceName) {
-    return <Redirect to="/notfound" />;
+    return <Navigate replace to="/notfound" />;
   }
 
   if (error) {
@@ -95,7 +95,7 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (rules.length === 1) {
     const [rule] = rules;
     const to = createViewLink(rulesSource, rule, '/alerting/list').replace(subUrl, '');
-    return <Redirect to={to} />;
+    return <Navigate replace to={to} />;
   }
 
   if (rules.length === 0) {

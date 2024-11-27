@@ -2,10 +2,11 @@ import { capitalize, get as lodashGet } from 'lodash';
 
 import { OneClickMode } from '@grafana/data';
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { config } from '@grafana/runtime';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
-  DEFAULT_CANVAS_ELEMENT_CONFIG,
   canvasElementRegistry,
+  DEFAULT_CANVAS_ELEMENT_CONFIG,
   defaultElementItems,
 } from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -67,6 +68,8 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
       const current = options?.type ? options.type : DEFAULT_CANVAS_ELEMENT_CONFIG.type;
       const layerTypes = getElementTypes(opts.scene.shouldShowAdvancedTypes, current).options;
 
+      const actionsEnabled = config.featureToggles.vizActions;
+
       const isUnsupported =
         !opts.scene.shouldShowAdvancedTypes && !defaultElementItems.filter((item) => item.id === options?.type).length;
 
@@ -120,21 +123,33 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
         optionBuilder.addBorder(builder, ctx);
       }
 
+      const oneClickModeOptions = [
+        { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
+        { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
+      ];
+
+      let oneClickCategory = 'Data links';
+      let oneClickDescription = 'When enabled, a single click opens the first link';
+
+      if (actionsEnabled) {
+        oneClickModeOptions.push({ value: OneClickMode.Action, label: capitalize(OneClickMode.Action) });
+        oneClickCategory += ' and actions';
+        oneClickDescription += ' or action';
+      }
+
       builder.addRadio({
-        category: ['Data links'],
+        category: [oneClickCategory],
         path: 'oneClickMode',
         name: 'One-click',
-        description: 'When enabled, a single click opens the first link',
+        description: oneClickDescription,
         settings: {
-          options: [
-            { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
-            { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
-          ],
+          options: oneClickModeOptions,
         },
         defaultValue: OneClickMode.Off,
       });
 
       optionBuilder.addDataLinks(builder, ctx);
+      optionBuilder.addActions(builder, ctx);
     },
   };
 }

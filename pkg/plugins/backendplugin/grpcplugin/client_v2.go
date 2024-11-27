@@ -25,6 +25,7 @@ type ClientV2 struct {
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
+	grpcplugin.ConversionClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -46,6 +47,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawAdmission, err := rpcClient.Dispense("admission")
+	if err != nil {
+		return nil, err
+	}
+
+	rawConversion, err := rpcClient.Dispense("conversion")
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +93,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawAdmission != nil {
 		if admissionClient, ok := rawAdmission.(grpcplugin.AdmissionClient); ok {
 			c.AdmissionClient = admissionClient
+		}
+	}
+
+	if rawConversion != nil {
+		if conversionClient, ok := rawConversion.(grpcplugin.ConversionClient); ok {
+			c.ConversionClient = conversionClient
 		}
 	}
 
@@ -308,13 +320,13 @@ func (c *ClientV2) MutateAdmission(ctx context.Context, req *backend.AdmissionRe
 	return backend.FromProto().MutationResponse(protoResp), nil
 }
 
-func (c *ClientV2) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if c.AdmissionClient == nil {
+func (c *ClientV2) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if c.ConversionClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().ConversionRequest(req)
-	protoResp, err := c.AdmissionClient.ConvertObject(ctx, protoReq)
+	protoResp, err := c.ConversionClient.ConvertObjects(ctx, protoReq)
 
 	if err != nil {
 		if status.Code(err) == codes.Unimplemented {

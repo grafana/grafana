@@ -148,6 +148,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Bulgarian Lev (BGN)', id: 'currencyBGN', fn: currency('BGN') },
       { name: 'Guaraní (₲)', id: 'currencyPYG', fn: currency('₲') },
       { name: 'Uruguay Peso (UYU)', id: 'currencyUYU', fn: currency('UYU') },
+      { name: 'Israeli New Shekels (₪)', id: 'currencyILS', fn: currency('₪') },
     ],
   },
   {

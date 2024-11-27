@@ -5,12 +5,12 @@ import (
 	"reflect"
 )
 
-type ScanDest struct {
+type scanDest struct {
 	values   []any
 	colNames []string
 }
 
-func (i *ScanDest) Into(v reflect.Value, colName string) (string, error) {
+func (i *scanDest) Into(v reflect.Value, colName string) (string, error) {
 	if !v.IsValid() || !v.CanAddr() || !v.Addr().CanInterface() {
 		return "", fmt.Errorf("invalid or unaddressable value: %v", colName)
 	}
@@ -21,19 +21,19 @@ func (i *ScanDest) Into(v reflect.Value, colName string) (string, error) {
 	return colName, nil
 }
 
-func (i *ScanDest) Reset() {
+func (i *scanDest) Reset() {
 	i.values = nil
 }
 
-func (i *ScanDest) GetScanDest() []any {
+func (i *scanDest) GetScanDest() []any {
 	return i.values
 }
 
-func (i *ScanDest) GetColNames() []string {
+func (i *scanDest) GetColNames() []string {
 	return i.colNames
 }
 
-type ScanDestIface interface {
+type ScanDest interface {
 	Into(v reflect.Value, colName string) (string, error)
 	GetScanDest() []any
 	GetColNames() []string

@@ -566,6 +566,7 @@ Lists the roles that have been directly assigned to a given user. The list does 
 Query Parameters:
 
 - `includeHidden`: Optional. Set to `true` to include roles that are `hidden`.
+- `includeMapped`: Optional. Set to `true` to include roles that have been mapped through the group attribute sync feature.
 
 #### Required permissions
 
