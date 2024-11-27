@@ -22690,6 +22690,32 @@
         ]
       }
     },
+    "/scim/users/": {
+      "post": {
+        "operationId": "createUser",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Creates user.",
+        "tags": [
+          "users"
+        ]
+      }
+    },
     "/search": {
       "get": {
         "operationId": "search",
