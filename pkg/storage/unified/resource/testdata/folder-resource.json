@@ -7,10 +7,7 @@
         "uid": "aaaa-bbbb",
         "creationTimestamp": "2024-11-01T19:42:22Z",
         "annotations": {
-            "grafana.app/createdBy": "user:1",
-            "grafana.app/originName": "SQL",
-            "grafana.app/originPath": "15",
-            "grafana.app/originTimestamp": "2024-11-01T19:42:22Z"
+            "grafana.app/createdBy": "user:1"
         }
     },
     "spec": {

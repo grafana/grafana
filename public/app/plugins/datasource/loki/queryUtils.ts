@@ -319,7 +319,7 @@ export function requestSupportsSharding(allQueries: LokiQuery[]) {
     .filter((query) => query.queryType !== LokiQueryType.Instant)
     .filter((query) => !query.refId.includes('do-not-shard'))
     .filter((query) => query.expr)
-    .filter((query) => query.direction === LokiQueryDirection.Scan || !isLogsQuery(query.expr));
+    .filter((query) => query.direction === LokiQueryDirection.Scan && isLogsQuery(query.expr));
 
   return queries.length > 0;
 }

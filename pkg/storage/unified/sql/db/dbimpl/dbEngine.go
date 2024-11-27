@@ -70,9 +70,13 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 		"user": getter.String("user"),
 		// accept the core Grafana jargon of `password` as well, originally
 		// Unified Storage used `pass`
-		"password": cmp.Or(getter.String("pass"), getter.String("password")),
-		"dbname":   getter.String("name"),
-		"sslmode":  cmp.Or(getter.String("ssl_mode"), "disable"),
+		"password":    cmp.Or(getter.String("pass"), getter.String("password")),
+		"dbname":      getter.String("name"),
+		"sslmode":     cmp.Or(getter.String("ssl_mode"), "disable"),
+		"sslsni":      getter.String("ssl_sni"),
+		"sslrootcert": getter.String("ca_cert_path"),
+		"sslkey":      getter.String("client_key_path"),
+		"sslcert":     getter.String("client_cert_path"),
 	}
 
 	// TODO: probably interesting:
@@ -84,8 +88,7 @@ func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	//	dsnKV["enable_experimental_alter_column_type_general"] = "true"
 
 	// TODO: do we want to support these options in the DSN as well?
-	//	"sslkey", "sslcert", "sslrootcert", "sslpassword", "sslsni", "krbspn",
-	//	"krbsrvname", "target_session_attrs", "service", "servicefile"
+	//	"sslpassword", "krbspn", "krbsrvname", "target_session_attrs", "service", "servicefile"
 
 	// More on Postgres connection string parameters:
 	//	https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING

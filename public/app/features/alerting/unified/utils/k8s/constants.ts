@@ -22,3 +22,8 @@ export enum K8sAnnotations {
   /** Annotation key that indicates that the calling user is able to delete this entity */
   AccessDelete = 'grafana.com/access/canDelete',
 }
+
+/**
+ * Special name that the K8S API expects to see/user for the root route in notification policies
+ */
+export const ROOT_ROUTE_NAME = 'user-defined';

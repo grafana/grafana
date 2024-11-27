@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { gt } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';
 import { Version } from '../types';
 
@@ -89,11 +90,22 @@ export const VersionInstallButton = ({
   };
 
   let label = 'Downgrade';
+  let hidden = false;
+  const isPreinstalled = isPreinstalledPlugin(pluginId);
 
   if (!installedVersion) {
     label = 'Install';
   } else if (gt(version.version, installedVersion)) {
     label = 'Upgrade';
+    if (isPreinstalled.withVersion) {
+      // Hide button if the plugin is preinstalled with a specific version
+      hidden = true;
+    }
+  } else {
+    if (isPreinstalled.found && Boolean(config.featureToggles.preinstallAutoUpdate)) {
+      // Hide the downgrade button if the plugin is preinstalled since it will be auto-updated
+      hidden = true;
+    }
   }
 
   return (
@@ -106,6 +118,7 @@ export const VersionInstallButton = ({
         variant={latestCompatibleVersion === version.version ? 'primary' : 'secondary'}
         onClick={onInstallClick}
         className={styles.button}
+        hidden={hidden}
       >
         {label} {isInstalling ? <Spinner className={styles.spinner} inline size="sm" /> : getIcon(label)}
       </Button>

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -77,8 +78,7 @@ type QueryJSONModel struct {
 }
 
 type ResponseOpts struct {
-	metricDataplane bool
-	logsDataplane   bool
+	logsDataplane bool
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -131,13 +131,30 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer, false)
 
-	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
-	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
-		return err
+	var rawLokiResponse RawLokiResponse
+	var err error
+
+	// suggestions is a resource endpoint that will return label and label value suggestions based
+	// on queries and the existing scope. By moving this to the backend we can use the logql parser to
+	// rewrite queries safely.
+	if req.Method == http.MethodPost && strings.EqualFold(req.Path, "suggestions") {
+		rawLokiResponse, err = GetSuggestions(ctx, api, req)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			plog.FromContext(ctx).Error("Failed to get suggestions from loki", "err", err)
+			return err
+		}
+	} else {
+		rawLokiResponse, err = api.RawQuery(ctx, lokiURL)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
+			return err
+		}
 	}
+
 	respHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
@@ -162,8 +179,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
+		logsDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
 	if isFeatureEnabled(ctx, featuremgmt.FlagLokiSendDashboardPanelNames) {
@@ -273,7 +289,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 	}
 
 	for _, frame := range res.Frames {
-		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
+		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
 
 		if err != nil {
 			plog.Error("Error adjusting frame", "error", err)
