@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -119,18 +120,26 @@ func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) error {
 	}
 }
 
-// ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+// Test implements provisioning.Repository.
+func (r *localRepository) validateRequest(ref string) error {
 	if ref != "" {
-		return nil, apierrors.NewBadRequest("local repository does not support ref")
+		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
-		return nil, &apierrors.StatusError{
+		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
 		}
+	}
+	return nil
+}
+
+// ReadResource implements provisioning.Repository.
+func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+	if err := r.validateRequest(ref); err != nil {
+		return nil, err
 	}
 
 	fullpath := filepath.Join(r.path, path)
@@ -164,59 +173,32 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 
 // ReadResource implements provisioning.Repository.
 func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
-	if ref != "" {
-		return nil, apierrors.NewBadRequest("local repository does not support ref")
-	}
-	if r.path == "" {
-		return nil, &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
-	}
-
-	return r.recursivelyReadTree(ctx, r.path)
-}
-
-func (r *localRepository) recursivelyReadTree(ctx context.Context, path string) ([]FileTreeEntry, error) {
-	osEntries, err := os.ReadDir(path)
-	if err != nil {
+	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
-	entries := make([]FileTreeEntry, 0, len(osEntries))
-	for _, oe := range osEntries {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
 
-		oePath := filepath.Join(path, oe.Name())
-		if oe.IsDir() {
-			entries = append(entries, FileTreeEntry{
-				Path: oePath,
-				Hash: "",
-				Size: 0,
-				Blob: false,
-			})
-			subEntries, err := r.recursivelyReadTree(ctx, oePath)
-			if err != nil {
-				return nil, err
-			}
-			entries = append(entries, subEntries...)
-		} else {
-			hash, size, err := r.calculateFileHash(ctx, oePath)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read and calculate hash of path %s: %w", oePath, err)
-			}
-			entries = append(entries, FileTreeEntry{
-				Path: oePath,
-				Blob: true,
-				Hash: hash,
-				Size: size,
-			})
+	rootlen := len(r.path)
+	entries := make([]FileTreeEntry, 0, 100)
+	err := filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
-	}
-	return entries, nil
+		entry := FileTreeEntry{
+			Path: strings.TrimLeft(path[rootlen:], "/"),
+			Size: info.Size(),
+		}
+		if !info.IsDir() {
+			entry.Blob = true
+			entry.Hash, _, err = r.calculateFileHash(ctx, path)
+			if err != nil {
+				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
+			}
+		}
+		entries = append(entries, entry)
+		return err
+	})
+
+	return entries, err
 }
 
 func (r *localRepository) calculateFileHash(ctx context.Context, path string) (string, int64, error) {
@@ -237,17 +219,8 @@ func (r *localRepository) calculateFileHash(ctx context.Context, path string) (s
 }
 
 func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
-	}
-
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	path = filepath.Join(r.path, path)
@@ -261,17 +234,8 @@ func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
-	}
-
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	path = filepath.Join(r.path, path)
@@ -282,17 +246,8 @@ func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
-	}
-
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	return os.Remove(filepath.Join(r.path, path))

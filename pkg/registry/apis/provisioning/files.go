@@ -65,7 +65,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.With("url", r.URL.Path)
+		query := r.URL.Query()
+		ref := query.Get("ref")
+		message := query.Get("message")
+		logger = logger.With("url", r.URL.Path, "ref", ref, "message", message)
+
 		prefix := fmt.Sprintf("/%s/files/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -75,9 +79,30 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := r.URL.Path[idx+len(prefix):]
-		if filePath == "" {
-			logger.DebugContext(r.Context(), "got an empty file path")
-			responder.Error(apierrors.NewBadRequest("missing path"))
+		if filePath == "" || strings.HasSuffix(filePath, "/") {
+			if len(filePath) > 0 {
+				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
+				return
+			}
+
+			rsp, err := repo.ReadTree(r.Context(), logger, ref)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			files := &provisioning.FileList{}
+			for _, v := range rsp {
+				if !v.Blob {
+					continue // folder item
+				}
+				files.Items = append(files.Items, provisioning.FileItem{
+					Path: v.Path,
+					Size: v.Size,
+					Hash: v.Hash,
+				})
+			}
+			responder.Object(http.StatusOK, files)
 			return
 		}
 
@@ -97,10 +122,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		var obj *provisioning.ResourceWrapper
-		ref := r.URL.Query().Get("ref")
-		message := r.URL.Query().Get("message")
-		logger = logger.With("ref", ref, "message", message)
-
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:

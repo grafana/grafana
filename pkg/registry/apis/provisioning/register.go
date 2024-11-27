@@ -153,17 +153,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger:        b.logger.With("connector", "hello_world"),
 	}
 
-	exportConnector := &exportConnector{
-		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "export"),
-	}
-	importConnector := &importConnector{
-		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "import"),
-	}
-
 	storage := map[string]rest.Storage{}
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
@@ -179,8 +168,16 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		client: b.client,
 		logger: b.logger.With("connector", "files"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
-	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = importConnector
+	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "import"),
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "export"),
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -464,6 +461,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+
 	// TODO: we might want to register some extras for subresources here.
 	sub := oas.Paths.Paths[repoprefix+"/hello"]
 	if sub != nil && sub.Get != nil {
@@ -521,8 +520,23 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.Parameters = []*spec3.Parameter{ref}
 	}
 
-	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/files")
+	// Show a special list command
+	sub = oas.Paths.Paths[repoprefix+"/files"]
+	if sub != nil {
+		delete(oas.Paths.Paths, repoprefix+"/files")
+		oas.Paths.Paths[repoprefix+"/files/"] = sub // add the trailing final slash
+		sub.Get.Description = "Get the files and content hash"
+		sub.Get.Summary = "File listing"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList"].Schema
+		mt["*/*"].Schema = &s
+	}
 
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
