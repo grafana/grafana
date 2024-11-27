@@ -1,12 +1,4 @@
-import {
-  FieldType,
-  Field,
-  formattedValueToString,
-  reduceField,
-  GrafanaTheme2,
-  FieldCalcs,
-  FormattedValue,
-} from '@grafana/data';
+import { FieldType, Field, formattedValueToString, reduceField } from '@grafana/data';
 
 import { TableRow } from '../types';
 
@@ -147,13 +139,7 @@ export interface TableFooterCalc {
   countRows?: boolean;
 }
 
-export function getFooterItemNG(
-  rows: TableRow[],
-  columnName: string,
-  field: Field,
-  options: TableFooterCalc | undefined,
-  theme: GrafanaTheme2
-): string {
+export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
   if (!options) {
     return '';
   }
@@ -167,34 +153,15 @@ export function getFooterItemNG(
     return '';
   }
 
-  let values = rows.map((row) => row[columnName]);
+  const value = reduceField({
+    field: {
+      ...field,
+      values: rows.map((row) => row[field.name]),
+    },
+    reducers: options.reducer,
+  })[calc];
 
-  // ...use above values array with reducer
-  // const reducer = fieldReducers.get(options.reducer[0]);
-  // console.log({ reducer });
-  const value = reduceValues(field, values, options.reducer)[calc];
-
-  // format reduced value to string using formatInfo (from field config)
-  const formattedValue = valueToDisplayValue(value, field);
-  // const formattedValue = getFormattedValue(field, options.reducer, theme);
-  console.log({ formattedValue });
+  const formattedValue = formattedValueToString(field.display!(value));
 
   return formattedValue;
-}
-
-export const valueToDisplayValue = (value: FormattedValue, field?: Field): string => {
-  if (field?.display) {
-    return formattedValueToString(field.display(value));
-  }
-
-  return formattedValueToString(value);
-};
-
-export function reduceValues(field: Field, values: number[], reducers: string[]): FieldCalcs {
-  const wrappedField: Field = {
-    ...field,
-    values: values,
-  };
-
-  return reduceField({ field: wrappedField, reducers });
 }

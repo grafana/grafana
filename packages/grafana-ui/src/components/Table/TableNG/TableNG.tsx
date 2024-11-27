@@ -8,6 +8,7 @@ import {
   DataFrame,
   Field,
   FieldType,
+  formattedValueToString,
   GrafanaTheme2,
   // ReducerID,
 } from '@grafana/data';
@@ -30,7 +31,7 @@ import {
 // import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
-import { getRowHeight, shouldTextOverflow, getFooterItemNG, valueToDisplayValue } from './utils';
+import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -244,8 +245,6 @@ export function TableNG(props: TableNGProps) {
   }, []);
 
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
-    console.log('mapFrameToDataGrid');
-    console.log({ rows });
     const columns: TableColumn[] = [];
 
     // Footer calculations
@@ -298,7 +297,6 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            console.log('renderSummaryCell');
             // return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
             // return <>{getFooterItemNG(rows, key, field, footerOptions, theme)}</>;
             return <>{calcsRef.current[fieldIndex]}</>;
@@ -379,8 +377,8 @@ export function TableNG(props: TableNGProps) {
 
     return sortedRows.filter((row) => {
       for (const [key, value] of filterValues) {
-        const field = props.data.fields.find((field) => field.name === key);
-        const displayedValue = valueToDisplayValue(row[key], field);
+        const field = props.data.fields.find((field) => field.name === key)!;
+        const displayedValue = formattedValueToString(field.display!(row[key]));
         if (!value.filteredSet.has(displayedValue)) {
           return false;
         }
@@ -389,13 +387,15 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const calcsRef = useRef<Array<string>>([]);
+  const calcsRef = useRef<string[]>([]);
   useMemo(() => {
-    calcsRef.current = [];
-    props.data.fields.forEach((field) => {
-      calcsRef.current.push(getFooterItemNG(filteredRows, field.name, field, footerOptions, theme));
+    calcsRef.current = props.data.fields.map((field) => {
+      if (field.state?.calcs) {
+        delete field.state?.calcs;
+      }
+      return getFooterItemNG(filteredRows, field, footerOptions);
     });
-  }, [filteredRows]);
+  }, [filteredRows, props.data.fields, footerOptions]);
 
   const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
