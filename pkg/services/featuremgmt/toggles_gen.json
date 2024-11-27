@@ -3132,6 +3132,20 @@
     },
     {
       "metadata": {
+        "name": "scopeApi",
+        "resourceVersion": "1732690644377",
+        "creationTimestamp": "2024-11-27T06:57:24Z"
+      },
+      "spec": {
+        "description": "In-development feature flag for the scope api using the app platform.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "hideFromAdminPage": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeFilters",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-03-05T15:41:19Z"
