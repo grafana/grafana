@@ -1,19 +1,9 @@
-import { css, cx } from '@emotion/css';
-import { useRef } from 'react';
-import { useClickAway } from 'react-use';
+import { css } from '@emotion/css';
+import { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneComponentProps,
-  SceneObject,
-  SceneObjectRef,
-  sceneGraph,
-  VizPanel,
-} from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
-import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
+import { SceneObjectState, SceneObjectBase, SceneObject, SceneObjectRef } from '@grafana/scenes';
+import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -24,144 +14,80 @@ export interface DashboardEditPaneState extends SceneObjectState {
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
-  private selectedHtmlElement: HTMLElement | null | undefined = null;
-
-  public selectObject(object: SceneObject, element?: HTMLElement) {
-    const current = this.state.selectedObject?.resolve();
-
-    if (current === object) {
+  public selectObject(obj: SceneObject) {
+    const currentSelection = this.state.selectedObject?.resolve();
+    if (currentSelection === obj) {
       this.setState({ selectedObject: undefined });
     } else {
-      this.setState({ selectedObject: object.getRef() });
-    }
-
-    this.selectedHtmlElement?.classList.remove('selected-dashboard-item');
-    this.selectedHtmlElement = element;
-
-    if (this.selectedHtmlElement) {
-      this.selectedHtmlElement.classList.add('selected-dashboard-item');
+      this.setState({ selectedObject: obj.getRef() });
     }
   }
+}
 
-  public clearSelection() {
-    if (this.state.selectedObject) {
-      this.setState({ selectedObject: undefined });
-    }
+export interface Props {
+  editPane: DashboardEditPane;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
 
-    if (this.selectedHtmlElement) {
-      this.selectedHtmlElement.classList.remove('selected-dashboard-item');
-      this.selectedHtmlElement = null;
+/**
+ * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
+ */
+export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse }: Props) {
+  // Activate the edit pane
+  useEffect(() => {
+    if (!editPane.state.selectedObject) {
+      const dashboard = getDashboardSceneFor(editPane);
+      editPane.setState({ selectedObject: dashboard.getRef() });
     }
+    editPane.activate();
+  }, [editPane]);
+
+  const { selectedObject } = editPane.useState();
+  const styles = useStyles2(getStyles);
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  if (!selectedObject) {
+    return null;
   }
 
-  public onClick = (evt: React.MouseEvent<HTMLDivElement>) => {
-    const dashboard = getDashboardSceneFor(this);
-    if (!dashboard.state.isEditing) {
-      return;
-    }
-
-    const target = evt.target as HTMLElement;
-    const isPanel = target.closest('[data-dashboard-selectable]');
-    const focusElement = target.closest('[tabindex]');
-
-    if (!isPanel) {
-      return;
-    }
-
-    const cancel = target.closest('.grid-drag-cancel');
-    if (cancel) {
-      return;
-    }
-
-    const panelKey = target.closest('[data-viz-panel-key]');
-    if (!panelKey) {
-      return;
-    }
-
-    const key = panelKey.getAttribute('data-viz-panel-key');
-    if (!key) {
-      return;
-    }
-
-    if (!(focusElement instanceof HTMLElement)) {
-      console.log('Tried to select element that cannot be focused');
-      return;
-    }
-
-    const panel = sceneGraph.findByKey(this, key);
-    if (panel instanceof VizPanel) {
-      this.selectObject(panel, focusElement);
-    }
-  };
-
-  public onFocus = (evt: React.FocusEvent<HTMLDivElement>) => {
-    // const target = evt.target as HTMLElement;
-    // const focusElement = target.closest('[tabindex]');
-    // const panelElement = target.closest('[data-viz-panel-key]');
-    // if (!panelElement) {
-    //   return;
-    // }
-    // const key = panelElement.getAttribute('data-viz-panel-key');
-    // if (!key) {
-    //   return;
-    // }
-    // if (!(focusElement instanceof HTMLElement)) {
-    //   console.log('Tried to select element that cannot be focused');
-    //   return;
-    // }
-    // const distance = getDistanceTo(target, panelElement);
-    // if (distance > 1) {
-    //   this.clearSelection();
-    //   console.log('distance too far', distance);
-    //   return;
-    // }
-    // const panel = sceneGraph.findByKey(this, key);
-    // if (panel instanceof VizPanel) {
-    //   this.toggleSelection(panel, focusElement);
-    // }
-  };
-
-  public onClickAway = () => {
-    this.setState({ selectedObject: undefined });
-
-    if (this.selectedHtmlElement) {
-      this.selectedHtmlElement?.classList.remove('selected-dashboard-item');
-      this.selectedHtmlElement = null;
-    }
-  };
-
-  public static Component = ({ model }: SceneComponentProps<DashboardEditPane>) => {
-    const { selectedObject } = model.useState();
-    const style = useStyles2(getStyles);
-    const paneRef = useRef<HTMLDivElement>(null);
-
-    useClickAway(paneRef, model.onClickAway);
-
-    if (!selectedObject) {
-      return null;
-    }
-
+  if (isCollapsed) {
     return (
-      <div className={cx(style.wrapper)} ref={paneRef}>
-        <ElementEditPane obj={selectedObject.resolve()} />
+      <div className={styles.expandOptionsWrapper}>
+        <ToolbarButton
+          tooltip={'Open options pane'}
+          icon={'arrow-to-right'}
+          onClick={onToggleCollapse}
+          variant="canvas"
+          className={styles.rotate180}
+          aria-label={'Open options pane'}
+        />
       </div>
     );
-  };
+  }
+
+  return (
+    <div className={styles.wrapper} ref={paneRef}>
+      <ElementEditPane obj={selectedObject.resolve()} />
+    </div>
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     wrapper: css({
-      right: 0,
-      top: TOP_BAR_LEVEL_HEIGHT * 2,
-      bottom: 0,
-      width: 280,
-      position: 'fixed',
-      background: theme.colors.background.primary,
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      zIndex: theme.zIndex.modal,
-      boxShadow: theme.shadows.z3,
-      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+      flex: '1 1 0',
+      overflow: 'auto',
+    }),
+    rotate180: css({
+      rotate: '180deg',
+    }),
+    expandOptionsWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2, 1),
     }),
   };
 }

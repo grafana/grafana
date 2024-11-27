@@ -37,6 +37,8 @@ func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr err
 }
 
 func TestAuth_Middleware(t *testing.T) {
+	ac := &actest.FakeAccessControl{}
+
 	type testCase struct {
 		desc           string
 		identity       *authn.Identity
@@ -105,7 +107,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode disabled should return 200 for authenticated user",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
 			identity:       &authn.Identity{ID: "1", Type: claims.TypeUser},
 			expecedReached: true,
 			expectedCode:   http.StatusOK,
@@ -113,7 +115,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode disabled should return 401 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: false}),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: false}, ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: false,
 			expectedCode:   http.StatusUnauthorized,
@@ -121,7 +123,7 @@ func TestAuth_Middleware(t *testing.T) {
 		{
 			desc:           "snapshot public mode enabled should return 200 for unauthenticated request",
 			path:           "/api/secure",
-			authMiddleware: SnapshotPublicModeOrSignedIn(&setting.Cfg{SnapshotPublicMode: true}),
+			authMiddleware: SnapshotPublicModeOrCreate(&setting.Cfg{SnapshotPublicMode: true}, ac),
 			authErr:        errors.New("no auth"),
 			expecedReached: true,
 			expectedCode:   http.StatusOK,

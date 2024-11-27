@@ -102,9 +102,9 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
     this.state.layout.addPanel(vizPanel);
   };
 
-  public onEdit = (domElement: HTMLDivElement) => {
+  public onEdit = () => {
     const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.selectObject(this, domElement);
+    dashboard.state.editPane.selectObject(this);
   };
 
   public static Component = ({ model }: SceneComponentProps<RowItem>) => {
@@ -132,9 +132,7 @@ export class RowItem extends SceneObjectBase<RowItemState> implements LayoutPare
               {titleInterpolated}
             </span>
           </button>
-          {isEditing && (
-            <Button icon="pen" variant="secondary" size="sm" fill="text" onClick={() => model.onEdit(ref.current!)} />
-          )}
+          {isEditing && <Button icon="pen" variant="secondary" size="sm" fill="text" onClick={() => model.onEdit()} />}
         </div>
         {!isCollapsed && <layout.Component model={layout} />}
       </div>

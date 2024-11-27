@@ -141,7 +141,7 @@ export interface EditableDashboardElement {
   /**
    * Panel Actions
    **/
-  renderActions(): React.ReactNode;
+  renderActions?(): React.ReactNode;
 }
 
 export function isEditableDashboardElement(obj: object): obj is EditableDashboardElement {

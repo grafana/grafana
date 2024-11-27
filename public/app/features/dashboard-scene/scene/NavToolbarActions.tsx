@@ -638,6 +638,24 @@ export function ToolbarActions({ dashboard }: Props) {
     },
   });
 
+  // Will open a schema v2 editor drawer. Only available with dashboardSchemaV2 feature toggle on.
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: uid && config.featureToggles.dashboardSchemaV2,
+    render: () => {
+      return (
+        <ToolbarButton
+          tooltip={'Edit dashboard v2 schema'}
+          icon={<Icon name="brackets-curly" size="lg" type="default" />}
+          key="schema-v2-button"
+          onClick={() => {
+            dashboard.openV2SchemaEditor();
+          }}
+        />
+      );
+    },
+  });
+
   const rigthActionsElements: React.ReactNode[] = renderActionElements(toolbarActions);
   const leftActionsElements: React.ReactNode[] = renderActionElements(leftActions);
   const hasActionsToLeftAndRight = showScopesSelector || leftActionsElements.length > 0;
