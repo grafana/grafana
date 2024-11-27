@@ -32,7 +32,6 @@ import {
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
@@ -134,9 +133,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
-  const [queryParams] = useURLSearchParams();
   const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isNewFromQueryParams = queryParams.has('defaults') && !editingExistingRule;
 
   const initialState = {
     queries: getValues('queries'),
@@ -172,7 +169,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const { simpleCondition, setSimpleCondition } = useAdvancedMode(
     simplifiedQueryInForm,
     isGrafanaAlertingType,
-    isNewFromQueryParams,
     dataQueries,
     expressionQueries
   );
@@ -771,7 +767,7 @@ const useSetExpressionAndDataSource = () => {
   };
 };
 
-function isExpressionQueryInAlert(
+export function isExpressionQueryInAlert(
   query: AlertQuery<AlertDataQuery | ExpressionQuery>
 ): query is AlertQuery<ExpressionQuery> {
   return isExpressionQuery(query.model);

@@ -67,7 +67,11 @@ import { GrafanaFolderAndLabelsStep } from '../GrafanaFolderAndLabelsStep';
 import { NotificationsStep } from '../NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
 import { RuleInspector } from '../RuleInspector';
-import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
+import {
+  areQueriesTransformableToSimpleCondition,
+  isExpressionQueryInAlert,
+  QueryAndExpressionsStep,
+} from '../query-and-alert-condition/QueryAndExpressionsStep';
 import { translateRouteParamToRuleType } from '../util';
 
 type Props = {
@@ -386,15 +390,17 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
     };
   }
 
-  return setInstantOrRange(
-    ignoreHiddenQueries({
-      ...getDefaultFormValues(),
-      ...ruleFromQueryParams,
-      annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
-      queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
-      type: type || RuleFormType.grafana,
-      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
-    })
+  return setQueryEditorSettings(
+    setInstantOrRange(
+      ignoreHiddenQueries({
+        ...getDefaultFormValues(),
+        ...ruleFromQueryParams,
+        annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+        queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+        type: type || RuleFormType.grafana,
+        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+      })
+    )
   );
 }
 
@@ -403,6 +409,23 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
+  // data queries only
+  const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
+
+  // expression queries only
+  const expressionQueries = values.queries.filter((query) => isExpressionQueryInAlert(query));
+
+  const queryParamsAreTransformable = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
+  return {
+    ...values,
+    editorSettings: {
+      simplifiedQueryEditor: queryParamsAreTransformable,
+      simplifiedNotificationEditor: false,
+    },
+  };
 }
 
 function setInstantOrRange(values: RuleFormValues): RuleFormValues {
