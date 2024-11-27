@@ -153,7 +153,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 		// TODO: the top-most folder's parent must be the repo folder.
 	}
 
-	parent := path.Base(filePath)
+	parent := path.Base(path.Dir(filePath))
 	if parent == "." || parent == "/" {
 		return "", nil
 	}
