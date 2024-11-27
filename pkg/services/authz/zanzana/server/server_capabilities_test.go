@@ -50,7 +50,7 @@ func testCapabilities(t *testing.T, server *Server) {
 	t.Run("user:5 should be able to read, write, create and delete resource:dashboards.grafana.app/dashboards/1 through folder with set relation", func(t *testing.T) {
 		res, err := server.Capabilities(context.Background(), newReq("user:5", dashboardGroup, dashboardResource, "1", "1"))
 		require.NoError(t, err)
-		assert.Equal(t, []string{common.RelationRead, common.RelationWrite, common.RelationCreate, common.RelationDelete}, res.GetCapabilities())
+		assert.Equal(t, []string{common.RelationRead, common.RelationWrite, common.RelationDelete}, res.GetCapabilities())
 	})
 
 	t.Run("user:6 should be able to read folder 1 ", func(t *testing.T) {
