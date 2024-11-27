@@ -46,7 +46,7 @@ class LegacyDashboardAPI implements DashboardAPI {
   }
 }
 
-interface DashboardWithAccessInfo extends Resource<DashboardDataDTO, 'DashboardWithAccessInfo'> {
+export interface DashboardWithAccessInfo<T = DashboardDataDTO> extends Resource<T, 'DashboardWithAccessInfo'> {
   access: Object; // TODO...
 }
 
