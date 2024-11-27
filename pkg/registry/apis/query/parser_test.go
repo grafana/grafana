@@ -29,7 +29,7 @@ type parserTestObject struct {
 func TestQuerySplitting(t *testing.T) {
 	ctx := context.Background()
 	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
-		&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest())
+		&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil)
 
 	t.Run("missing datasource flavors", func(t *testing.T) {
 		split, err := parser.parseRequest(ctx, &query.QueryDataRequest{
