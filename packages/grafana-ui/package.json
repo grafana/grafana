@@ -122,7 +122,6 @@
     "@storybook/addon-actions": "^8.4.2",
     "@storybook/addon-docs": "^8.4.2",
     "@storybook/addon-essentials": "^8.4.2",
-    "@storybook/addon-mdx-gfm": "^8.4.2",
     "@storybook/addon-storysource": "^8.4.2",
     "@storybook/addon-webpack5-compiler-swc": "^1.0.5",
     "@storybook/blocks": "^8.4.2",
