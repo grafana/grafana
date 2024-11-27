@@ -83,28 +83,32 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation, name string,
 func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, resource, name, folder string, store *storeInfo) (*authzv1.CheckResponse, error) {
 	groupResource := structpb.NewStringValue(common.FormatGroupResource(group, resource))
 
-	// Check if subject has direct access to resource
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
-		StoreId:              store.ID,
-		AuthorizationModelId: store.ModelID,
-		TupleKey: &openfgav1.CheckRequestTupleKey{
-			User:     subject,
-			Relation: relation,
-			Object:   common.NewResourceIdent(group, resource, name),
-		},
-		Context: &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"requested_group": groupResource,
+	// Create relation can only exist on namespace or folder level.
+	// So we skip direct resource access check.
+	if relation != common.RelationCreate {
+		// Check if subject has direct access to resource
+		res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+			StoreId:              store.ID,
+			AuthorizationModelId: store.ModelID,
+			TupleKey: &openfgav1.CheckRequestTupleKey{
+				User:     subject,
+				Relation: relation,
+				Object:   common.NewResourceIdent(group, resource, name),
 			},
-		},
-	})
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"requested_group": groupResource,
+				},
+			},
+		})
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	if res.GetAllowed() {
-		return &authzv1.CheckResponse{Allowed: true}, nil
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: true}, nil
+		}
 	}
 
 	if folder == "" {
@@ -112,7 +116,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation, group, res
 	}
 
 	// Check if subject has access as a sub resource for the folder
-	res, err = s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{

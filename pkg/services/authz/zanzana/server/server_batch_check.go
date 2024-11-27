@@ -60,6 +60,8 @@ func (s *Server) batchCheckItem(
 		if err != nil {
 			return nil, err
 		}
+
+		allowed = res.GetAllowed()
 		groupResourceAccess[groupResource] = res.GetAllowed()
 	}
 

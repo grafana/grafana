@@ -21,7 +21,7 @@ func (s *Server) Capabilities(ctx context.Context, r *authzextv1.CapabilitiesReq
 
 func (s *Server) capabilitiesTyped(ctx context.Context, r *authzextv1.CapabilitiesRequest, info common.TypeInfo, store *storeInfo) (*authzextv1.CapabilitiesResponse, error) {
 	out := make([]string, 0, len(common.ResourceRelations))
-	for _, relation := range common.ResourceRelations {
+	for _, relation := range info.Relations {
 		res, err := s.checkNamespace(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 		if err != nil {
 			return nil, err
