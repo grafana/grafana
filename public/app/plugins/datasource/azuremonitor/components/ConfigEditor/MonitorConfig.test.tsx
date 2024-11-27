@@ -74,7 +74,11 @@ describe('MonitorConfig', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getByText((content, element) => element?.tagName?.toLowerCase() === 'span' && /Current User/i.test(content))).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          (content, element) => element?.tagName?.toLowerCase() === 'span' && /Current User/i.test(content)
+        )
+      ).toBeInTheDocument();
     });
   });
 
