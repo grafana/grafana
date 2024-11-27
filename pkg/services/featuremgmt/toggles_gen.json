@@ -1395,6 +1395,20 @@
     },
     {
       "metadata": {
+        "name": "exploreMetricsRemoveOverviewTab",
+        "resourceVersion": "1732715340262",
+        "creationTimestamp": "2024-11-27T13:49:00Z"
+      },
+      "spec": {
+        "description": "Remove overview tab from selected metric view.",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-17T00:59:11Z"
