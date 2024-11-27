@@ -414,7 +414,8 @@ func zanzanaCollector(relations []string) zanzanaTupleCollector {
 
 			for c != "" {
 				res, err := client.Read(ctx, &authzextv1.ReadRequest{
-					Namespace: namespace,
+					ContinuationToken: c,
+					Namespace:         namespace,
 					TupleKey: &authzextv1.ReadRequestTupleKey{
 						Object:   object,
 						Relation: relation,
