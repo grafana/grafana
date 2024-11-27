@@ -1379,6 +1379,13 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:        "azureMonitorEnableUserAuth",
+			Description: "Enables user auth for Azure Monitor datasource only",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
+		},
 	}
 )
 
