@@ -39,7 +39,7 @@ import {
 } from './shared';
 import { getDataSource, getTrailFor, getUrlForTrail } from './utils';
 
-const relatedLogsFeatureEnabled = config.featureToggles.exploreMetricsRelatedLogs;
+const { exploreMetricsRelatedLogs, exploreMetricsRemoveOverviewTab } = config.featureToggles;
 
 export interface MetricSceneState extends SceneObjectState {
   body: MetricGraphScene;
@@ -68,7 +68,7 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 
   private _onActivate() {
     if (this.state.actionView === undefined) {
-      this.setActionView('overview');
+      this.setActionView(exploreMetricsRemoveOverviewTab ? 'breakdown' : 'overview');
     }
 
     if (config.featureToggles.enableScopesInMetricsExplore) {
@@ -123,7 +123,6 @@ export class MetricScene extends SceneObjectBase<MetricSceneState> {
 }
 
 const actionViewsDefinitions: ActionViewDefinition[] = [
-  { displayName: 'Overview', value: 'overview', getScene: buildMetricOverviewScene },
   { displayName: 'Breakdown', value: 'breakdown', getScene: buildLabelBreakdownActionScene },
   {
     displayName: 'Related metrics',
@@ -133,7 +132,15 @@ const actionViewsDefinitions: ActionViewDefinition[] = [
   },
 ];
 
-if (relatedLogsFeatureEnabled) {
+if (!exploreMetricsRemoveOverviewTab) {
+  actionViewsDefinitions.unshift({
+    displayName: 'Overview',
+    value: 'overview',
+    getScene: buildMetricOverviewScene,
+  });
+}
+
+if (exploreMetricsRelatedLogs) {
   actionViewsDefinitions.push({
     displayName: 'Related logs',
     value: 'related_logs',
