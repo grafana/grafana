@@ -33,9 +33,9 @@ composableKinds: PanelCfg: {
 					wrapLogMessage:          bool
 					prettifyLogMessage:      bool
 					enableLogDetails:        bool
-					enableInfiniteScrolling: bool
 					sortOrder:            common.LogsSortOrder
 					dedupStrategy:        common.LogsDedupStrategy
+					enableInfiniteScrolling?: bool
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _
 					onClickFilterOutLabel?:  _
@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					onClickHideField?:       _
 					logRowMenuIconsBefore?:  _
 					logRowMenuIconsAfter?:   _
+					onNewLogsReceived?:      _
 					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
 			}

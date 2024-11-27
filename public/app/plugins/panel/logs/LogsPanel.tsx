@@ -29,13 +29,13 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
-import { combineResponses } from '@grafana/o11y-ds-frontend/src/combineResponses';
 import { config } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
 import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
@@ -50,7 +50,9 @@ import {
   isOnClickFilterString,
   isOnClickHideField,
   isOnClickShowField,
+  isOnNewLogsReceivedType,
   isReactNodeArray,
+  onNewLogsReceivedType,
   Options,
 } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -118,6 +120,7 @@ export const LogsPanel = ({
     logRowMenuIconsBefore,
     logRowMenuIconsAfter,
     enableInfiniteScrolling,
+    onNewLogsReceived,
     ...options
   },
   id,
@@ -361,9 +364,11 @@ export const LogsPanel = ({
       loadingRef.current = true;
       setInfiniteScrolling(true);
 
+      const onNewLogsReceivedCallback = isOnNewLogsReceivedType(onNewLogsReceived) ? onNewLogsReceived : undefined;
+
       let newSeries: DataFrame[] = [];
       try {
-        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone);
+        newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
       } catch (e) {
         console.error(e);
       } finally {
@@ -376,7 +381,7 @@ export const LogsPanel = ({
         series: newSeries,
       });
     },
-    [data.request, dataSourcesMap, panelData, timeZone]
+    [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
   );
 
   if (!data || logRows.length === 0) {
@@ -540,7 +545,8 @@ async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
   timeRange: AbsoluteTimeRange,
-  timeZone: TimeZone
+  timeZone: TimeZone,
+  onNewLogsReceived?: onNewLogsReceivedType
 ) {
   if (!panelData.request) {
     return [];
@@ -570,16 +576,21 @@ async function requestMoreLogs(
   }
 
   const responses = await Promise.all(dataRequests);
-  let newSeries = panelData.series;
+  let updatedSeries = panelData.series;
   for (const response of responses) {
     const newData = isObservable(response) ? await lastValueFrom(response) : response;
-    newSeries = combineResponses(
+    
+    updatedSeries = combineResponses(
       {
-        data: newSeries,
+        data: updatedSeries,
       },
       { data: newData.data }
     ).data;
+
+    if (onNewLogsReceived) {
+      onNewLogsReceived(updatedSeries, newData.data);
+    }
   }
 
-  return newSeries;
+  return updatedSeries;
 }
