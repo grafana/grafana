@@ -1,11 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.tsx
-import { css } from '@emotion/css';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { useEffect, useReducer } from 'react';
 
 import { PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { PromQuery } from '../../types';
@@ -74,10 +72,9 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
   if (!state.visQuery) {
     return null;
   }
-  const styles = useStyles2(getPromQueryBuilderContainerStyles);
 
   return (
-    <span className={styles.addaptToParent}>
+    <>
       <PromQueryBuilder
         query={state.visQuery}
         datasource={datasource}
@@ -87,14 +84,9 @@ export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps)
         showExplain={showExplain}
       />
       {<QueryPreview query={query.expr} />}
-    </span>
+    </>
   );
 }
-const getPromQueryBuilderContainerStyles = () => ({
-  addaptToParent: css({
-    maxWidth: '100%',
-  }),
-});
 
 const initialState: State = {
   expr: '',
