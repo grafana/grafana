@@ -78,7 +78,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
       <form onSubmit={handleSubmit(renderImage)}>
         <Stack gap={1} justifyContent="space-between" direction={{ xs: 'column', sm: 'row' }}>
           <Field
-            label="Width"
+            label={t('share-panel-image.settings.width-label', 'Width')}
             className={styles.imageConfigurationField}
             required
             invalid={!!errors.width}
@@ -96,11 +96,10 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
               placeholder="1000"
               type="number"
               suffix="px"
-              min={1}
             />
           </Field>
           <Field
-            label="Height"
+            label={t('share-panel-image.settings.height-label', 'Height')}
             className={styles.imageConfigurationField}
             required
             invalid={!!errors.height}
@@ -121,7 +120,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
             />
           </Field>
           <Field
-            label={'Scale factor'}
+            label={t('share-panel-image.settings.scale-factor-label', 'Scale factor')}
             className={styles.imageConfigurationField}
             required
             invalid={!!errors.scaleFactor}
@@ -172,7 +171,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
           </div>
         </div>
       )}
-      {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-img" className={styles.image} />}
+      {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
       {error && (
         <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')} />
       )}
