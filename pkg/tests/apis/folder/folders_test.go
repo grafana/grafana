@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -762,6 +763,156 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 			if tc.expectedCode == http.StatusOK {
 				require.Equal(t, "uid", resp.Result.UID)
 				require.Equal(t, "Folder", resp.Result.Title)
+			}
+		})
+	}
+}
+
+func TestIntegrationFolderGetPermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		description          string
+		permissions          []resourcepermissions.SetResourcePermissionCommand
+		expectedCode         int
+		expectedParentUIDs   []string
+		expectedParentTitles []string
+		checkAccessControl   bool
+	}
+	tcs := []testCase{
+		{
+			description:          "get folder by UID should return parent folders if nested folder are enabled",
+			expectedCode:         http.StatusOK,
+			expectedParentUIDs:   []string{"parentuid"},
+			expectedParentTitles: []string{"testparent"},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{dashboards.ActionFoldersRead},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			},
+			checkAccessControl: true,
+		},
+		{
+			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			expectedCode:         http.StatusOK,
+			expectedParentUIDs:   []string{api.REDACTED},
+			expectedParentTitles: []string{api.REDACTED},
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{dashboards.ActionFoldersRead},
+					Resource:          "folders",
+					ResourceAttribute: "uid",
+					ResourceID:        "descuid",
+				},
+			},
+		},
+		{
+			description:          "get folder by UID should not succeed if user doesn't have permissions for the folder",
+			expectedCode:         http.StatusForbidden,
+			expectedParentUIDs:   []string{},
+			expectedParentTitles: []string{},
+			permissions:          []resourcepermissions.SetResourcePermissionCommand{},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: grafanarest.Mode1,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+					featuremgmt.FlagNestedFolders,
+					featuremgmt.FlagKubernetesFolders,
+				},
+			})
+
+			// Create parent folder
+			parentPayload := `{
+				"title": "testparent",
+				"uid": "parentuid"
+				}`
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			parentUID := parentCreate.Result.UID
+			require.NotEmpty(t, parentUID)
+
+			// Create descendant folder
+			payload := "{ \"uid\": \"descuid\", \"title\": \"Folder\", \"parentUid\": \"parentuid\"}"
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(payload),
+			}, &dtos.Folder{})
+			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+
+			user := helper.CreateUser("user", apis.Org1, org.RoleNone, tc.permissions)
+
+			// Get with accesscontrol disabled
+			getResp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodGet,
+				Path:   "/api/folders/descuid",
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+			require.NotNil(t, getResp.Result)
+
+			require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
+			require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+
+			parents := getResp.Result.Parents
+			require.Equal(t, len(tc.expectedParentUIDs), len(parents))
+			require.Equal(t, len(tc.expectedParentTitles), len(parents))
+			for i := 0; i < len(tc.expectedParentUIDs); i++ {
+				require.Equal(t, tc.expectedParentUIDs[i], parents[i].UID)
+				require.Equal(t, tc.expectedParentTitles[i], parents[i].Title)
+			}
+
+			// Get with accesscontrol enabled
+			if tc.checkAccessControl {
+				acPerms := []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           []string{dashboards.ActionFoldersRead},
+						Resource:          "folders",
+						ResourceAttribute: "uid",
+						ResourceID:        "*",
+					},
+					{
+						Actions:           []string{dashboards.ActionFoldersWrite},
+						Resource:          "folders",
+						ResourceAttribute: "uid",
+						ResourceID:        "parentuid",
+					},
+				}
+				acUser := helper.CreateUser("acuser", apis.Org1, org.RoleNone, acPerms)
+
+				getWithAC := apis.DoRequest(helper, apis.RequestParams{
+					User:   acUser,
+					Method: http.MethodGet,
+					Path:   "/api/folders/descuid?accesscontrol=true",
+				}, &dtos.Folder{})
+				require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
+				require.NotNil(t, getWithAC.Result)
+
+				require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
+				require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
 			}
 		})
 	}

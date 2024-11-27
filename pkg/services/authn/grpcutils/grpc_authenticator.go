@@ -27,11 +27,7 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 	)
 }
 
-func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGrpcServerConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
@@ -42,7 +38,7 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	}
 
 	client := http.DefaultClient
-	if cfg.Env == setting.Dev {
+	if authCfg.AllowInsecure {
 		// allow insecure connections in development mode to facilitate testing
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	}
@@ -87,7 +83,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return nil, err
 	}
 
-	authenticator, err := NewGrpcAuthenticator(cfg, tracer)
+	authenticator, err := NewGrpcAuthenticator(authCfg, tracer)
 	if err != nil {
 		return nil, err
 	}

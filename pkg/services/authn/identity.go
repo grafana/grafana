@@ -80,7 +80,6 @@ type Identity struct {
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
-// Access implements claims.AuthInfo.
 func (i *Identity) GetAccess() claims.AccessClaims {
 	if i.AccessTokenClaims != nil {
 		return authn.NewAccessClaims(*i.AccessTokenClaims)
@@ -88,7 +87,6 @@ func (i *Identity) GetAccess() claims.AccessClaims {
 	return &identity.IDClaimsWrapper{Source: i}
 }
 
-// Identity implements claims.AuthInfo.
 func (i *Identity) GetIdentity() claims.IdentityClaims {
 	if i.IDTokenClaims != nil {
 		return authn.NewIdentityClaims(*i.IDTokenClaims)
@@ -96,27 +94,22 @@ func (i *Identity) GetIdentity() claims.IdentityClaims {
 	return &identity.IDClaimsWrapper{Source: i}
 }
 
-// GetRawIdentifier implements Requester.
 func (i *Identity) GetRawIdentifier() string {
 	return i.UID
 }
 
-// GetInternalID implements Requester.
 func (i *Identity) GetInternalID() (int64, error) {
 	return identity.IntIdentifier(i.GetID())
 }
 
-// GetIdentityType implements Requester.
 func (i *Identity) GetIdentityType() claims.IdentityType {
 	return i.Type
 }
 
-// GetIdentityType implements Requester.
 func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(i.GetIdentityType(), expected...)
 }
 
-// GetExtra implements identity.Requester.
 func (i *Identity) GetExtra() map[string][]string {
 	extra := map[string][]string{}
 	if i.IDToken != "" {
@@ -128,14 +121,18 @@ func (i *Identity) GetExtra() map[string][]string {
 	return extra
 }
 
-// GetGroups implements identity.Requester.
 func (i *Identity) GetGroups() []string {
 	return []string{} // teams?
 }
 
-// GetName implements identity.Requester.
 func (i *Identity) GetName() string {
-	return i.Name
+	if i.Name != "" {
+		return i.Name
+	}
+	if i.Login != "" {
+		return i.Login
+	}
+	return i.Email
 }
 
 func (i *Identity) GetID() string {
@@ -163,10 +160,6 @@ func (i *Identity) GetCacheKey() string {
 	}
 
 	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.Type, id)
-}
-
-func (i *Identity) GetDisplayName() string {
-	return i.Name
 }
 
 func (i *Identity) GetEmail() string {
