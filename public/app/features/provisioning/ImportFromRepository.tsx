@@ -14,9 +14,9 @@ interface Props {
   folder?: string;
 }
 
-export function DashboardImportFromRepository({ name, folder }: Props) {
+export function ImportFromRepository({ name, folder }: Props) {
   const query = useListRepositoryQuery();
-  const [importDashboard, importQuery] = useCreateRepositoryImportMutation();
+  const [importResource, importQuery] = useCreateRepositoryImportMutation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,6 +26,7 @@ export function DashboardImportFromRepository({ name, folder }: Props) {
         type: AppEvents.alertSuccess.name,
         payload: ['Resources imported'],
       });
+      // TODO the URL will be different based on the type of resource imported
       navigate(`/dashboards${folder ? `/f/${folder}` : ''}`);
     } else if (importQuery.isError) {
       appEvents.publish({
@@ -40,7 +41,7 @@ export function DashboardImportFromRepository({ name, folder }: Props) {
       return;
     }
 
-    importDashboard({ name, ref: 'main' });
+    importResource({ name, ref: 'main' });
   };
 
   if (query.isLoading) {
