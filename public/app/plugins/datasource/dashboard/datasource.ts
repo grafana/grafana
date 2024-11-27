@@ -1,4 +1,4 @@
-import { Observable, defer, finalize, map, of } from 'rxjs';
+import { Observable, defer, finalize, map, of, take } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -18,6 +18,8 @@ import {
   getVizPanelKeyForPanelId,
 } from 'app/features/dashboard-scene/utils/utils';
 
+import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
+
 import { DashboardQuery } from './types';
 
 /**
@@ -35,10 +37,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   query(options: DataQueryRequest<DashboardQuery>): Observable<DataQueryResponse> {
     const sceneScopedVar: ScopedVar | undefined = options.scopedVars?.__sceneObject;
     let scene: SceneObject | undefined = sceneScopedVar ? (sceneScopedVar.value.valueOf() as SceneObject) : undefined;
-
-    if (options.requestId.indexOf('mixed') > -1) {
-      throw new Error('Dashboard data source cannot be used with Mixed data source.');
-    }
 
     if (!scene) {
       throw new Error('Can only be called from a scene');
@@ -88,6 +86,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             key: 'source-ds-provider',
           };
         }),
+        this.takeOneIfWithinMixedDS(options.requestId),
         finalize(() => cleanUp?.())
       );
     });
@@ -110,6 +109,14 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
   private findSourcePanel(scene: SceneObject, panelId: number) {
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+  }
+
+  private takeOneIfWithinMixedDS(
+    requestId: string
+  ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
+    return (source: Observable<DataQueryResponse>) => {
+      return requestId.includes(MIXED_REQUEST_PREFIX) ? source.pipe(take(1)) : source;
+    };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

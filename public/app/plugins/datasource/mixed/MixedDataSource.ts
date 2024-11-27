@@ -16,8 +16,10 @@ import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/run
 import { CustomFormatterVariable } from '@grafana/scenes';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
+export const MIXED_REQUEST_PREFIX = 'mixed-';
 
-export const mixedRequestId = (queryIdx: number, requestId?: string) => `mixed-${queryIdx}-${requestId || ''}`;
+export const mixedRequestId = (queryIdx: number, requestId?: string) =>
+  `${MIXED_REQUEST_PREFIX}${queryIdx}-${requestId || ''}`;
 
 export interface BatchedQueries {
   datasource: Promise<DataSourceApi>;
