@@ -14,7 +14,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { config, locationSearchToObject, UserStorage } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -97,8 +97,9 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     );
   }
 
+  console.log('Plugin root?', plugin.meta);
   const pluginRoot = plugin.root && (
-    <PluginContextProvider meta={plugin.meta}>
+    <PluginContextProvider meta={plugin.meta} userStorage={new UserStorage(plugin.meta.id)}>
       <ExtensionRegistriesProvider
         registries={{
           addedLinksRegistry: addedLinksRegistry.readOnly(),

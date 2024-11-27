@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
 import { PluginContextProvider, PluginLoadingStrategy, PluginMeta, PluginType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, UserStorage } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
@@ -218,6 +218,7 @@ describe('usePluginComponent()', () => {
             },
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
@@ -275,6 +276,7 @@ describe('usePluginComponent()', () => {
             },
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
@@ -306,6 +308,7 @@ describe('usePluginComponent()', () => {
             },
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>

@@ -260,3 +260,8 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
     this.meta = {} as T;
   }
 }
+
+export interface UserStorage {
+  getItem(key: string): Promise<string | null>;
+  setItem(key: string, value: string): Promise<void>;
+}
