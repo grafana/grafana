@@ -412,6 +412,18 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
 }
 
 function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
+  const isQuerySwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+
+  if (!isQuerySwitchModeEnabled) {
+    return {
+      ...values,
+      editorSettings: {
+        simplifiedQueryEditor: false,
+        simplifiedNotificationEditor: true, // actually it doesn't matter in this case
+      },
+    };
+  }
+
   // data queries only
   const dataQueries = values.queries.filter((query) => !isExpressionQuery(query.model));
 
@@ -423,7 +435,7 @@ function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
     ...values,
     editorSettings: {
       simplifiedQueryEditor: queryParamsAreTransformable,
-      simplifiedNotificationEditor: false,
+      simplifiedNotificationEditor: true,
     },
   };
 }
