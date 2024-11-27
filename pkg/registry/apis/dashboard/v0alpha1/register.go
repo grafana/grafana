@@ -11,6 +11,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardinternal "github.com/grafana/grafana/pkg/apis/dashboard"
 	dashboardv0alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -44,6 +45,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboard.DashboardStorage
+	search        *dashboard.SearchHandler
 	unified       resource.ResourceClient
 
 	log log.Logger
@@ -74,6 +76,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
 		unified:          unified,
+		search:           dashboard.NewSearchHandler(unified, tracing),
 
 		legacy: &dashboard.DashboardStorage{
 			Resource:       dashboardv0alpha1.DashboardResourceInfo,
@@ -177,14 +180,6 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Requires hack in to resolve with no name:
-	// pkg/services/apiserver/builder/helper.go#L58
-	storage["search"], err = dashboard.NewSearchConnector(b.unified,
-		func() runtime.Object { return &dashboardv0alpha1.DashboardWithAccessInfo{} }) // TODO... replace with a real model
-	if err != nil {
-		return err
-	}
-
 	// Expose read only library panels
 	storage[dashboardv0alpha1.LibraryPanelResourceInfo.StoragePath()] = &dashboard.LibraryPanelStore{
 		Access:       b.legacy.Access,
@@ -224,5 +219,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	return nil // no custom API routes
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+	return b.search.GetAPIRoutes(defs)
 }

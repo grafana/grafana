@@ -153,7 +153,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
-	"github.com/grafana/grafana/pkg/services/unifiedSearch"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -238,8 +237,6 @@ var wireBasicSet = wire.NewSet(
 	search.ProvideService,
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,
-	unifiedSearch.ProvideService,
-	unifiedSearch.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
 	live.ProvideService,
