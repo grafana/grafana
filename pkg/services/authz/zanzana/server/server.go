@@ -20,6 +20,8 @@ const (
 	resourceType     = "resource"
 	namespaceType    = "namespace"
 	folderTypePrefix = "folder:"
+
+	cacheCleanInterval = 2 * time.Minute
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
@@ -76,7 +78,7 @@ func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...
 		storesMU:      &sync.Mutex{},
 		stores:        make(map[string]storeInfo),
 		cfg:           cfg.Zanzana,
-		cache:         localcache.New(cfg.Zanzana.CheckQueryCacheTTL, 2*time.Minute),
+		cache:         localcache.New(cfg.Zanzana.CheckQueryCacheTTL, cacheCleanInterval),
 	}
 
 	for _, o := range opts {

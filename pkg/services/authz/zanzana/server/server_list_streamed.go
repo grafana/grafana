@@ -12,12 +12,15 @@ import (
 
 func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
 	if !s.cfg.CheckQueryCache {
-		return s.streamedListObjectsWrapper(ctx, req)
+		return s.listObjectsWithStream(ctx, req)
 	}
 	return s.streamedListObjectsCached(ctx, req)
 }
 
 func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.streamedListObjectsCached")
+	defer span.End()
+
 	reqHash, err := getRequestHash(req)
 	if err != nil {
 		return nil, err
@@ -27,7 +30,7 @@ func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.L
 		return res.(*openfgav1.ListObjectsResponse), nil
 	}
 
-	res, err := s.streamedListObjectsWrapper(ctx, req)
+	res, err := s.listObjectsWithStream(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,8 +38,8 @@ func (s *Server) streamedListObjectsCached(ctx context.Context, req *openfgav1.L
 	return res, nil
 }
 
-func (s *Server) streamedListObjectsWrapper(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	ctx, span := tracer.Start(ctx, "authzServer.streamedListObjects")
+func (s *Server) listObjectsWithStream(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	ctx, span := tracer.Start(ctx, "authzServer.listObjectsWithStream")
 	defer span.End()
 
 	r := &openfgav1.StreamedListObjectsRequest{
