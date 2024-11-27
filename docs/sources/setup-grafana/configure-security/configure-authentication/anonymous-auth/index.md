@@ -19,6 +19,12 @@ You can make Grafana accessible without any login required by enabling anonymous
 Anonymous users are charged as active users in Grafana Enterprise
 {{< /admonition >}}
 
+## Before you begin
+
+To see the devices, you need:
+
+- Permissions `users:read` which is normally only granted to server admins, that allow you to read users and devices tab.
+
 ## Anonymous devices
 
 The anonymous devices feature enhances the management and monitoring of anonymous access within your Grafana instance. This feature is part of ongoing efforts to provide more control and transparency over anonymous usage.
