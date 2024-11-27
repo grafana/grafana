@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -152,14 +153,14 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 		},
 		{
 			desc:           "Should resolve UID based identifier to the corresponding ID",
-			filters:        "?namespacedId=users:user_2_uid",
+			filters:        "?namespacedId=user:user_2_uid",
 			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
 			expectedCode:   http.StatusOK,
 			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
 		},
 		{
 			desc:         "Should fail if cannot resolve UID based identifier",
-			filters:      "?namespacedId=users:non_existent_uid",
+			filters:      "?namespacedId=user:non_existent_uid",
 			permissions:  map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
 			expectedCode: http.StatusBadRequest,
 		},
@@ -189,8 +190,8 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedUsersPermissions: tt.permissions}
 			accessControl := actest.FakeAccessControl{ExpectedEvaluate: true} // Always allow access to the endpoint
 			mockUserSvc := usertest.NewMockService(t)
-			mockUserSvc.On("GetByUID", &user.GetUserByUIDQuery{UID: "user_2_uid"}).Return(&user.User{ID: 2}, nil).Maybe()
-			mockUserSvc.On("GetByUID", &user.GetUserByUIDQuery{UID: "non_existent_uid"}).Return(nil, user.ErrUserNotFound).Maybe()
+			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "user_2_uid"}).Return(&user.User{ID: 2}, nil).Maybe()
+			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "non_existent_uid"}).Return(nil, user.ErrUserNotFound).Maybe()
 			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
 			api.RegisterAPIEndpoints()
 
