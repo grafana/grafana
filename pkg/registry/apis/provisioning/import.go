@@ -11,6 +11,7 @@ import (
 
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -21,7 +22,7 @@ import (
 
 type importConnector struct {
 	repoGetter RepoGetter
-	client     *resourceClient
+	client     *resources.ClientFactory
 	logger     *slog.Logger
 }
 
@@ -72,13 +73,12 @@ func (c *importConnector) Connect(
 	// TODO: We need some way to filter what we import.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, err := c.client.Client(ns)
+		client, kinds, err := c.client.New(ns)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a dynamic client: %w", err)))
 			return
 		}
-		kinds := newKindsLookup(client)
-		fileParser := newFileParser(ns, repo, client, kinds)
+		fileParser := newFileParser(repo, client, kinds)
 
 		folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
 			Group:   "folder.grafana.app",
@@ -90,7 +90,7 @@ func (c *importConnector) Connect(
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to find folder GVR")))
 			return
 		}
-		folderIface := client.Resource(folderGVR).Namespace(ns)
+		folderIface := client.Resource(folderGVR)
 
 		ref := r.URL.Query().Get("ref")
 		logger := logger.With("ref", ref)
@@ -193,7 +193,7 @@ func (c *importConnector) Connect(
 				logger.DebugContext(ctx, "got GVK of a resource we don't know how to control; ignoring")
 				continue
 			}
-			iface := client.Resource(gvr).Namespace(ns)
+			iface := client.Resource(gvr)
 			_, err = iface.Get(r.Context(), name, metav1.GetOptions{})
 			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 			if false && err != nil && !apierrors.IsNotFound(err) {

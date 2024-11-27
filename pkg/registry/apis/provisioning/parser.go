@@ -18,27 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type fileParser struct {
-	// Reader is always in the context of a single namespace
-	namespace string
-
 	// The target repository
 	repo repository.Repository
 
 	// client helper (for this namespace?)
-	client *dynamic.DynamicClient
-
-	kinds *kindsLookup
+	client *resources.DynamicClient
+	kinds  *resources.KindsLookup
 }
 
-func newFileParser(ns string, repo repository.Repository, client *dynamic.DynamicClient, kinds *kindsLookup) *fileParser {
+func newFileParser(repo repository.Repository, client *resources.DynamicClient, kinds *resources.KindsLookup) *fileParser {
 	return &fileParser{
-		namespace: ns,
-		repo:      repo,
-		client:    client,
-		kinds:     kinds,
+		repo:   repo,
+		client: client,
+		kinds:  kinds,
 	}
 }
 
@@ -81,15 +77,11 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 		gvk:  gvk,
 	}
 
-	if r.namespace == "" {
-		return nil, fmt.Errorf("parser is not configured (missing namespace)")
-	}
-
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != r.namespace {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != r.client.GetNamespace() {
 		parsed.errors = append(parsed.errors, ErrNamespaceMismatch)
 	}
-	obj.SetNamespace(r.namespace)
+	obj.SetNamespace(r.client.GetNamespace())
 
 	// When name is missing use the file path as the k8s name
 	if obj.GetName() == "" {
@@ -111,7 +103,7 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 		return parsed, nil
 	}
 
-	client := r.client.Resource(gvr).Namespace(r.namespace)
+	client := r.client.Resource(gvr)
 	parsed.gvr = &gvr
 	parsed.client = client
 	if !validate {

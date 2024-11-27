@@ -17,11 +17,12 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type filesConnector struct {
 	getter RepoGetter
-	client *resourceClient
+	client *resources.ClientFactory
 	logger *slog.Logger
 }
 
@@ -148,14 +149,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 func (s *filesConnector) getParser(repo repository.Repository) (*fileParser, error) {
 	ns := repo.Config().Namespace
-	if ns == "" {
-		return nil, fmt.Errorf("missing namespace")
-	}
-	client, err := s.client.Client(ns) // As system user
+	client, kinds, err := s.client.New(ns) // As system user
 	if err != nil {
 		return nil, err
 	}
-	return newFileParser(ns, repo, client, newKindsLookup(client)), nil
+	return newFileParser(repo, client, kinds), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
