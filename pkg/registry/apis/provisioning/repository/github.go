@@ -98,7 +98,7 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
-	content, _, err := r.gh.GetContents(ctx, owner, repo, filePath, ref)
+	content, dirContent, err := r.gh.GetContents(ctx, owner, repo, filePath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -110,6 +110,9 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 		}
 
 		return nil, fmt.Errorf("get contents: %w", err)
+	}
+	if dirContent != nil {
+		return nil, fmt.Errorf("input path was a directory")
 	}
 
 	data, err := content.GetFileContent()

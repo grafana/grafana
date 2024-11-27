@@ -91,6 +91,11 @@ func (c *importConnector) Connect(
 		}
 		for _, entry := range tree {
 			logger := logger.With("file", entry.Path)
+			if !entry.Blob {
+				logger.DebugContext(ctx, "ignoring non-blob entry")
+				continue
+			}
+
 			name := filepath.Base(entry.Path)
 			if strings.ContainsRune(name, '.') {
 				name = name[:strings.LastIndex(name, ".")]
