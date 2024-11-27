@@ -110,10 +110,18 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
+// ReconcileSync runs reconciliation and returns. Useful for tests to perform
+// reconciliation in a synchronous way.
+func (r *ZanzanaReconciler) ReconcileSync(ctx context.Context) error {
+	r.reconcile(ctx)
+	return nil
+}
+
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
 		for _, reconciler := range r.reconcilers {
+			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
 			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
@@ -150,11 +158,14 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	// We ignore the error for now
-	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
 		for _, ns := range namespaces {
 			run(ctx, ns)
 		}
 	})
+	if err != nil {
+		r.log.Error("Error performing zanzana reconciliation", "error", err)
+	}
 }
 
 func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {
