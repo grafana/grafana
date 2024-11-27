@@ -201,16 +201,19 @@ func tupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT ou.org_id, u.uid as user_uid, ou.role as org_role
+			SELECT
+				ou.org_id, u.uid as user_uid,
+				u.is_service_account as is_service_account,
+				ou.role as org_role
 			FROM org_user ou
 			LEFT JOIN ` + store.GetDialect().Quote("user") + ` u ON u.id = ou.user_id
 			WHERE ou.org_id = ?
-			AND NOT u.is_service_account
 		`
 		// FIXME: handle service admin role
 		type Binding struct {
-			UserUID string `xorm:"user_uid"`
-			OrgRole string `xorm:"org_role"`
+			UserUID          string `xorm:"user_uid"`
+			IsServiceAccount bool   `xorm:"is_service_account"`
+			OrgRole          string `xorm:"org_role"`
 		}
 
 		var bindings []Binding
@@ -225,8 +228,13 @@ func basicRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
+			userType := zanzana.TypeUser
+			if b.IsServiceAccount {
+				userType = zanzana.TypeServiceAccount
+			}
+
 			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, ""),
+				User:     zanzana.NewTupleEntry(userType, b.UserUID, ""),
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, zanzana.TranslateBasicRole(b.OrgRole), ""),
 			}
