@@ -140,7 +140,8 @@ func (c *importConnector) Connect(
 			}
 			iface := client.Resource(gvr).Namespace(ns)
 			_, err = iface.Get(r.Context(), name, metav1.GetOptions{})
-			if err != nil && !apierrors.IsNotFound(err) {
+			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
+			if false && err != nil && !apierrors.IsNotFound(err) {
 				logger.DebugContext(ctx, "failed to check if the object already exists", "error", err)
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if object already exists: %w", err)))
 				return
