@@ -94,6 +94,10 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     if (!repo || !path) {
       return;
     }
+
+    if (workflow === WorkflowOption.Branch) {
+      ref = repositoryConfig?.github?.branch || 'main';
+    }
     saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
