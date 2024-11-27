@@ -203,7 +203,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
               icon="compass"
               tooltip="Open in explore"
               onClick={model.openExploreLink}
-            ></ToolbarButton>
+            />
             <ShareTrailButton trail={trail} />
             <ToolbarButton
               variant={'canvas'}
