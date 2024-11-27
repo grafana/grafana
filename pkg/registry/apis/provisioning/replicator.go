@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,21 +14,40 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-type replicator struct {
-	namespace     string
-	client        *resourceClient
-	logger        *slog.Logger
-	once          sync.Once
-	dynamicClient *dynamic.DynamicClient
-	parser        *fileParser
+type replicatorFactory struct {
+	client    *resourceClient
+	namespace string
 }
 
-func newReplicator(client *resourceClient, namespace string) *replicator {
-	return &replicator{
+func newReplicatorFactory(client *resourceClient, namespace string) *replicatorFactory {
+	return &replicatorFactory{
 		client:    client,
-		logger:    slog.Default().With("logger", "replicator", "namespace", namespace),
 		namespace: namespace,
 	}
+}
+
+func (f *replicatorFactory) New() (repository.FileReplicator, error) {
+	dynamicClient, err := f.client.Client(f.namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get client for namespace %s: %w", f.namespace, err)
+	}
+
+	kinds := newKindsLookup(dynamicClient)
+	parser := newFileParser(f.namespace, dynamicClient, kinds)
+
+	return &replicator{
+		namespace: f.namespace,
+		logger:    slog.Default().With("logger", "replicator", "namespace", f.namespace),
+		parser:    parser,
+		client:    dynamicClient,
+	}, nil
+}
+
+type replicator struct {
+	namespace string
+	logger    *slog.Logger
+	client    *dynamic.DynamicClient
+	parser    *fileParser
 }
 
 // Replicate creates a new resource in the cluster.
@@ -43,7 +61,7 @@ func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInf
 
 	name := resourceName(fileInfo.Path)
 
-	iface := r.dynamicClient.Resource(*file.gvr).Namespace(r.namespace)
+	iface := r.client.Resource(*file.gvr).Namespace(r.namespace)
 	_, err = iface.Get(ctx, name, metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
@@ -74,7 +92,7 @@ func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 
 	name := resourceName(fileInfo.Path)
 
-	iface := r.dynamicClient.Resource(*file.gvr).Namespace(r.namespace)
+	iface := r.client.Resource(*file.gvr).Namespace(r.namespace)
 	_, err = iface.Get(ctx, name, metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
@@ -95,21 +113,6 @@ func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 }
 
 func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*parsedFile, error) {
-	// Initialize the dynamic client only once if it gets used
-	var err error
-	r.once.Do(func() {
-		r.dynamicClient, err = r.client.Client(r.namespace)
-		if err != nil {
-			return
-		}
-
-		r.parser = newFileParser(r.namespace, r.dynamicClient, newKindsLookup(r.dynamicClient))
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to get client for namespace %s: %w", r.namespace, err)
-	}
-
 	// NOTE: We don't need validation because we're about to apply the data for real.
 	// If the data is invalid, we'll know then!
 	file, err := r.parser.parse(ctx, r.logger, fileInfo, false)

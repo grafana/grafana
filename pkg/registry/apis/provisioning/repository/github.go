@@ -318,7 +318,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 }
 
 // Webhook implements provisioning.Repository.
-func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
+func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		// We don't want GitHub's request to cause a cancellation for us, but we also want the request context's data (primarily for logging).
 		// This means we will just ignore when GH closes their connection to us. If we respond in time, fantastic. Otherwise, we'll still do the work.
@@ -343,7 +343,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 
 		switch event := event.(type) {
 		case *github.PushEvent:
-			if err := r.onPushEvent(ctx, logger, event, replicator); err != nil {
+			if err := r.onPushEvent(ctx, logger, event, factory); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -372,7 +372,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 	}
 }
 
-func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, replicator FileReplicator) error {
+func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, replicatorFactory FileReplicatorFactory) error {
 	logger = logger.With("ref", event.GetRef())
 
 	if event.GetRepo() == nil {
@@ -388,6 +388,11 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
 		logger.DebugContext(ctx, "ignoring push event as it is not for the configured branch")
 		return nil
+	}
+
+	replicator, err := replicatorFactory.New()
+	if err != nil {
+		return fmt.Errorf("create replicator: %w", err)
 	}
 
 	beforeRef := event.GetBefore()
