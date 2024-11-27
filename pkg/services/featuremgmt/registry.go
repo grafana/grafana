@@ -1071,6 +1071,14 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
+			Name:              "scopeApi",
+			Description:       "In-development feature flag for the scope api using the app platform.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAppPlatformSquad,
+			HideFromAdminPage: true,
+			Expression:        "false",
+		},
+		{
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
 			Stage:       FeatureStageGeneralAvailability,

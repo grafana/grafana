@@ -102,8 +102,8 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// TODO, for standalone this will need to be started from enterprise
-	// Connecting to the correct remote services
-	docs := search.ProvideDocumentBuilders()
+	// Connecting to the correct remote services (cloudconfig for DS info and usage stats)
+	docs := search.ProvideDocumentBuilders(nil)
 
 	server, err := NewResourceServer(ctx, s.db, s.cfg, s.features, docs, s.tracing, s.reg, authzClient)
 	if err != nil {

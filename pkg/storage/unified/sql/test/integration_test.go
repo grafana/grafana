@@ -56,7 +56,6 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 		Backend:     ret,
 		Diagnostics: ret,
 		Lifecycle:   ret,
-		Index:       resource.NewResourceIndexServer(cfg, tracing.NewNoopTracerService()),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)

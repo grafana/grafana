@@ -316,10 +316,6 @@ func (hs *HTTPServer) registerRoutes() {
 			apiRoute.Group("/search-v2", hs.SearchV2HTTPService.RegisterHTTPRoutes)
 		}
 
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-			apiRoute.Group("/unified-search", hs.UnifiedSearchHTTPService.RegisterHTTPRoutes)
-		}
-
 		// current org
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
