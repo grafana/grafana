@@ -206,6 +206,43 @@ func (_m *MockClient) GetContents(ctx context.Context, owner string, repository 
 	return r0, r1, r2
 }
 
+// GetTree provides a mock function with given fields: ctx, owner, repository, ref, recursive
+func (_m *MockClient) GetTree(ctx context.Context, owner string, repository string, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+	ret := _m.Called(ctx, owner, repository, ref, recursive)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTree")
+	}
+
+	var r0 []RepositoryContent
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bool) ([]RepositoryContent, bool, error)); ok {
+		return rf(ctx, owner, repository, ref, recursive)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bool) []RepositoryContent); ok {
+		r0 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]RepositoryContent)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, bool) bool); ok {
+		r1 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, bool) error); ok {
+		r2 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // ListPullRequestFiles provides a mock function with given fields: ctx, owner, repository, number
 func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, repository string, number int) ([]CommitFile, error) {
 	ret := _m.Called(ctx, owner, repository, number)

@@ -58,6 +58,15 @@ func (r *unknownRepository) Read(ctx context.Context, logger *slog.Logger, path,
 	}
 }
 
+func (r *unknownRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "read file tree resource is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *unknownRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{

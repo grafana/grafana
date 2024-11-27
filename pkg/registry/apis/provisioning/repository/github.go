@@ -8,10 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-  "regexp"
+	"regexp"
 	"strings"
 	"text/template"
-	
+
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -100,7 +100,7 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
-	content, _, err := r.gh.GetContents(ctx, owner, repo, filePath, ref)
+	content, dirContent, err := r.gh.GetContents(ctx, owner, repo, filePath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			return nil, &apierrors.StatusError{
@@ -113,6 +113,9 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 
 		return nil, fmt.Errorf("get contents: %w", err)
 	}
+	if dirContent != nil {
+		return nil, fmt.Errorf("input path was a directory")
+	}
 
 	data, err := content.GetFileContent()
 	if err != nil {
@@ -124,6 +127,42 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 		Data: []byte(data),
 		Hash: content.GetSHA(),
 	}, nil
+}
+
+func (r *githubRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	logger = logger.With("owner", owner, "repo", repo, "ref", ref)
+
+	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
+	if err != nil {
+		if errors.Is(err, pgh.ErrResourceNotFound) {
+			return nil, &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: fmt.Sprintf("tree not found; ref=%s", ref),
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+	}
+	if truncated {
+		logger.WarnContext(ctx, "tree from github was truncated")
+	}
+
+	entries := make([]FileTreeEntry, 0, len(tree))
+	for _, entry := range tree {
+		converted := FileTreeEntry{
+			Path: entry.GetPath(),
+			Size: entry.GetSize(),
+			Hash: entry.GetSHA(),
+			Blob: !entry.IsDirectory(),
+		}
+		entries = append(entries, converted)
+	}
+	return entries, nil
 }
 
 func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
