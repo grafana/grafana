@@ -184,7 +184,7 @@ func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref
 			return err
 		}
 		entry := FileTreeEntry{
-			Path: path[rootlen:],
+			Path: strings.TrimLeft(path[rootlen:], "/"),
 			Size: info.Size(),
 		}
 		if !info.IsDir() {

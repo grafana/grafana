@@ -79,7 +79,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := r.URL.Path[idx+len(prefix):]
-		if filePath == "" {
+		if filePath == "" || strings.HasSuffix(filePath, "/") {
+			if len(filePath) > 0 {
+				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
+				return
+			}
+
 			rsp, err := repo.ReadTree(r.Context(), logger, ref)
 			if err != nil {
 				responder.Error(err)
