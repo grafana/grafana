@@ -40,7 +40,6 @@ influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
 prometheusRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
-lokiMetricDataplane,GA,@grafana/observability-logs,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
 disableSSEDataplane,experimental,@grafana/observability-metrics,false,false,false
