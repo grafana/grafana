@@ -153,17 +153,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger:        b.logger.With("connector", "hello_world"),
 	}
 
-	exportConnector := &exportConnector{
-		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "export"),
-	}
-	importConnector := &importConnector{
-		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "export"),
-	}
-
 	storage := map[string]rest.Storage{}
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
@@ -174,13 +163,25 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		client: b.client.identities,
 		logger: b.logger.With("connector", "webhook"),
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("list")] = &listConnector{
+		repoGetter: b,
+		logger:     b.logger.With("connector", "list"),
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
 		logger: b.logger.With("connector", "files"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
-	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = importConnector
+	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "import"),
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "export"),
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }

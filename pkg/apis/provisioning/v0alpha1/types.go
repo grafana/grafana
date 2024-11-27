@@ -183,3 +183,22 @@ type WebhookResponse struct {
 
 	Status string `json:"status,omitempty"`
 }
+
+// Information we can get just from the file listing
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FileList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// should be named "items", but avoid subresource error for now:
+	// kubernetes/kubernetes#126809
+	Items []FileItem `json:"files,omitempty"`
+}
+
+type FileItem struct {
+	Path     string `json:"path"`
+	Size     int64  `json:"size,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+	Modified int64  `json:"modified,omitempty"`
+	Author   string `json:"author,omitempty"`
+}

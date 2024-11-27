@@ -96,11 +96,17 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		var obj *provisioning.ResourceWrapper
-		ref := r.URL.Query().Get("ref")
-		message := r.URL.Query().Get("message")
-		logger = logger.With("ref", ref, "message", message)
+		query := r.URL.Query()
+		ref := query.Get("ref")
+		if ref != "" {
+			logger = logger.With("ref", ref)
+		}
+		message := query.Get("message")
+		if message != "" {
+			logger = logger.With("message", message)
+		}
 
+		var obj *provisioning.ResourceWrapper
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
