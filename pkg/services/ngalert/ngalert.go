@@ -382,6 +382,8 @@ func (ng *AlertNG) init() error {
 
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
+		InitialRetryDelay:    ng.Cfg.UnifiedAlerting.InitialRetryDelay,
+		MaxRetryDelay:        ng.Cfg.UnifiedAlerting.MaxRetryDelay,
 		C:                    clk,
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
