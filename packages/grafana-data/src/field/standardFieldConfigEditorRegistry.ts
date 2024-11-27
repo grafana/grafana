@@ -4,7 +4,6 @@ import { EventBus } from '../events/types';
 import { DataFrame } from '../types/dataFrame';
 import { VariableSuggestionsScope, VariableSuggestion } from '../types/dataLink';
 import { InterpolateFunction } from '../types/panel';
-import { TimeRange } from '../types/time';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
@@ -17,7 +16,6 @@ export interface StandardEditorContext<TOptions, TState = any> {
   options?: TOptions;
   instanceState?: TState;
   isOverride?: boolean;
-  timeRange?: TimeRange;
 }
 
 export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any, TState = any> {

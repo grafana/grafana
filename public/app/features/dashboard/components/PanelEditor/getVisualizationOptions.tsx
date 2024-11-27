@@ -6,7 +6,6 @@ import {
   PanelData,
   PanelPlugin,
   StandardEditorContext,
-  TimeRange,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
@@ -35,7 +34,6 @@ interface GetStandardEditorContextProps {
   options: Record<string, unknown>;
   eventBus: EventBus;
   instanceState: OptionPaneRenderProps['instanceState'];
-  timeRange?: TimeRange;
 }
 
 export function getStandardEditorContext({
@@ -44,7 +42,6 @@ export function getStandardEditorContext({
   options,
   eventBus,
   instanceState,
-  timeRange,
 }: GetStandardEditorContextProps): StandardEditorContext<unknown, unknown> {
   const dataSeries = data?.series ?? [];
 
@@ -55,7 +52,6 @@ export function getStandardEditorContext({
     eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(dataSeries, scope),
     instanceState,
-    timeRange,
   };
 
   return context;
@@ -233,7 +229,6 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     options: currentOptions,
     eventBus: eventBus,
     instanceState,
-    timeRange: panel.getTimeRange(),
   });
 
   // Load the options into categories

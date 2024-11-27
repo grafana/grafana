@@ -170,10 +170,6 @@ export interface HeatmapCalculationBucketConfig {
    */
   scale?: ScaleDistributionConfig;
   /**
-   * Controls if the value is valid and we should run the calculation
-   */
-  valid?: boolean;
-  /**
    * The number of buckets to use for the axis in the heatmap
    */
   value?: string;

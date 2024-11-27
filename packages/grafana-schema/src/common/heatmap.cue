@@ -11,8 +11,6 @@ HeatmapCalculationBucketConfig: {
   value?: string
   // Controls the scale of the buckets
   scale?: ScaleDistributionConfig
-  // Controls if the value is valid and we should run the calculation
-  valid?: bool
 } @cuetsy(kind="interface")
 
 HeatmapCalculationOptions: {

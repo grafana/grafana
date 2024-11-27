@@ -105,8 +105,6 @@ export function prepareHeatmapData({
   if (options.calculate) {
     // if calculate is true, we need to have the default values for the calculation if they don't exist
     let calculation = getCalculationObjectWithDefaults(options.calculation);
-    calculation =
-      calculation.xBuckets?.valid && calculation.yBuckets?.valid ? calculation : getCalculationObjectWithDefaults();
     if (config.featureToggles.transformationsVariableSupport) {
       if (calculation.xBuckets?.value && replaceVariables !== undefined) {
         calculation.xBuckets.value = replaceVariables(calculation.xBuckets.value);
@@ -213,12 +211,10 @@ const getCalculationObjectWithDefaults = (calculation?: HeatmapCalculationOption
     xBuckets: {
       ...calculation?.xBuckets,
       mode: calculation?.xBuckets?.mode ?? HeatmapCalculationMode.Size,
-      valid: calculation?.xBuckets?.valid ?? true,
     },
     yBuckets: {
       ...calculation?.yBuckets,
       mode: calculation?.yBuckets?.mode ?? HeatmapCalculationMode.Size,
-      valid: calculation?.yBuckets?.valid ?? true,
       scale: {
         ...calculation?.yBuckets?.scale,
         type: calculation?.yBuckets?.scale?.type ?? ScaleDistribution.Linear,

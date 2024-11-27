@@ -77,7 +77,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     });
 
     if (opts.calculate) {
-      addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category, context.timeRange);
+      addHeatmapCalculationOptions('calculation.', builder, opts.calculation, category);
     }
 
     category = ['Y Axis'];
