@@ -297,7 +297,6 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
-/pkg/services/unifiedSearch/ @grafana/grafana-search-and-storage
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend

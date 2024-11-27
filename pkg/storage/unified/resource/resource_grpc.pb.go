@@ -360,7 +360,7 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
-	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -375,9 +375,9 @@ func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
 	return &resourceIndexClient{cc}
 }
 
-func (c *resourceIndexClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+func (c *resourceIndexClient) Search(ctx context.Context, in *ResourceSearchRequest, opts ...grpc.CallOption) (*ResourceSearchResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SearchResponse)
+	out := new(ResourceSearchResponse)
 	err := c.cc.Invoke(ctx, ResourceIndex_Search_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -412,7 +412,7 @@ func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opt
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
-	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -423,7 +423,7 @@ type ResourceIndexServer interface {
 type UnimplementedResourceIndexServer struct {
 }
 
-func (UnimplementedResourceIndexServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+func (UnimplementedResourceIndexServer) Search(context.Context, *ResourceSearchRequest) (*ResourceSearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
@@ -445,7 +445,7 @@ func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServe
 }
 
 func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchRequest)
+	in := new(ResourceSearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -457,7 +457,7 @@ func _ResourceIndex_Search_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: ResourceIndex_Search_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).Search(ctx, req.(*SearchRequest))
+		return srv.(ResourceIndexServer).Search(ctx, req.(*ResourceSearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

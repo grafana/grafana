@@ -24,7 +24,7 @@ const tracingPrexfixBleve = "unified_search.bleve."
 var _ resource.SearchBackend = &bleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
-type bleveOptions struct {
+type BleveOptions struct {
 	// The root folder where file objects are saved
 	Root string
 
@@ -39,14 +39,14 @@ type bleveOptions struct {
 type bleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
-	opts   bleveOptions
+	opts   BleveOptions
 
 	// cache info
 	cache   map[resource.NamespacedResource]*bleveIndex
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts bleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
 	b := &bleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
@@ -247,8 +247,8 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	response.TotalHits = res.Total
-	response.QueryCost = res.Cost
+	response.TotalHits = int64(res.Total)
+	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 
 	response.Results, err = b.hitsToTable(searchrequest.Fields, res.Hits, req.Explain)
@@ -368,7 +368,7 @@ func toBleveSearchRequest(req *resource.ResourceSearchRequest, access authz.Acce
 		// See: https://github.com/grafana/grafana/blob/v11.3.0/pkg/services/searchV2/bluge.go
 		// NOTE, we likely want to pass in the already called checker because the resource server
 		// will first need to check if we can see anything (or everything!) for this resource
-		fmt.Printf("TODO... check authorization")
+		fmt.Printf("TODO... check authorization\n")
 	}
 
 	switch len(queries) {
