@@ -1,4 +1,14 @@
-import { FieldType } from '@grafana/data';
+import {
+  FieldType,
+  Field,
+  formattedValueToString,
+  reduceField,
+  GrafanaTheme2,
+  FieldCalcs,
+  FormattedValue,
+} from '@grafana/data';
+
+import { TableRow } from '../types';
 
 export function getCellHeight(
   text: string,
@@ -127,4 +137,60 @@ export function shouldTextOverflow(
   }
 
   return false;
+}
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+  countRows?: boolean;
+}
+
+export function getFooterItemNG(
+  rows: TableRow[],
+  columnName: string,
+  field: Field,
+  options: TableFooterCalc,
+  theme: GrafanaTheme2
+): string {
+  if (field.type !== FieldType.number) {
+    return '';
+  }
+
+  const calc = options.reducer[0];
+  if (calc === undefined) {
+    return '';
+  }
+
+  let values = rows.map((row) => row[columnName]);
+
+  // ...use above values array with reducer
+  // const reducer = fieldReducers.get(options.reducer[0]);
+  // console.log({ reducer });
+  const value = reduceValues(field, values, options.reducer)[calc];
+
+  // format reduced value to string using formatInfo (from field config)
+  const formattedValue = valueToDisplayValue(value, field);
+  // const formattedValue = getFormattedValue(field, options.reducer, theme);
+  console.log({ formattedValue });
+
+  return formattedValue;
+}
+
+export const valueToDisplayValue = (value: FormattedValue, field?: Field): string => {
+  if (field?.display) {
+    return formattedValueToString(field.display(value));
+  }
+
+  return formattedValueToString(value);
+};
+
+export function reduceValues(field: Field, values: number[], reducers: string[]): FieldCalcs {
+  const wrappedField: Field = {
+    ...field,
+    values: values,
+  };
+
+  return reduceField({ field: wrappedField, reducers });
 }
