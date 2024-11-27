@@ -31,7 +31,7 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    grantUserPermissions([AccessControlAction.SnapshotsCreate, AccessControlAction.OrgUsersRead]);
+    grantUserPermissions([AccessControlAction.SnapshotsCreate, AccessControlAction.OrgUsersAdd]);
 
     config.publicDashboardsEnabled = true;
     config.snapshotEnabled = true;
@@ -63,7 +63,7 @@ describe('ShareMenu', () => {
     Object.defineProperty(contextSrv, 'isSignedIn', {
       value: true,
     });
-    grantUserPermissions([AccessControlAction.OrgUsersRead]);
+    grantUserPermissions([AccessControlAction.OrgUsersAdd]);
     config.externalUserMngLinkUrl = '';
 
     expect(await screen.queryByTestId(selector.inviteUser)).not.toBeInTheDocument();
