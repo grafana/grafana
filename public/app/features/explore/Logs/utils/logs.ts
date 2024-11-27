@@ -17,7 +17,7 @@ export const canKeepDisplayedFields = (logsQueries: DataQuery[] | undefined, pre
     return false;
   }
   for (let i = 0; i < logsQueries.length; i++) {
-    if (!shallowCompare(logsQueries[i], prevLogsQueries[i])) {
+    if (!logsQueries[i] || !prevLogsQueries[i] || !shallowCompare(logsQueries[i], prevLogsQueries[i])) {
       return false;
     }
   }
