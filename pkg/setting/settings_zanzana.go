@@ -34,6 +34,9 @@ type ZanzanaSettings struct {
 	ListObjectsMaxResults uint32
 	// Deadline for the ListObjects() query. Default is 3 seconds.
 	ListObjectsDeadline time.Duration
+	// Use streamed version of list objects.
+	// Returns full list of objects, but takes more time.
+	UseStreamedListObjects bool
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -58,6 +61,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	s.CheckQueryCacheTTL = sec.Key("check_query_cache_ttl").MustDuration(10 * time.Second)
 	s.ListObjectsDeadline = sec.Key("list_objects_deadline").MustDuration(3 * time.Second)
 	s.ListObjectsMaxResults = uint32(sec.Key("list_objects_max_results").MustUint(1000))
+	s.UseStreamedListObjects = sec.Key("use_streamed_list_objects").MustBool(false)
 
 	cfg.Zanzana = s
 }

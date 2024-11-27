@@ -47,9 +47,16 @@ func (s *Server) List(ctx context.Context, r *authzextv1.ListRequest) (*authzext
 	return s.listGeneric(ctx, r.GetSubject(), relation, r.GetGroup(), r.GetResource(), store)
 }
 
+func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	if s.cfg.UseStreamedListObjects {
+		return s.streamedListObjects(ctx, req)
+	}
+	return s.openfga.ListObjects(ctx, req)
+}
+
 func (s *Server) listTyped(ctx context.Context, subject, relation string, info common.TypeInfo, store *storeInfo) (*authzextv1.ListResponse, error) {
 	// List all resources user has access too
-	listRes, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	listRes, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 info.Type,
@@ -69,7 +76,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 	groupResource := structpb.NewStringValue(common.FormatGroupResource(group, resource))
 
 	// 1. List all folders subject has access to resource type in
-	folders, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	folders, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 common.TypeFolder,
@@ -86,7 +93,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation, group, reso
 	}
 
 	// 2. List all resource directly assigned to subject
-	direct, err := s.openfga.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	direct, err := s.listObjects(ctx, &openfgav1.ListObjectsRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		Type:                 common.TypeResource,
