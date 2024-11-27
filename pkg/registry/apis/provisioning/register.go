@@ -159,9 +159,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		client: b.client.identities,
-		logger: b.logger.With("connector", "webhook"),
+		getter:         b,
+		client:         b.client.identities,
+		resourceClient: b.client,
+		logger:         b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
