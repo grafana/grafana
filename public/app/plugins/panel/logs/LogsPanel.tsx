@@ -37,7 +37,7 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
-import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
+import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
@@ -179,13 +179,6 @@ export const LogsPanel = ({
     [closeCallback]
   );
 
-  const onPermalinkClick = useCallback(
-    async (row: LogRowModel) => {
-      return await copyDashboardUrl(row, data.timeRange);
-    },
-    [data.timeRange]
-  );
-
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
       if (
@@ -274,6 +267,13 @@ export const LogsPanel = ({
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      return await copyDashboardUrl(row, logRows, data.timeRange);
+    },
+    [data.timeRange, logRows]
+  );
 
   useEffect(() => {
     setPanelData(data);
@@ -514,7 +514,7 @@ function getLogsPanelState(): LogsPermalinkUrlState | undefined {
   return undefined;
 }
 
-async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not
   // creating permalinks for logs without an id-field.
   // normally it should never happen, because we do not
@@ -533,8 +533,12 @@ async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
 
   // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
   currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
-  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+  const range = getLogsPermalinkRange(row, rows, {
+    from: toUtc(timeRange.from).valueOf(),
+    to: toUtc(timeRange.to).valueOf(),
+  });
+  currentURL.searchParams.set('from', range.from.toString(10));
+  currentURL.searchParams.set('to', range.to.toString(10));
 
   await createAndCopyShortLink(currentURL.toString());
 
