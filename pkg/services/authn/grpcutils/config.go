@@ -3,6 +3,8 @@ package grpcutils
 import (
 	"fmt"
 
+	"github.com/spf13/pflag"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,6 +28,11 @@ type GrpcServerConfig struct {
 	AllowedAudiences []string
 	Mode             Mode
 	LegacyFallback   bool
+	AllowInsecure    bool
+}
+
+func (c *GrpcServerConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.SigningKeysURL, "grpc-server-authentication.signing-keys-url", "", "gRPC server authentication signing keys URL")
 }
 
 func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
@@ -41,6 +48,7 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		Mode:             mode,
 		LegacyFallback:   section.Key("legacy_fallback").MustBool(true),
+		AllowInsecure:    cfg.Env == setting.Dev,
 	}, nil
 }
 
