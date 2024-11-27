@@ -161,7 +161,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	importConnector := &importConnector{
 		repoGetter: b,
 		client:     b.client,
-		logger:     b.logger.With("connector", "export"),
+		logger:     b.logger.With("connector", "import"),
 	}
 
 	storage := map[string]rest.Storage{}
@@ -518,9 +518,7 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 
 	sub = oas.Paths.Paths[repoprefix+"/import"]
 	if sub != nil && sub.Post != nil {
-		ref := *ref
-		ref.ParameterProps.Required = true
-		sub.Post.Parameters = []*spec3.Parameter{&ref}
+		sub.Post.Parameters = []*spec3.Parameter{ref}
 	}
 
 	// hide the version with no path
