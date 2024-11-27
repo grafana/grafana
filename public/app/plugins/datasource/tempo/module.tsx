@@ -4,7 +4,6 @@ import { DataSourcePlugin, DashboardLoadedEvent, type QueryEditorProps } from '@
 import { getAppEvents } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import CheatSheet from './CheatSheet';
 import type { ConfigEditorProps } from './configuration/ConfigEditor';
 import { TempoDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';
@@ -13,6 +12,7 @@ import type { TempoQuery } from './types';
 // Lazy load the QueryField and ConfigEditor components to reduce the size of the initial bundle
 const TempoQueryFieldLazy = lazy(() => import(/* webpackChunkName "tempo-queryfield"*/ './QueryField'));
 const ConfigEditorLazy = lazy(() => import(/* webpackChunkName "tempo-configeditor"*/ './configuration/ConfigEditor'));
+const CheatSheetLazy = lazy(() => import(/* webpackChunkName "tempo-cheatsheet"*/ './CheatSheet'));
 
 function TempoQueryField(props: QueryEditorProps<TempoDatasource, TempoQuery>) {
   return (
@@ -26,6 +26,14 @@ function ConfigEditor(props: ConfigEditorProps) {
   return (
     <Suspense fallback={<LoadingPlaceholder text={'Loading editor'} />}>
       <ConfigEditorLazy {...props} />
+    </Suspense>
+  );
+}
+
+function CheatSheet() {
+  return (
+    <Suspense fallback={null}>
+      <CheatSheetLazy />
     </Suspense>
   );
 }
