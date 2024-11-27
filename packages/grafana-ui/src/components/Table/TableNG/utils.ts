@@ -151,9 +151,13 @@ export function getFooterItemNG(
   rows: TableRow[],
   columnName: string,
   field: Field,
-  options: TableFooterCalc,
+  options: TableFooterCalc | undefined,
   theme: GrafanaTheme2
 ): string {
+  if (!options) {
+    return '';
+  }
+
   if (field.type !== FieldType.number) {
     return '';
   }

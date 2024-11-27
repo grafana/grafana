@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect, Ref } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
 import {
@@ -243,7 +243,7 @@ export function TableNG(props: TableNGProps) {
     return records;
   }, []);
 
-  const mapFrameToDataGrid = (main: DataFrame, rows: TableRow[]) => {
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     console.log('mapFrameToDataGrid');
     console.log({ rows });
     const columns: TableColumn[] = [];
@@ -298,8 +298,10 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
+            console.log('renderSummaryCell');
             // return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
-            return <>{getFooterItemNG(rows, key, field, footerOptions, theme)}</>;
+            // return <>{getFooterItemNG(rows, key, field, footerOptions, theme)}</>;
+            return <>{calcsRef.current[fieldIndex]}</>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
@@ -367,7 +369,7 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, sortColumns, columnTypes]);
 
-  // Sort rows
+  // Filter rows
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
 
@@ -387,7 +389,15 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data, filteredRows), [props.data, filteredRows]); // eslint-disable-line react-hooks/exhaustive-deps
+  const calcsRef = useRef<Array<string>>([]);
+  useMemo(() => {
+    calcsRef.current = [];
+    props.data.fields.forEach((field) => {
+      calcsRef.current.push(getFooterItemNG(filteredRows, field.name, field, footerOptions, theme));
+    });
+  }, [filteredRows]);
+
+  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
