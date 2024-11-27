@@ -30,8 +30,14 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 	})
 	if err != nil {
 		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+		if !errors.As(err, &ghErr) {
+			return nil, nil, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
 			return nil, nil, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, nil, ErrResourceNotFound
 		}
 		return nil, nil, err
 	} else if fc != nil {
@@ -140,6 +146,43 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 		return ErrServiceUnavailable
 	}
 	return err
+}
+
+func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
+	// Fail if the branch already exists
+	if _, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0); err == nil {
+		return ErrResourceAlreadyExists
+	}
+
+	// Branch out based on the repository branch
+	baseRef, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, sourceBranch, 0)
+	if err != nil {
+		return fmt.Errorf("get base branch: %w", err)
+	}
+
+	if _, _, err := r.gh.Git.CreateRef(ctx, owner, repository, &github.Reference{
+		Ref: github.String(fmt.Sprintf("refs/heads/%s", branchName)),
+		Object: &github.GitObject{
+			SHA: baseRef.Commit.SHA,
+		},
+	}); err != nil {
+		return fmt.Errorf("create branch ref: %w", err)
+	}
+
+	return nil
+}
+
+func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error) {
+	_, resp, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	if err == nil {
+		return true, nil
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {

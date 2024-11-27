@@ -19,6 +19,7 @@ type helloWorldSubresource struct {
 	statusUpdater rest.Updater
 	// for our hacky test access right now
 	parent *ProvisioningAPIBuilder
+	logger *slog.Logger
 }
 
 func (*helloWorldSubresource) New() runtime.Object {
@@ -53,6 +54,7 @@ func (*helloWorldSubresource) NewConnectOptions() (runtime.Object, bool, string)
 }
 
 func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	logger := s.logger.With("repository_name", name)
 	obj, err := s.getter.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -66,6 +68,7 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		if whom == "" {
 			whom = "World"
 		}
+		logger := logger.With("whom", whom)
 
 		// Exercise rendering
 		renderPath := r.URL.Query().Get("render")
@@ -100,12 +103,11 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 		newCommit := r.URL.Query().Get("commit")
 		if newCommit != "" {
 			repo.Status.CurrentGitCommit = newCommit
-			obj, b, err := s.statusUpdater.Update(
+			obj, _, err := s.statusUpdater.Update(
 				ctx,
 				name, // resource name
 				rest.DefaultUpdatedObjectInfo(obj, func(ctx context.Context, newObj, oldObj runtime.Object) (transformedNewObj runtime.Object, err error) {
 					newObj.(*v0alpha1.Repository).Status.CurrentGitCommit = newCommit
-					slog.InfoContext(ctx, "updated the commit", "newObj", newObj, "newCommit", newCommit)
 					return newObj, nil
 				}),
 				func(ctx context.Context, obj runtime.Object) error { return nil },      // createValidation
@@ -118,10 +120,9 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 				return
 			}
 			repo = obj.(*v0alpha1.Repository)
-			slog.InfoContext(ctx, "the conspicuous boolean", "bool", b)
 		}
 
-		slog.InfoContext(ctx, "Got a repository",
+		logger.InfoContext(ctx, "Got a repository",
 			"name", repo.Name,
 			"type", repo.Spec.Type,
 			"status", repo.Status,

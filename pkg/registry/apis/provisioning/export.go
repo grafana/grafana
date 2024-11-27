@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -25,6 +26,7 @@ import (
 type exportConnector struct {
 	repoGetter RepoGetter
 	client     *resourceClient
+	logger     *slog.Logger
 }
 
 func (*exportConnector) New() runtime.Object {
@@ -64,6 +66,7 @@ func (c *exportConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
+	logger := c.logger.With("repository_name", name)
 	repo, err := c.repoGetter.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
@@ -123,12 +126,12 @@ func (c *exportConnector) Connect(
 				return
 			}
 
-			slog.InfoContext(ctx, "got item in dashboard list",
+			logger.InfoContext(ctx, "got item in dashboard list",
 				"name", item.GetName(),
 				"namespace", item.GetNamespace())
 			name := item.GetName()
 			if namespace := item.GetNamespace(); namespace != ns {
-				slog.DebugContext(ctx, "skipping dashboard in export due to mismatched namespace",
+				logger.DebugContext(ctx, "skipping dashboard in export due to mismatched namespace",
 					"name", name,
 					"namespace", map[string]string{"expected": ns, "actual": namespace})
 				continue
@@ -139,7 +142,7 @@ func (c *exportConnector) Connect(
 			delete(item.Object, "metadata")
 			marshalledBody, baseFileName, err := c.marshalPreferredFormat(item.Object, name, repo)
 			if err != nil {
-				slog.ErrorContext(ctx, "failed to marshal dashboard into preferred format",
+				logger.ErrorContext(ctx, "failed to marshal dashboard into preferred format",
 					"err", err,
 					"dashboard", name,
 					"namespace", ns)
@@ -147,10 +150,23 @@ func (c *exportConnector) Connect(
 				return
 			}
 
+			var ref string
+			if repo.Config().Spec.Type == provisioning.GitHubRepositoryType {
+				ref = repo.Config().Spec.GitHub.Branch
+			}
+
 			fileName := filepath.Join(folder.CreatePath(), baseFileName)
-			// TODO: Upsert
-			if err := repo.Create(ctx, fileName, "", marshalledBody, "export of dashboard "+name+" in namespace "+ns); err != nil {
-				slog.ErrorContext(ctx, "failed to write dashboard model to repository",
+			_, err = repo.Read(ctx, logger, fileName, ref)
+			if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if file exists before writing: %w", err)))
+				return
+			} else if err != nil { // ErrFileNotFound
+				err = repo.Create(ctx, logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+			} else {
+				err = repo.Update(ctx, logger, fileName, ref, marshalledBody, "export of dashboard "+name+" in namespace "+ns)
+			}
+			if err != nil {
+				logger.ErrorContext(ctx, "failed to write dashboard model to repository",
 					"err", err,
 					"repository", repo.Config().GetName(),
 					"dashboard", name,

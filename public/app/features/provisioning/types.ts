@@ -11,3 +11,8 @@ export interface ProvisioningPreview {
   file: string;
   ref?: string;
 }
+
+export enum WorkflowOption {
+  Branch = 'branch',
+  PullRequest = 'pr',
+}

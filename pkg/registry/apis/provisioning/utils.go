@@ -1,9 +1,11 @@
 package provisioning
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 )
 
-func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
+// Tries to figure out what kind this data is.
+//
+// The context and logger are both only used for logging purposes. They do not control any logic.
+func FallbackResourceLoader(ctx context.Context, logger *slog.Logger, data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
 	// Try parsing as JSON
 	if data[0] == '{' {
 		var value map[string]any
@@ -24,7 +29,11 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 		}
 
 		// regular version headers exist
+		// TODO: do we intend on this checking Kind or kind? document reasoning.
 		if value["apiVersion"] != nil && value["Kind"] != nil {
+			logger.DebugContext(ctx, "found that the object had K8s definitions already",
+				"apiVersion", value["apiVersion"],
+				"kind", value["Kind"])
 			gv, err := schema.ParseGroupVersion(value["apiVersion"].(string))
 			if err != nil {
 				return nil, nil, fmt.Errorf("invalid apiVersion")
@@ -44,6 +53,7 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 			return &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": gvk.GroupVersion().String(),
+					"kind":       gvk.Kind,
 					"metadata": map[string]any{
 						"name": value["uid"],
 					},
@@ -51,6 +61,8 @@ func FallbackResourceLoader(data []byte) (*unstructured.Unstructured, *schema.Gr
 				},
 			}, gvk, nil
 		}
+	} else {
+		logger.DebugContext(ctx, "failed to get")
 	}
 
 	return nil, nil, ErrUnableToReadResourceBytes

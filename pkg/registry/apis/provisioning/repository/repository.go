@@ -3,12 +3,14 @@ package repository
 import (
 	"context"
 	"io/fs"
+	"log/slog"
 	"net/http"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 var ErrFileNotFound error = fs.ErrNotExist
@@ -49,28 +51,28 @@ type Repository interface {
 	Validate() field.ErrorList
 
 	// Called to check if all connection information actually works
-	Test(ctx context.Context) error
+	Test(ctx context.Context, logger *slog.Logger) error
 
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
-	Read(ctx context.Context, path, ref string) (*FileInfo, error)
+	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*FileInfo, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
-	Create(ctx context.Context, path, ref string, data []byte, comment string) error
+	Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, message string) error
 
 	// Update a file in the remote repository
 	// The data has already been validated and is ready for save
-	Update(ctx context.Context, path, ref string, data []byte, comment string) error
+	Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, message string) error
 
 	// Delete a file in the remote repository
-	Delete(ctx context.Context, path, ref, comment string) error
+	Delete(ctx context.Context, logger *slog.Logger, path, ref, message string) error
 
 	// For repositories that support webhooks
-	Webhook(responder rest.Responder) http.HandlerFunc
+	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc
 
 	// Hooks called after the repository has been created, updated or deleted
-	AfterCreate(ctx context.Context) error
-	BeginUpdate(ctx context.Context, old Repository) (UndoFunc, error)
-	AfterDelete(ctx context.Context) error
+	AfterCreate(ctx context.Context, logger *slog.Logger) error
+	BeginUpdate(ctx context.Context, logger *slog.Logger, old Repository) (UndoFunc, error)
+	AfterDelete(ctx context.Context, logger *slog.Logger) error
 }
