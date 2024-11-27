@@ -55,12 +55,6 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/dashboard.grafana.app/v0alpha1/namespaces/.*/search$)`),
-		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
-		},
-	},
-	{
 		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name

@@ -4,15 +4,7 @@ import { finalize, from, Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SceneObjectUrlSyncConfig,
-  SceneObjectUrlValues,
-  SceneObjectWithUrlSync,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
 import { Button, Drawer, IconButton, Spinner, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t, Trans } from 'app/core/internationalization';
@@ -22,12 +14,7 @@ import { ScopesInput } from './ScopesInput';
 import { ScopesTree } from './ScopesTree';
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
-import {
-  getBasicScope,
-  getScopeNamesFromSelectedScopes,
-  getScopesAndTreeScopesWithPaths,
-  getTreeScopesFromSelectedScopes,
-} from './utils';
+import { getBasicScope, getScopesAndTreeScopesWithPaths, getTreeScopesFromSelectedScopes } from './utils';
 
 export interface ScopesSelectorSceneState extends SceneObjectState {
   dashboards: SceneObjectRef<ScopesDashboardsScene> | null;
@@ -64,10 +51,8 @@ export const initialSelectorState: Omit<ScopesSelectorSceneState, 'dashboards'> 
   isEnabled: false,
 };
 
-export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneState> implements SceneObjectWithUrlSync {
+export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneState> {
   static Component = ScopesSelectorSceneRenderer;
-
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['scopes'] });
 
   private nodesFetchingSub: Subscription | undefined;
 
@@ -78,25 +63,16 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     });
 
     this.addActivationHandler(() => {
-      this.fetchBaseNodes();
+      // Only fetch base nodes on activation when there are no nodes fetched
+      // This prevents an issue where base nodes are overwritten upon re-activations
+      if (Object.keys(this.state.nodes[''].nodes).length === 0) {
+        this.fetchBaseNodes();
+      }
 
       return () => {
         this.nodesFetchingSub?.unsubscribe();
       };
     });
-  }
-
-  public getUrlState() {
-    return {
-      scopes: this.state.isEnabled ? getScopeNamesFromSelectedScopes(this.state.scopes) : [],
-    };
-  }
-
-  public updateFromUrl(values: SceneObjectUrlValues) {
-    let scopeNames = values.scopes ?? [];
-    scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
-
-    this.updateScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
   }
 
   public fetchBaseNodes() {
@@ -231,6 +207,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
       isLoadingScopes: true,
     });
 
+    this.state.dashboards?.resolve().fetchDashboards(treeScopes.map(({ scopeName }) => scopeName));
+
     const scopes = await fetchSelectedScopes(treeScopes);
 
     this.setState({ scopes, isLoadingScopes: false });
@@ -240,8 +218,8 @@ export class ScopesSelectorScene extends SceneObjectBase<ScopesSelectorSceneStat
     this.setState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.scopes) });
   }
 
-  public removeAllScopes() {
-    this.setState({ scopes: [], treeScopes: [], isLoadingScopes: false });
+  public async removeAllScopes() {
+    return this.updateScopes([]);
   }
 
   public enterReadOnly() {

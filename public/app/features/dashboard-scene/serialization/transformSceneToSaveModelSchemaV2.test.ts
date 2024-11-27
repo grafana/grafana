@@ -23,6 +23,7 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema/dist/esm/index.gen';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -164,6 +165,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
         }),
       }),
       meta: {},
+      editPane: new DashboardEditPane({}),
       $behaviors: [
         new behaviors.CursorSync({
           sync: DashboardCursorSyncV1.Crosshair,
