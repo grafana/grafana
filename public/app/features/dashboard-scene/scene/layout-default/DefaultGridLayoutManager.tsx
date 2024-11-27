@@ -41,8 +41,19 @@ export class DefaultGridLayoutManager
   implements DashboardLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {
-    this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
-    forceRenderChildren(this.state.grid, true);
+    const updateResizeAndDragging = () => {
+      this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+      forceRenderChildren(this.state.grid, true);
+    };
+
+    if (config.featureToggles.dashboardNewLayouts) {
+      // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
+      // if we show the edit pane without animations it opens much faster and feels more responsive
+      setTimeout(updateResizeAndDragging, 10);
+      return;
+    }
+
+    updateResizeAndDragging();
   }
 
   public addPanel(vizPanel: VizPanel): void {
@@ -370,8 +381,8 @@ export class DefaultGridLayoutManager
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
         children: children,
-        isDraggable: false,
-        isResizable: false,
+        isDraggable: true,
+        isResizable: true,
       }),
     });
   }

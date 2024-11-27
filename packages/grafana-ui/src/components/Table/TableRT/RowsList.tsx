@@ -286,6 +286,7 @@ export const RowsList = (props: RowsListProps) => {
         const { bgColor, textColor } = rowBg(row.index);
         style.background = bgColor;
         style.color = textColor;
+        style.borderLeft = `2px solid ${bgColor}`;
       }
 
       // If there's a text wrapping field we set the height of it here

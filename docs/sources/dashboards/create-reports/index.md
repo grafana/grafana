@@ -155,7 +155,7 @@ You can save a report as a draft at any point during the report creation or upda
 
 ### Choose template variables
 
-> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables](ref:templates-and-variables) section.
 
@@ -234,7 +234,6 @@ This feature relies on the same plugin that supports the [image rendering](ref:i
 ### Scheduling
 
 > **Note:** Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
-> The scheduler was significantly changed in Grafana Enterprise version 8.1.
 
 Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report via the API.
 
@@ -328,7 +327,9 @@ font_regular = DejaVuSansCondensed.ttf
 font_bold = DejaVuSansCondensed-Bold.ttf
 # Name of the TrueType font file with italic style
 font_italic = DejaVuSansCondensed-Oblique.ttf
-# Allowed domains to receive reports. Use * to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
+# Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the `reportingRetries` feature toggle.
+max_retries_per_panel = 3
+# Allowed domains to receive reports. Use an asterisk (`*`) to allow all domains. Use a comma-separated list to allow multiple domains. Example: allowed_domains = grafana.com, example.org
 allowed_domains = *
 ```
 
