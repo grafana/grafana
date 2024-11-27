@@ -78,7 +78,7 @@ func (c *importConnector) Connect(
 			return
 		}
 		kinds := newKindsLookup(client)
-		fileParser := newFileParser(ns, repo, client, kinds)
+		fileParser := newFileParser(ns, client, kinds)
 
 		folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
 			Group:   "folder.grafana.app",

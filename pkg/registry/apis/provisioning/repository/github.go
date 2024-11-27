@@ -318,7 +318,7 @@ func (r *githubRepository) ensureBranchExists(ctx context.Context, branchName st
 }
 
 // Webhook implements provisioning.Repository.
-func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
+func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		// We don't want GitHub's request to cause a cancellation for us, but we also want the request context's data (primarily for logging).
 		// This means we will just ignore when GH closes their connection to us. If we respond in time, fantastic. Otherwise, we'll still do the work.
@@ -343,7 +343,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 
 		switch event := event.(type) {
 		case *github.PushEvent:
-			if err := r.onPushEvent(ctx, logger, event); err != nil {
+			if err := r.onPushEvent(ctx, logger, event, replicator); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -372,7 +372,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 	}
 }
 
-func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent) error {
+func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger, event *github.PushEvent, replicator FileReplicator) error {
 	logger = logger.With("ref", event.GetRef())
 
 	if event.GetRepo() == nil {
@@ -394,39 +394,57 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 
 	for _, commit := range event.Commits {
 		logger := logger.With("commit", commit.GetID(), "message", commit.GetMessage())
-		logger.InfoContext(ctx, "processing commit")
+		logger.InfoContext(ctx, "process commit")
 
 		for _, file := range commit.Added {
-			logger := logger.With("change", "added", "file", file)
-			info, err := r.Read(ctx, logger, file, commit.GetID())
+			logger := logger.With("file", file)
+
+			fileInfo, err := r.Read(ctx, logger, file, commit.GetID())
 			if err != nil {
-				return fmt.Errorf("read added resource: %w", err)
+				logger.ErrorContext(ctx, "failed to read added resource", "error", err)
+				continue
 			}
 
-			logger.InfoContext(ctx, "added file", "resource", string(info.Data))
+			if err := replicator.Replicate(ctx, fileInfo); err != nil {
+				logger.ErrorContext(ctx, "failed to replicate added resource", "error", err)
+				continue
+			}
+
+			logger.InfoContext(ctx, "added file", "path", file)
 		}
 
 		for _, file := range commit.Modified {
-			logger := logger.With("change", "modified", "file", file)
-			info, err := r.Read(ctx, logger, file, commit.GetID())
+			logger := logger.With("file", file)
+			fileInfo, err := r.Read(ctx, logger, file, commit.GetID())
 			if err != nil {
-				return fmt.Errorf("read modified resource: %w", err)
+				logger.ErrorContext(ctx, "failed to read modified resource", "error", err)
+				continue
 			}
 
-			logger.InfoContext(ctx, "modified file", "resource", string(info.Data))
+			if err := replicator.Replicate(ctx, fileInfo); err != nil {
+				logger.ErrorContext(ctx, "failed to replicate modified resource", "error", err)
+				continue
+			}
+
+			logger.InfoContext(ctx, "modified file")
 		}
 
 		for _, file := range commit.Removed {
-			logger := logger.With("change", "removed", "file", file)
-			info, err := r.Read(ctx, logger, file, beforeRef)
+			logger := logger.With("file", file)
+
+			fileInfo, err := r.Read(ctx, logger, file, beforeRef)
 			if err != nil {
-				return fmt.Errorf("read removed resource: %w", err)
+				logger.ErrorContext(ctx, "failed to read removed resource", "error", err)
+				continue
 			}
 
-			logger.InfoContext(ctx, "removed file", "resource", string(info.Data))
-		}
+			if err := replicator.Delete(ctx, fileInfo); err != nil {
+				logger.ErrorContext(ctx, "failed to delete removed resource", "error", err)
+				continue
+			}
 
-		beforeRef = commit.GetID()
+			logger.InfoContext(ctx, "removed file")
+		}
 	}
 
 	return nil

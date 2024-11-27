@@ -254,7 +254,7 @@ func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path 
 }
 
 // Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
+func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, replicator FileReplicator) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }

@@ -20,9 +20,10 @@ import (
 
 // This only works for github right now
 type webhookConnector struct {
-	client auth.BackgroundIdentityService
-	getter RepoGetter
-	logger *slog.Logger
+	client         auth.BackgroundIdentityService
+	getter         RepoGetter
+	logger         *slog.Logger
+	resourceClient *resourceClient
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -60,8 +61,8 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns := request.NamespaceValue(ctx)
-	id, err := s.client.WorkerIdentity(ctx, ns)
+	namespace := request.NamespaceValue(ctx)
+	id, err := s.client.WorkerIdentity(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	if err != nil {
 		return nil, err
 	}
-	webhook := repo.Webhook(ctx, s.logger, responder)
+
+	replicator := newReplicator(s.resourceClient, namespace)
+	webhook := repo.Webhook(ctx, s.logger, responder, replicator)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{

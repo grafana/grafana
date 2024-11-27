@@ -24,19 +24,15 @@ type fileParser struct {
 	// Reader is always in the context of a single namespace
 	namespace string
 
-	// The target repository
-	repo repository.Repository
-
 	// client helper (for this namespace?)
 	client *dynamic.DynamicClient
 
 	kinds *kindsLookup
 }
 
-func newFileParser(ns string, repo repository.Repository, client *dynamic.DynamicClient, kinds *kindsLookup) *fileParser {
+func newFileParser(namespace string, client *dynamic.DynamicClient, kinds *kindsLookup) *fileParser {
 	return &fileParser{
-		namespace: ns,
-		repo:      repo,
+		namespace: namespace,
 		client:    client,
 		kinds:     kinds,
 	}
