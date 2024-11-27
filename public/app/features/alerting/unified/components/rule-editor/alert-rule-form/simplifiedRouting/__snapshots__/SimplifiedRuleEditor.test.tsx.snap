@@ -129,6 +129,11 @@ exports[`Can create a new grafana managed alert using simplified routing can cre
             ],
             "exec_err_state": "Error",
             "is_paused": false,
+            "metadata": {
+              "editor_settings": {
+                "simplified_query_and_expressions_section": true,
+              },
+            },
             "no_data_state": "NoData",
             "notification_settings": {
               "receiver": "lotsa-emails",
