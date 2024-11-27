@@ -50,7 +50,6 @@ const (
 var ResourceRelations = []string{
 	RelationRead,
 	RelationWrite,
-	RelationCreate,
 	RelationDelete,
 	RelationPermissionsRead,
 	RelationPermissionsWrite,
@@ -58,6 +57,7 @@ var ResourceRelations = []string{
 
 var FolderRelations = append(
 	ResourceRelations,
+	RelationCreate,
 	RelationFolderResourceRead,
 	RelationFolderResourceWrite,
 	RelationFolderResourceCreate,
