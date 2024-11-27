@@ -129,7 +129,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 				"OrgName":   c.SignedInUser.GetOrgName(),
 				"Email":     c.SignedInUser.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 
@@ -169,7 +169,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 			Data: map[string]any{
 				"Name":      user.NameOrFallback(),
 				"OrgName":   c.SignedInUser.GetOrgName(),
-				"InvitedBy": c.SignedInUser.GetDisplayName(),
+				"InvitedBy": c.SignedInUser.GetName(),
 			},
 		}
 

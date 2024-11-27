@@ -31,7 +31,7 @@ func TestBleveBackend(t *testing.T) {
 	require.NoError(t, err)
 
 	backend := NewBleveBackend(
-		bleveOptions{
+		BleveOptions{
 			Root:          tmpdir.Name(),
 			FileThreshold: 5, // with more than 5 items we create a file on disk
 		},
