@@ -4,7 +4,15 @@ import { Property } from 'csstype';
 import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
-import { DataFrame, Field, FieldType, GrafanaTheme2, ReducerID } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  fieldReducers,
+  FieldType,
+  formattedValueToString,
+  GrafanaTheme2,
+  ReducerID,
+} from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../../themes';
@@ -12,12 +20,12 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import { FooterItem, TableNGProps } from '../types';
-import { getTextAlign, getFooterItems } from '../utils';
+import { TableNGProps } from '../types';
+import { getTextAlign } from '../utils';
 
-import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
-import { getRowHeight, shouldTextOverflow } from './utils';
+import { Filter } from './Filter/Filter';
+import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
 
 const DEFAULT_CELL_PADDING = 6;
 const COLUMN_MIN_WIDTH = 150;
@@ -32,15 +40,23 @@ interface TableColumn extends Column<TableRow> {
 
 interface HeaderCellProps {
   column: Column<any>;
+  field: Field;
   onSort: (columnKey: string, direction: SortDirection) => void;
   direction: SortDirection | undefined;
   justifyContent?: Property.JustifyContent;
 }
 
+export type FilterType = {
+  [key: string]: {
+    filteredSet: Set<string>;
+  };
+};
+
 export function TableNG(props: TableNGProps) {
   const { height, width, timeRange, cellHeight, noHeader, fieldConfig, footerOptions } = props;
 
   const textWrap = fieldConfig?.defaults?.custom?.cellOptions.wrapText ?? false;
+  const filterable = fieldConfig?.defaults?.custom?.filterable ?? false;
 
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
@@ -77,6 +93,7 @@ export function TableNG(props: TableNGProps) {
   } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isContextMenuOpen, setIsContextMenuOpen] = useState(false);
+  const [filter, setFilter] = useState<FilterType>({});
 
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
   const [, setReadyForRowHeightCalc] = useState(false);
@@ -137,8 +154,21 @@ export function TableNG(props: TableNGProps) {
   const defaultRowHeight = getDefaultRowHeight();
   const defaultLineHeight = theme.typography.body.lineHeight * theme.typography.fontSize;
 
-  const HeaderCell: React.FC<HeaderCellProps> = ({ column, onSort, direction, justifyContent }) => {
+  const HeaderCell: React.FC<HeaderCellProps> = ({ column, field, onSort, direction, justifyContent }) => {
     const headerRef = useRef(null);
+
+    let isColumnFilterable = filterable;
+    if (field.config.custom.filterable !== filterable) {
+      isColumnFilterable = field.config.custom.filterable || false;
+    }
+    // we have to remove/reset the filter if the column is not filterable
+    if (!isColumnFilterable && filter[field.name]) {
+      setFilter((filter: FilterType) => {
+        const newFilter = { ...filter };
+        delete newFilter[field.name];
+        return newFilter;
+      });
+    }
 
     const handleSort = () => {
       onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC');
@@ -162,7 +192,9 @@ export function TableNG(props: TableNGProps) {
             ))}
         </button>
 
-        {/* put the filter button here */}
+        {isColumnFilterable && (
+          <Filter name={column.key} rows={rows} filter={filter} setFilter={setFilter} field={field} />
+        )}
       </div>
     );
   };
@@ -187,19 +219,33 @@ export function TableNG(props: TableNGProps) {
     }
   };
 
-  const mapFrameToDataGrid = (main: DataFrame, rows: TableRow[]) => {
+  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
+    const fnBody = `
+      const rows = Array(frame.length);
+      const values = frame.fields.map(f => f.values);
+
+      for (let i = 0; i < frame.length; i++) {
+        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
+      }
+
+      return rows;
+    `;
+
+    const convert = new Function('frame', fnBody);
+
+    const records = convert(frame);
+
+    return records;
+  }, []);
+
+  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
 
-    // Footer calculations
-    let footerItems: FooterItem[] = [];
-    const filterFields: Array<{ id: string; field?: Field } | undefined> = [];
-    const allValues: any[][] = [];
-
     main.fields.map((field, fieldIndex) => {
-      filterFields.push({ id: fieldIndex.toString(), field });
       const key = field.name;
 
       const justifyColumnContent = getTextAlign(field);
+      const footerStyles = getFooterStyles(justifyColumnContent);
 
       // Add a column for each field
       columns.push({
@@ -240,12 +286,13 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
+            return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
           <HeaderCell
             column={column}
+            field={field}
             onSort={handleSort}
             direction={sortDirection}
             justifyContent={justifyColumnContent}
@@ -255,62 +302,26 @@ export function TableNG(props: TableNGProps) {
         width: field.config.custom.width ?? columnWidth,
         minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
-
-      // Create row objects
-      if (footerOptions?.show && footerOptions.reducer.length > 0) {
-        // Only populate 2d array if needed for footer calculations
-        allValues.push(field.values);
-      }
     });
-
-    if (footerOptions?.show && footerOptions.reducer.length > 0) {
-      if (footerOptions.countRows && footerOptions.reducer[0] === ReducerID.count) {
-        footerItems = [rows.length.toString()];
-      } else {
-        footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
-      }
-    }
 
     return columns;
   };
 
-  const frameToRecords = useCallback((frame: DataFrame): Array<Record<string, string>> => {
-    const fnBody = `
-      const rows = Array(frame.length);
-      const values = frame.fields.map(f => f.values);
-
-      for (let i = 0; i < frame.length; i++) {
-        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
-      }
-
-      return rows;
-    `;
-
-    const convert = new Function('frame', fnBody);
-
-    const records = convert(frame);
-
-    return records;
-  }, []);
-
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
-  const columns = mapFrameToDataGrid(props.data, rows);
 
-  useLayoutEffect(() => {
-    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
-  }, [columns]);
-
+  // Create a map of column key to column type
   const columnTypes = useMemo(() => {
-    return columns.reduce(
-      (acc, column) => {
-        acc[column.key] = column.field.type;
+    return props.data.fields.reduce(
+      (acc, field) => {
+        acc[field.name] = field.type;
         return acc;
       },
       {} as { [key: string]: string }
     );
-  }, [columns]);
+  }, [props.data.fields]);
 
-  const sortedRows = useMemo((): ReadonlyArray<{ [key: string]: string }> => {
+  // Sort rows
+  const sortedRows = useMemo(() => {
     if (sortColumns.length === 0) {
       return rows;
     }
@@ -327,6 +338,49 @@ export function TableNG(props: TableNGProps) {
       return 0; // false
     });
   }, [rows, sortColumns, columnTypes]);
+
+  // Filter rows
+  const filteredRows = useMemo(() => {
+    const filterValues = Object.entries(filter);
+
+    if (filterValues.length === 0) {
+      return sortedRows;
+    }
+
+    return sortedRows.filter((row) => {
+      for (const [key, value] of filterValues) {
+        const field = props.data.fields.find((field) => field.name === key)!;
+        const displayedValue = formattedValueToString(field.display!(row[key]));
+        if (!value.filteredSet.has(displayedValue)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const calcsRef = useRef<string[]>([]);
+  useMemo(() => {
+    calcsRef.current = props.data.fields.map((field, index) => {
+      if (field.state?.calcs) {
+        delete field.state?.calcs;
+      }
+      if (isCountRowsSet) {
+        return index === 0 ? `Count: ${filteredRows.length}` : '';
+      }
+      if (index === 0) {
+        return footerOptions ? fieldReducers.get(footerOptions.reducer[0]).name : '';
+      }
+      return getFooterItemNG(filteredRows, field, footerOptions);
+    });
+  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // This effect needed to set header cells refs before row height calculation
+  useLayoutEffect(() => {
+    setReadyForRowHeightCalc(Object.keys(headerCellRefs.current).length > 0);
+  }, [columns]);
 
   const renderMenuItems = () => {
     return (
@@ -347,7 +401,7 @@ export function TableNG(props: TableNGProps) {
     <>
       <DataGrid
         key={`DataGrid${revId}`}
-        rows={sortedRows}
+        rows={filteredRows}
         columns={columns}
         headerRowHeight={noHeader ? 0 : undefined}
         defaultColumnOptions={{
@@ -385,7 +439,7 @@ export function TableNG(props: TableNGProps) {
         sortColumns={sortColumns}
         // footer
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
+        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
           // TODO: this is a hack to force rowHeight re-calculation
           setResizeTrigger((prev) => prev + 1);
@@ -466,5 +520,12 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  }),
+});
+
+const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
+  footerCell: css({
+    display: 'flex',
+    justifyContent: justifyContent || 'space-between',
   }),
 });
