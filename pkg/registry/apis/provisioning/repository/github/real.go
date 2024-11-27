@@ -310,6 +310,40 @@ func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cf
 	return err
 }
 
+func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
+	commitFiles, _, err := r.gh.PullRequests.ListFiles(ctx, owner, repository, number, nil)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, ErrServiceUnavailable
+		}
+		return nil, err
+	}
+
+	ret := make([]CommitFile, 0, len(commitFiles))
+	for _, f := range commitFiles {
+		ret = append(ret, f)
+	}
+
+	return ret, nil
+}
+
+func (r *realImpl) CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error {
+	comment := &github.IssueComment{
+		Body: &body,
+	}
+
+	if _, _, err := r.gh.Issues.CreateComment(ctx, owner, repository, number, comment); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return ErrServiceUnavailable
+		}
+		return err
+	}
+
+	return nil
+}
+
 type realRepositoryContent struct {
 	real *github.RepositoryContent
 }
