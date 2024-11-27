@@ -30,7 +30,7 @@ func NewScopeAPIBuilder() *ScopeAPIBuilder {
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *ScopeAPIBuilder {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagScopeApi) ||
-	features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil // skip registration unless opting into experimental apis
 	}
 	builder := NewScopeAPIBuilder()
