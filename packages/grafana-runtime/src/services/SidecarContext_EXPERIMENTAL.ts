@@ -32,9 +32,18 @@ export function useSidecar_EXPERIMENTAL() {
     // TODO: currently this allows anybody to open any app, in the future we should probably scope this to the
     //  current app but that means we will need to incorporate this better into the plugin platform APIs which
     //  we will do once the functionality is reasonably stable
-    openApp: (pluginId: string, context?: unknown) => service.openApp(pluginId, context),
-    openAppV2: (pluginId: string, path?: string) => service.openAppV2(pluginId, path),
+    openApp: (pluginId: string, context?: unknown) => {
+      return service.openApp(pluginId, context);
+    },
+    openAppV2: (pluginId: string, path?: string) => {
+      return service.openAppV2(pluginId, path);
+    },
+    openAppV3: (options: { pluginId: string; path?: string; follow?: boolean }) => {
+      return service.openAppV3(options);
+    },
     closeApp: () => service.closeApp(),
-    isAppOpened: (pluginId: string) => service.isAppOpened(pluginId),
+    isAppOpened: (pluginId: string) => {
+      return service.isAppOpened(pluginId);
+    },
   };
 }

@@ -35,7 +35,7 @@ This section provides minimum hardware and software requirements.
 
 - Disk space: 1 GB
 - Memory: 750 MiB (approx 750 MB)
-- CPU: 250m (approx 2.5 cores)
+- CPU: 250m (approx 0.25 cores)
 
 ### Supported databases
 

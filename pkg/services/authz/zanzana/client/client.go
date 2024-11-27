@@ -142,19 +142,6 @@ func newItemChecker(res *authzextv1.ListResponse) authz.ItemChecker {
 	}
 }
 
-func (c *Client) List(ctx context.Context, id claims.AuthInfo, req authz.ListRequest) (*authzextv1.ListResponse, error) {
-	ctx, span := tracer.Start(ctx, "authz.zanzana.client.List")
-	defer span.End()
-
-	return c.authzext.List(ctx, &authzextv1.ListRequest{
-		Subject:   id.GetUID(),
-		Group:     req.Group,
-		Verb:      utils.VerbList,
-		Resource:  req.Resource,
-		Namespace: req.Namespace,
-	})
-}
-
 func (c *Client) Read(ctx context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Read")
 	defer span.End()
@@ -168,4 +155,11 @@ func (c *Client) Write(ctx context.Context, req *authzextv1.WriteRequest) error 
 
 	_, err := c.authzext.Write(ctx, req)
 	return err
+}
+
+func (c *Client) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
+	ctx, span := tracer.Start(ctx, "authz.zanzana.client.Check")
+	defer span.End()
+
+	return c.authzext.BatchCheck(ctx, req)
 }
