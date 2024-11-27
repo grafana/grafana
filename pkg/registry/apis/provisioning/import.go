@@ -176,7 +176,9 @@ func (c *importConnector) Connect(
 			resource := wrapper.Resource.File
 			resource.SetNestedField(name, "metadata", "name")
 			resource.SetNestedField(ns, "metadata", "namespace")
-			resource.SetNestedField(path.Base(dir), "metadata", "annotations", apiutils.AnnoKeyFolder)
+			if folder := path.Base(dir); folder != "." && folder != "/" {
+				resource.SetNestedField(path.Base(dir), "metadata", "annotations", apiutils.AnnoKeyFolder)
+			}
 
 			gv, err := schema.ParseGroupVersion(resource.GetNestedString("apiVersion"))
 			if err != nil {
