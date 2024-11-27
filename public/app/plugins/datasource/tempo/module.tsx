@@ -10,9 +10,9 @@ import { onDashboardLoadedHandler } from './tracking';
 import type { TempoQuery } from './types';
 
 // Lazy load the QueryField and ConfigEditor components to reduce the size of the initial bundle
-const TempoQueryFieldLazy = lazy(() => import(/* webpackChunkName "tempo-queryfield"*/ './QueryField'));
-const ConfigEditorLazy = lazy(() => import(/* webpackChunkName "tempo-configeditor"*/ './configuration/ConfigEditor'));
-const CheatSheetLazy = lazy(() => import(/* webpackChunkName "tempo-cheatsheet"*/ './CheatSheet'));
+const TempoQueryFieldLazy = lazy(() => import('./QueryField'));
+const ConfigEditorLazy = lazy(() => import('./configuration/ConfigEditor'));
+const CheatSheetLazy = lazy(() => import('./CheatSheet'));
 
 function TempoQueryField(props: QueryEditorProps<TempoDatasource, TempoQuery>) {
   return (
