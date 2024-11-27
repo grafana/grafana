@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana-azure-sdk-go/v2/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azusercontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -137,6 +138,10 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 		routesForModel, err := getAzureMonitorRoutes(azureSettings, credentials, settings.JSONData)
 		if err != nil {
 			return nil, err
+		}
+
+		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
+			return nil, backend.DownstreamError(errors.New("current user authentication is not enabled for azure monitor"))
 		}
 
 		model := types.DatasourceInfo{

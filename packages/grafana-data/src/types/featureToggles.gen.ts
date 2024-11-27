@@ -241,5 +241,6 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  azureMonitorEnableUserAuth?: boolean;
   alertingNotificationsStepMode?: boolean;
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
@@ -59,9 +60,29 @@ func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {
 		name          string
 		settings      backend.DataSourceInstanceSettings
-		expectedModel types.DatasourceInfo
+		expectedModel *types.DatasourceInfo
 		Err           require.ErrorAssertionFunc
+		setupContext  func(ctx context.Context) context.Context
 	}{
+		{
+			name: "current user authentication disabled by feature toggle",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"azureAuthType":"currentuser"}`),
+				DecryptedSecureJSONData: map[string]string{},
+				ID:                      60,
+			},
+			expectedModel: nil,
+			Err: func(t require.TestingT, err error, _ ...interface{}) {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), "current user authentication is not enabled for azure monitor")
+			},
+			setupContext: func(ctx context.Context) context.Context {
+				featureToggles := backend.NewGrafanaCfg(map[string]string{
+					featuretoggles.EnabledFeatures: "", // No enabled features
+				})
+				return backend.WithGrafanaConfig(ctx, featureToggles)
+			},
+		},
 		{
 			name: "creates an instance",
 			settings: backend.DataSourceInstanceSettings{
@@ -69,7 +90,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				ID:                      40,
 			},
-			expectedModel: types.DatasourceInfo{
+			expectedModel: &types.DatasourceInfo{
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
 				Routes:                  testRoutes,
@@ -87,7 +108,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				ID:                      50,
 			},
-			expectedModel: types.DatasourceInfo{
+			expectedModel: &types.DatasourceInfo{
 				Credentials: &azcredentials.AzureClientSecretCredentials{
 					AzureCloud:   "AzureCustomizedCloud",
 					ClientSecret: "secret",
@@ -117,11 +138,23 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tt.setupContext != nil {
+				ctx = tt.setupContext(ctx)
+			}
+
 			factory := NewInstanceSettings(&httpclient.Provider{}, map[string]azDatasourceExecutor{}, log.DefaultLogger)
-			instance, err := factory(context.Background(), tt.settings)
+			instance, err := factory(ctx, tt.settings)
+
 			tt.Err(t, err)
-			if !cmp.Equal(instance, tt.expectedModel) {
-				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))
+
+			if tt.expectedModel == nil {
+				require.Nil(t, instance, "Expected instance to be nil")
+			} else {
+				require.NotNil(t, instance, "Expected instance to be created")
+				if !cmp.Equal(instance, *tt.expectedModel) {
+					t.Errorf("Unexpected instance: %v", cmp.Diff(instance, *tt.expectedModel))
+				}
 			}
 		})
 	}

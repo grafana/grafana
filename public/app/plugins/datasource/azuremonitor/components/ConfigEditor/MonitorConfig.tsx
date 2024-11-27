@@ -53,7 +53,7 @@ export const MonitorConfig = (props: Props) => {
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
-        userIdentityEnabled={config.azure.userIdentityEnabled}
+        userIdentityEnabled={config.azure.userIdentityEnabled && !!config.featureToggles.azureMonitorEnableUserAuth}
         credentials={credentials}
         azureCloudOptions={getAzureCloudOptions()}
         onCredentialsChange={onCredentialsChange}

@@ -662,6 +662,22 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorEnableUserAuth",
+        "resourceVersion": "1732189410576",
+        "creationTimestamp": "2024-11-21T11:42:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-21 11:43:30.576196 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables user auth for Azure Monitor datasource only",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorLogLimit",
         "resourceVersion": "1727696791818",
         "creationTimestamp": "2024-09-30T11:45:45Z",
