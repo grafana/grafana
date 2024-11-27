@@ -7,6 +7,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { Resource } from '../apiserver/types';
 
 import { DeleteRepositoryButton } from './DeleteRepositoryButton';
+import { ImportFromRepository } from './ImportFromRepository';
 import { RepositorySpec } from './api/types';
 import { NEW_URL, PROVISIONING_URL } from './constants';
 import { useRepositoryList } from './hooks';
@@ -63,6 +64,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
                   <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${item.metadata.name}/edit`}>
                     Edit
                   </LinkButton>
+                  <ImportFromRepository name={item?.metadata.name} folder={item.spec.folder} />
                   <DeleteRepositoryButton name={item.metadata.name} />
                 </Stack>
               </Card>

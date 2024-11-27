@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
+import { useAsync } from 'react-use';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
+import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
+import { Button, ConfirmModal } from '@grafana/ui';
 
 import { Loader } from '../plugins/admin/components/Loader';
 
@@ -17,7 +18,13 @@ interface Props {
 export function ImportFromRepository({ name, folder }: Props) {
   const query = useListRepositoryQuery();
   const [importResource, importQuery] = useCreateRepositoryImportMutation();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  // TODO generate endpoints for this
+  const { value } = useAsync(async () => {
+    return getBackendSrv().get(`/apis/folder.grafana.app/v0alpha1/namespaces/${config.namespace}/folders/${folder}`);
+  });
 
   useEffect(() => {
     const appEvents = getAppEvents();
@@ -48,8 +55,18 @@ export function ImportFromRepository({ name, folder }: Props) {
     return <Loader />;
   }
   return (
-    <Button variant={'secondary'} onClick={onClick} disabled={importQuery.isLoading || !name}>
-      {importQuery.isLoading ? 'Importing...' : 'Import from repository'}
-    </Button>
+    <>
+      <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={importQuery.isLoading || !name}>
+        {importQuery.isLoading ? 'Importing...' : 'Import from repository'}
+      </Button>
+      <ConfirmModal
+        isOpen={isModalOpen}
+        title={'Import resources from repository'}
+        body={`This will pull all resources from the repository into your instance into the "${value?.spec?.title}" folder. Existing dashboards with the same UID will be overwritten. Proceed?`}
+        confirmText={'Import'}
+        onConfirm={onClick}
+        onDismiss={() => setIsModalOpen(false)}
+      />
+    </>
   );
 }

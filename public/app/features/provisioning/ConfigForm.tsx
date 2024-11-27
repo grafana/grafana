@@ -19,7 +19,6 @@ import {
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { ImportFromRepository } from './ImportFromRepository';
 import { RepositoryResource, RepositorySpec } from './api/types';
 import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData } from './types';
@@ -67,7 +66,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
   const [tokenConfigured, setTokenConfigured] = useState(Boolean(data?.metadata?.name));
   const navigate = useNavigate();
-  const [type, folder] = watch(['type', 'folder']);
+  const type = watch('type');
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -213,7 +212,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
       </FieldSet>
       <Stack gap={2}>
         <Button type={'submit'}>Save</Button>
-        <ImportFromRepository name={data?.metadata.name} folder={folder} />
       </Stack>
     </form>
   );
