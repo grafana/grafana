@@ -70,7 +70,11 @@ Watch the following video for a quick tutorial on creating annotations:
 
 To add an annotation, complete the following steps:
 
-1. In the dashboard click the panel to which you're adding the annotation. A context menu will appear.
+1. If you've just saved a dashboard, refresh the page.
+1. In the dashboard click the panel to which you're adding the annotation.
+
+   A context menu will appear.
+
 1. In the context menu, click **Add annotation**.
    ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
 1. Add an annotation description and tags (optional).
@@ -80,6 +84,7 @@ Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the
 
 ### Add a region annotation
 
+1. If you've just saved a dashboard, refresh the page.
 1. In the dashboard press Ctrl/Cmd and click and drag on the panel.
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
 1. Add an annotation description and tags (optional).
