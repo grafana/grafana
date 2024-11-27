@@ -85,8 +85,8 @@ func RegisterAPIService(
 	identities auth.BackgroundIdentityService,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{

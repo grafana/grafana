@@ -126,7 +126,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 
 	pluginsNode := &navtree.NavLink{
-		Text:     "Plugins and data!",
+		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",
 		Id:       navtree.NavIDCfgPlugins,
 		Url:      "/admin/plugins",
