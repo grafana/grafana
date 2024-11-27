@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Field, Select } from '@grafana/ui';
+import { useStyles2, Field, Select, Button } from '@grafana/ui';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardLayoutManager, isLayoutParent, LayoutRegistryItem } from '../types';
@@ -16,6 +17,7 @@ interface Props {
 export function LayoutEditChrome({ layoutManager, children }: Props) {
   const styles = useStyles2(getStyles);
   const { isEditing } = getDashboardSceneFor(layoutManager).useState();
+  const [isPinned, setPinned] = useState(false);
 
   const layouts = layoutRegistry.list();
   const options = layouts.map((layout) => ({
@@ -29,7 +31,12 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
   return (
     <div className={styles.wrapper}>
       {isEditing && (
-        <div className={styles.editHeader}>
+        <div
+          className={styles.editHeader}
+          style={{
+            position: isPinned ? 'sticky' : undefined,
+          }}
+        >
           <Field label="Layout type">
             <Select
               options={options}
@@ -38,6 +45,15 @@ export function LayoutEditChrome({ layoutManager, children }: Props) {
             />
           </Field>
           {layoutManager.renderEditor?.()}
+          <Button
+            icon="gf-pin"
+            variant={isPinned ? 'primary' : 'secondary'}
+            className={styles.pinButton}
+            onClick={(e) => {
+              e.preventDefault();
+              setPinned(!isPinned);
+            }}
+          ></Button>
         </div>
       )}
       {children}
@@ -56,6 +72,9 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'flex-end',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
       paddingBottom: theme.spacing(1),
+      background: theme.colors.background.canvas,
+      top: 0,
+      zIndex: theme.zIndex.portal,
 
       '&:hover, &:focus-within': {
         '& > div': {
@@ -93,6 +112,9 @@ function getStyles(theme: GrafanaTheme2) {
       '&:hover, &:focus-within': {
         opacity: 1,
       },
+    }),
+    pinButton: css({
+      marginLeft: 'auto',
     }),
   };
 }
