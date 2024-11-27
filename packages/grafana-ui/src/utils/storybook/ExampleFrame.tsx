@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Unstyled } from '@storybook/blocks';
 import { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,7 +20,11 @@ export function ExampleFrame(props: ExampleFrameProps) {
   const { children } = props;
   const styles = useStyles2(getStyles);
 
-  return <div className={styles.container}>{children}</div>;
+  return (
+    <Unstyled>
+      <div className={styles.container}>{children}</div>
+    </Unstyled>
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
