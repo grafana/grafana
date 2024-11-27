@@ -340,7 +340,7 @@ Use this transformation to select a source of data and extract content from it i
 - **Format** - Choose one of the following:
   - **JSON** - Parse JSON content from the source.
   - **Key+value pairs** - Parse content in the format 'a=b' or 'c:d' from the source.
-  - **RegExp** - Parse content using a regular expression with [named capturing group(s)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) like `/(?<New_Field>.*)/`.
+  - **RegExp** - Parse content using a regular expression with [named capturing group(s)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Named_capturing_group) like `/(?<NewField>.*)/`.
     {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-regexp-detail-v11.3-2.png" class="docs-image--no-shadow" max-width= "1100px" alt="Example of a regular expression" >}}
   - **Auto** - Discover fields automatically.
 - **Replace All Fields** - (Optional) Select this option to hide all other fields and display only your calculated field in the visualization.

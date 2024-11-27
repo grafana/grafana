@@ -323,26 +323,6 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-// This will soon be deprecated/replaced with ResourceSearchRequest
-message SearchRequest {
-  // query string for chosen implementation (currently just bleve)
-  string query = 1;
-  // default to bleve
-  string queryType = 2;
-  string tenant = 3;
-  // resource kind (playlists, dashboards, etc)
-  repeated string kind = 4;
-  // pagination support
-  int64 limit = 5;
-  int64 offset = 6;
-  // grouping (optional)
-  repeated GroupBy groupBy = 8;
-  // sorting
-  repeated string sortBy = 9;
-  // filters
-  repeated string filters = 10;
-}
-
 // Search within a single resource
 message ResourceSearchRequest {
   message Sort {
@@ -417,32 +397,16 @@ message ResourceSearchResponse {
   ResourceTable results = 3;
 
   // The total hit count
-  uint64 total_hits = 4;
+  int64 total_hits = 4;
 
   // indicates how expensive was the query with respect to bytes read
-  uint64 query_cost = 5;
+  double query_cost = 5;
 
   // maximum score across all fields
   double max_score = 6;
 
   // Facet results
   map<string,Facet> facet = 7;
-}
-
-message GroupBy {
-  string name = 1;
-  int64 limit = 2;
-}
-
-message Group {
-  string name = 1;
-  int64 count = 2;
-}
-
-// This will soon be deprecated/replaced with ResourceSearchResponse
-message SearchResponse {
-  repeated ResourceWrapper items = 1;
-  repeated Group groups = 2;
 }
 
 message HistoryRequest {
@@ -749,7 +713,7 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-   rpc Search(SearchRequest) returns (SearchResponse);
+  rpc Search(ResourceSearchRequest) returns (ResourceSearchResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);

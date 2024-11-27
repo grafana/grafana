@@ -280,6 +280,12 @@
     "contactPointFilter": {
       "label": ""
     },
+    "export": {
+      "subtitle": {
+        "formats": "",
+        "one-format": ""
+      }
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -301,6 +307,7 @@
           "title": ""
         },
         "grafanaManaged": {
+          "export-new-rule": "",
           "export-rules": "",
           "loading": "",
           "new-recording-rule": "",
@@ -325,9 +332,16 @@
     "policies": {
       "default-policy": {
         "description": "",
-        "title": ""
+        "title": "",
+        "update": ""
+      },
+      "delete": {
+        "confirm": "",
+        "warning-1": "",
+        "warning-2": ""
       },
       "generated-policies": "",
+      "matchers": "",
       "metadata": {
         "active-time": "",
         "delivered-to": "",
@@ -358,6 +372,20 @@
       "new-child": "",
       "new-policy": "",
       "no-matchers": "",
+      "reload-policies": "",
+      "save-policy": "",
+      "update": {
+        "please-wait": "",
+        "update-policy": "",
+        "updating": ""
+      },
+      "update-errors": {
+        "conflict": "",
+        "error-code": "",
+        "fallback": "",
+        "suffix": "",
+        "title": ""
+      },
       "n-more-policies_one": "",
       "n-more-policies_other": ""
     },
@@ -1714,6 +1742,10 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": ""
+    },
+    "log-row-message": {
+      "ellipsis": "",
+      "more": ""
     }
   },
   "migrate-to-cloud": {
@@ -2072,6 +2104,9 @@
     "data-sources": {
       "subtitle": "Visualize e gerencie suas conexões de fonte de dados conectadas",
       "title": "Fontes de dados"
+    },
+    "databases": {
+      "title": ""
     },
     "datasources": {
       "subtitle": "Adicione e configure fontes de dados",
@@ -3082,6 +3117,7 @@
       "copy-link-button": "",
       "delete-button": "",
       "delete-description": "",
+      "delete-permission-tooltip": "",
       "delete-title": "",
       "deleted-alert": "",
       "expiration-label": "",
