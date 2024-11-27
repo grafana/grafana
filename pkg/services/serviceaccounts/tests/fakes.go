@@ -41,8 +41,8 @@ func (f *FakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, 
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *FakeServiceAccountService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return f.ExpectedServiceAccountID, f.ExpectedErr
+func (f *FakeServiceAccountService) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error) {
+	return f.ExpectedServiceAccountID, "", f.ExpectedErr
 }
 
 func (f *FakeServiceAccountService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {

@@ -103,6 +103,7 @@ func genExternalServiceAssignment(cmd accesscontrol.SaveExternalServiceRoleComma
 	assignment := accesscontrol.UserRole{
 		OrgID:   cmd.AssignmentOrgID,
 		UserID:  cmd.ServiceAccountID,
+		UserUID: cmd.ServiceAccountUID,
 		Created: time.Now(),
 	}
 	return assignment

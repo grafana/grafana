@@ -210,4 +210,9 @@ func AddMigration(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"org_id", "user_id", "role_id"},
 	}))
+
+	// TODO add an index once we know that the column is not nullable
+	mg.AddMigration("add column user_uid to user_role table", migrator.NewAddColumnMigration(userRoleV1, &migrator.Column{
+		Name: "user_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: true,
+	}))
 }

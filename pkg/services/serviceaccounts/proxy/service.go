@@ -145,8 +145,8 @@ func (s *ServiceAccountsProxy) RetrieveServiceAccount(ctx context.Context, query
 	return sa, nil
 }
 
-func (s *ServiceAccountsProxy) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return s.proxiedService.RetrieveServiceAccountIdByName(ctx, orgID, name)
+func (s *ServiceAccountsProxy) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error) {
+	return s.proxiedService.RetrieveServiceAccountIdentifiersByName(ctx, orgID, name)
 }
 
 func (s *ServiceAccountsProxy) UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64, saForm *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {

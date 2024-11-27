@@ -258,9 +258,10 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, q
 	return serviceAccount, err
 }
 
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgId int64, name string) (int64, error) {
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgId int64, name string) (int64, string, error) {
 	serviceAccount := &struct {
-		Id int64
+		Id  int64
+		UID string
 	}{}
 
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -281,6 +282,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 
 		sess.Cols(
 			"user.id",
+			"user.uid",
 		)
 
 		if ok, err := sess.Get(serviceAccount); err != nil {
@@ -293,10 +295,10 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 	})
 
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 
-	return serviceAccount.Id, nil
+	return serviceAccount.Id, serviceAccount.UID, nil
 }
 
 func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error) {

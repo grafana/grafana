@@ -235,6 +235,13 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 	return s.store.GetByEmail(ctx, query)
 }
 
+func (s *Service) GetUIDsByIDs(ctx context.Context, IDs []int64) (map[int64]string, error) {
+	ctx, span := s.tracer.Start(ctx, "user.GetUIDsByIDs")
+	defer span.End()
+
+	return s.store.GetUIDsByIDs(ctx, IDs)
+}
+
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
 	ctx, span := s.tracer.Start(ctx, "user.Update", trace.WithAttributes(
 		attribute.Int64("userID", cmd.UserID),

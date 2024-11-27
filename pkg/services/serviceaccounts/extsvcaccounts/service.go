@@ -3,6 +3,7 @@ package extsvcaccounts
 import (
 	"context"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/user"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,6 +32,7 @@ type ExtSvcAccountsService struct {
 	logger       log.Logger
 	metrics      *metrics
 	saSvc        sa.Service
+	userSvc      user.Service
 	skvStore     kvstore.SecretsKVStore
 	tracer       tracing.Tracer
 	enabled      bool
@@ -66,7 +68,7 @@ func (esa *ExtSvcAccountsService) EnableExtSvcAccount(ctx context.Context, cmd *
 
 	saName := sa.ExtSvcPrefix + slugify.Slugify(cmd.ExtSvcSlug)
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, saName)
+	saID, _, errRetrieve := esa.saSvc.RetrieveServiceAccountIdentifiersByName(ctx, cmd.OrgID, saName)
 	if errRetrieve != nil {
 		return errRetrieve
 	}
@@ -81,7 +83,7 @@ func (esa *ExtSvcAccountsService) HasExternalService(ctx context.Context, name s
 
 	saName := sa.ExtSvcPrefix + slugify.Slugify(name)
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, esa.defaultOrgID, saName)
+	saID, _, errRetrieve := esa.saSvc.RetrieveServiceAccountIdentifiersByName(ctx, esa.defaultOrgID, saName)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return false, errRetrieve
 	}
@@ -201,7 +203,7 @@ func (esa *ExtSvcAccountsService) RemoveExtSvcAccount(ctx context.Context, orgID
 
 	ctxLogger := esa.logger.FromContext(ctx)
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, orgID, sa.ExtSvcPrefix+extSvcSlug)
+	saID, _, errRetrieve := esa.saSvc.RetrieveServiceAccountIdentifiersByName(ctx, orgID, sa.ExtSvcPrefix+extSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return errRetrieve
 	}
@@ -240,7 +242,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		return 0, nil
 	}
 
-	saID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdByName(ctx, cmd.OrgID, sa.ExtSvcPrefix+cmd.ExtSvcSlug)
+	saID, saUID, errRetrieve := esa.saSvc.RetrieveServiceAccountIdentifiersByName(ctx, cmd.OrgID, sa.ExtSvcPrefix+cmd.ExtSvcSlug)
 	if errRetrieve != nil && !errors.Is(errRetrieve, sa.ErrServiceAccountNotFound) {
 		return 0, errRetrieve
 	}
@@ -268,6 +270,7 @@ func (esa *ExtSvcAccountsService) ManageExtSvcAccount(ctx context.Context, cmd *
 		OrgID:       cmd.OrgID,
 		Permissions: cmd.Permissions,
 		SaID:        saID,
+		SaUID:       saUID,
 	})
 	if errSave != nil {
 		ctxLogger.Error("Could not save service account", "service", cmd.ExtSvcSlug, "error", errSave.Error())
@@ -295,6 +298,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 			return 0, err
 		}
 		cmd.SaID = sa.Id
+		cmd.SaUID = sa.UID
 	}
 
 	// Enable or disable the service account
@@ -309,6 +313,7 @@ func (esa *ExtSvcAccountsService) saveExtSvcAccount(ctx context.Context, cmd *sa
 		AssignmentOrgID:   cmd.OrgID,
 		ExternalServiceID: cmd.ExtSvcSlug,
 		ServiceAccountID:  cmd.SaID,
+		ServiceAccountUID: cmd.SaUID,
 		Permissions:       cmd.Permissions,
 	}); err != nil {
 		return 0, err

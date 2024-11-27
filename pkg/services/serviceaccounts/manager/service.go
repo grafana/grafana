@@ -205,14 +205,14 @@ func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, qu
 	return sa.store.RetrieveServiceAccount(ctx, query)
 }
 
-func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+func (sa *ServiceAccountsService) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error) {
 	if err := validOrgID(orgID); err != nil {
-		return 0, err
+		return 0, "", err
 	}
 	if name == "" {
-		return 0, errors.New("name is required")
+		return 0, "", errors.New("name is required")
 	}
-	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
+	return sa.store.RetrieveServiceAccountIdentifiersByName(ctx, orgID, name)
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

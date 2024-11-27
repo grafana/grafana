@@ -81,9 +81,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 		assert.True(t, retrieved.IsDisabled)
 
-		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		retrievedId, retrievedUID, err := store.RetrieveServiceAccountIdentifiersByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
+		assert.Equal(t, saDTO.UID, retrievedUID)
 	})
 
 	t.Run("create service account twice same org, error", func(t *testing.T) {
@@ -115,9 +116,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 		assert.True(t, retrieved.IsDisabled)
 
-		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		retrievedId, retrievedUID, err := store.RetrieveServiceAccountIdentifiersByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
+		assert.Equal(t, saDTO.Id, retrievedUID)
 
 		// should not b able to create the same service account twice in the same org
 		_, err = store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
@@ -153,9 +155,10 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 		assert.True(t, retrieved.IsDisabled)
 
-		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		retrievedId, retrievedUID, err := store.RetrieveServiceAccountIdentifiersByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
+		assert.Equal(t, saDTO.Id, retrievedUID)
 
 		orgQuerySecond := &org.CreateOrgCommand{Name: "Second Org name"}
 		orgResultSecond, err := store.orgService.CreateWithMember(context.Background(), orgQuerySecond)
@@ -202,9 +205,10 @@ func TestIntegrationStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 	assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 
-	retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+	retrievedId, retrievedUID, err := store.RetrieveServiceAccountIdentifiersByName(context.Background(), serviceAccountOrgId, serviceAccountName)
 	require.NoError(t, err)
 	assert.Equal(t, saDTO.Id, retrievedId)
+	assert.Equal(t, saDTO.Id, retrievedUID)
 	assert.Equal(t, saDTO.Role, string(org.RoleNone))
 }
 

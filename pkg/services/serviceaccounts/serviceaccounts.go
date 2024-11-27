@@ -29,7 +29,7 @@ type Service interface {
 	ServiceAccountRetriever
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
+	RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error)
 	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
 	EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error
 	UpdateServiceAccount(ctx context.Context, orgID, serviceAccountID int64,

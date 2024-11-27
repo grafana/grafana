@@ -17,6 +17,7 @@ import (
 
 type FakeServiceAccountStore struct {
 	ExpectedServiceAccountID                int64
+	ExpectedServiceAccountUID               string
 	ExpectedServiceAccountDTO               *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfileDTO        *serviceaccounts.ServiceAccountProfileDTO
 	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchOrgServiceAccountsResult
@@ -39,9 +40,9 @@ func (f *FakeServiceAccountStore) RetrieveServiceAccount(ctx context.Context, qu
 	return f.ExpectedServiceAccountProfileDTO, f.ExpectedError
 }
 
-// RetrieveServiceAccountIdByName is a fake retrieving a service account id by name.
-func (f *FakeServiceAccountStore) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
-	return f.ExpectedServiceAccountID, f.ExpectedError
+// RetrieveServiceAccountIdentifiersByName is a fake retrieving a service account id and uid by name.
+func (f *FakeServiceAccountStore) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error) {
+	return f.ExpectedServiceAccountID, f.ExpectedServiceAccountUID, f.ExpectedError
 }
 
 // CreateServiceAccount is a fake creating a service account.

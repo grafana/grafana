@@ -23,6 +23,7 @@ type store interface {
 	GetByUID(ctx context.Context, uid string) (*user.User, error)
 	GetByLogin(context.Context, *user.GetUserByLoginQuery) (*user.User, error)
 	GetByEmail(context.Context, *user.GetUserByEmailQuery) (*user.User, error)
+	GetUIDsByIDs(context.Context, []int64) (map[int64]string, error)
 	Delete(context.Context, int64) error
 	LoginConflict(ctx context.Context, login, email string) error
 	Update(context.Context, *user.UpdateUserCommand) error
@@ -121,6 +122,35 @@ func (ss *sqlStore) GetByUID(ctx context.Context, uid string) (*user.User, error
 		return nil
 	})
 	return &usr, err
+}
+
+// TODO test
+func (ss *sqlStore) GetUIDsByIDs(ctx context.Context, IDs []int64) (map[int64]string, error) {
+	type identifier struct {
+		id  int64  `xorm:"id"`
+		uid string `xorm:"uid"`
+	}
+
+	identifiers := make([]identifier, 0, len(IDs))
+
+	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		user_id_params := strings.Repeat(",?", len(IDs)-1)
+		// TODO correctly pass in params
+		has, err := sess.Table("user").Where("id IN (?"+user_id_params+")", IDs).Get(&identifiers)
+		if err != nil {
+			return err
+		} else if !has {
+			return user.ErrUserNotFound
+		}
+		return nil
+	})
+
+	idToUIDmap := make(map[int64]string, len(IDs))
+	for _, id := range identifiers {
+		idToUIDmap[id.id] = id.uid
+	}
+
+	return idToUIDmap, err
 }
 
 func (ss *sqlStore) notServiceAccountFilter() string {

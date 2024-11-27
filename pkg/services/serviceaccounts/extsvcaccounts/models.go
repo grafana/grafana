@@ -55,6 +55,7 @@ type saveCmd struct {
 	OrgID       int64
 	Permissions []ac.Permission
 	SaID        int64
+	SaUID       string
 }
 
 func newRole(r identity.RoleType) *identity.RoleType {

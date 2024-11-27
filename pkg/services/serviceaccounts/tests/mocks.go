@@ -204,7 +204,7 @@ func (_m *MockServiceAccountService) RetrieveServiceAccount(ctx context.Context,
 }
 
 // RetrieveServiceAccountIdByName provides a mock function with given fields: ctx, orgID, name
-func (_m *MockServiceAccountService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+func (_m *MockServiceAccountService) RetrieveServiceAccountIdentifiersByName(ctx context.Context, orgID int64, name string) (int64, string, error) {
 	ret := _m.Called(ctx, orgID, name)
 
 	var r0 int64
@@ -224,7 +224,7 @@ func (_m *MockServiceAccountService) RetrieveServiceAccountIdByName(ctx context.
 		r1 = ret.Error(1)
 	}
 
-	return r0, r1
+	return r0, "", r1
 }
 
 // SearchOrgServiceAccounts provides a mock function with given fields: ctx, query

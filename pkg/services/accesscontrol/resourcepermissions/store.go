@@ -115,6 +115,9 @@ func (s *store) setUserResourcePermission(
 	hook UserResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID), cmd)
+	hook UserResourceHookFunc) (*accesscontrol.ResourcePermission, error) {
+	// TODO need UID for user
+	permission, err := s.setResourcePermission(sess, orgID, accesscontrol.ManagedUserRoleName(user.ID), s.userAdder(sess, orgID, user.ID, "TODO"), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -547,7 +550,8 @@ func flatPermissionsToResourcePermission(scope string, permissions []flatResourc
 	}
 }
 
-func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
+// TODO here
+func (s *store) userAdder(sess *db.Session, orgID, userID int64, userUID string) roleAdder {
 	return func(roleID int64) error {
 		if res, err := sess.Query("SELECT 1 FROM user_role WHERE org_id=? AND user_id=? AND role_id=?", orgID, userID, roleID); err != nil {
 			return err
@@ -558,6 +562,7 @@ func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
 		userRole := &accesscontrol.UserRole{
 			OrgID:   orgID,
 			UserID:  userID,
+			UserUID: userUID,
 			RoleID:  roleID,
 			Created: time.Now(),
 		}

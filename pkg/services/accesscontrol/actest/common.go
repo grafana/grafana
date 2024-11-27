@@ -100,6 +100,7 @@ func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 			OrgID:   role.OrgID,
 			RoleID:  role.ID,
 			UserID:  user.UserID,
+			UserUID: user.UserUID,
 			Created: time.Now(),
 		})
 		require.NoError(t, err)

@@ -178,6 +178,7 @@ type UserRole struct {
 	OrgID           int64  `json:"orgId" xorm:"org_id"`
 	RoleID          int64  `json:"roleId" xorm:"role_id"`
 	UserID          int64  `json:"userId" xorm:"user_id"`
+	UserUID         string `json:"userUid" xorm:"user_uid"`
 	GroupMappingUID string `json:"groupMappingUID" xorm:"group_mapping_uid"`
 
 	Created time.Time
@@ -285,6 +286,7 @@ type SaveExternalServiceRoleCommand struct {
 	AssignmentOrgID   int64
 	ExternalServiceID string
 	ServiceAccountID  int64
+	ServiceAccountUID string
 	Permissions       []Permission
 }
 

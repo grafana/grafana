@@ -176,6 +176,7 @@ type PermissionsService interface {
 	DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error
 }
 
+// TODO extedn this with UID
 type User struct {
 	ID         int64
 	IsExternal bool

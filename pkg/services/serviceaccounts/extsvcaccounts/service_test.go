@@ -92,7 +92,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should disable service account",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).Return(extSvcAccID, nil)
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).Return(extSvcAccID, nil)
 				env.SaSvc.On("EnableServiceAccount", mock.Anything, extSvcOrgID, extSvcAccID, false).Return(nil)
 				env.AcStore.On("SaveExternalServiceRole",
 					mock.Anything,
@@ -116,7 +116,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should remove service account when no permission",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).Return(extSvcAccID, nil)
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, extSvcOrgID, extSvcAccID).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, extSvcSlug).Return(nil)
 			},
@@ -133,7 +133,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should create new service account",
 			init: func(env *TestEnv) {
 				// No previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(0), sa.ErrServiceAccountNotFound.Errorf("mock"))
 				env.SaSvc.On("CreateServiceAccount",
 					mock.Anything,
@@ -165,7 +165,7 @@ func TestExtSvcAccountsService_ManageExtSvcAccount(t *testing.T) {
 			name: "should update service account",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, extSvcOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(11), nil)
 				env.SaSvc.On("EnableServiceAccount", mock.Anything, extSvcOrgID, int64(11), true).Return(nil)
 				env.AcStore.On("SaveExternalServiceRole",
@@ -236,7 +236,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			name: "should disable service account",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(extSvcAccID, nil)
 				env.SaSvc.On("EnableServiceAccount", mock.Anything, autoAssignOrgID, extSvcAccID, false).Return(nil)
 				env.AcStore.On("SaveExternalServiceRole",
@@ -272,7 +272,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			name: "should remove service account when no permission",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, autoAssignOrgID, extSvcAccID).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, extSvcSlug).Return(nil)
@@ -297,7 +297,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			name: "should create new service account",
 			init: func(env *TestEnv) {
 				// No previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(0), sa.ErrServiceAccountNotFound.Errorf("mock"))
 				env.SaSvc.On("CreateServiceAccount",
 					mock.Anything,
@@ -336,7 +336,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			name: "should update service account",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole",
 					mock.Anything,
@@ -368,7 +368,7 @@ func TestExtSvcAccountsService_SaveExternalService(t *testing.T) {
 			name: "should recover from a failed token encryption",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(11), nil)
 				env.AcStore.On("SaveExternalServiceRole",
 					mock.Anything,
@@ -457,7 +457,7 @@ func TestExtSvcAccountsService_RemoveExtSvcAccount(t *testing.T) {
 			name: "should not fail if the service account does not exist",
 			init: func(env *TestEnv) {
 				// No previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(int64(0), sa.ErrServiceAccountNotFound.Errorf("not found"))
 			},
 			slug: extSvcSlug,
@@ -467,7 +467,7 @@ func TestExtSvcAccountsService_RemoveExtSvcAccount(t *testing.T) {
 			name: "should remove service account",
 			init: func(env *TestEnv) {
 				// A previous service account was attached to this slug
-				env.SaSvc.On("RetrieveServiceAccountIdByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
+				env.SaSvc.On("RetrieveServiceAccountIdentifiersByName", mock.Anything, autoAssignOrgID, sa.ExtSvcPrefix+extSvcSlug).
 					Return(extSvcAccID, nil)
 				env.SaSvc.On("DeleteServiceAccount", mock.Anything, autoAssignOrgID, extSvcAccID).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, extSvcSlug).Return(nil)
