@@ -140,6 +140,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   };
 
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
+  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   // data queries only
   const dataQueries = useMemo(() => {
@@ -150,6 +151,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const expressionQueries = useMemo(() => {
     return queries.filter((query) => isExpressionQueryInAlert(query));
   }, [queries]);
+
+  useEffect(() => {
+    // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+    // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+
+    if (!editingExistingRule && isOptimizeReducerEnabled) {
+      dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
+    }
+  }, [dataQueries, expressionQueries, editingExistingRule, isOptimizeReducerEnabled]);
 
   const [type, condition, dataSourceName, editorSettings] = watch([
     'type',
@@ -265,7 +275,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
-  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -279,12 +288,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
-      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
-      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
-      if (!editingExistingRule && isOptimizeReducerEnabled) {
-        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
-      }
-
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -294,7 +297,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
+    [queries, updateExpressionAndDatasource, getValues, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
