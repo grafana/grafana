@@ -1,4 +1,4 @@
-import { dateTime } from '@grafana/data';
+import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
@@ -56,7 +56,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
     this.onThemeChange = this.onThemeChange.bind(this);
   }
 
-  async buildUrl(queryOptions?: { width: number; height: number }) {
+  async buildUrl(queryOptions?: UrlQueryMap) {
     this.setState({ isBuildUrlLoading: true });
     const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = getDashboardSceneFor(this);
