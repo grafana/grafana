@@ -163,10 +163,6 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		client: b.client.identities,
 		logger: b.logger.With("connector", "webhook"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("list")] = &listConnector{
-		repoGetter: b,
-		logger:     b.logger.With("connector", "list"),
-	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
@@ -465,6 +461,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+
 	// TODO: we might want to register some extras for subresources here.
 	sub := oas.Paths.Paths[repoprefix+"/hello"]
 	if sub != nil && sub.Get != nil {
@@ -524,8 +522,23 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.Parameters = []*spec3.Parameter{&ref}
 	}
 
-	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/files")
+	// Show a special list command
+	sub = oas.Paths.Paths[repoprefix+"/files"]
+	if sub != nil {
+		delete(oas.Paths.Paths, repoprefix+"/files")
+		oas.Paths.Paths[repoprefix+"/files/"] = sub // add the trailing final slash
+		sub.Get.Description = "Get the files and content hash"
+		sub.Get.Summary = "File listing"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList"].Schema
+		mt["*/*"].Schema = &s
+	}
 
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
