@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { BackendSrvRequest, FetchError, FetchResponse, BackendSrv } from '../services';
 
-import { UserStorage } from './userStorage';
+import { usePluginUserStorage } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -17,6 +17,11 @@ const backendSrv = {
 jest.mock('../services', () => ({
   ...jest.requireActual('../services'),
   getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  usePluginContext: jest.fn().mockReturnValue({ meta: { id: 'plugin-id' } }),
 }));
 
 describe('userStorage', () => {
@@ -43,21 +48,21 @@ describe('userStorage', () => {
   describe('UserStorageAPI.getItem', () => {
     it('use localStorage if the feature flag is disabled', async () => {
       config.featureToggles.userStorageAPI = false;
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user storage is not found', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       await storage.getItem('key');
       expect(localStorage.getItem).toHaveBeenCalled();
     });
@@ -66,7 +71,7 @@ describe('userStorage', () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       const value = await storage.getItem('key');
       expect(value).toBe('value');
     });
@@ -75,24 +80,24 @@ describe('userStorage', () => {
   describe('setItem', () => {
     it('use localStorage if the feature flag is disabled', async () => {
       config.featureToggles.userStorageAPI = false;
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       storage.setItem('key', 'value');
       expect(localStorage.setItem).toHaveBeenCalled();
     });
 
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       storage.setItem('key', 'value');
       expect(localStorage.setItem).toHaveBeenCalled();
     });
 
     it('creates a new user storage if it does not exist', async () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       await storage.setItem('key', 'value');
       expect(request).toHaveBeenCalledWith({
-        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
+        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
         method: 'GET',
         showErrorAlert: false,
       });
@@ -101,7 +106,7 @@ describe('userStorage', () => {
           url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/',
           method: 'POST',
           data: {
-            metadata: { labels: { service: 'service', user: 'abc' }, name: 'service:abc' },
+            metadata: { labels: { service: 'plugin-id', user: 'abc' }, name: 'plugin-id:abc' },
             spec: {
               data: { key: 'value' },
             },
@@ -117,16 +122,16 @@ describe('userStorage', () => {
           data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
         } as FetchResponse)
       );
-      const storage = new UserStorage('service');
+      const storage = usePluginUserStorage();
       await storage.setItem('key', 'new-value');
       expect(request).toHaveBeenCalledWith({
-        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
+        url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
         method: 'GET',
         showErrorAlert: false,
       });
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/service:abc',
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
           method: 'PATCH',
           data: {
             spec: {

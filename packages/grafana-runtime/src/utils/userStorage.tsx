@@ -1,6 +1,8 @@
 import { get } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
+import { usePluginContext } from '@grafana/data';
+
 import { config } from '../config';
 import { BackendSrvRequest, getBackendSrv } from '../services';
 
@@ -35,8 +37,9 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
 
 /**
  * A class for interacting with the backend user storage.
+ * Unexported because it is currently only be used through the useUserStorage hook.
  */
-export class UserStorage {
+class UserStorage {
   private service: string;
   private resourceName: string;
   private userUID: string;
@@ -129,4 +132,16 @@ export class UserStorage {
       body: { spec: newData },
     });
   }
+}
+
+/**
+ * A hook for interacting with the backend user storage (or local storage if not enabled).
+ * @returns An scoped object for a plugin and a user with getItem and setItem functions.
+ */
+export function usePluginUserStorage() {
+  const context = usePluginContext();
+  if (!context) {
+    throw new Error(`No PluginContext found. The useUserStorage() hook can only be used from a plugin.`);
+  }
+  return new UserStorage(context?.meta.id);
 }
