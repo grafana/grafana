@@ -373,7 +373,7 @@ export function TableNG(props: TableNGProps) {
       }
       return getFooterItemNG(filteredRows, field, footerOptions);
     });
-  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]);
+  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -439,7 +439,7 @@ export function TableNG(props: TableNGProps) {
         sortColumns={sortColumns}
         // footer
         // TODO figure out exactly how this works - some array needs to be here for it to render regardless of renderSummaryCell()
-        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [true] : undefined}
+        bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
           // TODO: this is a hack to force rowHeight re-calculation
           setResizeTrigger((prev) => prev + 1);
