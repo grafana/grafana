@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -469,7 +470,7 @@ func TestOAuth_Logout(t *testing.T) {
 			)
 
 			mockService := &oauthtokentest.MockOauthTokenService{
-				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester) *oauth2.Token {
+				GetCurrentOauthTokenFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) *oauth2.Token {
 					getTokenCalled = true
 					token := &oauth2.Token{
 						AccessToken: "some.access.token",
@@ -479,7 +480,7 @@ func TestOAuth_Logout(t *testing.T) {
 						"id_token": "some.id.token",
 					})
 				},
-				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester) error {
+				InvalidateOAuthTokensFunc: func(_ context.Context, _ identity.Requester, _ *auth.UserToken) error {
 					invalidateTokenCalled = true
 					return nil
 				},
@@ -490,7 +491,7 @@ func TestOAuth_Logout(t *testing.T) {
 			}
 			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser}, nil)
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {

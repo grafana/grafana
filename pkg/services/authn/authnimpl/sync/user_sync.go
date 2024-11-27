@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -51,7 +52,9 @@ var (
 	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
 )
 
-func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService, quotaService quota.Service, tracer tracing.Tracer) *UserSync {
+func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
+	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+) *UserSync {
 	return &UserSync{
 		userService:           userService,
 		authInfoService:       authInfoService,
@@ -59,6 +62,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		quotaService:          quotaService,
 		log:                   log.New("user.sync"),
 		tracer:                tracer,
+		features:              features,
 	}
 }
 
@@ -69,6 +73,7 @@ type UserSync struct {
 	quotaService          quota.Service
 	log                   log.Logger
 	tracer                tracing.Tracer
+	features              featuremgmt.FeatureToggles
 }
 
 // SyncUserHook syncs a user with the database
@@ -223,21 +228,30 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
-		return s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+		setAuthInfoCmd := &login.SetAuthInfoCommand{
 			UserId:     userID,
 			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
-			OAuthToken: identity.OAuthToken,
-		})
+		}
+
+		if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			setAuthInfoCmd.OAuthToken = identity.OAuthToken
+		}
+		return s.authInfoService.SetAuthInfo(ctx, setAuthInfoCmd)
 	}
 
-	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
-	return s.authInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
+	updateAuthInfoCmd := &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthId:     identity.AuthID,
 		AuthModule: identity.AuthenticatedBy,
-		OAuthToken: identity.OAuthToken,
-	})
+	}
+
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+		updateAuthInfoCmd.OAuthToken = identity.OAuthToken
+	}
+
+	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
+	return s.authInfoService.UpdateAuthInfo(ctx, updateAuthInfoCmd)
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
