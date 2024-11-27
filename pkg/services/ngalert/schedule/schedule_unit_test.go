@@ -970,8 +970,10 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	cfg := setting.UnifiedAlertingSettings{
-		BaseInterval: time.Second,
-		MaxAttempts:  1,
+		BaseInterval:      time.Second,
+		MaxAttempts:       1,
+		InitialRetryDelay: time.Second * 1,
+		MaxRetryDelay:     time.Second * 10,
 		RecordingRules: setting.RecordingRuleSettings{
 			Enabled: true,
 		},
@@ -982,6 +984,8 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	schedCfg := SchedulerCfg{
 		BaseInterval:      cfg.BaseInterval,
 		MaxAttempts:       cfg.MaxAttempts,
+		InitialRetryDelay: cfg.InitialRetryDelay,
+		MaxRetryDelay:     cfg.MaxRetryDelay,
 		C:                 mockedClock,
 		AppURL:            appUrl,
 		EvaluatorFactory:  evaluator,

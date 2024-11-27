@@ -54,6 +54,8 @@ func newRuleFactory(
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	maxAttempts int64,
+	initalRetryDelay time.Duration,
+	maxRetryDelay time.Duration,
 	sender AlertsSender,
 	stateManager *state.Manager,
 	evalFactory eval.EvaluatorFactory,
@@ -73,6 +75,8 @@ func newRuleFactory(
 				ctx,
 				rule.GetKey(),
 				maxAttempts,
+				initalRetryDelay,
+				maxRetryDelay,
 				clock,
 				evalFactory,
 				rrCfg,
@@ -90,6 +94,8 @@ func newRuleFactory(
 			appURL,
 			disableGrafanaFolder,
 			maxAttempts,
+			initalRetryDelay,
+			maxRetryDelay,
 			sender,
 			stateManager,
 			evalFactory,
@@ -122,6 +128,8 @@ type alertRule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	maxAttempts          int64
+	initialRetryDelay    time.Duration
+	maxRetryDelay        time.Duration
 
 	clock        clock.Clock
 	sender       AlertsSender
@@ -144,6 +152,8 @@ func newAlertRule(
 	appURL *url.URL,
 	disableGrafanaFolder bool,
 	maxAttempts int64,
+	initialRetryDelay time.Duration,
+	maxRetryDelay time.Duration,
 	sender AlertsSender,
 	stateManager *state.Manager,
 	evalFactory eval.EvaluatorFactory,
@@ -156,6 +166,7 @@ func newAlertRule(
 	stopAppliedHook func(ngmodels.AlertRuleKey),
 ) *alertRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
+
 	return &alertRule{
 		key:                  key,
 		evalCh:               make(chan *Evaluation),
@@ -165,6 +176,8 @@ func newAlertRule(
 		appURL:               appURL,
 		disableGrafanaFolder: disableGrafanaFolder,
 		maxAttempts:          maxAttempts,
+		initialRetryDelay:    initialRetryDelay,
+		maxRetryDelay:        maxRetryDelay,
 		clock:                clock,
 		sender:               sender,
 		stateManager:         stateManager,
@@ -268,6 +281,15 @@ func (a *alertRule) Run() error {
 			logger := a.logger.New("version", ctx.rule.Version, "fingerprint", f, "now", ctx.scheduledAt)
 			logger.Debug("Processing tick")
 
+			maxElapsedTime := time.Duration(0)
+			retryer := newExponentialBackoffRetryer(
+				a.maxAttempts,
+				a.initialRetryDelay,
+				a.maxRetryDelay,
+				maxElapsedTime,
+				a.clock,
+			)
+
 			func() {
 				orgID := fmt.Sprint(a.key.OrgID)
 				evalDuration := a.metrics.EvalDuration.WithLabelValues(orgID)
@@ -279,7 +301,8 @@ func (a *alertRule) Run() error {
 					a.evalApplied(ctx.scheduledAt)
 				}()
 
-				for attempt := int64(1); attempt <= a.maxAttempts; attempt++ {
+				attempt := 1
+				for {
 					isPaused := ctx.rule.IsPaused
 
 					// Do not clean up state if the eval loop has just started.
@@ -323,8 +346,9 @@ func (a *alertRule) Run() error {
 						logger.Error("Skip evaluation and updating the state because the context has been cancelled", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
 						return
 					}
-					retry := attempt < a.maxAttempts
-					err := a.evaluate(tracingCtx, ctx, span, retry, logger)
+					nextDelay := retryer.NextAttemptIn()
+					shouldRetry := nextDelay != retryStop
+					err := a.evaluate(tracingCtx, ctx, span, shouldRetry, logger)
 					// This is extremely confusing - when we exhaust all retry attempts, or we have no retryable errors
 					// we return nil - so technically, this is meaningless to know whether the evaluation has errors or not.
 					span.End()
@@ -333,12 +357,14 @@ func (a *alertRule) Run() error {
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
+					logger.Error("Failed to evaluate rule", "attempt", attempt, "max_attempts", a.maxAttempts, "next_attempt_in", nextDelay, "error", err)
+					attempt++
+
 					select {
 					case <-tracingCtx.Done():
 						logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 						return
-					case <-time.After(retryDelay):
+					case <-a.clock.After(nextDelay):
 						continue
 					}
 				}
