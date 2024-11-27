@@ -68,7 +68,7 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 	openfga, err := NewOpenFGA(&cfg.Zanzana, store, log.NewNopLogger())
 	require.NoError(t, err)
 
-	srv, err := NewAuthz(openfga)
+	srv, err := NewAuthz(cfg, openfga)
 	require.NoError(t, err)
 
 	storeInf, err := srv.getStoreInfo(context.Background(), namespace)
@@ -92,7 +92,8 @@ func setup(t *testing.T, testDB db.DB, cfg *setting.Cfg) *Server {
 				common.NewNamespaceResourceTuple("user:7", "read", folderGroup, folderResource),
 				common.NewFolderParentTuple("5", "4"),
 				common.NewFolderParentTuple("6", "5"),
-				common.NewFolderResourceTuple("user:8", "view", dashboardGroup, dashboardResource, "5"),
+				common.NewFolderResourceTuple("user:8", "edit", dashboardGroup, dashboardResource, "5"),
+				common.NewFolderResourceTuple("user:9", "create", dashboardGroup, dashboardResource, "5"),
 			},
 		},
 	})
