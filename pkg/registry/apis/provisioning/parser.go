@@ -33,6 +33,15 @@ type fileParser struct {
 	kinds *kindsLookup
 }
 
+func newFileParser(ns string, repo repository.Repository, client *dynamic.DynamicClient, kinds *kindsLookup) *fileParser {
+	return &fileParser{
+		namespace: ns,
+		repo:      repo,
+		client:    client,
+		kinds:     kinds,
+	}
+}
+
 type parsedFile struct {
 	// Original file info
 	info *repository.FileInfo
