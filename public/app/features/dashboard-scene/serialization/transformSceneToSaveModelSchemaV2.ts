@@ -1,5 +1,7 @@
 import { omit } from 'lodash';
 
+import { AnnotationQuery } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   behaviors,
   dataLayers,
@@ -399,7 +401,7 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         name: layer.state.query.name,
         datasource: layer.state.query.datasource || undefined,
         query: {
-          kind: layer.state.query.datasource?.type ?? 'default',
+          kind: getAnnotationQueryKind(layer.state.query),
           spec: omit(layer.state.query, 'datasource'),
         },
         enable: Boolean(layer.state.isEnabled),
@@ -415,6 +417,24 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
     annotations.push(result);
   }
   return annotations;
+}
+
+export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string {
+  if (annotationQuery.datasource?.type) {
+    return annotationQuery.datasource.type;
+  } else {
+    // we need to return the default datasource configured in the BootConfig
+    const defaultDatasource = config.bootData.settings.defaultDatasource;
+
+    // get default datasource type
+    const dsList = config.bootData.settings.datasources;
+    const ds = dsList[defaultDatasource];
+    if (ds) {
+      return ds.meta.id; // in the datasource list from bootData "id" is the type
+    }
+    // if we can't find the default datasource, return grafana as default
+    return 'grafana';
+  }
 }
 
 // Function to know if the dashboard transformed is a valid DashboardV2Spec

@@ -36,6 +36,35 @@ function setupDashboardScene(state: DashboardSceneState): DashboardScene {
   return new DashboardScene(state);
 }
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    bootData: {
+      settings: {
+        defaultDatasource: 'loki',
+        datasources: {
+          Prometheus: {
+            name: 'Prometheus',
+            meta: { id: 'prometheus' },
+            type: 'datasource',
+          },
+          '-- Grafana --': {
+            name: 'Grafana',
+            meta: { id: 'grafana' },
+            type: 'datasource',
+          },
+          loki: {
+            name: 'Loki',
+            meta: { id: 'loki' },
+            type: 'datasource',
+          },
+        },
+      },
+    },
+  },
+}));
+
 describe('transformSceneToSaveModelSchemaV2', () => {
   let dashboardScene: DashboardScene;
   let prevFeatureToggleValue: boolean;
@@ -282,8 +311,12 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
   it('should transform scene to save model schema v2', () => {
     const result = transformSceneToSaveModelSchemaV2(dashboardScene);
-
     expect(result).toMatchSnapshot();
+
+    // Check that the annotation layers are correctly transformed
+    expect(result.annotations).toHaveLength(3);
+    // check annotation layer 3 with no datasource has the default datasource defined as type
+    expect(result.annotations?.[2].spec.query.kind).toBe('loki');
   });
 });
 
@@ -319,4 +352,17 @@ const annotationLayer2 = new DashboardAnnotationsDataLayer({
   isHidden: true,
 });
 
-const annotationLayers = [annotationLayer1, annotationLayer2];
+// this could happen if a dahboard was created from code and the datasource was not defined
+const annotationLayer3NoDsDefined = new DashboardAnnotationsDataLayer({
+  key: 'layer3',
+  query: {
+    name: 'query3',
+    enable: true,
+    iconColor: 'green',
+  },
+  name: 'layer3',
+  isEnabled: true,
+  isHidden: true,
+});
+
+const annotationLayers = [annotationLayer1, annotationLayer2, annotationLayer3NoDsDefined];

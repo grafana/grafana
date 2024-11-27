@@ -55,6 +55,29 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
         },
       },
     },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": undefined,
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": true,
+        "iconColor": "green",
+        "name": "query3",
+        "query": {
+          "kind": "loki",
+          "spec": {
+            "enable": true,
+            "iconColor": "green",
+            "name": "query3",
+          },
+        },
+      },
+    },
   ],
   "cursorSync": "Crosshair",
   "description": "Test Description",
