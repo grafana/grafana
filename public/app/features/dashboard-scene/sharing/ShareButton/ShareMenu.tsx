@@ -63,8 +63,6 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       },
     });
 
-    customShareDrawerItems.forEach((d) => menuItems.push(d));
-
     menuItems.push({
       shareId: shareDashboardType.snapshot,
       testId: newShareButtonSelector.shareSnapshot,
@@ -79,11 +77,13 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       },
     });
 
+    customShareDrawerItems.forEach((d) => menuItems.push(d));
+
     menuItems.push({
       shareId: shareDashboardType.inviteUser,
       testId: newShareButtonSelector.inviteUser,
-      icon: 'add-user',
-      label: t('share-dashboard.menu.invite-user-title', 'Invite user'),
+      icon: 'external-link-alt',
+      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition:
         config.externalUserMngLinkUrl !== '' && contextSrv.hasPermission(AccessControlAction.OrgUsersRead),
       onClick: () => {
