@@ -2,7 +2,6 @@ import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/preview-api';
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { ComboboxOption } from './Combobox';
 import { MultiCombobox } from './MultiCombobox';
 import mdx from './MultiCombobox.mdx';
 

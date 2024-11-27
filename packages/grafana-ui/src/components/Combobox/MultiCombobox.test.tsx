@@ -60,6 +60,6 @@ describe('MultiCombobox', () => {
 
     expect(onChange).toHaveBeenNthCalledWith(1, ['a']);
     expect(onChange).toHaveBeenNthCalledWith(2, ['a', 'c']);
-    expect(onChange).toHaveBeenNthCalledWith(3, ['a']);
+    expect(onChange).toHaveBeenNthCalledWith(3, ['c']);
   });
 });

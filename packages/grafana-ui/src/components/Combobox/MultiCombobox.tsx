@@ -1,5 +1,5 @@
 import { useCombobox, useMultipleSelection } from 'downshift';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Checkbox } from '../Forms/Checkbox';
@@ -41,7 +41,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           break;
         }
       }
-      return resultingItems.filter((item) => item !== undefined);
+      return resultingItems.filter((item) => item !== undefined); //TODO: Handle cases where value is not in options
     }
 
     return value;
@@ -52,6 +52,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>(initialSelectedItems);
+
+  const isOptionSelected = useCallback(
+    (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
+    [selectedItems]
+  );
 
   const [inputValue, setInputValue] = useState('');
 
@@ -65,14 +70,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           if (newSelectedItems) {
             setSelectedItems(newSelectedItems);
-            onChange(getComboboxOptionsValues([...selectedItems, ...newSelectedItems]));
-          }
-          break;
-        case useMultipleSelection.stateChangeTypes.FunctionAddSelectedItem:
-          if (newSelectedItems) {
-            setSelectedItems(newSelectedItems);
             onChange(getComboboxOptionsValues(newSelectedItems));
           }
+          break;
+
         default:
           break;
       }
@@ -86,13 +87,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     getInputProps,
     highlightedIndex,
     getItemProps,
-    //selectedItem,
   } = useCombobox({
     isOpen,
     items,
     itemToString,
     inputValue,
-    //defaultHighlightedIndex: 0,
     selectedItem: null,
     stateReducer: (state, actionAndChanges) => {
       const { changes, type } = actionAndChanges;
@@ -102,6 +101,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           return {
             ...changes,
             isOpen: true,
+            defaultHighlightedIndex: 0,
           };
         default:
           return changes;
@@ -113,9 +113,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
         case useCombobox.stateChangeTypes.ItemClick:
           if (newSelectedItem) {
-            const isAlreadySelected = selectedItems.some((opt) => opt.value === newSelectedItem.value);
-            if (!isAlreadySelected) {
-              //setSelectedItems([...selectedItems, newSelectedItem]);
+            if (!isOptionSelected(newSelectedItem)) {
+              setSelectedItems([...selectedItems, newSelectedItem]);
               onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
               break;
             }
@@ -160,7 +159,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             <div>
               {items.map((item, index) => {
                 const itemProps = getItemProps({ item, index });
-                const isSelected = selectedItems.some((opt) => opt.value === item.value);
+                const isSelected = isOptionSelected(item);
                 const id = 'multicombobox-option-' + item.value.toString();
                 return (
                   <li
