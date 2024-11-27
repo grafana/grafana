@@ -8,8 +8,7 @@ import { lastValueFrom } from 'rxjs';
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Alert, Button, Field, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-
-import { t, Trans } from '../../../../core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 type ImageSettingsForm = {
   width: number;
@@ -50,14 +49,12 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
     return new Blob([response.data], { type: 'image/png' });
   }, [imageUrl, watch('width'), watch('height')]);
 
-  const onDowloadImageClick = () => {
+  const onDownloadImageClick = () => {
     saveAs(image!, `${title}.png`);
   };
 
-  console.log('error', error);
-
-  const onChange = async () => {
-    await buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
+  const onChange = () => {
+    buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
   };
 
   return (
@@ -158,7 +155,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
             <Trans i18nKey="link.share-panel.render-image">Generate image</Trans>
           </Button>
           <Button
-            onClick={onDowloadImageClick}
+            onClick={onDownloadImageClick}
             icon={'download-alt'}
             variant="secondary"
             disabled={!image || loading || disabled}
