@@ -366,10 +366,6 @@ func (val *DurationMsValue) UnmarshalYAML(unmarshal func(interface{}) error) err
 		// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
 		return nil
 	}
-	// if interpolated.value == "" {
-	// 	// To keep the same behaviour as the yaml lib which just does not set the value if it is empty.
-	// 	return nil
-	// }
 	val.Raw = interpolated.raw
 
 	duration, err := time.ParseDuration(interpolated.value)

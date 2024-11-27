@@ -67,7 +67,8 @@ func ProvideService(
 		EncryptionService:            encryptionService,
 		NotificationService:          notificatonService,
 		newDashboardProvisioner:      dashboards.New,
-		getCachingConfigs:            datasources.GetCacheConfigs,
+		getCachingDeleteConfigs:      datasources.GetDeleteCacheConfigs,
+		getCachingCreateConfigs:      datasources.GetCreateCacheConfigs,
 		provisionDatasources:         datasources.Provision,
 		provisionPlugins:             plugins.Provision,
 		provisionAlerting:            prov_alerting.Provision,
@@ -113,7 +114,8 @@ type ProvisioningService interface {
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
 
-	GetCachingConfigs(ctx context.Context) (*datasources.DatasourceCachingInfo, error)
+	GetCachingDeleteConfigs(ctx context.Context) ([]string, error)
+	GetCachingCreateConfigs(ctx context.Context) ([]datasources.DatasourceCachingConfig, error)
 }
 
 // Used for testing purposes
@@ -152,7 +154,8 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
-	getCachingConfigs            func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) (*datasources.DatasourceCachingInfo, error)
+	getCachingDeleteConfigs      func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) ([]string, error)
+	getCachingCreateConfigs      func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) ([]datasources.DatasourceCachingConfig, error)
 	provisionDatasources         func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error
 	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
@@ -324,12 +327,23 @@ func (ps *ProvisioningServiceImpl) GetAllowUIUpdatesFromConfig(name string) bool
 	return ps.dashboardProvisioner.GetAllowUIUpdatesFromConfig(name)
 }
 
-func (ps *ProvisioningServiceImpl) GetCachingConfigs(ctx context.Context) (*datasources.DatasourceCachingInfo, error) {
+func (ps *ProvisioningServiceImpl) GetCachingDeleteConfigs(ctx context.Context) ([]string, error) {
 	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
-	dsConfigs, err := ps.getCachingConfigs(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService)
+	dsConfigs, err := ps.getCachingDeleteConfigs(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService)
 	if err != nil {
 		err = fmt.Errorf("%v: %w", "get caching config error", err)
-		ps.log.Error("Failed to get datasources caching config", "error", err)
+		ps.log.Error("Failed to get datasources delete caching config", "error", err)
+		return nil, err
+	}
+	return dsConfigs, err
+}
+
+func (ps *ProvisioningServiceImpl) GetCachingCreateConfigs(ctx context.Context) ([]datasources.DatasourceCachingConfig, error) {
+	datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
+	dsConfigs, err := ps.getCachingCreateConfigs(ctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService)
+	if err != nil {
+		err = fmt.Errorf("%v: %w", "get caching config error", err)
+		ps.log.Error("Failed to get datasources create caching config", "error", err)
 		return nil, err
 	}
 	return dsConfigs, err

@@ -508,12 +508,15 @@ func TestDatasourceCachingConfig(t *testing.T) {
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
 
-		resCachingConfigs, err := dc.getCachingConfigs(context.Background(), cacheEnabledConfig)
+		resDeleteCachingConfigs, err := dc.getDeleteCachingConfigs(context.Background(), cacheEnabledConfig)
 		require.NoError(t, err)
-		require.NotNil(t, resCachingConfigs)
+		require.NotNil(t, resDeleteCachingConfigs)
+		resCreateCachingConfigs, err := dc.getCreateCachingConfigs(context.Background(), cacheEnabledConfig)
+		require.NoError(t, err)
+		require.NotNil(t, resDeleteCachingConfigs)
 
-		require.Equal(t, len(resCachingConfigs.DeleteDatasourceUIDs), len(expectedDatasourceUIDs))
-		require.ElementsMatch(t, resCachingConfigs.DatasourceCachingConfigs, expectedConfigs)
+		require.Equal(t, len(resDeleteCachingConfigs), len(expectedDatasourceUIDs))
+		require.ElementsMatch(t, resCreateCachingConfigs, expectedConfigs)
 	})
 
 	t.Run("get datasource caching config with missing caching", func(t *testing.T) {
@@ -536,12 +539,15 @@ func TestDatasourceCachingConfig(t *testing.T) {
 		correlationsStore := &mockCorrelationsStore{}
 		dc := newDatasourceProvisioner(store, correlationsStore, orgFake)
 
-		resCachingConfigs, err := dc.getCachingConfigs(context.Background(), cacheDisabledConfig)
+		resDeleteCachingConfigs, err := dc.getDeleteCachingConfigs(context.Background(), cacheDisabledConfig)
 		require.NoError(t, err)
-		require.NotNil(t, resCachingConfigs)
+		require.NotNil(t, resDeleteCachingConfigs)
+		resCreateCachingConfigs, err := dc.getCreateCachingConfigs(context.Background(), cacheDisabledConfig)
+		require.NoError(t, err)
+		require.NotNil(t, resCreateCachingConfigs)
 
-		require.Equal(t, len(resCachingConfigs.DeleteDatasourceUIDs), len(expectedDatasourceUIDs))
-		require.ElementsMatch(t, resCachingConfigs.DatasourceCachingConfigs, expectedConfigs)
+		require.Equal(t, len(resDeleteCachingConfigs), len(expectedDatasourceUIDs))
+		require.ElementsMatch(t, resCreateCachingConfigs, expectedConfigs)
 	})
 }
 

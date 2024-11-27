@@ -42,9 +42,14 @@ func Provision(ctx context.Context, configDirectory string, dsService BaseDataSo
 
 // GetCacheConfigs scans a directory for provisioning config files
 // and returns cache configs of the the datasources in those files.
-func GetCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) (*DatasourceCachingInfo, error) {
+func GetDeleteCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]string, error) {
 	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
-	return dc.getCachingConfigs(ctx, configDirectory)
+	return dc.getDeleteCachingConfigs(ctx, configDirectory)
+}
+
+func GetCreateCacheConfigs(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) ([]DatasourceCachingConfig, error) {
+	dc := newDatasourceProvisioner(dsService, correlationsStore, orgService)
+	return dc.getCreateCachingConfigs(ctx, configDirectory)
 }
 
 // DatasourceProvisioner is responsible for provisioning datasources based on
@@ -288,12 +293,7 @@ type DatasourceCachingConfig struct {
 	UseDefaultTTL bool
 }
 
-type DatasourceCachingInfo struct {
-	DeleteDatasourceUIDs     []string
-	DatasourceCachingConfigs []DatasourceCachingConfig
-}
-
-func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPath string) (*DatasourceCachingInfo, error) {
+func (dc *DatasourceProvisioner) getDeleteCachingConfigs(ctx context.Context, configPath string) ([]string, error) {
 	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return nil, err
@@ -302,14 +302,19 @@ func (dc *DatasourceProvisioner) getCachingConfigs(ctx context.Context, configPa
 	// Get UIDs for datasources marked for deletion
 	deleteDatasourceUIDs := dc.getDeleteDatasourceUIDs(ctx, configs)
 
+	return deleteDatasourceUIDs, nil
+}
+
+func (dc *DatasourceProvisioner) getCreateCachingConfigs(ctx context.Context, configPath string) ([]DatasourceCachingConfig, error) {
+	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
+	if err != nil {
+		return nil, err
+	}
+
 	// Obtain caching configurations of new datasources
 	dsCachingConfigs := dc.buildDatasourceCachingConfigs(ctx, configs)
 
-	dsCachingInfo := &DatasourceCachingInfo{
-		DeleteDatasourceUIDs:     deleteDatasourceUIDs,
-		DatasourceCachingConfigs: dsCachingConfigs,
-	}
-	return dsCachingInfo, nil
+	return dsCachingConfigs, nil
 }
 
 func (dc *DatasourceProvisioner) getDeleteDatasourceUIDs(ctx context.Context, configs []*configs) []string {
