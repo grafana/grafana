@@ -56,7 +56,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
         <>
           <Alert title="No API keys found" severity="warning">
             <div className={styles.text}>
-              No API keys were found. If you reload the browser, this page will be not available anymore.
+              No API keys were found. If you reload the browser, this page will not be available anymore.
             </div>
           </Alert>
         </>
