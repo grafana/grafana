@@ -78,7 +78,7 @@ func (c *importConnector) Connect(
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a dynamic client: %w", err)))
 			return
 		}
-		fileParser := newFileParser(repo, client, kinds)
+		fileParser := resources.NewParser(repo, client, kinds)
 
 		folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
 			Group:   "folder.grafana.app",
@@ -122,10 +122,10 @@ func (c *importConnector) Connect(
 
 			// NOTE: We're validating here to make sure we want the folders to be created.
 			//  If the file isn't valid, its folders aren't relevant, either.
-			file, err := fileParser.parse(r.Context(), logger, info, true)
+			file, err := fileParser.Parse(r.Context(), logger, info, true)
 			if err != nil {
 				logger.DebugContext(ctx, "error on parsing the entry's data", "error", err)
-				if errors.Is(err, ErrUnableToReadResourceBytes) {
+				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 					// Non-resource data is not relevant to us.
 					logger.DebugContext(ctx, "ignoring file due to being a non-resource", "error", err)
 					continue
