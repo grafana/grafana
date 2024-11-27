@@ -10,7 +10,11 @@ import { Loader } from '../plugins/admin/components/Loader';
 
 import { useCreateRepositoryImportMutation, useListRepositoryQuery } from './api';
 
-export function DashboardImportFromRepository() {
+interface Props {
+  repository?: string;
+}
+
+export function DashboardImportFromRepository({ repository }: Props) {
   const query = useListRepositoryQuery();
   const [importDashboard, importQuery] = useCreateRepositoryImportMutation();
   const { handleSubmit, control } = useForm();

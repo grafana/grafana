@@ -210,6 +210,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       </FieldSet>
       <Button type={'submit'}>Save</Button>
+      <Button variant={'secondary'}>Import from repository</Button>
     </form>
   );
 }
