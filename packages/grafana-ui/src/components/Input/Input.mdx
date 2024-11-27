@@ -2,39 +2,21 @@ import { ArgTypes, Canvas } from '@storybook/blocks';
 import { Input } from './Input';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
+import * as InputStories from './Input.story';
+import * as FieldStories from '../Forms/Field.story';
 
 # Input
 
 Used for regular text input. For an array of data or tree-structured data, consider using `Select` or `Cascader` respectively.
 
+<Canvas of={InputStories.Simple} />
+
 ## Prefix and suffix
 
 To add more context to the input you can add either text or an icon before or after the input. You can use the `prefix` and `suffix` props for this. Try some examples in the Canvas!
-
-```jsx
-<Input prefix={<Icon name="search" />} />
-```
-
-<Canvas>
-  <Input prefix={<Icon name="search" />} />
-</Canvas>
 
 ## Usage in forms with Field
 
 `Input` should be used with the `Field` component to get labels and descriptions. It can also be used for validation by using the `required` attribute. See the `Field` component for more information.
 
-```jsx
-<Field label="Important information" description="This information is very important, so you really need to fill it in">
-  <Input name="importantInput" required />
-</Field>
-```
-
-<Canvas>
-  <Field
-    label="Important information"
-    description="This information is very important, so you really need to fill it in"
-  >
-    <Input name="importantInput" required />
-  </Field>
-</Canvas>
 <ArgTypes of={Input} />

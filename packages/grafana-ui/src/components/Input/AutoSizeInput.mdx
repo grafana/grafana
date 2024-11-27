@@ -1,37 +1,17 @@
-import { ArgTypes, Canvas } from '@storybook/blocks';
+import { Canvas, ArgTypes } from '@storybook/blocks';
 import { AutoSizeInput } from './AutoSizeInput';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
+import * as AutoSizeInputStories from './AutoSizeInput.story';
 
 # AutoSizeInput
 
-You can use it or regular text input. When used, AutoSizeInput resizes itself to the current content. For an array of data or tree-structured data, consider using `Select` or `Cascader` respectively.
+AutoSizeInput is a variant of Input which resizes itself for the current content.
 
-## Prefix and suffix
+<Canvas of={AutoSizeInputStories.Simple} />
 
-To add more context to the input, you can add either text or an icon before or after the input using the `prefix` and `suffix`. Here are some examples for you to try in the Canvas!
+As AutoSizeInputs wraps the Input component, it accepts the same props as Input, such as `prefix` and `suffix`, and can be used in `<Field />` in the same way.
 
-```jsx
-<AutoSizeInput prefix={<Icon name="search" />} />
-```
+## Props
 
-<Canvas>
-  <AutoSizeInput prefix={<Icon name="search" />} />
-</Canvas>
-
-## Usage in forms with Field
-
-Use `AutoSizeInput`with the`Field`component to get labels and descriptions. Also, you can use`AutoSizeInput`with the`required`attribute for validation. See the`Field` component for more information.
-
-```jsx
-<Field label="Important information" description="This information is very important, so you really need to fill it in">
-  <AutoSizeInput name="importantInput" required />
-</Field>
-```
-
-<Canvas>
-  <Field label="Important information!" description="Please enter the relevant information.">
-    <AutoSizeInput name="importantInput" required />
-  </Field>
-</Canvas>
 <ArgTypes of={AutoSizeInput} />
