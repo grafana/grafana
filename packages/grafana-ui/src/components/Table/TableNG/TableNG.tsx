@@ -442,7 +442,10 @@ export function TableNG(props: TableNGProps) {
         bottomSummaryRows={footerOptions?.show && footerOptions.reducer.length ? [{}] : undefined}
         onColumnResize={() => {
           // TODO: this is a hack to force rowHeight re-calculation
-          setResizeTrigger((prev) => prev + 1);
+          if (textWrap) {
+            // This is needed only when textWrap is enabled
+            setResizeTrigger((prev) => prev + 1);
+          }
         }}
       />
 
