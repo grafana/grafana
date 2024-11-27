@@ -62,6 +62,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'react-redux',
       'redux',
       'rxjs',
+      'rxjs/operators',
       'react-router',
       'd3',
       'angular',
@@ -223,7 +224,7 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       unsafeCache: true,
     },
 
-    stats: 'minimal',
+    // stats: 'minimal',
 
     watchOptions: {
       ignored: ['**/node_modules', '**/dist', '**/.yarn'],
