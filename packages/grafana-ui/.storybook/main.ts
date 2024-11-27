@@ -34,11 +34,16 @@ const mainConfig: StorybookConfig = {
           url: false,
           importLoaders: 2,
         },
+        sassLoaderOptions: {
+          sassOptions: {
+            // silencing these warnings since we're planning to remove sass when angular is gone
+            silenceDeprecations: ['import', 'global-builtin'],
+          },
+        },
       },
     },
     getAbsolutePath('@storybook/addon-storysource'),
     getAbsolutePath('storybook-dark-mode'),
-    // getAbsolutePath('@storybook/addon-mdx-gfm'),
     getAbsolutePath('@storybook/addon-webpack5-compiler-swc'),
   ],
   framework: {
