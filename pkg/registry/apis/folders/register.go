@@ -57,6 +57,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 ) *FolderAPIBuilder {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) ||
 		features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) ||
 		features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
