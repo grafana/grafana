@@ -115,7 +115,7 @@ func folderTreeCollector(store db.DB) legacyTupleCollector {
 func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT u.uid as user_uid, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id, br.role as basic_role_name
+			SELECT u.uid as user_uid, u.is_service_account as is_service_account, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id, br.role as basic_role_name
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN user_role ur ON r.id = ur.role_id
@@ -128,12 +128,13 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 			AND p.kind = ?
 		`
 		type Permission struct {
-			Action        string `xorm:"action"`
-			Kind          string
-			Identifier    string
-			UserUID       string `xorm:"user_uid"`
-			TeamUID       string `xorm:"team_uid"`
-			BasicRoleName string `xorm:"basic_role_name"`
+			Action           string `xorm:"action"`
+			Kind             string
+			Identifier       string
+			UserUID          string `xorm:"user_uid"`
+			IsServiceAccount bool   `xorm:"is_service_account"`
+			TeamUID          string `xorm:"team_uid"`
+			BasicRoleName    string `xorm:"basic_role_name"`
 		}
 
 		var permissions []Permission
@@ -149,7 +150,9 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 
 		for _, p := range permissions {
 			var subject string
-			if len(p.UserUID) > 0 {
+			if len(p.UserUID) > 0 && p.IsServiceAccount {
+				subject = zanzana.NewTupleEntry(zanzana.TypeServiceAccount, p.UserUID, "")
+			} else if len(p.UserUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeUser, p.UserUID, "")
 			} else if len(p.TeamUID) > 0 {
 				subject = zanzana.NewTupleEntry(zanzana.TypeTeam, p.TeamUID, zanzana.RelationTeamMember)
