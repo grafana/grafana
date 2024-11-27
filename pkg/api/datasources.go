@@ -744,6 +744,82 @@ func (hs *HTTPServer) GetDataSourceIdByName(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, &dtos)
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-46879 - Create endpoints to return summary of datasources
+
+// swagger:route GET /api/datasources/summary datasources getDataSourcesSummary
+//
+// Get data sources summary.
+//
+// Responses:
+// 200: getDataSourceSummaryResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourcesSummary(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+
+	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+	if err != nil {
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
+	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
+	if err != nil {
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
+	result := make(dtos.DataSourceSummaryList, 0)
+	for _, ds := range filtered {
+		dsItem := dtos.DataSourceSummaryListItemDTO{
+			Id:       ds.ID,
+			UID:      ds.UID,
+			Name:     ds.Name,
+			Type:     ds.Type,
+			Database: ds.Database,
+		}
+
+		result = append(result, dsItem)
+	}
+
+	sort.Sort(result)
+
+	return response.JSON(http.StatusOK, &result)
+}
+
+// swagger:route GET /api/datasources/name/:name/summary datasources getDataSourcesSummaryByName
+//
+// Get data sources summary.
+//
+// Responses:
+// 200: getDataSourceSummaryByNameResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourceSummaryByName(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgID: c.SignedInUser.GetOrgID()}
+
+	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(404, "Data source not found", nil)
+		}
+		return response.Error(500, "Failed to query datasources", err)
+	}
+
+	dto := dtos.DataSourceSummaryListItemDTO{
+		Id:       dataSource.ID,
+		UID:      dataSource.UID,
+		Name:     dataSource.Name,
+		Type:     dataSource.Type,
+		Database: dataSource.Database,
+	}
+	return response.JSON(http.StatusOK, &dto)
+}
+
+// LOGZ.IO GRAFANA CHANGE :: End
+
 // swagger:route GET /datasources/{id}/resources/{datasource_proxy_route} datasources callDatasourceResourceByID
 //
 // Fetch data source resources by Id.

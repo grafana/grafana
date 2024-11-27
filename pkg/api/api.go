@@ -392,6 +392,10 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), routing.Wrap(hs.GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", authorize(ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceByName))
 			datasourceRoute.Get("/id/:name", authorize(ac.EvalPermission(datasources.ActionIDRead, nameScope)), routing.Wrap(hs.GetDataSourceIdByName))
+			// LOGZ.IO GRAFANA CHANGE :: DEV-46879 - Create endpoints to return summary of datasources
+			datasourceRoute.Get("/summary", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(hs.GetDataSourcesSummary))
+			datasourceRoute.Get("/name/:name/summary", authorize(ac.EvalPermission(datasources.ActionRead, nameScope)), routing.Wrap(hs.GetDataSourceSummaryByName))
+			// LOGZ.IO GRAFANA CHANGE :: End
 		})
 
 		pluginIDScope := pluginaccesscontrol.ScopeProvider.GetResourceScope(ac.Parameter(":pluginId"))
