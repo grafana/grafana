@@ -124,6 +124,42 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 	}, nil
 }
 
+func (r *githubRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+	owner := r.config.Spec.GitHub.Owner
+	repo := r.config.Spec.GitHub.Repository
+	logger = logger.With("owner", owner, "repo", repo, "ref", ref)
+
+	tree, truncated, err := r.gh.GetTree(ctx, owner, repo, ref, true)
+	if err != nil {
+		if errors.Is(err, pgh.ErrResourceNotFound) {
+			return nil, &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: fmt.Sprintf("tree not found; ref=%s", ref),
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+	}
+	if truncated {
+		logger.WarnContext(ctx, "tree from github was truncated")
+	}
+
+	entries := make([]FileTreeEntry, 0, len(tree))
+	for _, entry := range tree {
+		converted := FileTreeEntry{
+			Path: entry.GetPath(),
+			Size: entry.GetSize(),
+			Hash: entry.GetSHA(),
+			Blob: !entry.IsDirectory(),
+		}
+		entries = append(entries, converted)
+	}
+	return entries, nil
+}
+
 func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch

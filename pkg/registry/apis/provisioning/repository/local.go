@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -134,6 +137,8 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 	info, err := os.Stat(fullpath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
+	} else if err != nil {
+		return nil, err
 	}
 
 	//nolint:gosec
@@ -142,13 +147,93 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 		return nil, err
 	}
 
+	hash, _, err := r.calculateFileHash(ctx, fullpath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &FileInfo{
 		Path: path,
 		Data: data,
+		Hash: hash,
 		Modified: &metav1.Time{
 			Time: info.ModTime(),
 		},
 	}, nil
+}
+
+// ReadResource implements provisioning.Repository.
+func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	if ref != "" {
+		return nil, apierrors.NewBadRequest("local repository does not support ref")
+	}
+	if r.path == "" {
+		return nil, &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Message: "the service is missing a root path",
+				Code:    http.StatusFailedDependency,
+			},
+		}
+	}
+
+	return r.recursivelyReadTree(ctx, r.path)
+}
+
+func (r *localRepository) recursivelyReadTree(ctx context.Context, path string) ([]FileTreeEntry, error) {
+	osEntries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	entries := make([]FileTreeEntry, 0, len(osEntries))
+	for _, oe := range osEntries {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
+		oePath := filepath.Join(path, oe.Name())
+		if oe.IsDir() {
+			entries = append(entries, FileTreeEntry{
+				Path: oePath,
+				Hash: "",
+				Size: 0,
+				Blob: false,
+			})
+			subEntries, err := r.recursivelyReadTree(ctx, oePath)
+			if err != nil {
+				return nil, err
+			}
+			entries = append(entries, subEntries...)
+		} else {
+			hash, size, err := r.calculateFileHash(ctx, oePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read and calculate hash of path %s: %w", oePath, err)
+			}
+			entries = append(entries, FileTreeEntry{
+				Path: oePath,
+				Blob: true,
+				Hash: hash,
+				Size: size,
+			})
+		}
+	}
+	return entries, nil
+}
+
+func (r *localRepository) calculateFileHash(ctx context.Context, path string) (string, int64, error) {
+	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	if err != nil {
+		return "", 0, err
+	}
+
+	// TODO: Define what hashing algorithm we want to use for the entire repository. Maybe a config option?
+	hasher := sha1.New()
+	// TODO: context-aware io.Copy? Is that even possible with a reasonable impl?
+	size, err := io.Copy(hasher, file)
+	if err != nil {
+		return "", 0, err
+	}
+	// NOTE: EncodeToString (& hex.Encode for that matter) return lower-case hex.
+	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
 func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {

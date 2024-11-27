@@ -51,6 +51,41 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 	}
 }
 
+func (r *realImpl) GetTree(ctx context.Context, owner, repository, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+	tree, _, err := r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if !errors.As(err, &ghErr) {
+			return nil, false, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, false, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, false, ErrResourceNotFound
+		}
+		return nil, false, err
+	}
+
+	var entries []RepositoryContent
+	for _, te := range tree.Entries {
+		rrc := &realRepositoryContent{
+			real: &github.RepositoryContent{
+				Path: te.Path,
+				Size: te.Size,
+				SHA:  te.SHA,
+			},
+		}
+		if te.GetType() == "tree" {
+			rrc.real.Type = github.String("dir")
+		} else {
+			rrc.real.Type = te.Type
+		}
+		entries = append(entries, rrc)
+	}
+	return entries, tree.GetTruncated(), nil
+}
+
 func (r *realImpl) CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error {
 	if strings.Contains(path, "..") {
 		return ErrPathTraversalDisallowed
@@ -299,4 +334,16 @@ func (c realRepositoryContent) GetPath() string {
 
 func (c realRepositoryContent) GetSHA() string {
 	return c.real.GetSHA()
+}
+
+func (c realRepositoryContent) GetSize() int64 {
+	if c.real.Size != nil {
+		return int64(*c.real.Size)
+	}
+	if c.real.Content != nil {
+		if c, err := c.real.GetContent(); err == nil {
+			return int64(len(c))
+		}
+	}
+	return 0
 }

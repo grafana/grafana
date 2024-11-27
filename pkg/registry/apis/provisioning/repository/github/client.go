@@ -32,6 +32,13 @@ type Client interface {
 	// If ".." appears in the "path", this method will return an error.
 	GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error)
 
+	// GetTree returns the Git tree in the repository.
+	// When recursive is given, subtrees are mapped into the returned array.
+	//
+	// The truncated bool will be set to true if the tree is larger than 7 MB or 100 000 entries.
+	// When truncated is true, you may wish to read each subtree manually instead.
+	GetTree(ctx context.Context, owner, repository, ref string, recursive bool) (entries []RepositoryContent, truncated bool, err error)
+
 	// CreateFile creates a new file in the repository under the given path.
 	// The file is created on the branch given.
 	// The message given is the commit message. If none is given, an appropriate default is used.
@@ -85,6 +92,8 @@ type RepositoryContent interface {
 	// Get the SHA hash. This is usually a SHA-256, but may also be SHA-512.
 	// Directories have SHA hashes, too (TODO: how is this calculated?).
 	GetSHA() string
+	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
+	GetSize() int64
 }
 
 type CreateFileOptions struct {

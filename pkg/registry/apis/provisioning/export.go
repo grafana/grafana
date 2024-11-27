@@ -53,7 +53,7 @@ func (c *exportConnector) ProducesObject(verb string) any {
 }
 
 func (*exportConnector) ConnectMethods() []string {
-	return []string{http.MethodGet, http.MethodPost}
+	return []string{http.MethodPost}
 }
 
 func (*exportConnector) NewConnectOptions() (runtime.Object, bool, string) {

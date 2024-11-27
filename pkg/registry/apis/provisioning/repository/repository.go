@@ -41,6 +41,21 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
+// An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
+type FileTreeEntry struct {
+	// The path to the file from the base path given (if any).
+	// No leading or trailing slashes will be contained within.
+	Path string
+	// The hash for the file. Lower-case hex.
+	// Empty string if Blob is false.
+	Hash string
+	// The size of the file.
+	// 0 if Blob is false.
+	Size int64
+	// Whether this entry is a blob or a subtree.
+	Blob bool
+}
+
 type Repository interface {
 	// The saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -56,6 +71,13 @@ type Repository interface {
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
 	Read(ctx context.Context, logger *slog.Logger, path, ref string) (*FileInfo, error)
+
+	// Read all file names from the tree.
+	// This data will be parsed and validated before it is shown.
+	//
+	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
+	// TODO: Test scale: do we want to stream entries instead somehow?
+	ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error)
 
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save

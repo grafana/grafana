@@ -158,6 +158,11 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		client:     b.client,
 		logger:     b.logger.With("connector", "export"),
 	}
+	importConnector := &importConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "export"),
+	}
 
 	storage := map[string]rest.Storage{}
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
@@ -175,6 +180,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger: b.logger.With("connector", "files"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
+	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = importConnector
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -481,41 +487,48 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
+	ref := &spec3.Parameter{
+		ParameterProps: spec3.ParameterProps{
+			Name:    "ref",
+			In:      "query",
+			Example: "",
+			Examples: map[string]*spec3.Example{
+				"": {
+					ExampleProps: spec3.ExampleProps{
+						Summary: "The default",
+					},
+				},
+				"branch": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "my-branch",
+						Summary: "Select branch",
+					},
+				},
+				"commit": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "7f7cc2153",
+						Summary: "Commit hash (or prefix)",
+					},
+				},
+			},
+			Description: "branch or commit hash",
+			Schema:      spec.StringProperty(),
+			Required:    false,
+		}}
+
+	sub = oas.Paths.Paths[repoprefix+"/import"]
+	if sub != nil && sub.Post != nil {
+		ref := *ref
+		ref.ParameterProps.Required = true
+		sub.Post.Parameters = []*spec3.Parameter{&ref}
+	}
+
 	// hide the version with no path
 	delete(oas.Paths.Paths, repoprefix+"/files")
 
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
-		ref := &spec3.Parameter{
-			ParameterProps: spec3.ParameterProps{
-				Name:    "ref",
-				In:      "query",
-				Example: "",
-				Examples: map[string]*spec3.Example{
-					"": {
-						ExampleProps: spec3.ExampleProps{
-							Summary: "The default",
-						},
-					},
-					"branch": {
-						ExampleProps: spec3.ExampleProps{
-							Value:   "my-branch",
-							Summary: "Select branch",
-						},
-					},
-					"commit": {
-						ExampleProps: spec3.ExampleProps{
-							Value:   "7f7cc2153",
-							Summary: "Commit hash (or prefix)",
-						},
-					},
-				},
-				Description: "optional branch or commit hash",
-				Schema:      spec.StringProperty(),
-				Required:    false,
-			}}
-
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
