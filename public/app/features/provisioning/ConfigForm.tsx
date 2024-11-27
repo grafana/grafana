@@ -14,10 +14,12 @@ import {
   TextLink,
   ControlledCollapse,
   FieldSet,
+  Stack,
 } from '@grafana/ui';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
+import { DashboardImportFromRepository } from './DashboardImportFromRepository';
 import { RepositoryResource, RepositorySpec } from './api/types';
 import { useCreateOrUpdateRepository } from './hooks';
 import { RepositoryFormData } from './types';
@@ -65,7 +67,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
   const [tokenConfigured, setTokenConfigured] = useState(Boolean(data?.metadata?.name));
   const navigate = useNavigate();
-  const watchType = watch('type');
+  const [type, folder] = watch(['type', 'folder']);
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -115,7 +117,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
       >
         <Input {...register('title', { required: 'This field is required.' })} placeholder={'My config'} />
       </Field>
-      {watchType === 'github' && (
+      {type === 'github' && (
         <>
           <ControlledCollapse collapsible label="Access Token Permissions" isOpen>
             <p>
@@ -173,13 +175,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </>
       )}
 
-      {watchType === 'local' && (
+      {type === 'local' && (
         <Field label={'Local path'} error={errors?.path?.message} invalid={!!errors?.path}>
           <Input {...register('path', { required: 'This field is required.' })} placeholder={'/path/to/repo'} />
         </Field>
       )}
 
-      {watchType === 's3' && (
+      {type === 's3' && (
         <>
           <Field label={'S3 bucket'} error={errors?.bucket?.message} invalid={!!errors?.bucket}>
             <Input {...register('bucket', { required: 'This field is required.' })} placeholder={'bucket-name'} />
@@ -209,8 +211,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
           <Switch {...register('editing.delete')} id={'editing.delete'} />
         </Field>
       </FieldSet>
-      <Button type={'submit'}>Save</Button>
-      <Button variant={'secondary'}>Import from repository</Button>
+      <Stack gap={2}>
+        <Button type={'submit'}>Save</Button>
+        <DashboardImportFromRepository name={data?.metadata.name} folder={folder} />
+      </Stack>
     </form>
   );
 }

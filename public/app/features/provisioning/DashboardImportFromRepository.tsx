@@ -1,23 +1,22 @@
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { FieldSet, Field, Combobox, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import { Loader } from '../plugins/admin/components/Loader';
 
 import { useCreateRepositoryImportMutation, useListRepositoryQuery } from './api';
 
 interface Props {
-  repository?: string;
+  name?: string;
+  folder?: string;
 }
 
-export function DashboardImportFromRepository({ repository }: Props) {
+export function DashboardImportFromRepository({ name, folder }: Props) {
   const query = useListRepositoryQuery();
   const [importDashboard, importQuery] = useCreateRepositoryImportMutation();
-  const { handleSubmit, control } = useForm();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,54 +24,31 @@ export function DashboardImportFromRepository({ repository }: Props) {
     if (importQuery.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
-        payload: ['Dashboard imported'],
+        payload: ['Resources imported'],
       });
-      console.log('q', importQuery);
+      navigate(`/dashboards${folder ? `/f/${folder}` : ''}`);
     } else if (importQuery.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: ['Error importing dashboard', importQuery.error],
+        payload: ['Error importing resources', importQuery.error],
       });
     }
-  }, [importQuery.error, importQuery.isError, importQuery.isSuccess]);
+  }, [folder, importQuery.error, importQuery.isError, importQuery.isSuccess, navigate]);
 
-  const onSubmit = ({ repository }: { repository?: string }) => {
-    if (!repository) {
+  const onClick = () => {
+    if (!name) {
       return;
     }
 
-    importDashboard({ name: repository, ref: 'main' });
+    importDashboard({ name, ref: 'main' });
   };
 
   if (query.isLoading) {
     return <Loader />;
   }
   return (
-    <form onSubmit={handleSubmit(onSubmit)} style={{ paddingTop: 100 }}>
-      <FieldSet label={'Import from repository'}>
-        <Field label={'Repository'}>
-          <Controller
-            control={control}
-            name={'repository'}
-            render={({ field: { ref, onChange, ...field } }) => {
-              return (
-                <Combobox
-                  {...field}
-                  placeholder={'My GitHub repository'}
-                  onChange={(value) => onChange(value?.value)}
-                  options={
-                    query.data?.items.map((item) => ({ value: item.metadata.name, label: item.spec.title })) || []
-                  }
-                />
-              );
-            }}
-          />
-        </Field>
-      </FieldSet>
-
-      <Button type="submit" disabled={importQuery.isLoading}>
-        {importQuery.isLoading ? 'Importing...' : 'Import'}
-      </Button>
-    </form>
+    <Button variant={'secondary'} onClick={onClick} disabled={importQuery.isLoading || !name}>
+      {importQuery.isLoading ? 'Importing...' : 'Import from repository'}
+    </Button>
   );
 }
