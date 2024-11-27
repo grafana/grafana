@@ -13,6 +13,7 @@ import * as common from '@grafana/schema';
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   displayedFields?: Array<string>;
+  enableInfiniteScrolling: boolean;
   enableLogDetails: boolean;
   isFilterLabelActive?: unknown;
   logRowMenuIconsAfter?: unknown;
