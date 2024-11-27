@@ -13,7 +13,6 @@ import {
 } from '../panel-edit/getPanelFrameOptions';
 import { EditableDashboardElement, isDashboardLayoutItem } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../utils/utils';
 
 export class VizPanelEditPaneBehavior extends SceneObjectBase implements EditableDashboardElement {
   public isEditableDashboardElement: true = true;

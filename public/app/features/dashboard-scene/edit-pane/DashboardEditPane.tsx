@@ -5,8 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, SceneObjectRef } from '@grafana/scenes';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { DashboardScene } from '../scene/DashboardScene';
+import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { DummySelectedObject } from './DummySelectedObject';
 import { ElementEditPane } from './ElementEditPane';
 
 export interface DashboardEditPaneState extends SceneObjectState {
@@ -66,11 +69,32 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
     );
   }
 
+  const element = getEditableElementFor(selectedObject.resolve());
+
   return (
     <div className={styles.wrapper} ref={paneRef}>
-      <ElementEditPane obj={selectedObject.resolve()} />
+      <ElementEditPane element={element} key={element.getTypeName()} />
     </div>
   );
+}
+
+function getEditableElementFor(obj: SceneObject): EditableDashboardElement {
+  if (isEditableDashboardElement(obj)) {
+    return obj;
+  }
+
+  for (const behavior of obj.state.$behaviors ?? []) {
+    if (isEditableDashboardElement(behavior)) {
+      return behavior;
+    }
+  }
+
+  // Temp thing to show somethin in edit pane
+  if (obj instanceof DashboardScene) {
+    return new DummySelectedObject(obj);
+  }
+
+  throw new Error("Can't find editable element for selected object");
 }
 
 function getStyles(theme: GrafanaTheme2) {
