@@ -160,7 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       [theme.breakpoints.down('md')]: {
-        width: 'auto !important'
+        width: 'auto !important',
       },
 
       '&:focus, &:focus-visible': {
