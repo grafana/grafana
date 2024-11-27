@@ -30,6 +30,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 
 import { cleanUpAction } from '../../core/actions/cleanUp';
+import { DashboardImportFromRepository } from '../provisioning/DashboardImportFromRepository';
 
 import { ImportDashboardOverview } from './components/ImportDashboardOverview';
 import { fetchGcomDashboard, importDashboardJson } from './state/actions';
@@ -218,6 +219,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
               </>
             )}
           </Form>
+          <DashboardImportFromRepository />
         </div>
       </>
     );
