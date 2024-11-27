@@ -74,7 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       paddingBottom: theme.spacing(1),
       background: theme.colors.background.canvas,
       top: 0,
-      zIndex: theme.zIndex.portal,
+      zIndex: theme.zIndex.sidemenu,
 
       '&:hover, &:focus-within': {
         '& > div': {
