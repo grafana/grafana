@@ -1,16 +1,17 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { Property } from 'csstype';
-import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect, Ref } from 'react';
+import React, { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import DataGrid, { Column, RenderRowProps, Row, SortColumn, SortDirection } from 'react-data-grid';
 
 import {
   DataFrame,
   Field,
+  fieldReducers,
   FieldType,
   formattedValueToString,
   GrafanaTheme2,
-  // ReducerID,
+  ReducerID,
 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -19,16 +20,9 @@ import { ContextMenu } from '../../ContextMenu/ContextMenu';
 import { Icon } from '../../Icon/Icon';
 import { MenuItem } from '../../Menu/MenuItem';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
-import {
-  // FooterItem,
-  TableNGProps,
-} from '../types';
-import {
-  getTextAlign,
-  // getFooterItems,
-} from '../utils';
+import { TableNGProps } from '../types';
+import { getTextAlign } from '../utils';
 
-// import { getFooterValue } from './Cells/FooterCell';
 import { TableCellNG } from './Cells/TableCellNG';
 import { Filter } from './Filter/Filter';
 import { getRowHeight, shouldTextOverflow, getFooterItemNG } from './utils';
@@ -67,12 +61,12 @@ export function TableNG(props: TableNGProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles, textWrap);
 
-  // const isCountRowsSet = Boolean(
-  //   footerOptions?.countRows &&
-  //     footerOptions.reducer &&
-  //     footerOptions.reducer.length &&
-  //     footerOptions.reducer[0] === ReducerID.count
-  // );
+  const isCountRowsSet = Boolean(
+    footerOptions?.countRows &&
+      footerOptions.reducer &&
+      footerOptions.reducer.length &&
+      footerOptions.reducer[0] === ReducerID.count
+  );
 
   // TODO: this is a hack to force the column width to update when the fieldConfig changes
   const [revId, setRevId] = useState(0);
@@ -247,16 +241,11 @@ export function TableNG(props: TableNGProps) {
   const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>) => {
     const columns: TableColumn[] = [];
 
-    // Footer calculations
-    // let footerItems: FooterItem[] = [];
-    // const filterFields: Array<{ id: string; field?: Field } | undefined> = [];
-    // const allValues: any[][] = [];
-
     main.fields.map((field, fieldIndex) => {
-      // filterFields.push({ id: fieldIndex.toString(), field });
       const key = field.name;
 
       const justifyColumnContent = getTextAlign(field);
+      const footerStyles = getFooterStyles(justifyColumnContent);
 
       // Add a column for each field
       columns.push({
@@ -297,9 +286,7 @@ export function TableNG(props: TableNGProps) {
         },
         ...(footerOptions?.show && {
           renderSummaryCell() {
-            // return <>{getFooterValue(fieldIndex, footerItems, isCountRowsSet, justifyColumnContent)}</>;
-            // return <>{getFooterItemNG(rows, key, field, footerOptions, theme)}</>;
-            return <>{calcsRef.current[fieldIndex]}</>;
+            return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
           },
         }),
         renderHeaderCell: ({ column, sortDirection }) => (
@@ -315,27 +302,12 @@ export function TableNG(props: TableNGProps) {
         width: field.config.custom.width ?? columnWidth,
         minWidth: field.config.custom.minWidth ?? columnMinWidth,
       });
-
-      // Create row objects
-      // if (footerOptions?.show && footerOptions.reducer.length > 0) {
-      //   // Only populate 2d array if needed for footer calculations
-      //   allValues.push(field.values);
-      // }
     });
-
-    // if (footerOptions?.show && footerOptions.reducer.length > 0) {
-    //   if (footerOptions.countRows && footerOptions.reducer[0] === ReducerID.count) {
-    //     footerItems = [rows.length.toString()];
-    //   } else {
-    //     footerItems = getFooterItems(filterFields, allValues, footerOptions, theme);
-    //   }
-    // }
 
     return columns;
   };
 
   const rows = useMemo(() => frameToRecords(props.data), [frameToRecords, props.data]);
-  // const columns = mapFrameToDataGrid(props.data, filteredRows);
 
   // Create a map of column key to column type
   const columnTypes = useMemo(() => {
@@ -389,13 +361,19 @@ export function TableNG(props: TableNGProps) {
 
   const calcsRef = useRef<string[]>([]);
   useMemo(() => {
-    calcsRef.current = props.data.fields.map((field) => {
+    calcsRef.current = props.data.fields.map((field, index) => {
       if (field.state?.calcs) {
         delete field.state?.calcs;
       }
+      if (isCountRowsSet) {
+        return index === 0 ? `Count: ${filteredRows.length}` : '';
+      }
+      if (index === 0) {
+        return footerOptions ? fieldReducers.get(footerOptions.reducer[0]).name : '';
+      }
       return getFooterItemNG(filteredRows, field, footerOptions);
     });
-  }, [filteredRows, props.data.fields, footerOptions]);
+  }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]);
 
   const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -542,5 +520,12 @@ const getStyles = (theme: GrafanaTheme2, textWrap: boolean) => ({
     wordWrap: 'break-word',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  }),
+});
+
+const getFooterStyles = (justifyContent: Property.JustifyContent) => ({
+  footerCell: css({
+    display: 'flex',
+    justifyContent: justifyContent || 'space-between',
   }),
 });
