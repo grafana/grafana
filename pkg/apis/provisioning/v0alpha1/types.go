@@ -55,15 +55,27 @@ type GitHubRepositoryConfig struct {
 	// TODO: Do we want an SSH url instead maybe?
 	// TODO: On-prem GitHub Enterprise support?
 
-	// Whether we should commit to change branches and use a Pull Request flow to achieve this.
-	// By default, this is false (i.e. we will commit straight to the main branch).
-	BranchWorkflow bool `json:"branchWorkflow,omitempty"`
-
-	// Whether we should show dashboard previews in the pull requests caused by the BranchWorkflow option.
-	// By default, this is false (i.e. we will not create previews).
-	// This option is a no-op if BranchWorkflow is `false` or default.
-	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+	// SubmitChangeMode defines how changes are submitted to the repository.
+	// Possible values are:
+	// - "pull-request-only": Changes are submitted via a pull request.
+	// - "direct-push-only": Changes are submitted directly to the configured branch.
+	// - "pull-request-by-default": Changes are submitted via a pull request if possible.
+	// - "direct-push-by-default": Changes are submitted directly to the configured branch if possible.
+	// Default: "pull-request-by-default"
+	SubmitChangeMode SubmitChangeMode `json:"submitChangeMode,omitempty"`
 }
+
+// SubmitChangeMode defines how changes are submitted to the repository.
+// +enum
+type SubmitChangeMode string
+
+// SubmitChangeMode values
+const (
+	PullRequestOnlyMode      SubmitChangeMode = "pull-request-only"
+	DirectPushOnlyMode       SubmitChangeMode = "direct-push-only"
+	PullRequestByDefaultMode SubmitChangeMode = "pull-request-by-default"
+	DirectPushByDefaultMode  SubmitChangeMode = "direct-push-by-default"
+)
 
 // RepositoryType defines the types of Repository
 // +enum

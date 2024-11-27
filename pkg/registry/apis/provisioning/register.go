@@ -345,6 +345,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 }
+
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -364,6 +365,10 @@ func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attribu
 
 		if r.Spec.GitHub.Branch == "" {
 			r.Spec.GitHub.Branch = "main"
+		}
+
+		if r.Spec.GitHub.SubmitChangeMode == "" {
+			r.Spec.GitHub.SubmitChangeMode = provisioning.PullRequestByDefaultMode
 		}
 
 		if r.Spec.GitHub.WebhookURL == "" {
@@ -514,13 +519,15 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 				Description: "optional branch or commit hash",
 				Schema:      spec.StringProperty(),
 				Required:    false,
-			}}
+			},
+		}
 
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
 		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{ref,
+		comment := []*spec3.Parameter{
+			ref,
 			{
 				ParameterProps: spec3.ParameterProps{
 					Name:        "message",
@@ -578,7 +585,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 kind: Dashboard
 spec:
   title: Sample dashboard
-`},
+`,
+									},
 								},
 								"playlist": {
 									ExampleProps: spec3.ExampleProps{
@@ -590,7 +598,8 @@ spec:
   items:
   - type: dashboard_by_tag
     value: panel-tests
-`},
+`,
+									},
 								},
 							},
 						},

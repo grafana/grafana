@@ -15,7 +15,6 @@ spec:
     owner: grafana
     repository: git-ui-sync-demo
     branch: dummy-branch
-    branchWorkflow: true
-    generateDashboardPreviews: true
+    submitChangeMode: "pull-request-only"
     token: "github_pat_dummy"
     webhookSecret: "dummyWebhookSecret"

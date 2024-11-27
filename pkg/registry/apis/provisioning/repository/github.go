@@ -62,9 +62,6 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	if gh.Token == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "token"), "a github access token is required"))
 	}
-	if gh.GenerateDashboardPreviews && !gh.BranchWorkflow {
-		list = append(list, field.Forbidden(field.NewPath("spec", "github", "token"), "to generate dashboard previews, you must activate the branch workflow"))
-	}
 	if gh.WebhookURL == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "webhookURL"), "a webhook URL is required"))
 	}
@@ -75,6 +72,12 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	_, err := url.Parse(gh.WebhookURL)
 	if err != nil {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "webhookURL"), gh.WebhookURL, "invalid URL"))
+	}
+
+	switch gh.SubmitChangeMode {
+	case provisioning.PullRequestOnlyMode, provisioning.DirectPushOnlyMode, provisioning.PullRequestByDefaultMode, provisioning.DirectPushByDefaultMode:
+	default:
+		list = append(list, field.Invalid(field.NewPath("spec", "github", "submitChangeMode"), gh.SubmitChangeMode, "invalid submit change mode"))
 	}
 
 	return list
@@ -125,18 +128,15 @@ func (r *githubRepository) Read(ctx context.Context, logger *slog.Logger, filePa
 }
 
 func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
-	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
-	}
-
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on create: %w", err)
+	ref, err := r.prepareToWrite(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("prepare to write for create: %w", err)
 	}
 
 	owner := r.config.Spec.GitHub.Owner
 	repo := r.config.Spec.GitHub.Repository
 
-	err := r.gh.CreateFile(ctx, owner, repo, path, ref, comment, data)
+	err = r.gh.CreateFile(ctx, owner, repo, path, ref, comment, data)
 	if errors.Is(err, pgh.ErrResourceAlreadyExists) {
 		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
@@ -149,12 +149,9 @@ func (r *githubRepository) Create(ctx context.Context, logger *slog.Logger, path
 }
 
 func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path, ref string, data []byte, comment string) error {
-	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
-	}
-
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on update: %w", err)
+	ref, err := r.prepareToWrite(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("prepare to write for update: %w", err)
 	}
 
 	owner := r.config.Spec.GitHub.Owner
@@ -181,12 +178,9 @@ func (r *githubRepository) Update(ctx context.Context, logger *slog.Logger, path
 }
 
 func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path, ref, comment string) error {
-	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
-	}
-
-	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on delete: %w", err)
+	ref, err := r.prepareToWrite(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("prepare to write for delete: %w", err)
 	}
 
 	owner := r.config.Spec.GitHub.Owner
@@ -206,6 +200,40 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	}
 
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
+}
+
+// prepareToWrite checks if the write operation is allowed for the provided ref and creates the branch if needed.
+// It returns the branch name to use for the write operation.
+func (r *githubRepository) prepareToWrite(ctx context.Context, ref string) (string, error) {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+
+	if !r.isWriteToRefAllowed(ref) {
+		return "", &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Code:    http.StatusForbidden,
+				Message: "write operation is not allowed for the provided ref",
+			},
+		}
+	}
+
+	if err := r.ensureBranchExists(ctx, ref); err != nil {
+		return "", fmt.Errorf("ensure branch exists: %w", err)
+	}
+
+	return ref, nil
+}
+
+// isWriteToRefAllowed checks if the write operation is allowed for the provided ref.
+// mostly based on the exclusive modes.
+func (r *githubRepository) isWriteToRefAllowed(ref string) bool {
+	mode := r.config.Spec.GitHub.SubmitChangeMode
+	if ref == r.config.Spec.GitHub.Branch {
+		return mode != provisioning.PullRequestOnlyMode
+	} else {
+		return mode != provisioning.DirectPushOnlyMode
+	}
 }
 
 // basicGitBranchNameRegex is a regular expression to validate a git branch name
