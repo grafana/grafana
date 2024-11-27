@@ -492,6 +492,7 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 // 200: createOrUpdateDatasourceResponse
 // 401: unauthorisedError
 // 403: forbiddenError
+// 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
 	cmd := datasources.UpdateDataSourceCommand{}
