@@ -138,15 +138,25 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                                |                            |                                      |
-| ------------------------------ | -------------------------- | ------------------------------------ |
-| [Bar chart](ref:bar-chart)     | [Geomap](ref:geomap)       | [State timeline](ref:state-timeline) |
-| [Bar gauge](ref:bar-gauge)     | [Heatmap](ref:heatmap)     | [Status history](ref:status-history) |
-| [Candlestick](ref:candlestick) | [Histogram](ref:histogram) | [Table](ref:table)                   |
-| [Canvas](ref:canvas)           | [Pie chart](ref:pie-chart) | [Time series](ref:time-series)       |
-| [Gauge](ref:gauge)             | [Stat](ref:stat)           | [Trend](ref:trend)                   |
+{{< column-list >}}
 
-<!--Also xy chart -->
+- [Bar chart](ref:bar-chart)
+- [Bar gauge](ref:bar-gauge)
+- [Candlestick](ref:candlestick)
+- [Canvas](ref:canvas)
+- [Gauge](ref:gauge)
+- [Geomap](ref:geomap)
+- [Heatmap](ref:heatmap)
+- [Histogram](ref:histogram)
+- [Pie chart](ref:pie-chart)
+- [Stat](ref:stat)
+- [State timeline](ref:state-timeline)
+- [Status history](ref:status-history)
+- [Table](ref:table)
+- [Time series](ref:time-series)
+- [Trend](ref:trend)
+
+{{< /column-list >}}
 
 ## Data link variables
 
