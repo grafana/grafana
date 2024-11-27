@@ -297,7 +297,7 @@ func teamRoleBindingsCollector(store db.DB) legacyTupleCollector {
 func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT u.uid AS user_uid, r.uid AS role_uid
+			SELECT u.uid AS user_uid, u.is_service_account as is_service_account, r.uid AS role_uid
 			FROM user_role ur
 			INNER JOIN ` + store.GetDialect().Quote("user") + ` u ON ur.user_id = u.id
 			INNER JOIN role r ON ur.role_id = r.id
@@ -305,8 +305,9 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 			AND r.name NOT LIKE 'managed:%'
 		`
 		type Binding struct {
-			UserUID string `xorm:"user_uid"`
-			RoleUID string `xorm:"role_uid"`
+			UserUID          string `xorm:"user_uid"`
+			IsServiceAccount bool   `xorm:"is_service_account"`
+			RoleUID          string `xorm:"role_uid"`
 		}
 
 		var bindings []Binding
@@ -321,8 +322,13 @@ func userRoleBindingsCollector(store db.DB) legacyTupleCollector {
 		tuples := make(map[string]map[string]*openfgav1.TupleKey)
 
 		for _, b := range bindings {
+			userType := zanzana.TypeUser
+			if b.IsServiceAccount {
+				userType = zanzana.TypeServiceAccount
+			}
+
 			tuple := &openfgav1.TupleKey{
-				User:     zanzana.NewTupleEntry(zanzana.TypeUser, b.UserUID, ""),
+				User:     zanzana.NewTupleEntry(userType, b.UserUID, ""),
 				Relation: zanzana.RelationAssignee,
 				Object:   zanzana.NewTupleEntry(zanzana.TypeRole, b.RoleUID, ""),
 			}
