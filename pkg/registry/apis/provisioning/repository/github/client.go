@@ -75,6 +75,9 @@ type Client interface {
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
 	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
 	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
+
+	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
+	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
 }
 
 type RepositoryContent interface {
@@ -94,6 +97,13 @@ type RepositoryContent interface {
 	GetSHA() string
 	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
 	GetSize() int64
+}
+
+type CommitFile interface {
+	GetSHA() string
+	GetFilename() string
+	GetPreviousFilename() string
+	GetStatus() string
 }
 
 type CreateFileOptions struct {

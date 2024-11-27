@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -78,11 +80,20 @@ func (c *importConnector) Connect(
 		kinds := newKindsLookup(client)
 		fileParser := newFileParser(ns, repo, client, kinds)
 
-		ref := r.URL.Query().Get("ref")
-		if ref == "" {
-			responder.Error(apierrors.NewBadRequest("no ref value was given"))
+		folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
+			Group:   "folder.grafana.app",
+			Version: "v0alpha1",
+			Kind:    "Folder",
+		})
+		if !ok {
+			logger.DebugContext(ctx, "no folder GVR was returned")
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to find folder GVR")))
 			return
 		}
+		folderIface := client.Resource(folderGVR).Namespace(ns)
+
+		ref := r.URL.Query().Get("ref")
+		logger := logger.With("ref", ref)
 
 		tree, err := repo.ReadTree(r.Context(), logger, ref)
 		if err != nil {
@@ -96,7 +107,7 @@ func (c *importConnector) Connect(
 				continue
 			}
 
-			name := filepath.Base(entry.Path)
+			name := path.Base(entry.Path)
 			if strings.ContainsRune(name, '.') {
 				name = name[:strings.LastIndex(name, ".")]
 			}
@@ -109,9 +120,9 @@ func (c *importConnector) Connect(
 				return
 			}
 
-			// NOTE: We don't need validation because we're about to apply the data for real.
-			// If the data is invalid, we'll know then!
-			file, err := fileParser.parse(r.Context(), logger, info, false)
+			// NOTE: We're validating here to make sure we want the folders to be created.
+			//  If the file isn't valid, its folders aren't relevant, either.
+			file, err := fileParser.parse(r.Context(), logger, info, true)
 			if err != nil {
 				logger.DebugContext(ctx, "error on parsing the entry's data", "error", err)
 				if errors.Is(err, ErrUnableToReadResourceBytes) {
@@ -123,8 +134,50 @@ func (c *importConnector) Connect(
 				return
 			}
 
+			// TODO: Don't create folders for resources that aren't folder-able. Maybe we can check the annotations for this?
+			dir := path.Dir(entry.Path)
+			if dir != "." && dir != "/" {
+				logger := logger.With("dir", dir)
+				logger.DebugContext(ctx, "creating directories")
+				for _, folder := range strings.Split(dir, "/") {
+					logger := logger.With("folder", folder)
+					obj, err := folderIface.Get(r.Context(), folder, metav1.GetOptions{})
+					// FIXME: Check for IsNotFound properly
+					if obj != nil || err == nil {
+						logger.DebugContext(ctx, "folder already existed")
+						continue
+					}
+
+					_, err = folderIface.Create(r.Context(), &unstructured.Unstructured{
+						Object: map[string]interface{}{
+							"metadata": map[string]any{
+								"name":      folder,
+								"namespace": ns,
+							},
+							"spec": map[string]any{
+								"title":       folder, // TODO: how do we want to get this?
+								"description": "Repository-managed folder.",
+							},
+						},
+					}, metav1.CreateOptions{})
+					if err != nil {
+						logger.DebugContext(ctx, "failed to create folder", "error", err)
+						responder.Error(apierrors.NewInternalError(fmt.Errorf("got error when creating folder %s: %w", folder, err)))
+						return
+					}
+					logger.DebugContext(ctx, "folder created")
+
+					// TODO: folder parents
+					// TODO: the top-most folder's parent must be the repo folder.
+				}
+			}
+
 			wrapper := file.AsResourceWrapper()
 			resource := wrapper.Resource.File
+			resource.SetNestedField(name, "metadata", "name")
+			resource.SetNestedField(ns, "metadata", "namespace")
+			resource.SetNestedField(path.Base(dir), "metadata", "annotations", apiutils.AnnoKeyFolder)
+
 			gv, err := schema.ParseGroupVersion(resource.GetNestedString("apiVersion"))
 			if err != nil {
 				logger.DebugContext(ctx, "invalid GroupVersion was given as the apiVersion of the parsed object?", "error", err)
@@ -146,10 +199,12 @@ func (c *importConnector) Connect(
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if object already exists: %w", err)))
 				return
 			}
+			kubeObj := resource.ToKubernetesObject()
+			logger.DebugContext(ctx, "upserting kube object", "name", kubeObj.GetName())
 			if err != nil { // IsNotFound
-				_, err = iface.Create(r.Context(), resource.ToKubernetesObject(), metav1.CreateOptions{})
+				_, err = iface.Create(r.Context(), kubeObj, metav1.CreateOptions{})
 			} else { // already exists
-				_, err = iface.Update(ctx, resource.ToKubernetesObject(), metav1.UpdateOptions{})
+				_, err = iface.Update(r.Context(), kubeObj, metav1.UpdateOptions{})
 			}
 			if err != nil {
 				logger.DebugContext(ctx, "failed to upsert object", "error", err)
@@ -157,7 +212,6 @@ func (c *importConnector) Connect(
 				return
 			}
 
-			// TODO: Folders
 			logger.DebugContext(ctx, "successfully upserted the object")
 		}
 
