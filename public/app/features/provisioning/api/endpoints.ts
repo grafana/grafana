@@ -20,16 +20,16 @@ const injectedRtkApi = api.injectEndpoints({
       query: () => ({ url: BASE_PATH }),
       providesTags: ['RepositoryList'],
     }),
-    getRepository: build.query<RepositoryResource, RequestArg>({
-      query: ({ name }) => ({ url: `${BASE_PATH}/${name}` }),
-    }),
     createRepository: build.mutation<void, RepositoryForCreate>({
-      query: (resource) => ({
+      query: (body) => ({
         url: BASE_PATH,
         method: 'POST',
-        body: resource,
+        body,
       }),
       invalidatesTags: ['RepositoryList'],
+    }),
+    getRepository: build.query<RepositoryResource, RequestArg>({
+      query: ({ name }) => ({ url: `${BASE_PATH}/${name}` }),
     }),
     updateRepository: build.mutation<void, UpdateRequestArg>({
       query: ({ name, body }) => ({
@@ -53,11 +53,6 @@ const injectedRtkApi = api.injectEndpoints({
         body,
       }),
       invalidatesTags: ['RepositoryList'],
-    }),
-    getRepositoryExport: build.query<ResourceWrapper, RequestArg>({
-      query: ({ name }) => ({
-        url: `${BASE_PATH}/${name}/export`,
-      }),
     }),
     createRepositoryExport: build.mutation<ResourceWrapper, RequestArg>({
       query: ({ name }) => ({
@@ -94,13 +89,19 @@ const injectedRtkApi = api.injectEndpoints({
       query: ({ name, path, ref, message }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
         method: 'DELETE',
-        params: { ref, message },
       }),
     }),
     getRepositoryHello: build.query<HelloWorld, { name: string; whom?: string }>({
       query: ({ name, whom }) => ({
         url: `${BASE_PATH}/${name}/hello`,
         params: { whom },
+      }),
+    }),
+    createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref: string }>({
+      query: ({ name, ref }) => ({
+        url: `${BASE_PATH}/${name}/import`,
+        method: 'POST',
+        params: { ref },
       }),
     }),
     getRepositoryStatus: build.query<RepositoryResource, RequestArg>({
@@ -147,13 +148,13 @@ export const {
   useUpdateRepositoryMutation,
   useDeleteRepositoryMutation,
   usePatchRepositoryMutation,
-  useGetRepositoryExportQuery,
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useUpdateRepositoryFilesMutation,
   useCreateRepositoryFilesMutation,
   useDeleteRepositoryFilesMutation,
   useGetRepositoryHelloQuery,
+  useCreateRepositoryImportMutation,
   useGetRepositoryStatusQuery,
   useUpdateRepositoryStatusMutation,
   usePatchRepositoryStatusMutation,
