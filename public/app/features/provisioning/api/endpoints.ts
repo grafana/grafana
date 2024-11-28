@@ -10,6 +10,7 @@ import {
   ResourceWrapper,
   FileOperationArg,
   GetFileArg,
+  ListFilesApiResponse,
 } from './types';
 
 const BASE_PATH = '/repositories';
@@ -63,6 +64,12 @@ const injectedRtkApi = api.injectEndpoints({
     getRepositoryFiles: build.query<ResourceWrapper, GetFileArg>({
       query: ({ name, path, ref }) => ({
         url: `${BASE_PATH}/${name}/files/${path}`,
+        params: { ref },
+      }),
+    }),
+    listRepositoryFiles: build.query<ListFilesApiResponse, { name: string; ref?: string }>({
+      query: ({ name, ref }) => ({
+        url: `${BASE_PATH}/${name}/files/`,
         params: { ref },
       }),
     }),
@@ -150,6 +157,7 @@ export const {
   usePatchRepositoryMutation,
   useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
+  useListRepositoryFilesQuery,
   useUpdateRepositoryFilesMutation,
   useCreateRepositoryFilesMutation,
   useDeleteRepositoryFilesMutation,
