@@ -20,13 +20,13 @@ import { Template } from './TemplateSelector';
 export function parseTemplates(templatesString: string): Template[] {
   const templates: Record<string, Template> = {};
   const stack: Array<{ type: string; startIndex: number; name?: string }> = [];
-  const regex = /{{\s*(-?)\s*(define|end|if|range|else|with|template|block)\b(.*?)\s*(-?)\s*}}/gs;
+  const regex = /{{-?\s*(define|end|if|range|else|with|template|block)\b(.*?)-?}}/gs;
 
   let match;
   let currentIndex = 0;
 
   while ((match = regex.exec(templatesString)) !== null) {
-    const [, , keyword, middleContent] = match;
+    const [, keyword, middleContent] = match;
     currentIndex = match.index;
 
     if (keyword === 'define') {
@@ -91,7 +91,7 @@ export function getTemplateName(useTemplateText: string) {
 }
 
 /* This function checks if the a field value contains only one template usage
-    for example: 
+    for example:
     "{{ template "templateName" . }}"" returns true
     but "{{ template "templateName" . }} some text {{ template "templateName" . }}"" returns false
     and "{{ template "templateName" . }} some text" some text returns false
