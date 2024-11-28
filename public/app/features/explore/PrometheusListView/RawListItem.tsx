@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCopyToClipboard } from 'react-use';
 
 import { Field, GrafanaTheme2 } from '@grafana/data/';
-import { isValidLegacyName } from '@grafana/prometheus/src/utf8_support';
+import { isValidLegacyName, utf8Support } from '@grafana/prometheus/src/utf8_support';
 import { reportInteraction } from '@grafana/runtime/src';
 import { IconButton, useStyles2 } from '@grafana/ui/';
 
@@ -113,10 +113,12 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
   };
 
   // Convert the object back into a string
-  const stringRep = `${__name__}{${attributeValues.map((value) => {
-    // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
-    return `${value.key}="${transformCopyValue(value.value)}"`;
-  })}}`;
+  const stringRep = `${isLegacyMetric ? __name__ : ''}{${isLegacyMetric ? '' : `"${__name__}", `}${attributeValues.map(
+    (value) => {
+      // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
+      return `${utf8Support(value.key)}="${transformCopyValue(value.value)}"`;
+    }
+  )}}`;
 
   const hideFieldsWithoutValues = Boolean(valueLabels && valueLabels?.length);
 
