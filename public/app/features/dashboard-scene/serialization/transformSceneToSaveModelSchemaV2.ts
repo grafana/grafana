@@ -1,4 +1,18 @@
-import { behaviors, SceneDataQuery, SceneDataTransformer, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { omit } from 'lodash';
+
+import { AnnotationQuery } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import {
+  behaviors,
+  dataLayers,
+  SceneDataQuery,
+  SceneDataTransformer,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
+import { DataSourceRef } from '@grafana/schema';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+
 import {
   DashboardV2Spec,
   defaultDashboardV2Spec,
@@ -8,11 +22,9 @@ import {
   TransformationKind,
   FieldConfigSource,
   DashboardLink,
-  DashboardCursorSync,
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
-  defaultDataSourceRef,
   GridLayoutItemKind,
   QueryOptionsSpec,
   QueryVariableKind,
@@ -23,9 +35,11 @@ import {
   ConstantVariableKind,
   GroupByVariableKind,
   AdhocVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0/dashboard.gen';
-import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
-
+  AnnotationQueryKind,
+  defaultAnnotationPanelFilter,
+  defaultAnnotationQuerySpec,
+} from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -34,7 +48,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { transformDashboardLinksToEnums, transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -58,7 +72,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(oldDash),
     preload: oldDash.preload,
     editable: oldDash.editable,
-    links: transformDashboardLinksToEnums(oldDash.links),
+    links: oldDash.links,
     tags: oldDash.tags,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     // EOF dashboard settings
@@ -87,7 +101,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF elements
 
     // annotations
-    annotations: [], //FIXME
+    annotations: getAnnotations(oldDash),
     // EOF annotations
 
     // layout
@@ -252,7 +266,7 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
         spec: query,
       };
       const querySpec: PanelQuerySpec = {
-        datasource: datasource ?? defaultDataSourceRef(),
+        datasource: datasource ?? getDefaultDataSourceRef(),
         query: dataQuery,
         refId: query.refId,
         hidden: query.hidden,
@@ -267,8 +281,8 @@ function getVizPanelQueries(vizPanel: VizPanel): PanelQueryKind[] {
 }
 
 export function getDataQueryKind(query: SceneDataQuery): string {
-  // If the query has a datasource, use the datasource type, otherwise use 'default'
-  return query.datasource?.type ?? 'default';
+  // If the query has a datasource, use the datasource type, otherwise return empty kind
+  return query.datasource?.type ?? getDefaultDataSourceRef()?.type ?? '';
 }
 
 export function getDataQuerySpec(query: SceneDataQuery): Record<string, any> {
@@ -370,6 +384,68 @@ function getVariables(oldDash: DashboardSceneState) {
   return variables;
 }
 
+function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
+  const data = state.$data;
+  if (!(data instanceof DashboardDataLayerSet)) {
+    return [];
+  }
+  const annotations: AnnotationQueryKind[] = [];
+  for (const layer of data.state.annotationLayers) {
+    if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
+      continue;
+    }
+    const result: AnnotationQueryKind = {
+      kind: 'AnnotationQuery',
+      spec: {
+        name: layer.state.query.name,
+        datasource: layer.state.query.datasource || getDefaultDataSourceRef(),
+        query: {
+          kind: getAnnotationQueryKind(layer.state.query),
+          spec: omit(layer.state.query, 'datasource'),
+        },
+        enable: Boolean(layer.state.isEnabled),
+        hide: Boolean(layer.state.isHidden),
+        filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
+        iconColor: layer.state.query.iconColor,
+        builtIn:
+          layer.state.query.builtIn === undefined
+            ? Boolean(layer.state.query.builtIn)
+            : defaultAnnotationQuerySpec().builtIn,
+      },
+    };
+    annotations.push(result);
+  }
+  return annotations;
+}
+
+export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string {
+  if (annotationQuery.datasource?.type) {
+    return annotationQuery.datasource.type;
+  } else {
+    const ds = getDefaultDataSourceRef();
+    if (ds) {
+      return ds.type!; // in the datasource list from bootData "id" is the type
+    }
+    // if we can't find the default datasource, return grafana as default
+    return 'grafana';
+  }
+}
+
+function getDefaultDataSourceRef(): DataSourceRef | undefined {
+  // we need to return the default datasource configured in the BootConfig
+  const defaultDatasource = config.bootData.settings.defaultDatasource;
+
+  // get default datasource type
+  const dsList = config.bootData.settings.datasources;
+  const ds = dsList[defaultDatasource];
+
+  if (ds) {
+    return { type: ds.meta.id, uid: ds.name }; // in the datasource list from bootData "id" is the type
+  }
+
+  return undefined;
+}
+
 // Function to know if the dashboard transformed is a valid DashboardV2Spec
 function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
   if (typeof dash !== 'object' || dash === null) {
@@ -383,9 +459,6 @@ function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
     return false;
   }
   if (typeof dash.cursorSync !== 'string') {
-    return false;
-  }
-  if (!Object.values(DashboardCursorSync).includes(dash.cursorSync)) {
     return false;
   }
   if (typeof dash.liveNow !== 'boolean') {
