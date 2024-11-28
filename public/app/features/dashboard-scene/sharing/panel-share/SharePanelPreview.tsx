@@ -6,8 +6,8 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { Alert, Button, Field, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 type ImageSettingsForm = {
@@ -58,124 +58,136 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
   };
 
   return (
-    <Stack gap={2} direction="column">
-      <Text element="h4">
-        <Trans i18nKey="share-panel-image.preview.title">Panel preview</Trans>
-      </Text>
-      <Stack gap={1} alignItems="center">
-        <Text element="h5">
-          <Trans i18nKey="share-panel-image.settings.title">Image settings</Trans>
+    <div data-testid="saraza">
+      <Stack gap={2} direction="column">
+        <Text element="h4">
+          <Trans i18nKey="share-panel-image.preview.title">Panel preview</Trans>
         </Text>
-        <Tooltip
-          content={t(
-            'share-panel-image.settings.max-warning',
-            'Setting maximums are limited by the image renderer service'
-          )}
-        >
-          <Icon name="info-circle" size="sm" />
-        </Tooltip>
-      </Stack>
-      <form onSubmit={handleSubmit(renderImage)}>
-        <Stack gap={1} justifyContent="space-between" direction={{ xs: 'column', sm: 'row' }}>
-          <Field
-            label={t('share-panel-image.settings.width-label', 'Width')}
-            className={styles.imageConfigurationField}
-            required
-            invalid={!!errors.width}
-            error={errors.width?.message}
+        <form onSubmit={handleSubmit(renderImage)}>
+          <FieldSet
+            disabled={!config.rendererAvailable}
+            label={
+              <Stack gap={1} alignItems="center">
+                <Text element="h5">
+                  <Trans i18nKey="share-panel-image.settings.title">Image settings</Trans>
+                </Text>
+                <Tooltip
+                  content={t(
+                    'share-panel-image.settings.max-warning',
+                    'Setting maximums are limited by the image renderer service'
+                  )}
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            }
           >
-            <Input
-              {...register('width', {
-                required: t('share-panel-image.settings.width-required', 'Width is required'),
-                min: {
-                  value: 1,
-                  message: t('share-panel-image.settings.width-min', 'Width must be equal or greater than 1'),
-                },
-                onChange: onChange,
-              })}
-              placeholder="1000"
-              type="number"
-              suffix="px"
-            />
-          </Field>
-          <Field
-            label={t('share-panel-image.settings.height-label', 'Height')}
-            className={styles.imageConfigurationField}
-            required
-            invalid={!!errors.height}
-            error={errors.height?.message}
-          >
-            <Input
-              {...register('height', {
-                required: t('share-panel-image.settings.height-required', 'Height is required'),
-                min: {
-                  value: 1,
-                  message: t('share-panel-image.settings.height-min', 'Height must be equal or greater than 1'),
-                },
-                onChange: onChange,
-              })}
-              placeholder="500"
-              type="number"
-              suffix="px"
-            />
-          </Field>
-          <Field
-            label={t('share-panel-image.settings.scale-factor-label', 'Scale factor')}
-            className={styles.imageConfigurationField}
-            required
-            invalid={!!errors.scaleFactor}
-            error={errors.scaleFactor?.message}
-          >
-            <Input
-              {...register('scaleFactor', {
-                required: t('share-panel-image.settings.scale-factor-required', 'Scale factor is required'),
-                min: {
-                  value: 1,
-                  message: t(
-                    'share-panel-image.settings.scale-factor-min',
-                    'Scale factor must be equal or greater than 1'
-                  ),
-                },
-                onChange: onChange,
-              })}
-              placeholder="1"
-              type="number"
-            />
-          </Field>
-        </Stack>
-        <Stack gap={1}>
-          <Button
-            icon="gf-layout-simple"
-            variant="secondary"
-            fill="solid"
-            type="submit"
-            disabled={!config.rendererAvailable || disabled || loading || !isValid}
-          >
-            <Trans i18nKey="link.share-panel.render-image">Generate image</Trans>
-          </Button>
-          <Button
-            onClick={onDownloadImageClick}
-            icon={'download-alt'}
-            variant="secondary"
-            disabled={!image || loading || disabled}
-          >
-            <Trans i18nKey="link.share-panel.download-image">Download image</Trans>
-          </Button>
-        </Stack>
-      </form>
-      {loading && (
-        <div>
-          <LoadingBar width={128} />
-          <div className={styles.imageLoadingContainer}>
-            <Text variant="body">{title || ''}</Text>
+            <Stack gap={1} justifyContent="space-between" direction={{ xs: 'column', sm: 'row' }}>
+              <Field
+                label={t('share-panel-image.settings.width-label', 'Width')}
+                className={styles.imageConfigurationField}
+                required
+                invalid={!!errors.width}
+                error={errors.width?.message}
+              >
+                <Input
+                  {...register('width', {
+                    required: t('share-panel-image.settings.width-required', 'Width is required'),
+                    min: {
+                      value: 1,
+                      message: t('share-panel-image.settings.width-min', 'Width must be equal or greater than 1'),
+                    },
+                    onChange: onChange,
+                  })}
+                  placeholder="1000"
+                  type="number"
+                  suffix="px"
+                />
+              </Field>
+              <Field
+                label={t('share-panel-image.settings.height-label', 'Height')}
+                className={styles.imageConfigurationField}
+                required
+                invalid={!!errors.height}
+                error={errors.height?.message}
+              >
+                <Input
+                  {...register('height', {
+                    required: t('share-panel-image.settings.height-required', 'Height is required'),
+                    min: {
+                      value: 1,
+                      message: t('share-panel-image.settings.height-min', 'Height must be equal or greater than 1'),
+                    },
+                    onChange: onChange,
+                  })}
+                  placeholder="500"
+                  type="number"
+                  suffix="px"
+                />
+              </Field>
+              <Field
+                label={t('share-panel-image.settings.scale-factor-label', 'Scale factor')}
+                className={styles.imageConfigurationField}
+                required
+                invalid={!!errors.scaleFactor}
+                error={errors.scaleFactor?.message}
+              >
+                <Input
+                  {...register('scaleFactor', {
+                    required: t('share-panel-image.settings.scale-factor-required', 'Scale factor is required'),
+                    min: {
+                      value: 1,
+                      message: t(
+                        'share-panel-image.settings.scale-factor-min',
+                        'Scale factor must be equal or greater than 1'
+                      ),
+                    },
+                    onChange: onChange,
+                  })}
+                  placeholder="1"
+                  type="number"
+                />
+              </Field>
+            </Stack>
+            <Stack gap={1}>
+              <Button
+                icon="gf-layout-simple"
+                variant="secondary"
+                fill="solid"
+                type="submit"
+                disabled={disabled || loading || !isValid}
+              >
+                <Trans i18nKey="link.share-panel.render-image">Generate image</Trans>
+              </Button>
+              <Button
+                onClick={onDownloadImageClick}
+                icon={'download-alt'}
+                variant="secondary"
+                disabled={!image || loading || disabled}
+              >
+                <Trans i18nKey="link.share-panel.download-image">Download image</Trans>
+              </Button>
+            </Stack>
+          </FieldSet>
+        </form>
+        {loading && (
+          <div>
+            <LoadingBar width={128} />
+            <div className={styles.imageLoadingContainer}>
+              <Text variant="body">{title || ''}</Text>
+            </div>
           </div>
-        </div>
-      )}
-      {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
-      {error && (
-        <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')} />
-      )}
-    </Stack>
+        )}
+        {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
+        {error && (
+          <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')}>
+            <Trans i18nKey="link.share-panel.render-image-error-description">
+              {isFetchError(error) ? error.statusText : 'An error occurred when generating the image'}
+            </Trans>
+          </Alert>
+        )}
+      </Stack>
+    </div>
   );
 }
 
