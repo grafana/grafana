@@ -104,7 +104,7 @@ const injectedRtkApi = api.injectEndpoints({
         params: { whom },
       }),
     }),
-    createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref: string }>({
+    createRepositoryImport: build.mutation<ResourceWrapper, { name: string; ref?: string }>({
       query: ({ name, ref }) => ({
         url: `${BASE_PATH}/${name}/import`,
         method: 'POST',

@@ -23,7 +23,6 @@ export function ImportFromRepository({ repository }: Props) {
   const navigate = useNavigate();
   const name = repository.metadata?.name;
   const folder = repository.spec?.folder;
-  const branch = repository.spec?.github?.branch;
 
   // TODO generate endpoints for this
   const { value } = useAsync(async () => {
@@ -52,22 +51,27 @@ export function ImportFromRepository({ repository }: Props) {
       return;
     }
 
-    importResource({ name, ref: branch || 'main' });
+    importResource({ name });
   };
 
   if (query.isLoading) {
     return <Loader />;
   }
+
+  if (repository.spec?.type !== 'github') {
+    return null;
+  }
+
   return (
     <>
       <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={importQuery.isLoading || !name}>
-        {importQuery.isLoading ? 'Importing...' : 'Import from repository'}
+        Import from repository
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
         title={'Import resources from repository'}
         body={`This will pull all resources from the repository into your instance into the "${value?.spec?.title}" folder. Existing dashboards with the same UID will be overwritten. Proceed?`}
-        confirmText={'Import'}
+        confirmText={importQuery.isLoading ? 'Importing...' : 'Import'}
         onConfirm={onClick}
         onDismiss={() => setIsModalOpen(false)}
       />
