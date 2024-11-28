@@ -51,18 +51,6 @@ export class DashboardEditPaneBehavior extends SceneObjectBase implements Editab
   public getTypeName(): string {
     return 'Dashboard';
   }
-
-  public onDelete = () => {};
-
-  public renderActions(): React.ReactNode {
-    return (
-      <>
-        <Button size="sm" variant="destructive" fill="outline" onClick={this.onDelete}>
-          Delete
-        </Button>
-      </>
-    );
-  }
 }
 
 export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }) {

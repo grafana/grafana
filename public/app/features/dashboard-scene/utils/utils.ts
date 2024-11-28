@@ -222,7 +222,7 @@ export function getDefaultVizPanel(): VizPanel {
     pluginId: 'timeseries',
     titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     hoverHeaderOffset: 0,
-    $behaviors: [new VizPanelEditPaneBehavior({})],
+    $behaviors: [],
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
