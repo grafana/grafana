@@ -509,11 +509,30 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 		IsServiceAccount: true,
 	}
 
+	// maximum number of attempts for creating a service account
+	attempts := 10
+
 	return s.sqlStore.InTransaction(ctx, func(tctx context.Context) error {
 		newSA, errCreateSA := s.userService.CreateServiceAccount(tctx, &cmd)
 		if errCreateSA != nil {
+			if errors.Is(errCreateSA, serviceaccounts.ErrServiceAccountAlreadyExists) {
+				// The service account we tried to create already exists with that login name. We will attempt to create
+				// a unique service account by adding suffixes to the initial login name (e.g. -001, -002, ... , -010).
+				for i := 1; errCreateSA != nil && i <= attempts; i++ {
+					serviceAccountName := fmt.Sprintf("%s-%03d", key.Name, i)
+					cmd.Login = generateLogin(prefix, key.OrgID, serviceAccountName)
+					newSA, errCreateSA = s.userService.CreateServiceAccount(tctx, &cmd)
+					if errCreateSA != nil && !errors.Is(errCreateSA, serviceaccounts.ErrServiceAccountAlreadyExists) {
+						break
+					}
+				}
+			}
+		}
+
+		if errCreateSA != nil {
 			return fmt.Errorf("failed to create service account: %w", errCreateSA)
 		}
+
 		return s.assignApiKeyToServiceAccount(tctx, key.ID, newSA.ID)
 	})
 }
