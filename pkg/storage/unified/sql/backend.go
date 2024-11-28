@@ -141,22 +141,30 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
 	var namespaces []string
 
-	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
-		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
-		if err != nil {
-			return err
+	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) (txErr error) {
+		var rows db.Rows
+
+		rows, txErr = tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
+		if txErr != nil {
+			return txErr
 		}
+
+		defer func() {
+			txErr = rows.Close()
+		}()
+
 		for rows.Next() {
 			var ns string
-			err = rows.Scan(&ns)
-			if err != nil {
-				return err
+
+			txErr = rows.Scan(&ns)
+			if txErr != nil {
+				return txErr
 			}
+
 			namespaces = append(namespaces, ns)
 		}
 
-		err = rows.Close()
-		return err
+		return txErr
 	})
 
 	return namespaces, err
@@ -679,7 +687,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 		nextRV = rec.ResourceVersion
 		prevRV := rec.PreviousRV
 		if prevRV == nil {
-			*prevRV = int64(0)
+			prevRV = new(int64)
 		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
