@@ -26,6 +26,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
 
+import { AnnoKeyRepoName } from '../../apiserver/types';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
@@ -112,6 +113,22 @@ export function ToolbarActions({ dashboard }: Props) {
             key="public-dashboard-button-badge"
             className={styles.publicBadge}
             data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
+          />
+        );
+      },
+    });
+  }
+
+  if (meta.k8s?.annotations?.[AnnoKeyRepoName]) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return (
+          <Badge
+            color="green"
+            text="Provisioned"
+            key="provisioned-dashboard-button-badge"
           />
         );
       },
