@@ -3762,7 +3762,8 @@ exports[`better eslint`] = {
     "public/app/features/sandbox/TestStuffPage.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/scopes/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "0"],

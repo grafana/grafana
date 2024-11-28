@@ -322,3 +322,9 @@ export { type GraphNGLegendEvent } from '../graveyard/GraphNG/types';
 
 export { ZoomPlugin } from '../graveyard/uPlot/plugins/ZoomPlugin';
 export { TooltipPlugin } from '../graveyard/uPlot/plugins/TooltipPlugin';
+
+export {
+  ElementSelectionContext,
+  useElementSelection,
+  type ElementSelectionContextState,
+} from './ElementSelectionContext/ElementSelectionContext';
