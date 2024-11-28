@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { SceneObjectBase } from '@grafana/scenes';
-import { Button, Input, TextArea } from '@grafana/ui';
+import { Input, TextArea } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
