@@ -246,6 +246,7 @@ export function TableNG(props: TableNGProps) {
   }, []);
   const calcsRef = useRef<string[]>([]);
   const mapFrameToDataGrid = (main: DataFrame, subTable?: boolean) => {
+    console.log('called');
     const columns: TableColumn[] = [];
 
     // Check for nestedFrames
@@ -453,7 +454,7 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columns = useMemo(() => mapFrameToDataGrid(props.data), [props.data, calcsRef, expandedRows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
