@@ -62,7 +62,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <thead>
           <tr>
             <th></th>
-            <th>Template</th>
+            <th>Template group</th>
             <Authorize
               actions={[
                 AlertmanagerAction.CreateNotificationTemplate,
@@ -95,8 +95,8 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
       {!!templateToDelete && (
         <ConfirmModal
           isOpen={true}
-          title="Delete template"
-          body={`Are you sure you want to delete template "${templateToDelete.title}"?`}
+          title="Delete template group"
+          body={`Are you sure you want to delete template group "${templateToDelete.title}"?`}
           confirmText="Yes, delete"
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
@@ -161,7 +161,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
             <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
               <ActionIcon
                 to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
-                tooltip="edit template"
+                tooltip="Edit template group"
                 icon="pen"
               />
             </Authorize>
@@ -172,7 +172,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
                 `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
                 alertManagerName
               )}
-              tooltip="Copy template"
+              tooltip="Copy template group"
               icon="copy"
             />
           </Authorize>
@@ -180,7 +180,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
             <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
               <ActionIcon
                 onClick={() => onDeleteClick(notificationTemplate)}
-                tooltip="delete template"
+                tooltip="Delete template group"
                 icon="trash-alt"
               />
             </Authorize>
@@ -191,7 +191,7 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
         <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
           <td></td>
           <td colSpan={2}>
-            <DetailsField label="Description" horizontal={true}>
+            <DetailsField label="" horizontal={true}>
               <TemplateEditor
                 width={'auto'}
                 height={'auto'}

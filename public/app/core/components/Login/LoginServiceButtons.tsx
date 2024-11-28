@@ -113,7 +113,7 @@ const LoginDivider = () => {
         <div className={styles.divider.line} />
       </div>
       <div>
-        <span>{!config.disableLoginForm && <span>or</span>}</span>
+        <span>{!config.disableLoginForm && <Trans i18nKey="login.divider.connecting-text">or</Trans>}</span>
       </div>
       <div>
         <div className={styles.divider.line} />

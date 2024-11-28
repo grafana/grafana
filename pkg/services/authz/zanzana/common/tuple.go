@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	TypeUser      string = "user"
-	TypeTeam      string = "team"
-	TypeRole      string = "role"
-	TypeFolder    string = "folder"
-	TypeResource  string = "resource"
-	TypeNamespace string = "namespace"
+	TypeUser           string = "user"
+	TypeServiceAccount string = "service-account"
+	TypeTeam           string = "team"
+	TypeRole           string = "role"
+	TypeFolder         string = "folder"
+	TypeResource       string = "resource"
+	TypeNamespace      string = "namespace"
 )
 
 const (
@@ -45,6 +46,25 @@ const (
 	RelationFolderResourceDelete           string = "resource_" + RelationDelete
 	RelationFolderResourcePermissionsRead  string = "resource_" + RelationPermissionsRead
 	RelationFolderResourcePermissionsWrite string = "resource_" + RelationPermissionsWrite
+)
+
+var ResourceRelations = []string{
+	RelationRead,
+	RelationWrite,
+	RelationDelete,
+	RelationPermissionsRead,
+	RelationPermissionsWrite,
+}
+
+var FolderRelations = append(
+	ResourceRelations,
+	RelationCreate,
+	RelationFolderResourceRead,
+	RelationFolderResourceWrite,
+	RelationFolderResourceCreate,
+	RelationFolderResourceDelete,
+	RelationFolderResourcePermissionsRead,
+	RelationFolderResourcePermissionsWrite,
 )
 
 func FolderResourceRelation(relation string) string {
