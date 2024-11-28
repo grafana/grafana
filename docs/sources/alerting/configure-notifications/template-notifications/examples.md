@@ -64,7 +64,7 @@ Notification templates allows you to change the default notification messages.
 You can modify the content and format of notification messages. For example, you can customize the content to show only specific information or adjust the format to suit a particular contact point, such as Slack or Email.
 
 {{% admonition type="note" %}}
-Avoid adding extra information about alert instances in notification templates, as this information is only be visible in the notification message.
+Avoid adding extra information about alert instances in notification templates, as this information is only visible in the notification message.
 
 Instead, you should [use annotations or labels](ref:template-annotations-and-labels) to add information directly to the alert, ensuring it's also visible in the alert state and alert history within Grafana. You can then print the new alert annotation or label in notification templates.
 {{% /admonition %}}

@@ -25,6 +25,7 @@ import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSu
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
@@ -111,7 +112,11 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         },
       });
 
-      if (contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard()) {
+      if (
+        contextSrv.isSignedIn &&
+        config.snapshotEnabled &&
+        contextSrv.hasPermission(AccessControlAction.SnapshotsCreate)
+      ) {
         subMenu.push({
           text: t('share-panel.menu.share-snapshot-title', 'Share snapshot'),
           iconClassName: 'camera',
