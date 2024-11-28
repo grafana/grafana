@@ -192,24 +192,6 @@ export function ToolbarActions({ dashboard }: Props) {
         </Button>
       ),
     });
-    leftActions.push({
-      group: 'settings',
-      condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
-      render: () => (
-        <Button
-          onClick={() => {
-            dashboard.onOpenEditPane();
-          }}
-          tooltip="Options"
-          fill="text"
-          size="sm"
-          key="settings"
-          variant="secondary"
-          icon="cog"
-          data-testid={selectors.components.NavToolbar.editDashboard.settingsButton}
-        />
-      ),
-    });
   } else {
     toolbarActions.push({
       group: 'add-panel',

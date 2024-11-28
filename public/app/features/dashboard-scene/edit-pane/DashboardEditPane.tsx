@@ -18,7 +18,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public selectObject(obj: SceneObject) {
     const currentSelection = this.state.selectedObject?.resolve();
     if (currentSelection === obj) {
-      this.setState({ selectedObject: undefined });
+      const dashboard = getDashboardSceneFor(this);
+      this.setState({ selectedObject: dashboard.getRef() });
     } else {
       this.setState({ selectedObject: obj.getRef() });
     }

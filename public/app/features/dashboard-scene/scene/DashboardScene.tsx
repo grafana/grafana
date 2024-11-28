@@ -573,10 +573,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public onOpenEditPane = () => {
-    this.state.editPane.selectObject(this);
-  };
-
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
     this.setState({
       overlay: new AddLibraryPanelDrawer({ panelToReplaceRef }),
