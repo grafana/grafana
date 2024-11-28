@@ -13,7 +13,6 @@ type isOnClickShowFieldType = (value: string) => void;
 type isOnClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
 
-
 export function isOnClickFilterLabel(callback: unknown): callback is onClickFilterLabelType {
   return typeof callback === 'function';
 }
