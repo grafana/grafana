@@ -60,7 +60,7 @@ export function DataTrailCard(props: Props) {
   const { dsValue, filters, metric, createdAt } = values;
 
   return (
-    <div>
+    <article>
       <Card onClick={onSelect} className={styles.card}>
         <Card.Heading>
           <div className={styles.metricLabel}>
@@ -103,7 +103,7 @@ export function DataTrailCard(props: Props) {
         </div>
         <div className={styles.primaryFont}>{createdAt && dateTimeFormat(createdAt, { format: 'YYYY-MM-DD' })}</div>
       </div>
-    </div>
+    </article>
   );
 }
 
