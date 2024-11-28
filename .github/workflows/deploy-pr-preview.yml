@@ -17,6 +17,6 @@ jobs:
       branch: ${{ github.head_ref }}
       event_number: ${{ github.event.number }}
       title: ${{ github.event.pull_request.title }}
-      repo: writers-toolkit
+      repo: grafana
       website_directory: content/docs/grafana/latest
       relative_prefix: /docs/grafana/latest/
