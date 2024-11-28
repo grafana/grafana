@@ -78,7 +78,7 @@ import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,
-  transformValueMappingsToV1,
+  transformMappingsToV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
@@ -101,7 +101,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const annotationLayers = dashboard.annotations.map((annotation) => {
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
-      query: annotation.spec,
+      query: {
+        ...annotation.spec,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
+      },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
@@ -233,7 +236,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
-    fieldConfig: transformValueMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
     // FIXME: Transparent is not added to the schema yet
     // displayMode: panel.spec.transparent ? 'transparent' : undefined,
@@ -297,7 +300,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource.uid || datasource.type !== query.spec.datasource.type) {
+    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
