@@ -1,8 +1,9 @@
-package provisioning
+package resources
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -15,6 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/dashboard"
 )
+
+var ErrUnableToReadResourceBytes = errors.New("unable to read bytes as a resource")
 
 // Tries to figure out what kind this data is.
 //

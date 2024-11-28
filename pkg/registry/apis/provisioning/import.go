@@ -9,19 +9,19 @@ import (
 	"path"
 	"strings"
 
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type importConnector struct {
 	repoGetter RepoGetter
-	client     *resourceClient
+	client     *resources.ClientFactory
 	logger     *slog.Logger
 }
 
@@ -73,18 +73,18 @@ func (c *importConnector) Connect(
 	// TODO: We need some way to filter what we import.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, err := c.client.Client(ns)
+		client, kinds, err := c.client.New(ns)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a dynamic client: %w", err)))
 			return
 		}
-		kinds := newKindsLookup(client)
-		fileParser := newFileParser(ns, repo, client, kinds)
+		fileParser := resources.NewParser(repo, client, kinds)
+
 		folderIface := client.Resource(schema.GroupVersionResource{
 			Group:    "folder.grafana.app",
 			Version:  "v0alpha1",
 			Resource: "folders",
-		}).Namespace(ns)
+		})
 
 		ref := r.URL.Query().Get("ref")
 		logger := logger.With("ref", ref)
@@ -120,10 +120,10 @@ func (c *importConnector) Connect(
 
 			// NOTE: We're validating here to make sure we want the folders to be created.
 			//  If the file isn't valid, its folders aren't relevant, either.
-			file, err := fileParser.parse(r.Context(), logger, info, true)
+			file, err := fileParser.Parse(r.Context(), logger, info, true)
 			if err != nil {
 				logger.DebugContext(ctx, "error on parsing the entry's data", "error", err)
-				if errors.Is(err, ErrUnableToReadResourceBytes) {
+				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 					// Non-resource data is not relevant to us.
 					logger.DebugContext(ctx, "ignoring file due to being a non-resource", "error", err)
 					continue
@@ -132,9 +132,9 @@ func (c *importConnector) Connect(
 				return
 			}
 
-			logger = logger.With("gvk", file.gvk)
-			if file.client == nil {
-				logger.DebugContext(ctx, "unable to find client for", "obj", file.obj)
+			logger = logger.With("gvk", file.GVK)
+			if file.Client == nil {
+				logger.DebugContext(ctx, "unable to find client for", "obj", file.Obj)
 				continue
 			}
 
@@ -176,17 +176,17 @@ func (c *importConnector) Connect(
 				}
 			}
 
-			if file.gvr == nil {
+			if file.GVR == nil {
 				logger.DebugContext(ctx, "no GVR found")
 				continue
 			}
 
-			file.obj.SetName(name)
+			file.Obj.SetName(name)
 			if folder := path.Base(dir); folder != "." && folder != "/" {
-				file.meta.SetFolder(path.Base(dir))
+				file.Meta.SetFolder(path.Base(dir))
 			}
 
-			_, err = file.client.Get(r.Context(), name, metav1.GetOptions{})
+			_, err = file.Client.Get(r.Context(), name, metav1.GetOptions{})
 			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 			if false && err != nil && !apierrors.IsNotFound(err) {
 				logger.DebugContext(ctx, "failed to check if the object already exists", "error", err)
@@ -194,11 +194,11 @@ func (c *importConnector) Connect(
 				return
 			}
 
-			logger.DebugContext(ctx, "upserting kube object", "name", file.obj.GetName())
+			logger.DebugContext(ctx, "upserting kube object", "name", file.Obj.GetName())
 			if err != nil { // IsNotFound
-				_, err = file.client.Create(r.Context(), file.obj, metav1.CreateOptions{})
+				_, err = file.Client.Create(r.Context(), file.Obj, metav1.CreateOptions{})
 			} else { // already exists
-				_, err = file.client.Update(r.Context(), file.obj, metav1.UpdateOptions{})
+				_, err = file.Client.Update(r.Context(), file.Obj, metav1.UpdateOptions{})
 			}
 			if err != nil {
 				logger.DebugContext(ctx, "failed to upsert object", "error", err)
