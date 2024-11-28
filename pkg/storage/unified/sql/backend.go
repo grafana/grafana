@@ -146,6 +146,11 @@ func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
 		if err != nil {
 			return err
 		}
+
+		defer func() {
+			_ = rows.Close()
+		}()
+
 		for rows.Next() {
 			var ns string
 			err = rows.Scan(&ns)
@@ -155,8 +160,7 @@ func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
 			namespaces = append(namespaces, ns)
 		}
 
-		err = rows.Close()
-		return err
+		return nil
 	})
 
 	return namespaces, err
@@ -679,7 +683,7 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 		nextRV = rec.ResourceVersion
 		prevRV := rec.PreviousRV
 		if prevRV == nil {
-			*prevRV = int64(0)
+			prevRV = new(int64)
 		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{

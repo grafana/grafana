@@ -29,6 +29,11 @@ func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBui
 			if err != nil {
 				return nil, err
 			}
+
+			defer func() {
+				_ = rows.Close()
+			}()
+
 			for rows.Next() {
 				info := &dashboard.DatasourceQueryResult{}
 				err = rows.Scan(&info.UID, &info.Type, &info.Name, &info.IsDefault)

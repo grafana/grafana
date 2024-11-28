@@ -101,7 +101,7 @@ func (r *sqlResourceHistoryPollRequest) Validate() error {
 func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
 	prevRV := r.Response.PreviousRV
 	if prevRV == nil {
-		*prevRV = int64(0)
+		prevRV = new(int64)
 	}
 	return &historyPollResponse{
 		Key: resource.ResourceKey{
