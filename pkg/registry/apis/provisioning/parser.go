@@ -197,6 +197,8 @@ func (f *parsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 	return wrap
 }
 
+// Matches the frontend logic that pulls ref from the path
+// public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx#L32
 func joinPathWithRef(p, r string) string {
 	if r == "" {
 		return p
