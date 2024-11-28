@@ -100,7 +100,7 @@ func (r *s3Repository) Delete(ctx context.Context, logger *slog.Logger, path str
 }
 
 // Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
+func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }

@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // This only works for github right now
 type webhookConnector struct {
-	client auth.BackgroundIdentityService
-	getter RepoGetter
-	logger *slog.Logger
+	client         auth.BackgroundIdentityService
+	getter         RepoGetter
+	logger         *slog.Logger
+	resourceClient *resources.ClientFactory
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -60,8 +62,8 @@ func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns := request.NamespaceValue(ctx)
-	id, err := s.client.WorkerIdentity(ctx, ns)
+	namespace := request.NamespaceValue(ctx)
+	id, err := s.client.WorkerIdentity(ctx, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +73,9 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	if err != nil {
 		return nil, err
 	}
-	webhook := repo.Webhook(ctx, s.logger, responder)
+
+	factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
+	webhook := repo.Webhook(ctx, s.logger, responder, factory)
 	if webhook == nil {
 		return nil, &errors.StatusError{
 			ErrStatus: v1.Status{

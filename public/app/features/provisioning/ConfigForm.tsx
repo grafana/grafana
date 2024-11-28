@@ -64,7 +64,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
     watch,
     getValues,
   } = useForm<RepositoryFormData>({ defaultValues: getDefaultValues(data?.spec) });
-  const [tokenConfigured, setTokenConfigured] = useState(Boolean(data?.metadata?.name));
+  const isEdit = Boolean(data?.metadata?.name);
+  const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const navigate = useNavigate();
   const type = watch('type');
 
@@ -142,7 +143,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             <Controller
               name={'token'}
               control={control}
-              rules={{ required: 'This field is required.' }}
+              rules={{ required: isEdit ? false : 'This field is required.' }}
               render={({ field: { ref, ...field } }) => {
                 return (
                   <SecretInput
@@ -194,9 +195,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Controller
           control={control}
           name={'folder'}
-          render={({ field: { ref, ...field } }) => {
-            return <FolderPicker {...field} />;
-          }}
+          render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
         />
       </Field>
       <FieldSet label={'Editing options'}>
@@ -211,7 +210,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
         </Field>
       </FieldSet>
       <Stack gap={2}>
-        <Button type={'submit'}>Save</Button>
+        <Button type={'submit'} disabled={request.isLoading}>
+          {request.isLoading ? 'Saving...' : 'Save'}
+        </Button>
       </Stack>
     </form>
   );

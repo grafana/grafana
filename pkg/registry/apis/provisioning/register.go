@@ -163,9 +163,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		client: b.identities,
-		logger: b.logger.With("connector", "webhook"),
+		getter:         b,
+		client:         b.identities,
+		resourceClient: b.client,
+		logger:         b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
@@ -342,6 +343,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 }
+
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -507,7 +509,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 			Description: "branch or commit hash",
 			Schema:      spec.StringProperty(),
 			Required:    false,
-		}}
+		},
+	}
 
 	sub = oas.Paths.Paths[repoprefix+"/import"]
 	if sub != nil && sub.Post != nil {
@@ -539,7 +542,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
 		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{ref,
+		comment := []*spec3.Parameter{
+			ref,
 			{
 				ParameterProps: spec3.ParameterProps{
 					Name:        "message",
@@ -597,7 +601,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 kind: Dashboard
 spec:
   title: Sample dashboard
-`},
+`,
+									},
 								},
 								"playlist": {
 									ExampleProps: spec3.ExampleProps{
@@ -609,7 +614,8 @@ spec:
   items:
   - type: dashboard_by_tag
     value: panel-tests
-`},
+`,
+									},
 								},
 							},
 						},
