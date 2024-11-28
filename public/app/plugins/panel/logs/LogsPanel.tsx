@@ -88,6 +88,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Passed to the LogRowMenuCell component to be rendered after the default actions in the menu.
    * logRowMenuIconsAfter?: ReactNode[];
+   *
+   * Callback to be invoked when enableInfiniteScrolling and new logs have been received after an scroll event.
+   * onNewLogsReceived?: (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
    */
 }
 interface LogsPermalinkUrlState {
@@ -255,12 +258,7 @@ export const LogsPanel = ({
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = panelData
-      ? dataFrameToLogsModel(
-          panelData.series,
-          data.request?.intervalMs,
-          undefined,
-          data.request?.targets,
-        )
+      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets)
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
@@ -583,7 +581,7 @@ async function requestMoreLogs(
   let updatedSeries = panelData.series;
   for (const response of responses) {
     const newData = isObservable(response) ? await lastValueFrom(response) : response;
-    
+
     updatedSeries = combineResponses(
       {
         data: updatedSeries,
