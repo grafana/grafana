@@ -177,11 +177,6 @@ func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 	//  If the file isn't valid, its folders aren't relevant, either.
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
-		// FIXME: We should probably handle this in the callers to do a warning or ignore.
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
-			return nil, ErrUnableToReadResourceBytes
-		}
-
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
 	}
 

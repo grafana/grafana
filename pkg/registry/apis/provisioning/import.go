@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -70,6 +71,7 @@ func (c *importConnector) Connect(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		replicator, err := replicatorFactory.New()
 		if err != nil {
+			logger.ErrorContext(ctx, "failed to create replicator", "error", err)
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create replicator: %w", err)))
 			return
 		}
@@ -79,7 +81,8 @@ func (c *importConnector) Connect(
 
 		tree, err := repo.ReadTree(r.Context(), logger, ref)
 		if err != nil {
-			responder.Error(err) // TODO: do we want to do anything more for this?
+			logger.ErrorContext(ctx, "failed to read tree", "error", err)
+			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read tree: %w", err)))
 			return
 		}
 
@@ -92,16 +95,22 @@ func (c *importConnector) Connect(
 
 			info, err := repo.Read(r.Context(), logger, entry.Path, ref)
 			if err != nil {
-				logger.DebugContext(ctx, "error on reading the entry", "error", err)
+				logger.ErrorContext(ctx, "failed to read file", "error", err)
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read %s: %w", entry.Path, err)))
 				return
 			}
+
 			// The parse function will fill in the repository metadata, so copy it over here
 			info.Hash = entry.Hash
 			info.Modified = nil // modified?
 
 			if err := replicator.Replicate(r.Context(), info); err != nil {
-				logger.DebugContext(ctx, "error on replicating the entry", "error", err)
+				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+					logger.InfoContext(ctx, "file does not contain a resource")
+					continue
+				}
+
+				logger.ErrorContext(ctx, "failed to replicate file", "error", err)
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to replicate %s: %w", entry.Path, err)))
 				return
 			}
