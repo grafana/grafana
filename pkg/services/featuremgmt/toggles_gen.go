@@ -899,6 +899,10 @@ const (
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
 
+	// FlagAzureMonitorEnableUserAuth
+	// Enables user auth for Azure Monitor datasource only
+	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
