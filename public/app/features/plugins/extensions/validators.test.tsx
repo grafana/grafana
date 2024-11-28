@@ -630,6 +630,10 @@ describe('Plugin Extension Validators', () => {
             },
           },
         },
+        userStorage: {
+          getItem: async (k: string) => '',
+          setItem: async (k: string, v: string) => {},
+        },
       };
     });
 
@@ -696,6 +700,10 @@ describe('Plugin Extension Validators', () => {
               exposedComponents: [],
             },
           },
+        },
+        userStorage: {
+          getItem: async (k: string) => '',
+          setItem: async (k: string, v: string) => {},
         },
       };
     });

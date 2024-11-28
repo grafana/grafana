@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, UserStorage } from '@grafana/runtime';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2 } from '@grafana/ui';
 
 import { Changelog } from '../components/Changelog';
@@ -105,9 +105,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
   if (pluginConfig?.configPages) {
     for (const configPage of pluginConfig.configPages) {
       if (pageId === configPage.id) {
+        console.log('plugin details pluginConfig', pluginConfig);
         return (
           <div>
-            <PluginContextProvider meta={pluginConfig.meta}>
+            <PluginContextProvider meta={pluginConfig.meta} userStorage={new UserStorage(pluginConfig.meta.id)}>
               <configPage.body plugin={pluginConfig} query={queryParams} />
             </PluginContextProvider>
           </div>

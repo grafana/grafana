@@ -9,7 +9,7 @@ import {
   OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
-import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
+import { getTemplateSrv, PanelRendererProps, UserStorage } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
@@ -81,9 +81,10 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
 
   const PanelComponent = plugin.panel;
 
+  console.log('Panel renderer?');
   return (
     <ErrorBoundaryAlert dependencies={[plugin, data]}>
-      <PluginContextProvider meta={plugin.meta}>
+      <PluginContextProvider meta={plugin.meta} userStorage={new UserStorage(plugin.meta.id)}>
         <PanelComponent
           id={1}
           data={dataWithOverrides}

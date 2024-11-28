@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { UserStorage } from '@grafana/runtime';
 
 import {
   CloudWatchSettings,
@@ -107,7 +108,7 @@ const setup = (optionOverrides?: Partial<Props['options']>) => {
   };
 
   return render(
-    <PluginContextProvider meta={meta}>
+    <PluginContextProvider meta={meta} userStorage={new UserStorage(meta.id)}>
       <ConfigEditor {...newProps} />
     </PluginContextProvider>
   );
@@ -286,7 +287,7 @@ describe('Render', () => {
     };
 
     const { rerender } = render(
-      <PluginContextProvider meta={meta}>
+      <PluginContextProvider meta={meta} userStorage={new UserStorage(meta.id)}>
         <ConfigEditor {...newProps} />
       </PluginContextProvider>
     );
@@ -302,7 +303,7 @@ describe('Render', () => {
       },
     };
     rerender(
-      <PluginContextProvider meta={meta}>
+      <PluginContextProvider meta={meta} userStorage={new UserStorage(meta.id)}>
         <ConfigEditor {...rerenderProps} />
       </PluginContextProvider>
     );
@@ -334,7 +335,7 @@ describe('Render', () => {
       baseUrl: '',
     };
     const { rerender } = render(
-      <PluginContextProvider meta={meta}>
+      <PluginContextProvider meta={meta} userStorage={new UserStorage(meta.id)}>
         <ConfigEditor {...newProps} />
       </PluginContextProvider>
     );
@@ -347,7 +348,7 @@ describe('Render', () => {
       },
     };
     rerender(
-      <PluginContextProvider meta={meta}>
+      <PluginContextProvider meta={meta} userStorage={new UserStorage(meta.id)}>
         <ConfigEditor {...rerenderProps} />
       </PluginContextProvider>
     );

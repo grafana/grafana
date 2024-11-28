@@ -17,7 +17,7 @@ import {
   PluginExtensionAddedLinkConfig,
   urlUtil,
 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { reportInteraction, config, UserStorage } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
@@ -90,8 +90,9 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
       return null;
     }
 
+    console.log('Plugin meta', pluginMeta);
     return (
-      <PluginContextProvider meta={pluginMeta}>
+      <PluginContextProvider meta={pluginMeta} userStorage={new UserStorage(pluginMeta.id)}>
         <Component {...props} />
       </PluginContextProvider>
     );

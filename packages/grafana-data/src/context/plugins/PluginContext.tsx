@@ -1,10 +1,11 @@
 import { createContext } from 'react';
 
 import { DataSourceInstanceSettings } from '../../types/datasource';
-import { PluginMeta } from '../../types/plugin';
+import { PluginMeta, UserStorage } from '../../types/plugin';
 
 export interface PluginContextType {
   meta: PluginMeta;
+  userStorage: UserStorage;
 }
 
 export interface DataSourcePluginContextType extends PluginContextType {

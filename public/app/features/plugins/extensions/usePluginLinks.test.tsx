@@ -2,6 +2,7 @@ import { act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
 import { PluginContextProvider, PluginMeta, PluginType } from '@grafana/data';
+import { UserStorage } from '@grafana/runtime';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
@@ -88,7 +89,7 @@ describe('usePluginLinks()', () => {
     };
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <PluginContextProvider meta={pluginMeta}>
+      <PluginContextProvider meta={pluginMeta} userStorage={new UserStorage(pluginMeta.id)}>
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
     );
@@ -184,6 +185,7 @@ describe('usePluginLinks()', () => {
             extensionPoints: [],
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
@@ -219,6 +221,7 @@ describe('usePluginLinks()', () => {
             extensionPoints: [],
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
@@ -286,6 +289,7 @@ describe('usePluginLinks()', () => {
             extensionPoints: [],
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
@@ -324,6 +328,7 @@ describe('usePluginLinks()', () => {
             extensionPoints: [],
           },
         }}
+        userStorage={new UserStorage(pluginMeta.id)}
       >
         <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
       </PluginContextProvider>
