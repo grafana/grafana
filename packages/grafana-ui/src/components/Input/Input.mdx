@@ -1,11 +1,15 @@
-import { ArgTypes, Preview } from '@storybook/blocks';
+import { ArgTypes, Canvas } from '@storybook/blocks';
 import { Input } from './Input';
 import { Field } from '../Forms/Field';
 import { Icon } from '../Icon/Icon';
+import * as InputStories from './Input.story';
+import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 # Input
 
 Used for regular text input. For an array of data or tree-structured data, consider using `Select` or `Cascader` respectively.
+
+<Canvas of={InputStories.Simple} />
 
 ## Prefix and suffix
 
@@ -15,9 +19,9 @@ To add more context to the input you can add either text or an icon before or af
 <Input prefix={<Icon name="search" />} />
 ```
 
-<Preview>
+<ExampleFrame>
   <Input prefix={<Icon name="search" />} />
-</Preview>
+</ExampleFrame>
 
 ## Usage in forms with Field
 
@@ -29,12 +33,15 @@ To add more context to the input you can add either text or an icon before or af
 </Field>
 ```
 
-<Preview>
+<ExampleFrame>
   <Field
     label="Important information"
     description="This information is very important, so you really need to fill it in"
   >
     <Input name="importantInput" required />
   </Field>
-</Preview>
+</ExampleFrame>
+
+## Props
+
 <ArgTypes of={Input} />

@@ -1,5 +1,6 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
 import { Spinner } from './Spinner';
+import * as SpinnerStories from './Spinner.story';
 
 <Meta title="MDX|Spinner" component={Spinner} />
 
@@ -7,11 +8,6 @@ import { Spinner } from './Spinner';
 
 Spinner is `fa-spinner` icon animated. It is used to alert a user to wait for an activity to complete.
 
-<Preview>
-  <div>
-    <Spinner />
-    <Spinner className="my-spin-div" iconClassName="my-spinner-classname" size={24} />
-  </div>
-</Preview>
+<Canvas of={SpinnerStories.Basic} />
 
 <ArgTypes of={Spinner} />
