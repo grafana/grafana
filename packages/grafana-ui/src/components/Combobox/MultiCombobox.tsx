@@ -15,13 +15,13 @@ interface MultiComboboxBaseProps<T extends string | number> extends Omit<Combobo
   onChange: (items?: T[]) => void;
 }
 
-type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
+export type MultiComboboxProps<T extends string | number> = MultiComboboxBaseProps<T> & AutoSizeConditionals;
 
 export const MultiCombobox = <T extends string | number>(props: MultiComboboxProps<T>) => {
   const { options, placeholder, onChange, value } = props;
   const isAsync = typeof options === 'function';
 
-  const initialSelectedItems = useMemo(() => {
+  const selectedItems = useMemo(() => {
     if (!value || isAsync) {
       //TODO handle async
       return [];
@@ -51,7 +51,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>(initialSelectedItems);
+  //const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>(initialSelectedItems);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
@@ -69,7 +69,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useMultipleSelection.stateChangeTypes.DropdownKeyDownBackspace:
         case useMultipleSelection.stateChangeTypes.FunctionRemoveSelectedItem:
           if (newSelectedItems) {
-            setSelectedItems(newSelectedItems);
             onChange(getComboboxOptionsValues(newSelectedItems));
           }
           break;
@@ -114,7 +113,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
         case useCombobox.stateChangeTypes.ItemClick:
           if (newSelectedItem) {
             if (!isOptionSelected(newSelectedItem)) {
-              setSelectedItems([...selectedItems, newSelectedItem]);
               onChange(getComboboxOptionsValues([...selectedItems, newSelectedItem]));
               break;
             }

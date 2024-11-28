@@ -29,7 +29,7 @@ export default meta;
 
 type Story = StoryObj<typeof MultiCombobox>;
 
-export const Controlled: Story = {
+export const Basic: Story = {
   args: commonArgs,
   render: (args) => {
     const [{ value }, setArgs] = useArgs();
@@ -45,8 +45,4 @@ export const Controlled: Story = {
       />
     );
   },
-};
-
-export const Basic: Story = {
-  args: commonArgs,
 };

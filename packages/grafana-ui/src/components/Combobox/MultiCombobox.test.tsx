@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
-import { MultiCombobox } from './MultiCombobox';
+import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
 
 describe('MultiCombobox', () => {
   it('should render with options', async () => {
@@ -38,14 +39,28 @@ describe('MultiCombobox', () => {
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
-  it('should call onChange', async () => {
+  it('should call onChange with the correct values', async () => {
     const options = [
       { label: 'A', value: 'a' },
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
     const onChange = jest.fn();
-    render(<MultiCombobox options={options} value={[]} onChange={onChange} />);
+
+    const ControlledMultiCombobox = (props: MultiComboboxProps<string>) => {
+      const [value, setValue] = React.useState<string[]>([]);
+      return (
+        <MultiCombobox
+          {...props}
+          value={value}
+          onChange={(val) => {
+            setValue(val ?? []);
+            onChange(val);
+          }}
+        />
+      );
+    };
+    render(<ControlledMultiCombobox options={options} value={[]} onChange={onChange} />);
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
     await userEvent.click(await screen.findByRole('option', { name: 'A' }));
