@@ -124,13 +124,7 @@ export function ToolbarActions({ dashboard }: Props) {
       group: 'icon-actions',
       condition: true,
       render: () => {
-        return (
-          <Badge
-            color="green"
-            text="Provisioned"
-            key="provisioned-dashboard-button-badge"
-          />
-        );
+        return <Badge color="green" text="Provisioned" key="provisioned-dashboard-button-badge" />;
       },
     });
   }
