@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"text/template"
@@ -353,7 +354,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 				Code:    http.StatusOK,
 			})
 		case *github.PullRequestEvent:
-			if err := r.onPullRequestEvent(ctx, logger, event); err != nil {
+			if err := r.onPullRequestEvent(ctx, logger, event, factory); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -476,9 +477,28 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	return nil
 }
 
+const commentTemplate = `Hey there! 🎉
+Grafana spotted some changes for your resources in this pull request:
+
+| File Name | Type | Path | Action | Links |
+|-----------|------|------|--------|-------|
+{{range . }}| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|{{end}}
+
+Take a look and judge yourself! 🚀`
+
+type commentFile struct {
+	Filename string
+	Path     string
+	Action   string
+	Type     string
+	Original string
+	Current  string
+	Preview  string
+}
+
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
-func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent) error {
+func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, factory FileReplicatorFactory) error {
 	action := event.GetAction()
 	r.logger.InfoContext(ctx, "processing pull request event", "number", event.GetNumber(), "action", action)
 
@@ -501,59 +521,95 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("list pull request files: %w", err)
 	}
 
+	rows := make([]commentFile, 0)
+
+	baseBranch := event.GetPullRequest().GetBase().GetRef()
+	mainBranch := r.config.Spec.GitHub.Branch
+
+	replicator, err := factory.New()
+	if err != nil {
+		return fmt.Errorf("create replicator: %w", err)
+	}
+
 	// TODO: implement the real handling of the files
 	for _, file := range files {
+		row := commentFile{
+			Filename: path.Base(file.GetFilename()),
+			Path:     file.GetFilename(),
+			Action:   file.GetStatus(),
+			Type:     "dashboard", // TODO: get this from the resource
+		}
+
+		path := file.GetFilename()
+		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
+
+		ref := file.GetSHA()
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch file.GetStatus() {
 		case "added":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read added file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "added file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Preview = r.previewURL(file.GetSHA(), path)
 		case "modified":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read modified file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "modified file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Original = r.previewURL(baseBranch, path)
+			row.Current = r.previewURL(mainBranch, path)
+			row.Preview = r.previewURL(file.GetSHA(), path)
 		case "removed":
-			r.logger.InfoContext(ctx, "removed file", "file", file.GetFilename())
+			row.Original = r.previewURL(baseBranch, path)
+			row.Current = r.previewURL(mainBranch, path)
+			ref = baseBranch
 		case "renamed":
-			r.logger.InfoContext(ctx, "renamed file", "file", file.GetFilename(), "previous", file.GetPreviousFilename())
+			row.Original = r.previewURL(baseBranch, file.GetPreviousFilename())
+			row.Current = r.previewURL(mainBranch, file.GetPreviousFilename())
+			row.Preview = r.previewURL(file.GetSHA(), path)
 		case "changed":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read changed file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "changed file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Original = r.previewURL(baseBranch, path)
+			row.Current = r.previewURL(mainBranch, path)
+			row.Preview = r.previewURL(file.GetSHA(), path)
 		case "unchanged":
-			r.logger.InfoContext(ctx, "ignore unchanged file", "file", file.GetFilename())
+			logger.InfoContext(ctx, "ignore unchanged file")
+			continue
 		default:
-			r.logger.ErrorContext(ctx, "unhandled pull request file", "status", file.GetStatus(), "file", file.GetFilename())
+			logger.ErrorContext(ctx, "unhandled pull request file")
+			continue
 		}
+
+		f, err := r.Read(ctx, logger, path, ref)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to read file", "error", err)
+			continue
+		}
+
+		ok, err := replicator.Validate(ctx, f)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to validate file", "error", err)
+			continue
+		}
+		if !ok {
+			logger.InfoContext(ctx, "ignore file as it is not a valid resource")
+			continue
+		}
+
+		logger.InfoContext(ctx, "resource changed")
+		rows = append(rows, row)
 	}
 
-	commentTemplate := `Grafana detected that the following files have been changed in this pull request:
-{{range .}}
-- {{.GetFilename}} **{{.GetStatus }}**
-{{end}}
-`
+	if len(rows) == 0 {
+		return nil
+	}
+
 	tmpl, err := template.New("comment").Parse(commentTemplate)
 	if err != nil {
 		return fmt.Errorf("parse comment template: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, files); err != nil {
+	if err := tmpl.Execute(&buf, rows); err != nil {
 		return fmt.Errorf("execute comment template: %w", err)
 	}
 
 	comment := buf.String()
 
+	// TODO: comment with Grafana Logo
+	// TODO: comment author should be written by Grafana and not the user
 	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
@@ -561,6 +617,10 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber())
 
 	return nil
+}
+
+func (r *githubRepository) previewURL(ref, path string) string {
+	return fmt.Sprintf("%s/dashboard/preview/%s/%s", "https://grafana.com", ref, path)
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {
