@@ -195,9 +195,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
         <Controller
           control={control}
           name={'folder'}
-          render={({ field: { ref, ...field } }) => {
-            return <FolderPicker {...field} />;
-          }}
+          render={({ field: { ref, ...field } }) => <FolderPicker {...field} />}
         />
       </Field>
       <FieldSet label={'Editing options'}>
