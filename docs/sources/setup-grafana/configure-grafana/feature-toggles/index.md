@@ -228,6 +228,7 @@ Experimental features might be changed or removed without prior notice.
 | `crashDetection`                              | Enables browser crash detection reporting to Faro.                                                                                                                                                                                                                                |
 | `jaegerBackendMigration`                      | Enables querying the Jaeger data source without the proxy                                                                                                                                                                                                                         |
 | `alertingNotificationsStepMode`               | Enables simplified step mode in the notifications section                                                                                                                                                                                                                         |
+| `switchToRbacAuthZService`                    | Switch the AuthZ Client to use the RBAC AuthZ Service.                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 

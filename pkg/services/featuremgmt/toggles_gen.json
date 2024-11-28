@@ -3318,6 +3318,18 @@
     },
     {
       "metadata": {
+        "name": "switchToRbacAuthZService",
+        "resourceVersion": "1732807756937",
+        "creationTimestamp": "2024-11-28T15:29:16Z"
+      },
+      "spec": {
+        "description": "Switch the AuthZ Client to use the RBAC AuthZ Service.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-12-13T09:33:14Z"

@@ -906,4 +906,8 @@ const (
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
+
+	// FlagSwitchToRbacAuthZService
+	// Switch the AuthZ Client to use the RBAC AuthZ Service.
+	FlagSwitchToRbacAuthZService = "switchToRbacAuthZService"
 )

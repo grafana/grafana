@@ -1680,6 +1680,12 @@ var (
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "switchToRbacAuthZService",
+			Description: "Switch the AuthZ Client to use the RBAC AuthZ Service.",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
+		},
 	}
 )
 
