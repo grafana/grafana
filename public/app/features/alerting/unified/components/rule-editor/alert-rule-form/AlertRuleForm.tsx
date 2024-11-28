@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 
@@ -86,7 +86,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const notifyApp = useAppNotification();
   const [queryParams] = useURLSearchParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
@@ -119,9 +118,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       condition: 'C',
       queries: getDefaultQueries(isGrafanaRecordingRuleByType(defaultRuleType)),
       type: defaultRuleType,
-      evaluateEvery: evaluateEvery,
+      evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     };
-  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
+  }, [existing, prefill, queryParams, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -135,7 +134,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     formState: { isSubmitting },
   } = formAPI;
 
-  const type = watch('type');
+  const [type, evaluateEvery] = watch(['type', 'evaluateEvery']);
   const grafanaTypeRule = isGrafanaManagedRuleByType(type ?? RuleFormType.grafana);
 
   const dataSourceName = watch('dataSourceName');
@@ -235,9 +234,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     locationService.getHistory().goBack();
   };
 
-  const evaluateEveryInForm = watch('evaluateEvery');
-  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
-
   const actionButtons = (
     <Stack justifyContent="flex-end" alignItems="center">
       {existing && (
@@ -313,12 +309,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
                 {/* Step 4 & 5 & 6*/}
                 {isGrafanaManagedRuleByType(type) && (
-                  <GrafanaEvaluationBehaviorStep
-                    evaluateEvery={evaluateEvery}
-                    setEvaluateEvery={setEvaluateEvery}
-                    existing={Boolean(existing)}
-                    enableProvisionedGroups={false}
-                  />
+                  <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={false} />
                 )}
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={uidFromParams} />
