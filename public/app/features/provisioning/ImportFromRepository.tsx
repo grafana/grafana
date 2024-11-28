@@ -6,20 +6,23 @@ import { AppEvents } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
+import { Resource } from '../apiserver/types';
 import { Loader } from '../plugins/admin/components/Loader';
 
 import { useCreateRepositoryImportMutation, useListRepositoryQuery } from './api';
+import { RepositorySpec } from './api/types';
 
 interface Props {
-  name?: string;
-  folder?: string;
+  repository: Resource<RepositorySpec>;
 }
 
-export function ImportFromRepository({ name, folder }: Props) {
+export function ImportFromRepository({ repository }: Props) {
   const query = useListRepositoryQuery();
   const [importResource, importQuery] = useCreateRepositoryImportMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const name = repository.metadata?.name;
+  const folder = repository.spec?.folder;
 
   // TODO generate endpoints for this
   const { value } = useAsync(async () => {
@@ -48,22 +51,27 @@ export function ImportFromRepository({ name, folder }: Props) {
       return;
     }
 
-    importResource({ name, ref: 'main' });
+    importResource({ name });
   };
 
   if (query.isLoading) {
     return <Loader />;
   }
+
+  if (repository.spec?.type !== 'github') {
+    return null;
+  }
+
   return (
     <>
       <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={importQuery.isLoading || !name}>
-        {importQuery.isLoading ? 'Importing...' : 'Import from repository'}
+        Import from repository
       </Button>
       <ConfirmModal
         isOpen={isModalOpen}
         title={'Import resources from repository'}
         body={`This will pull all resources from the repository into your instance into the "${value?.spec?.title}" folder. Existing dashboards with the same UID will be overwritten. Proceed?`}
-        confirmText={'Import'}
+        confirmText={importQuery.isLoading ? 'Importing...' : 'Import'}
         onConfirm={onClick}
         onDismiss={() => setIsModalOpen(false)}
       />

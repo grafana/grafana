@@ -39,7 +39,6 @@ function getDefaultValues(meta: DashboardMeta) {
     path,
     repo,
     comment: '',
-    workflow: WorkflowOption.Branch,
   };
 }
 
@@ -60,16 +59,21 @@ export interface Props {
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
   const defaultValues = getDefaultValues(meta);
+  const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
+  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const isGitHub = repositoryConfig?.type === 'github';
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
     control,
-  } = useForm({ defaultValues });
-  const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
-  const repositoryConfig = repositoryConfigQuery?.data?.spec;
-  const isGitHub = repositoryConfig?.type === 'github';
+  } = useForm({
+    defaultValues: {
+      ...defaultValues,
+      workflow: repositoryConfig?.github?.branchWorkflow ? WorkflowOption.Branch : WorkflowOption.PullRequest,
+    },
+  });
   const [repo, ref, workflow] = watch(['repo', 'ref', 'workflow']);
   const href = createPRLink(repositoryConfig, repo, ref);
   const { isDirty } = dashboard.state;

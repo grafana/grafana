@@ -64,7 +64,7 @@ function RepositoryListPageContent({ items }: { items?: Array<Resource<Repositor
                   <LinkButton variant="secondary" href={`${PROVISIONING_URL}/${item.metadata.name}/edit`}>
                     Edit
                   </LinkButton>
-                  <ImportFromRepository name={item?.metadata.name} folder={item.spec.folder} />
+                  <ImportFromRepository repository={item} />
                   <DeleteRepositoryButton name={item.metadata.name} />
                 </Stack>
               </Card>
