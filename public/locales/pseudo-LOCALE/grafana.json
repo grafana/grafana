@@ -1696,7 +1696,8 @@
       "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř päŉęľ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
       "download-image": "Đőŵŉľőäđ įmäģę",
       "render-image": "Ğęŉęřäŧę įmäģę",
-      "render-image-error": "Fäįľęđ ŧő řęŉđęř päŉęľ įmäģę"
+      "render-image-error": "Fäįľęđ ŧő řęŉđęř päŉęľ įmäģę",
+      "render-image-error-description": "Åŉ ęřřőř őččūřřęđ ŵĥęŉ ģęŉęřäŧįŉģ ŧĥę įmäģę"
     }
   },
   "login": {

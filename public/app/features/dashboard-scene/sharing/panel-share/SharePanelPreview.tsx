@@ -6,10 +6,10 @@ import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 type ImageSettingsForm = {
   width: number;
@@ -189,9 +189,9 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
         {image && !loading && <img src={URL.createObjectURL(image)} alt="panel-preview-img" className={styles.image} />}
         {error && (
           <Alert severity="error" title={t('link.share-panel.render-image-error', 'Failed to render panel image')}>
-            <Trans i18nKey="link.share-panel.render-image-error-description">
-              {isFetchError(error) ? error.statusText : 'An error occurred when generating the image'}
-            </Trans>
+            {isFetchError(error)
+              ? error.statusText
+              : t('link.share-panel.render-image-error-description', 'An error occurred when generating the image')}
           </Alert>
         )}
       </Stack>
