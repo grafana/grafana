@@ -535,8 +535,8 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
     from: toUtc(timeRange.from).valueOf(),
     to: toUtc(timeRange.to).valueOf(),
   });
-  currentURL.searchParams.set('from', range.from.toString(10));
-  currentURL.searchParams.set('to', range.to.toString(10));
+  currentURL.searchParams.set('from', range.from.toString());
+  currentURL.searchParams.set('to', range.to.toString());
 
   await createAndCopyShortLink(currentURL.toString());
 
