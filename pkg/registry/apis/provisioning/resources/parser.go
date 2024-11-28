@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -45,6 +46,9 @@ type ParsedFile struct {
 	Info *repository.FileInfo
 	// Parsed contents
 	Obj *unstructured.Unstructured
+	// Metadata accessor for the file object
+	Meta utils.GrafanaMetaAccessor
+
 	// The Kind is defined in the file
 	GVK *schema.GroupVersionKind
 	// The Resource is found by mapping Kind to the right apiserver
@@ -73,9 +77,15 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 			return nil, err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
 	parsed := &ParsedFile{
 		Info: info,
 		Obj:  obj,
+		Meta: meta,
 		GVK:  gvk,
 	}
 
@@ -83,7 +93,14 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.client.GetNamespace() {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
+
 	obj.SetNamespace(r.client.GetNamespace())
+	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+		Name:      r.repo.Config().Name,
+		Path:      joinPathWithRef(info.Path, info.Ref),
+		Hash:      info.Hash,
+		Timestamp: nil, // ???&info.Modified.Time,
+	})
 
 	// When name is missing use the file path as the k8s name
 	if obj.GetName() == "" {
@@ -171,4 +188,13 @@ func (f *ParsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap
+}
+
+// Matches the frontend logic that pulls ref from the path
+// public/app/features/dashboard-scene/saving/SaveProvisionedDashboard.tsx#L32
+func joinPathWithRef(p, r string) string {
+	if r == "" {
+		return p
+	}
+	return fmt.Sprintf("%s#%s", p, r)
 }
