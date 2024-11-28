@@ -6,6 +6,7 @@ import { BackendSrvRequest, getBackendSrv, locationService } from '@grafana/runt
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { ResponseTransformers } from 'app/features/dashboard/api/ResponseTransformers';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardResource } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -261,18 +262,23 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
-
-          if (isDashboardResource(fullDash)) {
-            throw new Error('v2 schema is not supported');
-          }
-
-          const options = {
-            dashboard: fullDash.dashboard,
+          const dashDto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const options: Partial<{
+            dashboard: Dashboard;
+            folderUid: string;
+            overwrite: boolean;
+            message: string;
+          }> = {
             folderUid: destinationUID,
             overwrite: false,
             message: '',
           };
+
+          if (isDashboardResource(dashDto)) {
+            options.dashboard = ResponseTransformers.transformV2ToV1(dashDto).dashboard;
+          } else {
+            options.dashboard = dashDto.dashboard;
+          }
 
           // TODO[schema]: handle v2, refactor to use
           await baseQuery({

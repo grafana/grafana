@@ -1,7 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 import { Resource } from 'app/features/apiserver/types';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { SaveDashboardResponseDTO } from 'app/types';
+import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
@@ -17,6 +17,14 @@ export interface DashboardAPI<G> {
 // Implemented using /api/dashboards/*
 export interface DashboardWithAccessInfo<T> extends Resource<T, 'DashboardWithAccessInfo'> {
   access: {
-    url: string;
+    url?: string;
+    slug?: string;
+    canSave?: boolean;
+    canEdit?: boolean;
+    canDelete?: boolean;
+    canShare?: boolean;
+    canStar?: boolean;
+    canAdmin?: boolean;
+    annotationsPermissions?: AnnotationsPermissions;
   }; // TODO...
 }
