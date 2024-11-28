@@ -77,33 +77,22 @@ func (c *exportConnector) Connect(
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, lookup, err := c.client.New(ns)
+		client, _, err := c.client.New(ns)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a dynamic client: %w", err)))
 			return
 		}
 
-		dashboardGVR, ok := lookup.Resource(schema.GroupVersionKind{
-			Group:   "dashboard.grafana.app",
-			Version: "v2alpha1",
-			Kind:    "Dashboard",
+		dashboardIface := client.Resource(schema.GroupVersionResource{
+			Group:    "dashboard.grafana.app",
+			Version:  "v2alpha1",
+			Resource: "dashboards",
 		})
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("no GVR was found for dashboards")))
-			return
-		}
-		dashboardIface := client.Resource(dashboardGVR)
-
-		folderGVR, ok := lookup.Resource(schema.GroupVersionKind{
-			Group:   "folder.grafana.app",
-			Version: "v0alpha1",
-			Kind:    "Folder",
+		folderIface := client.Resource(schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "folders",
 		})
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("no GVR was found for folders")))
-			return
-		}
-		folderIface := client.Resource(folderGVR)
 
 		// TODO: handle pagination
 		folders, err := c.fetchFolderInfo(ctx, folderIface)
