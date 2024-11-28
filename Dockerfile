@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.19.1
+ARG BASE_IMAGE=alpine:3.20
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
 ARG GO_IMAGE=golang:1.23.1-alpine
@@ -30,7 +30,7 @@ COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
@@ -77,6 +77,7 @@ RUN if [[ "$BINGO" = "true" ]]; then \
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY kindsv2 kindsv2
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins

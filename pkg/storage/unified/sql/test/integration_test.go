@@ -56,7 +56,6 @@ func newServer(t *testing.T, cfg *setting.Cfg) (sql.Backend, resource.ResourceSe
 		Backend:     ret,
 		Diagnostics: ret,
 		Lifecycle:   ret,
-		Index:       resource.NewResourceIndexServer(cfg, tracing.NewNoopTracerService()),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)
@@ -357,8 +356,8 @@ func TestClientServer(t *testing.T) {
 	dbstore := infraDB.InitTestDB(t)
 
 	cfg := setting.NewCfg()
-	cfg.GRPCServerAddress = "localhost:0" // get a free address
-	cfg.GRPCServerNetwork = "tcp"
+	cfg.GRPCServer.Address = "localhost:0" // get a free address
+	cfg.GRPCServer.Network = "tcp"
 
 	features := featuremgmt.WithFeatures()
 
