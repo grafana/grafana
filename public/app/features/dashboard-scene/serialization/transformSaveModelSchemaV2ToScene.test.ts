@@ -53,7 +53,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(scene.state.title).toEqual(dash.title);
     expect(scene.state.description).toEqual(dash.description);
     expect(scene.state.editable).toEqual(dash.editable);
-    expect(scene.state.preload).toEqual(true);
+    expect(scene.state.preload).toEqual(false);
     expect(scene.state.version).toEqual(dash.schemaVersion);
     expect(scene.state.tags).toEqual(dash.tags);
 

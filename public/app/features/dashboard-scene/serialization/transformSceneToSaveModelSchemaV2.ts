@@ -8,7 +8,6 @@ import {
   TransformationKind,
   FieldConfigSource,
   DashboardLink,
-  DashboardCursorSync,
   DataTransformerConfig,
   PanelQuerySpec,
   DataQueryKind,
@@ -34,7 +33,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
-import { transformDashboardLinksToEnums, transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
@@ -58,7 +57,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     liveNow: getLiveNow(oldDash),
     preload: oldDash.preload,
     editable: oldDash.editable,
-    links: transformDashboardLinksToEnums(oldDash.links),
+    links: oldDash.links,
     tags: oldDash.tags,
     schemaVersion: DASHBOARD_SCHEMA_VERSION,
     // EOF dashboard settings
@@ -383,9 +382,6 @@ function isDashboardSchemaV2(dash: any): dash is DashboardV2Spec {
     return false;
   }
   if (typeof dash.cursorSync !== 'string') {
-    return false;
-  }
-  if (!Object.values(DashboardCursorSync).includes(dash.cursorSync)) {
     return false;
   }
   if (typeof dash.liveNow !== 'boolean') {

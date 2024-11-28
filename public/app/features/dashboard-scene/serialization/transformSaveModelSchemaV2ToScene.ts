@@ -78,7 +78,7 @@ import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
   transformSortVariableToEnumV1,
-  transformValueMappingsToV1,
+  transformMappingsToV1,
   transformVariableHideToEnumV1,
   transformVariableRefreshToEnumV1,
 } from './transformToV1TypesUtils';
@@ -233,7 +233,7 @@ function buildVizPanel(panel: PanelKind): VizPanel {
     description: panel.spec.description,
     pluginId: panel.spec.vizConfig.kind,
     options: panel.spec.vizConfig.spec.options,
-    fieldConfig: transformValueMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
+    fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
     pluginVersion: panel.spec.vizConfig.spec.pluginVersion,
     // FIXME: Transparent is not added to the schema yet
     // displayMode: panel.spec.transparent ? 'transparent' : undefined,
