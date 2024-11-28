@@ -85,7 +85,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       icon: 'external-link-alt',
       label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
       renderCondition:
-        config.externalUserMngLinkUrl !== '' && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
+        !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
       onClick: () => {
         window.open(config.externalUserMngLinkUrl, '_blank');
       },
