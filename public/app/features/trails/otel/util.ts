@@ -191,8 +191,9 @@ export function limitOtelMatchTerms(
         jobsRegex += `${jobsList[i]}`;
         instancesRegex += `${instancesList[i]}`;
       } else {
-        jobsRegex += `|${jobsList[i]}`;
-        instancesRegex += `|${instancesList[i]}`;
+        // check to make sure we aren't duplicating job or instance
+        jobsRegex += !jobsRegex.includes(jobsList[i]) ? `|${jobsList[i]}` : '';
+        instancesRegex += !instancesRegex.includes(instancesList[i]) ? `|${instancesList[i]}` : '';
       }
     } else {
       missingOtelTargets = true;
