@@ -1,4 +1,5 @@
 import { produce } from 'immer';
+import { isEmpty, pick } from 'lodash';
 import { Observable } from 'rxjs';
 
 import {
@@ -778,15 +779,21 @@ export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?:
   });
 }
 
-export function getCloudRule(override?: Partial<CombinedRule>) {
+export function getCloudRule(override?: Partial<CombinedRule>, nsOverride?: Partial<CombinedRuleNamespace>) {
+  const promOverride = pick(override, ['name', 'labels', 'annotations']);
+  const rulerOverride = pick(override, ['name', 'labels', 'annotations']);
+
   return mockCombinedRule({
     namespace: {
       groups: [],
       name: 'Cortex',
       rulesSource: mockDataSource(),
+      ...nsOverride,
     },
-    promRule: mockPromAlertingRule(),
-    rulerRule: mockRulerAlertingRule(),
+    promRule: mockPromAlertingRule(isEmpty(promOverride) ? undefined : promOverride),
+    rulerRule: mockRulerAlertingRule(
+      isEmpty(rulerOverride) ? undefined : { ...rulerOverride, alert: rulerOverride.name }
+    ),
     ...override,
   });
 }

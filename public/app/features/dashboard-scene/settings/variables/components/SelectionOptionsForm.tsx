@@ -8,17 +8,21 @@ import { VariableTextField } from 'app/features/dashboard-scene/settings/variabl
 interface SelectionOptionsFormProps {
   multi: boolean;
   includeAll: boolean;
+  allowCustomValue?: boolean;
   allValue?: string | null;
   onMultiChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onAllowCustomValueChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   onIncludeAllChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onAllValueChange: (event: FormEvent<HTMLInputElement>) => void;
 }
 
 export function SelectionOptionsForm({
   multi,
+  allowCustomValue,
   includeAll,
   allValue,
   onMultiChange,
+  onAllowCustomValueChange,
   onIncludeAllChange,
   onAllValueChange,
 }: SelectionOptionsFormProps) {
@@ -31,6 +35,15 @@ export function SelectionOptionsForm({
         onChange={onMultiChange}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch}
       />
+      {onAllowCustomValueChange && ( // backwards compat with old arch, remove on cleanup
+        <VariableCheckboxField
+          value={allowCustomValue ?? true}
+          name="Allow custom values"
+          description="Enables users to add custom values to the list"
+          onChange={onAllowCustomValueChange}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
+        />
+      )}
       <VariableCheckboxField
         value={includeAll}
         name="Include All option"

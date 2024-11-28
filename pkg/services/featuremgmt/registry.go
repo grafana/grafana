@@ -49,14 +49,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:           "publicDashboards",
-			Description:    "[Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaSharingSquad,
-			Expression:     "true", // enabled by default
-			AllowSelfServe: true,
-		},
-		{
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
@@ -325,14 +317,6 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:           "lokiMetricDataplane",
-			Description:    "Changes metric responses from Loki to be compliant with the dataplane specification.",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          grafanaObservabilityLogsSquad,
-			AllowSelfServe: true,
-		},
-		{
 			Name:        "lokiLogsDataplane",
 			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageExperimental,
@@ -372,10 +356,12 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "unifiedRequestLog",
-			Description: "Writes error logs to the request logger",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Name:              "unifiedRequestLog",
+			Description:       "Writes error logs to the request logger",
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaBackendGroup,
+			Expression:        "true",
+			HideFromAdminPage: true,
 		},
 		{
 			Name:              "renderAuthJWT",
@@ -513,6 +499,13 @@ var (
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			RequiresDevMode: true,
+			Owner:           grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "provisioning",
+			Description:     "Next generation provisioning... and git",
+			Stage:           FeatureStageExperimental,
+			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
 		},
 		{
@@ -1065,11 +1058,25 @@ var (
 			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
+			Name:        "onPremToCloudMigrationsAuthApiMig",
+			Description: "Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+		},
+		{
 			Name:         "alertingSaveStatePeriodic",
 			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:              "scopeApi",
+			Description:       "In-development feature flag for the scope api using the app platform.",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAppPlatformSquad,
+			HideFromAdminPage: true,
+			Expression:        "false",
 		},
 		{
 			Name:        "promQLScope",
@@ -1448,9 +1455,10 @@ var (
 		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "exploreLogsShardSplitting",
@@ -1638,11 +1646,39 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "jaegerBackendMigration",
+			Description: "Enables querying the Jaeger data source without the proxy",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOSSBigTent,
+		},
+		{
 			Name:        "reportingUseRawTimeRange",
 			Description: "Uses the original report or dashboard time range instead of making an absolute transformation",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Expression:  "false", // disabled by default
+		},
+		{
+			Name:         "alertingUIOptimizeReducer",
+			Description:  "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
+			Stage:        FeatureStageGeneralAvailability,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "true", // enabled by default
+		},
+		{
+			Name:        "azureMonitorEnableUserAuth",
+			Description: "Enables user auth for Azure Monitor datasource only",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // Enabled by default for now
+		},
+		{
+			Name:         "alertingNotificationsStepMode",
+			Description:  "Enables simplified step mode in the notifications section",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
 		},
 	}
 )
