@@ -58,10 +58,6 @@ export function ImportFromRepository({ repository }: Props) {
     return <Loader />;
   }
 
-  if (repository.spec?.type !== 'github') {
-    return null;
-  }
-
   return (
     <>
       <Button variant={'secondary'} onClick={() => setIsModalOpen(true)} disabled={importQuery.isLoading || !name}>
