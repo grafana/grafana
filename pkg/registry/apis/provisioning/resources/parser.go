@@ -1,9 +1,10 @@
-package provisioning
+package resources
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"path/filepath"
@@ -20,52 +21,49 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
-type fileParser struct {
-	// Reader is always in the context of a single namespace
-	namespace string
+var ErrNamespaceMismatch = errors.New("the file namespace does not match target namespace")
 
+type FileParser struct {
 	// The target repository
 	repo repository.Repository
 
 	// client helper (for this namespace?)
-	client *dynamic.DynamicClient
-
-	kinds *kindsLookup
+	client *DynamicClient
+	kinds  *KindsLookup
 }
 
-func newFileParser(ns string, repo repository.Repository, client *dynamic.DynamicClient, kinds *kindsLookup) *fileParser {
-	return &fileParser{
-		namespace: ns,
-		repo:      repo,
-		client:    client,
-		kinds:     kinds,
+func NewParser(repo repository.Repository, client *DynamicClient, kinds *KindsLookup) *FileParser {
+	return &FileParser{
+		repo:   repo,
+		client: client,
+		kinds:  kinds,
 	}
 }
 
-type parsedFile struct {
-	// Original file info
-	info *repository.FileInfo
+type ParsedFile struct {
+	// Original file Info
+	Info *repository.FileInfo
 	// Parsed contents
-	obj *unstructured.Unstructured
+	Obj *unstructured.Unstructured
 	// The Kind is defined in the file
-	gvk *schema.GroupVersionKind
+	GVK *schema.GroupVersionKind
 	// The Resource is found by mapping Kind to the right apiserver
-	gvr *schema.GroupVersionResource
+	GVR *schema.GroupVersionResource
 	// Client that can talk to this resource
-	client dynamic.ResourceInterface
+	Client dynamic.ResourceInterface
 
-	// The existing object (same name)
+	// The Existing object (same name)
 	// ?? do we need/want the whole thing??
-	existing *unstructured.Unstructured
+	Existing *unstructured.Unstructured
 
 	// The results from dry run
-	dryRunResponse *unstructured.Unstructured
+	DryRunResponse *unstructured.Unstructured
 
-	// If we got some errors
-	errors []error
+	// If we got some Errors
+	Errors []error
 }
 
-func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (*parsedFile, error) {
+func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (*ParsedFile, error) {
 	obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
@@ -75,21 +73,17 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 			return nil, err
 		}
 	}
-	parsed := &parsedFile{
-		info: info,
-		obj:  obj,
-		gvk:  gvk,
-	}
-
-	if r.namespace == "" {
-		return nil, fmt.Errorf("parser is not configured (missing namespace)")
+	parsed := &ParsedFile{
+		Info: info,
+		Obj:  obj,
+		GVK:  gvk,
 	}
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != r.namespace {
-		parsed.errors = append(parsed.errors, ErrNamespaceMismatch)
+	if obj.GetNamespace() != "" && obj.GetNamespace() != r.client.GetNamespace() {
+		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
-	obj.SetNamespace(r.namespace)
+	obj.SetNamespace(r.client.GetNamespace())
 
 	// When name is missing use the file path as the k8s name
 	if obj.GetName() == "" {
@@ -111,36 +105,36 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 		return parsed, nil
 	}
 
-	client := r.client.Resource(gvr).Namespace(r.namespace)
-	parsed.gvr = &gvr
-	parsed.client = client
+	client := r.client.Resource(gvr)
+	parsed.GVR = &gvr
+	parsed.Client = client
 	if !validate {
 		return parsed, nil
 	}
 
 	// Dry run CREATE or UPDATE
-	parsed.existing, _ = parsed.client.Get(ctx, obj.GetName(), metav1.GetOptions{})
-	if parsed.existing == nil {
-		parsed.dryRunResponse, err = parsed.client.Create(ctx, obj, metav1.CreateOptions{
+	parsed.Existing, _ = parsed.Client.Get(ctx, obj.GetName(), metav1.GetOptions{})
+	if parsed.Existing == nil {
+		parsed.DryRunResponse, err = parsed.Client.Create(ctx, obj, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 	} else {
-		parsed.dryRunResponse, err = parsed.client.Update(ctx, obj, metav1.UpdateOptions{
+		parsed.DryRunResponse, err = parsed.Client.Update(ctx, obj, metav1.UpdateOptions{
 			DryRun: []string{"All"},
 		})
 	}
 	if err != nil {
-		parsed.errors = append(parsed.errors, err)
+		parsed.Errors = append(parsed.Errors, err)
 	}
 	return parsed, nil
 }
 
-func (f *parsedFile) ToSaveBytes() ([]byte, error) {
+func (f *ParsedFile) ToSaveBytes() ([]byte, error) {
 	// TODO... should use the validated one?
-	obj := f.obj.Object
+	obj := f.Obj.Object
 	delete(obj, "metadata")
 
-	switch filepath.Ext(f.info.Path) {
+	switch filepath.Ext(f.Info.Path) {
 	// JSON pretty print
 	case ".json":
 		return json.MarshalIndent(obj, "", "  ")
@@ -154,17 +148,17 @@ func (f *parsedFile) ToSaveBytes() ([]byte, error) {
 	}
 }
 
-func (f *parsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
-	info := f.info
+func (f *ParsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
+	info := f.Info
 	res := provisioning.ResourceObjects{}
-	if f.obj != nil {
-		res.File = v0alpha1.Unstructured{Object: f.obj.Object}
+	if f.Obj != nil {
+		res.File = v0alpha1.Unstructured{Object: f.Obj.Object}
 	}
-	if f.existing != nil {
-		res.Store = v0alpha1.Unstructured{Object: f.existing.Object}
+	if f.Existing != nil {
+		res.Store = v0alpha1.Unstructured{Object: f.Existing.Object}
 	}
-	if f.dryRunResponse != nil {
-		res.DryRun = v0alpha1.Unstructured{Object: f.dryRunResponse.Object}
+	if f.DryRunResponse != nil {
+		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
 	}
 	wrap := &provisioning.ResourceWrapper{
 		Path:      info.Path,
@@ -173,7 +167,7 @@ func (f *parsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Timestamp: info.Modified,
 		Resource:  res,
 	}
-	for _, err := range f.errors {
+	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap

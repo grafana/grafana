@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,8 +51,9 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
-	client            *resourceClient
+	client            *resources.ClientFactory
 	ghFactory         github.ClientFactory
+	identities        auth.BackgroundIdentityService
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -70,9 +72,10 @@ func NewProvisioningAPIBuilder(
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecreteKey,
-		client:            newResourceClient(identities),
+		client:            resources.NewFactory(identities),
 		features:          features,
 		ghFactory:         ghFactory,
+		identities:        identities,
 	}
 }
 
@@ -160,7 +163,7 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
 		getter: b,
-		client: b.client.identities,
+		client: b.identities,
 		logger: b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
@@ -285,12 +288,11 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 		return nil
 	}
 
-	client, err := b.client.Client(cfg.GetNamespace())
+	client, lookup, err := b.client.New(cfg.GetNamespace())
 	if err != nil {
 		return err
 	}
 
-	lookup := newKindsLookup(client)
 	folderResource, ok := lookup.Resource(schema.GroupVersionKind{
 		Group:   "folder.grafana.app",
 		Version: "v0alpha1",
@@ -299,7 +301,7 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 	if !ok {
 		return fmt.Errorf("failed to get resource client of the Folder kind")
 	}
-	folderIface := client.Resource(folderResource).Namespace(cfg.GetNamespace())
+	folderIface := client.Resource(folderResource)
 
 	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
 	if err == nil {

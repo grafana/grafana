@@ -97,8 +97,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"namespaced": true,
 					"kind": "ResourceWrapper",
 					"verbs": [
-						"create",
-						"get"
+						"create"
 					]
 				},
 				{
@@ -120,6 +119,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"kind": "HelloWorld",
 					"verbs": [
 						"get"
+					]
+				},
+				{
+					"name": "repositories/import",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "ResourceWrapper",
+					"verbs": [
+						"create"
 					]
 				},
 				{
