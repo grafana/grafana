@@ -178,7 +178,6 @@ export function getInsightsScenes() {
           children: (
             <>
               <Text>
-                {' '}
                 Monitor the status of your system{' '}
                 <Tooltip
                   content={
