@@ -1,14 +1,16 @@
 package server
 
 import (
-	"errors"
 	"sync"
+	"time"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/openfga/language/pkg/go/transformer"
 	"go.opentelemetry.io/otel"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,6 +20,8 @@ const (
 	resourceType     = "resource"
 	namespaceType    = "namespace"
 	folderTypePrefix = "folder:"
+
+	cacheCleanInterval = 2 * time.Minute
 )
 
 var _ authzv1.AuthzServiceServer = (*Server)(nil)
@@ -25,24 +29,24 @@ var _ authzextv1.AuthzExtentionServiceServer = (*Server)(nil)
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/authz/zanzana/server")
 
-var errStoreNotFound = errors.New("store not found")
-var errAuthorizationModelNotInitialized = errors.New("authorization model not initialized")
-
 type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openfga openfgav1.OpenFGAServiceServer
+	openfga       openfgav1.OpenFGAServiceServer
+	openfgaClient openfgav1.OpenFGAServiceClient
 
-	logger    log.Logger
-	modules   []transformer.ModuleFile
-	storeMap  map[string]storeInfo
-	storeLock *sync.Mutex
+	cfg      setting.ZanzanaSettings
+	logger   log.Logger
+	modules  []transformer.ModuleFile
+	stores   map[string]storeInfo
+	storesMU *sync.Mutex
+	cache    *localcache.CacheService
 }
 
 type storeInfo struct {
-	Id                   string
-	AuthorizationModelId string
+	ID      string
+	ModelID string
 }
 
 type ServerOption func(s *Server)
@@ -60,14 +64,21 @@ func WithSchema(modules []transformer.ModuleFile) ServerOption {
 }
 
 func NewAuthzServer(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer) (*Server, error) {
-	return NewAuthz(openfga)
+	return NewAuthz(cfg, openfga)
 }
 
-func NewAuthz(openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
+func NewAuthz(cfg *setting.Cfg, openfga openfgav1.OpenFGAServiceServer, opts ...ServerOption) (*Server, error) {
+	channel := &inprocgrpc.Channel{}
+	openfgav1.RegisterOpenFGAServiceServer(channel, openfga)
+	openFGAClient := openfgav1.NewOpenFGAServiceClient(channel)
+
 	s := &Server{
-		openfga:   openfga,
-		storeLock: &sync.Mutex{},
-		storeMap:  make(map[string]storeInfo),
+		openfga:       openfga,
+		openfgaClient: openFGAClient,
+		storesMU:      &sync.Mutex{},
+		stores:        make(map[string]storeInfo),
+		cfg:           cfg.Zanzana,
+		cache:         localcache.New(cfg.Zanzana.CheckQueryCacheTTL, cacheCleanInterval),
 	}
 
 	for _, o := range opts {

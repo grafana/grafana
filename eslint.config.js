@@ -14,6 +14,12 @@ const unicornPlugin = require('eslint-plugin-unicorn');
 const grafanaConfig = require('@grafana/eslint-config/flat');
 const grafanaPlugin = require('@grafana/eslint-plugin');
 
+const bettererConfig = require('./.betterer.eslint.config');
+const getEnvConfig = require('./scripts/webpack/env-util');
+
+const envConfig = getEnvConfig();
+const enableBettererRules = envConfig.frontend_dev_betterer_eslint_rules;
+
 /**
  * @type {Array<import('eslint').Linter.Config>}
  */
@@ -43,6 +49,8 @@ module.exports = [
       'scripts/grafana-server/tmp',
     ],
   },
+  // Conditionally run the betterer rules if enabled in dev's config
+  ...(enableBettererRules ? bettererConfig : []),
   grafanaConfig,
   {
     name: 'react/jsx-runtime',
@@ -70,6 +78,10 @@ module.exports = [
     settings: {
       'import/internal-regex': '^(app/)|(@grafana)',
       'import/external-module-folders': ['node_modules', '.yarn'],
+      // Silences a warning when linting enterprise code
+      react: {
+        version: 'detect',
+      },
     },
 
     rules: {

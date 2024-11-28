@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -246,7 +246,7 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
-func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.SearchRequest) (*resource.SearchResponse, error) {
+func (a *dashboardSqlAccess) Search(ctx context.Context, req *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not yet (filter)")
 }
 

@@ -64,6 +64,30 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 				zanzanaCollector(zanzana.ResourceRelations),
 				client,
 			),
+			newResourceReconciler(
+				"role permissions",
+				rolePermissionsCollector(store),
+				zanzanaCollector(zanzana.FolderRelations),
+				client,
+			),
+			newResourceReconciler(
+				"basic role bindings",
+				basicRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
+			newResourceReconciler(
+				"team role bindings",
+				teamRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
+			newResourceReconciler(
+				"user role bindings",
+				userRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
 		},
 	}
 }
@@ -74,9 +98,8 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	r.reconcile(ctx)
 
 	// FIXME:
-	// 1. We should be a bit graceful about reconciliations so we are not hammering dbs
-	// 2. We should be able to configure reconciliation interval
-	ticker := time.NewTicker(1 * time.Hour)
+	// We should be a bit graceful about reconciliations so we are not hammering dbs
+	ticker := time.NewTicker(r.cfg.RBAC.ZanzanaReconciliationInterval)
 	for {
 		select {
 		case <-ticker.C:
@@ -87,10 +110,18 @@ func (r *ZanzanaReconciler) Reconcile(ctx context.Context) error {
 	}
 }
 
+// ReconcileSync runs reconciliation and returns. Useful for tests to perform
+// reconciliation in a synchronous way.
+func (r *ZanzanaReconciler) ReconcileSync(ctx context.Context) error {
+	r.reconcile(ctx)
+	return nil
+}
+
 func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	run := func(ctx context.Context, namespace string) {
 		now := time.Now()
 		for _, reconciler := range r.reconcilers {
+			r.log.Debug("Performing zanzana reconciliation", "reconciler", reconciler.name)
 			if err := reconciler.reconcile(ctx, namespace); err != nil {
 				r.log.Warn("Failed to perform reconciliation for resource", "err", err)
 			}
@@ -127,11 +158,14 @@ func (r *ZanzanaReconciler) reconcile(ctx context.Context) {
 	}
 
 	// We ignore the error for now
-	_ = r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
+	err := r.lock.LockExecuteAndRelease(ctx, "zanzana-reconciliation", 10*time.Hour, func(ctx context.Context) {
 		for _, ns := range namespaces {
 			run(ctx, ns)
 		}
 	})
+	if err != nil {
+		r.log.Error("Error performing zanzana reconciliation", "error", err)
+	}
 }
 
 func (r *ZanzanaReconciler) getOrgs(ctx context.Context) ([]int64, error) {

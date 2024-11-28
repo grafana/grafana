@@ -4,10 +4,9 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { FieldValidationMessage, Portal, TextArea, useTheme2 } from '@grafana/ui';
+import { FieldValidationMessage, Portal, ScrollContainer, TextArea, useTheme2 } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
 import { Input } from '@grafana/ui/src/components/Input/Input';
-import { ScrollContainer } from '@grafana/ui/src/unstable';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
