@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert, ClipboardButton, Divider, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -35,7 +35,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
   const isDashboardSaved = Boolean(dashboard.state.uid);
 
   const onBuildUrl = useCallback(
-    async (urlParams: any) => {
+    async (urlParams: UrlQueryMap) => {
       await model.buildUrl(urlParams);
     },
     [model]
