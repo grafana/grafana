@@ -9,14 +9,15 @@ import (
 	"path"
 	"strings"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type importConnector struct {
@@ -67,7 +68,8 @@ func (c *importConnector) Connect(
 	if err != nil {
 		return nil, err
 	}
-	ns := repo.Config().GetNamespace()
+	cfg := repo.Config()
+	ns := cfg.GetNamespace()
 
 	// TODO: We need some way to filter what we import.
 
@@ -79,18 +81,11 @@ func (c *importConnector) Connect(
 		}
 		kinds := newKindsLookup(client)
 		fileParser := newFileParser(ns, repo, client, kinds)
-
-		folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
-			Group:   "folder.grafana.app",
-			Version: "v0alpha1",
-			Kind:    "Folder",
-		})
-		if !ok {
-			logger.DebugContext(ctx, "no folder GVR was returned")
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to find folder GVR")))
-			return
-		}
-		folderIface := client.Resource(folderGVR).Namespace(ns)
+		folderIface := client.Resource(schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "folders",
+		}).Namespace(ns)
 
 		ref := r.URL.Query().Get("ref")
 		logger := logger.With("ref", ref)
@@ -134,6 +129,11 @@ func (c *importConnector) Connect(
 				return
 			}
 
+			if file.client == nil {
+				logger.DebugContext(ctx, "unable to find client for", "obj", file.obj)
+				continue
+			}
+
 			// TODO: Don't create folders for resources that aren't folder-able. Maybe we can check the annotations for this?
 			dir := path.Dir(entry.Path)
 			if dir != "." && dir != "/" {
@@ -172,41 +172,44 @@ func (c *importConnector) Connect(
 				}
 			}
 
-			wrapper := file.AsResourceWrapper()
-			resource := wrapper.Resource.File
-			resource.SetNestedField(name, "metadata", "name")
-			resource.SetNestedField(ns, "metadata", "namespace")
-			if folder := path.Base(dir); folder != "." && folder != "/" {
-				resource.SetNestedField(path.Base(dir), "metadata", "annotations", apiutils.AnnoKeyFolder)
-			}
-
-			gv, err := schema.ParseGroupVersion(resource.GetNestedString("apiVersion"))
-			if err != nil {
-				logger.DebugContext(ctx, "invalid GroupVersion was given as the apiVersion of the parsed object?", "error", err)
-				responder.Error(apierrors.NewInternalError(fmt.Errorf("got an invalid groupversion from a parsed file %s: %w", entry.Path, err)))
-				return
-			}
-			gvk := gv.WithKind(resource.GetNestedString("kind"))
-			logger = logger.With("gvk", gvk)
-			gvr, ok := kinds.Resource(gvk)
-			if !ok {
-				logger.DebugContext(ctx, "got GVK of a resource we don't know how to control; ignoring")
+			if file.gvr == nil {
+				logger.DebugContext(ctx, "no GVR found")
 				continue
 			}
-			iface := client.Resource(gvr).Namespace(ns)
-			_, err = iface.Get(r.Context(), name, metav1.GetOptions{})
+
+			obj, err := utils.MetaAccessor(file.obj)
+			if err != nil {
+				logger.DebugContext(ctx, "error writing object", err)
+				continue
+			}
+
+			obj.SetName(name)
+			obj.SetNamespace(ns)
+			obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+				Name:      cfg.Name,
+				Path:      entry.Path,
+				Hash:      entry.Hash,
+				Timestamp: nil, // ?? is timestamp easy to get?
+			})
+			if folder := path.Base(dir); folder != "." && folder != "/" {
+				obj.SetFolder(path.Base(dir))
+			}
+
+			logger = logger.With("gvk", file.gvk)
+
+			_, err = file.client.Get(r.Context(), name, metav1.GetOptions{})
 			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 			if false && err != nil && !apierrors.IsNotFound(err) {
 				logger.DebugContext(ctx, "failed to check if the object already exists", "error", err)
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to check if object already exists: %w", err)))
 				return
 			}
-			kubeObj := resource.ToKubernetesObject()
-			logger.DebugContext(ctx, "upserting kube object", "name", kubeObj.GetName())
+
+			logger.DebugContext(ctx, "upserting kube object", "name", obj.GetName())
 			if err != nil { // IsNotFound
-				_, err = iface.Create(r.Context(), kubeObj, metav1.CreateOptions{})
+				_, err = file.client.Create(r.Context(), file.obj, metav1.CreateOptions{})
 			} else { // already exists
-				_, err = iface.Update(r.Context(), kubeObj, metav1.UpdateOptions{})
+				_, err = file.client.Update(r.Context(), file.obj, metav1.UpdateOptions{})
 			}
 			if err != nil {
 				logger.DebugContext(ctx, "failed to upsert object", "error", err)
