@@ -67,7 +67,7 @@ func (r *realImpl) GetTree(ctx context.Context, owner, repository, ref string, r
 		return nil, false, err
 	}
 
-	var entries []RepositoryContent
+	entries := make([]RepositoryContent, 0, len(tree.Entries))
 	for _, te := range tree.Entries {
 		rrc := &realRepositoryContent{
 			real: &github.RepositoryContent{
