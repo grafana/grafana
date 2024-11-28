@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { ReactElement, useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -22,30 +22,31 @@ export interface VariablesUnknownTableProps {
 export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknownTableProps): ReactElement {
   const [open, setOpen] = useState(false);
   const [changed, setChanged] = useState(0);
-  const [usages, setUsages] = useState<UsagesToNetwork[]>([]);
   const style = useStyles2(getStyles);
-  useEffect(() => setChanged((prevState) => prevState + 1), [variables, dashboard]);
-  const { loading } = useAsync(async () => {
-    if (open && changed > 0) {
-      // make sure we only fetch when opened and variables or dashboard have changed
-      const start = Date.now();
-      const unknownsNetwork = await getUnknownsNetwork(variables, dashboard);
-      const stop = Date.now();
-      const elapsed = stop - start;
-      if (elapsed >= SLOW_VARIABLES_EXPANSION_THRESHOLD) {
-        reportInteraction('Slow unknown variables expansion', { elapsed });
-      }
-      setChanged(0);
-      setUsages(unknownsNetwork);
-      return unknownsNetwork;
-    }
 
-    return [];
-  }, [variables, dashboard, open, changed]);
+  useEffect(() => setChanged((prevState) => prevState + 1), [variables, dashboard]);
+
+  const [{ loading, value: usages }, getUnknowns] = useAsyncFn(async () => {
+    const start = Date.now();
+    const unknownsNetwork = await getUnknownsNetwork(variables, dashboard);
+    const stop = Date.now();
+    const elapsed = stop - start;
+    if (elapsed >= SLOW_VARIABLES_EXPANSION_THRESHOLD) {
+      reportInteraction('Slow unknown variables expansion', { elapsed });
+    }
+    setChanged(0);
+
+    return unknownsNetwork;
+  }, [variables, dashboard]);
 
   const onToggle = (isOpen: boolean) => {
     if (isOpen) {
       reportInteraction('Unknown variables section expanded');
+
+      // make sure we only fetch when opened and variables or dashboard have changed
+      if (changed > 0) {
+        getUnknowns();
+      }
     }
 
     setOpen(isOpen);
@@ -54,7 +55,7 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
   return (
     <div className={style.container}>
       <CollapsableSection label={<CollapseLabel />} isOpen={open} onToggle={onToggle}>
-        {loading && (
+        {loading || !usages ? (
           <Stack justifyContent="center" direction="column">
             <Stack justifyContent="center">
               <span>
@@ -63,12 +64,10 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
               <Spinner />
             </Stack>
           </Stack>
-        )}
-        {!loading && usages && (
-          <>
-            {usages.length === 0 && <NoUnknowns />}
-            {usages.length > 0 && <UnknownTable usages={usages} />}
-          </>
+        ) : usages.length > 0 ? (
+          <UnknownTable usages={usages} />
+        ) : (
+          <NoUnknowns />
         )}
       </CollapsableSection>
     </div>
