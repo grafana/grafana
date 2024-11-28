@@ -153,7 +153,6 @@ func (s *filesConnector) getParser(repo repository.Repository) (*resources.FileP
 	if err != nil {
 		return nil, err
 	}
-
 	return resources.NewParser(repo, client, kinds), nil
 }
 
