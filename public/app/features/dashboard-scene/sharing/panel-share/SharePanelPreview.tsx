@@ -9,6 +9,7 @@ import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, FieldSet, Icon, Input, LoadingBar, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 type ImageSettingsForm = {
   width: number;
@@ -22,6 +23,8 @@ type Props = {
   imageUrl: string;
   disabled: boolean;
 };
+
+const selector = e2eSelectors.pages.ShareDashboardDrawer.ShareInternally.SharePanel;
 
 export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props) {
   const styles = useStyles2(getStyles);
@@ -58,7 +61,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
   };
 
   return (
-    <div data-testid="saraza">
+    <div data-testid={selector.preview}>
       <Stack gap={2} direction="column">
         <Text element="h4">
           <Trans i18nKey="share-panel-image.preview.title">Panel preview</Trans>
@@ -102,6 +105,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                   placeholder="1000"
                   type="number"
                   suffix="px"
+                  data-testid={selector.widthInput}
                 />
               </Field>
               <Field
@@ -123,6 +127,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                   placeholder="500"
                   type="number"
                   suffix="px"
+                  data-testid={selector.heightInput}
                 />
               </Field>
               <Field
@@ -146,6 +151,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                   })}
                   placeholder="1"
                   type="number"
+                  data-testid={selector.scaleFactorInput}
                 />
               </Field>
             </Stack>
@@ -156,6 +162,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                 fill="solid"
                 type="submit"
                 disabled={disabled || loading || !isValid}
+                data-testid={selector.generateImageButton}
               >
                 <Trans i18nKey="link.share-panel.render-image">Generate image</Trans>
               </Button>
@@ -164,6 +171,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                 icon={'download-alt'}
                 variant="secondary"
                 disabled={!image || loading || disabled}
+                data-testid={selector.downloadImageButton}
               >
                 <Trans i18nKey="link.share-panel.download-image">Download image</Trans>
               </Button>
