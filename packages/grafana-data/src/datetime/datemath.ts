@@ -7,6 +7,7 @@ import {
   dateTime,
   dateTimeAsMoment,
   dateTimeForTimeZone,
+  DateTimeInput,
   DurationUnit,
   isDateTime,
   ISO_8601,
@@ -40,12 +41,14 @@ export function isMathString(text: string | DateTime | Date): boolean {
  * @param text
  * @param roundUp See parseDateMath function.
  * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
+ * @param now DateTimeInput to use as now. Useful when parsing multiple values and now needs to be the same. Without this, comparing results from subsequent parses is not guaranteed to be deterministic.
  */
 export function parse(
   text?: string | DateTime | Date | null,
   roundUp?: boolean,
   timezone?: TimeZone,
-  fiscalYearStartMonth?: number
+  fiscalYearStartMonth?: number,
+  now?: DateTimeInput
 ): DateTime | undefined {
   if (!text) {
     return undefined;
@@ -69,7 +72,7 @@ export function parse(
     let parseString = '';
 
     if (text.substring(0, 3) === 'now') {
-      time = dateTimeForTimeZone(timezone);
+      time = dateTimeForTimeZone(timezone, now);
       mathString = text.substring('now'.length);
     } else {
       index = text.indexOf('||');
