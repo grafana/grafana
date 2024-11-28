@@ -463,11 +463,9 @@ export const defaultVizConfigKind = (): VizConfigKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	query: DataQueryKind;
-	// TODO: Should be figured out based on datasource (Grafana ds)
-	// builtIn?: int
-	// Below are currently existing options for annotation queries
+	builtIn?: boolean;
 	enable: boolean;
 	filter: AnnotationPanelFilter;
 	hide: boolean;
@@ -476,7 +474,6 @@ export interface AnnotationQuerySpec {
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
-	datasource: defaultDataSourceRef(),
 	query: defaultDataQueryKind(),
 	enable: false,
 	filter: defaultAnnotationPanelFilter(),
@@ -521,14 +518,13 @@ export const defaultDataQueryKind = (): DataQueryKind => ({
 
 export interface PanelQuerySpec {
 	query: DataQueryKind;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	refId: string;
 	hidden: boolean;
 }
 
 export const defaultPanelQuerySpec = (): PanelQuerySpec => ({
 	query: defaultDataQueryKind(),
-	datasource: defaultDataSourceRef(),
 	refId: "",
 	hidden: false,
 });
@@ -859,7 +855,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	query: string | DataQueryKind;
 	regex: string;
 	sort: VariableSort;
@@ -877,7 +873,6 @@ export const defaultQueryVariableSpec = (): QueryVariableSpec => ({
 	hide: "dontHide",
 	refresh: "never",
 	skipUrlSync: false,
-	datasource: defaultDataSourceRef(),
 	query: "",
 	regex: "",
 	sort: "disabled",
@@ -1080,7 +1075,7 @@ export const defaultCustomVariableKind = (): CustomVariableKind => ({
 // GroupBy variable specification
 export interface GroupByVariableSpec {
 	name: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	current: VariableOption;
 	options: VariableOption[];
 	multi: boolean;
@@ -1094,7 +1089,6 @@ export interface GroupByVariableSpec {
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
 	name: "",
-	datasource: defaultDataSourceRef(),
 	current: { text: "", value: "", },
 	options: [],
 	multi: false,
@@ -1117,7 +1111,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 // Adhoc variable specification
 export interface AdhocVariableSpec {
 	name: string;
-	datasource: DataSourceRef;
+	datasource?: DataSourceRef;
 	baseFilters: AdHocFilterWithLabels[];
 	filters: AdHocFilterWithLabels[];
 	defaultKeys: MetricFindValue[];
@@ -1129,7 +1123,6 @@ export interface AdhocVariableSpec {
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	name: "",
-	datasource: defaultDataSourceRef(),
 	baseFilters: [],
 	filters: [],
 	defaultKeys: [],

@@ -2,7 +2,86 @@
 
 exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model schema v2 1`] = `
 {
-  "annotations": [],
+  "annotations": [
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": false,
+        "iconColor": "red",
+        "name": "query1",
+        "query": {
+          "kind": "grafana",
+          "spec": {
+            "enable": true,
+            "iconColor": "red",
+            "name": "query1",
+          },
+        },
+      },
+    },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "prometheus",
+          "uid": "abcdef",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": true,
+        "iconColor": "blue",
+        "name": "query2",
+        "query": {
+          "kind": "prometheus",
+          "spec": {
+            "enable": true,
+            "iconColor": "blue",
+            "name": "query2",
+          },
+        },
+      },
+    },
+    {
+      "kind": "AnnotationQuery",
+      "spec": {
+        "builtIn": false,
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki",
+        },
+        "enable": true,
+        "filter": {
+          "exclude": false,
+          "ids": [],
+        },
+        "hide": true,
+        "iconColor": "green",
+        "name": "query3",
+        "query": {
+          "kind": "loki",
+          "spec": {
+            "enable": true,
+            "iconColor": "green",
+            "name": "query3",
+          },
+        },
+      },
+    },
+  ],
   "cursorSync": "Crosshair",
   "description": "Test Description",
   "editable": true,

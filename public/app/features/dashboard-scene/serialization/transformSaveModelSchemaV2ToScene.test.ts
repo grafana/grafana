@@ -185,13 +185,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
   });
 
-  // Skipping the test because the schema doesn't accept the ds to be undefined.
-  // In future PR, we will mark it as optional so, this test should pass and the runtime code should be updated.
-  it.skip('should set panel ds as undefined if it is not mixed DS', () => {
+  it('should set panel ds as mixed if one ds is undefined', () => {
     const dashboard = cloneDeep(defaultDashboard);
+
     dashboard.spec.elements['test-panel-uid'].spec.data.spec.queries.push({
       kind: 'PanelQuery',
-      // @ts-expect-error TODO: When marking DS as optional, this should be fixed
       spec: {
         refId: 'A',
         hidden: false,
@@ -208,6 +206,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels.length).toBe(1);
-    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource).toBeUndefined();
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
+    expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 });
