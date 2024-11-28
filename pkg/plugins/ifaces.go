@@ -12,7 +12,7 @@ import (
 
 type Installer interface {
 	// Add adds a new plugin.
-	Add(ctx context.Context, pluginID, version string, opts DownloadOpts) error
+	Add(ctx context.Context, pluginID, version string, opts AddOpts) error
 	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID, version string) error
 }
@@ -33,7 +33,7 @@ type File struct {
 	ModTime time.Time
 }
 
-type DownloadOpts struct {
+type AddOpts struct {
 	grafanaVersion string
 
 	os   string
@@ -42,28 +42,24 @@ type DownloadOpts struct {
 	url string
 }
 
-func (co DownloadOpts) GrafanaVersion() string {
+func (co AddOpts) GrafanaVersion() string {
 	return co.grafanaVersion
 }
 
-func (co DownloadOpts) OS() string {
+func (co AddOpts) OS() string {
 	return co.os
 }
 
-func (co DownloadOpts) Arch() string {
+func (co AddOpts) Arch() string {
 	return co.arch
 }
 
-func (co DownloadOpts) URL() string {
+func (co AddOpts) URL() string {
 	return co.url
 }
 
-func NewDownloadOpts(grafanaVersion, os, arch, url string) DownloadOpts {
-	return DownloadOpts{grafanaVersion: grafanaVersion, arch: arch, os: os, url: url}
-}
-
-func NewSystemCompatOpts(os, arch string) DownloadOpts {
-	return DownloadOpts{arch: arch, os: os}
+func NewAddOpts(grafanaVersion, os, arch, url string) AddOpts {
+	return AddOpts{grafanaVersion: grafanaVersion, arch: arch, os: os, url: url}
 }
 
 type UpdateInfo struct {

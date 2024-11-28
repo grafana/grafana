@@ -160,7 +160,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		start := time.Now()
 		ctx = repo.WithRequestOrigin(ctx, "preinstall")
-		compatOpts := plugins.NewDownloadOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, installPlugin.URL)
+		compatOpts := plugins.NewAddOpts(s.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH, installPlugin.URL)
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError
