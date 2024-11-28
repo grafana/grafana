@@ -2,18 +2,21 @@ package traceql
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	v1 "github.com/grafana/tempo/pkg/tempopb/common/v1"
 )
 
-func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
+func TransformMetricsResponse(query *dataquery.TempoQuery, resp tempopb.QueryRangeResponse) []*data.Frame {
 	var frames []*data.Frame
 	var exemplarFrames []*data.Frame
+
 	for _, series := range resp.Series {
 		name, labels := transformLabelsAndGetName(series.Labels)
 
@@ -36,12 +39,17 @@ func TransformMetricsResponse(resp tempopb.QueryRangeResponse) []*data.Frame {
 			},
 		}
 
+		isHistogram := isHistogramQuery(*query.Query)
+		if isHistogram {
+			frame.Meta.PreferredVisualizationPluginID = "heatmap"
+		}
+
 		for _, sample := range series.Samples {
 			frame.AppendRow(time.UnixMilli(sample.GetTimestampMs()), sample.GetValue())
 		}
 
 		if len(series.Exemplars) > 0 {
-			exFrame := transformExemplarToFrame(name, series.Exemplars)
+			exFrame := transformExemplarToFrame(name, series.Exemplars, isHistogram)
 			exemplarFrames = append(exemplarFrames, exFrame)
 		}
 
@@ -87,4 +95,9 @@ func transformLabelsAndGetName(seriesLabels []v1.KeyValue) (string, data.Labels)
 		}
 	}
 	return name, labels
+}
+
+func isHistogramQuery(query string) bool {
+	match, _ := regexp.MatchString("\\|\\s*(histogram_over_time)\\s*\\(", query)
+	return match
 }

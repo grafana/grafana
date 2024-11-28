@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 )
 
-func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar) *data.Frame {
+func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar, isHistogram bool) *data.Frame {
 	timeField := data.NewField("Time", nil, []time.Time{})
 	valueField := data.NewField("Value", nil, []float64{})
 	traceIdField := data.NewField("traceId", nil, []string{})
 	traceIdField.Config = &data.FieldConfig{
 		DisplayName: "Trace ID",
 	}
+	bucketField := data.NewField("__bucket", nil, []float64{})
 
 	frame := &data.Frame{
 		RefID: name,
@@ -29,6 +30,10 @@ func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar) *data.F
 		},
 	}
 
+	if isHistogram {
+		frame.Fields = append(frame.Fields, bucketField)
+	}
+
 	for _, exemplar := range exemplars {
 		_, labels := transformLabelsAndGetName(exemplar.GetLabels())
 		traceId := labels["trace:id"]
@@ -37,6 +42,10 @@ func transformExemplarToFrame(name string, exemplars []tempopb.Exemplar) *data.F
 		}
 
 		frame.AppendRow(time.UnixMilli(exemplar.GetTimestampMs()), exemplar.GetValue(), traceId)
+
+		if isHistogram {
+			frame.Fields[3].Append(exemplar.GetValue())
+		}
 	}
 	return frame
 }
