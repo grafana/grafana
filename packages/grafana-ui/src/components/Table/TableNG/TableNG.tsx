@@ -246,7 +246,6 @@ export function TableNG(props: TableNGProps) {
   }, []);
   const calcsRef = useRef<string[]>([]);
   const mapFrameToDataGrid = (main: DataFrame, subTable?: boolean) => {
-    console.log('called');
     const columns: TableColumn[] = [];
 
     // Check for nestedFrames
