@@ -2,7 +2,7 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes'
 import { DataSourceRef } from '@grafana/schema';
 
 import { INSTANCE_ID, overrideToFixedColor } from '../../home/Insights';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 export function getInstanceStatByStatusScene(
   datasource: DataSourceRef,
   panelTitle: string,
@@ -33,7 +33,7 @@ export function getInstanceStatByStatusScene(
       .setData(query)
       .setOverrides((b) => b.matchFieldsWithName(status).overrideColor(overrideToFixedColor(status)))
       .setNoValue('0')
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }

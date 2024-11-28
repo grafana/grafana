@@ -1,12 +1,67 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, toURLRange, GrafanaTheme2 } from '@grafana/data';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneTimeRangeState,
+  SceneVariableSetState,
+} from '@grafana/scenes';
+import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Icon, IconButton, Menu, Modal, useStyles2 } from '@grafana/ui';
 
 import { trackInsightsFeedback } from '../Analytics';
 
-export function InsightsRatingModal({ panel }: { panel: string }) {
+type DataQueryWithExpr = DataQuery & { expr: string };
+
+const getPrometheusExploreUrl = ({
+  queries,
+  range,
+  variables,
+}: {
+  queries?: DataQueryWithExpr[];
+  range: SceneTimeRangeState;
+  variables: SceneVariableSetState;
+}): string => {
+  // In Mimir-per-group panels, replace `$rule_group` in the query expression with the actual rule group value
+  const ruleGroup = variables?.variables.find((v) => v.state.name === 'rule_group')?.getValue() || null;
+  if (ruleGroup !== null) {
+    queries = queries?.map((query) => {
+      return {
+        ...query,
+        expr: query.expr.replace('$rule_group', String(ruleGroup)),
+      };
+    });
+  }
+  const urlState: ExploreUrlState = {
+    datasource: (queries?.length && queries[0].datasource?.uid) || null,
+    queries:
+      queries?.map(({ expr, refId }, i) => {
+        return { expr, refId };
+      }) || [],
+    range: toURLRange(range ? { from: range.from, to: range.to } : { from: 'now-1h', to: 'now' }),
+  };
+
+  const param = encodeURIComponent(serializeStateToUrlParam(urlState));
+
+  return `/explore?left=${param}`;
+};
+
+const InsightsMenuButtonRenderer = ({ model }: SceneComponentProps<InsightsMenuButton>) => {
+  const data = sceneGraph.getData(model).useState();
+  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const variables = sceneGraph.getVariables(model).useState();
+  const panel = model.state.panel;
+
+  const url = getPrometheusExploreUrl({
+    queries: data.data?.request?.targets as DataQueryWithExpr[],
+    range: timeRange,
+    variables: variables,
+  });
+
   const styles = useStyles2(getStyles);
 
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -50,6 +105,7 @@ export function InsightsRatingModal({ panel }: { panel: string }) {
 
   const menu = (
     <Menu>
+      <Menu.Item label="Explore" icon="compass" url={url} target="_blank" />
       <Menu.Item label="Rate this panel" icon="comment-alt-message" onClick={() => setShowModal(true)} />
     </Menu>
   );
@@ -62,6 +118,14 @@ export function InsightsRatingModal({ panel }: { panel: string }) {
       {modal}
     </div>
   );
+};
+
+interface InsightsMenuButtonState extends SceneObjectState {
+  panel: string;
+}
+
+export class InsightsMenuButton extends SceneObjectBase<InsightsMenuButtonState> {
+  static Component = InsightsMenuButtonRenderer;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
