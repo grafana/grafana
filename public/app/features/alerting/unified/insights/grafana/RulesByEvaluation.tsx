@@ -2,7 +2,7 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner } from '@grafana/scenes'
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { INSTANCE_ID, overrideToFixedColor, PANEL_STYLES } from '../../home/Insights';
-import { InsightsRatingModal } from '../RatingModal';
+import { InsightsMenuButton } from '../InsightsMenuButton';
 
 export function getGrafanaRulesByEvaluationScene(datasource: DataSourceRef, panelTitle: string) {
   const expr = INSTANCE_ID
@@ -32,7 +32,7 @@ export function getGrafanaRulesByEvaluationScene(datasource: DataSourceRef, pane
       .setOverrides((b) =>
         b.matchFieldsWithName('active evaluation').overrideColor(overrideToFixedColor('active evaluation'))
       )
-      .setHeaderActions(<InsightsRatingModal panel={panelTitle} />)
+      .setHeaderActions([new InsightsMenuButton({ panel: panelTitle })])
       .build(),
   });
 }
