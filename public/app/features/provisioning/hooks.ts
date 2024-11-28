@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
 
-import { useCreateRepositoryMutation, useListRepositoryQuery, useUpdateRepositoryMutation } from './api';
-import { RepositoryResource, RepositorySpec } from './api/types';
+import {
+  useCreateRepositoryFilesMutation,
+  useCreateRepositoryMutation,
+  useListRepositoryQuery,
+  useUpdateRepositoryFilesMutation,
+  useUpdateRepositoryMutation,
+} from './api';
+import { FileOperationArg, RepositoryResource, RepositorySpec } from './api/types';
 
 export function useCreateOrUpdateRepository(name?: string) {
   const [create, createRequest] = useCreateRepositoryMutation();
@@ -29,4 +35,19 @@ export function useRepositoryList(): [RepositoryResource[] | undefined, boolean]
   });
 
   return [sortedItems, query.isLoading];
+}
+
+export function useCreateOrUpdateRepositoryFile(name?: string) {
+  const [create, createRequest] = useCreateRepositoryFilesMutation();
+  const [update, updateRequest] = useUpdateRepositoryFilesMutation();
+
+  const updateOrCreate = useCallback(
+    (data: FileOperationArg) => {
+      const actions = name ? update : create;
+      return actions(data);
+    },
+    [create, name, update]
+  );
+
+  return [updateOrCreate, name ? updateRequest : createRequest] as const;
 }

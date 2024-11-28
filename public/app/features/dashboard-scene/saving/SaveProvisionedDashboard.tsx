@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
@@ -8,11 +9,10 @@ import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
 import { RepositorySelect } from '../../provisioning/RepositorySelect';
-import {
-  useCreateRepositoryFilesMutation,
-  useGetRepositoryQuery,
-  useUpdateRepositoryFilesMutation,
-} from '../../provisioning/api';
+import { useGetRepositoryQuery } from '../../provisioning/api';
+import { RepositorySpec } from '../../provisioning/api/types';
+import { PROVISIONING_URL } from '../../provisioning/constants';
+import { useCreateOrUpdateRepositoryFile } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -32,7 +32,7 @@ type FormData = {
 function getDefaultValues(meta: DashboardMeta) {
   const anno = meta.k8s?.annotations;
   let ref = '';
-  let path = anno?.[AnnoKeyRepoPath] ?? '';
+  let path = anno?.[AnnoKeyRepoPath] ?? `${meta.slug}.json` ?? '';
   const repo = anno?.[AnnoKeyRepoName] ?? '';
   const idx = path.indexOf('#');
   if (idx > 0) {
@@ -46,6 +46,10 @@ function getDefaultValues(meta: DashboardMeta) {
     comment: '',
   };
 }
+
+const getDefaultWorkflow = (config?: RepositorySpec) => {
+  return config?.github?.branchWorkflow ? WorkflowOption.Branch : WorkflowOption.PullRequest;
+};
 
 function getWorkflowOptions(branch = 'main') {
   return [
@@ -62,45 +66,54 @@ export interface Props {
 }
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
-  const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
-  const [save, saveReq] = useCreateRepositoryFilesMutation();
   // Saving as a new provisioned dashboard
   const { saveProvisioned } = drawer.useState();
   const defaultValues = getDefaultValues(meta);
+  const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned ? undefined : defaultValues.path);
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
     control,
+    setValue,
   } = useForm({
     defaultValues: {
       ...defaultValues,
-      workflow: WorkflowOption.Branch,
+      workflow: WorkflowOption.PullRequest,
     },
   });
-  const [repo, ref, workflow] = watch(['repo', 'ref', 'workflow']);
+  const [repo, ref, workflow, path] = watch(['repo', 'ref', 'workflow', 'path']);
   const repositoryConfigQuery = useGetRepositoryQuery({ name: repo });
   const repositoryConfig = repositoryConfigQuery?.data?.spec;
   const isGitHub = repositoryConfig?.type === 'github';
   const href = createPRLink(repositoryConfig, repo, ref);
   const { isDirty } = dashboard.state;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const appEvents = getAppEvents();
-    if (request.isSuccess || saveReq.isSuccess) {
+    if (request.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-    } else if (request.isError || saveReq.isError) {
+
+      if (saveProvisioned) {
+        navigate(`${PROVISIONING_URL}/${repo}/dashboard/preview/${path}?ref=${ref}`);
+      }
+    } else if (request.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
       });
     }
-  }, [request.isSuccess, request.isError, request.error, dashboard]);
+  }, [request.isSuccess, request.isError, request.error, dashboard, path, saveProvisioned, navigate, repo, ref]);
+
+  useEffect(() => {
+    setValue('workflow', getDefaultWorkflow(repositoryConfig));
+  }, [repositoryConfig, setValue]);
 
   const doSave = ({ ref, path, comment, repo }: FormData) => {
     if (!repo || !path) {
@@ -110,11 +123,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     if (workflow === WorkflowOption.Branch) {
       ref = repositoryConfig?.github?.branch || 'main';
     }
-    if (!saveProvisioned) {
-      saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
-    } else {
-      save({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
-    }
+    action({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
   };
 
   if (repositoryConfigQuery.isLoading) {
@@ -159,17 +168,9 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
               <Controller
                 control={control}
                 name={'workflow'}
-                render={({ field: { ref, value, ...field } }) => (
-                  <RadioButtonGroup
-                    {...field}
-                    options={getWorkflowOptions(repositoryConfig.github?.branch)}
-                    value={
-                      value || repositoryConfig?.github?.branchWorkflow
-                        ? WorkflowOption.Branch
-                        : WorkflowOption.PullRequest
-                    }
-                  />
-                )}
+                render={({ field: { ref, ...field } }) => {
+                  return <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig.github?.branch)} />;
+                }}
               />
             </Field>
             {workflow === WorkflowOption.PullRequest && (
@@ -202,7 +203,7 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         )}
 
         <Stack gap={2}>
-          <Button variant="primary" type="submit" disabled={request.isLoading || !isDirty}>
+          <Button variant="primary" type="submit" disabled={(request.isLoading || !isDirty) && !saveProvisioned}>
             {request.isLoading ? 'Saving...' : 'Save'}
           </Button>
           <Button variant="secondary" onClick={drawer.onClose} fill="outline">
