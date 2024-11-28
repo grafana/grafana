@@ -111,22 +111,23 @@ func FallbackUsed(ctx context.Context) bool {
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
 	defer span.End()
-	span.SetAttributes(attribute.Bool("fallback_used", false))
+
 	// Try to authenticate with the new authenticator first
+	span.SetAttributes(attribute.Bool("fallback_used", false))
 	newCtx, err := f.authenticator.Authenticate(ctx)
-	if err != nil {
-		// In case of error, fallback to the legacy authenticator
-		newCtx, err = f.fallback.Authenticate(ctx)
-		span.SetAttributes(attribute.Bool("fallback_used", true))
-		if err != nil {
-			f.metrics.requestsTotal.WithLabelValues("true", "false").Inc()
-			return nil, err
-		}
-		f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
-		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
-		return newCtx, err
+	if err == nil {
+		// fallback not used, authentication successful
+		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
+		return newCtx, nil
 	}
-	f.metrics.requestsTotal.WithLabelValues("false", fmt.Sprintf("%t", err == nil)).Inc()
+
+	// In case of error, fallback to the legacy authenticator
+	span.SetAttributes(attribute.Bool("fallback_used", true))
+	newCtx, err = f.fallback.Authenticate(ctx)
+	if newCtx != nil {
+		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
+	}
+	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
 	return newCtx, err
 }
 
