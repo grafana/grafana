@@ -1,7 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Column, EmptyState, FilterInput, InteractiveTable, Spinner, Stack, Text, TextLink } from '@grafana/ui';
+import {
+  CellProps,
+  Column,
+  EmptyState,
+  FilterInput,
+  InteractiveTable,
+  LinkButton,
+  Spinner,
+  Stack,
+  Text,
+  TextLink,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { useGetRepositoryStatusQuery, useListRepositoryFilesQuery } from './api';
@@ -45,29 +56,50 @@ interface FilesTableProps {
   name: string;
 }
 
+type Cell<T extends keyof FileDetails = keyof FileDetails> = CellProps<FileDetails, FileDetails[T]>;
+
 function FilesTable({ name }: FilesTableProps) {
   const query = useListRepositoryFilesQuery({ name });
   const [searchQuery, setSearchQuery] = useState('');
   const data = [...(query.data?.files ?? [])].filter((file) =>
     file.path.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const columns: Array<Column<FileDetails>> = [
-    {
-      id: 'path',
-      header: 'Path',
-      sortType: 'string',
-    },
-    {
-      id: 'size',
-      header: 'Size',
-      sortType: 'number',
-    },
-    {
-      id: 'hash',
-      header: 'Hash',
-      sortType: 'string',
-    },
-  ];
+  const columns: Array<Column<FileDetails>> = useMemo(
+    () => [
+      {
+        id: 'path',
+        header: 'Path',
+        sortType: 'string',
+      },
+      {
+        id: 'size',
+        header: 'Size',
+        sortType: 'number',
+      },
+      {
+        id: 'hash',
+        header: 'Hash',
+        sortType: 'string',
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row: { original } }: Cell<'path'>) => {
+          const { path } = original;
+          // TODO Check if the file is a valid resource
+          if (!path.endsWith('.json') && !path.endsWith('.yaml')) {
+            return null;
+          }
+          return (
+            <LinkButton target={'_blank'} href={`/admin/provisioning/${name}/dashboard/preview/${path}`}>
+              Preview
+            </LinkButton>
+          );
+        },
+      },
+    ],
+    [name]
+  );
 
   if (query.isLoading) {
     return (
