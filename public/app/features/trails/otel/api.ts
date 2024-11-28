@@ -5,7 +5,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { callSuggestionsApi } from '../utils';
 
 import { OtelResponse, LabelResponse, OtelTargetType } from './types';
-import { sortResources } from './util';
+import { limitOtelMatchTerms, sortResources } from './util';
 
 const OTEL_RESOURCE_EXCLUDED_FILTERS = ['__name__', 'deployment_environment']; // name is handled by metric search metrics bar
 /**
@@ -249,7 +249,15 @@ export async function getFilteredResourceAttributes(
   const url = `/api/datasources/uid/${datasourceUid}/resources/api/v1/labels`;
 
   // The match param for the metric to get all possible labels for this metric
-  const metricMatchParam = `${metric}{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+  const metricMatchTerms = limitOtelMatchTerms([], metricResources.jobs, metricResources.instances);
+
+  let metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
+
+  if (metricMatchTerms.missingOtelTargets) {
+    console.warn(
+      'Truncating job and instance values for label values GET request. Please consider filtering by more OTel resource attributes.'
+    );
+  }
 
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
@@ -272,7 +280,7 @@ export async function getFilteredResourceAttributes(
   const metricLabels = metricResponse.data ?? [];
 
   // only get the resource attributes filtered by job and instance values present on the metric
-  const targetInfoMatchParam = `target_info{job=~"${metricResources.jobs.join('|')}",instance=~"${metricResources.instances.join('|')}"}`;
+  let targetInfoMatchParam = `target_info{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
 
   const targetInfoParams: Record<string, string | number> = {
     start,
