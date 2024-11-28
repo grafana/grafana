@@ -35,7 +35,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { RoutesMatchingFilters } from '../../NotificationPolicies';
+import { RoutesMatchingFilters } from '../../NotificationPoliciesPage';
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { getAmMatcherFormatter } from '../../utils/alertmanager';
 import { MatcherFormatter, normalizeMatchers } from '../../utils/matchers';

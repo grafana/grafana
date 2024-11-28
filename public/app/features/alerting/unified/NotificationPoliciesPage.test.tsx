@@ -31,7 +31,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPolicies';
+import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPoliciesPage';
 import {
   grantUserPermissions,
   mockDataSource,
