@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
+import { locationSearchToObject, locationService, useScopesDashboards } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -32,9 +32,9 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const { dashboards } = useScopes();
+  const { state: scopesDashboardsState } = useScopesDashboards();
   const isScopesDashboardsOpen = Boolean(
-    dashboards.state.isEnabled && dashboards.state.isOpened && !dashboards.state.isReadOnly
+    scopesDashboardsState.isEnabled && scopesDashboardsState.isOpened && !scopesDashboardsState.isReadOnly
   );
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,

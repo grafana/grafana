@@ -127,20 +127,21 @@ let dataTrailsApp: DataTrailsApp;
 
 export function getDataTrailsApp() {
   if (!dataTrailsApp) {
-    const $behaviors = config.featureToggles.enableScopesInMetricsExplore
-      ? [
-          new ScopesFacade({
-            handler: (facade) => {
-              const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
+    const $behaviors =
+      config.featureToggles.scopeFilters && config.featureToggles.enableScopesInMetricsExplore
+        ? [
+            new ScopesFacade({
+              handler: (facade) => {
+                const trail = facade.parent && 'trail' in facade.parent.state ? facade.parent.state.trail : undefined;
 
-              if (trail instanceof DataTrail) {
-                trail.publishEvent(new RefreshMetricsEvent());
-                trail.checkDataSourceForOTelResources();
-              }
-            },
-          }),
-        ]
-      : undefined;
+                if (trail instanceof DataTrail) {
+                  trail.publishEvent(new RefreshMetricsEvent());
+                  trail.checkDataSourceForOTelResources();
+                }
+              },
+            }),
+          ]
+        : undefined;
 
     dataTrailsApp = new DataTrailsApp({
       trail: newMetricsTrail(),

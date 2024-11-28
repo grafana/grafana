@@ -7,7 +7,7 @@ import { getClosestScopesFacade } from '../utils';
 
 import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
 import { expectScopesSelectorValue } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
+import { getDatasource, getInstanceSettings, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 import SpyInstance = jest.SpyInstance;
@@ -16,7 +16,6 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -39,9 +38,6 @@ describe('Selector', () => {
 
   afterEach(async () => {
     await resetScenes();
-    fetchSelectedScopesApiSpy.mockClear();
-    dashboardReloadSpy.mockClear();
-    getMock.mockClear();
   });
 
   it('Fetches scope details on save', async () => {

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useScopes } from '@grafana/runtime';
+import { config, useScopesDashboards } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -10,14 +10,14 @@ import { ScopesDashboardsTreeSearch } from './internal/ScopesDashboardsTreeSearc
 
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
-  const { dashboards } = useScopes();
+  const { state, changeSearchQuery, clearSearchQuery, updateFolder } = useScopesDashboards();
 
-  if (!dashboards.state.isEnabled || !dashboards.state.isOpened || dashboards.state.isReadOnly) {
+  if (!config.featureToggles.scopeFilters || !state.isEnabled || !state.isOpened || state.isReadOnly) {
     return null;
   }
 
-  if (!dashboards.state.isLoading) {
-    if (dashboards.state.forScopeNames.length === 0) {
+  if (!state.isLoading) {
+    if (state.forScopeNames.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -26,7 +26,7 @@ export function ScopesDashboards() {
           <Trans i18nKey="scopes.dashboards.noResultsNoScopes">No scopes selected</Trans>
         </div>
       );
-    } else if (dashboards.state.dashboards.length === 0) {
+    } else if (state.dashboards.length === 0) {
       return (
         <div
           className={cx(styles.container, styles.noResultsContainer)}
@@ -40,25 +40,17 @@ export function ScopesDashboards() {
 
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
-      <ScopesDashboardsTreeSearch
-        disabled={dashboards.state.isLoading}
-        query={dashboards.state.searchQuery}
-        onChange={(value) => dashboards.changeSearchQuery(value)}
-      />
+      <ScopesDashboardsTreeSearch disabled={state.isLoading} query={state.searchQuery} onChange={changeSearchQuery} />
 
-      {dashboards.state.isLoading ? (
+      {state.isLoading ? (
         <LoadingPlaceholder
           className={styles.loadingIndicator}
           text={t('scopes.dashboards.loading', 'Loading dashboards')}
           data-testid="scopes-dashboards-loading"
         />
-      ) : dashboards.state.filteredFolders[''] ? (
+      ) : state.filteredFolders[''] ? (
         <ScrollContainer>
-          <ScopesDashboardsTree
-            folders={dashboards.state.filteredFolders}
-            folderPath={['']}
-            onFolderUpdate={(path, isExpanded) => dashboards.updateFolder(path, isExpanded)}
-          />
+          <ScopesDashboardsTree folders={state.filteredFolders} folderPath={['']} onFolderUpdate={updateFolder} />
         </ScrollContainer>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
@@ -66,7 +58,7 @@ export function ScopesDashboards() {
 
           <Button
             variant="secondary"
-            onClick={() => dashboards.changeSearchQuery('')}
+            onClick={clearSearchQuery}
             data-testid="scopes-dashboards-notFoundForFilter-clear"
           >
             <Trans i18nKey="scopes.dashboards.noResultsForFilterClear">Clear search</Trans>

@@ -3,14 +3,13 @@ import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
 import { enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -75,8 +74,6 @@ describe('Dashboard reload', () => {
       getDashboardScenePageStateManager().clearSceneCache();
       setDashboardAPI(undefined);
       await resetScenes();
-      dashboardReloadSpy.mockClear();
-      getMock.mockClear();
     }
   );
 });

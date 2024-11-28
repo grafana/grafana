@@ -187,7 +187,6 @@ export function renderDashboard(
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
-  getMock.mockClear();
   setBackendSrv({
     get: getMock,
     delete: jest.fn(),
@@ -224,4 +223,5 @@ export async function resetScenes() {
   getScopesSelectorService().reset();
   getScopesDashboardsService().reset();
   cleanup();
+  getMock.mockClear();
 }

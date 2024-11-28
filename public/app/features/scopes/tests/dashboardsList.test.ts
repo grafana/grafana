@@ -21,7 +21,7 @@ import {
   expectNoDashboardsNoScopes,
   expectNoDashboardsSearch,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 import SpyInstance = jest.SpyInstance;
@@ -30,7 +30,6 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -51,7 +50,6 @@ describe('Dashboards list', () => {
   afterEach(async () => {
     await resetScenes();
     fetchDashboardsApiSpy.mockClear();
-    getMock.mockClear();
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {

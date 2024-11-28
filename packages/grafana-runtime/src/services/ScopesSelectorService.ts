@@ -5,8 +5,8 @@ import { ScopesNodesMapItemReason, ScopesNodesMap, SelectedScope, TreeScope, Sco
 
 import { config } from '../config';
 
-import { getScopesDashboardsService } from './ScopesContext';
 import { getBackendSrv } from './backendSrv';
+import { getScopesDashboardsService } from './scopes';
 
 export interface ScopesSelectorServiceState {
   isEnabled: boolean;

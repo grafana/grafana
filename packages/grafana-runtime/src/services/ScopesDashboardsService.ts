@@ -85,6 +85,10 @@ export class ScopesDashboardsService {
     });
   }
 
+  public clearSearchQuery() {
+    this.changeSearchQuery('');
+  }
+
   public changeSearchQuery(searchQuery: string) {
     searchQuery = searchQuery ?? '';
 

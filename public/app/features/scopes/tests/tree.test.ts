@@ -39,7 +39,7 @@ import {
   expectSelectedScopePath,
   expectTreeScopePath,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 import SpyInstance = jest.SpyInstance;
@@ -48,7 +48,6 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -70,9 +69,6 @@ describe('Tree', () => {
 
   afterEach(async () => {
     await resetScenes();
-    fetchNodesApiSpy.mockClear();
-    fetchScopeApiSpy.mockClear();
-    getMock.mockClear();
   });
 
   it('Fetches scope details on select', async () => {
