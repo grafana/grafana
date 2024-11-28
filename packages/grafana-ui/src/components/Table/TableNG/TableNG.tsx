@@ -161,8 +161,8 @@ export function TableNG(props: TableNGProps) {
     const headerRef = useRef(null);
 
     let isColumnFilterable = filterable;
-    if (field.config.custom.filterable !== filterable) {
-      isColumnFilterable = field.config.custom.filterable || false;
+    if (field.config.custom?.filterable !== filterable) {
+      isColumnFilterable = field.config.custom?.filterable || false;
     }
     // we have to remove/reset the filter if the column is not filterable
     if (!isColumnFilterable && filter[field.name]) {
@@ -228,7 +228,6 @@ export function TableNG(props: TableNGProps) {
       const values = frame.fields.map(f => f.values);
       let rowCount = 0;
       for (let i = 0; i < frame.length; i++) {
-        rows[i] = {index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
         rows[rowCount] = {____type: 'parent', index: i, ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}};
         rowCount += 1;
         if (rows[rowCount-1]['Nested frames']){
@@ -243,11 +242,10 @@ export function TableNG(props: TableNGProps) {
     const convert = new Function('frame', fnBody);
 
     const records = convert(frame);
-
     return records;
   }, []);
-
-  const mapFrameToDataGrid = (main: DataFrame, calcsRef: React.MutableRefObject<string[]>, subTable?: boolean) => {
+  const calcsRef = useRef<string[]>([]);
+  const mapFrameToDataGrid = (main: DataFrame, subTable?: boolean) => {
     const columns: TableColumn[] = [];
 
     // Check for nestedFrames
@@ -440,7 +438,6 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, sortedRows, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const calcsRef = useRef<string[]>([]);
   useMemo(() => {
     calcsRef.current = props.data.fields.map((field, index) => {
       if (field.state?.calcs) {
@@ -456,7 +453,7 @@ export function TableNG(props: TableNGProps) {
     });
   }, [filteredRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const columns = useMemo(() => mapFrameToDataGrid(props.data, calcsRef), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
+  const columns = useMemo(() => mapFrameToDataGrid(props.data), [props.data, calcsRef]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // This effect needed to set header cells refs before row height calculation
   useLayoutEffect(() => {
