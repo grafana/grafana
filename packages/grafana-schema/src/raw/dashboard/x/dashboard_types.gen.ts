@@ -131,6 +131,10 @@ export interface VariableModel {
    */
   allValue?: string;
   /**
+   * Allow custom values to be entered in the variable
+   */
+  allowCustomValue?: boolean;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -169,7 +173,7 @@ export interface VariableModel {
   /**
    * Query used to fetch values for a variable
    */
-  query?: (string | Record<string, unknown>);
+  query?: string | Record<string, unknown>;
   /**
    * Options to config when to refresh a variable
    */
@@ -194,6 +198,7 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
+  allowCustomValue: true,
   includeAll: false,
   multi: false,
   options: [],
@@ -211,11 +216,11 @@ export interface VariableOption {
   /**
    * Text to be displayed for the option
    */
-  text: (string | Array<string>);
+  text: string | Array<string>;
   /**
    * Value of the option
    */
-  value: (string | Array<string>);
+  value: string | Array<string>;
 }
 
 /**
@@ -336,7 +341,7 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
 /**
  * Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
  */
-export type DashboardLinkType = ('link' | 'dashboards');
+export type DashboardLinkType = 'link' | 'dashboards';
 
 /**
  * Dashboard variable type
@@ -349,7 +354,17 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
  */
-export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system' | 'snapshot');
+export type VariableType =
+  | 'query'
+  | 'adhoc'
+  | 'groupby'
+  | 'constant'
+  | 'datasource'
+  | 'interval'
+  | 'textbox'
+  | 'custom'
+  | 'system'
+  | 'snapshot';
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -392,7 +407,7 @@ export enum FieldColorModeId {
 /**
  * Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
  */
-export type FieldColorSeriesByMode = ('min' | 'max' | 'last');
+export type FieldColorSeriesByMode = 'min' | 'max' | 'last';
 
 /**
  * Map a field to a color.
@@ -458,7 +473,7 @@ export interface Threshold {
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
-  value: (number | null);
+  value: number | null;
 }
 
 /**
@@ -490,7 +505,7 @@ export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
 /**
  * Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
  */
-export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
+export type ValueMapping = ValueMap | RangeMap | RegexMap | SpecialValueMap;
 
 /**
  * Supported value mapping types
@@ -530,11 +545,11 @@ export interface RangeMap {
     /**
      * Min value of the range. It can be null which means -Infinity
      */
-    from: (number | null);
+    from: number | null;
     /**
      * Max value of the range. It can be null which means +Infinity
      */
-    to: (number | null);
+    to: number | null;
     /**
      * Config to apply when the value is within the range
      */
@@ -643,7 +658,7 @@ export interface DataTransformerConfig {
   /**
    * Where to pull DataFrames from as input to transformation
    */
-  topic?: ('series' | 'annotations' | 'alertStates'); // replaced with common.DataTopic
+  topic?: 'series' | 'annotations' | 'alertStates'; // replaced with common.DataTopic
 }
 
 /**
@@ -764,7 +779,7 @@ export interface Panel {
    * Direction to repeat in if 'repeat' is set.
    * `h` for horizontal, `v` for vertical.
    */
-  repeatDirection?: ('h' | 'v');
+  repeatDirection?: 'h' | 'v';
   /**
    * Depends on the panel plugin. See the plugin documentation for details.
    */
@@ -938,7 +953,7 @@ export interface FieldConfig {
   /**
    * An explicit path to the field in the datasource.  When the frame meta includes a path,
    * This will default to `${frame.meta.path}/${field.name}
-   * 
+   *
    * When defined, this value can be used as an identifier within the datasource scope, and
    * may be used to update the results
    */
@@ -1047,7 +1062,7 @@ export interface Dashboard {
    * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
-  id?: (number | null); // TODO eliminate this null option
+  id?: number | null; // TODO eliminate this null option
   /**
    * Links with references to other dashboards or external websites.
    */
@@ -1061,7 +1076,7 @@ export interface Dashboard {
   /**
    * List of dashboard panels
    */
-  panels?: Array<(Panel | RowPanel)>;
+  panels?: Array<Panel | RowPanel>;
   /**
    * When set to true, the dashboard will load all panels in the dashboard when it's loaded.
    */

@@ -27,11 +27,7 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 	)
 }
 
-func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGrpcServerConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
@@ -42,21 +38,27 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	}
 
 	client := http.DefaultClient
-	if cfg.Env == setting.Dev {
+	if authCfg.AllowInsecure {
 		// allow insecure connections in development mode to facilitate testing
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	}
 	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 		authnlib.WithTracerAuthOption(tracer),
 	}
-	if authCfg.Mode == ModeOnPrem {
+	switch authCfg.Mode {
+	case ModeOnPrem:
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
+			authnlib.WithIDTokenAuthOption(true),
+		)
+	case ModeCloud:
+		grpcOpts = append(grpcOpts,
+			// ID tokens are enabled but not required in cloud
+			authnlib.WithIDTokenAuthOption(false),
 		)
 	}
 
@@ -65,6 +67,8 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 		grpcOpts...,
 	)
 }
+
+type contextFallbackKey struct{}
 
 type AuthenticatorWithFallback struct {
 	authenticator *authnlib.GrpcAuthenticator
@@ -79,7 +83,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return nil, err
 	}
 
-	authenticator, err := NewGrpcAuthenticator(cfg, tracer)
+	authenticator, err := NewGrpcAuthenticator(authCfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -96,6 +100,10 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 	}, nil
 }
 
+func FallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
+
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
 	defer span.End()
@@ -107,6 +115,7 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 		newCtx, err = f.fallback.Authenticate(ctx)
 		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 		span.SetAttributes(attribute.Bool("fallback_used", true))
+		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
 	}
 	return newCtx, err
 }

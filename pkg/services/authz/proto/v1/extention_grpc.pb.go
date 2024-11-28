@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	AuthzExtentionService_List_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/List"
-	AuthzExtentionService_Read_FullMethodName  = "/authz.extention.v1.AuthzExtentionService/Read"
-	AuthzExtentionService_Write_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Write"
+	AuthzExtentionService_List_FullMethodName         = "/authz.extention.v1.AuthzExtentionService/List"
+	AuthzExtentionService_BatchCheck_FullMethodName   = "/authz.extention.v1.AuthzExtentionService/BatchCheck"
+	AuthzExtentionService_Capabilities_FullMethodName = "/authz.extention.v1.AuthzExtentionService/Capabilities"
+	AuthzExtentionService_Read_FullMethodName         = "/authz.extention.v1.AuthzExtentionService/Read"
+	AuthzExtentionService_Write_FullMethodName        = "/authz.extention.v1.AuthzExtentionService/Write"
 )
 
 // AuthzExtentionServiceClient is the client API for AuthzExtentionService service.
@@ -29,6 +31,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthzExtentionServiceClient interface {
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error)
+	Capabilities(ctx context.Context, in *CapabilitiesRequest, opts ...grpc.CallOption) (*CapabilitiesResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
 }
@@ -45,6 +49,26 @@ func (c *authzExtentionServiceClient) List(ctx context.Context, in *ListRequest,
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, AuthzExtentionService_List_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authzExtentionServiceClient) BatchCheck(ctx context.Context, in *BatchCheckRequest, opts ...grpc.CallOption) (*BatchCheckResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchCheckResponse)
+	err := c.cc.Invoke(ctx, AuthzExtentionService_BatchCheck_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authzExtentionServiceClient) Capabilities(ctx context.Context, in *CapabilitiesRequest, opts ...grpc.CallOption) (*CapabilitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CapabilitiesResponse)
+	err := c.cc.Invoke(ctx, AuthzExtentionService_Capabilities_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +100,8 @@ func (c *authzExtentionServiceClient) Write(ctx context.Context, in *WriteReques
 // for forward compatibility
 type AuthzExtentionServiceServer interface {
 	List(context.Context, *ListRequest) (*ListResponse, error)
+	BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error)
+	Capabilities(context.Context, *CapabilitiesRequest) (*CapabilitiesResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
 }
@@ -86,6 +112,12 @@ type UnimplementedAuthzExtentionServiceServer struct {
 
 func (UnimplementedAuthzExtentionServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedAuthzExtentionServiceServer) BatchCheck(context.Context, *BatchCheckRequest) (*BatchCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchCheck not implemented")
+}
+func (UnimplementedAuthzExtentionServiceServer) Capabilities(context.Context, *CapabilitiesRequest) (*CapabilitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Capabilities not implemented")
 }
 func (UnimplementedAuthzExtentionServiceServer) Read(context.Context, *ReadRequest) (*ReadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
@@ -119,6 +151,42 @@ func _AuthzExtentionService_List_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthzExtentionServiceServer).List(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthzExtentionService_BatchCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCheckRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzExtentionServiceServer).BatchCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzExtentionService_BatchCheck_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzExtentionServiceServer).BatchCheck(ctx, req.(*BatchCheckRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthzExtentionService_Capabilities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CapabilitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthzExtentionServiceServer).Capabilities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthzExtentionService_Capabilities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthzExtentionServiceServer).Capabilities(ctx, req.(*CapabilitiesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -169,6 +237,14 @@ var AuthzExtentionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _AuthzExtentionService_List_Handler,
+		},
+		{
+			MethodName: "BatchCheck",
+			Handler:    _AuthzExtentionService_BatchCheck_Handler,
+		},
+		{
+			MethodName: "Capabilities",
+			Handler:    _AuthzExtentionService_Capabilities_Handler,
 		},
 		{
 			MethodName: "Read",

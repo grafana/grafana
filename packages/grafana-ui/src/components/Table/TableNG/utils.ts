@@ -1,4 +1,6 @@
-import { FieldType } from '@grafana/data';
+import { FieldType, Field, formattedValueToString, reduceField } from '@grafana/data';
+
+import { TableRow } from '../types';
 
 export function getCellHeight(
   text: string,
@@ -127,4 +129,39 @@ export function shouldTextOverflow(
   }
 
   return false;
+}
+
+export interface TableFooterCalc {
+  show: boolean;
+  reducer: string[]; // actually 1 value
+  fields?: string[];
+  enablePagination?: boolean;
+  countRows?: boolean;
+}
+
+export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFooterCalc | undefined): string {
+  if (!options) {
+    return '';
+  }
+
+  if (field.type !== FieldType.number) {
+    return '';
+  }
+
+  const calc = options.reducer[0];
+  if (calc === undefined) {
+    return '';
+  }
+
+  const value = reduceField({
+    field: {
+      ...field,
+      values: rows.map((row) => row[field.name]),
+    },
+    reducers: options.reducer,
+  })[calc];
+
+  const formattedValue = formattedValueToString(field.display!(value));
+
+  return formattedValue;
 }

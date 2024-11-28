@@ -1,14 +1,7 @@
 {
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "schemes": [
-    "http",
-    "https"
-  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "schemes": ["http", "https"],
   "swagger": "2.0",
   "info": {
     "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
@@ -25,9 +18,7 @@
     "/access-control/assignments/search": {
       "post": {
         "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "summary": "Debug permissions.",
         "operationId": "searchResult",
         "responses": {
@@ -49,10 +40,7 @@
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get all roles.",
         "operationId": "listRoles",
         "parameters": [
@@ -81,10 +69,7 @@
       },
       "post": {
         "description": "Creates a new custom role and maps given permissions to that role. Note that roles with the same prefix as Fixed Roles can’t be created.\n\nYou need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.\nFor example, if a user does not have required permissions for creating users, they won’t be able to create a custom role which allows to do that. This is done to prevent escalation of privileges.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Create a new custom role.",
         "operationId": "createRole",
         "parameters": [
@@ -116,10 +101,7 @@
     "/access-control/roles/{roleUID}": {
       "get": {
         "description": "Get a role for the given UID.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get a role.",
         "operationId": "getRole",
         "parameters": [
@@ -144,10 +126,7 @@
       },
       "put": {
         "description": "You need to have a permission with action `roles:write` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only create custom roles with the same, or a subset of permissions which the user has.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Update a custom role.",
         "operationId": "updateRole",
         "parameters": [
@@ -186,10 +165,7 @@
       },
       "delete": {
         "description": "Delete a role with the given UID, and it’s permissions. If the role is assigned to a built-in role, the deletion operation will fail, unless force query param is set to true, and in that case all assignments will also be deleted.\n\nYou need to have a permission with action `roles:delete` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only delete a custom role with the same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to delete a custom role which allows to do that.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Delete a custom role.",
         "operationId": "deleteRole",
         "parameters": [
@@ -229,10 +205,7 @@
     "/access-control/roles/{roleUID}/assignments": {
       "get": {
         "description": "Get role assignments for the role with the given UID.\nDoes not include role assignments mapped through group attribute sync.\n\nYou need to have a permission with action `teams.roles:list` and scope `teams:id:*` and `users.roles:list` and scope `users:id:*`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get role assignments.",
         "operationId": "getRoleAssignments",
         "parameters": [
@@ -260,10 +233,7 @@
       },
       "put": {
         "description": "Set role assignments for the role with the given UID.\n\nYou need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate`, and `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Set role assignments.",
         "operationId": "setRoleAssignments",
         "parameters": [
@@ -301,10 +271,7 @@
     "/access-control/status": {
       "get": {
         "description": "Returns an indicator to check if fine-grained access control is enabled or not.\n\nYou need to have a permission with action `status:accesscontrol` and scope `services:accesscontrol`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get status.",
         "operationId": "getAccessControlStatus",
         "responses": {
@@ -326,10 +293,7 @@
     "/access-control/teams/roles/search": {
       "post": {
         "description": "Lists the roles that have been directly assigned to the given teams.\n\nYou need to have a permission with action `teams.roles:read` and scope `teams:id:*`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "List roles assigned to multiple teams.",
         "operationId": "listTeamsRoles",
         "parameters": [
@@ -361,10 +325,7 @@
     "/access-control/teams/{teamId}/roles": {
       "get": {
         "description": "You need to have a permission with action `teams.roles:read` and scope `teams:id:\u003cteam ID\u003e`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Get team roles.",
         "operationId": "listTeamRoles",
         "parameters": [
@@ -393,10 +354,7 @@
       },
       "put": {
         "description": "You need to have a permission with action `teams.roles:add` and `teams.roles:remove` and scope `permissions:type:delegate` for each.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Update team role.",
         "operationId": "setTeamRoles",
         "parameters": [
@@ -428,10 +386,7 @@
       },
       "post": {
         "description": "You need to have a permission with action `teams.roles:add` and scope `permissions:type:delegate`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Add team role.",
         "operationId": "addTeamRole",
         "parameters": [
@@ -473,10 +428,7 @@
     "/access-control/teams/{teamId}/roles/{roleUID}": {
       "delete": {
         "description": "You need to have a permission with action `teams.roles:remove` and scope `permissions:type:delegate`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Remove team role.",
         "operationId": "removeTeamRole",
         "parameters": [
@@ -516,10 +468,7 @@
     "/access-control/users/roles/search": {
       "post": {
         "description": "Lists the roles that have been directly assigned to the given users. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:*`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "List roles assigned to multiple users.",
         "operationId": "listUsersRoles",
         "parameters": [
@@ -551,10 +500,7 @@
     "/access-control/users/{userId}/roles": {
       "get": {
         "description": "Lists the roles that have been directly assigned to a given user. The list does not include built-in roles (Viewer, Editor, Admin or Grafana Admin), and it does not include roles that have been inherited from a team.\n\nYou need to have a permission with action `users.roles:read` and scope `users:id:\u003cuser ID\u003e`.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "List roles assigned to a user.",
         "operationId": "listUserRoles",
         "parameters": [
@@ -583,10 +529,7 @@
       },
       "put": {
         "description": "Update the user’s role assignments to match the provided set of UIDs. This will remove any assigned roles that aren’t in the request and add roles that are in the set but are not already assigned to the user.\nRoles mapped through group attribute sync are not impacted.\nIf you want to add or remove a single role, consider using Add a user role assignment or Remove a user role assignment instead.\n\nYou need to have a permission with action `users.roles:add` and `users.roles:remove` and scope `permissions:type:delegate` for each. `permissions:type:delegate`  scope ensures that users can only assign or unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign or unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Set user role assignments.",
         "operationId": "setUserRoles",
         "parameters": [
@@ -626,10 +569,7 @@
       },
       "post": {
         "description": "Assign a role to a specific user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:add` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only assign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to assign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Add a user role assignment.",
         "operationId": "addUserRole",
         "parameters": [
@@ -668,10 +608,7 @@
     "/access-control/users/{userId}/roles/{roleUID}": {
       "delete": {
         "description": "Revoke a role from a user. For bulk updates consider Set user role assignments.\n\nYou need to have a permission with action `users.roles:remove` and scope `permissions:type:delegate`. `permissions:type:delegate` scope ensures that users can only unassign roles which have same, or a subset of permissions which the user has. For example, if a user does not have required permissions for creating users, they won’t be able to unassign a role which will allow to do that. This is done to prevent escalation of privileges.",
-        "tags": [
-          "access_control",
-          "enterprise"
-        ],
+        "tags": ["access_control", "enterprise"],
         "summary": "Remove a user role assignment.",
         "operationId": "removeUserRole",
         "parameters": [
@@ -717,10 +654,7 @@
     "/admin/ldap-sync-status": {
       "get": {
         "description": "You need to have a permission with action `ldap.status:read`.",
-        "tags": [
-          "ldap_debug",
-          "enterprise"
-        ],
+        "tags": ["ldap_debug", "enterprise"],
         "summary": "Returns the current state of the LDAP background sync integration.",
         "operationId": "getSyncStatus",
         "responses": {
@@ -741,10 +675,7 @@
     },
     "/admin/provisioning/access-control/reload": {
       "post": {
-        "tags": [
-          "access_control_provisioning",
-          "enterprise"
-        ],
+        "tags": ["access_control_provisioning", "enterprise"],
         "summary": "You need to have a permission with action `provisioning:reload` with scope `provisioners:accesscontrol`.",
         "operationId": "adminProvisioningReloadAccessControl",
         "responses": {
@@ -762,9 +693,7 @@
     },
     "/datasources/uid/{uid}/lbac/teams": {
       "get": {
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "summary": "Retrieves LBAC rules for a team.",
         "operationId": "getTeamLBACRulesApi",
         "parameters": [
@@ -797,9 +726,7 @@
         }
       },
       "put": {
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "summary": "Updates LBAC rules for a team.",
         "operationId": "updateTeamLBACRulesApi",
         "parameters": [
@@ -842,9 +769,7 @@
     "/datasources/{dataSourceUID}/cache": {
       "get": {
         "description": "get cache config for a single data source",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "operationId": "getDataSourceCacheConfig",
         "parameters": [
           {
@@ -868,9 +793,7 @@
       },
       "post": {
         "description": "set cache config for a single data source",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "operationId": "setDataSourceCacheConfig",
         "parameters": [
           {
@@ -907,9 +830,7 @@
     "/datasources/{dataSourceUID}/cache/clean": {
       "post": {
         "description": "clean cache for a single data source",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "operationId": "cleanDataSourceCache",
         "parameters": [
           {
@@ -935,9 +856,7 @@
     "/datasources/{dataSourceUID}/cache/disable": {
       "post": {
         "description": "disable cache for a single data source",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "operationId": "disableDataSourceCache",
         "parameters": [
           {
@@ -963,9 +882,7 @@
     "/datasources/{dataSourceUID}/cache/enable": {
       "post": {
         "description": "enable cache for a single data source",
-        "tags": [
-          "enterprise"
-        ],
+        "tags": ["enterprise"],
         "operationId": "enableDataSourceCache",
         "parameters": [
           {
@@ -990,10 +907,7 @@
     },
     "/groupsync/groups": {
       "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "getMappedGroups",
         "responses": {
@@ -1017,10 +931,7 @@
     },
     "/groupsync/groups/{group_id}": {
       "put": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "updateGroupMappings",
         "parameters": [
@@ -1058,10 +969,7 @@
         }
       },
       "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "createGroupMappings",
         "parameters": [
@@ -1099,10 +1007,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "deleteGroupMappings",
         "parameters": [
@@ -1134,10 +1039,7 @@
     },
     "/groupsync/groups/{group_id}/roles": {
       "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "getGroupRoles",
         "parameters": [
@@ -1172,10 +1074,7 @@
     },
     "/groupsync/mappings": {
       "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "List group mappings. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "getGroupMappings",
         "responses": {
@@ -1197,10 +1096,7 @@
         }
       },
       "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Create a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "createGroupMapping",
         "parameters": [
@@ -1237,10 +1133,7 @@
     },
     "/groupsync/mappings/{mapping_uid}": {
       "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Get a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "getGroupMapping",
         "parameters": [
@@ -1273,10 +1166,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
+        "tags": ["group_attribute_sync", "enterprise"],
         "summary": "Delete a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
         "operationId": "deleteGroupMapping",
         "parameters": [
@@ -1311,10 +1201,7 @@
     },
     "/licensing/check": {
       "get": {
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Check license availability.",
         "operationId": "getStatus",
         "responses": {
@@ -1327,10 +1214,7 @@
     "/licensing/custom-permissions": {
       "get": {
         "description": "You need to have a permission with action `licensing.reports:read`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Get custom permissions report.",
         "operationId": "getCustomPermissionsReport",
         "deprecated": true,
@@ -1344,13 +1228,8 @@
     "/licensing/custom-permissions-csv": {
       "get": {
         "description": "You need to have a permission with action `licensing.reports:read`.",
-        "produces": [
-          "text/csv"
-        ],
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "produces": ["text/csv"],
+        "tags": ["licensing", "enterprise"],
         "summary": "Get custom permissions report in CSV format.",
         "operationId": "getCustomPermissionsCSV",
         "deprecated": true,
@@ -1364,10 +1243,7 @@
     "/licensing/refresh-stats": {
       "get": {
         "description": "You need to have a permission with action `licensing:read`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Refresh license stats.",
         "operationId": "refreshLicenseStats",
         "responses": {
@@ -1383,10 +1259,7 @@
     "/licensing/token": {
       "get": {
         "description": "You need to have a permission with action `licensing:read`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Get license token.",
         "operationId": "getLicenseToken",
         "responses": {
@@ -1397,10 +1270,7 @@
       },
       "post": {
         "description": "You need to have a permission with action `licensing:update`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Create license token.",
         "operationId": "postLicenseToken",
         "parameters": [
@@ -1424,10 +1294,7 @@
       },
       "delete": {
         "description": "Removes the license stored in the Grafana database. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:delete`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Remove license from database.",
         "operationId": "deleteLicenseToken",
         "parameters": [
@@ -1465,10 +1332,7 @@
     "/licensing/token/renew": {
       "post": {
         "description": "Manually ask license issuer for a new token. Available in Grafana Enterprise v7.4+.\n\nYou need to have a permission with action `licensing:update`.",
-        "tags": [
-          "licensing",
-          "enterprise"
-        ],
+        "tags": ["licensing", "enterprise"],
         "summary": "Manually force license refresh.",
         "operationId": "postRenewLicenseToken",
         "parameters": [
@@ -1496,10 +1360,7 @@
     },
     "/logout/saml": {
       "get": {
-        "tags": [
-          "saml",
-          "enterprise"
-        ],
+        "tags": ["saml", "enterprise"],
         "summary": "GetLogout initiates single logout process.",
         "operationId": "getSAMLLogout",
         "responses": {
@@ -1517,10 +1378,7 @@
     },
     "/recording-rules": {
       "get": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Lists all rules in the database: active or deleted.",
         "operationId": "listRecordingRules",
         "responses": {
@@ -1542,10 +1400,7 @@
         }
       },
       "put": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Update the active status of a rule.",
         "operationId": "updateRecordingRule",
         "parameters": [
@@ -1577,10 +1432,7 @@
         }
       },
       "post": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Create a recording rule that is then registered and started.",
         "operationId": "createRecordingRule",
         "parameters": [
@@ -1614,10 +1466,7 @@
     },
     "/recording-rules/test": {
       "post": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Test a recording rule.",
         "operationId": "testCreateRecordingRule",
         "parameters": [
@@ -1654,10 +1503,7 @@
     },
     "/recording-rules/writer": {
       "get": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Return the prometheus remote write target.",
         "operationId": "getRecordingRuleWriteTarget",
         "responses": {
@@ -1680,10 +1526,7 @@
       },
       "post": {
         "description": "It returns a 422 if there is not an existing prometheus data source configured.",
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Create a remote write target.",
         "operationId": "createRecordingRuleWriteTarget",
         "parameters": [
@@ -1718,10 +1561,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Delete the remote write target.",
         "operationId": "deleteRecordingRuleWriteTarget",
         "responses": {
@@ -1745,10 +1585,7 @@
     },
     "/recording-rules/{recordingRuleID}": {
       "delete": {
-        "tags": [
-          "recording_rules",
-          "enterprise"
-        ],
+        "tags": ["recording_rules", "enterprise"],
         "summary": "Delete removes the rule from the registry and stops it.",
         "operationId": "deleteRecordingRule",
         "parameters": [
@@ -1782,10 +1619,7 @@
     "/reports": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:*`.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "List reports.",
         "operationId": "getReports",
         "responses": {
@@ -1805,10 +1639,7 @@
       },
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports.admin:create`.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Create a report.",
         "operationId": "createReport",
         "parameters": [
@@ -1846,10 +1677,7 @@
     "/reports/email": {
       "post": {
         "description": "Generate and send a report. This API waits for the report to be generated before returning. We recommend that you set the client’s timeout to at least 60 seconds. Available to org admins only and with a valid license.\n\nOnly available in Grafana Enterprise v7.0+.\nThis API endpoint is experimental and may be deprecated in a future release. On deprecation, a migration strategy will be provided and the endpoint will remain functional until the next major release of Grafana.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Send a report.",
         "operationId": "sendReport",
         "parameters": [
@@ -1887,10 +1715,7 @@
     "/reports/images/:image": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Get custom branding report image.",
         "operationId": "getSettingsImage",
         "responses": {
@@ -1915,13 +1740,8 @@
     "/reports/render/csvs": {
       "get": {
         "description": "Available to all users and with a valid license.",
-        "produces": [
-          "application/zip"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "produces": ["application/zip"],
+        "tags": ["reports", "enterprise"],
         "summary": "Download a CSV report.",
         "operationId": "renderReportCSVs",
         "parameters": [
@@ -1958,13 +1778,8 @@
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
-        "produces": [
-          "application/pdf"
-        ],
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "produces": ["application/pdf"],
+        "tags": ["reports", "enterprise"],
         "summary": "Render report for multiple dashboards.",
         "operationId": "renderReportPDFs",
         "parameters": [
@@ -2018,10 +1833,7 @@
     "/reports/settings": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`x.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Get report settings.",
         "operationId": "getReportSettings",
         "responses": {
@@ -2041,10 +1853,7 @@
       },
       "post": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:write`xx.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Save settings.",
         "operationId": "saveReportSettings",
         "parameters": [
@@ -2079,10 +1888,7 @@
     "/reports/test-email": {
       "post": {
         "description": "Available to org admins only and with a valid license.\n\nYou need to have a permission with action `reports:send`.",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Send test report via email.",
         "operationId": "sendTestEmail",
         "parameters": [
@@ -2120,10 +1926,7 @@
     "/reports/{id}": {
       "get": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports:read` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Get a report.",
         "operationId": "getReport",
         "deprecated": true,
@@ -2159,10 +1962,7 @@
       },
       "put": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.admin:write` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Update a report.",
         "operationId": "updateReport",
         "deprecated": true,
@@ -2206,10 +2006,7 @@
       },
       "delete": {
         "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.delete` with scope `reports:id:\u003creport ID\u003e`.\n\nRequesting reports using the internal id will stop workgin in the future\nUse the reporting apiserver to manage reports.  See: /apis/reporting.grafana.app/",
-        "tags": [
-          "reports",
-          "enterprise"
-        ],
+        "tags": ["reports", "enterprise"],
         "summary": "Delete a report.",
         "operationId": "deleteReport",
         "deprecated": true,
@@ -2246,10 +2043,7 @@
     },
     "/saml/acs": {
       "post": {
-        "tags": [
-          "saml",
-          "enterprise"
-        ],
+        "tags": ["saml", "enterprise"],
         "summary": "It performs Assertion Consumer Service (ACS).",
         "operationId": "postACS",
         "parameters": [
@@ -2274,13 +2068,8 @@
     },
     "/saml/metadata": {
       "get": {
-        "produces": [
-          "application/xml;application/samlmetadata+xml"
-        ],
-        "tags": [
-          "saml",
-          "enterprise"
-        ],
+        "produces": ["application/xml;application/samlmetadata+xml"],
+        "tags": ["saml", "enterprise"],
         "summary": "It exposes the SP (Grafana's) metadata for the IdP's consumption.",
         "operationId": "getMetadata",
         "responses": {
@@ -2293,10 +2082,7 @@
     "/saml/slo": {
       "get": {
         "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
-        "tags": [
-          "saml",
-          "enterprise"
-        ],
+        "tags": ["saml", "enterprise"],
         "summary": "It performs Single Logout (SLO) callback.",
         "operationId": "getSLO",
         "responses": {
@@ -2316,10 +2102,7 @@
       },
       "post": {
         "description": "There might be two possible requests:\n1. Logout response (callback) when Grafana initiates single logout and IdP returns response to logout request.\n2. Logout request when another SP initiates single logout and IdP sends logout request to the Grafana,\nor in case of IdP-initiated logout.",
-        "tags": [
-          "saml",
-          "enterprise"
-        ],
+        "tags": ["saml", "enterprise"],
         "summary": "It performs Single Logout (SLO) callback.",
         "operationId": "postSLO",
         "parameters": [
@@ -2352,10 +2135,7 @@
     },
     "/teams/{teamId}/groups": {
       "get": {
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Get External Groups.",
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -2389,10 +2169,7 @@
         }
       },
       "post": {
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Add External Group.",
         "operationId": "addTeamGroupApi",
         "parameters": [
@@ -2434,10 +2211,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "sync_team_groups",
-          "enterprise"
-        ],
+        "tags": ["sync_team_groups", "enterprise"],
         "summary": "Remove External Group.",
         "operationId": "removeTeamGroupApiQuery",
         "parameters": [
@@ -2526,12 +2300,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "secondsToLive": {
           "type": "integer",
@@ -2598,12 +2367,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "sendEmail": {
           "type": "boolean"
@@ -2618,12 +2382,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -3092,12 +2851,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -3645,10 +3399,7 @@
     },
     "CorrelationConfig": {
       "type": "object",
-      "required": [
-        "field",
-        "target"
-      ],
+      "required": ["field", "target"],
       "properties": {
         "field": {
           "description": "Field used to attach the correlation link",
@@ -3766,9 +3517,7 @@
     },
     "CreateDashboardSnapshotCommand": {
       "type": "object",
-      "required": [
-        "dashboard"
-      ],
+      "required": ["dashboard"],
       "properties": {
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
@@ -3841,10 +3590,7 @@
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
-          "enum": [
-            1,
-            2
-          ]
+          "enum": [1, 2]
         },
         "model": {
           "description": "The JSON model for the library element.",
@@ -3935,9 +3681,7 @@
     "CreateQueryInQueryHistoryCommand": {
       "description": "CreateQueryInQueryHistoryCommand is the command for adding query history",
       "type": "object",
-      "required": [
-        "queries"
-      ],
+      "required": ["queries"],
       "properties": {
         "datasourceUid": {
           "description": "UID of the data source for which are queries stored.",
@@ -3998,12 +3742,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ],
+          "enum": ["None", "Viewer", "Editor", "Admin"],
           "example": "Admin"
         }
       }
@@ -4060,12 +3799,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "slug": {
           "type": "string"
@@ -4125,12 +3859,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "teamId": {
           "type": "integer",
@@ -4145,9 +3874,7 @@
     "DashboardCreateCommand": {
       "description": "These are the values expected to be sent from an end user\n+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object",
       "type": "object",
-      "required": [
-        "dashboard"
-      ],
+      "required": ["dashboard"],
       "properties": {
         "apiVersion": {
           "description": "APIVersion defines the versioned schema of this representation of an object.\nServers should convert recognized schemas to the latest internal value, and\nmay reject unrecognized values.\nMore info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\n+optional",
@@ -4676,9 +4403,7 @@
     },
     "ErrorResponseBody": {
       "type": "object",
-      "required": [
-        "message"
-      ],
+      "required": ["message"],
       "properties": {
         "error": {
           "description": "Error An optional detailed description of the actual error. Only included if running in developer mode.",
@@ -5719,11 +5444,7 @@
     },
     "MetricRequest": {
       "type": "object",
-      "required": [
-        "from",
-        "to",
-        "queries"
-      ],
+      "required": ["from", "to", "queries"],
       "properties": {
         "debug": {
           "type": "boolean"
@@ -5775,11 +5496,7 @@
     },
     "MigrateDataResponseItemDTO": {
       "type": "object",
-      "required": [
-        "type",
-        "refId",
-        "status"
-      ],
+      "required": ["type", "refId", "status"],
       "properties": {
         "errorCode": {
           "type": "string",
@@ -5812,13 +5529,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "OK",
-            "WARNING",
-            "ERROR",
-            "PENDING",
-            "UNKNOWN"
-          ]
+          "enum": ["OK", "WARNING", "ERROR", "PENDING", "UNKNOWN"]
         },
         "type": {
           "type": "string",
@@ -6103,10 +5814,7 @@
           "description": "Kind of element to create, Use 1 for library panels or 2 for c.\nDescription:\n1 - library panels\n2 - library variables",
           "type": "integer",
           "format": "int64",
-          "enum": [
-            1,
-            2
-          ]
+          "enum": [1, 2]
         },
         "model": {
           "description": "The JSON model for the library element.",
@@ -6155,17 +5863,11 @@
         },
         "theme": {
           "type": "string",
-          "enum": [
-            "light",
-            "dark"
-          ]
+          "enum": ["light", "dark"]
         },
         "timezone": {
           "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "enum": ["utc", "browser"]
         },
         "weekStart": {
           "type": "string"
@@ -6331,9 +6033,7 @@
     },
     "PostAnnotationsCmd": {
       "type": "object",
-      "required": [
-        "text"
-      ],
+      "required": ["text"],
       "properties": {
         "dashboardId": {
           "type": "integer",
@@ -7121,6 +6821,9 @@
           "type": "string"
         },
         "hidden": {
+          "type": "boolean"
+        },
+        "mapped": {
           "type": "boolean"
         },
         "name": {
@@ -7933,12 +7636,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "status": {
           "$ref": "#/definitions/TempUserStatus"
@@ -8151,10 +7849,7 @@
         },
         "type": {
           "type": "string",
-          "enum": [
-            "regex",
-            "logfmt"
-          ]
+          "enum": ["regex", "logfmt"]
         }
       }
     },
@@ -8419,12 +8114,7 @@
       "properties": {
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -8477,18 +8167,11 @@
         },
         "theme": {
           "type": "string",
-          "enum": [
-            "light",
-            "dark",
-            "system"
-          ]
+          "enum": ["light", "dark", "system"]
         },
         "timezone": {
           "type": "string",
-          "enum": [
-            "utc",
-            "browser"
-          ]
+          "enum": ["utc", "browser"]
         },
         "weekStart": {
           "type": "string"
@@ -8551,12 +8234,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         },
         "serviceAccountId": {
           "type": "integer",
@@ -8645,12 +8323,7 @@
         },
         "role": {
           "type": "string",
-          "enum": [
-            "None",
-            "Viewer",
-            "Editor",
-            "Admin"
-          ]
+          "enum": ["None", "Viewer", "Editor", "Admin"]
         }
       }
     },
@@ -8933,10 +8606,7 @@
     "publicError": {
       "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
       "type": "object",
-      "required": [
-        "statusCode",
-        "messageId"
-      ],
+      "required": ["statusCode", "messageId"],
       "properties": {
         "extra": {
           "description": "Extra Additional information about the error",
@@ -9194,12 +8864,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "id",
-          "name",
-          "message",
-          "datasource"
-        ],
+        "required": ["id", "name", "message", "datasource"],
         "properties": {
           "datasource": {
             "$ref": "#/definitions/DataSource"
@@ -9227,10 +8892,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "orgId",
-          "message"
-        ],
+        "required": ["orgId", "message"],
         "properties": {
           "message": {
             "description": "Message Message of the created org.",
@@ -9346,11 +9008,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "uid",
-          "title",
-          "message"
-        ],
+        "required": ["uid", "title", "message"],
         "properties": {
           "message": {
             "description": "Message Message of the deleted dashboard.",
@@ -9374,10 +9032,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
+        "required": ["id", "message"],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted data source.",
@@ -9397,11 +9052,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "id",
-          "title",
-          "message"
-        ],
+        "required": ["id", "title", "message"],
         "properties": {
           "id": {
             "description": "ID Identifier of the deleted folder.",
@@ -9561,9 +9212,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "properties": {
           "id": {
             "description": "ID Identifier of the data source.",
@@ -10154,10 +9803,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "id",
-          "message"
-        ],
+        "required": ["id", "message"],
         "properties": {
           "id": {
             "description": "ID Identifier of the created annotation.",
@@ -10176,14 +9822,7 @@
       "description": "",
       "schema": {
         "type": "object",
-        "required": [
-          "status",
-          "title",
-          "version",
-          "id",
-          "uid",
-          "url"
-        ],
+        "required": ["status", "title", "version", "id", "uid", "url"],
         "properties": {
           "folderUid": {
             "description": "FolderUID The unique identifier (uid) of the folder the dashboard belongs to.",

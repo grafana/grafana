@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
 	"github.com/grafana/authlib/authz"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -49,23 +48,9 @@ const (
 	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
 )
 
-var ResourceRelations = []string{
-	RelationRead,
-	RelationWrite,
-	RelationCreate,
-	RelationDelete,
-	RelationPermissionsRead,
-	RelationPermissionsWrite,
-}
-
-var FolderRelations = append(
-	ResourceRelations,
-	RelationFolderResourceRead,
-	RelationFolderResourceWrite,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
-	RelationFolderResourcePermissionsRead,
-	RelationFolderResourcePermissionsWrite,
+var (
+	FolderRelations   = common.FolderRelations
+	ResourceRelations = common.ResourceRelations
 )
 
 const (
@@ -83,6 +68,8 @@ var (
 	ToOpenFGATuples                   = common.ToOpenFGATuples
 	ToOpenFGATupleKey                 = common.ToOpenFGATupleKey
 	ToOpenFGATupleKeyWithoutCondition = common.ToOpenFGATupleKeyWithoutCondition
+
+	FormatGroupResource = common.FormatGroupResource
 )
 
 // NewTupleEntry constructs new openfga entry type:name[#relation].
@@ -164,6 +151,31 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 	}
 
 	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	// FIXME: support different verbs
+	req := &authz.ListRequest{
+		Namespace: namespace,
+		Group:     translation.group,
+		Resource:  translation.resource,
+	}
+
+	return req, true
+}
+
+func TranslateToGroupResource(kind string) string {
+	translation, ok := resourceTranslations[kind]
+	if !ok {
+		return ""
+	}
+	return common.FormatGroupResource(translation.group, translation.resource)
 }
 
 func TranslateBasicRole(name string) string {
