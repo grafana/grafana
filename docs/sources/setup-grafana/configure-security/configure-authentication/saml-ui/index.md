@@ -113,8 +113,8 @@ Sign in to Grafana and navigate to **Administration > Authentication > Configure
 
 1. If you wish to [map user information from SAML assertions]({{< relref "../saml#assertion-mapping" >}}), complete the **Assertion attributes mappings** section.
 
-   You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
-   Learn more about [team sync]({{< relref "../../configure-team-sync" >}}) and [configuring team sync for SAML]({{< relref "../saml#configure-team-sync" >}}).
+   You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
+   To learn more about how to configure group synchronization, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 

@@ -25,7 +25,11 @@ export interface AlertManagerManualRouting {
 
 export interface SimplifiedEditor {
   simplifiedQueryEditor: boolean;
+  simplifiedNotificationEditor: boolean;
 }
+
+export type KVObject = { key: string; value: string };
+export type KBObjectArray = KVObject[];
 
 export interface RuleFormValues {
   // common

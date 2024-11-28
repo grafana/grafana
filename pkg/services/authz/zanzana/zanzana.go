@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"strings"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
 	"github.com/grafana/authlib/authz"
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 const (
-	TypeUser      = common.TypeUser
-	TypeTeam      = common.TypeTeam
-	TypeRole      = common.TypeRole
-	TypeFolder    = common.TypeFolder
-	TypeResource  = common.TypeResource
-	TypeNamespace = common.TypeNamespace
+	TypeUser           = common.TypeUser
+	TypeServiceAccount = common.TypeServiceAccount
+	TypeTeam           = common.TypeTeam
+	TypeRole           = common.TypeRole
+	TypeFolder         = common.TypeFolder
+	TypeResource       = common.TypeResource
+	TypeNamespace      = common.TypeNamespace
 )
 
 const (
@@ -49,23 +49,9 @@ const (
 	RelationFolderResourcePermissionsWrite = common.RelationFolderResourcePermissionsWrite
 )
 
-var ResourceRelations = []string{
-	RelationRead,
-	RelationWrite,
-	RelationCreate,
-	RelationDelete,
-	RelationPermissionsRead,
-	RelationPermissionsWrite,
-}
-
-var FolderRelations = append(
-	ResourceRelations,
-	RelationFolderResourceRead,
-	RelationFolderResourceWrite,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
-	RelationFolderResourcePermissionsRead,
-	RelationFolderResourcePermissionsWrite,
+var (
+	FolderRelations   = common.FolderRelations
+	ResourceRelations = common.ResourceRelations
 )
 
 const (
@@ -163,6 +149,23 @@ func TranslateToCheckRequest(namespace, action, kind, folder, name string) (*aut
 		Resource:  translation.resource,
 		Name:      name,
 		Folder:    folder,
+	}
+
+	return req, true
+}
+
+func TranslateToListRequest(namespace, action, kind string) (*authz.ListRequest, bool) {
+	translation, ok := resourceTranslations[kind]
+
+	if !ok {
+		return nil, false
+	}
+
+	// FIXME: support different verbs
+	req := &authz.ListRequest{
+		Namespace: namespace,
+		Group:     translation.group,
+		Resource:  translation.resource,
 	}
 
 	return req, true
