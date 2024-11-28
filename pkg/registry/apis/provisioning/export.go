@@ -21,11 +21,12 @@ import (
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type exportConnector struct {
 	repoGetter RepoGetter
-	client     *resourceClient
+	client     *resources.ClientFactory
 	logger     *slog.Logger
 }
 
@@ -76,34 +77,22 @@ func (c *exportConnector) Connect(
 	// TODO: We need some way to filter what we export.
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client, err := c.client.Client(ns)
+		client, _, err := c.client.New(ns)
 		if err != nil {
 			responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to create a dynamic client: %w", err)))
 			return
 		}
 
-		lookup := newKindsLookup(client)
-		dashboardGVR, ok := lookup.Resource(schema.GroupVersionKind{
-			Group:   "dashboard.grafana.app",
-			Version: "v2alpha1",
-			Kind:    "Dashboard",
+		dashboardIface := client.Resource(schema.GroupVersionResource{
+			Group:    "dashboard.grafana.app",
+			Version:  "v2alpha1",
+			Resource: "dashboards",
 		})
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("no GVR was found for dashboards")))
-			return
-		}
-		dashboardIface := client.Resource(dashboardGVR).Namespace(ns)
-
-		folderGVR, ok := lookup.Resource(schema.GroupVersionKind{
-			Group:   "folder.grafana.app",
-			Version: "v0alpha1",
-			Kind:    "Folder",
+		folderIface := client.Resource(schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Version:  "v0alpha1",
+			Resource: "folders",
 		})
-		if !ok {
-			responder.Error(apierrors.NewInternalError(fmt.Errorf("no GVR was found for folders")))
-			return
-		}
-		folderIface := client.Resource(folderGVR).Namespace(ns)
 
 		// TODO: handle pagination
 		folders, err := c.fetchFolderInfo(ctx, folderIface)

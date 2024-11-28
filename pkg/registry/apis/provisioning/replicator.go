@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,97 +19,81 @@ import (
 )
 
 type replicatorFactory struct {
-	client    *resourceClient
+	repo      repository.Repository
+	client    *resources.ClientFactory
 	namespace string
 }
 
-func newReplicatorFactory(client *resourceClient, namespace string) *replicatorFactory {
+func newReplicatorFactory(client *resources.ClientFactory, namespace string, repo repository.Repository) *replicatorFactory {
 	return &replicatorFactory{
 		client:    client,
 		namespace: namespace,
+		repo:      repo,
 	}
 }
 
 func (f *replicatorFactory) New() (repository.FileReplicator, error) {
-	dynamicClient, err := f.client.Client(f.namespace)
+	dynamicClient, kinds, err := f.client.New(f.namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client for namespace %s: %w", f.namespace, err)
 	}
 
-	kinds := newKindsLookup(dynamicClient)
-	parser := newFileParser(f.namespace, dynamicClient, kinds)
-
-	folderGVR, ok := kinds.Resource(schema.GroupVersionKind{
-		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
-		Kind:    "Folder",
+	parser := resources.NewParser(f.repo, dynamicClient, kinds)
+	folders := dynamicClient.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
 	})
-	if !ok {
-		return nil, errors.New("missing folder resource")
-	}
-
-	folders := dynamicClient.Resource(folderGVR).Namespace(f.namespace)
 
 	return &replicator{
-		namespace: f.namespace,
-		logger:    slog.Default().With("logger", "replicator", "namespace", f.namespace),
-		parser:    parser,
-		client:    dynamicClient,
-		folders:   folders,
+		logger:  slog.Default().With("logger", "replicator", "namespace", f.namespace),
+		parser:  parser,
+		client:  dynamicClient,
+		folders: folders,
 	}, nil
 }
 
 type replicator struct {
-	namespace string
-	logger    *slog.Logger
-	client    *dynamic.DynamicClient
-	parser    *fileParser
-	folders   dynamic.ResourceInterface
+	logger  *slog.Logger
+	client  *resources.DynamicClient
+	parser  *resources.FileParser
+	folders dynamic.ResourceInterface
 }
 
 // Replicate creates a new resource in the cluster.
 // If the resource already exists, it will be updated.
-// TODO: Add support for folders
 func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInfo) error {
 	file, err := r.parseResource(ctx, fileInfo)
 	if err != nil {
 		return err
 	}
 
-	name := resourceName(fileInfo.Path)
-
 	parent, err := r.createFolderPath(ctx, fileInfo.Path)
 	if err != nil {
 		return fmt.Errorf("failed to create folder path: %w", err)
 	}
 
-	iface := r.client.Resource(*file.gvr).Namespace(r.namespace)
-	_, err = iface.Get(ctx, name, metav1.GetOptions{})
+	_, err = file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if object already exists: %w", err)
 	}
 
-	resource := file.AsResourceWrapper().Resource.File
-	resource.SetNestedField(name, "metadata", "name")
-	resource.SetNestedField(r.namespace, "metadata", "namespace")
-
 	if parent != "" {
-		resource.SetNestedField(parent, "metadata", "annotations", apiutils.AnnoKeyFolder)
+		file.Meta.SetFolder(parent)
 	}
 
-	obj := file.AsResourceWrapper().Resource.File.ToKubernetesObject()
 	if err != nil { // IsNotFound
-		_, err = iface.Create(ctx, obj, metav1.CreateOptions{})
+		_, err = file.Client.Create(ctx, file.Obj, metav1.CreateOptions{})
 	} else { // already exists
-		_, err = iface.Update(ctx, obj, metav1.UpdateOptions{})
+		_, err = file.Client.Update(ctx, file.Obj, metav1.UpdateOptions{})
 	}
 
 	if err != nil {
 		return fmt.Errorf("failed to upsert object: %w", err)
 	}
 
-	r.logger.InfoContext(ctx, "Replicated file", "name", name, "path", fileInfo.Path)
+	r.logger.InfoContext(ctx, "Replicated file", "name", file.Obj.GetName(), "path", fileInfo.Path)
 
 	return nil
 }
@@ -135,7 +119,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 			Object: map[string]interface{}{
 				"metadata": map[string]any{
 					"name":      folder,
-					"namespace": r.namespace,
+					"namespace": r.client.GetNamespace(),
 				},
 				"spec": map[string]any{
 					"title":       folder, // TODO: how do we want to get this?
@@ -147,7 +131,7 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 			return "", fmt.Errorf("failed to create folder %s: %w", folder, err)
 		}
 
-		logger.DebugContext(ctx, "folder created")
+		logger.InfoContext(ctx, "folder created")
 
 		// TODO: folder parents
 		// TODO: the top-most folder's parent must be the repo folder.
@@ -167,10 +151,7 @@ func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 		return err
 	}
 
-	name := resourceName(fileInfo.Path)
-
-	iface := r.client.Resource(*file.gvr).Namespace(r.namespace)
-	_, err = iface.Get(ctx, name, metav1.GetOptions{})
+	_, err = file.Client.Get(ctx, file.Obj.GetName(), metav1.GetOptions{})
 	// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
 	if false && err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to check if object already exists: %w", err)
@@ -180,22 +161,23 @@ func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 		return ErrFileNotFound
 	}
 
-	if err = iface.Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+	if err = file.Client.Delete(ctx, file.Obj.GetName(), metav1.DeleteOptions{}); err != nil {
 		return fmt.Errorf("failed to delete object: %w", err)
 	}
 
-	// TOOD: prune empty folders
+	// TODO: delete folders if empty recursively
 
-	r.logger.InfoContext(ctx, "Deleted file", "name", name, "path", fileInfo.Path)
+	r.logger.InfoContext(ctx, "Deleted file", "name", file.Obj.GetName(), "path", fileInfo.Path)
 
 	return nil
 }
 
-func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*parsedFile, error) {
+func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*resources.ParsedFile, error) {
 	// NOTE: We're validating here to make sure we want the folders to be created.
 	//  If the file isn't valid, its folders aren't relevant, either.
-	file, err := r.parser.parse(ctx, r.logger, fileInfo, true)
+	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
+		// FIXME: We should probably handle this in the callers to do a warning or ignore.
 		if errors.Is(err, ErrUnableToReadResourceBytes) {
 			return nil, ErrUnableToReadResourceBytes
 		}
@@ -203,18 +185,13 @@ func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.Fil
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
 	}
 
-	if file.gvr == nil {
+	if file.GVR == nil {
 		return nil, errors.New("parsed file is missing GVR")
 	}
 
-	return file, nil
-}
-
-func resourceName(path string) string {
-	name := filepath.Base(path)
-	if strings.ContainsRune(name, '.') {
-		name = name[:strings.LastIndex(name, ".")]
+	if file.Client == nil {
+		return nil, errors.New("parsed file is missing client")
 	}
 
-	return name
+	return file, nil
 }

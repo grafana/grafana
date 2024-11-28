@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -14,7 +15,7 @@ import (
 
 type importConnector struct {
 	repoGetter RepoGetter
-	client     *resourceClient
+	client     *resources.ClientFactory
 	logger     *slog.Logger
 }
 
@@ -60,11 +61,11 @@ func (c *importConnector) Connect(
 	if err != nil {
 		return nil, err
 	}
-	ns := repo.Config().GetNamespace()
+	cfg := repo.Config()
+	ns := cfg.GetNamespace()
+	replicatorFactory := newReplicatorFactory(c.client, ns, repo)
 
 	// TODO: We need some way to filter what we import.
-
-	replicatorFactory := newReplicatorFactory(c.client, ns)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		replicator, err := replicatorFactory.New()
@@ -95,6 +96,9 @@ func (c *importConnector) Connect(
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read %s: %w", entry.Path, err)))
 				return
 			}
+			// The parse function will fill in the repository metadata, so copy it over here
+			info.Hash = entry.Hash
+			info.Modified = nil // modified?
 
 			if err := replicator.Replicate(r.Context(), info); err != nil {
 				logger.DebugContext(ctx, "error on replicating the entry", "error", err)

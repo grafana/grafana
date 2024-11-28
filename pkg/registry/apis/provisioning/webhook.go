@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // This only works for github right now
@@ -23,7 +24,7 @@ type webhookConnector struct {
 	client         auth.BackgroundIdentityService
 	getter         RepoGetter
 	logger         *slog.Logger
-	resourceClient *resourceClient
+	resourceClient *resources.ClientFactory
 }
 
 func (*webhookConnector) New() runtime.Object {
@@ -73,7 +74,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	factory := newReplicatorFactory(s.resourceClient, namespace)
+	factory := newReplicatorFactory(s.resourceClient, namespace, repo)
 	webhook := repo.Webhook(ctx, s.logger, responder, factory)
 	if webhook == nil {
 		return nil, &errors.StatusError{
