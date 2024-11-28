@@ -29,7 +29,7 @@ export default function RepositoryStatusPage() {
       navId="provisioning"
       pageNav={{
         text: query.data?.spec.title ?? 'Repository Status',
-        subTitle: 'Configure a repository for storing your resources.',
+        subTitle: 'Check the status of configured repository.',
       }}
     >
       <Page.Contents isLoading={false}>
