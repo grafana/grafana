@@ -89,7 +89,8 @@ func RegisterAPIService(
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs)) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
@@ -279,11 +280,6 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 }
 
 func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) && !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) {
-		// Nothing to do: we can't use the folders API.
-		return nil
-	}
-
 	if cfg.Spec.Folder == "" {
 		// The root folder can't not exist, so we don't have to do anything.
 		return nil
@@ -293,6 +289,7 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 	if err != nil {
 		return err
 	}
+	// FIXME: make sure folders are actually enabled in the apiserver.
 	folderIface := client.Resource(schema.GroupVersionResource{
 		Group:    "folder.grafana.app",
 		Version:  "v0alpha1",
