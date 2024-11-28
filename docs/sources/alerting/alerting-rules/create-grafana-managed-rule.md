@@ -72,9 +72,13 @@ refs:
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+    - destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   compatible-data-sources:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
 ---
 
 # Configure Grafana-managed alert rules
@@ -85,6 +89,9 @@ Multiple alert instances can be created as a result of one alert rule (also know
 
 {{% admonition type="note" %}}
 For Grafana Cloud Free Forever, you can create up to 100 free Grafana-managed alert rules with each alert rule having a maximum of 1000 alert instances.
+
+For all paid tiers (Cloud Pro and Advanced), there is a soft limit of 2000 alert rules and unlimited alert instances. To increase the limit, open a support ticket from the [Cloud portal](https://grafana.com/docs/grafana-cloud/account-management/support/).
+
 {{% /admonition %}}
 
 Grafana-managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
@@ -97,7 +104,7 @@ To make a backup of your configuration and to be able to restore deleted alertin
 If you are using Grafana OSS:
 
 1. Configure your [data sources](ref:data-sources).
-1. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
+2. Check which [data sources](ref:compatible-data-sources) are compatible with and supported by Grafana Alerting.
 
 If you are using Grafana OSS, Enterprise, or Cloud:
 
@@ -174,13 +181,24 @@ It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:
 1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
    {{< /collapse >}}
 
+## Add folders and labels
+
+Organize your alert rule with a folder and set of labels.
+
+In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
+
+1. Select a folder or click **+ New folder**.
+
+1. Add labels, if required.
+
+   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
+
 ## Set alert evaluation behavior
 
 Use alert rule evaluation to determine how frequently an alert rule should be evaluated and how quickly it should change its state.
 
 To do this, you need to make sure that your alert rule is in the right evaluation group and set a pending period time that works best for your use case.
 
-1. Select a folder or click **+ New folder**.
 1. Select an evaluation group or click **+ New evaluation group**.
 
    If you are creating a new evaluation group, specify the interval for the group.
@@ -205,19 +223,13 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
 
-## Configure labels and notifications
+## Configure notifications
 
-In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
+Choose to select a contact point directly from the alert rule form or to use notification policy routing as well as set up mute timings and groupings.
 
-In the **Configure notifications** section, you can choose to select a contact point directly from the alert rule form or choose to use notification policy routing as well as set up mute timings and groupings.
+Complete the following steps to set up notifications.
 
-Complete the following steps to set up labels and notifications.
-
-1. Add labels, if required.
-
-   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
-
-2. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
+1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
 
    **Select contact point**
 
@@ -225,30 +237,30 @@ Complete the following steps to set up labels and notifications.
 
       All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
 
-   2. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
       {{< admonition type="note" >}}
       An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{< /admonition >}}
 
    **Use notification policy**
 
-   3. Choose this option to use the notification policy tree to direct your notifications.
+   1. Choose this option to use the notification policy tree to direct your notifications.
 
       {{< admonition type="note" >}}
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
       {{< /admonition >}}
 
-   4. Preview your alert instance routing set up.
+   1. Preview your alert instance routing set up.
 
       Based on the labels added, alert instances are routed to the following notification policies displayed.
 
-   5. Expand each notification policy below to view more details.
+   1. Expand each notification policy below to view more details.
 
-   6. Click **See details** to view alert routing details and an email preview.
+   1. Click **See details** to view alert routing details and an email preview.
 
-## Add annotations
+## Configure notification message
 
-Add [annotations](ref:annotation-label). to provide more context on the alert in your alert notification message.
+Add more context on the alert in your alert notification message. For more information, see [annotations](ref:annotation-label).
 
 Annotations add metadata to provide more information on the alert in your alert notification message. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
 

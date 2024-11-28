@@ -14,6 +14,9 @@
     "permission-list": {
       "permission": "Permission"
     },
+    "permission-list-item": {
+      "inherited": "Inherited from folder"
+    },
     "permissions": {
       "add-label": "Add a permission",
       "no-permissions": "There are no permissions",
@@ -25,6 +28,143 @@
       "user": "User"
     }
   },
+  "action-editor": {
+    "modal": {
+      "cancel-button": "Cancel",
+      "save-button": "Save"
+    }
+  },
+  "actions-editor": {
+    "inline": {
+      "add-button": "Add action",
+      "one-click-link": "One-click link"
+    }
+  },
+  "admin": {
+    "anon-users": {
+      "not-found": "No anonymous users found."
+    },
+    "edit-org": {
+      "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
+      "heading": "Edit Organization",
+      "update-button": "Update",
+      "users-heading": "Organization users"
+    },
+    "feature-toggles": {
+      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
+    },
+    "get-enterprise": {
+      "contact-us": "Contact us and get a free trial",
+      "description": "You can use the trial version for free for 30 days. We will remind you about it five days before the trial period ends.",
+      "features-heading": "Enhanced functionality",
+      "included-description": "Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.",
+      "included-heading": "Also included:",
+      "service-title": "At your service",
+      "team-sync-details": "LDAP, GitHub OAuth, Auth Proxy, Okta",
+      "title": "Get Grafana Enterprise"
+    },
+    "ldap": {
+      "test-mapping-heading": "Test user mapping",
+      "test-mapping-run-button": "Run"
+    },
+    "ldap-permissions": {
+      "active": "<0></0> Active",
+      "admin": "<0></0> Yes",
+      "inactive": "<0></0> Inactive"
+    },
+    "ldap-status": {
+      "title": "LDAP Connection"
+    },
+    "ldap-sync": {
+      "debug-button": "Debug LDAP Mapping",
+      "external-sync-description": "User synced via LDAP. Some changes must be done in LDAP or mappings.",
+      "external-sync-label": "External sync",
+      "next-sync-label": "Next scheduled synchronization",
+      "not-enabled": "Not enabled",
+      "sync-button": "Sync user",
+      "title": "LDAP Synchronisation"
+    },
+    "ldap-sync-info": {
+      "title": "LDAP Synchronization"
+    },
+    "ldap-user-groups": {
+      "no-org-found": "No match <2><0></0></2>"
+    },
+    "ldap-user-info": {
+      "no-team": "No teams found via LDAP"
+    },
+    "org-uers": {
+      "last-seen-never": "Never"
+    },
+    "org-users": {
+      "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
+    },
+    "orgs": {
+      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
+      "id-header": "ID",
+      "name-header": "Name",
+      "new-org-button": "New org"
+    },
+    "server-settings": {
+      "alerts-button": "Manage alerts",
+      "dashboards-button": "Manage dashboards",
+      "data-sources-button": "Manage data sources",
+      "not-found": "No stats found.",
+      "title": "Instance statistics",
+      "users-button": "Manage users"
+    },
+    "settings": {
+      "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+    },
+    "upgrade-info": {
+      "title": "Enterprise license"
+    },
+    "user-orgs": {
+      "add-button": "Add user to organization",
+      "change-role-button": "Change role",
+      "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "remove-button": "Remove from organization",
+      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
+      "title": "Organizations"
+    },
+    "user-orgs-modal": {
+      "add-button": "Add to organization",
+      "cancel-button": "Cancel"
+    },
+    "user-permissions": {
+      "change-button": "Change",
+      "grafana-admin-key": "Grafana Admin",
+      "grafana-admin-no": "No",
+      "grafana-admin-yes": "Yes",
+      "title": "Permissions"
+    },
+    "user-profile": {
+      "delete-button": "Delete user",
+      "disable-button": "Disable user",
+      "edit-button": "Edit",
+      "enable-button": "Enable user",
+      "title": "User information"
+    },
+    "user-sessions": {
+      "browser-column": "Browser and OS",
+      "force-logout-all-button": "Force logout from all devices",
+      "force-logout-button": "Force logout",
+      "ip-column": "IP address",
+      "last-seen-column": "Last seen",
+      "logged-on-column": "Logged on",
+      "title": "Sessions"
+    },
+    "users-create": {
+      "create-button": "Create user"
+    },
+    "users-list": {
+      "create-button": "New user"
+    },
+    "users-table": {
+      "last-seen-never": "Never",
+      "no-licensed-roles": "Not assigned"
+    }
+  },
   "alert-labels": {
     "button": {
       "hide": "Hide common labels",
@@ -33,41 +173,11 @@
       }
     }
   },
-  "alert-rule-form": {
-    "evaluation-behaviour": {
-      "info-help": {
-        "text": "Define the alert behavior when the evaluation fails or the query returns no data."
-      },
-      "pending-period": "Pending period"
-    },
-    "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
-    "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
-    "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
-    "evaluation-behaviour-for": {
-      "error-parsing": "Failed to parse duration",
-      "validation": "Pending period must be greater than or equal to the evaluation interval."
-    },
-    "evaluation-behaviour-group": {
-      "text": "All rules in the selected group are evaluated every {{evaluateEvery}}."
-    },
-    "pause": {
-      "alerting": "Turn on to pause evaluation for this alert rule.",
-      "label": "Pause evaluation",
-      "recording": "Turn on to pause evaluation for this recording rule."
-    }
-  },
   "alerting": {
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
           "text": "Define how the recording rule is evaluated."
-        }
-      }
-    },
-    "alert-rule-form": {
-      "evaluation-behaviour": {
-        "description": {
-          "text": "Define how the alert rule is evaluated."
         }
       }
     },
@@ -137,7 +247,6 @@
       "export-all": "Export all",
       "view": "View"
     },
-    "contact-point": "Contact Point",
     "contact-points": {
       "create": "Create contact point",
       "custom-template-value": "Custom template value",
@@ -155,6 +264,7 @@
       },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
+      "no-contact-points-found": "No contact points found",
       "no-delivery-attempts": "No delivery attempts",
       "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
@@ -170,6 +280,12 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "export": {
+      "subtitle": {
+        "formats": "Select the format and download the file or copy the contents to clipboard",
+        "one-format": "Download the file or copy the contents to clipboard"
+      }
+    },
     "folderAndGroup": {
       "evaluation": {
         "modal": {
@@ -177,10 +293,6 @@
             "alerting": "Create a new evaluation group to use for this alert rule.",
             "recording": "Create a new evaluation group to use for this recording rule."
           }
-        },
-        "text": {
-          "alerting": "Define how often the alert rule is evaluated.",
-          "recording": "Define how often the recording rule is evaluated."
         }
       }
     },
@@ -195,6 +307,7 @@
           "title": "Data source-managed"
         },
         "grafanaManaged": {
+          "export-new-rule": "Export rule definition",
           "export-rules": "Export rules",
           "loading": "Loading...",
           "new-recording-rule": "New recording rule",
@@ -219,9 +332,16 @@
     "policies": {
       "default-policy": {
         "description": "All alert instances will be handled by the default policy if no other matching policies are found.",
-        "title": "Default policy"
+        "title": "Default policy",
+        "update": "Update default policy"
+      },
+      "delete": {
+        "confirm": "Yes, delete policy",
+        "warning-1": "Deleting this notification policy will permanently remove it.",
+        "warning-2": "Are you sure you want to delete this policy?"
       },
       "generated-policies": "Auto-generated policies",
+      "matchers": "Matchers",
       "metadata": {
         "active-time": "Active when",
         "delivered-to": "Delivered to",
@@ -253,7 +373,21 @@
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
-      "no-matchers": "No matchers"
+      "no-matchers": "No matchers",
+      "reload-policies": "Reload policies",
+      "save-policy": "Save policy",
+      "update": {
+        "please-wait": "Please wait while we update your notification policies.",
+        "update-policy": "Update policy",
+        "updating": "Updating..."
+      },
+      "update-errors": {
+        "conflict": "The notification policy tree has been updated by another user.",
+        "error-code": "Error message: \"{{error}}\"",
+        "fallback": "Something went wrong when updating your notification policies.",
+        "suffix": "Please refresh the page and try again.",
+        "title": "Error saving notification policy"
+      }
     },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
@@ -265,6 +399,60 @@
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"
+    },
+    "rule-form": {
+      "evaluation": {
+        "evaluation-group-and-interval": "Evaluation group and interval",
+        "group": {
+          "cancel": "Cancel",
+          "create": "Create",
+          "interval": "Evaluation interval"
+        },
+        "group-name": "Evaluation group name",
+        "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
+        "new-group": "New evaluation group",
+        "pause": {
+          "alerting": "Turn on to pause evaluation for this alert rule.",
+          "recording": "Turn on to pause evaluation for this recording rule."
+        },
+        "select-folder-before": "Select a folder before setting evaluation group and interval"
+      },
+      "evaluation-behaviour": {
+        "description": {
+          "text": "Define how the alert rule is evaluated."
+        },
+        "info-help": {
+          "text": "Define the alert behavior when the evaluation fails or the query returns no data."
+        },
+        "pending-period": "Pending period"
+      },
+      "evaluation-behaviour-description1": "Evaluation groups are containers for evaluating alert and recording rules.",
+      "evaluation-behaviour-description2": "An evaluation group defines an evaluation interval - how often a rule is evaluated. Alert rules within the same evaluation group are evaluated over the same evaluation interval.",
+      "evaluation-behaviour-description3": "Pending period specifies how long the threshold condition must be met before the alert starts firing. This option helps prevent alerts from being triggered by temporary issues.",
+      "evaluation-behaviour-for": {
+        "error-parsing": "Failed to parse duration",
+        "validation": "Pending period must be greater than or equal to the evaluation interval."
+      },
+      "folder": {
+        "cancel": "Cancel",
+        "create": "Create",
+        "create-folder": "Create a new folder to store your alert rule in.",
+        "creating-new-folder": "Creating new folder",
+        "label": "Folder",
+        "name": "Folder name",
+        "new-folder": "New folder",
+        "new-folder-or": "or"
+      },
+      "folder-and-labels": "Organize your alert rule with a folder and set of labels.",
+      "folders": {
+        "help-info": "Folders are used for storing alert rules. You can extend the access provided by a role to alert rules and assign permissions to individual folders."
+      },
+      "labels": {
+        "help-info": "Labels are used to differentiate an alert from all other alerts.You can use them for searching, silencing, and routing notifications."
+      },
+      "pause": {
+        "label": "Pause evaluation"
+      }
     },
     "rule-groups": {
       "delete": {
@@ -279,6 +467,10 @@
       "update": {
         "success": "Successfully updated rule group"
       }
+    },
+    "rule-list": {
+      "configure-datasource": "Configure",
+      "new-alert-rule": "New alert rule"
     },
     "rule-state": {
       "creating": "Creating",
@@ -326,6 +518,14 @@
       "alertCondition": "Alert condition"
     },
     "templates": {
+      "editor": {
+        "add-example": "Add example",
+        "auto-complete": "For auto-completion of common templating code, type the following keywords in the content editor:",
+        "goto-docs": "Notification templates documentation"
+      },
+      "help": {
+        "intro": "Notification templates use Go templating language to create notification messages.\n\nIn Grafana, a template group can define multiple notification templates using {{ define \"<NAME>\" }}.\nThese templates can then be used in contact points and within other notification templates by calling {{ template \"<NAME>\" }}.\nFor detailed information about notification templates, refer to our documentation."
+      },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
       "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
@@ -345,6 +545,17 @@
   "api-keys": {
     "empty-state": {
       "message": "No API keys found"
+    }
+  },
+  "app-chrome": {
+    "skip-content-button": "Skip to main content",
+    "top-bar": {
+      "sign-in": "Sign in"
+    }
+  },
+  "app-notification": {
+    "item": {
+      "trace-id": "Trace ID: {{traceId}}"
     }
   },
   "bookmarks-page": {
@@ -382,15 +593,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -418,6 +629,7 @@
       "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
+      "non-folder-item": "Non-folder {{itemKind}} {{itemUID}}",
       "search-placeholder": "Search folders",
       "unknown-error": "Unknown error"
     },
@@ -455,7 +667,7 @@
       "title": "Clear value"
     },
     "custom-value": {
-      "create": "Create custom value"
+      "label": "Custom value: "
     },
     "options": {
       "no-found": "No options found."
@@ -489,6 +701,7 @@
     "close": "Close",
     "collapse": "Collapse",
     "edit": "Edit",
+    "help": "Help",
     "locale": {
       "default": "Default"
     },
@@ -845,6 +1058,10 @@
     },
     "open-advanced-button": "Open advanced data source picker"
   },
+  "data-source-testing-status-page": {
+    "error-more-details-link": "Click <2>here</2> to learn more about this error.",
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
@@ -858,6 +1075,12 @@
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
     }
+  },
+  "empty-list-cta": {
+    "pro-tip": "ProTip: {{proTip}}"
+  },
+  "entity-not-found": {
+    "description": "We're looking but can't seem to find this {{lowerCaseEntity}}. Try returning <4>home</4> or seeking help on the <7>community site.</7>"
   },
   "errors": {
     "dashboard-settings": {
@@ -1079,8 +1302,28 @@
       "export-as-json-tooltip": "Export"
     }
   },
+  "folder-filter": {
+    "clear-folder-button": "Clear folders"
+  },
   "folder-picker": {
+    "create-instructions": "Press enter to create the new folder.",
     "loading": "Loading folders..."
+  },
+  "forgot-password": {
+    "back-button": "Back to login",
+    "change-password": {
+      "skip-button": "Skip",
+      "submit-button": "Submit"
+    },
+    "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
+    "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
+    "reset-password-header": "Reset password",
+    "send-email-button": "Send reset email"
+  },
+  "form-prompt": {
+    "continue-button": "Continue editing",
+    "description": "Changes that you made may not be saved.",
+    "discard-button": "Discard unsaved changes"
   },
   "gen-ai": {
     "apply-suggestion": "Apply",
@@ -1201,6 +1444,10 @@
     }
   },
   "help-modal": {
+    "column-headers": {
+      "description": "Description",
+      "keys": "Keys"
+    },
     "shortcuts-category": {
       "dashboard": "Dashboard",
       "focused-panel": "Focused panel",
@@ -1451,6 +1698,9 @@
     }
   },
   "login": {
+    "divider": {
+      "connecting-text": "or"
+    },
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
@@ -1459,6 +1709,14 @@
     },
     "forgot-password": "Forgot your password?",
     "form": {
+      "confirmation-code": "Confirmation code is required",
+      "confirmation-code-label": "Confirmation code",
+      "confirmation-code-placeholder": "confirmation code",
+      "email-label": "Email",
+      "email-placeholder": "email",
+      "email-required": "Email is required",
+      "name-label": "Name",
+      "name-placeholder": "name",
       "password-label": "Password",
       "password-placeholder": "password",
       "password-required": "Password is required",
@@ -1466,7 +1724,12 @@
       "submit-loading-label": "Logging in...",
       "username-label": "Email or username",
       "username-placeholder": "email or username",
-      "username-required": "Email or username is required"
+      "username-required": "Email or username is required",
+      "verify-email-label": "Send a verification email",
+      "verify-email-loading-label": "Sending email..."
+    },
+    "layout": {
+      "update-password": "Update your password"
     },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
@@ -1479,6 +1742,10 @@
   "logs": {
     "infinite-scroll": {
       "older-logs": "Older logs"
+    },
+    "log-row-message": {
+      "ellipsis": "… ",
+      "more": "more"
     }
   },
   "migrate-to-cloud": {
@@ -1838,6 +2105,9 @@
       "subtitle": "View and manage your connected data source connections",
       "title": "Data sources"
     },
+    "databases": {
+      "title": "Databases"
+    },
     "datasources": {
       "subtitle": "Add and configure data sources",
       "title": "Data sources"
@@ -2113,6 +2383,9 @@
     "no-matches": "No matches found",
     "unsupported-layout": "Unsupported layout"
   },
+  "panel-type-filter": {
+    "clear-button": "Clear types"
+  },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
     "form": {
@@ -2206,6 +2479,10 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "plugin-help": {
+      "error": "An error occurred when loading help.",
+      "not-found": "No query help could be found."
     }
   },
   "profile": {
@@ -2399,6 +2676,10 @@
       "dashboard-modal-title": "Public dashboards",
       "shared-dashboard-modal-title": "Shared dashboards"
     },
+    "table-body": {
+      "dashboard-count_one": "{{count}} dashboard",
+      "dashboard-count_other": "{{count}} dashboards"
+    },
     "table-header": {
       "activated-label": "Activated",
       "activated-tooltip": "Earliest time user has been an active user to a dashboard",
@@ -2493,6 +2774,19 @@
     "dismissable-button": "Close"
   },
   "role-picker": {
+    "built-in": {
+      "basic-roles": "Basic roles"
+    },
+    "input": {
+      "no-roles": "No roles assigned"
+    },
+    "menu": {
+      "clear-button": "Clear all",
+      "tooltip": "You can now select the \"No basic role\" option and add permissions to your custom needs. You can find more information in <1>our documentation</1>."
+    },
+    "sub-menu": {
+      "clear-button": "Clear"
+    },
     "title": {
       "description": "Assign roles to users to ensure granular control over access to Grafana&lsquo;s features and resources. Find out more in our <2>documentation</2>."
     }
@@ -2501,6 +2795,11 @@
     "basic-roles": {
       "label": "Basic Roles"
     }
+  },
+  "route-error": {
+    "description": "Grafana has likely been updated. Please try reloading the page.",
+    "reload-button": "Reload",
+    "title": "Unable to find application file"
   },
   "save-dashboards": {
     "name-exists": {
@@ -2635,9 +2934,11 @@
       "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
+      "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-schemav2": "View JSON SchemaV2"
     },
     "library": {
       "info": "Create library panel."
@@ -2772,6 +3073,17 @@
     },
     "title": "Preferences"
   },
+  "sign-up": {
+    "back-button": "Back to login",
+    "submit-button": "Submit",
+    "verify": {
+      "back-button": "Back to login",
+      "complete-button": "Complete signup",
+      "header": "Verify email",
+      "info": "An email with a verification link has been sent to the email address. You should receive it shortly.",
+      "send-button": "Send verification email"
+    }
+  },
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -2805,6 +3117,7 @@
       "copy-link-button": "Copy link",
       "delete-button": "Delete snapshot",
       "delete-description": "Are you sure you want to delete this snapshot?",
+      "delete-permission-tooltip": "You don't have permission to delete snapshots",
       "delete-title": "Delete snapshot",
       "deleted-alert": "Snapshot deleted. It could take an hour to be cleared from CDN caches.",
       "expiration-label": "Expires in",
@@ -2824,6 +3137,7 @@
     "view-button": "View"
   },
   "tag-filter": {
+    "clear-button": "Clear tags",
     "loading": "Loading...",
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
@@ -2943,6 +3257,13 @@
       "add-transformation-body": "Transformations allow data to be changed in various ways before your visualization is shown.<1></1>This includes joining data together, renaming fields, making calculations, formatting data for display, and more.",
       "add-transformation-header": "Start transforming data"
     }
+  },
+  "upgrade-box": {
+    "discovery-text": "You’ve discovered a Pro feature!",
+    "discovery-text-continued": "Get the Grafana Pro plan to access {{featureName}}.",
+    "get-started": "Get started with {{featureName}}",
+    "learn-more": "Learn more",
+    "upgrade-button": "Upgrade"
   },
   "user-orgs": {
     "current-org-button": "Current",

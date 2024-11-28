@@ -240,7 +240,11 @@ export function useRuleWithLocation({
 }): RequestState<RuleWithLocation> {
   const ruleSource = getRulesSourceFromIdentifier(ruleIdentifier);
 
-  const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(ruleIdentifier.ruleSourceName);
+  const { data: dsFeatures, isLoading: isLoadingDsFeatures } =
+    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+      rulesSourceName: ruleIdentifier.ruleSourceName,
+    });
+
   const {
     loading: isLoadingRuleLocation,
     error: ruleLocationError,

@@ -3,20 +3,25 @@ package sql
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 
-	"github.com/grafana/authlib/claims"
+	"github.com/prometheus/client_golang/prometheus"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg prometheus.Registerer) (resource.ResourceServer, error) {
+func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles, docs resource.DocumentBuilderSupplier,
+	tracer tracing.Tracer, reg prometheus.Registerer, ac authz.Client) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -25,7 +30,9 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 		},
 		Reg: reg,
 	}
-
+	if ac != nil {
+		opts.AccessClient = resource.NewAuthzLimitedClient(ac, resource.AuthzOptions{Tracer: tracer})
+	}
 	// Support local file blob
 	if strings.HasPrefix(opts.Blob.URL, "./data/") {
 		dir := strings.Replace(opts.Blob.URL, "./data", cfg.DataPath, 1)
@@ -48,32 +55,22 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, fea
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
-		opts.WriteAccess = resource.WriteAccessHooks{
-			Folder: func(ctx context.Context, user claims.AuthInfo, uid string) bool {
-				// #TODO build on the logic here
-				// #TODO only enable write access when the resource being written in the folder
-				// is another folder
-				return true
-			},
-		}
-	}
-
+	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
+		opts.Search = resource.SearchOptions{
+			Backend: search.NewBleveBackend(search.BleveOptions{
+				Root:          filepath.Join(cfg.DataPath, "unified-search", "bleve"),
+				FileThreshold: 10,  // fewer than X items will use a memory index
+				BatchSize:     500, // This is the batch size for how many objects to add to the index at once
+			}, tracer, reg),
+			Resources:     docs,
+			WorkerThreads: 5, // from cfg?
+		}
 	}
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	// Initialize the indexer if one is configured
-	if opts.Index != nil {
-		_, err = rs.(resource.ResourceIndexer).Index(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return rs, nil

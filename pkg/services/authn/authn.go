@@ -19,16 +19,17 @@ import (
 )
 
 const (
-	ClientAPIKey      = "auth.client.api-key" // #nosec G101
-	ClientAnonymous   = "auth.client.anonymous"
-	ClientBasic       = "auth.client.basic"
-	ClientJWT         = "auth.client.jwt"
-	ClientExtendedJWT = "auth.client.extended-jwt"
-	ClientRender      = "auth.client.render"
-	ClientSession     = "auth.client.session"
-	ClientForm        = "auth.client.form"
-	ClientProxy       = "auth.client.proxy"
-	ClientSAML        = "auth.client.saml"
+	ClientAPIKey       = "auth.client.api-key" // #nosec G101
+	ClientAnonymous    = "auth.client.anonymous"
+	ClientBasic        = "auth.client.basic"
+	ClientJWT          = "auth.client.jwt"
+	ClientExtendedJWT  = "auth.client.extended-jwt"
+	ClientRender       = "auth.client.render"
+	ClientSession      = "auth.client.session"
+	ClientForm         = "auth.client.form"
+	ClientProxy        = "auth.client.proxy"
+	ClientSAML         = "auth.client.saml"
+	ClientPasswordless = "auth.client.passwordless"
 )
 
 const (
@@ -177,7 +178,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester) (*Redirect, bool)
+	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, bool)
 }
 
 type SSOSettingsAwareClient interface {

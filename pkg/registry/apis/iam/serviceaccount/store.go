@@ -110,7 +110,7 @@ func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
 	}
 	obj, _ := utils.MetaAccessor(&item)
 	obj.SetUpdatedTimestamp(&sa.Updated)
-	obj.SetOriginInfo(&utils.ResourceOriginInfo{
+	obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name: "SQL",
 		Path: strconv.FormatInt(sa.ID, 10),
 	})

@@ -4,14 +4,16 @@ import { useMemo, useRef, useState } from 'react';
 import { measureText } from '../../utils';
 
 import { ComboboxOption } from './Combobox';
-import { MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT, MENU_ITEM_PADDING_X } from './getComboboxStyles';
+import {
+  MENU_ITEM_FONT_SIZE,
+  MENU_ITEM_FONT_WEIGHT,
+  MENU_ITEM_PADDING,
+  MENU_OPTION_HEIGHT,
+  POPOVER_MAX_HEIGHT,
+} from './getComboboxStyles';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
-
-// Used with Downshift to get the height of each item
-export const OPTION_HEIGHT = 45;
-const POPOVER_MAX_HEIGHT = OPTION_HEIGHT * 8.5;
 
 // Clearance around the popover to prevent it from being too close to the edge of the viewport
 const POPOVER_PADDING = 16;
@@ -41,7 +43,7 @@ export const useComboboxFloat = (
         const preferredMaxHeight = availableHeight - POPOVER_PADDING;
 
         const width = Math.max(preferredMaxWidth, 0);
-        const height = Math.min(Math.max(preferredMaxHeight, OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
+        const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
 
         setPopoverMaxSize({ width, height });
       },
@@ -68,7 +70,7 @@ export const useComboboxFloat = (
 
     const size = measureText(longestItem, MENU_ITEM_FONT_SIZE, MENU_ITEM_FONT_WEIGHT).width;
 
-    return size + MENU_ITEM_PADDING_X * 2 + scrollbarWidth;
+    return size + MENU_ITEM_PADDING * 2 + scrollbarWidth;
   }, [items, scrollbarWidth]);
 
   const floatStyles = {
