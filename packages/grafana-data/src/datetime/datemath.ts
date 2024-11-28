@@ -74,6 +74,11 @@ export interface ConversionOptions {
   now?: DateTimeInput;
 }
 
+/**
+ * @param dateTimeRep A DateTime object, a Date object or a string represenation of a specific time.
+ * @param options Options for converting to DateTime
+ * @returns A DateTime object if possible, undefined if not.
+ */
 export function toDateTime(dateTimeRep: string | DateTime | Date, options: ConversionOptions): DateTime | undefined {
   if (typeof dateTimeRep !== 'string') {
     if (isDateTime(dateTimeRep)) {
