@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -87,7 +88,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		// Sync Grafana DB with zanzana (migrate data)
 		tracer := tracing.InitializeTracerForTest()
 		lock := serverlock.ProvideService(db, tracer)
-		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock)
+		zanzanaSyncronizer := dualwrite.NewZanzanaReconciler(cfg, zclient, db, lock, orgtest.NewOrgServiceFake())
 		err = zanzanaSyncronizer.ReconcileSync(context.Background())
 		require.NoError(t, err)
 

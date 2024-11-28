@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -55,7 +56,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		acSvc: acimpl.ProvideOSSService(
 			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
 			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil, nil,
-			permreg.ProvidePermissionRegistry(), nil,
+			permreg.ProvidePermissionRegistry(), nil, orgtest.NewOrgServiceFake(),
 		),
 		defaultOrgID: autoAssignOrgID,
 		logger:       logger,

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,15 +25,16 @@ type ZanzanaReconciler struct {
 	cfg *setting.Cfg
 	log log.Logger
 
-	store  db.DB
-	client zanzana.Client
-	lock   *serverlock.ServerLockService
+	store      db.DB
+	orgService org.Service
+	client     zanzana.Client
+	lock       *serverlock.ServerLockService
 	// reconcilers are migrations that tries to reconcile the state of grafana db to zanzana store.
 	// These are run periodically to try to maintain a consistent state.
 	reconcilers []resourceReconciler
 }
 
-func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService) *ZanzanaReconciler {
+func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, lock *serverlock.ServerLockService, orgService org.Service) *ZanzanaReconciler {
 	return &ZanzanaReconciler{
 		cfg:    cfg,
 		log:    log.New("zanzana.reconciler"),
@@ -85,6 +87,12 @@ func NewZanzanaReconciler(cfg *setting.Cfg, client zanzana.Client, store db.DB, 
 			newResourceReconciler(
 				"user role bindings",
 				userRoleBindingsCollector(store),
+				zanzanaCollector([]string{zanzana.RelationAssignee}),
+				client,
+			),
+			newResourceReconciler(
+				"anonymous role binding",
+				anonymousRoleBindingsCollector(cfg, orgService),
 				zanzanaCollector([]string{zanzana.RelationAssignee}),
 				client,
 			),
