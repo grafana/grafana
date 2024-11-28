@@ -104,7 +104,7 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 	obj.SetNamespace(r.namespace)
 	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
 		Name:      r.repo.Config().Name,
-		Path:      info.Path, // + ref?
+		Path:      joinPathWithRef(info.Path, info.Ref)
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
 	})
@@ -195,4 +195,11 @@ func (f *parsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 		wrap.Errors = append(wrap.Errors, err.Error())
 	}
 	return wrap
+}
+
+func joinPathWithRef(p, r string) string {
+	if r == "" {
+		return p
+	}
+	return fmt.Sprintf("%s#%s", p, r)
 }
