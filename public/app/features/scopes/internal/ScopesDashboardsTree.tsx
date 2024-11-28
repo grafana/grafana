@@ -1,11 +1,12 @@
+import { SuggestedDashboardsFoldersMap } from '@grafana/data';
+
 import { ScopesDashboardsTreeDashboardItem } from './ScopesDashboardsTreeDashboardItem';
 import { ScopesDashboardsTreeFolderItem } from './ScopesDashboardsTreeFolderItem';
-import { OnFolderUpdate, SuggestedDashboardsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeProps {
   folders: SuggestedDashboardsFoldersMap;
   folderPath: string[];
-  onFolderUpdate: OnFolderUpdate;
+  onFolderUpdate: (path: string[], isExpanded: boolean) => void;
 }
 
 export function ScopesDashboardsTree({ folders, folderPath, onFolderUpdate }: ScopesDashboardsTreeProps) {

@@ -72,3 +72,46 @@ export interface ScopeNode {
   };
   spec: ScopeNodeSpec;
 }
+
+export enum ScopesNodesMapItemReason {
+  Persisted,
+  Result,
+}
+
+export interface ScopesNodesMapItem extends ScopeNodeSpec {
+  name: string;
+  reason: ScopesNodesMapItemReason;
+  isExpandable: boolean;
+  isSelectable: boolean;
+  isExpanded: boolean;
+  query: string;
+  nodes: ScopesNodesMap;
+}
+
+export type ScopesNodesMap = Record<string, ScopesNodesMapItem>;
+
+export interface SelectedScope {
+  scope: Scope;
+  path: string[];
+}
+
+export interface TreeScope {
+  scopeName: string;
+  path: string[];
+}
+
+export interface SuggestedDashboardsMapItem {
+  dashboard: string;
+  dashboardTitle: string;
+  items: ScopeDashboardBinding[];
+}
+
+export interface SuggestedDashboardsFoldersMapItem {
+  title: string;
+  isExpanded: boolean;
+  folders: SuggestedDashboardsFoldersMap;
+  dashboards: SuggestedDashboardsMap;
+}
+
+export type SuggestedDashboardsMap = Record<string, SuggestedDashboardsMapItem>;
+export type SuggestedDashboardsFoldersMap = Record<string, SuggestedDashboardsFoldersMapItem>;

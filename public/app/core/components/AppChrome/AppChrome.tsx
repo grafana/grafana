@@ -3,14 +3,14 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject, locationService } from '@grafana/runtime';
+import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
+import { ScopesDashboards } from 'app/features/scopes';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -32,9 +32,9 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const scopesDashboardsState = useScopesDashboardsState();
+  const { dashboards } = useScopes();
   const isScopesDashboardsOpen = Boolean(
-    scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened && !scopesDashboardsState?.isReadOnly
+    dashboards.state.isEnabled && dashboards.state.isOpened && !dashboards.state.isReadOnly
   );
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,

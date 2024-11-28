@@ -6,8 +6,12 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import {
   config,
+  getScopesDashboardsService,
+  getScopesSelectorService,
   navigationLogger,
   reportInteraction,
+  ScopesDashboardsContext,
+  ScopesSelectorContext,
   SidecarContext_EXPERIMENTAL,
   sidecarServiceSingleton_EXPERIMENTAL,
 } from '@grafana/runtime';
@@ -123,17 +127,21 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <GlobalStyles />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                        <div className="grafana-app">
-                          {config.featureToggles.appSidecar ? (
-                            <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                          ) : (
-                            <RouterWrapper {...routerWrapperProps} />
-                          )}
-                          <LiveConnectionWarning />
-                          <PortalContainer />
-                        </div>
-                      </ExtensionRegistriesProvider>
+                      <ScopesSelectorContext.Provider value={getScopesSelectorService()}>
+                        <ScopesDashboardsContext.Provider value={getScopesDashboardsService()}>
+                          <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                            <div className="grafana-app">
+                              {config.featureToggles.appSidecar ? (
+                                <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                              ) : (
+                                <RouterWrapper {...routerWrapperProps} />
+                              )}
+                              <LiveConnectionWarning />
+                              <PortalContainer />
+                            </div>
+                          </ExtensionRegistriesProvider>
+                        </ScopesDashboardsContext.Provider>
+                      </ScopesSelectorContext.Provider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>

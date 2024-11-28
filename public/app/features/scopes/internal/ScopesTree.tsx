@@ -1,19 +1,20 @@
 import { Dictionary, groupBy } from 'lodash';
 import { useMemo } from 'react';
 
+import { ScopesNodesMapItem, ScopesNodesMapItemReason, ScopesNodesMap, TreeScope } from '@grafana/data';
+
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeLoading } from './ScopesTreeLoading';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { Node, NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
 
 export interface ScopesTreeProps {
-  nodes: NodesMap;
+  nodes: ScopesNodesMap;
   nodePath: string[];
   loadingNodeName: string | undefined;
   scopes: TreeScope[];
-  onNodeUpdate: OnNodeUpdate;
-  onNodeSelectToggle: OnNodeSelectToggle;
+  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
+  onNodeSelectToggle: (path: string[]) => void;
 }
 
 export function ScopesTree({
@@ -30,7 +31,7 @@ export function ScopesTree({
   const isNodeLoading = loadingNodeName === nodeId;
   const scopeNames = scopes.map(({ scopeName }) => scopeName);
   const anyChildExpanded = childNodes.some(({ isExpanded }) => isExpanded);
-  const groupedNodes: Dictionary<Node[]> = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
+  const groupedNodes: Dictionary<ScopesNodesMapItem[]> = useMemo(() => groupBy(childNodes, 'reason'), [childNodes]);
   const isLastExpandedNode = !anyChildExpanded && node.isExpanded;
 
   return (
@@ -50,7 +51,7 @@ export function ScopesTree({
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodeReason={NodeReason.Persisted}
+          nodeReason={ScopesNodesMapItemReason.Persisted}
           scopes={scopes}
           scopeNames={scopeNames}
           type="persisted"
@@ -61,7 +62,7 @@ export function ScopesTree({
         <ScopesTreeHeadline
           anyChildExpanded={anyChildExpanded}
           query={node.query}
-          resultsNodes={groupedNodes[NodeReason.Result] ?? []}
+          resultsNodes={groupedNodes[ScopesNodesMapItemReason.Result] ?? []}
         />
 
         <ScopesTreeItem
@@ -71,7 +72,7 @@ export function ScopesTree({
           loadingNodeName={loadingNodeName}
           node={node}
           nodePath={nodePath}
-          nodeReason={NodeReason.Result}
+          nodeReason={ScopesNodesMapItemReason.Result}
           scopes={scopes}
           scopeNames={scopeNames}
           type="result"

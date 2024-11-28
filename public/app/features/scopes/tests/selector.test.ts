@@ -1,13 +1,16 @@
-import { config } from '@grafana/runtime';
+import { config, getScopesSelectorService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { getClosestScopesFacade } from '../utils';
 
 import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
-import { expectNotDashboardReload, expectScopesSelectorValue } from './utils/assertions';
-import { fetchSelectedScopesSpy, getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
+import { expectScopesSelectorValue } from './utils/assertions';
+import { getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
+
+import SpyInstance = jest.SpyInstance;
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
@@ -20,6 +23,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('Selector', () => {
   let dashboardScene: DashboardScene;
+  let fetchSelectedScopesApiSpy: SpyInstance;
+  let dashboardReloadSpy: SpyInstance;
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
@@ -28,17 +33,22 @@ describe('Selector', () => {
 
   beforeEach(() => {
     dashboardScene = renderDashboard();
+    fetchSelectedScopesApiSpy = jest.spyOn(getScopesSelectorService(), 'fetchSelectedScopesApi');
+    dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
   });
 
   afterEach(async () => {
     await resetScenes();
+    fetchSelectedScopesApiSpy.mockClear();
+    dashboardReloadSpy.mockClear();
+    getMock.mockClear();
   });
 
   it('Fetches scope details on save', async () => {
     await openSelector();
     await selectResultCloud();
     await applyScopes();
-    expect(fetchSelectedScopesSpy).toHaveBeenCalled();
+    expect(fetchSelectedScopesApiSpy).toHaveBeenCalled();
     expect(getClosestScopesFacade(dashboardScene)?.value).toEqual(
       mocksScopes.filter(({ metadata: { name } }) => name === 'cloud')
     );
@@ -48,7 +58,7 @@ describe('Selector', () => {
     await openSelector();
     await selectResultCloud();
     await cancelScopes();
-    expect(fetchSelectedScopesSpy).not.toHaveBeenCalled();
+    expect(fetchSelectedScopesApiSpy).not.toHaveBeenCalled();
     expect(getClosestScopesFacade(dashboardScene)?.value).toEqual([]);
   });
 
@@ -59,7 +69,7 @@ describe('Selector', () => {
 
   it('Does not reload the dashboard on scope change', async () => {
     await updateScopes(['grafana']);
-    expectNotDashboardReload();
+    expect(dashboardReloadSpy).not.toHaveBeenCalled();
   });
 
   it('Adds scopes to enrichers', async () => {

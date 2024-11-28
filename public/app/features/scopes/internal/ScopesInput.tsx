@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, ScopesNodesMap, SelectedScope } from '@grafana/data';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { NodesMap, SelectedScope } from './types';
-
 export interface ScopesInputProps {
-  nodes: NodesMap;
+  nodes: ScopesNodesMap;
   scopes: SelectedScope[];
   isDisabled: boolean;
   isLoading: boolean;

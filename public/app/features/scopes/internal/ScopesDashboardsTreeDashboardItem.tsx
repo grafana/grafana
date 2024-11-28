@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, SuggestedDashboardsMapItem, urlUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { SuggestedDashboard } from './types';
-
 export interface ScopesDashboardsTreeDashboardItemProps {
-  dashboard: SuggestedDashboard;
+  dashboard: SuggestedDashboardsMapItem;
 }
 
 export function ScopesDashboardsTreeDashboardItem({ dashboard }: ScopesDashboardsTreeDashboardItemProps) {
