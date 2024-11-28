@@ -90,7 +90,13 @@ export class ResponsiveGridLayoutManager
   }
 
   public static createEmpty() {
-    return new ResponsiveGridLayoutManager({ layout: new SceneCSSGridLayout({ children: [] }) });
+    return new ResponsiveGridLayoutManager({
+      layout: new SceneCSSGridLayout({
+        children: [],
+        templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
+        autoRows: 'minmax(300px, auto)',
+      }),
+    });
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): ResponsiveGridLayoutManager {
