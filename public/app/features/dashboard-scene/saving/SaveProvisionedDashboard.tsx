@@ -3,11 +3,16 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, RadioButtonGroup, Stack, TextArea } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
-import { useGetRepositoryQuery, useUpdateRepositoryFilesMutation } from '../../provisioning/api';
+import { RepositorySelect } from '../../provisioning/RepositorySelect';
+import {
+  useCreateRepositoryFilesMutation,
+  useGetRepositoryQuery,
+  useUpdateRepositoryFilesMutation,
+} from '../../provisioning/api';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -58,10 +63,10 @@ export interface Props {
 
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   const [saveDashboard, request] = useUpdateRepositoryFilesMutation();
+  const [save, saveReq] = useCreateRepositoryFilesMutation();
+  // Saving as a new provisioned dashboard
+  const { saveProvisioned } = drawer.useState();
   const defaultValues = getDefaultValues(meta);
-  const repositoryConfigQuery = useGetRepositoryQuery({ name: defaultValues.repo });
-  const repositoryConfig = repositoryConfigQuery?.data?.spec;
-  const isGitHub = repositoryConfig?.type === 'github';
   const {
     register,
     handleSubmit,
@@ -71,22 +76,25 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
   } = useForm({
     defaultValues: {
       ...defaultValues,
-      workflow: repositoryConfig?.github?.branchWorkflow ? WorkflowOption.Branch : WorkflowOption.PullRequest,
+      workflow: WorkflowOption.Branch,
     },
   });
   const [repo, ref, workflow] = watch(['repo', 'ref', 'workflow']);
+  const repositoryConfigQuery = useGetRepositoryQuery({ name: repo });
+  const repositoryConfig = repositoryConfigQuery?.data?.spec;
+  const isGitHub = repositoryConfig?.type === 'github';
   const href = createPRLink(repositoryConfig, repo, ref);
   const { isDirty } = dashboard.state;
 
   useEffect(() => {
     const appEvents = getAppEvents();
-    if (request.isSuccess) {
+    if (request.isSuccess || saveReq.isSuccess) {
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Dashboard saved'],
       });
       dashboard.setState({ isDirty: false });
-    } else if (request.isError) {
+    } else if (request.isError || saveReq.isError) {
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: ['Error saving dashboard', request.error],
@@ -102,9 +110,20 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
     if (workflow === WorkflowOption.Branch) {
       ref = repositoryConfig?.github?.branch || 'main';
     }
-    saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+    if (!saveProvisioned) {
+      saveDashboard({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+    } else {
+      save({ ref, name: repo, path, message: comment, body: changeInfo.changedSaveModel });
+    }
   };
 
+  if (repositoryConfigQuery.isLoading) {
+    return (
+      <Stack justifyContent={'center'}>
+        <Spinner />
+      </Stack>
+    );
+  }
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
@@ -117,11 +136,21 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
 
         <Field label="Repository">
-          <Input {...register('repo')} readOnly />
+          {saveProvisioned ? (
+            <Controller
+              control={control}
+              name={'repo'}
+              render={({ field: { ref, onChange, ...field } }) => {
+                return <RepositorySelect {...field} onChange={(v) => onChange(v.value)} />;
+              }}
+            />
+          ) : (
+            <Input {...register('repo')} readOnly />
+          )}
         </Field>
 
         <Field label="Path" description="File path inside the repository. This must be .json or .yaml">
-          <Input {...register('path')} readOnly />
+          <Input {...register('path')} readOnly={!saveProvisioned} />
         </Field>
 
         {isGitHub && (
@@ -130,8 +159,16 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
               <Controller
                 control={control}
                 name={'workflow'}
-                render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig.github?.branch)} />
+                render={({ field: { ref, value, ...field } }) => (
+                  <RadioButtonGroup
+                    {...field}
+                    options={getWorkflowOptions(repositoryConfig.github?.branch)}
+                    value={
+                      value || repositoryConfig?.github?.branchWorkflow
+                        ? WorkflowOption.Branch
+                        : WorkflowOption.PullRequest
+                    }
+                  />
                 )}
               />
             </Field>
