@@ -117,36 +117,42 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 	if err != nil {
 		// In case of error, fallback to the legacy authenticator
 		newCtx, err = f.fallback.Authenticate(ctx)
-		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
 		span.SetAttributes(attribute.Bool("fallback_used", true))
+		if err != nil {
+			f.metrics.requestsTotal.WithLabelValues("true", "false").Inc()
+			return nil, err
+		}
+		f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
 		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
+		return newCtx, err
 	}
+	f.metrics.requestsTotal.WithLabelValues("false", fmt.Sprintf("%t", err == nil)).Inc()
 	return newCtx, err
 }
 
 const (
 	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authenticator"
+	metricsSubSystem = "grpc_authenticator_with_fallback"
 )
 
 type metrics struct {
-	fallbackCounter *prometheus.CounterVec
+	requestsTotal *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
 	m := &metrics{
-		fallbackCounter: prometheus.NewCounterVec(
+		requestsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
-				Name:      "fallback_total",
-				Help:      "Number of times the fallback authenticator was used",
-			}, []string{"result"}),
+				Name:      "requests_total",
+				Help:      "Number requests using the authenticator with fallback",
+			}, []string{"fallback_used", "result"}),
 	}
 
 	if reg != nil {
 		once.Do(func() {
-			reg.MustRegister(m.fallbackCounter)
+			reg.MustRegister(m.requestsTotal)
 		})
 	}
 
