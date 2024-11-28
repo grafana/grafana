@@ -6,20 +6,24 @@ import { AppEvents } from '@grafana/data';
 import { config, getAppEvents, getBackendSrv } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 
+import { Resource } from '../apiserver/types';
 import { Loader } from '../plugins/admin/components/Loader';
 
 import { useCreateRepositoryImportMutation, useListRepositoryQuery } from './api';
+import { RepositorySpec } from './api/types';
 
 interface Props {
-  name?: string;
-  folder?: string;
+  repository: Resource<RepositorySpec>;
 }
 
-export function ImportFromRepository({ name, folder }: Props) {
+export function ImportFromRepository({ repository }: Props) {
   const query = useListRepositoryQuery();
   const [importResource, importQuery] = useCreateRepositoryImportMutation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const name = repository.metadata?.name;
+  const folder = repository.spec?.folder;
+  const branch = repository.spec?.github?.branch;
 
   // TODO generate endpoints for this
   const { value } = useAsync(async () => {
@@ -48,7 +52,7 @@ export function ImportFromRepository({ name, folder }: Props) {
       return;
     }
 
-    importResource({ name, ref: 'main' });
+    importResource({ name, ref: branch || 'main' });
   };
 
   if (query.isLoading) {
