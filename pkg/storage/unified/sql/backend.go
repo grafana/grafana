@@ -141,30 +141,26 @@ func (b *backend) WriteEvent(ctx context.Context, event resource.WriteEvent) (in
 func (b *backend) Namespaces(ctx context.Context) ([]string, error) {
 	var namespaces []string
 
-	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) (txErr error) {
-		var rows db.Rows
-
-		rows, txErr = tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
-		if txErr != nil {
-			return txErr
+	err := b.db.WithTx(ctx, RepeatableRead, func(ctx context.Context, tx db.Tx) error {
+		rows, err := tx.QueryContext(ctx, "SELECT DISTINCT(namespace) FROM resource ORDER BY namespace;")
+		if err != nil {
+			return err
 		}
 
 		defer func() {
-			txErr = rows.Close()
+			_ = rows.Close()
 		}()
 
 		for rows.Next() {
 			var ns string
-
-			txErr = rows.Scan(&ns)
-			if txErr != nil {
-				return txErr
+			err = rows.Scan(&ns)
+			if err != nil {
+				return err
 			}
-
 			namespaces = append(namespaces, ns)
 		}
 
-		return txErr
+		return nil
 	})
 
 	return namespaces, err
