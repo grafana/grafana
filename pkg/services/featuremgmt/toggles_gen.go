@@ -575,6 +575,10 @@ const (
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
+	// FlagScopeApi
+	// In-development feature flag for the scope api using the app platform.
+	FlagScopeApi = "scopeApi"
+
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
@@ -894,6 +898,10 @@ const (
 	// FlagAlertingUIOptimizeReducer
 	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
 	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
+
+	// FlagAzureMonitorEnableUserAuth
+	// Enables user auth for Azure Monitor datasource only
+	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
 
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
