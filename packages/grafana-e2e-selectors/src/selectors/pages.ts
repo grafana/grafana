@@ -205,7 +205,7 @@ export const versionedPages = {
             '11.2.0': 'data-testid new share button share snapshot',
           },
           inviteUser: {
-            '11.4.0': 'data-testid new share button invite user',
+            '11.5.0': 'data-testid new share button invite user',
           },
         },
       },

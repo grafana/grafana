@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import * as React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
@@ -23,6 +24,7 @@ export interface ShareDrawerMenuItem {
   icon: IconName;
   renderCondition: boolean;
   onClick: (d: DashboardScene) => void;
+  addDividerBelow?: boolean;
 }
 
 let customShareDrawerItems: ShareDrawerMenuItem[] = [];
@@ -42,6 +44,18 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
   const buildMenuItems = useCallback(() => {
     const menuItems: ShareDrawerMenuItem[] = [];
+
+    menuItems.push({
+      shareId: shareDashboardType.inviteUser,
+      testId: newShareButtonSelector.inviteUser,
+      icon: 'external-link-alt',
+      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
+      renderCondition: !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
+      onClick: () => {
+        window.open(config.externalUserMngLinkUrl, '_blank');
+      },
+      addDividerBelow: true,
+    });
 
     menuItems.push({
       shareId: shareDashboardType.link,
@@ -79,18 +93,6 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
 
     customShareDrawerItems.forEach((d) => menuItems.push(d));
 
-    menuItems.push({
-      shareId: shareDashboardType.inviteUser,
-      testId: newShareButtonSelector.inviteUser,
-      icon: 'external-link-alt',
-      label: t('share-dashboard.menu.invite-user-title', 'Invite new member'),
-      renderCondition:
-        !!config.externalUserMngLinkUrl && contextSrv.hasPermission(AccessControlAction.OrgUsersAdd),
-      onClick: () => {
-        window.open(config.externalUserMngLinkUrl, '_blank');
-      },
-    });
-
     return menuItems.filter((item) => item.renderCondition);
   }, [panel]);
 
@@ -106,14 +108,17 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   return (
     <Menu data-testid={newShareButtonSelector.container}>
       {buildMenuItems().map((item) => (
-        <Menu.Item
-          key={item.shareId}
-          testId={item.testId}
-          label={item.label}
-          icon={item.icon}
-          description={item.description}
-          onClick={() => onClick(item)}
-        />
+        <React.Fragment key={`${item.shareId}-item`}>
+          <Menu.Item
+            key={item.shareId}
+            testId={item.testId}
+            label={item.label}
+            icon={item.icon}
+            description={item.description}
+            onClick={() => onClick(item)}
+          />
+          {item.addDividerBelow && <Menu.Divider />}
+        </React.Fragment>
       ))}
     </Menu>
   );
