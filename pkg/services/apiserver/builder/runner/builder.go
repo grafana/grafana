@@ -83,7 +83,6 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
-
 		}
 	}
 	return nil
