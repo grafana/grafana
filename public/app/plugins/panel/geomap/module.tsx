@@ -34,6 +34,14 @@ export const plugin = new PanelPlugin<Options>(GeomapPanel)
 
     builder.addBooleanSwitch({
       category,
+      path: 'view.dashboardVariable',
+      description: 'Store view bounds into the "mapViewData" dashboard variable.',
+      name: 'Enable dashboard variable (Experimental)',
+      defaultValue: false,
+    });
+
+    builder.addBooleanSwitch({
+      category,
       path: 'view.shared',
       description: t(
         'geomap.description-share-view',

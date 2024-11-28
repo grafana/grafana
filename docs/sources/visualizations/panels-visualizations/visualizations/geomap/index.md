@@ -177,6 +177,16 @@ Default Views are also available including:
 | South Asia | South-East Asia | East Asia | Australia | Oceania |
 <!-- prettier-ignore-end -->
 
+#### Enable dashboard variable (Experimental)
+
+If toggled the Geomap panel update, if exists, the dashboard's variable named `mapViewData` with the bounding box of the current view.
+
+The variable can be a `Custom` variable type and can be hidden on the dashbaord (Show on dashboard: Nothing).
+
+You can use then the variable inside your query to receive on the server side a string like this:
+
+    4.102646520428928,44.489253792751214,12.793524298588558,46.4346026776777
+
 #### Share view
 
 The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.

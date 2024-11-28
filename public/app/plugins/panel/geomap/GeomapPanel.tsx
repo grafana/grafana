@@ -7,6 +7,7 @@ import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
+import { EventsKey } from 'ol/events';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import { fromLonLat, transformExtent } from 'ol/proj';
@@ -16,7 +17,7 @@ import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -73,6 +74,8 @@ export class GeomapPanel extends Component<Props, State> {
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
 
+  mapViewData?: string;
+
   constructor(props: Props) {
     super(props);
     this.state = { ttipOpen: false, legends: [] };
@@ -125,6 +128,9 @@ export class GeomapPanel extends Component<Props, State> {
     // Check for resize
     if (this.props.height !== nextProps.height || this.props.width !== nextProps.width) {
       this.map.updateSize();
+      if (this.props.options?.view?.dashboardVariable) {
+        this.updateGeoVariables(this.map.getView());
+      }
     }
 
     // External data changed
@@ -331,7 +337,37 @@ export class GeomapPanel extends Component<Props, State> {
     return view;
   };
 
+  /**
+   * Updates the dashboard variable `mapViewData` with the view extent value.
+   * Use a debounce strategy to wait the user stop dragging or zooming the map.
+   */
+  private timeoutId: NodeJS.Timeout | null = null; // for debounce
+
+  updateGeoVariables = (view: View) => {
+    const bounds = view.calculateExtent();
+    const bounds4326 = transformExtent(bounds, 'EPSG:3857', 'EPSG:4326');
+    console.log('GeomapPanel.updateGeoVariables', bounds4326);
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      locationService.partial({ 'var-mapViewData': `${bounds4326}` }, true);
+    }, 500);
+  };
+
+  private viewListernerKey: EventsKey | null = null;
+
   initViewExtent(view: View, config: MapViewConfig) {
+    if (config.dashboardVariable) {
+      if (this.viewListernerKey != null) {
+        view.un('change', this.viewListernerKey.listener);
+      }
+      this.viewListernerKey = view.on('change', () => {
+        this.updateGeoVariables(view);
+      });
+      this.updateGeoVariables(view);
+    }
+
     const v = centerPointRegistry.getIfExists(config.id);
     if (v) {
       let coord: Coordinate | undefined = undefined;

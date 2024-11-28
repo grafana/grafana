@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					layer?:     string
 					shared?:    bool
 					noRepeat?:  bool | *false
+					dashboardVariable?: bool
 				} @cuetsy(kind="interface")
 
 				ControlsOptions: {
