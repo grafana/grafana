@@ -148,6 +148,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       )
     );
 
+    debugger;
+    console.log(runningQueries);
     return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 

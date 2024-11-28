@@ -1,4 +1,4 @@
-import { Observable, defer, finalize, map, of, take } from 'rxjs';
+import { Observable, defer, filter, finalize, first, map, of, switchMap, take, tap } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -10,6 +10,7 @@ import {
   DataTopic,
   PanelData,
   DataFrame,
+  LoadingState,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -86,7 +87,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
             key: 'source-ds-provider',
           };
         }),
-        this.takeOneIfWithinMixedDS(options.requestId),
+        this.emitFirstLoadedDataIfMixedDS(options.requestId),
         finalize(() => cleanUp?.())
       );
     });
@@ -111,11 +112,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
   }
 
-  private takeOneIfWithinMixedDS(
+  private emitFirstLoadedDataIfMixedDS(
     requestId: string
   ): (source: Observable<DataQueryResponse>) => Observable<DataQueryResponse> {
     return (source: Observable<DataQueryResponse>) => {
-      return requestId.includes(MIXED_REQUEST_PREFIX) ? source.pipe(take(1)) : source;
+      return requestId.includes(MIXED_REQUEST_PREFIX)
+        ? source.pipe(
+            filter((result) => result.state === LoadingState.Done),
+            first()
+          )
+        : source;
     };
   }
 
