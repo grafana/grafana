@@ -175,15 +175,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 	}
 	dbPerms := make([]UserRBACPermission, 0)
 
-	userID := int64(-1)
-	if options.TypedID != "" {
-		var err error
-		userID, err = options.ComputeUserID()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleNameFilterJoin := ""
 		if len(options.RolePrefixes) > 0 {
@@ -193,28 +184,25 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		params := []any{}
 
 		direct := userAssignsSQL
-		if userID >= 0 {
-			direct += " WHERE ur.user_id = ?"
-			params = append(params, userID)
-		}
-
 		team := teamAssignsSQL
-		if userID >= 0 {
-			team += " WHERE tm.user_id = ?"
-			params = append(params, userID)
-		}
-
 		basic := basicRoleAssignsSQL
-		if userID >= 0 {
+
+		if options.UserID > 0 {
+			direct += " WHERE ur.user_id = ?"
+			params = append(params, options.UserID)
+
+			team += " WHERE tm.user_id = ?"
+			params = append(params, options.UserID)
+
 			basic += " WHERE ou.user_id = ?"
-			params = append(params, userID)
+			params = append(params, options.UserID)
 		}
 
 		grafanaAdmin := fmt.Sprintf(grafanaAdminAssignsSQL, s.sql.Quote("user"))
 		params = append(params, accesscontrol.RoleGrafanaAdmin)
-		if userID >= 0 {
+		if options.UserID > 0 {
 			grafanaAdmin += " AND sa.user_id = ?"
-			params = append(params, userID)
+			params = append(params, options.UserID)
 		}
 
 		// Find permissions

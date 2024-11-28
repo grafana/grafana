@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -40,7 +42,7 @@ func TestAPI_getUserActions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -93,7 +95,7 @@ func TestAPI_getUserPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -150,6 +152,19 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
 		},
 		{
+			desc:           "Should resolve UID based identifier to the corresponding ID",
+			filters:        "?namespacedId=user:user_2_uid",
+			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
+			expectedCode:   http.StatusOK,
+			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
+		},
+		{
+			desc:         "Should fail if cannot resolve UID based identifier",
+			filters:      "?namespacedId=user:non_existent_uid",
+			permissions:  map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
+			expectedCode: http.StatusBadRequest,
+		},
+		{
 			desc:           "Should reduce permissions",
 			filters:        "?namespacedId=service-account:2",
 			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:id:1"}, {Action: "users:read", Scope: "users:*"}}},
@@ -174,7 +189,10 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedUsersPermissions: tt.permissions}
 			accessControl := actest.FakeAccessControl{ExpectedEvaluate: true} // Always allow access to the endpoint
-			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
+			mockUserSvc := usertest.NewMockService(t)
+			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "user_2_uid"}).Return(&user.User{ID: 2}, nil).Maybe()
+			mockUserSvc.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "non_existent_uid"}).Return(nil, user.ErrUserNotFound).Maybe()
+			api := NewAccessControlAPI(routing.NewRouteRegister(), accessControl, acSvc, mockUserSvc, featuremgmt.WithFeatures(featuremgmt.FlagAccessControlOnCall))
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
