@@ -24,18 +24,25 @@ import (
 )
 
 type githubRepository struct {
-	logger *slog.Logger
-	config *provisioning.Repository
-	gh     pgh.Client
+	logger  *slog.Logger
+	config  *provisioning.Repository
+	gh      pgh.Client
+	baseURL *url.URL
 }
 
 var _ Repository = (*githubRepository)(nil)
 
-func NewGitHub(ctx context.Context, config *provisioning.Repository, factory pgh.ClientFactory) *githubRepository {
+func NewGitHub(
+	ctx context.Context,
+	config *provisioning.Repository,
+	factory pgh.ClientFactory,
+	baseURL *url.URL,
+) *githubRepository {
 	return &githubRepository{
-		config: config,
-		logger: slog.Default().With("logger", "github-repository"),
-		gh:     factory.New(ctx, config.Spec.GitHub.Token),
+		config:  config,
+		logger:  slog.Default().With("logger", "github-repository"),
+		gh:      factory.New(ctx, config.Spec.GitHub.Token),
+		baseURL: baseURL,
 	}
 }
 
@@ -482,7 +489,9 @@ Grafana spotted some changes for your resources in this pull request:
 
 | File Name | Type | Path | Action | Links |
 |-----------|------|------|--------|-------|
-{{range . }}| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|{{end}}
+{{- range .}}
+| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
+{{- end}}
 
 Take a look and judge yourself! 🚀`
 
@@ -531,6 +540,8 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("create replicator: %w", err)
 	}
 
+	prURL := event.GetPullRequest().GetHTMLURL()
+
 	// TODO: implement the real handling of the files
 	for _, file := range files {
 		row := commentFile{
@@ -543,27 +554,27 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		path := file.GetFilename()
 		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
 
-		ref := file.GetSHA()
+		ref := event.GetPullRequest().GetHead().GetRef()
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch file.GetStatus() {
 		case "added":
-			row.Preview = r.previewURL(file.GetSHA(), path)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "modified":
-			row.Original = r.previewURL(baseBranch, path)
-			row.Current = r.previewURL(mainBranch, path)
-			row.Preview = r.previewURL(file.GetSHA(), path)
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "removed":
-			row.Original = r.previewURL(baseBranch, path)
-			row.Current = r.previewURL(mainBranch, path)
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
 			ref = baseBranch
 		case "renamed":
-			row.Original = r.previewURL(baseBranch, file.GetPreviousFilename())
-			row.Current = r.previewURL(mainBranch, file.GetPreviousFilename())
-			row.Preview = r.previewURL(file.GetSHA(), path)
+			row.Original = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
+			row.Current = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "changed":
-			row.Original = r.previewURL(baseBranch, path)
-			row.Current = r.previewURL(mainBranch, path)
-			row.Preview = r.previewURL(file.GetSHA(), path)
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "unchanged":
 			logger.InfoContext(ctx, "ignore unchanged file")
 			continue
@@ -614,13 +625,23 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
 
-	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber())
+	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber(), "num_changes", len(rows))
 
 	return nil
 }
 
-func (r *githubRepository) previewURL(ref, path string) string {
-	return fmt.Sprintf("%s/dashboard/preview/%s/%s", "https://grafana.com", ref, path)
+// previewURL returns the URL to preview the file in Grafana
+func (r *githubRepository) previewURL(ref, filePath, pullRequestURL string) string {
+	// Copy the baseURL to modify path and query
+	baseURL := *r.baseURL
+	baseURL.Path = path.Join(baseURL.Path, "/admin/provisioning", r.Config().GetName(), "dashboard/preview", filePath)
+
+	query := baseURL.Query()
+	query.Set("ref", ref)
+	query.Set("pull_request_url", url.QueryEscape(pullRequestURL))
+	baseURL.RawQuery = query.Encode()
+
+	return baseURL.String()
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {

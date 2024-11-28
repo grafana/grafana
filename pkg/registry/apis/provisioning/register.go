@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"path/filepath"
 	"slices"
 
@@ -207,7 +208,12 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		return repository.NewGitHub(ctx, r, b.ghFactory), nil
+		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
+		if err != nil {
+			return nil, fmt.Errorf("invalid base URL: %w", err)
+		}
+
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
