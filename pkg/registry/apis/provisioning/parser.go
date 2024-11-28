@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
@@ -47,6 +48,9 @@ type parsedFile struct {
 	info *repository.FileInfo
 	// Parsed contents
 	obj *unstructured.Unstructured
+	// Metadata accessor for the file object
+	meta utils.GrafanaMetaAccessor
+
 	// The Kind is defined in the file
 	gvk *schema.GroupVersionKind
 	// The Resource is found by mapping Kind to the right apiserver
@@ -75,9 +79,16 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 			return nil, err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+
 	parsed := &parsedFile{
 		info: info,
 		obj:  obj,
+		meta: meta,
 		gvk:  gvk,
 	}
 
@@ -89,7 +100,14 @@ func (r *fileParser) parse(ctx context.Context, logger *slog.Logger, info *repos
 	if obj.GetNamespace() != "" && obj.GetNamespace() != r.namespace {
 		parsed.errors = append(parsed.errors, ErrNamespaceMismatch)
 	}
+
 	obj.SetNamespace(r.namespace)
+	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+		Name:      r.repo.Config().Name,
+		Path:      info.Path, // + ref?
+		Hash:      info.Hash,
+		Timestamp: nil, // ???&info.Modified.Time,
+	})
 
 	// When name is missing use the file path as the k8s name
 	if obj.GetName() == "" {

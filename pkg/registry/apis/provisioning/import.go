@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -102,6 +101,7 @@ func (c *importConnector) Connect(
 				continue
 			}
 
+			// Calculate name based on the file path
 			name := path.Base(entry.Path)
 			if strings.ContainsRune(name, '.') {
 				name = name[:strings.LastIndex(name, ".")]
@@ -114,6 +114,9 @@ func (c *importConnector) Connect(
 				responder.Error(apierrors.NewInternalError(fmt.Errorf("failed to read %s: %w", entry.Path, err)))
 				return
 			}
+			// The parse function will fill in the repository metadata, so copy it over here
+			info.Hash = entry.Hash
+			info.Modified = nil // modified?
 
 			// NOTE: We're validating here to make sure we want the folders to be created.
 			//  If the file isn't valid, its folders aren't relevant, either.
@@ -129,6 +132,7 @@ func (c *importConnector) Connect(
 				return
 			}
 
+			logger = logger.With("gvk", file.gvk)
 			if file.client == nil {
 				logger.DebugContext(ctx, "unable to find client for", "obj", file.obj)
 				continue
@@ -177,25 +181,10 @@ func (c *importConnector) Connect(
 				continue
 			}
 
-			obj, err := utils.MetaAccessor(file.obj)
-			if err != nil {
-				logger.DebugContext(ctx, "error writing object", err)
-				continue
-			}
-
-			obj.SetName(name)
-			obj.SetNamespace(ns)
-			obj.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-				Name:      cfg.Name,
-				Path:      entry.Path,
-				Hash:      entry.Hash,
-				Timestamp: nil, // ?? is timestamp easy to get?
-			})
+			file.obj.SetName(name)
 			if folder := path.Base(dir); folder != "." && folder != "/" {
-				obj.SetFolder(path.Base(dir))
+				file.meta.SetFolder(path.Base(dir))
 			}
-
-			logger = logger.With("gvk", file.gvk)
 
 			_, err = file.client.Get(r.Context(), name, metav1.GetOptions{})
 			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
@@ -205,7 +194,7 @@ func (c *importConnector) Connect(
 				return
 			}
 
-			logger.DebugContext(ctx, "upserting kube object", "name", obj.GetName())
+			logger.DebugContext(ctx, "upserting kube object", "name", file.obj.GetName())
 			if err != nil { // IsNotFound
 				_, err = file.client.Create(r.Context(), file.obj, metav1.CreateOptions{})
 			} else { // already exists
