@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -140,6 +141,7 @@ func (c *importConnector) Connect(
 
 			// TODO: Don't create folders for resources that aren't folder-able. Maybe we can check the annotations for this?
 			dir := path.Dir(entry.Path)
+			parent := repo.Config().Spec.Folder
 			if dir != "." && dir != "/" {
 				logger := logger.With("dir", dir)
 				logger.DebugContext(ctx, "creating directories")
@@ -157,6 +159,9 @@ func (c *importConnector) Connect(
 							"metadata": map[string]any{
 								"name":      folder,
 								"namespace": ns,
+								"annotations": map[string]any{
+									apiutils.AnnoKeyFolder: parent,
+								},
 							},
 							"spec": map[string]any{
 								"title":       folder, // TODO: how do we want to get this?
@@ -169,10 +174,8 @@ func (c *importConnector) Connect(
 						responder.Error(apierrors.NewInternalError(fmt.Errorf("got error when creating folder %s: %w", folder, err)))
 						return
 					}
+					parent = folder
 					logger.DebugContext(ctx, "folder created")
-
-					// TODO: folder parents
-					// TODO: the top-most folder's parent must be the repo folder.
 				}
 			}
 
@@ -182,9 +185,7 @@ func (c *importConnector) Connect(
 			}
 
 			file.Obj.SetName(name)
-			if folder := path.Base(dir); folder != "." && folder != "/" {
-				file.Meta.SetFolder(path.Base(dir))
-			}
+			file.Meta.SetFolder(parent)
 
 			_, err = file.Client.Get(r.Context(), name, metav1.GetOptions{})
 			// FIXME: Remove the 'false &&' when .Get returns 404 on 404 instead of 500. Until then, this is a really ugly workaround.
