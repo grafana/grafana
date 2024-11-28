@@ -142,7 +142,7 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
-				Name:      "requests_total",
+				Name:      "checks_total",
 				Help:      "Number requests using the authenticator with fallback",
 			}, []string{"fallback_used", "result"}),
 	}
