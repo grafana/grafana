@@ -12,6 +12,7 @@ import {
   getDefaultTimeRange,
   LogsDedupStrategy,
   EventBusSrv,
+  DataFrameType,
 } from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
@@ -108,23 +109,36 @@ describe('LogsPanel', () => {
       createDataFrame({
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
             values: [
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
-            labels: {
-              app: 'common_app',
-              job: 'common_job',
-            },
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+                job: 'common_job',
+              },
+              {
+                app: 'common_app',
+                job: 'common_job',
+              },
+            ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
 
@@ -172,12 +186,12 @@ describe('LogsPanel', () => {
       createDataFrame({
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
             values: [
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
@@ -185,6 +199,9 @@ describe('LogsPanel', () => {
             ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
     it('shows (no common labels) when showCommonLabels is set to true', async () => {
@@ -214,20 +231,33 @@ describe('LogsPanel', () => {
         refId: 'A',
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
-            values: ['logline text'],
-            labels: {
-              app: 'common_app',
-              job: 'common_job',
-            },
+            values: ['logline text', 'more text'],
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+                job: 'common_job',
+              },
+              {
+                app: 'common_app',
+                job: 'common_job',
+              },
+            ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
 
@@ -367,20 +397,29 @@ describe('LogsPanel', () => {
         refId: 'A',
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
             values: ['logline text'],
-            labels: {
-              app: 'common_app',
-              job: 'common_job',
-            },
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+                job: 'common_job',
+              },
+            ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
 
@@ -431,19 +470,28 @@ describe('LogsPanel', () => {
         refId: 'A',
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
             values: ['logline text'],
-            labels: {
-              app: 'common_app',
-            },
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
 
@@ -544,19 +592,28 @@ describe('LogsPanel', () => {
         refId: 'A',
         fields: [
           {
-            name: 'time',
+            name: 'timestamp',
             type: FieldType.time,
             values: ['2019-04-26T09:28:11.352440161Z'],
           },
           {
-            name: 'message',
+            name: 'body',
             type: FieldType.string,
             values: ['logline text'],
-            labels: {
-              app: 'common_app',
-            },
+          },
+          {
+            name: 'labels',
+            type: FieldType.other,
+            values: [
+              {
+                app: 'common_app',
+              },
+            ],
           },
         ],
+        meta: {
+          type: DataFrameType.LogLines,
+        },
       }),
     ];
 
