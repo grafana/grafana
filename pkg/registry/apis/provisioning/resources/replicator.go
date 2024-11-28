@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"path"
 	"path/filepath"
 	"strings"
 
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,18 +45,20 @@ func (f *ReplicatorFactory) New() (repository.FileReplicator, error) {
 	})
 
 	return &replicator{
-		logger:  slog.Default().With("logger", "replicator", "namespace", f.namespace),
-		parser:  parser,
-		client:  dynamicClient,
-		folders: folders,
+		logger:     slog.Default().With("logger", "replicator", "namespace", f.namespace),
+		parser:     parser,
+		client:     dynamicClient,
+		folders:    folders,
+		repository: f.repo,
 	}, nil
 }
 
 type replicator struct {
-	logger  *slog.Logger
-	client  *DynamicClient
-	parser  *FileParser
-	folders dynamic.ResourceInterface
+	logger     *slog.Logger
+	client     *DynamicClient
+	parser     *FileParser
+	folders    dynamic.ResourceInterface
+	repository repository.Repository
 }
 
 // Replicate creates a new resource in the cluster.
@@ -99,13 +101,13 @@ func (r *replicator) Replicate(ctx context.Context, fileInfo *repository.FileInf
 
 func (r *replicator) createFolderPath(ctx context.Context, filePath string) (string, error) {
 	dir := filepath.Dir(filePath)
-	if dir == "." || dir == "/" {
-		return "", nil
+	parent := r.repository.Config().Spec.Folder
+	if dir == "." {
+		return parent, nil
 	}
 
 	logger := r.logger.With("file", filePath)
-
-	for _, folder := range strings.Split(dir, "/") {
+	for _, folder := range strings.Split(dir, string(filepath.Separator)) {
 		logger := logger.With("folder", folder)
 		obj, err := r.folders.Get(ctx, folder, metav1.GetOptions{})
 		// FIXME: Check for IsNotFound properly
@@ -119,6 +121,9 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 				"metadata": map[string]any{
 					"name":      folder,
 					"namespace": r.client.GetNamespace(),
+					"annotations": map[string]any{
+						apiutils.AnnoKeyFolder: parent,
+					},
 				},
 				"spec": map[string]any{
 					"title":       folder, // TODO: how do we want to get this?
@@ -127,18 +132,11 @@ func (r *replicator) createFolderPath(ctx context.Context, filePath string) (str
 			},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			return "", fmt.Errorf("failed to create folder %s: %w", folder, err)
+			return parent, fmt.Errorf("failed to create folder %s: %w", folder, err)
 		}
 
+		parent = folder
 		logger.InfoContext(ctx, "folder created")
-
-		// TODO: folder parents
-		// TODO: the top-most folder's parent must be the repo folder.
-	}
-
-	parent := path.Base(path.Dir(filePath))
-	if parent == "." || parent == "/" {
-		return "", nil
 	}
 
 	return parent, nil

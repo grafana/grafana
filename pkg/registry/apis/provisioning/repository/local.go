@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	// Git still uses sha1 for the most part: https://git-scm.com/docs/hash-function-transition
+	//nolint:gosec
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
@@ -143,6 +145,11 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 	}
 
 	fullpath := filepath.Join(r.path, path)
+	// Treats https://securego.io/docs/rules/g304.html
+	if !strings.HasPrefix(fullpath, r.path) {
+		return nil, ErrFileNotFound
+	}
+
 	info, err := os.Stat(fullpath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
@@ -156,7 +163,7 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 		return nil, err
 	}
 
-	hash, _, err := r.calculateFileHash(ctx, fullpath)
+	hash, _, err := r.calculateFileHash(fullpath)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +196,7 @@ func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref
 		}
 		if !info.IsDir() {
 			entry.Blob = true
-			entry.Hash, _, err = r.calculateFileHash(ctx, path)
+			entry.Hash, _, err = r.calculateFileHash(path)
 			if err != nil {
 				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
 			}
@@ -201,7 +208,14 @@ func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref
 	return entries, err
 }
 
-func (r *localRepository) calculateFileHash(ctx context.Context, path string) (string, int64, error) {
+func (r *localRepository) calculateFileHash(path string) (string, int64, error) {
+	// Treats https://securego.io/docs/rules/g304.html
+	if !strings.HasPrefix(path, r.path) {
+		return "", 0, ErrFileNotFound
+	}
+
+	// We've already made sure the path is safe, so we'll ignore the gosec lint.
+	//nolint:gosec
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
 		return "", 0, err

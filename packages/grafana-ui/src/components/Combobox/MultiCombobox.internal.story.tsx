@@ -1,16 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { MultiCombobox } from './MultiCombobox';
-import mdx from './MultiCombobox.mdx';
 
 const meta: Meta<typeof MultiCombobox> = {
   title: 'Forms/MultiCombobox',
   component: MultiCombobox,
-  parameters: {
-    docs: {
-      page: mdx,
-    },
-  },
 };
 
 export default meta;
