@@ -288,20 +288,15 @@ func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Contex
 		return nil
 	}
 
-	client, lookup, err := b.client.New(cfg.GetNamespace())
+	client, _, err := b.client.New(cfg.GetNamespace())
 	if err != nil {
 		return err
 	}
-
-	folderResource, ok := lookup.Resource(schema.GroupVersionKind{
-		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
-		Kind:    "Folder",
+	folderIface := client.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
 	})
-	if !ok {
-		return fmt.Errorf("failed to get resource client of the Folder kind")
-	}
-	folderIface := client.Resource(folderResource)
 
 	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
 	if err == nil {
