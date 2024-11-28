@@ -144,6 +144,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignoring frontend packages specifics
 /packages/grafana-ui/.yarn/.cache
+/packages/grafana-ui/.storybook/static
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
