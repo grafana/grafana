@@ -13,7 +13,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-  config: jest.requireActual('@grafana/runtime').config,
 }));
 
 describe('createShortLink', () => {
