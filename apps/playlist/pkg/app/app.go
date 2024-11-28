@@ -76,12 +76,12 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-func GetKinds() map[schema.GroupVersion]resource.Kind {
+func GetKinds() map[schema.GroupVersion][]resource.Kind {
 	gv := schema.GroupVersion{
 		Group:   playlistv0alpha1.PlaylistKind().Group(),
 		Version: playlistv0alpha1.PlaylistKind().Version(),
 	}
-	return map[schema.GroupVersion]resource.Kind{
-		gv: playlistv0alpha1.PlaylistKind(),
+	return map[schema.GroupVersion][]resource.Kind{
+		gv: {playlistv0alpha1.PlaylistKind()},
 	}
 }

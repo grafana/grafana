@@ -24,7 +24,7 @@ type AppBuilderConfig struct {
 	Authorizer          authorizer.Authorizer
 	LegacyStorageGetter LegacyStorageGetter
 	OpenAPIDefGetter    common.GetOpenAPIDefinitions
-	ManagedKinds        map[schema.GroupVersion]resource.Kind
+	ManagedKinds        map[schema.GroupVersion][]resource.Kind
 	CustomConfig        any
 
 	groupVersion schema.GroupVersion
@@ -60,26 +60,30 @@ func (b *appBuilder) GetGroupVersion() schema.GroupVersion {
 // InstallSchema implements APIGroupBuilder.InstallSchema
 func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gv := b.GetGroupVersion()
-	for _, kind := range b.config.ManagedKinds {
-		scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()), kind.ZeroValue())
-		scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+	for _, kinds := range b.config.ManagedKinds {
+		for _, kind := range kinds {
+			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()), kind.ZeroValue())
+			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+		}
 	}
 	return scheme.SetVersionPriority(gv)
 }
 
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo
 func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	for _, kind := range b.config.ManagedKinds {
-		version := kind.GroupVersionKind().Version
-		if _, ok := apiGroupInfo.VersionedResourcesStorageMap[version]; !ok {
-			apiGroupInfo.VersionedResourcesStorageMap[version] = make(map[string]rest.Storage)
+	for _, kinds := range b.config.ManagedKinds {
+		for _, kind := range kinds {
+			version := kind.GroupVersionKind().Version
+			if _, ok := apiGroupInfo.VersionedResourcesStorageMap[version]; !ok {
+				apiGroupInfo.VersionedResourcesStorageMap[version] = make(map[string]rest.Storage)
+			}
+			resourceInfo := KindToResourceInfo(kind)
+			store, err := b.getStorage(resourceInfo, opts)
+			if err != nil {
+				return err
+			}
+			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
 		}
-		resourceInfo := KindToResourceInfo(kind)
-		store, err := b.getStorage(resourceInfo, opts)
-		if err != nil {
-			return err
-		}
-		apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
 	}
 	return nil
 }
