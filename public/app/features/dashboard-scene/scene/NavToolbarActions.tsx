@@ -192,6 +192,26 @@ export function ToolbarActions({ dashboard }: Props) {
         </Button>
       ),
     });
+    leftActions.push({
+      group: 'add-panel',
+      condition: isEditingAndShowingDashboard,
+      render: () => (
+        <Button
+          key="add-panel-lib"
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          fill="text"
+          data-testid={selectors.pages.AddDashboard.itemButton('Add new panel from panel library menu item')}
+          onClick={() => {
+            dashboard.onShowAddLibraryPanelDrawer();
+            DashboardInteractions.toolbarAddButtonClicked({ item: 'add_library_panel' });
+          }}
+        >
+          Import
+        </Button>
+      ),
+    });
   } else {
     toolbarActions.push({
       group: 'add-panel',
