@@ -105,7 +105,7 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 			gv: kinds,
 		}
 		confCopy.groupVersion = gv
-		if confCopy.CustomConfig == nil {
+		if confCopy.CustomConfig != nil {
 			group.customConfig = confCopy.CustomConfig
 		}
 		b, err := NewAppBuilder(confCopy)
