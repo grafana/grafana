@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -47,8 +48,8 @@ func TestCreateResponseErrorFromStatusCode(t *testing.T) {
 			err := CreateResponseErrorFromStatusCode(tt.statusCode, tt.status, tt.body)
 			assert.Error(t, err)
 			// Check if error is of type ErrorWithSource
-			errorWithSource, ok := err.(backend.ErrorWithSource)
-			assert.True(t, ok, "error should implement ErrorWithSource")
+			var errorWithSource backend.ErrorWithSource
+			assert.True(t, errors.As(err, &errorWithSource))
 
 			// Validate the source of the error
 			assert.Equal(t, tt.expectedType, errorWithSource.ErrorSource())
