@@ -24,7 +24,7 @@ export interface ShareDrawerMenuItem {
   icon: IconName;
   renderCondition: boolean;
   onClick: (d: DashboardScene) => void;
-  addDividerBelow?: boolean;
+  renderBottomDivider?: boolean;
 }
 
 let customShareDrawerItems: ShareDrawerMenuItem[] = [];
@@ -54,7 +54,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       onClick: () => {
         window.open(config.externalUserMngLinkUrl, '_blank');
       },
-      addDividerBelow: true,
+      renderBottomDivider: true,
     });
 
     menuItems.push({
@@ -108,16 +108,15 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
   return (
     <Menu data-testid={newShareButtonSelector.container}>
       {buildMenuItems().map((item) => (
-        <React.Fragment key={`${item.shareId}-item`}>
+        <React.Fragment key={item.shareId}>
           <Menu.Item
-            key={item.shareId}
             testId={item.testId}
             label={item.label}
             icon={item.icon}
             description={item.description}
             onClick={() => onClick(item)}
           />
-          {item.addDividerBelow && <Menu.Divider />}
+          {item.renderBottomDivider && <Menu.Divider />}
         </React.Fragment>
       ))}
     </Menu>
