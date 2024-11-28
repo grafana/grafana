@@ -60,12 +60,6 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       transitionProperty: 'none !important',
     },
 
-    '.selected-dashboard-item': {
-      outline: `2px dashed ${theme.colors.primary.border}`,
-      outlineOffset: '2px',
-      borderRadius: '2px',
-    },
-
     [theme.transitions.handleMotion('no-preference')]: {
       '.react-grid-layout--enable-move-animations': {
         '.react-grid-item.cssTransforms': {
