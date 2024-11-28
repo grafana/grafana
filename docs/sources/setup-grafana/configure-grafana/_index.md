@@ -630,7 +630,11 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be unable to login for 5 minutes if all login attempts are spent within a 5 minute window.
+
+### brute_force_login_protection_max_attempts
+
+Configure how many login attempts a user have within a 5 minute window before the account will be locked. Default is `5`.
 
 ### cookie_secure
 

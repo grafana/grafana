@@ -154,18 +154,19 @@ type Cfg struct {
 	RendererDefaultImageScale      float64
 
 	// Security
-	DisableInitAdminCreation          bool
-	DisableBruteForceLoginProtection  bool
-	CookieSecure                      bool
-	CookieSameSiteDisabled            bool
-	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
-	XSSProtectionHeader               bool
-	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
-	StrictTransportSecurityPreload    bool
-	StrictTransportSecuritySubDomains bool
+	DisableInitAdminCreation             bool
+	DisableBruteForceLoginProtection     bool
+	BruteForceLoginProtectionMaxAttempts int64
+	CookieSecure                         bool
+	CookieSameSiteDisabled               bool
+	CookieSameSiteMode                   http.SameSite
+	AllowEmbedding                       bool
+	XSSProtectionHeader                  bool
+	ContentTypeProtectionHeader          bool
+	StrictTransportSecurity              bool
+	StrictTransportSecurityMaxAge        int
+	StrictTransportSecurityPreload       bool
+	StrictTransportSecuritySubDomains    bool
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
@@ -1498,7 +1499,14 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
 	cfg.SecretKey = valueAsString(security, "secret_key", "")
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+
+	// Ensure at least one login attempt can be performed.
+	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
+		cfg.BruteForceLoginProtectionMaxAttempts = 1
+	}
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure
