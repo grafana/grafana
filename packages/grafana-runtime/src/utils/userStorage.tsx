@@ -73,11 +73,6 @@ class UserStorage {
     }
   }
 
-  /**
-   * Retrieves an item from the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to retrieve.
-   * @returns A promise that resolves to the item value or null if not found.
-   */
   async getItem(key: string): Promise<string | null> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
@@ -92,12 +87,6 @@ class UserStorage {
     return this.storageSpec.data[key];
   }
 
-  /**
-   * Sets an item in the backend user storage or local storage if not enabled.
-   * @param key - The key of the item to set.
-   * @param value - The value of the item to set.
-   * @returns A promise that resolves when the item is set.
-   */
   async setItem(key: string, value: string): Promise<void> {
     if (!this.canUseUserStorage) {
       // Fallback to localStorage
@@ -134,14 +123,31 @@ class UserStorage {
   }
 }
 
+export interface PluginUserStorage {
+  /**
+   * Retrieves an item from the backend user storage or local storage if not enabled.
+   * @param key - The key of the item to retrieve.
+   * @returns A promise that resolves to the item value or null if not found.
+   */
+  getItem(key: string): Promise<string | null>;
+  /**
+   * Sets an item in the backend user storage or local storage if not enabled.
+   * @param key - The key of the item to set.
+   * @param value - The value of the item to set.
+   * @returns A promise that resolves when the item is set.
+   */
+  setItem(key: string, value: string): Promise<void>;
+}
+
 /**
  * A hook for interacting with the backend user storage (or local storage if not enabled).
  * @returns An scoped object for a plugin and a user with getItem and setItem functions.
+ * @alpha Experimental
  */
-export function usePluginUserStorage() {
+export function usePluginUserStorage(): PluginUserStorage {
   const context = usePluginContext();
   if (!context) {
-    throw new Error(`No PluginContext found. The useUserStorage() hook can only be used from a plugin.`);
+    throw new Error(`No PluginContext found. The usePluginUserStorage() hook can only be used from a plugin.`);
   }
   return new UserStorage(context?.meta.id);
 }
