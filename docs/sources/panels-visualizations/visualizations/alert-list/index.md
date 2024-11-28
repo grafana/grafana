@@ -105,7 +105,7 @@ Filter alerts by the selected folder. Only alerts from dashboards in this folder
 
 ### Show alerts with 0 instances
 
-Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. As these rules have no instances, they will remain hidden if an Alert instance label filter is configured.
+Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. As these rules have no instances, they will remain hidden if the **Alert instance label** filter is configured.
 
 ## Alert state filter
 
