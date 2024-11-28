@@ -74,7 +74,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		return nil, err
 	}
 
-	factory := newReplicatorFactory(s.resourceClient, namespace, repo)
+	factory := resources.NewReplicatorFactory(s.resourceClient, namespace, repo)
 	webhook := repo.Webhook(ctx, s.logger, responder, factory)
 	if webhook == nil {
 		return nil, &errors.StatusError{

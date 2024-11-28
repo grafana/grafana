@@ -64,7 +64,7 @@ func (c *importConnector) Connect(
 	}
 	cfg := repo.Config()
 	ns := cfg.GetNamespace()
-	replicatorFactory := newReplicatorFactory(c.client, ns, repo)
+	replicatorFactory := resources.NewReplicatorFactory(c.client, ns, repo)
 
 	// TODO: We need some way to filter what we import.
 

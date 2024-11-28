@@ -20,7 +20,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type githubRepository struct {
@@ -412,10 +411,12 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 			}
 
 			if err := replicator.Replicate(ctx, fileInfo); err != nil {
-				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-					logger.InfoContext(ctx, "added file does not contain a resource")
-					continue
-				}
+				// TODO: handle the case where the file does not contain a resource
+				// after resolving the import cycles
+				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+				// 	logger.InfoContext(ctx, "added file does not contain a resource")
+				// 	continue
+				// }
 
 				logger.ErrorContext(ctx, "failed to replicate added resource", "error", err)
 				continue
@@ -433,10 +434,12 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 			}
 
 			if err := replicator.Replicate(ctx, fileInfo); err != nil {
-				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-					logger.InfoContext(ctx, "modified file does not contain a resource")
-					continue
-				}
+				// TODO: handle the case where the file does not contain a resource
+				// after resolving the import cycles
+				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+				// 	logger.InfoContext(ctx, "modified file does not contain a resource")
+				// 	continue
+				// }
 
 				logger.ErrorContext(ctx, "failed to replicate modified resource", "error", err)
 				continue
@@ -455,10 +458,12 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 			}
 
 			if err := replicator.Delete(ctx, fileInfo); err != nil {
-				if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
-					logger.InfoContext(ctx, "deleted file does not contain a resource")
-					continue
-				}
+				// TODO: handle the case where the file does not contain a resource
+				// after resolving the import cycles
+				// if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
+				// 	logger.InfoContext(ctx, "deleted file does not contain a resource")
+				// 	continue
+				// }
 
 				logger.ErrorContext(ctx, "failed to delete removed resource", "error", err)
 				continue
