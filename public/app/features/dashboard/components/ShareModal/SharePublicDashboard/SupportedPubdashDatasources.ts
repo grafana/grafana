@@ -42,6 +42,7 @@ export const supportedDatasources = new Set<string>([
   'grafana-oracle-datasource',
   'grafana-orbit-datasource',
   'grafana-pagerduty-datasource',
+  'grafana-postgresql-datasource',
   'grafana-redshift-datasource',
   'grafana-salesforce-datasource',
   'grafana-saphana-datasource',
