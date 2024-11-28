@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -178,7 +176,7 @@ export function getInsightsScenes() {
         component: SectionSubheader,
         props: {
           children: (
-            <React.Fragment>
+            <>
               <Text>
                 {' '}
                 Monitor the status of your system{' '}
@@ -196,7 +194,7 @@ export function getInsightsScenes() {
                   <Icon name="info-circle" size="sm" />
                 </Tooltip>
               </Text>
-            </React.Fragment>
+            </>
           ),
         },
       }),
