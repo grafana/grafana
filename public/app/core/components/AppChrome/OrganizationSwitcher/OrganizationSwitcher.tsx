@@ -28,7 +28,7 @@ export function OrganizationSwitcher() {
     }
   };
   useEffect(() => {
-    if (contextSrv.isSignedIn) {
+    if (contextSrv.isSignedIn && !(contextSrv.user.authenticatedBy === 'apikey' || contextSrv.user.authenticatedBy === 'render')) {
       dispatch(getUserOrganizations());
     }
   }, [dispatch]);
