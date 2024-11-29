@@ -95,6 +95,24 @@ func (_m *MockClient) CreatePullRequestComment(ctx context.Context, owner string
 	return r0
 }
 
+// CreatePullRequestFileComment provides a mock function with given fields: ctx, owner, repository, number, comment
+func (_m *MockClient) CreatePullRequestFileComment(ctx context.Context, owner string, repository string, number int, comment FileComment) error {
+	ret := _m.Called(ctx, owner, repository, number, comment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePullRequestFileComment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, FileComment) error); ok {
+		r0 = rf(ctx, owner, repository, number, comment)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateWebhook provides a mock function with given fields: ctx, owner, repository, cfg
 func (_m *MockClient) CreateWebhook(ctx context.Context, owner string, repository string, cfg WebhookConfig) error {
 	ret := _m.Called(ctx, owner, repository, cfg)
@@ -326,7 +344,8 @@ func (_m *MockClient) UpdateFile(ctx context.Context, owner string, repository s
 func NewMockClient(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockClient {
+},
+) *MockClient {
 	mock := &MockClient{}
 	mock.Mock.Test(t)
 

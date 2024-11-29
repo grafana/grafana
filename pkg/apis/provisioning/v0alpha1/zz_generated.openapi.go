@@ -223,6 +223,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"pullRequestLinter": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PullRequestLinter enables the dashboard linter for this repository in Pull Requests",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

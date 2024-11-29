@@ -344,6 +344,26 @@ func (r *realImpl) CreatePullRequestComment(ctx context.Context, owner, reposito
 	return nil
 }
 
+func (r *realImpl) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
+	commentRequest := &github.PullRequestComment{
+		Body:     &comment.Content,
+		CommitID: &comment.Ref,
+		Path:     &comment.Path,
+		Position: &comment.Position,
+	}
+
+	if _, _, err := r.gh.PullRequests.CreateComment(ctx, owner, repository, number, commentRequest); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return ErrServiceUnavailable
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 type realRepositoryContent struct {
 	real *github.RepositoryContent
 }

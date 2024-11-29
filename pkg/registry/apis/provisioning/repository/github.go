@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -19,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/dashboard-linter/lint"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
@@ -484,7 +486,7 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	return nil
 }
 
-const commentTemplate = `Hey there! 🎉
+const previewsCommentTemplate = `Hey there! 🎉
 Grafana spotted some changes for your resources in this pull request:
 
 | File Name | Type | Path | Action | Links |
@@ -503,13 +505,27 @@ type commentFile struct {
 	Original string
 	Current  string
 	Preview  string
+	Data     []byte
 }
 
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
 func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, factory FileReplicatorFactory) error {
 	action := event.GetAction()
-	r.logger.InfoContext(ctx, "processing pull request event", "number", event.GetNumber(), "action", action)
+	logger = logger.With("pull_request", event.GetNumber(), "action", action)
+	logger.InfoContext(
+		ctx,
+		"processing pull request event",
+		"linter",
+		r.Config().Spec.GitHub.PullRequestLinter,
+		"previews",
+		r.Config().Spec.GitHub.GenerateDashboardPreviews,
+	)
+
+	if !r.Config().Spec.GitHub.PullRequestLinter && !r.Config().Spec.GitHub.GenerateDashboardPreviews {
+		logger.DebugContext(ctx, "no action required on pull request event")
+		return nil
+	}
 
 	if event.GetRepo() == nil {
 		return fmt.Errorf("missing repository in pull request event")
@@ -589,6 +605,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			continue
 		}
 
+		// TODO: how does this validation works vs linting?
 		ok, err := replicator.Validate(ctx, f)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to validate file", "error", err)
@@ -599,21 +616,146 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			continue
 		}
 
+		row.Data = f.Data
 		logger.InfoContext(ctx, "resource changed")
 		rows = append(rows, row)
 	}
 
-	if len(rows) == 0 {
+	if err := r.previewPullRequest(ctx, event.GetNumber(), rows); err != nil {
+		logger.ErrorContext(ctx, "failed to comment previews", "error", err)
+	}
+
+	headRef := event.GetPullRequest().GetHead().GetSHA()
+	if err := r.lintPullRequest(ctx, event.GetNumber(), headRef, rows); err != nil {
+		logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
+	}
+
+	return nil
+}
+
+// TODO: Add icons to the comment
+// TODO: add rule info
+var lintDashboardIssuesTemplate = `Grafana found some linting issues in this dashboard:
+{{ range .}}
+- {{ if eq .Severity 4 }}‼️ ERROR{{ else if eq .Severity 3 }}⚠️ WARNING{{ end }}: {{ .Message }}.
+{{- end }}
+`
+
+type lintIssue struct {
+	Severity lint.Severity
+	Message  string
+}
+
+// lintPullRequest lints the files changed in the pull request and comments the issues found.
+// The linter is disabled if the configuration does not have PullRequestLinter enabled.
+// The only supported type of file to lint is a dashboard.
+func (r *githubRepository) lintPullRequest(ctx context.Context, prNumber int, ref string, files []commentFile) error {
+	if !r.Config().Spec.GitHub.PullRequestLinter {
 		return nil
 	}
 
-	tmpl, err := template.New("comment").Parse(commentTemplate)
+	// TODO: use common logger
+
+	r.logger.DebugContext(ctx, "linting pull request")
+
+	// TODO: clean previuos comments
+
+	tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
+	if err != nil {
+		return fmt.Errorf("parse lint comment template: %w", err)
+	}
+
+	for _, file := range files {
+		if file.Action == "removed" {
+			continue
+		}
+
+		if file.Type != "dashboard" {
+			continue
+		}
+
+		dashboard, err := lint.NewDashboard(file.Data)
+		if err != nil {
+			return fmt.Errorf("failed to parse dashboard with linter: %v", err)
+		}
+
+		// TODO: use linter configuration
+		rules := lint.NewRuleSet()
+		results, err := rules.Lint([]lint.Dashboard{dashboard})
+		if err != nil {
+			return fmt.Errorf("failed to lint dashboard: %v", err)
+		}
+
+		issues := extractLintIssues(results)
+		if len(issues) == 0 {
+			r.logger.DebugContext(ctx, "no lint issues found", "file", file.Path)
+			continue
+		}
+
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, issues); err != nil {
+			return fmt.Errorf("execute lint template: %w", err)
+		}
+
+		comment := pgh.FileComment{
+			Content:  buf.String(),
+			Path:     file.Path,
+			Position: 1, // create a top-level comment
+			Ref:      ref,
+		}
+
+		if err := r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
+			return fmt.Errorf("create pull request comment: %w", err)
+		}
+
+		// TODO: use a common logger
+		r.logger.InfoContext(ctx, "lint comment created", "pr", prNumber, "file", file.Path, "issues", len(issues))
+	}
+
+	return nil
+}
+
+func extractLintIssues(rs *lint.ResultSet) []lintIssue {
+	byRule := rs.ByRule()
+	rules := make([]string, 0, len(byRule))
+	for r := range byRule {
+		rules = append(rules, r)
+	}
+
+	sort.Strings(rules)
+	issues := make([]lintIssue, 0)
+
+	for _, rule := range rules {
+		for _, rr := range byRule[rule] {
+			for _, r := range rr.Result.Results {
+				if r.Severity != lint.Error && r.Severity != lint.Warning {
+					continue
+				}
+
+				issues = append(issues, lintIssue{
+					// TODO: rule info?
+					Severity: r.Severity,
+					Message:  r.Message,
+				})
+			}
+		}
+	}
+
+	return issues
+}
+
+func (r *githubRepository) previewPullRequest(ctx context.Context, prNumber int, files []commentFile) error {
+	if !r.Config().Spec.GitHub.GenerateDashboardPreviews || len(files) == 0 {
+		return nil
+	}
+
+	tmpl, err := template.New("comment").Parse(previewsCommentTemplate)
 	if err != nil {
 		return fmt.Errorf("parse comment template: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, rows); err != nil {
+	if err := tmpl.Execute(&buf, files); err != nil {
 		return fmt.Errorf("execute comment template: %w", err)
 	}
 
@@ -621,11 +763,9 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 
 	// TODO: comment with Grafana Logo
 	// TODO: comment author should be written by Grafana and not the user
-	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
+	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
-
-	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber(), "num_changes", len(rows))
 
 	return nil
 }
