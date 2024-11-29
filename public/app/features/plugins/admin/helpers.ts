@@ -513,10 +513,8 @@ export const fetchDefaultBranchFromRepo = async (repoLink: string): Promise<stri
       console.error(`Failed to parse repository link: ${repoLink}`);
       return null;
     }
-    console.log('repoPath', repoPath);
-    // For GitLab, encode the path
     const apiUrl = isGitHub ? `${baseUrl}${repoPath}` : `${baseUrl}${encodeURIComponent(repoPath)}`;
-    console.log('apiUrl', apiUrl);
+
     const response = await fetch(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
