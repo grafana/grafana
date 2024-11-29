@@ -373,11 +373,15 @@ Icons don't have text, so they have different options:
 
 Control the placement of elements on the canvas with the following options.
 
-| Option          | Description                                                                                                                                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul>               |
-| Constraints     | Set element constraints. Choose from:<ul><li>**Left**</li><li>**Right**</li><li>**Left & Right**</li><li>**Center**</li><li>**Scale** - Use this option to ensure that elements are automatically resized when the panel size changes.</li></ul> |
-| Position        | Use the settings to manually set the position of an element. Set any or all of the following options:<ul><li>**top**</li><li>**left**</li><li>**width**</li><li>**height**</li><li>**rotation**</li></ul>                                        |
+<!-- prettier-ignore-start -->
+
+| Option          | Description     |
+| --------------- | --------------- |
+| Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
+| Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
+| Position        | Use the settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
+
+<!-- prettier-ignore-end -->
 
 #### Background (element)
 
