@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 	"text/template"
@@ -23,18 +24,25 @@ import (
 )
 
 type githubRepository struct {
-	logger *slog.Logger
-	config *provisioning.Repository
-	gh     pgh.Client
+	logger  *slog.Logger
+	config  *provisioning.Repository
+	gh      pgh.Client
+	baseURL *url.URL
 }
 
 var _ Repository = (*githubRepository)(nil)
 
-func NewGitHub(ctx context.Context, config *provisioning.Repository, factory pgh.ClientFactory) *githubRepository {
+func NewGitHub(
+	ctx context.Context,
+	config *provisioning.Repository,
+	factory pgh.ClientFactory,
+	baseURL *url.URL,
+) *githubRepository {
 	return &githubRepository{
-		config: config,
-		logger: slog.Default().With("logger", "github-repository"),
-		gh:     factory.New(ctx, config.Spec.GitHub.Token),
+		config:  config,
+		logger:  slog.Default().With("logger", "github-repository"),
+		gh:      factory.New(ctx, config.Spec.GitHub.Token),
+		baseURL: baseURL,
 	}
 }
 
@@ -353,7 +361,7 @@ func (r *githubRepository) Webhook(ctx context.Context, logger *slog.Logger, res
 				Code:    http.StatusOK,
 			})
 		case *github.PullRequestEvent:
-			if err := r.onPullRequestEvent(ctx, logger, event); err != nil {
+			if err := r.onPullRequestEvent(ctx, logger, event, factory); err != nil {
 				responder.Error(err)
 				return
 			}
@@ -476,9 +484,30 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	return nil
 }
 
+const commentTemplate = `Hey there! 🎉
+Grafana spotted some changes for your resources in this pull request:
+
+| File Name | Type | Path | Action | Links |
+|-----------|------|------|--------|-------|
+{{- range .}}
+| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
+{{- end}}
+
+Click the preview links above to view how your changes will look and compare them with the original and current versions.`
+
+type commentFile struct {
+	Filename string
+	Path     string
+	Action   string
+	Type     string
+	Original string
+	Current  string
+	Preview  string
+}
+
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
-func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent) error {
+func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, factory FileReplicatorFactory) error {
 	action := event.GetAction()
 	r.logger.InfoContext(ctx, "processing pull request event", "number", event.GetNumber(), "action", action)
 
@@ -501,66 +530,118 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("list pull request files: %w", err)
 	}
 
+	rows := make([]commentFile, 0)
+
+	baseBranch := event.GetPullRequest().GetBase().GetRef()
+	mainBranch := r.config.Spec.GitHub.Branch
+
+	replicator, err := factory.New()
+	if err != nil {
+		return fmt.Errorf("create replicator: %w", err)
+	}
+
+	prURL := event.GetPullRequest().GetHTMLURL()
+
 	// TODO: implement the real handling of the files
 	for _, file := range files {
+		row := commentFile{
+			Filename: path.Base(file.GetFilename()),
+			Path:     file.GetFilename(),
+			Action:   file.GetStatus(),
+			Type:     "dashboard", // TODO: get this from the resource
+		}
+
+		path := file.GetFilename()
+		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
+
+		ref := event.GetPullRequest().GetHead().GetRef()
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch file.GetStatus() {
 		case "added":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read added file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "added file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "modified":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read modified file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "modified file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "removed":
-			r.logger.InfoContext(ctx, "removed file", "file", file.GetFilename())
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
+			ref = baseBranch
 		case "renamed":
-			r.logger.InfoContext(ctx, "renamed file", "file", file.GetFilename(), "previous", file.GetPreviousFilename())
+			row.Original = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
+			row.Current = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "changed":
-			f, err := r.Read(ctx, logger, file.GetFilename(), file.GetSHA())
-			if err != nil {
-				r.logger.ErrorContext(ctx, "read changed file", "file", file.GetFilename(), "error", err)
-				continue
-			}
-			r.logger.InfoContext(ctx, "changed file", "file", file.GetFilename(), "resource", string(f.Data))
+			row.Original = r.previewURL(baseBranch, path, prURL)
+			row.Current = r.previewURL(mainBranch, path, prURL)
+			row.Preview = r.previewURL(ref, path, prURL)
 		case "unchanged":
-			r.logger.InfoContext(ctx, "ignore unchanged file", "file", file.GetFilename())
+			logger.InfoContext(ctx, "ignore unchanged file")
+			continue
 		default:
-			r.logger.ErrorContext(ctx, "unhandled pull request file", "status", file.GetStatus(), "file", file.GetFilename())
+			logger.ErrorContext(ctx, "unhandled pull request file")
+			continue
 		}
+
+		f, err := r.Read(ctx, logger, path, ref)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to read file", "error", err)
+			continue
+		}
+
+		ok, err := replicator.Validate(ctx, f)
+		if err != nil {
+			logger.ErrorContext(ctx, "failed to validate file", "error", err)
+			continue
+		}
+		if !ok {
+			logger.InfoContext(ctx, "ignore file as it is not a valid resource")
+			continue
+		}
+
+		logger.InfoContext(ctx, "resource changed")
+		rows = append(rows, row)
 	}
 
-	commentTemplate := `Grafana detected that the following files have been changed in this pull request:
-{{range .}}
-- {{.GetFilename}} **{{.GetStatus }}**
-{{end}}
-`
+	if len(rows) == 0 {
+		return nil
+	}
+
 	tmpl, err := template.New("comment").Parse(commentTemplate)
 	if err != nil {
 		return fmt.Errorf("parse comment template: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, files); err != nil {
+	if err := tmpl.Execute(&buf, rows); err != nil {
 		return fmt.Errorf("execute comment template: %w", err)
 	}
 
 	comment := buf.String()
 
+	// TODO: comment with Grafana Logo
+	// TODO: comment author should be written by Grafana and not the user
 	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
 
-	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber())
+	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber(), "num_changes", len(rows))
 
 	return nil
+}
+
+// previewURL returns the URL to preview the file in Grafana
+func (r *githubRepository) previewURL(ref, filePath, pullRequestURL string) string {
+	// Copy the baseURL to modify path and query
+	baseURL := *r.baseURL
+	baseURL.Path = path.Join(baseURL.Path, "/admin/provisioning", r.Config().GetName(), "dashboard/preview", filePath)
+
+	query := baseURL.Query()
+	query.Set("ref", ref)
+	query.Set("pull_request_url", url.QueryEscape(pullRequestURL))
+	baseURL.RawQuery = query.Encode()
+
+	return baseURL.String()
 }
 
 func (r *githubRepository) createWebhook(ctx context.Context, logger *slog.Logger) error {

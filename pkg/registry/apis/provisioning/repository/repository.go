@@ -100,6 +100,7 @@ type Repository interface {
 
 // FileReplicator is an interface for replicating files
 type FileReplicator interface {
+	Validate(ctx context.Context, fileInfo *FileInfo) (bool, error)
 	Replicate(ctx context.Context, fileInfo *FileInfo) error
 	Delete(ctx context.Context, fileInfo *FileInfo) error
 }

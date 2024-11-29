@@ -169,9 +169,18 @@ func (r *replicator) Delete(ctx context.Context, fileInfo *repository.FileInfo) 
 	return nil
 }
 
+func (r *replicator) Validate(ctx context.Context, fileInfo *repository.FileInfo) (bool, error) {
+	if _, err := r.parseResource(ctx, fileInfo); err != nil {
+		if errors.Is(err, ErrUnableToReadResourceBytes) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (r *replicator) parseResource(ctx context.Context, fileInfo *repository.FileInfo) (*ParsedFile, error) {
-	// NOTE: We're validating here to make sure we want the folders to be created.
-	//  If the file isn't valid, its folders aren't relevant, either.
 	file, err := r.parser.Parse(ctx, r.logger, fileInfo, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse file %s: %w", fileInfo.Path, err)
