@@ -2923,8 +2923,7 @@
       "loading": "",
       "save-button": "保存至文件",
       "share-externally-label": "导出以供外部分享",
-      "view-button": "查看 JSON",
-      "view-button-schemav2": ""
+      "view-button": "查看 JSON"
     },
     "library": {
       "info": "创建库面板。"
