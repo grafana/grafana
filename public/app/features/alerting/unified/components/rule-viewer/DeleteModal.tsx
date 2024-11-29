@@ -14,12 +14,7 @@ import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { isCloudRuleIdentifier } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: RulerRuleDTO, groupIdentifier: RuleGroupIdentifierV2) => void, () => void];
-type DeleteRuleInfo =
-  | {
-      rule: RulerRuleDTO;
-      groupIdentifier: RuleGroupIdentifierV2;
-    }
-  | undefined;
+type DeleteRuleInfo = { rule: RulerRuleDTO; groupIdentifier: RuleGroupIdentifierV2 } | undefined;
 
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 

@@ -298,25 +298,29 @@ interface RuleLocationProps {
 }
 
 // @TODO make the datasource / namespace / group click-able to allow further filtering of the list
-export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => (
-  <Stack direction="row" alignItems="center" gap={0.5}>
-    {!(rulesSource && application) ? null : application === 'grafana' ? (
-      <Icon size="xs" name="folder" />
-    ) : (
-      <Tooltip content={rulesSource.name}>
-        <span>
-          <DataSourceIcon application={application} size={14} />
-        </span>
-      </Tooltip>
-    )}
+export const RuleLocation = ({ namespace, group, rulesSource, application }: RuleLocationProps) => {
+  const isGrafanaApp = application === 'grafana';
+  const isDataSourceApp = !!rulesSource && !!application && !isGrafanaApp;
 
-    <Stack direction="row" alignItems="center" gap={0}>
-      {namespace}
-      <Icon size="sm" name="angle-right" />
-      {group}
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      {isGrafanaApp && <Icon size="xs" name="folder" />}
+      {isDataSourceApp && (
+        <Tooltip content={rulesSource.name}>
+          <span>
+            <DataSourceIcon application={application} size={14} />
+          </span>
+        </Tooltip>
+      )}
+
+      <Stack direction="row" alignItems="center" gap={0}>
+        {namespace}
+        <Icon size="sm" name="angle-right" />
+        {group}
+      </Stack>
     </Stack>
-  </Stack>
-);
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertListItemContainer: css({

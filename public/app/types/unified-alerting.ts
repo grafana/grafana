@@ -181,14 +181,14 @@ export interface DataSourceNamespaceIdentifier {
 }
 
 export interface GrafanaRuleGroupIdentifier {
-  rulesSource: { uid: typeof GrafanaRulesSourceSymbol; name: typeof GRAFANA_RULES_SOURCE_NAME };
+  rulesSource: GrafanaRulesSourceIdentifier;
   groupName: string;
   namespace: GrafanaNamespaceIdentifier;
   groupOrigin: 'grafana';
 }
 
 export interface DataSourceRuleGroupIdentifier {
-  rulesSource: RulesSourceIdentifier;
+  rulesSource: ExternalRulesSourceIdentifier;
   groupName: string;
   namespace: DataSourceNamespaceIdentifier;
   groupOrigin: 'datasource';
