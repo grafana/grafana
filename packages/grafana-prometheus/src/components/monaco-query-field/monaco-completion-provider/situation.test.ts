@@ -188,6 +188,14 @@ describe('situation', () => {
         otherLabels: [{ name: '"utf8.label"', value: 'val', op: '=' }],
       });
     });
+
+    it('with utf8 metric name with grouping', () => {
+      assertSituation(`sum by (^)(rate({"metric.name", label1="val"}[1m]))`, {
+        type: 'IN_GROUPING',
+        metricName: 'metric.name',
+        otherLabels: [],
+      });
+    });
   });
 
   it('utf-8 label support', () => {

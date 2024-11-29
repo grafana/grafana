@@ -330,13 +330,20 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  // TODO handle utf8 metric
-  const metricIdNode = getNodeInSubtree(bodyNode, Identifier);
-  if (metricIdNode === null) {
+  const metricIdNode = getNodeInSubtree(bodyNode, Identifier) ?? getNodeInSubtree(bodyNode, StringLiteral);
+
+  if (!metricIdNode) {
     return null;
   }
 
-  const metricName = getNodeText(metricIdNode, text);
+  // Let's check whether it's a utf8 metric.
+  // A utf8 metric must be a StringLiteral and its parent must be a QuotedLabelName
+  if (metricIdNode.type.id === StringLiteral && metricIdNode.parent?.type.id !== QuotedLabelName) {
+    return null;
+  }
+
+  const metricName = getNodeText(metricIdNode, text, metricIdNode.type.id === StringLiteral);
+
   return {
     type: 'IN_GROUPING',
     metricName,
