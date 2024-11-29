@@ -55,6 +55,7 @@ export function initializeCrashDetection() {
      *  We guarantee the type assertion is correct by returning a SharedWorker in CorsSharedWorker constructor.
      */
     createDetectorWorker() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return new SharedWorker(new URL('./detector.worker', import.meta.url)) as globalThis.SharedWorker;
     },
 
