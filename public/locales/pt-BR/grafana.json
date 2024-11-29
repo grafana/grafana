@@ -2937,8 +2937,7 @@
       "loading": "",
       "save-button": "Salvar no arquivo",
       "share-externally-label": "Exportar para compartilhamento externo",
-      "view-button": "Visualizar JSON",
-      "view-button-schemav2": ""
+      "view-button": "Visualizar JSON"
     },
     "library": {
       "info": "Criar painel de biblioteca."

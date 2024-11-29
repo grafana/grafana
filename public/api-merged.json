@@ -5605,145 +5605,6 @@
         }
       }
     },
-    "/groupsync/mappings": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "List group mappings. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMappings",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Create a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "createGroupMapping",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/groupMappingRequestBody"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/mappings/{mapping_uid}": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Get a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupMappingResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Delete a group mapping. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "deleteGroupMapping",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "mapping_uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/health": {
       "get": {
         "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
@@ -16466,24 +16327,6 @@
         }
       }
     },
-    "GroupMapping": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "orgID": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "uid": {
-          "type": "string"
-        },
-        "variant": {
-          "type": "string"
-        }
-      }
-    },
     "HTTPClientConfig": {
       "type": "object",
       "title": "HTTPClientConfig configures an HTTP client.",
@@ -22752,17 +22595,6 @@
         }
       }
     },
-    "getGroupMappings": {
-      "type": "object",
-      "properties": {
-        "mappings": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/GroupMapping"
-          }
-        }
-      }
-    },
     "getGroupsResponse": {
       "type": "object",
       "properties": {
@@ -22963,20 +22795,6 @@
       "items": {
         "type": "object",
         "$ref": "#/definitions/gettableSilence"
-      }
-    },
-    "groupMappingRequestBody": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "mapping": {
-          "type": "object"
-        },
-        "variant": {
-          "type": "string"
-        }
       }
     },
     "healthResponse": {
@@ -23980,18 +23798,6 @@
         "items": {
           "$ref": "#/definitions/FolderSearchHit"
         }
-      }
-    },
-    "getGroupMappingResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/GroupMapping"
-      }
-    },
-    "getGroupMappingsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/getGroupMappings"
       }
     },
     "getGroupRolesResponse": {
