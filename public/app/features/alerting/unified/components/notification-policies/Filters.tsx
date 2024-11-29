@@ -71,13 +71,13 @@ const NotificationPoliciesFilter = ({
         label={
           <Label>
             <Stack gap={0.5}>
-              <span>Search by matchers</span>
+              <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
+                  <Trans i18nKey="alerting.policies.filter-description">
                     Filter notification policies by using a comma separated list of matchers, e.g.:
                     <pre>severity=critical, region=EMEA</pre>
-                  </div>
+                  </Trans>
                 }
               >
                 <Icon name="info-circle" size="sm" />

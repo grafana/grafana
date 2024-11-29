@@ -247,6 +247,7 @@
       "export": "Export",
       "export-all": "Export all",
       "loading": "Loading...",
+      "search-by-matchers": "Search by matchers",
       "view": "View"
     },
     "contact-points": {
@@ -352,6 +353,7 @@
         "warning-1": "Deleting this notification policy will permanently remove it.",
         "warning-2": "Are you sure you want to delete this policy?"
       },
+      "filter-description": "Filter notification policies by using a comma separated list of matchers, e.g.:<1>severity=critical, region=EMEA</1>",
       "generated-policies": "Auto-generated policies",
       "matchers": "Matchers",
       "metadata": {
