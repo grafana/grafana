@@ -42,9 +42,9 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
 
   // create maps for routes to be get by id, this map also contains the path to the route
   // ⚠️ don't forget to compute the inherited tree before using this map
-  const routesByIdMap = useMemo(() => {
-    return rootRoute ? getRoutesByIdMap(computeInheritedTree(rootRoute)) : new Map<string, RouteWithPath>();
-  }, [rootRoute]);
+  const routesByIdMap = rootRoute
+    ? getRoutesByIdMap(computeInheritedTree(rootRoute))
+    : new Map<string, RouteWithPath>();
 
   // to create the list of matching contact points we need to first get the rootRoute
   const receiversByName = useMemo(() => {
