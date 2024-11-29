@@ -1,9 +1,16 @@
+import { useEffect, useState } from 'react';
+
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
 import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
-import { getLatestCompatibleVersion } from '../helpers';
+import {
+  getLatestCompatibleVersion,
+  getPluginRepositoryUrl,
+  fetchDefaultBranchFromRepo,
+  getCustomLink,
+} from '../helpers';
 import { CatalogPlugin } from '../types';
 
 type Props = {
@@ -13,6 +20,40 @@ type Props = {
 
 export function PluginDetailsRightPanel(props: Props): React.ReactElement | null {
   const { info, plugin } = props;
+  const [defaultBranch, setDefaultBranch] = useState<string | null>(null);
+
+  console.log('plugin', plugin);
+  console.log('plugin info', info);
+
+  const trailURLSlash = (url: string | null) => (url?.endsWith('/') ? url?.slice(0, -1) : url);
+
+  const repositoryLink = trailURLSlash(
+    plugin.url ||
+      (plugin.signatureType === 'community' && plugin.details?.links
+        ? getPluginRepositoryUrl(plugin.details.links)
+        : null)
+  );
+
+  useEffect(() => {
+    if (repositoryLink) {
+      fetchDefaultBranchFromRepo(repositoryLink)
+        .then(setDefaultBranch)
+        .catch(() => setDefaultBranch(null));
+    }
+  }, [repositoryLink]);
+
+  const licenseLink = plugin.details?.links
+    ? getCustomLink(plugin.details?.links, 'LICENSE', repositoryLink, defaultBranch)
+    : null;
+  const documentationLink = plugin.details?.links
+    ? getCustomLink(plugin.details?.links, 'Documentation', repositoryLink, defaultBranch)
+    : null;
+  const customLinks = plugin.details?.links?.filter(
+    (link) => ![repositoryLink, licenseLink, documentationLink].includes(trailURLSlash(link.url))
+  );
+
+  const shouldRenderLinks = Boolean(plugin.details?.links?.length || repositoryLink);
+
   return (
     <Stack direction="column" gap={3} shrink={0} grow={0} maxWidth={'250px'}>
       <Box padding={2} borderColor="medium" borderStyle="solid">
@@ -68,21 +109,42 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         </Stack>
       </Box>
 
-      {plugin?.details?.links && plugin.details?.links?.length > 0 && (
+      {shouldRenderLinks && (
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             <Text color="secondary">
               <Trans i18nKey="plugins.details.labels.links">Links </Trans>
             </Text>
-            {plugin.details.links.map((link, index) => (
-              <TextLink key={index} href={link.url} external>
-                {link.name}
-              </TextLink>
-            ))}
+            {repositoryLink && (
+              <LinkButton href={repositoryLink} variant="secondary" fill="solid">
+                <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
+              </LinkButton>
+            )}
+
+            {licenseLink && (
+              <LinkButton href={licenseLink} variant="secondary" fill="solid">
+                <Trans i18nKey="plugins.details.labels.license">License</Trans>
+              </LinkButton>
+            )}
+            {documentationLink && (
+              <LinkButton href={documentationLink} variant="secondary" fill="solid">
+                <Trans i18nKey="plugins.details.labels.documentation">Documentation</Trans>
+              </LinkButton>
+            )}
+            {repositoryLink && (
+              <LinkButton href={`${repositoryLink}/issues/new`} variant="secondary" fill="solid">
+                <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
+              </LinkButton>
+            )}
+            {customLinks &&
+              customLinks.map((link, index) => (
+                <TextLink key={index} href={link.url} external>
+                  {link.name}
+                </TextLink>
+              ))}
           </Stack>
         </Box>
       )}
-
       {!plugin?.isCore && (
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column">
