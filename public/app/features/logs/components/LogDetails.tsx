@@ -6,6 +6,7 @@ import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
+import { LogDetailsBody } from './LogDetailsBody';
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 import { getAllFields, createLogLineLinks } from './logParser';
@@ -86,6 +87,24 @@ class UnThemedLogDetails extends PureComponent<Props> {
           <div className={styles.logDetailsContainer}>
             <table className={styles.logDetailsTable}>
               <tbody>
+                {displayedFields && displayedFields.length > 0 && (
+                  <>
+                    <tr>
+                      <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
+                        Log line
+                      </td>
+                    </tr>
+                    <LogDetailsBody
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      row={row}
+                      app={app}
+                      displayedFields={displayedFields}
+                      disableActions={false}
+                      theme={theme}
+                    />
+                  </>
+                )}
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
