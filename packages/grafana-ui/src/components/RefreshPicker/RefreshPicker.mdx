@@ -1,5 +1,6 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Meta, Canvas, ArgTypes } from '@storybook/blocks';
 import { RefreshPicker } from './RefreshPicker';
+import * as RefreshPickerStories from './RefreshPicker.story';
 
 <Meta title="MDX|RefreshPicker" component={RefreshPicker} />
 
@@ -11,10 +12,6 @@ This component is used on dashboards to refresh visualizations. Grafana does not
 
 **The down arrow:** will display a list of refresh intervals. If one of them is selected the dashboard will regularly refresh according to that schedule.
 
-<Preview>
-  <RefreshPicker tooltip="Run query" />
-  <RefreshPicker text="Run query" tooltip="Run query" />
-  <RefreshPicker text="Run query" isLoading={true} tooltip="Run query" value="1h" />
-</Preview>
+<Canvas of={RefreshPickerStories.Examples} />
 
 <ArgTypes of={RefreshPicker} />

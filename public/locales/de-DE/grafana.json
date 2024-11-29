@@ -2937,8 +2937,7 @@
       "loading": "",
       "save-button": "In Datei speichern …",
       "share-externally-label": "Export für externe Freigabe",
-      "view-button": "JSON anzeigen",
-      "view-button-schemav2": ""
+      "view-button": "JSON anzeigen"
     },
     "library": {
       "info": "Bibliotheks-Panel erstellen."
