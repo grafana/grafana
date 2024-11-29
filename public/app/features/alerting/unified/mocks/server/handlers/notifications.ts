@@ -3,15 +3,19 @@ import { HttpResponse, http } from 'msw';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-const alertmanagerConfig = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-const defaultReceiversResponse = alertmanagerConfig.alertmanager_config.receivers;
-const defaultTimeIntervalsResponse = alertmanagerConfig.alertmanager_config.time_intervals;
+const getNotificationReceiversHandler = () =>
+  http.get('/api/v1/notifications/receivers', () => {
+    const receivers = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME).alertmanager_config.receivers || [];
 
-const getNotificationReceiversHandler = (response = defaultReceiversResponse) =>
-  http.get('/api/v1/notifications/receivers', () => HttpResponse.json(response));
+    return HttpResponse.json(receivers);
+  });
 
-const getTimeIntervalsHandler = (response = defaultTimeIntervalsResponse) =>
-  http.get('/api/v1/notifications/time-intervals', () => HttpResponse.json(response));
+const getTimeIntervalsHandler = () =>
+  http.get('/api/v1/notifications/time-intervals', () => {
+    const intervals = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME).alertmanager_config.time_intervals;
+
+    return HttpResponse.json(intervals);
+  });
 
 const handlers = [getNotificationReceiversHandler(), getTimeIntervalsHandler()];
 

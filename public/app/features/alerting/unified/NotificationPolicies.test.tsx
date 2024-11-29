@@ -240,7 +240,7 @@ describe.each([
     setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
       alertmanager_config: {
         route: {},
-        receivers: [{ name: 'grafana-default-email' }],
+        receivers: [{ name: 'lotsa-emails' }],
       },
       template_files: {},
     });

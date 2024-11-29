@@ -159,23 +159,11 @@ export class AlertmanagerReceiverBuilder {
   }
 }
 
-export function mockApi(server: SetupServer) {
-  return {
-    getAlertmanagerConfig: (amName: string, configure: (builder: AlertmanagerConfigBuilder) => void) => {
-      const builder = new AlertmanagerConfigBuilder();
-      configure(builder);
-
-      server.use(
-        http.get(`api/alertmanager/${amName}/config/api/v1/alerts`, () =>
-          HttpResponse.json<AlertManagerCortexConfig>({
-            alertmanager_config: builder.build(),
-            template_files: {},
-          })
-        )
-      );
-    },
-  };
-}
+export const getMockConfig = (configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig => {
+  const builder = new AlertmanagerConfigBuilder();
+  configure(builder);
+  return { alertmanager_config: builder.build(), template_files: {} };
+};
 
 export function mockAlertRuleApi(server: SetupServer) {
   return {
