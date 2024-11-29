@@ -186,9 +186,7 @@ const getMectricComboboxStyles = () => ({
     maxWidth: '100%',
     display: 'flex',
     '[class*="InlineFieldRow"]': {
-      maxWidth: '100%',
       '> div': {
-        maxWidth: '100%',
         'label + div': {
           // Take label and the metrics explorer button into account
           maxWidth: `calc(100% - (160px + 32px))`,
