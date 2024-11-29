@@ -48,16 +48,11 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 			Relation: relation,
 			Object:   common.NewNamespaceResourceIdent(group, resource),
 		},
-		ContextualTuples: &openfgav1.ContextualTupleKeys{
-			TupleKeys: []*openfgav1.TupleKey{
-				{
-					User:     "render:0",
-					Relation: "view",
-					Object:   common.NewNamespaceResourceIdent("dashboard.grafana.app", "dashboards"),
-				},
-			},
-		},
 	}
+	if subject == common.RenderUser {
+		common.AddRenderContext(req)
+	}
+
 	res, err := s.openfga.Check(ctx, req)
 	if err != nil {
 		return nil, err
