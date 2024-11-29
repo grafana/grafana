@@ -225,7 +225,6 @@ Cell options allow you to control how data is displayed in a table.
 The options are:
 
 - [Cell type](#cell-type) - Control the default cell display settings.
-- [Wrap text](#wrap-text) - Wrap text in the cell that contains the longest content in your table.
 - [Cell value inspect](#cell-value-inspect) - Enables value inspection from table cells.
 
 #### Cell type
