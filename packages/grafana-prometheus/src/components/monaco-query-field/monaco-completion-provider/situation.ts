@@ -37,8 +37,10 @@ type NodeTypeId =
   | typeof GroupingLabels
   | typeof Identifier
   | typeof UnquotedLabelMatcher
+  | typeof QuotedLabelMatcher
   | typeof LabelMatchers
   | typeof LabelName
+  | typeof QuotedLabelName
   | typeof PromQL
   | typeof StringLiteral
   | typeof VectorSelector
