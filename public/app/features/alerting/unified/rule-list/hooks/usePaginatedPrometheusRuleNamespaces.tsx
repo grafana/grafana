@@ -1,43 +1,47 @@
-import { useState, useCallback, useEffect, useMemo, useDeferredValue } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { usePrevious } from 'react-use';
 
 import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { groupRulesByFileName } from '../../api/prometheus';
 import { prometheusApi } from '../../api/prometheusApi';
+import { isLoading, useAsync } from '../../hooks/useAsync';
 import { getDatasourceAPIUid } from '../../utils/datasource';
+
+const { useLazyGroupsQuery } = prometheusApi;
 
 export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pageSize: number) {
   const [currentPage, setCurrentPage] = useState(1);
   const [groups, setGroups] = useState<PromRuleGroupDTO[]>([]);
   const [lastPage, setLastPage] = useState<number | undefined>(undefined);
 
-  const defferedGroups = useDeferredValue(groups);
+  const { groupsGenerator } = usePrometheusGroupsGenerator(ruleSourceName, pageSize);
 
-  const { groupsGenerator, isLoading } = usePrometheusGroupsGenerator(ruleSourceName, pageSize);
+  const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async (groupsCount: number) => {
+    let done = false;
+    const currentGroups: PromRuleGroupDTO[] = [];
 
-  const fetchMoreGroups = useCallback(
-    async (groupsCount: number) => {
-      let done = false;
-      const currentGroups = [];
-
-      while (currentGroups.length < groupsCount) {
-        const group = await groupsGenerator.next();
-        if (group.done) {
-          done = true;
-          break;
-        }
-
-        currentGroups.push(group.value);
+    while (currentGroups.length < groupsCount) {
+      const group = await groupsGenerator.next();
+      if (group.done) {
+        done = true;
+        break;
       }
 
-      return { done, groups: currentGroups };
-    },
-    [groupsGenerator]
-  );
+      currentGroups.push(group.value);
+    }
 
-  const canMoveForward = !lastPage || currentPage < lastPage;
-  const canMoveBackward = currentPage > 1;
+    if (done) {
+      const groupsTotal = groups.length + currentGroups.length;
+      setLastPage(Math.ceil(groupsTotal / pageSize));
+    }
+
+    setGroups((groups) => [...groups, ...currentGroups]);
+  });
+
+  const fetchInProgress = isLoading(groupsRequestState);
+  const canMoveForward = !fetchInProgress && (!lastPage || currentPage < lastPage);
+  const canMoveBackward = currentPage > 1 && !fetchInProgress;
 
   const nextPage = useCallback(async () => {
     if (canMoveForward) {
@@ -52,26 +56,21 @@ export function usePaginatedPrometheusRuleNamespaces(ruleSourceName: string, pag
   }, [canMoveBackward]);
 
   // groups.length - pageSize to have one more page loaded to prevent flickering with loading state
-  const shouldFetchNextPage = groups.length - pageSize < pageSize * currentPage && !lastPage;
-  if (shouldFetchNextPage) {
-    fetchMoreGroups(pageSize).then((result) => {
-      if (result.done) {
-        setLastPage(Math.ceil(groups.length / pageSize));
-      }
-      setGroups((groups) => [...groups, ...result.groups]);
-    });
+  // lastPage === undefined because 0 is falsy but a value which should stop fetching (e.g for broken data sources)
+  const shouldFetchNextPage = groups.length - pageSize < pageSize * currentPage && lastPage === undefined;
+
+  if (shouldFetchNextPage && !fetchInProgress) {
+    fetchMoreGroups(pageSize);
   }
 
   const pageNamespaces = useMemo(() => {
-    const pageGroups = defferedGroups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const pageGroups = groups.slice((currentPage - 1) * pageSize, currentPage * pageSize);
     // groupRulesByFileName mutates the array and RTKQ query freezes the response data
     return groupRulesByFileName(structuredClone(pageGroups), ruleSourceName);
-  }, [defferedGroups, ruleSourceName, currentPage, pageSize]);
+  }, [groups, ruleSourceName, currentPage, pageSize]);
 
-  return { isLoading, page: pageNamespaces, nextPage, previousPage, canMoveForward, canMoveBackward };
+  return { isLoading: fetchInProgress, page: pageNamespaces, nextPage, previousPage, canMoveForward, canMoveBackward };
 }
-
-const { useLazyGroupsQuery } = prometheusApi;
 
 function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) {
   const [fetchGroups, { isLoading }] = useLazyGroupsQuery();
@@ -90,7 +89,10 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
         groupLimit: maxGroups,
       });
 
-      // TODO Add filtering
+      if (!response.isSuccess) {
+        return;
+      }
+
       if (response.data?.data) {
         yield* response.data.data.groups;
       }
@@ -106,6 +108,10 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
           groupNextToken: lastToken,
           groupLimit: maxGroups,
         });
+
+        if (!response.isSuccess) {
+          return;
+        }
 
         if (response.data?.data) {
           yield* response.data.data.groups;
@@ -136,5 +142,5 @@ function usePrometheusGroupsGenerator(ruleSourceName: string, pageSize: number) 
     };
   }, [groupsGenerator]);
 
-  return { groupsGenerator, isLoading, resetGenerator };
+  return { groupsGenerator, isLoading };
 }

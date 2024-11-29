@@ -30,10 +30,8 @@ export function paginatedHandlerFor(
       id: Buffer.from(`${group.file}-${group.name}`).toString('base64url'),
     }));
 
-    const startIndex = groupNextToken
-      ? orderedGroupsWithCursor.findIndex((group) => group.id === groupNextToken) + 1
-      : 0;
-    const endIndex = groupLimit ? startIndex + groupLimit + 1 : orderedGroupsWithCursor.length;
+    const startIndex = groupNextToken ? orderedGroupsWithCursor.findIndex((group) => group.id === groupNextToken) : 0;
+    const endIndex = groupLimit ? startIndex + groupLimit : orderedGroupsWithCursor.length;
 
     const groupsResult = orderedGroupsWithCursor.slice(startIndex, endIndex);
     const nextToken =

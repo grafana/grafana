@@ -40,6 +40,10 @@ export function useFilteredRulesIteratorProvider() {
     async function* (ruleSource: ExternalRulesSourceIdentifier, maxGroups: number) {
       const response = await fetchGroups({ ruleSource: { uid: ruleSource.uid }, groupLimit: maxGroups });
 
+      if (!response.isSuccess) {
+        return;
+      }
+
       if (response.data?.data) {
         yield* response.data.data.groups.map((group) => [ruleSource, group] as const);
       }
@@ -55,6 +59,10 @@ export function useFilteredRulesIteratorProvider() {
           groupNextToken: lastToken,
           groupLimit: maxGroups,
         });
+
+        if (!response.isSuccess) {
+          return;
+        }
 
         if (response.data?.data) {
           yield* response.data.data.groups.map((group) => [ruleSource, group] as const);

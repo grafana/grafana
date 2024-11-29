@@ -109,14 +109,12 @@ function PaginatedDataSourceLoader({ ruleSourceName, name, uid, application }: P
             ))}
           </ListSection>
         ))}
-        {!isLoading && (
-          <LazyPagination
-            nextPage={nextPage}
-            previousPage={previousPage}
-            canMoveForward={canMoveForward}
-            canMoveBackward={canMoveBackward}
-          />
-        )}
+        <LazyPagination
+          nextPage={nextPage}
+          previousPage={previousPage}
+          canMoveForward={canMoveForward}
+          canMoveBackward={canMoveBackward}
+        />
       </Stack>
     </DataSourceSection>
   );
@@ -197,7 +195,7 @@ const DataSourceSection = ({
     <section aria-labelledby={`datasource-${uid}-heading`} role="listitem">
       <Stack direction="column" gap={1}>
         <Stack direction="column" gap={0}>
-          {isLoading && <LoadingIndicator />}
+          {isLoading && <LoadingIndicator datasourceUid={uid} />}
           <div className={styles.dataSourceSectionTitle}>
             {loader ?? (
               <Stack alignItems="center">
