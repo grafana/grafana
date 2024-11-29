@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+import { useUrlParams } from 'app/core/navigation/hooks';
+
 import {
   useCreateRepositoryFilesMutation,
   useCreateRepositoryMutation,
@@ -51,3 +53,14 @@ export function useCreateOrUpdateRepositoryFile(name?: string) {
 
   return [updateOrCreate, name ? updateRequest : createRequest] as const;
 }
+
+export const usePullRequestParam = () => {
+  const [params] = useUrlParams();
+  const prParam = params.get('pull_request_url');
+
+  if (!prParam) {
+    return undefined;
+  }
+
+  return decodeURIComponent(prParam);
+};

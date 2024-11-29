@@ -4,7 +4,18 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Field,
+  Input,
+  LinkButton,
+  RadioButtonGroup,
+  Spinner,
+  Stack,
+  TextArea,
+  TextLink,
+} from '@grafana/ui';
 import { AnnoKeyRepoName, AnnoKeyRepoPath } from 'app/features/apiserver/types';
 import { DashboardMeta } from 'app/types';
 
@@ -12,7 +23,7 @@ import { RepositorySelect } from '../../provisioning/RepositorySelect';
 import { useGetRepositoryQuery } from '../../provisioning/api';
 import { RepositorySpec } from '../../provisioning/api/types';
 import { PROVISIONING_URL } from '../../provisioning/constants';
-import { useCreateOrUpdateRepositoryFile } from '../../provisioning/hooks';
+import { useCreateOrUpdateRepositoryFile, usePullRequestParam } from '../../provisioning/hooks';
 import { WorkflowOption } from '../../provisioning/types';
 import { createPRLink, validateBranchName } from '../../provisioning/utils/git';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -68,6 +79,7 @@ export interface Props {
 export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }: Props) {
   // Saving as a new provisioned dashboard
   const { saveProvisioned } = drawer.useState();
+  const prURL = usePullRequestParam();
   const defaultValues = getDefaultValues(meta);
   const [action, request] = useCreateOrUpdateRepositoryFile(saveProvisioned ? undefined : defaultValues.path);
   const {
@@ -202,6 +214,14 @@ export function SaveProvisionedDashboard({ meta, drawer, changeInfo, dashboard }
           </Alert>
         )}
 
+        {prURL && (
+          <Alert severity="info" title="Pull request created">
+            A pull request has been created with changes to this dashboard:{' '}
+            <TextLink href={prURL} external>
+              {prURL}
+            </TextLink>
+          </Alert>
+        )}
         <Stack gap={2}>
           <Button variant="primary" type="submit" disabled={(request.isLoading || !isDirty) && !saveProvisioned}>
             {request.isLoading ? 'Saving...' : 'Save'}
