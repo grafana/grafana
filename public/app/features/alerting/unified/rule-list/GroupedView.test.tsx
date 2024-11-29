@@ -1,4 +1,3 @@
-import { http } from 'msw';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
@@ -7,8 +6,8 @@ import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
+import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { paginatedHandlerFor } from '../mocks/server/utils';
 
 import { GroupedView } from './GroupedView';
 
@@ -18,7 +17,7 @@ setReturnToPreviousHook(() => () => {});
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-const server = setupMswServer();
+setupMswServer();
 
 const mimirGroups = alertingFactory.group.buildList(500, { file: 'test-mimir-namespace' });
 alertingFactory.group.rewindSequence();
@@ -28,8 +27,8 @@ const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' }
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
-  server.use(http.get(`/api/prometheus/${mimirDs.uid}/api/v1/rules`, paginatedHandlerFor(mimirGroups)));
-  server.use(http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, paginatedHandlerFor(prometheusGroups)));
+  setPrometheusRules(mimirDs, mimirGroups);
+  setPrometheusRules(prometheusDs, prometheusGroups);
 });
 
 const ui = {

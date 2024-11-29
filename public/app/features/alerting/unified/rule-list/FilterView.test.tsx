@@ -1,6 +1,5 @@
 import { act, screen, waitForElementToBeRemoved } from '@testing-library/react';
 import { mockIntersectionObserver } from 'jsdom-testing-mocks';
-import { http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -8,8 +7,8 @@ import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
+import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { paginatedHandlerFor } from '../mocks/server/utils';
 import { RulesFilter } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
@@ -19,7 +18,7 @@ setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
-const server = setupMswServer();
+setupMswServer();
 
 const mimirGroups = alertingFactory.group.buildList(5000, { file: 'test-mimir-namespace' });
 alertingFactory.group.rewindSequence();
@@ -29,8 +28,8 @@ const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' }
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
-  server.use(http.get(`/api/prometheus/${mimirDs.uid}/api/v1/rules`, paginatedHandlerFor(mimirGroups)));
-  server.use(http.get(`/api/prometheus/${prometheusDs.uid}/api/v1/rules`, paginatedHandlerFor(prometheusGroups)));
+  setPrometheusRules(mimirDs, mimirGroups);
+  setPrometheusRules(prometheusDs, prometheusGroups);
 });
 
 const io = mockIntersectionObserver();
