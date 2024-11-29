@@ -155,7 +155,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled }: Props
                 />
               </Field>
             </Stack>
-            <Stack gap={1}>
+            <Stack gap={1} direction={{ xs: 'column', sm: 'row' }}>
               <Button
                 icon="gf-layout-simple"
                 variant="secondary"
