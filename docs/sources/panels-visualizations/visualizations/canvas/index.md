@@ -342,18 +342,32 @@ You can change the type of the element by making a new selection in the drop-dow
 
 #### Element
 
-<!-- This section differs for button and icon -->
-
 This section is named based on the element type. Control the appearance of text on the element with the following options:
 
-| Option         | Description                                                                                                                                                                                                                                                                                                                |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Style          | This option only applies to button elements. Select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. For the other API options for buttons, refer to [Button API options](#button-api-options). |
-| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field.                                                                                                                                                             |
-| Text color     | Choose a text color.                                                                                                                                                                                                                                                                                                       |
-| Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.                                                                                                                                                                                                                  |
-| Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**.                                                                                                                                                                                                                |
-| Text size      | Set the text size. Leave the field empty to allow Grafana to automatically set the text size.                                                                                                                                                                                                                              |
+<!-- prettier-ignore-start -->
+
+| Option         | Description                                               |
+| -------------- | --------------------------------------------------------- |
+| Style          | Buttons only. Select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. |
+| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field. |
+| Text color     | Choose a text color.     |
+| Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.  |
+| Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**. |
+| Text size      | Set the text size. Leave the field empty to allow Grafana to automatically set the text size. |
+| API      | Buttons only. Configure API options. For more information, refer to [Button API options](#button-api-options).   |
+
+<!--prettier-ignore-end -->
+
+<!-- prettier-ignore-start -->
+
+Icons don't have text, so they have different options:
+
+| Option         | Description                                               |
+| -------------- | --------------------------------------------------------- |
+| SVG Path     | Choose whether an icon SVG file source is **Fixed** or **Field**. If you selected **Fixed**, choose a provided option or [add a custom icon](#add-a-custom-icon). If you selected **Field**, choose a field. |
+| Fill color     | Icons only. Choose a fill color for the icon.   |
+
+<!--prettier-ignore-end -->
 
 #### Layout
 
