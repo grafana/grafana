@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { dateTime, usePluginContext } from '@grafana/data';
+import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -12,6 +13,10 @@ import {
   getReadOnlyProxy,
   createOpenModalFunction,
   wrapWithPluginContext,
+  getExtensionPointPluginDependencies,
+  getExposedComponentPluginDependencies,
+  getAppPluginConfigs,
+  getAppPluginIdFromExposedComponentId,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -445,6 +450,433 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(await screen.findByText('Hello folks!')).toBeVisible();
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
+    });
+  });
+
+  describe('getAppPluginConfigs()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should return the app plugin configs based on the provided plugin ids', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      expect(getAppPluginConfigs(['myorg-first-app', 'myorg-third-app'])).toEqual([
+        config.apps['myorg-first-app'],
+        config.apps['myorg-third-app'],
+      ]);
+    });
+
+    test('should simply ignore the app plugin ids that do not belong to a config', () => {
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      expect(getAppPluginConfigs(['myorg-first-app', 'unknown-app-id'])).toEqual([config.apps['myorg-first-app']]);
+    });
+  });
+
+  describe('getAppPluginIdFromExposedComponentId()', () => {
+    test('should return the app plugin id from an extension point id', () => {
+      expect(getAppPluginIdFromExposedComponentId('myorg-extensions-app/component/v1')).toBe('myorg-extensions-app');
+    });
+  });
+
+  describe('getExtensionPointPluginDependencies()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should return the app plugin ids that register extensions to a link extension point', () => {
+      const extensionPointId = 'myorg-first-app/link/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        // This plugin is registering a link extension to the extension point
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [
+              {
+                targets: [extensionPointId],
+                title: 'Link title',
+              },
+            ],
+            addedComponents: [],
+            exposedComponents: [],
+            extensionPoints: [],
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app']);
+    });
+
+    test('should return the app plugin ids that register extensions to a component extension point', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        // This plugin is registering a component extension to the extension point
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [
+              {
+                targets: [extensionPointId],
+                title: 'Component title',
+              },
+            ],
+            exposedComponents: [],
+            extensionPoints: [],
+          },
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-third-app']);
+    });
+
+    test('should return an empty array if there are no apps that that extend the extension point', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      // None of the apps are extending the extension point
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual([]);
+    });
+
+    test('should also return (recursively) the app plugin ids that the apps which extend the extension-point depend on', () => {
+      const extensionPointId = 'myorg-first-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        // This plugin is registering a component extension to the extension point.
+        // It is also depending on the 'myorg-fourth-app' plugin.
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [
+              {
+                targets: [extensionPointId],
+                title: 'Component title',
+              },
+            ],
+            exposedComponents: [],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fourth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+        // This plugin exposes a component, but is also depending on the 'myorg-fifth-app'.
+        'myorg-fourth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fourth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fourth-app/component/v1',
+                title: 'Exposed component',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fifth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-fifth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fifth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fifth-app/component/v1',
+                title: 'Exposed component',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+        'myorg-sixth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-sixth-app',
+        },
+      };
+
+      const appPluginIds = getExtensionPointPluginDependencies(extensionPointId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
+    });
+  });
+
+  describe('getExposedComponentPluginDependencies()', () => {
+    const originalApps = config.apps;
+    const genereicAppPluginConfig = {
+      path: '',
+      version: '',
+      preload: false,
+      angular: {
+        detected: false,
+        hideDeprecation: false,
+      },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaVersion: '8.0.0',
+        plugins: [],
+        extensions: {
+          exposedComponents: [],
+        },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      },
+    };
+
+    afterEach(() => {
+      config.apps = originalApps;
+    });
+
+    test('should only return the app plugin id that exposes the component, if that component does not depend on anything', () => {
+      const exposedComponentId = 'myorg-second-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: exposedComponentId,
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+      };
+
+      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app']);
+    });
+
+    test('should also return the list of app plugin ids that the plugin - which exposes the component - is depending on', () => {
+      const exposedComponentId = 'myorg-second-app/component/v1';
+
+      config.apps = {
+        'myorg-first-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-first-app',
+        },
+        'myorg-second-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-second-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: exposedComponentId,
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fourth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-third-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-third-app',
+        },
+        'myorg-fourth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fourth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fourth-app/component/v1',
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+          dependencies: {
+            ...genereicAppPluginConfig.dependencies,
+            extensions: {
+              exposedComponents: ['myorg-fifth-app/component/v1'],
+            },
+          },
+        },
+        'myorg-fifth-app': {
+          ...genereicAppPluginConfig,
+          id: 'myorg-fifth-app',
+          extensions: {
+            addedLinks: [],
+            addedComponents: [],
+            exposedComponents: [
+              {
+                id: 'myorg-fifth-app/component/v1',
+                title: 'Component title',
+              },
+            ],
+            extensionPoints: [],
+          },
+        },
+      };
+
+      const appPluginIds = getExposedComponentPluginDependencies(exposedComponentId);
+
+      expect(appPluginIds).toEqual(['myorg-second-app', 'myorg-fourth-app', 'myorg-fifth-app']);
     });
   });
 });
