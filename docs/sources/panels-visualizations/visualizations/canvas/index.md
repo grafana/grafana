@@ -61,7 +61,7 @@ You can tie [Elements](#elements) and [Connections](#connections) to data throug
 
 Elements are the basic building blocks of a canvas and they help you visualize data with different shapes and options. You can rotate and move elements around the canvas. When you move elements, snapping and alignment guides help you create more precise layouts.
 
-Add elements in the **Layer** section of canvas options.
+Add elements in the [Layer](#layer-options) section of canvas options.
 
 {{% admonition type="note" %}}
 Element snapping and alignment only works when the canvas is not zoomed in.
@@ -69,7 +69,9 @@ Element snapping and alignment only works when the canvas is not zoomed in.
 
 ### Element types
 
-When you select an element that you've added to a canvas, you can access editing options for it that are dependent on the element type. The following section describes the different elements available.
+When you select an element that you've added to a canvas, you can access [configuration options](#selected-element-options) for it that are dependent on the element type.
+
+The following section describes the different elements available.
 
 {{< column-list >}}
 
