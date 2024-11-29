@@ -634,15 +634,15 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 	return nil
 }
 
-// TODO: Add icons to the comment
-// TODO: add rule info
-var lintDashboardIssuesTemplate = `Grafana found some linting issues in this dashboard:
+var lintDashboardIssuesTemplate = `Hey there! 👋
+Grafana found some linting issues in this dashboard you may want to check:
 {{ range .}}
-{{ if eq .Severity 4 }}‼️ {{ else if eq .Severity 3 }}⚠️ {{ end }} {{ .Message }}.
+{{ if eq .Severity 4 }}❌{{ else if eq .Severity 3 }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
 {{- end }}
 `
 
 type lintIssue struct {
+	Rule     string
 	Severity lint.Severity
 	Message  string
 }
@@ -656,10 +656,12 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, prNumber int, re
 	}
 
 	// TODO: use common logger
+	r.logger.InfoContext(ctx, "linting pull request")
 
-	r.logger.DebugContext(ctx, "linting pull request")
-
-	// TODO: clean previuos comments
+	// Clear all previous comments because we don't know if the files have changed
+	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber); err != nil {
+		return fmt.Errorf("clear pull request comments: %w", err)
+	}
 
 	tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
 	if err != nil {
@@ -744,7 +746,7 @@ func extractLintIssues(rs *lint.ResultSet) []lintIssue {
 				}
 
 				issues = append(issues, lintIssue{
-					// TODO: rule info?
+					Rule:     rule,
 					Severity: r.Severity,
 					Message:  r.Message,
 				})
