@@ -74,7 +74,6 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			}
 			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
 			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
-
 		}
 	}
 	return scheme.SetVersionPriority(gv)
@@ -94,7 +93,6 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
-
 		}
 	}
 	return nil
