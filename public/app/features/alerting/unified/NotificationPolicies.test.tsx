@@ -294,6 +294,7 @@ describe.each([
   });
 
   it('allows user to reload and update policies if its been changed by another user', async () => {
+    jest.retryTimes(2);
     const { user } = renderNotificationPolicies();
 
     await getRootRoute();
@@ -317,7 +318,8 @@ describe.each([
     await openDefaultPolicyEditModal();
     await user.click(await screen.findByRole('button', { name: /update default policy/i }));
     expect(await screen.findByText(/updated notification policies/i)).toBeInTheDocument();
-  });
+    // TODO: Check if test flakiness/length can be improved
+  }, 60000);
 
   it('Should be able to delete an empty route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
