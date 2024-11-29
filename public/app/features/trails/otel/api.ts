@@ -253,12 +253,6 @@ export async function getFilteredResourceAttributes(
 
   let metricMatchParam = `${metric}{${metricMatchTerms.jobsRegex},${metricMatchTerms.instancesRegex}}`;
 
-  if (metricMatchTerms.missingOtelTargets) {
-    console.warn(
-      'Truncating job and instance values for label values GET request. Please consider filtering by more OTel resource attributes.'
-    );
-  }
-
   const start = getPrometheusTime(timeRange.from, false);
   const end = getPrometheusTime(timeRange.to, true);
 
