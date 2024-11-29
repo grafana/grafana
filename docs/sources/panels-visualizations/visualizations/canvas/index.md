@@ -100,8 +100,6 @@ A basic shape element can display text (both fixed and field data) and its backg
 
 The metric value element lets you select the data you want to display on a canvas. This element has a unique “edit” mode that can be triggered either through the context menu “Edit” option or by double clicking. When in edit mode you can select which field data that you want to display.
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-metric-value-9-2-0.mp4" max-width="750px" alt="Metric value element demo" >}}
-
 #### Text
 
 The text element lets you add text to the canvas. The element also supports an editing mode, triggered via either double clicking or the edit menu option in the context menu.
@@ -185,21 +183,19 @@ When building a canvas, you can connect elements together to create more complex
 
 To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
-{{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="650px" alt="Canvas connections demo" >}}
-
 ### Connector adjustments
 
 You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
 
 If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
 
-<!-- TODO: Use updated demo from what's new when uploaded to YouTube -->
-
-{{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}}
+<!-- {{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}} -->
 
 ### Connector styles
 
 You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+
+{{< youtube id="0iO2gqv0XNA" >}}
 
 ## Canvas editing
 
