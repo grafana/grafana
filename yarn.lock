@@ -3776,11 +3776,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:5.26.0":
-  version: 5.26.0
-  resolution: "@grafana/scenes-react@npm:5.26.0"
+"@grafana/scenes-react@npm:5.28.1":
+  version: 5.28.1
+  resolution: "@grafana/scenes-react@npm:5.28.1"
   dependencies:
-    "@grafana/scenes": "npm:5.26.0"
+    "@grafana/scenes": "npm:5.28.1"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
@@ -3791,13 +3791,13 @@ __metadata:
     "@grafana/ui": ^11.0.0
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/57bc608902b4b07f090bd03e7148d21264796d8412072e0d887672d8d6271e2fdd0c1417b1622c8339f2411da34da8a208ce6f85914ddcc792e61c157d2ef90f
+  checksum: 10/1979eebf0eea30550e9ffc1c9a766cd239914f5b79e0487ddf77d49006288c78f2e3f72bbe97782b6144902ef05e649f6f46197891811e3bbf809e6d016f0920
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:5.26.0":
-  version: 5.26.0
-  resolution: "@grafana/scenes@npm:5.26.0"
+"@grafana/scenes@npm:5.28.1":
+  version: 5.28.1
+  resolution: "@grafana/scenes@npm:5.28.1"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@leeoniya/ufuzzy": "npm:^1.0.16"
@@ -3814,7 +3814,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/b1aebcb7aafdbbd6090af75f2b2e38d3fda5789efc1c6cd586e715cc9d32210b4f2340b7ddd96fe3eadb19355dba7a1f5e067e152b4107855a98fca932c60e4a
+  checksum: 10/a12ab38c048e886a880bff64c5b17ae959f34efea44bee06afa4acdc4dcde14ccafc7aa263df568f54d7d5dd165d40952f11ce0ee0c1daa3ad46ea435dbe00ad
   languageName: node
   linkType: hard
 
@@ -17670,8 +17670,8 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.26.0"
-    "@grafana/scenes-react": "npm:5.26.0"
+    "@grafana/scenes": "npm:5.28.1"
+    "@grafana/scenes-react": "npm:5.28.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
