@@ -1,10 +1,16 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
 import { MultiCombobox, MultiComboboxProps } from './MultiCombobox';
 
 describe('MultiCombobox', () => {
+  let user: UserEvent;
+
+  beforeEach(() => {
+    user = userEvent.setup();
+  });
+
   it('should render with options', async () => {
     const options = [
       { label: 'A', value: 'a' },
@@ -13,7 +19,7 @@ describe('MultiCombobox', () => {
     ];
     render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
     const input = screen.getByRole('combobox');
-    userEvent.click(input);
+    user.click(input);
     expect(await screen.findByText('A')).toBeInTheDocument();
     expect(await screen.findByText('B')).toBeInTheDocument();
     expect(await screen.findByText('C')).toBeInTheDocument();
@@ -25,8 +31,8 @@ describe('MultiCombobox', () => {
       { label: 'B', value: 'b' },
       { label: 'C', value: 'c' },
     ];
-    const { getByText } = render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} />);
-    expect(getByText('A')).toBeInTheDocument();
+    render(<MultiCombobox options={options} value={['a']} onChange={jest.fn()} />);
+    expect(screen.getByText('A')).toBeInTheDocument();
   });
 
   it('should render with placeholder', () => {
@@ -66,16 +72,14 @@ describe('MultiCombobox', () => {
     };
     render(<ControlledMultiCombobox options={options} value={[]} onChange={onChange} />);
     const input = screen.getByRole('combobox');
-    await userEvent.click(input);
-    await userEvent.click(await screen.findByRole('option', { name: 'A' }));
+    await user.click(input);
+    await user.click(await screen.findByRole('option', { name: 'A' }));
 
     //Second option
-    //await userEvent.click(input);
-    await userEvent.click(await screen.findByRole('option', { name: 'C' }));
+    await user.click(screen.getByRole('option', { name: 'C' }));
 
     //Deselect
-    //userEvent.click(input);
-    await userEvent.click(await screen.findByRole('option', { name: 'A' }));
+    await user.click(screen.getByRole('option', { name: 'A' }));
 
     expect(onChange).toHaveBeenNthCalledWith(1, [first]);
     expect(onChange).toHaveBeenNthCalledWith(2, [first, third]);
@@ -89,7 +93,7 @@ describe('MultiCombobox', () => {
       { label: 'C', value: 'c' },
     ];
     render(<MultiCombobox options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
-    await userEvent.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('combobox'));
     expect(await screen.findByText('d')).toBeInTheDocument();
   });
 });
