@@ -48,7 +48,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           resultingItems[index] = { value: val };
         }
       }
-      return resultingItems;
+      return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
     }
 
     return value;
