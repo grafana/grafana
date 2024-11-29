@@ -3,6 +3,7 @@ package repository
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -637,7 +638,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 // TODO: add rule info
 var lintDashboardIssuesTemplate = `Grafana found some linting issues in this dashboard:
 {{ range .}}
-- {{ if eq .Severity 4 }}‼️ ERROR{{ else if eq .Severity 3 }}⚠️ WARNING{{ end }}: {{ .Message }}.
+{{ if eq .Severity 4 }}‼️ {{ else if eq .Severity 3 }}⚠️ {{ end }} {{ .Message }}.
 {{- end }}
 `
 
@@ -674,7 +675,17 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, prNumber int, re
 			continue
 		}
 
-		dashboard, err := lint.NewDashboard(file.Data)
+		// TODO: this should be done somewhere else
+		type specData struct {
+			Spec json.RawMessage `json:"spec"`
+		}
+
+		var data specData
+		if err := json.Unmarshal(file.Data, &data); err != nil {
+			return fmt.Errorf("unmarshal file data into spec: %w", err)
+		}
+
+		dashboard, err := lint.NewDashboard(data.Spec)
 		if err != nil {
 			return fmt.Errorf("failed to parse dashboard with linter: %v", err)
 		}
