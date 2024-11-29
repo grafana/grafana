@@ -205,6 +205,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"branchWorkflow": true,
 					"generateDashboardPreviews": true,
 					"owner": "grafana",
+					"pullRequestLinter": true,
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy",
 					"webhookSecret": "dummyWebhookSecret",
