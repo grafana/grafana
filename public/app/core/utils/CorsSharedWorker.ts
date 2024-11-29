@@ -9,6 +9,9 @@ export function sharedWorkersSupported() {
  */
 export class CorsSharedWorker {
   constructor(url: URL, options?: WorkerOptions) {
+    if (!sharedWorkersSupported()) {
+      throw new Error('SharedWorker is not supported');
+    }
     // by default, worker inherits HTML document's location and pathname which leads to wrong public path value
     // the CorsWorkerPlugin will override it with the value based on the initial worker chunk, ie.
     //    initial worker chunk: http://host.com/cdn/scripts/worker-123.js
