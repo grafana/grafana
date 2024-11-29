@@ -24,7 +24,7 @@ type Options struct {
 }
 
 func rspErr(e error) backend.DataResponse {
-	return backend.DataResponse{Error: e}
+	return backend.DataResponse{Error: e, ErrorSource: backend.ErrorSourceDownstream}
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -50,7 +50,7 @@ l1Fields:
 		case "data":
 			rsp = readPrometheusData(iter, opt)
 			if rsp.Error != nil {
-				return rsp
+				return rspErr(err)
 			}
 
 		case "error":
@@ -86,7 +86,8 @@ l1Fields:
 
 	if status == "error" {
 		return backend.DataResponse{
-			Error: fmt.Errorf("%s: %s", errorType, promErrString),
+			Error:       fmt.Errorf("%s: %s", errorType, promErrString),
+			ErrorSource: backend.ErrorSourceDownstream,
 		}
 	}
 
