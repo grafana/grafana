@@ -183,6 +183,7 @@ func (t *folderTree) DirPath(folder string) string {
 	parent := t.tree[folder]
 	for parent != "" && parent != t.repoFolder {
 		dirPath = path.Join(parent, dirPath)
+		parent = t.tree[parent]
 	}
 	// Not using Clean here is intentional. We don't want `.` or similar.
 	return dirPath
