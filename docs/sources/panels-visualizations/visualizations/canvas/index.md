@@ -179,21 +179,23 @@ To upload a custom image, follow these steps:
 
 ## Connections
 
+<!-- maybe make this first para a task -->
+
 When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
 
 To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
 ### Connector adjustments
 
+<!-- maybe make this a task as well -->
+
 You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
 
 If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
 
-<!-- {{< video-embed src="/media/docs/grafana/panels-visualizations/gif-canvas-connector-vertex-control-v11.0.mp4" alt="Changing a connector from a straight line to a right angle" >}} -->
-
 ### Connector styles
 
-You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor. For more information on connector styles, refer to [Selected connection options](#selected-connection-options).
 
 {{< youtube id="0iO2gqv0XNA" >}}
 
@@ -308,8 +310,6 @@ Use these following options to control the border of the canvas:
 
 ### Selected element options
 
-<!-- test a version of this with this section under Elements -->
-
 The following options allow you to control the appearance of the element you've selected. To access an element so that you can edit it, expand the **Layer** section and select the desired element.
 
 | Option                                      | Description                                                                                     |
@@ -405,8 +405,6 @@ The first data link in the list will be configured as your one-click data link. 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/canvas-one-click-datalink-.mp4" >}}
 
 ### Selected connection options
-
-<!--test a version of this with this section under Connectors; this should be consolidated with the connector style section -->
 
 You can style connectors using the following options:
 
