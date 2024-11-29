@@ -14,7 +14,7 @@ import {
 } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { EditRuleGroupModal } from './EditRuleGroupModal';
 
 const ui = {
   input: {
@@ -40,7 +40,7 @@ describe('EditGroupModal', () => {
 
     const group = namespace.groups[0];
 
-    render(<EditCloudGroupModal namespace={namespace} group={group} intervalEditOnly onClose={noop} />);
+    render(<EditRuleGroupModal namespace={namespace} group={group} intervalEditOnly onClose={noop} />);
 
     expect(await ui.input.namespace.find()).toHaveAttribute('readonly');
     expect(ui.input.group.get()).toHaveAttribute('readonly');
@@ -80,7 +80,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
 
     const group = promNs.groups[0];
 
-    render(<EditCloudGroupModal namespace={promNs} group={group} onClose={noop} />);
+    render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
 
     expect(await ui.input.namespace.find()).toHaveValue('prometheus-ns');
     expect(ui.input.namespace.get()).not.toHaveAttribute('readonly');
@@ -99,7 +99,7 @@ describe('EditGroupModal component on cloud alert rules', () => {
 
     const group = promNs.groups[0];
 
-    render(<EditCloudGroupModal namespace={promNs} group={group} onClose={noop} />);
+    render(<EditRuleGroupModal namespace={promNs} group={group} onClose={noop} />);
     expect(ui.table.query()).not.toBeInTheDocument();
     expect(await ui.noRulesText.find()).toBeInTheDocument();
   });
@@ -133,7 +133,7 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
   const grafanaGroup1 = grafanaNamespace.groups[0];
 
   const renderWithGrafanaGroup = () =>
-    render(<EditCloudGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={noop} />);
+    render(<EditRuleGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={noop} />);
 
   it('Should show alert table', async () => {
     renderWithGrafanaGroup();

@@ -27,11 +27,7 @@ func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
 	)
 }
 
-func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGrpcServerConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewGrpcAuthenticator(authCfg *GrpcServerConfig, tracer tracing.Tracer) (*authnlib.GrpcAuthenticator, error) {
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
@@ -42,21 +38,27 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 	}
 
 	client := http.DefaultClient
-	if cfg.Env == setting.Dev {
+	if authCfg.AllowInsecure {
 		// allow insecure connections in development mode to facilitate testing
 		client = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	}
 	keyRetriever := authnlib.NewKeyRetriever(grpcAuthCfg.KeyRetrieverConfig, authnlib.WithHTTPClientKeyRetrieverOpt(client))
 
 	grpcOpts := []authnlib.GrpcAuthenticatorOption{
-		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 		authnlib.WithTracerAuthOption(tracer),
 	}
-	if authCfg.Mode == ModeOnPrem {
+	switch authCfg.Mode {
+	case ModeOnPrem:
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
+			authnlib.WithIDTokenAuthOption(true),
+		)
+	case ModeCloud:
+		grpcOpts = append(grpcOpts,
+			// ID tokens are enabled but not required in cloud
+			authnlib.WithIDTokenAuthOption(false),
 		)
 	}
 
@@ -65,6 +67,8 @@ func NewGrpcAuthenticator(cfg *setting.Cfg, tracer tracing.Tracer) (*authnlib.Gr
 		grpcOpts...,
 	)
 }
+
+type contextFallbackKey struct{}
 
 type AuthenticatorWithFallback struct {
 	authenticator *authnlib.GrpcAuthenticator
@@ -79,7 +83,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		return nil, err
 	}
 
-	authenticator, err := NewGrpcAuthenticator(cfg, tracer)
+	authenticator, err := NewGrpcAuthenticator(authCfg, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -96,43 +100,56 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 	}, nil
 }
 
+func FallbackUsed(ctx context.Context) bool {
+	return ctx.Value(contextFallbackKey{}) != nil
+}
+
 func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.Context, error) {
 	ctx, span := f.tracer.Start(ctx, "grpcutils.AuthenticatorWithFallback.Authenticate")
-	span.SetAttributes(attribute.Bool("fallback_used", false))
+	defer span.End()
+
 	// Try to authenticate with the new authenticator first
+	span.SetAttributes(attribute.Bool("fallback_used", false))
 	newCtx, err := f.authenticator.Authenticate(ctx)
-	if err != nil {
-		// In case of error, fallback to the legacy authenticator
-		newCtx, err = f.fallback.Authenticate(ctx)
-		f.metrics.fallbackCounter.WithLabelValues(fmt.Sprintf("%t", err == nil)).Inc()
-		span.SetAttributes(attribute.Bool("fallback_used", true))
+	if err == nil {
+		// fallback not used, authentication successful
+		f.metrics.requestsTotal.WithLabelValues("false", "true").Inc()
+		return newCtx, nil
 	}
+
+	// In case of error, fallback to the legacy authenticator
+	span.SetAttributes(attribute.Bool("fallback_used", true))
+	newCtx, err = f.fallback.Authenticate(ctx)
+	if newCtx != nil {
+		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
+	}
+	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
 	return newCtx, err
 }
 
 const (
 	metricsNamespace = "grafana"
-	metricsSubSystem = "grpc_authenticator"
+	metricsSubSystem = "grpc_authenticator_with_fallback"
 )
 
 type metrics struct {
-	fallbackCounter *prometheus.CounterVec
+	requestsTotal *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
 	m := &metrics{
-		fallbackCounter: prometheus.NewCounterVec(
+		requestsTotal: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
-				Name:      "fallback_total",
-				Help:      "Number of times the fallback authenticator was used",
-			}, []string{"result"}),
+				Name:      "requests_total",
+				Help:      "Number requests using the authenticator with fallback",
+			}, []string{"fallback_used", "result"}),
 	}
 
 	if reg != nil {
 		once.Do(func() {
-			reg.MustRegister(m.fallbackCounter)
+			reg.MustRegister(m.requestsTotal)
 		})
 	}
 

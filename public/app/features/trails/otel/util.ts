@@ -153,15 +153,14 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
  * @param matchTerms __name__ and other Prom filters
  * @param jobsList list of jobs in target_info
  * @param instancesList list of instances in target_info
- * @param missingOtelTargets flag to indicate truncated job and instance filters
  * @returns
  */
 export function limitOtelMatchTerms(
   matchTerms: string[],
   jobsList: string[],
-  instancesList: string[],
-  missingOtelTargets: boolean
+  instancesList: string[]
 ): { missingOtelTargets: boolean; jobsRegex: string; instancesRegex: string } {
+  let missingOtelTargets = false;
   const charLimit = 2000;
 
   let initialCharAmount = matchTerms.join(',').length;
@@ -284,4 +283,19 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     // update the join query that is interpolated in all queries
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
   }
+}
+
+/**
+ * Returns the option value that is like 'prod'.
+ * If there are no options, returns null.
+ *
+ * @param options
+ * @returns
+ */
+export function getProdOrDefaultOption(options: Array<{ value: string; label: string }>): string | null {
+  if (options.length === 0) {
+    return null;
+  }
+
+  return options.find((option) => option.value.toLowerCase().indexOf('prod') > -1)?.value ?? options[0].value;
 }

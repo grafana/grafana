@@ -18,6 +18,10 @@ jest.mock('uuid', () => ({
 }));
 
 const originalShardingFlagState = config.featureToggles.lokiShardSplitting;
+const originalErr = console.error;
+beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
 beforeAll(() => {
   // @ts-expect-error
   jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
@@ -28,6 +32,7 @@ beforeAll(() => {
 afterAll(() => {
   jest.mocked(global.setTimeout).mockReset();
   config.featureToggles.lokiShardSplitting = originalShardingFlagState;
+  console.error = originalErr;
 });
 
 describe('runSplitQuery()', () => {

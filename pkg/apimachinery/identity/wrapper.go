@@ -25,7 +25,7 @@ func (i *IDClaimsWrapper) AuthenticatedBy() string {
 
 // GetDisplayName implements claims.IdentityClaims.
 func (i *IDClaimsWrapper) DisplayName() string {
-	return i.Source.GetDisplayName()
+	return i.Source.GetName()
 }
 
 // GetEmail implements claims.IdentityClaims.
@@ -85,7 +85,7 @@ func (i *IDClaimsWrapper) JTI() string {
 
 // GetNamespace implements claims.AccessClaims.
 func (i *IDClaimsWrapper) Namespace() string {
-	return i.Source.GetAllowedKubernetesNamespace()
+	return i.Source.GetNamespace()
 }
 
 // GetNotBefore implements claims.AccessClaims.

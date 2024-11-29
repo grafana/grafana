@@ -91,7 +91,26 @@ const attemptDeleteContactPoint = async (name: string) => {
   return user.click(await screen.findByRole('button', { name: /delete contact point/i }));
 };
 
+const alertManager = mockDataSource<AlertManagerDataSourceJsonData>({
+  name: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+  uid: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+  type: DataSourceType.Alertmanager,
+  jsonData: {
+    implementation: AlertManagerImplementation.prometheus,
+    handleGrafanaManagedAlerts: true,
+  },
+});
+
+const mimirDatasource = mockDataSource({
+  type: DataSourceType.Alertmanager,
+  name: MIMIR_DATASOURCE_UID,
+  uid: MIMIR_DATASOURCE_UID,
+});
+
 describe('contact points', () => {
+  beforeEach(() => {
+    setupDataSources(alertManager, mimirDatasource);
+  });
   describe('Contact points with Grafana managed alertmanager', () => {
     beforeEach(() => {
       grantUserPermissions([
@@ -127,9 +146,14 @@ describe('contact points', () => {
     });
 
     describe('templates tab', () => {
-      it('shows a warning when a template is misconfigured', async () => {
-        renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=templates'] });
-        expect((await screen.findAllByText(/^misconfigured$/i))[0]).toBeInTheDocument();
+      it('does not show a warning for a "misconfigured" template', async () => {
+        renderWithProvider(
+          <ContactPointsPageContents />,
+          { initialEntries: ['/?tab=templates'] },
+          { alertmanagerSourceName: GRAFANA_RULES_SOURCE_NAME }
+        );
+        await screen.findByText(/create notification templates/i);
+        expect(screen.queryByText(/^misconfigured$/i)).not.toBeInTheDocument();
       });
     });
 
@@ -201,7 +225,10 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.getByRole('link', { name: 'Add notification template' })).toHaveAttribute('aria-disabled', 'true');
+      expect(screen.getByRole('link', { name: 'Add notification template group' })).toHaveAttribute(
+        'aria-disabled',
+        'true'
+      );
     });
 
     it('allows deleting when not disabled', async () => {
@@ -328,13 +355,6 @@ describe('contact points', () => {
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]);
-      setupDataSources(
-        mockDataSource({
-          type: DataSourceType.Alertmanager,
-          name: MIMIR_DATASOURCE_UID,
-          uid: MIMIR_DATASOURCE_UID,
-        })
-      );
     });
 
     it('should show / hide loading states, have the right actions enabled', async () => {
@@ -367,6 +387,17 @@ describe('contact points', () => {
         expect(button).toBeEnabled();
       });
     });
+
+    describe('templates tab', () => {
+      it('shows a warning when a template is misconfigured', async () => {
+        renderWithProvider(
+          <ContactPointsPageContents />,
+          { initialEntries: ['/?tab=templates'] },
+          { alertmanagerSourceName: MIMIR_DATASOURCE_UID }
+        );
+        expect((await screen.findAllByText(/^misconfigured$/i))[0]).toBeInTheDocument();
+      });
+    });
   });
 
   describe('Vanilla Alertmanager ', () => {
@@ -376,23 +407,11 @@ describe('contact points', () => {
         AccessControlAction.AlertingNotificationsExternalRead,
         AccessControlAction.AlertingNotificationsExternalWrite,
       ]);
-
-      const alertManager = mockDataSource<AlertManagerDataSourceJsonData>({
-        name: VANILLA_ALERTMANAGER_DATASOURCE_UID,
-        uid: VANILLA_ALERTMANAGER_DATASOURCE_UID,
-        type: DataSourceType.Alertmanager,
-        jsonData: {
-          implementation: AlertManagerImplementation.prometheus,
-          handleGrafanaManagedAlerts: true,
-        },
-      });
-
-      setupDataSources(alertManager);
     });
 
     it("should not allow any editing because it's not supported", async () => {
       const { user } = renderWithProvider(<ContactPointsPageContents />, undefined, {
-        alertmanagerSourceName: VANILLA_ALERTMANAGER_DATASOURCE_UID,
+        alertmanagerSourceName: alertManager.name,
       });
 
       await waitForElementToBeRemoved(screen.queryByText('Loading...'));
@@ -407,7 +426,7 @@ describe('contact points', () => {
       // check buttons in Notification Templates
       const notificationTemplatesTab = screen.getByRole('tab', { name: 'Notification Templates' });
       await user.click(notificationTemplatesTab);
-      expect(screen.queryByRole('link', { name: 'Add notification template' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Add notification template group' })).not.toBeInTheDocument();
     });
   });
 

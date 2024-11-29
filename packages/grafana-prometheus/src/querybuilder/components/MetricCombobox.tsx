@@ -12,6 +12,7 @@ import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { MetricsModal } from './metrics-modal';
+import { tracking } from './metrics-modal/state/helpers';
 
 export interface MetricComboboxProps {
   metricLookupDisabled: boolean;
@@ -95,6 +96,7 @@ export function MetricCombobox({
           options={loadOptions}
           value={query.metric}
           onChange={onComboboxChange}
+          createCustomValue
         />
 
         {metricsExplorerEnabled ? (
@@ -103,7 +105,10 @@ export function MetricCombobox({
             aria-label="Open metrics explorer"
             variant="secondary"
             icon="book-open"
-            onClick={() => setMetricsModalOpen(true)}
+            onClick={() => {
+              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+              setMetricsModalOpen(true);
+            }}
           />
         ) : (
           <></>

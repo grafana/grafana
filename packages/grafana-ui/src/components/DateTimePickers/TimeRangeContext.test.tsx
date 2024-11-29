@@ -79,6 +79,43 @@ describe('TimeRangeProvider', () => {
       syncedValue: undefined,
     });
   });
+
+  it('sets status to not synced if only 1 component remains', async () => {
+    let context2: TimeRangeContextHookValue | undefined = undefined;
+    function onContextChange2(val?: TimeRangeContextHookValue) {
+      context2 = val;
+    }
+
+    const renderContext = render(
+      <TimeRangeProvider>
+        <TestComponent onContextChange={onContextChange} />
+        <TestComponent onContextChange={onContextChange2} />
+      </TimeRangeProvider>
+    );
+
+    const timeRange = makeTimeRange('2021-01-01', '2021-01-02');
+    act(() => {
+      context?.sync(timeRange);
+    });
+
+    expect(context2).toMatchObject({
+      syncPossible: true,
+      synced: true,
+      syncedValue: timeRange,
+    });
+
+    renderContext.rerender(
+      <TimeRangeProvider>
+        <TestComponent onContextChange={onContextChange2} />
+      </TimeRangeProvider>
+    );
+
+    expect(context2).toMatchObject({
+      syncPossible: false,
+      synced: false,
+      syncedValue: undefined,
+    });
+  });
 });
 
 describe('useTimeRangeContext', () => {

@@ -4,7 +4,7 @@
   "private": true,
   "version": "11.4.0-pre",
   "dependencies": {
-    "@emotion/css": "11.13.4",
+    "@emotion/css": "11.13.5",
     "@grafana/data": "11.4.0-pre",
     "@grafana/runtime": "11.4.0-pre",
     "@grafana/schema": "11.4.0-pre",
@@ -22,7 +22,7 @@
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.0.1",
     "@testing-library/user-event": "14.5.2",
-    "@types/lodash": "4.17.12",
+    "@types/lodash": "4.17.13",
     "@types/node": "20.16.15",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
@@ -38,5 +38,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.5.1"
+  "packageManager": "yarn@4.5.3"
 }

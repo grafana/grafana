@@ -32,8 +32,7 @@ interface TransformationPickerNgProps {
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onClose?: () => void;
   noTransforms: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  xforms: Array<TransformerRegistryItem<any>>;
+  xforms: TransformerRegistryItem[];
   search: string;
   suffix: ReactNode;
   data: DataFrame[];
@@ -160,8 +159,7 @@ function getTransformationPickerStyles(theme: GrafanaTheme2) {
 }
 
 interface TransformationsGridProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  transformations: Array<TransformerRegistryItem<any>>;
+  transformations: TransformerRegistryItem[];
   showIllustrations?: boolean;
   onClick: (id: string) => void;
   data: DataFrame[];

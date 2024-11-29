@@ -23,10 +23,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPublicDashboards
-	// [Deprecated] Public dashboards are now enabled by default; to disable them, use the configuration setting. This feature toggle will be removed in the next major version.
-	FlagPublicDashboards = "publicDashboards"
-
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
@@ -74,10 +70,6 @@ const (
 	// FlagAutoMigrateStatPanel
 	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
-
-	// FlagAutoMigrateXYChartPanel
-	// Migrate old XYChart panel to new XYChart2 model
-	FlagAutoMigrateXYChartPanel = "autoMigrateXYChartPanel"
 
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
@@ -178,10 +170,6 @@ const (
 	// FlagPrometheusRunQueriesInParallel
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
-	// FlagLokiMetricDataplane
-	// Changes metric responses from Loki to be compliant with the dataplane specification.
-	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
@@ -286,6 +274,10 @@ const (
 	// FlagGrafanaAPIServerWithExperimentalAPIs
 	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
+
+	// FlagProvisioning
+	// Next generation provisioning... and git
+	FlagProvisioning = "provisioning"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -575,13 +567,25 @@ const (
 	// Enables the migration of alerts and its child resources to your Grafana Cloud stack. Requires `onPremToCloudMigrations` to be enabled in conjunction.
 	FlagOnPremToCloudMigrationsAlerts = "onPremToCloudMigrationsAlerts"
 
+	// FlagOnPremToCloudMigrationsAuthApiMig
+	// Enables the use of auth api instead of gcom for internal token services. Requires `onPremToCloudMigrations` to be enabled in conjunction.
+	FlagOnPremToCloudMigrationsAuthApiMig = "onPremToCloudMigrationsAuthApiMig"
+
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
+	// FlagScopeApi
+	// In-development feature flag for the scope api using the app platform.
+	FlagScopeApi = "scopeApi"
+
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagLogQLScope
+	// In-development feature that will allow injection of labels into loki queries.
+	FlagLogQLScope = "logQLScope"
 
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
@@ -695,6 +699,10 @@ const (
 	// Preserve plugin proxy trailing slash.
 	FlagPluginProxyPreserveTrailingSlash = "pluginProxyPreserveTrailingSlash"
 
+	// FlagSqlQuerybuilderFunctionParameters
+	// Enables SQL query builder function parameters
+	FlagSqlQuerybuilderFunctionParameters = "sqlQuerybuilderFunctionParameters"
+
 	// FlagAzureMonitorPrometheusExemplars
 	// Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars
 	FlagAzureMonitorPrometheusExemplars = "azureMonitorPrometheusExemplars"
@@ -726,6 +734,10 @@ const (
 	// FlagReloadDashboardsOnParamsChange
 	// Enables reload of dashboards on scopes, time range and variables changes
 	FlagReloadDashboardsOnParamsChange = "reloadDashboardsOnParamsChange"
+
+	// FlagEnableScopesInMetricsExplore
+	// Enables the scopes usage in Metrics Explore
+	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
 
 	// FlagAlertingApiServer
 	// Register Alerting APIs with the K8s API server
@@ -831,9 +843,17 @@ const (
 	// Use new combobox component for Prometheus query editor
 	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
+	// FlagUserStorageAPI
+	// Enables the user storage API
+	FlagUserStorageAPI = "userStorageAPI"
+
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
+
+	// FlagPreinstallAutoUpdate
+	// Enables automatic updates for pre-installed plugins
+	FlagPreinstallAutoUpdate = "preinstallAutoUpdate"
 
 	// FlagDashboardSchemaV2
 	// Enables the new dashboard schema version 2, implementing changes necessary for dynamic dashboards and dashboards as code.
@@ -842,4 +862,48 @@ const (
 	// FlagPlaylistsWatcher
 	// Enables experimental watcher for playlists
 	FlagPlaylistsWatcher = "playlistsWatcher"
+
+	// FlagPasswordlessMagicLinkAuthentication
+	// Enable passwordless login via magic link authentication
+	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
+
+	// FlagExploreMetricsRelatedLogs
+	// Display Related Logs in Explore Metrics
+	FlagExploreMetricsRelatedLogs = "exploreMetricsRelatedLogs"
+
+	// FlagEnableExtensionsAdminPage
+	// Enables the extension admin page regardless of development mode
+	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"
+
+	// FlagZipkinBackendMigration
+	// Enables querying Zipkin data source without the proxy
+	FlagZipkinBackendMigration = "zipkinBackendMigration"
+
+	// FlagEnableSCIM
+	// Enables SCIM support for user and group management
+	FlagEnableSCIM = "enableSCIM"
+
+	// FlagCrashDetection
+	// Enables browser crash detection reporting to Faro.
+	FlagCrashDetection = "crashDetection"
+
+	// FlagJaegerBackendMigration
+	// Enables querying the Jaeger data source without the proxy
+	FlagJaegerBackendMigration = "jaegerBackendMigration"
+
+	// FlagReportingUseRawTimeRange
+	// Uses the original report or dashboard time range instead of making an absolute transformation
+	FlagReportingUseRawTimeRange = "reportingUseRawTimeRange"
+
+	// FlagAlertingUIOptimizeReducer
+	// Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
+	FlagAlertingUIOptimizeReducer = "alertingUIOptimizeReducer"
+
+	// FlagAzureMonitorEnableUserAuth
+	// Enables user auth for Azure Monitor datasource only
+	FlagAzureMonitorEnableUserAuth = "azureMonitorEnableUserAuth"
+
+	// FlagAlertingNotificationsStepMode
+	// Enables simplified step mode in the notifications section
+	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
 )

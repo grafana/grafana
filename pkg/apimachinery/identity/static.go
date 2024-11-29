@@ -14,21 +14,20 @@ var _ Requester = &StaticRequester{}
 // This is mostly copied from:
 // https://github.com/grafana/grafana/blob/v11.0.0/pkg/services/user/identity.go#L16
 type StaticRequester struct {
-	Type                       claims.IdentityType
-	UserID                     int64
-	UserUID                    string
-	OrgID                      int64
-	OrgName                    string
-	OrgRole                    RoleType
-	Login                      string
-	Name                       string
-	DisplayName                string
-	Email                      string
-	EmailVerified              bool
-	AuthID                     string
-	AuthenticatedBy            string
-	AllowedKubernetesNamespace string
-	IsGrafanaAdmin             bool
+	Type            claims.IdentityType
+	UserID          int64
+	UserUID         string
+	OrgID           int64
+	OrgName         string
+	OrgRole         RoleType
+	Login           string
+	Name            string
+	Email           string
+	EmailVerified   bool
+	AuthID          string
+	AuthenticatedBy string
+	Namespace       string
+	IsGrafanaAdmin  bool
 	// Permissions grouped by orgID and actions
 	Permissions   map[int64]map[string][]string
 	IDToken       string
@@ -89,7 +88,13 @@ func (u *StaticRequester) GetGroups() []string {
 
 // GetName implements Requester.
 func (u *StaticRequester) GetName() string {
-	return u.DisplayName
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 func (u *StaticRequester) HasRole(role RoleType) bool {
@@ -168,15 +173,15 @@ func (u *StaticRequester) HasUniqueId() bool {
 
 // GetID returns typed id for the entity
 func (u *StaticRequester) GetID() string {
-	return NewTypedIDString(u.Type, fmt.Sprintf("%d", u.UserID))
+	return claims.NewTypeID(u.Type, fmt.Sprintf("%d", u.UserID))
 }
 
 func (u *StaticRequester) GetAuthID() string {
 	return u.AuthID
 }
 
-func (u *StaticRequester) GetAllowedKubernetesNamespace() string {
-	return u.AllowedKubernetesNamespace
+func (u *StaticRequester) GetNamespace() string {
+	return u.Namespace
 }
 
 func (u *StaticRequester) GetAuthenticatedBy() string {
@@ -211,25 +216,6 @@ func (u *StaticRequester) GetCacheKey() string {
 	return u.CacheKey
 }
 
-// GetDisplayName returns the display name of the active entity
-// The display name is the name if it is set, otherwise the login or email
-func (u *StaticRequester) GetDisplayName() string {
-	if u.DisplayName != "" {
-		return u.DisplayName
-	}
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
 func (u *StaticRequester) GetIDToken() string {
 	return u.IDToken
-}
-
-func (u *StaticRequester) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
-	return u.IDTokenClaims
 }

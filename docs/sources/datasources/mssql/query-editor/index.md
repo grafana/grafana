@@ -129,6 +129,8 @@ You can select an optional aggregation function for the column in the **Aggregat
 
 To add more value columns, click the plus (`+`) button to the right of the column's row.
 
+{{< docs/shared source="grafana" lookup="datasources/sql-query-builder-macros.md" version="<GRAFANA_VERSION>" >}}
+
 ### Filter data (WHERE)
 
 To add a filter, toggle the **Filter** switch at the top of the editor.
@@ -179,8 +181,6 @@ To simplify syntax and to allow for dynamic components, such as date range filte
 | `$__unixEpochNanoTo()`                                | The end of the currently active time selection as nanosecond timestamp. For example, _1494497183142514872_                                                                                                                                                             |
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as `$__timeGroup` but for times stored as Unix timestamp.                                                                                                                                                                                                         |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as above but also adds a column alias.                                                                                                                                                                                                                            |
-
-To suggest more macros, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
 ### View the interpolated query
 

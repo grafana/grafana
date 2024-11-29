@@ -13,6 +13,7 @@ import {
   FieldType,
   TimeRange,
   hasTimeField,
+  InterpolateFunction,
 } from '@grafana/data';
 import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
@@ -55,6 +56,7 @@ interface RowsListProps {
   longestField?: Field;
   textWrapField?: Field;
   getActions?: GetActionsFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -82,6 +84,7 @@ export const RowsList = (props: RowsListProps) => {
     longestField,
     textWrapField,
     getActions,
+    replaceVariables,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -283,6 +286,7 @@ export const RowsList = (props: RowsListProps) => {
         const { bgColor, textColor } = rowBg(row.index);
         style.background = bgColor;
         style.color = textColor;
+        style.borderLeft = `2px solid ${bgColor}`;
       }
 
       // If there's a text wrapping field we set the height of it here
@@ -337,6 +341,7 @@ export const RowsList = (props: RowsListProps) => {
               textWrapped={textWrapFinal !== undefined}
               height={Number(style.height)}
               getActions={getActions}
+              replaceVariables={replaceVariables}
             />
           ))}
         </div>
@@ -364,6 +369,7 @@ export const RowsList = (props: RowsListProps) => {
       onCellFilterAdded,
       timeRange,
       getActions,
+      replaceVariables,
     ]
   );
 

@@ -38,6 +38,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -57,10 +58,10 @@ import {
   getPanelIdForVizPanel,
   isPanelClone,
 } from '../utils/utils';
+import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -68,6 +69,7 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './angular/AngularDeprecation';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { DashboardLayoutManager } from './types';
 
@@ -126,6 +128,8 @@ export interface DashboardSceneState extends SceneObjectState {
   panelSearch?: string;
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
+  /** options pane */
+  editPane: DashboardEditPane;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -176,6 +180,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
+      editPane: new DashboardEditPane({}),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);
@@ -389,6 +394,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
+      }),
+    });
+  }
+
+  public openV2SchemaEditor() {
+    this.setState({
+      overlay: new SchemaV2EditorDrawer({
+        dashboardRef: this.getRef(),
       }),
     });
   }

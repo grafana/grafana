@@ -1191,12 +1191,17 @@ export const versionedComponents = {
     selectColumn: {
       '11.0.0': 'data-testid select-column',
     },
+    selectColumnInput: { '11.0.0': 'data-testid select-column-input' },
+    selectFunctionParameter: { '11.0.0': (name: string) => `data-testid select-function-parameter-${name}` },
     selectAggregation: {
       '11.0.0': 'data-testid select-aggregation',
     },
+    selectAggregationInput: { '11.0.0': 'data-testid select-aggregation-input' },
     selectAlias: {
       '11.0.0': 'data-testid select-alias',
     },
+    selectAliasInput: { '11.0.0': 'data-testid select-alias-input' },
+    selectInputParameter: { '11.0.0': 'data-testid select-input-parameter' },
     filterConjunction: {
       '11.0.0': 'data-testid filter-conjunction',
     },

@@ -208,7 +208,6 @@ export interface GrafanaConfig {
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
-  customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
@@ -279,5 +278,6 @@ export interface AuthSettings {
   GenericOAuthSkipOrgRoleSync?: boolean;
 
   disableLogin?: boolean;
+  passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
 }

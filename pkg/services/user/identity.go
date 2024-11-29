@@ -30,8 +30,8 @@ type SignedInUser struct {
 	// AuthID will be set if user signed in using external method
 	AuthID string
 	// AuthenticatedBy be set if user signed in using external method
-	AuthenticatedBy            string
-	AllowedKubernetesNamespace string
+	AuthenticatedBy string
+	Namespace       string
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -102,9 +102,17 @@ func (u *SignedInUser) IsIdentityType(expected ...claims.IdentityType) bool {
 	return claims.IsIdentityType(u.GetIdentityType(), expected...)
 }
 
-// GetName implements identity.Requester.
 func (u *SignedInUser) GetName() string {
-	return u.Name
+	// kubernetesAggregator feature flag which allows Cloud Apps to become available
+	// in single tenant Grafana requires that GetName() returns something and not an empty string
+	// the logic below ensures that something is returned
+	if u.Name != "" {
+		return u.Name
+	}
+	if u.Login != "" {
+		return u.Login
+	}
+	return u.Email
 }
 
 // GetExtra implements Requester.
@@ -130,16 +138,6 @@ func (u *SignedInUser) GetGroups() []string {
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
-}
-
-func (u *SignedInUser) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
 }
 
 func (u *SignedInUser) HasRole(role identity.RoleType) bool {
@@ -173,8 +171,8 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
-func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
-	return u.AllowedKubernetesNamespace
+func (u *SignedInUser) GetNamespace() string {
+	return u.Namespace
 }
 
 // GetCacheKey returns a unique key for the entity.
@@ -257,7 +255,7 @@ func (u *SignedInUser) GetOrgRole() identity.RoleType {
 // GetID returns namespaced id for the entity
 func (u *SignedInUser) GetID() string {
 	ns, id := u.getTypeAndID()
-	return identity.NewTypedIDString(ns, id)
+	return claims.NewTypeID(ns, id)
 }
 
 func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
@@ -311,12 +309,6 @@ func (u *SignedInUser) GetEmail() string {
 
 func (u *SignedInUser) IsEmailVerified() bool {
 	return u.EmailVerified
-}
-
-// GetDisplayName returns the display name of the active entity
-// The display name is the name if it is set, otherwise the login or email
-func (u *SignedInUser) GetDisplayName() string {
-	return u.NameOrFallback()
 }
 
 func (u *SignedInUser) GetIDToken() string {
