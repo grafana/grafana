@@ -118,74 +118,81 @@ describe('situation', () => {
   });
 
   describe('utf-8 metric name support', () => {
+    it('with utf8 metric name no label and no comma', () => {
+      assertSituation(`{"metric.name"^}`, null);
+    });
+
     it('with utf8 metric name no label', () => {
       assertSituation(`{"metric.name", ^}`, {
         type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         otherLabels: [],
         betweenQuotes: false,
+        utf8Metric: true,
       });
-    });
-
-    it('with utf8 metric name no label and no comma', () => {
-      assertSituation(`{"metric.name"^}`, null);
     });
 
     it('with utf8 metric name requesting utf8 labels in quotes', () => {
       assertSituation(`{"metric.name", "^"}`, {
         type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         otherLabels: [],
         betweenQuotes: true,
+        utf8Metric: true,
       });
     });
 
     it('with utf8 metric name with a legacy label', () => {
       assertSituation(`{"metric.name", label1="val", ^}`, {
         type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
         betweenQuotes: false,
+        utf8Metric: true,
       });
     });
 
     it('with utf8 metric name with a legacy label and no value', () => {
       assertSituation(`{"metric.name", label1="^"}`, {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         labelName: 'label1',
         betweenQuotes: true,
         otherLabels: [],
+        utf8Metric: true,
       });
     });
 
     it('with utf8 metric name with a utf8 label and no value', () => {
       assertSituation(`{"metric.name", "utf8.label"="^"}`, {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         labelName: '"utf8.label"',
         betweenQuotes: true,
         otherLabels: [],
+        utf8Metric: true,
       });
     });
 
     it('with utf8 metric name with a legacy label and utf8 label', () => {
       assertSituation(`{"metric.name", label1="val", "utf8.label"="^"}`, {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         labelName: `"utf8.label"`,
         betweenQuotes: true,
         otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
+        utf8Metric: true,
       });
     });
 
     it('with utf8 metric name with a utf8 label and legacy label', () => {
       assertSituation(`{"metric.name", "utf8.label"="val",  label1="^"}`, {
         type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-        metricName: '"metric.name"',
+        metricName: 'metric.name',
         labelName: `label1`,
         betweenQuotes: true,
         otherLabels: [{ name: '"utf8.label"', value: 'val', op: '=' }],
+        utf8Metric: true,
       });
     });
   });
