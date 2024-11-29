@@ -17,7 +17,6 @@ import (
 const GrafanaDir = "."
 const NpmArtifactDir = "./npm-artifacts"
 
-// TODO: could this be replaced by `yarn lerna list -p` ?
 var packages = []string{
 	"@grafana/ui",
 	"@grafana/data",

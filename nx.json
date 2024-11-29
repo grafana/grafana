@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -10,6 +11,39 @@
   "targetDefaults": {
     "build": {
       "outputs": ["{projectRoot}/dist"]
+    }
+  },
+  "release": {
+    "projectsRelationship": "fixed",
+    "groups": {
+      "grafanaPackages": {
+        "projects": [
+          "@grafana/data",
+          "@grafana/e2e",
+          "@grafana/e2e-selectors",
+          "@grafana/flamegraph",
+          "@grafana/prometheus",
+          "@grafana/runtime",
+          "@grafana/schema",
+          "@grafana/ui"
+        ]
+      },
+      "privatePackages": {
+        "projects": ["@grafana/sql", "@grafana/o11y-ds-frontend"]
+      },
+      "plugins": {
+        "projects": ["@grafana-plugins/*"]
+      }
+    },
+    "version": {
+      "generatorOptions": {
+        "skipLockFileUpdate": true
+      },
+      "git": {
+        "commit": false,
+        "stageChanges": false,
+        "tag": false
+      }
     }
   },
   "defaultBase": "main"
