@@ -3,7 +3,7 @@
 /** @jsxRuntime classic */
 import { css, cx } from '@emotion/css';
 import classnames from 'classnames';
-import { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
+import React, { Profiler, ProfilerOnRenderCallback, useState, FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 

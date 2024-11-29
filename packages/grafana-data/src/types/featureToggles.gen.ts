@@ -22,7 +22,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   publicDashboardsScene?: boolean;
   lokiExperimentalStreaming?: boolean;
@@ -60,7 +59,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
@@ -87,6 +85,7 @@ export interface FeatureToggles {
   metricsSummary?: boolean;
   datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
+  provisioning?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
@@ -159,7 +158,9 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   onPremToCloudMigrationsAlerts?: boolean;
+  onPremToCloudMigrationsAuthApiMig?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  scopeApi?: boolean;
   promQLScope?: boolean;
   logQLScope?: boolean;
   sqlExpressions?: boolean;
@@ -240,4 +241,6 @@ export interface FeatureToggles {
   jaegerBackendMigration?: boolean;
   reportingUseRawTimeRange?: boolean;
   alertingUIOptimizeReducer?: boolean;
+  azureMonitorEnableUserAuth?: boolean;
+  alertingNotificationsStepMode?: boolean;
 }

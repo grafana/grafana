@@ -14,6 +14,7 @@ import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
+import { ALERTING_API_SERVER_BASE_URL } from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -22,6 +23,7 @@ import { FolderDTO } from 'app/types';
 import { setupDataSources } from '../../testSetup/datasources';
 import { buildInfoResponse } from '../../testSetup/featureDiscovery';
 import { DataSourceType } from '../../utils/datasource';
+import { ApiMachineryError } from '../../utils/k8s/errors';
 
 import { MIMIR_DATASOURCE_UID } from './constants';
 import { rulerRuleGroupHandler, updateRulerRuleNamespaceHandler } from './handlers/grafanaRuler';
@@ -145,4 +147,28 @@ export const makeAllAlertmanagerConfigFetchFail = (
   responseOverride: ReturnType<typeof getErrorResponse> = defaultError
 ) => {
   server.use(getAlertmanagerConfigHandler(responseOverride));
+};
+
+export const makeAllK8sGetEndpointsFail = (
+  uid: string,
+  message = 'could not find an Alertmanager configuration',
+  status = 500
+) => {
+  server.use(
+    http.get(ALERTING_API_SERVER_BASE_URL + '/*', () => {
+      const errorResponse: ApiMachineryError = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        metadata: {},
+        status: 'Failure',
+        details: {
+          uid,
+        },
+        message,
+        code: status,
+        reason: '',
+      };
+      return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+    })
+  );
 };
