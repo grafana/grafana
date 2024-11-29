@@ -920,6 +920,7 @@ export const versionedComponents = {
   DataSourcePicker: {
     container: {
       '10.0.0': 'data-testid Data source picker select container',
+      '8.0.0': 'Data source picker select container',
       [MIN_GRAFANA_VERSION]: 'Data source picker select container',
     },
     inputV2: {
