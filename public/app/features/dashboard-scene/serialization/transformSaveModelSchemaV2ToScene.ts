@@ -101,7 +101,10 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
   const annotationLayers = dashboard.annotations.map((annotation) => {
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
-      query: annotation.spec,
+      query: {
+        ...annotation.spec,
+        builtIn: annotation.spec.builtIn ? 1 : 0,
+      },
       name: annotation.spec.name,
       isEnabled: Boolean(annotation.spec.enable),
       isHidden: Boolean(annotation.spec.hide),
@@ -297,7 +300,7 @@ function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
   panel.spec.data.spec.queries.forEach((query) => {
     if (!datasource) {
       datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource.uid || datasource.type !== query.spec.datasource.type) {
+    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
       isMixedDatasource = true;
     }
   });
