@@ -12,6 +12,7 @@ import (
 const (
 	TypeUser           string = "user"
 	TypeServiceAccount string = "service-account"
+	TypeRenderService  string = "render"
 	TypeTeam           string = "team"
 	TypeRole           string = "role"
 	TypeFolder         string = "folder"

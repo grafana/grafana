@@ -40,7 +40,7 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 // checkTyped performes check on the root "namespace". If subject has access through the namespace they have access to
 // every resource for that "GroupResource".
 func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, resource string, store *storeInfo) (*authzv1.CheckResponse, error) {
-	res, err := s.openfga.Check(ctx, &openfgav1.CheckRequest{
+	req := &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,
 		TupleKey: &openfgav1.CheckRequestTupleKey{
@@ -48,7 +48,17 @@ func (s *Server) checkNamespace(ctx context.Context, subject, relation, group, r
 			Relation: relation,
 			Object:   common.NewNamespaceResourceIdent(group, resource),
 		},
-	})
+		ContextualTuples: &openfgav1.ContextualTupleKeys{
+			TupleKeys: []*openfgav1.TupleKey{
+				{
+					User:     "render:0",
+					Relation: "view",
+					Object:   common.NewNamespaceResourceIdent("dashboard.grafana.app", "dashboards"),
+				},
+			},
+		},
+	}
+	res, err := s.openfga.Check(ctx, req)
 	if err != nil {
 		return nil, err
 	}
