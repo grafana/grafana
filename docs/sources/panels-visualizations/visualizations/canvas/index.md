@@ -134,7 +134,7 @@ The server element lets you easily represent a single server, a stack of servers
 
 #### Button
 
-The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. API settings are found in the button element editor. You can also pass template variables in the API editor.
+The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
 {{% admonition type="note" %}}
 A button click will only trigger an API call when [inline editing](#inline-editing) is disabled.
@@ -186,7 +186,7 @@ When building a canvas, you can connect elements together to create more complex
 To create a connection, follow these steps:
 
 1. In the panel edit pane, expand the **Canvas** options section.
-1. Toggle the **Inline editing** switch on.
+1. Toggle on the **Inline editing** switch.
 1. Hover the cursor over an element you want to connect to display the connection anchors:
 
    ![Element with connection anchors displayed](/media/docs/grafana/panels-visualizations/screenshot-connection-anchors-v11.3.png)
