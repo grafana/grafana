@@ -16,6 +16,7 @@ import {
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
+import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
@@ -57,6 +58,33 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
+    });
+    it('should show an option to display the log line when displayed fields are used', async () => {
+      const onClickShowField = jest.fn();
+
+      setup({ displayedFields: ['key1'], onClickShowField }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Show log line body')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Show log line body'));
+
+      expect(onClickShowField).toHaveBeenCalledTimes(1);
+    });
+    it('should show an active option to display the log line when displayed fields are used', async () => {
+      const onClickHideField = jest.fn();
+
+      setup({ displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Hide log line body')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByLabelText('Hide log line body'));
+
+      expect(onClickHideField).toHaveBeenCalledTimes(1);
+    });
+    it('should not show an option to display the log line when displayed fields are not used', () => {
+      setup({ displayedFields: undefined }, { labels: { key1: 'label1' } });
+      expect(screen.getByRole('cell', { name: 'key1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText('Show log line body')).not.toBeInTheDocument();
     });
     it('should render filter controls when the callbacks are provided', () => {
       setup(
