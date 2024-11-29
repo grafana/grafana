@@ -229,7 +229,8 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (!(labelMatcherNode.type.id === UnquotedLabelMatcher || labelMatcherNode.type.id === QuotedLabelMatcher)) {
+  const allowedMatchers = new Set([UnquotedLabelMatcher, QuotedLabelMatcher]);
+  if (!allowedMatchers.has(labelMatcherNode.type.id)) {
     return null;
   }
 
@@ -267,16 +268,17 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  const unquotedLabels = labelMatchersNode
-    .getChildren(UnquotedLabelMatcher)
-    .map((ln) => getLabel(ln, text))
-    .filter(notEmpty);
-  const quotedLabels = labelMatchersNode
-    .getChildren(QuotedLabelMatcher)
-    .map((ln) => getLabel(ln, text))
-    .filter(notEmpty);
+  const matchers = [UnquotedLabelMatcher, QuotedLabelMatcher];
 
-  return [...unquotedLabels, ...quotedLabels];
+  return matchers.reduce<Label[]>((acc, matcher) => {
+    labelMatchersNode.getChildren(matcher).forEach((ln) => {
+      const label = getLabel(ln, text);
+      if (notEmpty(label)) {
+        acc.push(label);
+      }
+    });
+    return acc;
+  }, []);
 }
 
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
