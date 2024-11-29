@@ -21,7 +21,8 @@ If you have the grafana/website repo checked out in the same directory as the gr
 
 ## Deploy preview
 
-When a PR is opened with changes under the docs/sources directory, a deploy preview will be built. A comment and commit status check will be posted to the PR after the deploy preview is finished building.
+When you open a PR that changes files in the `docs/sources/` directory, CI builds a deploy preview.
+After the deploy preview has been built, the **Deploy pr preview** workflow comments a link to the preview URL and adds a commit status check .
 
 ---
 
