@@ -31,11 +31,11 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       const resultingItems: Array<ComboboxOption<T> | undefined> = [];
 
       for (const item of options) {
-        value.forEach((val, index) => {
+        for (const [index, val] of value.entries()) {
           if (val === item.value) {
-            resultingItems[index] = item; // Use index to keep order
+            resultingItems[index] = item;
           }
-        });
+        }
         if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
           // We found all items for the values
           break;
@@ -51,7 +51,6 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 
   const [items, _baseSetItems] = useState(isAsync ? [] : options);
   const [isOpen, setIsOpen] = useState(false);
-  //const [selectedItems, setSelectedItems] = useState<Array<ComboboxOption<T>>>(initialSelectedItems);
 
   const isOptionSelected = useCallback(
     (item: ComboboxOption<T>) => selectedItems.some((opt) => opt.value === item.value),
