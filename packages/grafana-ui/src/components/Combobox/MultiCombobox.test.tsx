@@ -39,21 +39,25 @@ describe('MultiCombobox', () => {
     expect(screen.getByPlaceholderText('Select')).toBeInTheDocument();
   });
 
-  it('should call onChange with the correct values', async () => {
+  it.each([
+    ['a', 'b', 'c'],
+    [1, 2, 3],
+  ])('should call onChange with the correct values', async (first, second, third) => {
     const options = [
-      { label: 'A', value: 'a' },
-      { label: 'B', value: 'b' },
-      { label: 'C', value: 'c' },
+      { label: 'A', value: first },
+      { label: 'B', value: second },
+      { label: 'C', value: third },
     ];
     const onChange = jest.fn();
 
-    const ControlledMultiCombobox = (props: MultiComboboxProps<string>) => {
-      const [value, setValue] = React.useState<string[]>([]);
+    const ControlledMultiCombobox = (props: MultiComboboxProps<string | number>) => {
+      const [value, setValue] = React.useState<string[] | number[]>([]);
       return (
         <MultiCombobox
           {...props}
           value={value}
           onChange={(val) => {
+            //@ts-expect-error Don't do this for real life use cases
             setValue(val ?? []);
             onChange(val);
           }}
@@ -73,8 +77,19 @@ describe('MultiCombobox', () => {
     //userEvent.click(input);
     await userEvent.click(await screen.findByRole('option', { name: 'A' }));
 
-    expect(onChange).toHaveBeenNthCalledWith(1, ['a']);
-    expect(onChange).toHaveBeenNthCalledWith(2, ['a', 'c']);
-    expect(onChange).toHaveBeenNthCalledWith(3, ['c']);
+    expect(onChange).toHaveBeenNthCalledWith(1, [first]);
+    expect(onChange).toHaveBeenNthCalledWith(2, [first, third]);
+    expect(onChange).toHaveBeenNthCalledWith(3, [third]);
+  });
+
+  it('should be able to render a valie that is not in the options', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={['a', 'd', 'c']} onChange={jest.fn()} />);
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(await screen.findByText('d')).toBeInTheDocument();
   });
 });

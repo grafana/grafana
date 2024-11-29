@@ -11,7 +11,7 @@ import { ValuePill } from './ValuePill';
 import { getMultiComboboxStyles } from './getMultiComboboxStyles';
 
 interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
-  value?: string[] | Array<ComboboxOption<T>>;
+  value?: T[] | Array<ComboboxOption<T>>;
   onChange: (items?: T[]) => void;
 }
 
@@ -41,7 +41,14 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           break;
         }
       }
-      return resultingItems.filter((item) => item !== undefined); //TODO: Handle cases where value is not in options
+
+      // Handle values that are not in options
+      for (const [index, val] of value.entries()) {
+        if (resultingItems[index] === undefined) {
+          resultingItems[index] = { value: val };
+        }
+      }
+      return resultingItems;
     }
 
     return value;
@@ -180,7 +187,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
 };
 
 function isComboboxOptions<T extends string | number>(
-  value: string[] | Array<ComboboxOption<T>>
+  value: T[] | Array<ComboboxOption<T>>
 ): value is Array<ComboboxOption<T>> {
   return typeof value[0] === 'object';
 }
