@@ -128,7 +128,6 @@ describe('situation', () => {
         metricName: 'metric.name',
         otherLabels: [],
         betweenQuotes: false,
-        utf8Metric: true,
       });
     });
 
@@ -138,7 +137,6 @@ describe('situation', () => {
         metricName: 'metric.name',
         otherLabels: [],
         betweenQuotes: true,
-        utf8Metric: true,
       });
     });
 
@@ -148,7 +146,6 @@ describe('situation', () => {
         metricName: 'metric.name',
         otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
         betweenQuotes: false,
-        utf8Metric: true,
       });
     });
 
@@ -159,7 +156,6 @@ describe('situation', () => {
         labelName: 'label1',
         betweenQuotes: true,
         otherLabels: [],
-        utf8Metric: true,
       });
     });
 
@@ -170,7 +166,6 @@ describe('situation', () => {
         labelName: '"utf8.label"',
         betweenQuotes: true,
         otherLabels: [],
-        utf8Metric: true,
       });
     });
 
@@ -181,7 +176,6 @@ describe('situation', () => {
         labelName: `"utf8.label"`,
         betweenQuotes: true,
         otherLabels: [{ name: 'label1', value: 'val', op: '=' }],
-        utf8Metric: true,
       });
     });
 
@@ -192,7 +186,6 @@ describe('situation', () => {
         labelName: `label1`,
         betweenQuotes: true,
         otherLabels: [{ name: '"utf8.label"', value: 'val', op: '=' }],
-        utf8Metric: true,
       });
     });
   });

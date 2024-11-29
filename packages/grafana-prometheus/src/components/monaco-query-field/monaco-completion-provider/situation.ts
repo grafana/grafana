@@ -148,7 +148,6 @@ export type Situation =
       otherLabels: Label[];
       // utf8 labels must be in quotes
       betweenQuotes: boolean;
-      utf8Metric?: boolean;
     }
   | {
       type: 'IN_GROUPING';
@@ -161,7 +160,6 @@ export type Situation =
       labelName: string;
       betweenQuotes: boolean;
       otherLabels: Label[];
-      utf8Metric?: boolean;
     };
 
 type Resolver = {
@@ -375,7 +373,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
-  const { metricName, utf8Metric } = getMetricName(labelMatchersNode, text);
+  const metricName = getMetricName(labelMatchersNode, text);
 
   // we are probably in a situation without a metric name
   return {
@@ -383,7 +381,6 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
     labelName,
     betweenQuotes: inStringNode,
     otherLabels,
-    utf8Metric,
     ...(metricName ? { metricName } : {}),
   };
 }
@@ -416,14 +413,13 @@ function resolveQuotedLabelMatcher(node: SyntaxNode, text: string, pos: number):
 
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
-  const { metricName, utf8Metric } = getMetricName(parent.parent!, text);
+  const metricName = getMetricName(parent.parent!, text);
 
   return {
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
     labelName,
     betweenQuotes: inStringNode,
     otherLabels,
-    utf8Metric,
     ...(metricName ? { metricName } : {}),
   };
 }
@@ -482,33 +478,29 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   }
 
   const otherLabels = getLabels(node, text);
-  const { metricName, utf8Metric } = getMetricName(node, text);
+  const metricName = getMetricName(node, text);
 
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     otherLabels,
     betweenQuotes: false,
-    utf8Metric,
     ...(metricName ? { metricName } : {}),
   };
 }
 
 function resolveUtf8LabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   const otherLabels = getLabels(node, text);
-  const { metricName, utf8Metric } = node.parent?.parent
-    ? getMetricName(node.parent.parent, text)
-    : { metricName: null, utf8Metric: false };
+  const metricName = node.parent?.parent ? getMetricName(node.parent.parent, text) : null;
 
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     otherLabels,
     betweenQuotes: true,
-    utf8Metric,
     ...(metricName ? { metricName } : {}),
   };
 }
 
-function getMetricName(node: SyntaxNode, text: string): { metricName: string | null; utf8Metric: boolean } {
+function getMetricName(node: SyntaxNode, text: string): string | null {
   // Legacy Metric metric_name{label="value"}
   const legacyMetricNameNode = walk(node, [
     ['parent', VectorSelector],
@@ -516,7 +508,7 @@ function getMetricName(node: SyntaxNode, text: string): { metricName: string | n
   ]);
 
   if (legacyMetricNameNode) {
-    return { metricName: getNodeText(legacyMetricNameNode, text), utf8Metric: false };
+    return getNodeText(legacyMetricNameNode, text);
   }
 
   // check for a utf-8 metric
@@ -529,11 +521,11 @@ function getMetricName(node: SyntaxNode, text: string): { metricName: string | n
   ]);
 
   if (utf8MetricNameNode) {
-    return { metricName: getNodeText(utf8MetricNameNode, text, true), utf8Metric: true };
+    return getNodeText(utf8MetricNameNode, text, true);
   }
 
   // no metric name
-  return { metricName: null, utf8Metric: false };
+  return null;
 }
 
 // we find the first error-node in the tree that is at the cursor-position.
