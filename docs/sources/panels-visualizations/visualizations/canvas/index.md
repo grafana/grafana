@@ -71,7 +71,7 @@ Element snapping and alignment only works when the canvas is not zoomed in.
 
 When you select an element that you've added to a canvas, you can access [configuration options](#selected-element-options) for it that are dependent on the element type.
 
-The following section describes the different elements available.
+The following sections describe the different elements available.
 
 {{< column-list >}}
 
@@ -193,7 +193,7 @@ To create a connection, follow these steps:
 
 1. Drag the cursor from a connection anchor on that element to one on another element.
 
-To remove a connection, click on the connection and then press the `Delete` or `Backspace` key.
+To remove a connection, click the connection and then press the `Delete` or `Backspace` key.
 
 ### Connection adjustments
 
@@ -212,11 +212,11 @@ You can set the size, color, direction, and style of connections based on fixed 
 
 ## Canvas editing
 
-You can edit a canvas when the dashboard is in either panel edit mode or from the context of the dashboard. The following sections describe the editing options available in dashboard mode.
+You can make changes to a canvas visualization while in the context of the dashboard, or in dashboard mode. The following sections describe the editing options available in dashboard mode.
 
 ### Inline editor
 
-You can edit your canvas inline while in dashboard mode. The inline editor menu displays the options relevant to the part of the canvas that you have in focus or selected. You can also move the editor window around.
+You can edit your canvas inline while in dashboard mode. The inline editor menu displays the options relevant to the part of the canvas that you've selected. You can also move the editor window around.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" alt="Inline editor demo" >}}
 
@@ -272,7 +272,7 @@ Infinite panning is an experimental feature that may not work as expected in all
 
 The **Layer** options let you add elements to the canvas and control its appearance:
 
-- [Elements](#elements)
+- [Elements](#elements-1)
 - [Background](#background-canvas)
 - [Border](#border-canvas)
 
@@ -282,11 +282,11 @@ Use the **Add item** button to open the [element type](#element-types) drop-down
 
 ![Canvas elements added in the Layer options](/media/docs/grafana/panels-visualizations/screenshot-canvas-elements-v11.3.png)
 
-By default, the elements have a name that corresponds to the order in which it was added, but you can [change the name](#rename-an-element).
+By default, elements have numbered names, like "Element 1", and those numbers correspond to the order in which the elements were added, but you can [change the default names](#rename-an-element).
 
 You can also take the following actions on elements:
 
-- Change the order of elements. Click and hold the row of the element while moving it up and down in the element list.
+- Change the order of elements by clicking and holding the row of the element while moving it up and down in the element list.
 - Duplicate or remove elements by clicking the icons on the element row.
 - Access the element editing options by clicking the element row. This displays the [Selected element](#selected-element-options) section of options. Click **Clear selection** to remove the element from focus and stop displaying that section of options.
 
@@ -294,24 +294,24 @@ You can also take the following actions on elements:
 
 To update the name of an element, follow these steps:
 
-1. Hover the cursor over the name of the default element name so the **Edit layer name** (pencil) icon is displayed.
+1. Hover the cursor over the element name so the **Edit layer name** (pencil) icon is displayed.
 1. Click the **Edit layer name** icon.
 1. Enter a new name.
 1. Click outside of the name field.
 
 #### Background (canvas)
 
-Use these following options to control the background of the canvas:
+Use the following options to control the background of the canvas:
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | Color      | Set the background color.                                                                                 |
 | Image      | Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements). |
-| Image size | Control the size of the image or even set it as a tile.                                                   |
+| Image size | Control the size of the image or set it as a tile.                                                        |
 
 #### Border (canvas)
 
-Use these following options to control the border of the canvas:
+Use the following options to control the border of the canvas:
 
 | Option | Description                                                                                     |
 | ------ | ----------------------------------------------------------------------------------------------- |
@@ -334,7 +334,7 @@ The following options allow you to control the appearance of the element you've 
 
 #### Element type
 
-You can change the type of the element by making a new selection in the drop-down list:
+You can change element type by making a new selection in the drop-down list:
 
 ![Cursor on the element type selection drop-down](/media/docs/grafana/panels-visualizations/screenshot-element-type-select-v11.3.png)
 
@@ -347,7 +347,7 @@ This section is named based on the element type. Control the appearance of text 
 | Option         | Description                                               |
 | -------------- | --------------------------------------------------------- |
 | Style          | Buttons only. Select an option in the **Variant** drop-down list to indicate what kind of action the button initiates. Choose from **primary**, **secondary**, **success**, and **destructive**. |
-| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you select **Fixed**, enter text in the **Value** field. If you select **Field** select the field. |
+| Text           | Select a **Source**. Choose from **Fixed** or **Field**. If you selected **Fixed**, enter text in the **Value** field. If you selected **Field**, choose the field. |
 | Text color     | Choose a text color.     |
 | Align text     | Set the horizontal alignment of text within the element. Choose from **Left**, **Center**, and **Right**.  |
 | Vertical align | Set the vertical alignment of the text within the element. Choose from **Top**, **Middle**, and **Bottom**. |
@@ -362,14 +362,14 @@ Icons don't have text, so they have different options:
 
 | Option         | Description                                               |
 | -------------- | --------------------------------------------------------- |
-| SVG Path     | Choose whether an icon SVG file source is **Fixed** or **Field**. If you selected **Fixed**, choose a provided option or [add a custom icon](#add-a-custom-icon). If you selected **Field**, choose a field. |
-| Fill color     | Icons only. Choose a fill color for the icon.   |
+| SVG Path     | Choose whether the icon SVG file source is **Fixed** or **Field**. If you selected **Fixed**, choose a provided option or [add a custom icon](#add-a-custom-icon). If you selected **Field**, choose a field. |
+| Fill color     | Choose a fill color for the icon.   |
 
 <!--prettier-ignore-end -->
 
 #### Layout
 
-Control the placement of elements on the canvas with the following options.
+Control the placement of elements on the canvas with the following options:
 
 <!-- prettier-ignore-start -->
 
@@ -377,26 +377,26 @@ Control the placement of elements on the canvas with the following options.
 | --------------- | --------------- |
 | Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
 | Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
-| Position        | Use the settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
+| Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
 
 <!-- prettier-ignore-end -->
 
 #### Background (element)
 
-Use these following options to set the background of the element:
+Use the following options to set the background of the element:
 
 - **Color** - Set the background color.
 - **Image** - Use one of the provided background images or [add your own custom image](#add-custom-images-to-elements).
 
-This option does not apply to the button element.
+This option doesn't apply to the button element.
 
 #### Border (element)
 
-Use these following options to set the border of the element:
+Use the following options to set the border of the element:
 
 - **Width** - Set the border width in pixels.
 - **Color** - Set the border color. This option is only displayed when the border width is greater than zero.
-- **Radius** - Add rounded corners to the border and control the degree of curve.
+- **Radius** - Add rounded corners to the element border and control the degree of curve.
 
 #### Data links
 
@@ -435,17 +435,17 @@ The first data link in the list will be configured as your one-click data link. 
 
 ### Selected connection options
 
-You can style connections using the following options:
+You can style the selected connection using the following options:
 
 - **Color** - Set the connection color.
 - **Size** - Control the size of the connection by entering a number in the **Value** field.
 - **Radius** - Add curve to the connection by entering a value to represent the degree.
-- **Arrow Direction** - Control how the arrow head of the connection is set. Choose from:
+- **Arrow Direction** - Control the appearance of the arrow head. Choose from:
 
-  - **Forward** - The direction in which the connection was drawn.
-  - **Reverse** - The opposite of the direction in which the connection was drawn.
-  - **Both** - Add arrow heads to both ends of the connection.
-  - **None** - Remove the arrow head.
+  - **Forward** - The arrow head points in the direction in which the connection was drawn.
+  - **Reverse** - The arrow head points in the opposite direction of which the connection was drawn.
+  - **Both** - Adds arrow heads to both ends of the connection.
+  - **None** - Removes the arrow head.
 
 - **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
 
