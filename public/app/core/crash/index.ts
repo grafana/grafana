@@ -49,7 +49,7 @@ export function initializeCrashDetection() {
      *  There are limitations that require us to manually assert the type here.
      *  1) Webpack uses static code analysis to create a new entry point for a SharedWorker.
      *     It requies constructing an object with exact syntax new SharedWorker(...) (https://webpack.js.org/guides/web-workers/)
-     *  2) Some browsers may not support SharedWorkers hence we cannot extends CorsSharedWorker like CorsWorker and
+     *  2) Some browsers may not support SharedWorkers hence we cannot extend CorsSharedWorker like CorsWorker and
      *     window.SharedWorker needs to be referenced during runtime only if it supported (https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker)
      *
      *  We guarantee the type assertion is correct by returning a SharedWorker in CorsSharedWorker constructor.
