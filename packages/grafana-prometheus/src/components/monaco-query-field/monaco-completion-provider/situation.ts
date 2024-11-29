@@ -227,11 +227,12 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (labelMatcherNode.type.id !== UnquotedLabelMatcher) {
+  if (!(labelMatcherNode.type.id === UnquotedLabelMatcher || labelMatcherNode.type.id === QuotedLabelMatcher)) {
     return null;
   }
 
-  const nameNode = walk(labelMatcherNode, [['firstChild', LabelName]]);
+  const nameNode =
+    walk(labelMatcherNode, [['firstChild', LabelName]]) ?? walk(labelMatcherNode, [['firstChild', QuotedLabelName]]);
 
   if (nameNode === null) {
     return null;
@@ -264,8 +265,16 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  const labelNodes = labelMatchersNode.getChildren(UnquotedLabelMatcher);
-  return labelNodes.map((ln) => getLabel(ln, text)).filter(notEmpty);
+  const unquotedLabels = labelMatchersNode
+    .getChildren(UnquotedLabelMatcher)
+    .map((ln) => getLabel(ln, text))
+    .filter(notEmpty);
+  const quotedLabels = labelMatchersNode
+    .getChildren(QuotedLabelMatcher)
+    .map((ln) => getLabel(ln, text))
+    .filter(notEmpty);
+
+  return [...unquotedLabels, ...quotedLabels];
 }
 
 function getNodeChildren(node: SyntaxNode): SyntaxNode[] {
@@ -351,29 +360,15 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
 
-  const metricNameNode = walk(labelMatchersNode, [
-    ['parent', VectorSelector],
-    ['firstChild', Identifier],
-  ]);
+  const metricName = getMetricName(labelMatchersNode, text);
 
-  if (metricNameNode === null) {
-    // we are probably in a situation without a metric name
-    return {
-      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-      labelName,
-      betweenQuotes: inStringNode,
-      otherLabels,
-    };
-  }
-
-  const metricName = getNodeText(metricNameNode, text);
-
+  // we are probably in a situation without a metric name
   return {
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-    metricName,
     labelName,
     betweenQuotes: inStringNode,
     otherLabels,
+    ...(metricName ? { metricName } : {}),
   };
 }
 
@@ -405,30 +400,14 @@ function resolveQuotedLabelMatcher(node: SyntaxNode, text: string, pos: number):
 
   // we need to remove "our" label from all-labels, if it is in there
   const otherLabels = allLabels.filter((label) => label.name !== labelName);
-
-  const metricNameNode = walk(labelMatchersNode, [
-    ['parent', VectorSelector],
-    ['firstChild', Identifier],
-  ]);
-
-  if (metricNameNode === null) {
-    // we are probably in a situation without a metric name
-    return {
-      type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-      labelName,
-      betweenQuotes: inStringNode,
-      otherLabels,
-    };
-  }
-
-  const metricName = getNodeText(metricNameNode, text);
+  const metricName = getMetricName(parent.parent!, text);
 
   return {
     type: 'IN_LABEL_SELECTOR_WITH_LABEL_NAME',
-    metricName,
     labelName,
     betweenQuotes: inStringNode,
     otherLabels,
+    ...(metricName ? { metricName } : {}),
   };
 }
 
@@ -468,28 +447,42 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
     }
   }
 
-  const metricNameNode = walk(node, [
+  const otherLabels = getLabels(node, text);
+  const metricName = getMetricName(node, text);
+
+  return {
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+    otherLabels,
+    ...(metricName ? { metricName } : {}),
+  };
+}
+
+function getMetricName(node: SyntaxNode, text: string): string | null {
+  // Legacy Metric metric_name{label="value"}
+  const legacyMetricNameNode = walk(node, [
     ['parent', VectorSelector],
     ['firstChild', Identifier],
   ]);
 
-  const otherLabels = getLabels(node, text);
-
-  if (metricNameNode === null) {
-    // we are probably in a situation without a metric name.
-    return {
-      type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-      otherLabels,
-    };
+  if (legacyMetricNameNode) {
+    return getNodeText(legacyMetricNameNode, text);
   }
 
-  const metricName = getNodeText(metricNameNode, text);
+  // check for a utf-8 metric
+  // utf-8 metric {"metric.name", label="value"}
+  const utf8MetricNameNode = walk(node, [
+    ['parent', VectorSelector],
+    ['firstChild', LabelMatchers],
+    ['firstChild', QuotedLabelName],
+    ['firstChild', StringLiteral],
+  ]);
 
-  return {
-    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
-    metricName,
-    otherLabels,
-  };
+  if (utf8MetricNameNode) {
+    return getNodeText(utf8MetricNameNode, text);
+  }
+
+  // no metric name
+  return null;
 }
 
 // we find the first error-node in the tree that is at the cursor-position.
