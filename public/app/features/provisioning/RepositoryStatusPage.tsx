@@ -73,7 +73,11 @@ function FilesTable({ name }: FilesTableProps) {
       },
       {
         id: 'size',
-        header: 'Size',
+        header: 'Size (KB)',
+        cell: ({ row: { original } }: Cell<'size'>) => {
+          const { size } = original;
+          return (parseInt(size, 10) / 1024).toFixed(2);
+        },
         sortType: 'number',
       },
       {
@@ -123,7 +127,7 @@ function FilesTable({ name }: FilesTableProps) {
       <InteractiveTable
         columns={columns}
         data={data}
-        pageSize={10}
+        pageSize={25}
         getRowId={(file: FileDetails) => String(file.hash)}
       />
     </Stack>
