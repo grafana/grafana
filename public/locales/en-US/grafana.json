@@ -241,6 +241,7 @@
     },
     "common": {
       "cancel": "Cancel",
+      "clear-filters": "Clear filters",
       "delete": "Delete",
       "edit": "Edit",
       "export": "Export",
@@ -327,6 +328,8 @@
       }
     },
     "mute-timings": {
+      "add-mute-timing": "Add mute timing",
+      "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
       "save": "Save mute timing",
       "saving": "Saving mute timing"
     },
