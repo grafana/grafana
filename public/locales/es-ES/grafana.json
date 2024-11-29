@@ -245,6 +245,7 @@
       "edit": "",
       "export": "",
       "export-all": "",
+      "loading": "",
       "view": ""
     },
     "contact-points": {
@@ -328,6 +329,14 @@
     "mute-timings": {
       "save": "",
       "saving": ""
+    },
+    "notification-preview": {
+      "alertmanager": "",
+      "error": "",
+      "initialized": "",
+      "preview-routing": "",
+      "title": "",
+      "uninitialized": ""
     },
     "policies": {
       "default-policy": {
