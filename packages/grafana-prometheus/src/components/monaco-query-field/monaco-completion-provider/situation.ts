@@ -144,6 +144,8 @@ export type Situation =
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
       metricName?: string;
       otherLabels: Label[];
+      // utf8 labels must be in quotes
+      betweenQuotes: boolean;
     }
   | {
       type: 'IN_GROUPING';
@@ -173,6 +175,10 @@ const RESOLVERS: Resolver[] = [
   {
     path: [LabelMatchers, VectorSelector],
     fun: resolveLabelKeysWithEquals,
+  },
+  {
+    path: [StringLiteral, QuotedLabelName, LabelMatchers, VectorSelector],
+    fun: resolveUtf8LabelKeysWithEquals,
   },
   {
     path: [PromQL],
@@ -436,9 +442,26 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   // next false positive:
   // `something{a="1"^}`
-  const child = walk(node, [['firstChild', UnquotedLabelMatcher]]);
+  let child = walk(node, [['firstChild', UnquotedLabelMatcher]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
+    //
+    // in this case, we will need to have a `,` character at the end,
+    // to be able to suggest adding the next label.
+    // the area between the end-of-the-child-node and the cursor-pos
+    // must contain a `,` in this case.
+    const textToCheck = text.slice(child.to, pos);
+
+    if (!textToCheck.includes(',')) {
+      return null;
+    }
+  }
+
+  // next false positive:
+  // `{"utf8.metric"^}`
+  child = walk(node, [['firstChild', QuotedLabelName]]);
+  if (child !== null) {
+    // means the label-matching part contains a utf8 metric.
     //
     // in this case, we will need to have a `,` character at the end,
     // to be able to suggest adding the next label.
@@ -457,6 +480,19 @@ function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number)
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     otherLabels,
+    betweenQuotes: false,
+    ...(metricName ? { metricName } : {}),
+  };
+}
+
+function resolveUtf8LabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
+  const otherLabels = getLabels(node, text);
+  const metricName = node.parent?.parent ? getMetricName(node.parent.parent, text) : null;
+
+  return {
+    type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+    otherLabels,
+    betweenQuotes: true,
     ...(metricName ? { metricName } : {}),
   };
 }
