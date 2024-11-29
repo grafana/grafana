@@ -543,6 +543,7 @@ type UnifiedStorageConfig struct {
 type InstallPlugin struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
+	URL     string `json:"url,omitempty"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
