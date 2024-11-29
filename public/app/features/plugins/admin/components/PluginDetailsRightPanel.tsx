@@ -22,9 +22,6 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
   const { info, plugin } = props;
   const [defaultBranch, setDefaultBranch] = useState<string | null>(null);
 
-  console.log('plugin', plugin);
-  console.log('plugin info', info);
-
   const trailURLSlash = (url: string | null) => (url?.endsWith('/') ? url?.slice(0, -1) : url);
 
   const repositoryLink = trailURLSlash(
