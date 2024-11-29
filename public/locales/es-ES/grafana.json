@@ -2937,8 +2937,7 @@
       "loading": "",
       "save-button": "Guardar en archivo",
       "share-externally-label": "Exportar para compartir externamente",
-      "view-button": "Ver JSON",
-      "view-button-schemav2": ""
+      "view-button": "Ver JSON"
     },
     "library": {
       "info": "Cree un panel de librería."
