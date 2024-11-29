@@ -242,7 +242,7 @@ export async function getFilteredResourceAttributes(
   // OTel metrics require unique identifies for the resource. Job+instance is the unique identifier.
   // If there are none, we cannot join on a target_info resource
   if (metricResources.jobs.length === 0 || metricResources.instances.length === 0) {
-    return [];
+    return { attributes: [], missingOtelTargets: false };
   }
 
   // The URL for the labels endpoint
@@ -311,5 +311,5 @@ export async function getFilteredResourceAttributes(
   // return a string array
   const resourceAttributes = sortedResourceAttributes.map((el) => el.text);
 
-  return resourceAttributes;
+  return { attributes: resourceAttributes, missingOtelTargets: metricMatchTerms.missingOtelTargets };
 }

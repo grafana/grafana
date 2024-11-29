@@ -26,7 +26,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { DataQuery, SortOrder, TooltipDisplayMode } from '@grafana/schema';
-import { Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -47,6 +47,7 @@ import {
   VAR_FILTERS,
   VAR_GROUP_BY,
   VAR_GROUP_BY_EXP,
+  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_GROUP_LEFT,
 } from '../shared';
 import { getColorByIndex, getTrailFor } from '../utils';
@@ -338,6 +339,8 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE).unshift(all);
     }
 
+    const missingOtelTargets = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail)?.getValue();
+
     useEffect(() => {
       if (useOtelExperience) {
         // this will update the group left variable
@@ -369,6 +372,23 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               </Field>
             )}
           </div>
+          {missingOtelTargets && (
+            <Alert
+              title={`Warning: There may be missing Open Telemetry resource attributes.`}
+              severity={'warning'}
+              key={'warning'}
+              onRemove={() => {}}
+              // elevated={true}
+              className={styles.truncatedOTelResources}
+            >
+              <Trans i18nKey={'explore-metrics.breakdown.missing-otel-labels'}>
+                This metric has too many job and instance label values to call the Prometheus label_values endpoint with
+                the match[] parameter. These label values are used to join the metric with target_info, which contains
+                the resource attributes. Please include more resource attributes filters.
+              </Trans>
+            </Alert>
+          )}
+
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
       </div>
@@ -399,6 +419,10 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'flex-end',
       gap: theme.spacing(2),
       justifyContent: 'space-between',
+    }),
+    truncatedOTelResources: css({
+      minWidth: '30vw',
+      flexGrow: 0,
     }),
   };
 }

@@ -5,6 +5,7 @@ import { DataTrail } from '../DataTrail';
 import {
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
+  VAR_MISSING_OTEL_TARGETS,
   VAR_OTEL_DEPLOYMENT_ENV,
   VAR_OTEL_GROUP_LEFT,
   VAR_OTEL_JOIN_QUERY,
@@ -244,7 +245,12 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
   }
   const otelGroupLeft = sceneGraph.lookupVariable(VAR_OTEL_GROUP_LEFT, trail);
   const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
-  if (!(otelGroupLeft instanceof ConstantVariable) || !(otelJoinQueryVariable instanceof ConstantVariable)) {
+  const missingOtelTargetsVariable = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail);
+  if (
+    !(otelGroupLeft instanceof ConstantVariable) ||
+    !(otelJoinQueryVariable instanceof ConstantVariable) ||
+    !(missingOtelTargetsVariable instanceof ConstantVariable)
+  ) {
     return;
   }
   // Remove the group left
@@ -277,7 +283,12 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     excludeFilterKeys = excludeFilterKeys.concat(['job', 'instance']);
   }
   const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
-  const attributes = await getFilteredResourceAttributes(datasourceUid, timeRange, metric, excludeFilterKeys);
+  const { attributes, missingOtelTargets } = await getFilteredResourceAttributes(
+    datasourceUid,
+    timeRange,
+    metric,
+    excludeFilterKeys
+  );
   // here we start to add the attributes to the group left
   if (attributes.length > 0) {
     // update the group left variable that contains all the filtered resource attributes
@@ -288,6 +299,8 @@ export async function updateOtelJoinWithGroupLeft(trail: DataTrail, metric: stri
     // update the join query that is interpolated in all queries
     otelJoinQueryVariable.setState({ value: otelJoinQuery });
   }
+  // used to show a warning in label breakdown that the user must select more OTel resource attributes
+  missingOtelTargetsVariable.setState({ value: missingOtelTargets });
 }
 
 /**
