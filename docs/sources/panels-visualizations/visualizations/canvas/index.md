@@ -272,11 +272,11 @@ Infinite panning is an experimental feature that may not work as expected in all
 
 The **Layer** options let you add elements to the canvas and control its appearance:
 
-- [Elements](#elements-1)
+- [Elements](#elements-layer)
 - [Background](#background-canvas)
 - [Border](#border-canvas)
 
-#### Elements
+#### Elements (layer)
 
 Use the **Add item** button to open the [element type](#element-types) drop-down list. Elements are listed in the reverse order that you add them to the canvas:
 
