@@ -2,14 +2,16 @@ import { config } from '@grafana/runtime';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 
-import { enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
+import { clearMocks, enterEditMode, updateMyVar, updateScopes, updateTimeRange } from './utils/actions';
+import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -38,7 +40,6 @@ describe('Dashboard reload', () => {
       setDashboardAPI(undefined);
 
       const dashboardScene = renderDashboard({ uid: withUid ? 'dash-1' : undefined }, { reloadOnParamsChange });
-      const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
 
       if (editMode) {
         await enterEditMode(dashboardScene);
@@ -49,31 +50,32 @@ describe('Dashboard reload', () => {
       await updateTimeRange(dashboardScene);
       await jest.advanceTimersToNextTimerAsync();
       if (!shouldReload) {
-        expect(dashboardReloadSpy).not.toHaveBeenCalled();
+        expectNotDashboardReload();
       } else {
-        expect(dashboardReloadSpy).toHaveBeenCalled();
+        expectDashboardReload();
       }
 
       await updateMyVar(dashboardScene, '2');
       await jest.advanceTimersToNextTimerAsync();
       if (!shouldReload) {
-        expect(dashboardReloadSpy).not.toHaveBeenCalled();
+        expectNotDashboardReload();
       } else {
-        expect(dashboardReloadSpy).toHaveBeenCalled();
+        expectDashboardReload();
       }
 
       await updateScopes(['grafana']);
       await jest.advanceTimersToNextTimerAsync();
       if (!shouldReload) {
-        expect(dashboardReloadSpy).not.toHaveBeenCalled();
+        expectNotDashboardReload();
       } else {
-        expect(dashboardReloadSpy).toHaveBeenCalled();
+        expectDashboardReload();
       }
 
       getDashboardScenePageStateManager().clearDashboardCache();
       getDashboardScenePageStateManager().clearSceneCache();
       setDashboardAPI(undefined);
       await resetScenes();
+      clearMocks();
     }
   );
 });

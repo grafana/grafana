@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, SuggestedDashboardsFoldersMapItem, SuggestedDashboardsFoldersMap } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
+import { OnFolderUpdate, SuggestedDashboardsFolder, SuggestedDashboardsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeFolderItemProps {
-  folder: SuggestedDashboardsFoldersMapItem;
+  folder: SuggestedDashboardsFolder;
   folderPath: string[];
   folders: SuggestedDashboardsFoldersMap;
-  onFolderUpdate: (path: string[], isExpanded: boolean) => void;
+  onFolderUpdate: OnFolderUpdate;
 }
 
 export function ScopesDashboardsTreeFolderItem({

@@ -1,4 +1,4 @@
-import { getScopesDashboardsService, getScopesSelectorService } from '@grafana/runtime';
+import { scopesService } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneObjectState,
@@ -28,21 +28,21 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!values.scopes && !getScopesSelectorService().state.isEnabled) {
+    if (!values.scopes && !scopesService.state.isEnabled) {
       return;
     }
 
     let scopeNames = values.scopes ?? [];
     scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    getScopesSelectorService().updateScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
+    scopesService.setNewScopes(scopeNames);
   }
 
   private _activationHandler = () => {
     this.enable();
 
     this._subs.add(
-      getScopesSelectorService().stateObservable.subscribe(() => {
+      scopesService.stateObservable.subscribe(() => {
         this.forceRender();
       })
     );
@@ -53,26 +53,22 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   };
 
   public get value() {
-    return getScopesSelectorService().state.scopes.map(({ scope }) => scope);
+    return scopesService.state.value;
   }
 
   public enable() {
-    getScopesSelectorService().enable();
-    getScopesDashboardsService().enable();
+    scopesService.enable();
   }
 
   public disable() {
-    getScopesSelectorService().disable();
-    getScopesDashboardsService().disable();
+    scopesService.disable();
   }
 
   public enterReadOnly() {
-    getScopesSelectorService().enterReadOnly();
-    getScopesDashboardsService().enterReadOnly();
+    scopesService.enterReadOnly();
   }
 
   public exitReadOnly() {
-    getScopesSelectorService().exitReadOnly();
-    getScopesDashboardsService().exitReadOnly();
+    scopesService.exitReadOnly();
   }
 }

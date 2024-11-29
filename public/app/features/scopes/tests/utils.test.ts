@@ -1,42 +1,14 @@
-import { ScopeDashboardBinding } from '@grafana/data';
+import { filterFolders, groupDashboards } from '../internal/utils';
 
-import { filterFolders, groupDashboards } from './ScopesDashboardsService';
-
-const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
-  metadata: { name: `${dashboardTitle}-name` },
-  spec: {
-    dashboard: `${dashboardId ?? dashboardTitle}-dashboard`,
-    scope: `${dashboardTitle}-scope`,
-  },
-  status: {
-    dashboardTitle,
-    groups,
-  },
-});
-
-export const dashboardWithoutFolder: ScopeDashboardBinding = generateScopeDashboardBinding('Without Folder');
-export const dashboardWithOneFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With one folder', [
-  'Folder 1',
-]);
-export const dashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding('With two folders', [
-  'Folder 1',
-  'Folder 2',
-]);
-export const alternativeDashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding(
-  'Alternative with two folders',
-  ['Folder 1', 'Folder 2'],
-  'With two folders'
-);
-export const dashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With root folder', ['']);
-export const alternativeDashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
-  'Alternative With root folder',
-  [''],
-  'With root folder'
-);
-export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
-  'With root folder and other folder',
-  ['', 'Folder 3']
-);
+import {
+  alternativeDashboardWithRootFolder,
+  alternativeDashboardWithTwoFolders,
+  dashboardWithOneFolder,
+  dashboardWithoutFolder,
+  dashboardWithRootFolder,
+  dashboardWithRootFolderAndOtherFolder,
+  dashboardWithTwoFolders,
+} from './utils/mocks';
 
 describe('Utils', () => {
   describe('groupDashboards', () => {

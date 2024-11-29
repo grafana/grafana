@@ -1,4 +1,4 @@
-import { config, getScopesDashboardsService, getScopesSelectorService } from '@grafana/runtime';
+import { config, scopesService } from '@grafana/runtime';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { enterEditMode, openSelector, toggleDashboards } from './utils/actions';
@@ -15,6 +15,7 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
@@ -37,8 +38,8 @@ describe('View mode', () => {
 
   it('Enters view mode', async () => {
     await enterEditMode(dashboardScene);
-    expect(getScopesSelectorService().state.isReadOnly).toEqual(true);
-    expect(getScopesDashboardsService().state.isOpened).toEqual(false);
+    expect(scopesService.state.isReadOnly).toEqual(true);
+    expect(scopesService.state.isDrawerOpened).toEqual(false);
   });
 
   it('Closes selector on enter', async () => {

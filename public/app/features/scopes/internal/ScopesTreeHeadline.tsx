@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2, ScopesNodesMapItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
+
+import { Node } from './types';
 
 export interface ScopesTreeHeadlineProps {
   anyChildExpanded: boolean;
   query: string;
-  resultsNodes: ScopesNodesMapItem[];
+  resultsNodes: Node[];
 }
 
 export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {

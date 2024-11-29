@@ -40,7 +40,6 @@ import {
   setPluginLinksHook,
   setCorrelationsService,
   setPluginFunctionsHook,
-  initializeScopes,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -251,8 +250,6 @@ export class GrafanaApp {
 
       setReturnToPreviousHook(useReturnToPreviousInternal);
       setChromeHeaderHeightHook(useChromeHeaderHeight);
-
-      initializeScopes();
 
       if (config.featureToggles.crashDetection) {
         initializeCrashDetection();

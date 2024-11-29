@@ -1,18 +1,25 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, useScopesDashboards } from '@grafana/runtime';
+import { config, useScopes } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './internal/ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './internal/ScopesDashboardsTreeSearch';
+import { useScopesDashboardsService } from './internal/useScopesDashboardsService';
 
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
-  const { state, changeSearchQuery, clearSearchQuery, updateFolder } = useScopesDashboards();
+  const scopesContext = useScopes();
+  const { changeSearchQuery, clearSearchQuery, state, updateFolder } = useScopesDashboardsService();
 
-  if (!config.featureToggles.scopeFilters || !state.isEnabled || !state.isOpened || state.isReadOnly) {
+  if (
+    !config.featureToggles.scopeFilters ||
+    !scopesContext.isEnabled ||
+    !scopesContext.isDrawerOpened ||
+    scopesContext.isReadOnly
+  ) {
     return null;
   }
 

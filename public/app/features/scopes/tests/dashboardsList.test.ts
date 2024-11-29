@@ -1,4 +1,4 @@
-import { config, getScopesDashboardsService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import {
   clearNotFound,
@@ -21,22 +21,19 @@ import {
   expectNoDashboardsNoScopes,
   expectNoDashboardsSearch,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
+import { fetchDashboardsSpy, getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
-
-import SpyInstance = jest.SpyInstance;
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 describe('Dashboards list', () => {
-  let fetchDashboardsApiSpy: SpyInstance;
-
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
@@ -44,19 +41,17 @@ describe('Dashboards list', () => {
 
   beforeEach(() => {
     renderDashboard();
-    fetchDashboardsApiSpy = jest.spyOn(getScopesDashboardsService(), 'fetchDashboardsApi');
   });
 
   afterEach(async () => {
     await resetScenes();
-    fetchDashboardsApiSpy.mockClear();
   });
 
   it('Opens container and fetches dashboards list when a scope is selected', async () => {
     expectDashboardsClosed();
     await updateScopes(['mimir']);
     expectDashboardsOpen();
-    expect(fetchDashboardsApiSpy).toHaveBeenCalled();
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Closes container when no scopes are selected', async () => {
@@ -71,13 +66,13 @@ describe('Dashboards list', () => {
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
     await updateScopes(['mimir']);
-    expect(fetchDashboardsApiSpy).toHaveBeenCalled();
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
     await updateScopes(['mimir']);
     await toggleDashboards();
-    expect(fetchDashboardsApiSpy).toHaveBeenCalled();
+    expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows dashboards for multiple scopes', async () => {

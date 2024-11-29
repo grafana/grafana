@@ -1,3 +1,4 @@
+import { dashboardReloadSpy } from './mocks';
 import {
   getDashboard,
   getDashboardsContainer,
@@ -79,6 +80,9 @@ export const expectDashboardInDocument = (uid: string) => expectInDocument(() =>
 export const expectDashboardNotInDocument = (uid: string) => expectNotInDocument(() => queryDashboard(uid));
 export const expectDashboardLength = (uid: string, length: number) =>
   expect(queryAllDashboard(uid)).toHaveLength(length);
+
+export const expectNotDashboardReload = () => expect(dashboardReloadSpy).not.toHaveBeenCalled();
+export const expectDashboardReload = () => expect(dashboardReloadSpy).toHaveBeenCalled();
 
 export const expectSelectedScopePath = (name: string, path: string[] | undefined) =>
   expect(getSelectedScope(name)?.path).toEqual(path);

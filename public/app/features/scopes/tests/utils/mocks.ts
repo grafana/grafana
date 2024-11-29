@@ -1,5 +1,8 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema/dist/esm/common/common.gen';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+
+import * as api from '../../internal/api';
 
 export const mocksScopes: Scope[] = [
   {
@@ -366,6 +369,12 @@ export const mocksNodes: Array<ScopeNode & { parent: string }> = [
   },
 ] as const;
 
+export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
+export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
+export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
+export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
+
 export const getMock = jest
   .fn()
   .mockImplementation(
@@ -408,6 +417,42 @@ export const getMock = jest
       return {};
     }
   );
+
+const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
+  metadata: { name: `${dashboardTitle}-name` },
+  spec: {
+    dashboard: `${dashboardId ?? dashboardTitle}-dashboard`,
+    scope: `${dashboardTitle}-scope`,
+  },
+  status: {
+    dashboardTitle,
+    groups,
+  },
+});
+
+export const dashboardWithoutFolder: ScopeDashboardBinding = generateScopeDashboardBinding('Without Folder');
+export const dashboardWithOneFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With one folder', [
+  'Folder 1',
+]);
+export const dashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding('With two folders', [
+  'Folder 1',
+  'Folder 2',
+]);
+export const alternativeDashboardWithTwoFolders: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'Alternative with two folders',
+  ['Folder 1', 'Folder 2'],
+  'With two folders'
+);
+export const dashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding('With root folder', ['']);
+export const alternativeDashboardWithRootFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'Alternative With root folder',
+  [''],
+  'With root folder'
+);
+export const dashboardWithRootFolderAndOtherFolder: ScopeDashboardBinding = generateScopeDashboardBinding(
+  'With root folder and other folder',
+  ['', 'Folder 3']
+);
 
 export const getDatasource = async (ref: DataSourceRef) => {
   if (ref.uid === '-- Grafana --') {

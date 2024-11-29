@@ -3,22 +3,16 @@ import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import {
-  config,
-  getScopesDashboardsService,
-  getScopesSelectorService,
-  initializeScopes,
-  ScopesDashboardsContext,
-  ScopesSelectorContext,
-  setBackendSrv,
-  setPluginImportUtils,
-} from '@grafana/runtime';
+import { config, ScopesContext, scopesService, setPluginImportUtils } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { getMock } from './mocks';
+import { scopesDashboardsService } from '../../internal/ScopesDashboardsService';
+import { scopesSelectorService } from '../../internal/ScopesSelectorService';
+
+import { clearMocks } from './actions';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -187,31 +181,18 @@ export function renderDashboard(
 ) {
   jest.useFakeTimers({ advanceTimers: true });
   jest.spyOn(console, 'error').mockImplementation(jest.fn());
-  setBackendSrv({
-    get: getMock,
-    delete: jest.fn(),
-    fetch: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    datasourceRequest: jest.fn(),
-    request: jest.fn(),
-  });
-  initializeScopes();
 
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
   const scene = transformSaveModelToScene(dto);
 
   render(
-    <ScopesSelectorContext.Provider value={getScopesSelectorService()}>
-      <ScopesDashboardsContext.Provider value={getScopesDashboardsService()}>
-        <KBarProvider>
-          <AppChrome>
-            <scene.Component model={scene} />
-          </AppChrome>
-        </KBarProvider>
-      </ScopesDashboardsContext.Provider>
-    </ScopesSelectorContext.Provider>
+    <KBarProvider>
+      <ScopesContext.Provider value={scopesService}>
+        <AppChrome>
+          <scene.Component model={scene} />
+        </AppChrome>
+      </ScopesContext.Provider>
+    </KBarProvider>
   );
 
   return scene;
@@ -220,8 +201,9 @@ export function renderDashboard(
 export async function resetScenes() {
   await jest.runOnlyPendingTimersAsync();
   jest.useRealTimers();
-  getScopesSelectorService().reset();
-  getScopesDashboardsService().reset();
+  clearMocks();
+  scopesService.resetState();
+  scopesSelectorService.resetState();
+  scopesDashboardsService.resetState();
   cleanup();
-  getMock.mockClear();
 }

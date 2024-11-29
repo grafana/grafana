@@ -575,15 +575,6 @@ export {
   type ScopeNodeSpec,
   type ScopeSpec,
   type ScopeSpecFilter,
-  type ScopesNodesMap,
-  type ScopesNodesMapItem,
-  type SelectedScope,
-  type SuggestedDashboardsFoldersMap,
-  type SuggestedDashboardsFoldersMapItem,
-  type SuggestedDashboardsMap,
-  type SuggestedDashboardsMapItem,
-  type TreeScope,
-  ScopesNodesMapItemReason,
   scopeFilterOperatorMap,
 } from './types/scopes';
 export {

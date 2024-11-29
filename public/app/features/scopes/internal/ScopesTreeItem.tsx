@@ -1,25 +1,26 @@
 import { css, cx } from '@emotion/css';
 import { Dictionary } from 'lodash';
 
-import { GrafanaTheme2, ScopesNodesMapItem, ScopesNodesMapItemReason, TreeScope } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, RadioButtonDot, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
+import { Node, NodeReason, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
 
 export interface ScopesTreeItemProps {
   anyChildExpanded: boolean;
-  groupedNodes: Dictionary<ScopesNodesMapItem[]>;
+  groupedNodes: Dictionary<Node[]>;
   isLastExpandedNode: boolean;
   loadingNodeName: string | undefined;
-  node: ScopesNodesMapItem;
+  node: Node;
   nodePath: string[];
-  nodeReason: ScopesNodesMapItemReason;
+  nodeReason: NodeReason;
   scopeNames: string[];
   scopes: TreeScope[];
   type: 'persisted' | 'result';
-  onNodeUpdate: (path: string[], isExpanded: boolean, query: string) => void;
-  onNodeSelectToggle: (path: string[]) => void;
+  onNodeUpdate: OnNodeUpdate;
+  onNodeSelectToggle: OnNodeSelectToggle;
 }
 
 export function ScopesTreeItem({
@@ -130,7 +131,7 @@ export function ScopesTreeItem({
     return (
       <ScrollContainer
         minHeight={`${Math.min(5, nodes.length) * 30}px`}
-        maxHeight={nodeReason === ScopesNodesMapItemReason.Persisted ? `${Math.min(5, nodes.length) * 30}px` : '100%'}
+        maxHeight={nodeReason === NodeReason.Persisted ? `${Math.min(5, nodes.length) * 30}px` : '100%'}
       >
         {children}
       </ScrollContainer>

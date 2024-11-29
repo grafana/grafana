@@ -6,12 +6,10 @@ import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import {
   config,
-  getScopesDashboardsService,
-  getScopesSelectorService,
   navigationLogger,
   reportInteraction,
-  ScopesDashboardsContext,
-  ScopesSelectorContext,
+  ScopesContext,
+  scopesService,
   SidecarContext_EXPERIMENTAL,
   sidecarServiceSingleton_EXPERIMENTAL,
 } from '@grafana/runtime';
@@ -127,21 +125,19 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   <GlobalStyles />
                   <MaybeTimeRangeProvider>
                     <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ScopesSelectorContext.Provider value={getScopesSelectorService()}>
-                        <ScopesDashboardsContext.Provider value={getScopesDashboardsService()}>
-                          <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                            <div className="grafana-app">
-                              {config.featureToggles.appSidecar ? (
-                                <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                              ) : (
-                                <RouterWrapper {...routerWrapperProps} />
-                              )}
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </ExtensionRegistriesProvider>
-                        </ScopesDashboardsContext.Provider>
-                      </ScopesSelectorContext.Provider>
+                      <ScopesContext.Provider value={scopesService}>
+                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                          <div className="grafana-app">
+                            {config.featureToggles.appSidecar ? (
+                              <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                            ) : (
+                              <RouterWrapper {...routerWrapperProps} />
+                            )}
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContext.Provider>
                     </SidecarContext_EXPERIMENTAL.Provider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>
