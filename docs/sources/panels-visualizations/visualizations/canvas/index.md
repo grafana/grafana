@@ -286,8 +286,6 @@ By default, the elements have a name that corresponds to the order in which it w
 
 You can also take the following actions on elements:
 
-<!--maybe put this in a table? -->
-
 - Change the order of elements. Click and hold the row of the element while moving it up and down in the element list.
 - Duplicate or remove elements by clicking the icons on the element row.
 - Access the element editing options by clicking the element row. This displays the [Selected element](#selected-element-options) section of options. Click **Clear selection** to remove the element from focus and stop displaying that section of options.
