@@ -559,13 +559,15 @@ export function ToolbarActions({ dashboard }: Props) {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
-          <Menu.Item
-            label="Save to repository"
-            icon="github"
-            onClick={() => {
-              dashboard.openSaveDrawer({ saveProvisioned: true });
-            }}
-          />
+          {!meta.k8s?.annotations?.[AnnoKeyRepoName] && (
+            <Menu.Item
+              label="Save to repository"
+              icon="github"
+              onClick={() => {
+                dashboard.openSaveDrawer({ saveProvisioned: true });
+              }}
+            />
+          )}
         </Menu>
       );
 
