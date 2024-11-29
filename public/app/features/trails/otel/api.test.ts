@@ -130,21 +130,16 @@ describe('OTEL API', () => {
 
   describe('getFilteredResourceAttributes', () => {
     it('should fetch and filter OTEL resources with excluded filters', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      const resources = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
+      const { attributes } = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
       // promotedResourceAttribute will be filtered out because even though it is a resource attribute, it is also a metric label and wee prioritize metric labels
-      expect(resources).not.toEqual(['promotedResourceAttribute', 'resourceAttribute']);
+      expect(attributes).not.toEqual(['promotedResourceAttribute', 'resourceAttribute']);
       // the resource attributes returned are the ones only present on target_info
-      expect(resources).toEqual(['resourceAttribute']);
-      expect(warnSpy).toHaveBeenCalled();
+      expect(attributes).toEqual(['resourceAttribute']);
     });
 
-    it('should log a warning if the job and instance list for matching is truncated', async () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
-      expect(warnSpy).toHaveBeenCalledWith(
-        'Truncating job and instance values for label values GET request. Please consider filtering by more OTel resource attributes.'
-      );
+    it('should return a boolean true if the job and instance list for matching is truncated', async () => {
+      const { missingOtelTargets } = await getFilteredResourceAttributes(dataSourceUid, timeRange, 'metric', ['job']);
+      expect(missingOtelTargets).toBe(true);
     });
   });
 });
