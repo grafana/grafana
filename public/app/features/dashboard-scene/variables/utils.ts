@@ -37,7 +37,8 @@ export interface VariableUsageTree {
 }
 
 export interface UsagesToNetwork {
-  variable: SceneVariable<SceneVariableState>;
+  /** string when unknown/missing variable otherwise SceneVariable */
+  variable: string | SceneVariable<SceneVariableState>;
   nodes: GraphNode[];
   edges: GraphEdge[];
   showGraph: boolean;
@@ -62,7 +63,9 @@ export function createUsagesNetwork(variables: Array<SceneVariable<SceneVariable
   return usages;
 }
 
-export function transformUsagesToNetwork(usages: VariableUsageTree[]): UsagesToNetwork[] {
+export function transformUsagesToNetwork(
+  usages: Array<VariableUsageTree | UnknownVariableUsageTree>
+): UsagesToNetwork[] {
   const results: UsagesToNetwork[] = [];
 
   for (const usage of usages) {
@@ -148,25 +151,25 @@ export async function getUnknownsNetwork(
   });
 }
 
+type UnknownVariableUsageTree = {
+  variable: string;
+  tree: unknown;
+};
+
 function createUnknownsNetwork(
   variables: Array<SceneVariable<SceneVariableState>>,
   dashboard: Dashboard | null
-): VariableUsageTree[] {
+): UnknownVariableUsageTree[] {
   if (!dashboard) {
     return [];
   }
 
-  let unknown: VariableUsageTree[] = [];
+  let unknown: UnknownVariableUsageTree[] = [];
   const unknownVariables = getUnknownVariableStrings(variables, dashboard);
   for (const unknownVariable of unknownVariables) {
     const props = getPropsWithVariable(unknownVariable, { key: 'model', value: dashboard }, {});
     if (Object.keys(props).length) {
-      const variable = {
-        state: {
-          name: unknownVariable,
-        },
-      } as SceneVariable<SceneVariableState>;
-      unknown.push({ variable, tree: props });
+      unknown.push({ variable: unknownVariable, tree: props });
     }
   }
 

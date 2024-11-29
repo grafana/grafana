@@ -13,7 +13,10 @@ interface Props {
 }
 
 export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
-  const network = useMemo(() => usages.find((n) => n.variable.state.name === id), [usages, id]);
+  const network = useMemo(
+    () => usages.find((n) => (typeof n.variable === 'string' ? n.variable : n.variable.state.name) === id),
+    [usages, id]
+  );
   if (usages.length === 0 || isAdhoc || !network) {
     return null;
   }

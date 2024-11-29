@@ -108,7 +108,7 @@ function UnknownTable({ usages }: { usages: UsagesToNetwork[] }): ReactElement {
       </thead>
       <tbody>
         {usages.map((usage) => {
-          const { name } = usage.variable.state;
+          const name = typeof usage.variable === 'string' ? usage.variable : usage.variable.state.name;
           return (
             <tr key={name}>
               <td className={style.firstColumn}>
