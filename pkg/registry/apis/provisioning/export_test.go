@@ -16,6 +16,7 @@ func TestFolderTree(t *testing.T) {
 		assert.True(t, tree.In("x"))
 		assert.False(t, tree.In("z"))
 		assert.Empty(t, tree.DirPath("x"))
+		assert.PanicsWithValue(t, "undefined behaviour", func() { tree.DirPath("z") }, "unknown folders cannot have a DirPath result")
 	})
 
 	t.Run("simple tree", func(t *testing.T) {

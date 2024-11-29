@@ -174,9 +174,15 @@ func (t *folderTree) In(folder string) bool {
 	return ok
 }
 
+// DirPath creates the path to the directory with slashes.
+// The repository folder is not included in the path.
+// If In(folder) is false, this will panic, because it would be undefined behaviour.
 func (t *folderTree) DirPath(folder string) string {
 	if folder == t.repoFolder {
 		return ""
+	}
+	if !t.In(folder) {
+		panic("undefined behaviour")
 	}
 
 	dirPath := folder
