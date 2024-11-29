@@ -181,23 +181,32 @@ To upload a custom image, follow these steps:
 
 ## Connections
 
-<!-- maybe make this first para a task -->
+When building a canvas, you can connect elements together to create more complex visualizations. You can also create connections to the background of the canvas.
 
-When building a canvas, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas. Connection anchors are displayed when you hover over an element and inline editing is turned on.
+To create a connection, follow these steps:
 
-To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
+1. In the panel edit pane, expand the **Canvas** options section.
+1. Toggle the **Inline editing** switch on.
+1. Hover the cursor over an element you want to connect to display the connection anchors:
 
-### Connector adjustments
+   ![Element with connection anchors displayed](/media/docs/grafana/panels-visualizations/screenshot-connection-anchors-v11.3.png)
 
-<!-- maybe make this a task as well -->
+1. Drag the cursor from a connection anchor on that element to one on another element.
 
-You can adjust connectors, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connector resizes to fit the space. To adjust a connector, click it to display the midpoint controls and move those as needed. To make a connector a straight line again, move the midpoint back until the midpoint controls disappear.
+To remove a connection, click on the connection and then press the `Delete` or `Backspace` key.
 
-If you move a connector so that it's almost a right angle or a straight line, the connector snaps into that angle or into a straight line.
+### Connection adjustments
 
-### Connector styles
+You can adjust connections, adding angles to them, to fit the canvas you're working in. When you move connected elements, the connection resizes to fit the space.
 
-You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor. For more information on connector styles, refer to [Selected connection options](#selected-connection-options).
+- To adjust a connection, click it to display the midpoint controls and move those as needed.
+- To make a connection a straight line again, move the midpoint back until the midpoint controls disappear.
+
+If you move a connection so that it's almost a right angle or a straight line, the connection snaps into that angle or into a straight line.
+
+### Connection styles
+
+You can set the size, color, direction, and style of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor. For more information on connection styles, refer to [Selected connection options](#selected-connection-options).
 
 {{< youtube id="0iO2gqv0XNA" >}}
 
@@ -408,16 +417,16 @@ The first data link in the list will be configured as your one-click data link. 
 
 ### Selected connection options
 
-You can style connectors using the following options:
+You can style connections using the following options:
 
-- **Color** - Set the connector color.
-- **Size** - Control the size of the connector by entering a number in the **Value** field.
-- **Radius** - Add curve to the connector by entering a value to represent the degree.
-- **Arrow Direction** - Control how the arrow head of the connector is set. Choose from:
+- **Color** - Set the connection color.
+- **Size** - Control the size of the connection by entering a number in the **Value** field.
+- **Radius** - Add curve to the connection by entering a value to represent the degree.
+- **Arrow Direction** - Control how the arrow head of the connection is set. Choose from:
 
-  - **Forward** - The direction in which the connector was drawn.
-  - **Reverse** - The opposite of the direction in which the connector was drawn.
-  - **Both** - Add arrow heads to both ends of the connector.
+  - **Forward** - The direction in which the connection was drawn.
+  - **Reverse** - The opposite of the direction in which the connection was drawn.
+  - **Both** - Add arrow heads to both ends of the connection.
   - **None** - Remove the arrow head.
 
 - **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
