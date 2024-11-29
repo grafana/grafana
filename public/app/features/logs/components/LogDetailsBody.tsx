@@ -8,12 +8,12 @@ import { IconButton, Themeable2 } from '@grafana/ui';
 import { getLogRowStyles } from './getLogRowStyles';
 
 export interface Props extends Themeable2 {
+  app?: CoreApp;
   disableActions: boolean;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
-  app?: CoreApp;
   theme: GrafanaTheme2;
 }
 
