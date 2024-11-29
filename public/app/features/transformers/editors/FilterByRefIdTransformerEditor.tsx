@@ -8,7 +8,6 @@ import {
   StandardEditorsRegistryItem,
 } from '@grafana/data';
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
-import { stringsToRegexp } from '@grafana/ui/src/components/MatchersUI/FieldsByFrameRefIdMatcher';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -18,12 +17,12 @@ export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterF
     <FrameMultiSelectionEditor
       value={{
         id: FrameMatcherID.byRefId,
-        options: props.options.include || stringsToRegexp(props.input.map((frame) => frame.refId!)),
+        options: props.options.include || '',
       }}
       onChange={(value) => {
         props.onChange({
           ...props.options,
-          include: value?.options,
+          include: value?.options || '',
         });
       }}
       context={{ data: props.input }}
