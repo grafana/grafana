@@ -64,6 +64,17 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		for _, kind := range kinds {
 			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()), kind.ZeroValue())
 			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
+			// Link this group to the internal representation.
+			// This is used for server-side-apply (PATCH), and avoids the error:
+			// "no kind is registered for the type"
+			gvInternal := schema.GroupVersion{
+				Group:   gv.Group,
+				Version: runtime.APIVersionInternal,
+			}
+			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
+			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
 		}
 	}
 	return scheme.SetVersionPriority(gv)
@@ -83,6 +94,7 @@ func (b *appBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 				return err
 			}
 			apiGroupInfo.VersionedResourcesStorageMap[version][resourceInfo.StoragePath()] = store
+
 		}
 	}
 	return nil
