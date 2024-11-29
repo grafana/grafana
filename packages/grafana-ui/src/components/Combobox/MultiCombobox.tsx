@@ -27,31 +27,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       return [];
     }
 
-    if (!isComboboxOptions(value)) {
-      const resultingItems: Array<ComboboxOption<T> | undefined> = [];
-
-      for (const item of options) {
-        for (const [index, val] of value.entries()) {
-          if (val === item.value) {
-            resultingItems[index] = item;
-          }
-        }
-        if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
-          // We found all items for the values
-          break;
-        }
-      }
-
-      // Handle values that are not in options
-      for (const [index, val] of value.entries()) {
-        if (resultingItems[index] === undefined) {
-          resultingItems[index] = { value: val };
-        }
-      }
-      return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
-    }
-
-    return value;
+    return getSelectedItemsFromValue<T>(value, options);
   }, [value, options, isAsync]);
 
   const multiStyles = useStyles2(getMultiComboboxStyles);
@@ -185,6 +161,37 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     </div>
   );
 };
+
+function getSelectedItemsFromValue<T extends string | number>(
+  value: T[] | Array<ComboboxOption<T>>,
+  options: Array<ComboboxOption<T>>
+) {
+  if (!isComboboxOptions(value)) {
+    const resultingItems: Array<ComboboxOption<T> | undefined> = [];
+
+    for (const item of options) {
+      for (const [index, val] of value.entries()) {
+        if (val === item.value) {
+          resultingItems[index] = item;
+        }
+      }
+      if (resultingItems.length === value.length && !resultingItems.includes(undefined)) {
+        // We found all items for the values
+        break;
+      }
+    }
+
+    // Handle values that are not in options
+    for (const [index, val] of value.entries()) {
+      if (resultingItems[index] === undefined) {
+        resultingItems[index] = { value: val };
+      }
+    }
+    return resultingItems.filter((item) => item !== undefined); // TODO: Not actually needed, but TS complains
+  }
+
+  return value;
+}
 
 function isComboboxOptions<T extends string | number>(
   value: T[] | Array<ComboboxOption<T>>
