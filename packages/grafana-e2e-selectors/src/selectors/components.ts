@@ -469,6 +469,7 @@ export const versionedComponents = {
     General: {
       content: {
         '11.1.0': 'data-testid Panel editor content',
+        '8.0.0': 'Panel editor content',
         [MIN_GRAFANA_VERSION]: 'Panel editor content',
       },
     },
