@@ -493,7 +493,7 @@ Grafana spotted some changes for your resources in this pull request:
 | {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
 {{- end}}
 
-Take a look and judge yourself! 🚀`
+Click the preview links above to view how your changes will look and compare them with the original and current versions.`
 
 type commentFile struct {
 	Filename string
