@@ -80,7 +80,7 @@ export const SilencesFilter = () => {
       {queryString && (
         <div className={styles.rowChild}>
           <Button variant="secondary" icon="times" onClick={clearFilters}>
-            <Trans i18nKey="alerting.common.clear-filters">Search by matchers</Trans>
+            <Trans i18nKey="alerting.common.clear-filters">Clear filters</Trans>
           </Button>
         </div>
       )}
