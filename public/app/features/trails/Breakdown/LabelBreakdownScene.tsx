@@ -4,7 +4,7 @@ import { isNumber, max, min, throttle } from 'lodash';
 import { useEffect, useRef } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
