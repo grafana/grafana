@@ -565,16 +565,16 @@ export {
   type PluginExtensionAddedFunctionConfig,
 } from './types/pluginExtensions';
 export {
-  type Scope,
-  type ScopeDashboardBinding,
   type ScopeDashboardBindingSpec,
+  type ScopeDashboardBinding,
   type ScopeFilterOperator,
-  type ScopeNode,
-  type ScopeNodeLinkType,
-  type ScopeNodeNodeType,
-  type ScopeNodeSpec,
-  type ScopeSpec,
   type ScopeSpecFilter,
+  type ScopeSpec,
+  type Scope,
+  type ScopeNodeNodeType,
+  type ScopeNodeLinkType,
+  type ScopeNodeSpec,
+  type ScopeNode,
   scopeFilterOperatorMap,
 } from './types/scopes';
 export {
