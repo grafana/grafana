@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -75,9 +76,10 @@ type AuthenticatorWithFallback struct {
 	fallback      interceptors.Authenticator
 	metrics       *metrics
 	tracer        tracing.Tracer
+	logger        log.Logger
 }
 
-func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, fallback interceptors.Authenticator) (interceptors.Authenticator, error) {
+func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registerer, tracer tracing.Tracer, logger log.Logger, fallback interceptors.Authenticator) (interceptors.Authenticator, error) {
 	authCfg, err := ReadGrpcServerConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -97,6 +99,7 @@ func NewGrpcAuthenticatorWithFallback(cfg *setting.Cfg, reg prometheus.Registere
 		fallback:      fallback,
 		metrics:       newMetrics(reg),
 		tracer:        tracer,
+		logger:        logger,
 	}, nil
 }
 
@@ -119,12 +122,17 @@ func (f *AuthenticatorWithFallback) Authenticate(ctx context.Context) (context.C
 
 	// In case of error, fallback to the legacy authenticator
 	span.SetAttributes(attribute.Bool("fallback_used", true))
-	newCtx, err = f.fallback.Authenticate(ctx)
+	newCtx, errFallback := f.fallback.Authenticate(ctx)
+	if errFallback != nil {
+		// both authenticators failed
+		f.logger.Error("authenticators with fallback failed for both auth methods", "error", err, "errorFallback", errFallback)
+		f.metrics.errorTotal.WithLabelValues().Inc()
+	}
 	if newCtx != nil {
 		newCtx = context.WithValue(newCtx, contextFallbackKey{}, true)
 	}
 	f.metrics.requestsTotal.WithLabelValues("true", fmt.Sprintf("%t", err == nil)).Inc()
-	return newCtx, err
+	return newCtx, errFallback
 }
 
 const (
@@ -134,6 +142,7 @@ const (
 
 type metrics struct {
 	requestsTotal *prometheus.CounterVec
+	errorTotal    *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *metrics {
@@ -145,11 +154,19 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 				Name:      "checks_total",
 				Help:      "Number requests using the authenticator with fallback",
 			}, []string{"fallback_used", "result"}),
+		errorTotal: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+				Name:      "errors_total",
+				Help:      "Number of errors using the authenticator with fallback",
+			}, []string{}),
 	}
 
 	if reg != nil {
 		once.Do(func() {
 			reg.MustRegister(m.requestsTotal)
+			reg.MustRegister(m.errorTotal)
 		})
 	}
 
