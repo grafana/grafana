@@ -212,17 +212,19 @@ You can set the size, color, direction, and style of connections based on fixed 
 
 ## Canvas editing
 
+You can edit a canvas when the dashboard is in either panel edit mode or from the context of the dashboard. The following sections describe the editing options available in dashboard mode.
+
 ### Inline editor
 
-You can edit your canvas inline while in the context of dashboard mode.
+You can edit your canvas inline while in dashboard mode. The inline editor menu displays the options relevant to the part of the canvas that you have in focus or selected. You can also move the editor window around.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editor-9-2-0.mp4" max-width="750px" alt="Inline editor demo" >}}
 
 ### Context menu
 
-The context menu lets you perform common tasks quickly and efficiently. Supported functionality includes opening / closing the inline editor, duplicating an element, deleting an element, and more.
+The context menu lets you perform common tasks quickly and efficiently. Supported functionality includes opening and closing the inline editor, duplicating an element, deleting an element, and more.
 
-The context menu is triggered by a right click action over the panel / over a given canvas element. When right clicking the panel, you are able to set a background image and easily add elements to the canvas.
+The context menu is triggered by a right click action over the panel or over a given canvas element. When right clicking the panel, you are able to set a background image and easily add elements to the canvas.
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-panel-context-menu-9-3-0.png" max-width="350px" alt="Canvas panel context menu" >}}
 
