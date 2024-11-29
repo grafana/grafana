@@ -111,9 +111,6 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  configDescription: css({
-    marginBottom: theme.spacing(2),
-  }),
   configurationContainer: css({
     marginTop: theme.spacing(2),
   }),
