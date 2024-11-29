@@ -1,10 +1,10 @@
 import init from '@bsull/augurs/outlier';
 import { css } from '@emotion/css';
 import { isNumber, max, min, throttle } from 'lodash';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { DataFrame, FieldType, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   ConstantVariable,
   PanelBuilders,
@@ -339,7 +339,14 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       allLabelOptions.filter((option) => option.value !== ALL_VARIABLE_VALUE).unshift(all);
     }
 
+    const otelWarning = useRef(false);
     const missingOtelTargets = sceneGraph.lookupVariable(VAR_MISSING_OTEL_TARGETS, trail)?.getValue();
+    if (missingOtelTargets && !otelWarning.current) {
+      reportExploreMetrics('missing_otel_labels_by_truncating_job_and_instance', {
+        metric: trail.state.metric,
+      });
+      otelWarning.current = true;
+    }
 
     useEffect(() => {
       if (useOtelExperience) {
@@ -378,7 +385,6 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
               severity={'warning'}
               key={'warning'}
               onRemove={() => {}}
-              // elevated={true}
               className={styles.truncatedOTelResources}
             >
               <Trans i18nKey={'explore-metrics.breakdown.missing-otel-labels'}>
