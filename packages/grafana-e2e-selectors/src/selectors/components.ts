@@ -498,6 +498,7 @@ export const versionedComponents = {
     },
     toggleVizPicker: {
       '10.0.0': 'data-testid toggle-viz-picker',
+      '8.0.0': 'toggle-viz-picker',
       [MIN_GRAFANA_VERSION]: 'toggle-viz-picker',
     },
     toggleVizOptions: {
