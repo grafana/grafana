@@ -19,11 +19,12 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { PermissionLevelString } from 'app/types';
 
+import { useAppNotification } from '../../copy/appNotification';
+
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
-import { NewFolderForm } from '../../../features/browse-dashboards/components/NewFolderForm';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -73,7 +74,7 @@ export function NestedFolderPicker({
   excludeUIDs,
   permission = PermissionLevelString.Edit,
   onChange,
-  createFolder = false
+  createFolder = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -91,7 +92,9 @@ export function NestedFolderPicker({
   const lastSearchTimestamp = useRef<number>(0);
   const [chooseExistingFolder, setChooseExistingFolder] = useState(true);
 
-  const [newFolder] = useNewFolderMutation();
+  const notifyApp = useAppNotification();
+  const [newFolderName, setNewFolderName] = useState('');
+  const [createNewFolder] = useNewFolderMutation();
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -202,13 +205,14 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
-  const onCreateNewFolder = async (folderName: string) => {
-    try {
-      await newFolder({
-        title: folderName,
-      });
-    } finally {
-      // TODO: clean up! catch error?
+  const onCreateNewFolder = async () => {
+    const { data, error } = await createNewFolder({ title: newFolderName });
+
+    if (error) {
+      notifyApp.error('Failed to create folder');
+    } else if (data) {
+      notifyApp.success('Folder created');
+      // TODO: hand over to MoveModal: onCreate({ title: data.title });
     }
   };
 
@@ -369,31 +373,21 @@ export function NestedFolderPicker({
 
   const pickNewFolder = () => {
     return (
-      <NewFolderForm
-        onConfirm={onCreateNewFolder}
-        onCancel={() => {
-          setChooseExistingFolder(true);
-        }}
-      />
+      <>
+        <Field label={t('browse-dashboards.folder-picker.input-label-create-new-folder', 'Enter a new folder name')}>
+          <Input
+            id="folder-name-input"
+            placeholder={t(
+              'browse-dashboards.folder-picker.input-placeholder-create-new-folder',
+              'Enter a folder name'
+            )}
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.currentTarget.value)}
+          />
+        </Field>
+      </>
     );
   };
-
-   /*
-  *  <Field
-        label={t('browse-dashboards.folder-picker.input-label-create-new-folder', 'Enter a new folder name')}
-        // invalid={!!errors.folderName}
-        // error={errors.folderName && errors.folderName.message}
-      >
-        <Input
-          id="folder-name-input"
-          // defaultValue={initialFormModel.folderName}
-          // {...register('folderName', {
-          //   required: t('browse-dashboards.folder-picker.new-folder-name-required-phrase', 'Folder name is required.'),
-          //   validate: async (v) => await validateFolderName(v),
-          // })}
-        />
-      </Field>
-  * */
 
   return (
     <>
@@ -402,7 +396,12 @@ export function NestedFolderPicker({
           <RadioButtonGroup
             options={optionsToPickFolder}
             value={chooseExistingFolder}
-            onChange={(value) => setChooseExistingFolder(value!)}
+            onChange={(value) => {
+              setChooseExistingFolder(value!);
+              if (onChange) {
+                onChange(undefined, undefined);
+              }
+            }}
             fullWidth={true}
           />
           <Space v={1} />
