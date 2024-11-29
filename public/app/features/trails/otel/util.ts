@@ -174,6 +174,8 @@ export function limitOtelMatchTerms(
   // stop before the total count reaches 2000
   // show a warning that there are missing OTel targets and
   // the user must select more OTel resource attributes
+  const jobCheck: { [key: string]: boolean } = {};
+  const instanceCheck: { [key: string]: boolean } = {};
   for (let i = 0; i < jobsList.length; i++) {
     // use or character for the count
     const orChars = i === 0 ? 0 : 2;
@@ -192,9 +194,11 @@ export function limitOtelMatchTerms(
         instancesRegex += `${instancesList[i]}`;
       } else {
         // check to make sure we aren't duplicating job or instance
-        jobsRegex += !jobsRegex.includes(jobsList[i]) ? `|${jobsList[i]}` : '';
-        instancesRegex += !instancesRegex.includes(instancesList[i]) ? `|${instancesList[i]}` : '';
+        jobsRegex += jobCheck[jobsList[i]] ? '' : `|${jobsList[i]}`;
+        instancesRegex += instanceCheck[instancesList[i]] ? '' : `|${instancesList[i]}`;
       }
+      jobCheck[jobsList[i]] = true;
+      instanceCheck[instancesList[i]] = true;
     } else {
       missingOtelTargets = true;
       break;
