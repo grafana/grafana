@@ -332,18 +332,6 @@ Set the following options:
 - **Alt text** - Set the alternative text of an image. The text will be available for screen readers and in cases when images can't be loaded.
 - **Title text** - Set the text that's displayed when the image is hovered over with a cursor.
 
-#### Wrap text
-
-{{< admonition type="note" >}}
-Text wrapping is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview), however, it’s available to use by default.
-We’d love hear from you about how this new feature is working. To provide feedback, you can open an issue in the [Grafana GitHub repository](https://github.com/grafana/grafana).
-{{< /admonition >}}
-
-Toggle the **Wrap text** switch to wrap text in the cell that contains the longest content in your table.
-To wrap the text in a specific column only, use the Wrap Text option in a [field override](ref:field-override).
-
-This option is available for the following cell types: **Auto**, **Colored text**, and **Colored background**.
-
 #### Cell value inspect
 
 Enables value inspection from table cells. When the **Cell inspect value** switch is toggled on, clicking the inspect icon in a cell opens the **Inspect value** drawer.
