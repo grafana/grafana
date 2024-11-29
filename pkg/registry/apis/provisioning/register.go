@@ -30,6 +30,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -214,7 +215,8 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 			return nil, fmt.Errorf("invalid base URL: %w", err)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL), nil
+		linter := lint.NewDashboardLinter()
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linter), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:

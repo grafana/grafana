@@ -41,6 +41,24 @@ func (_m *MockClient) BranchExists(ctx context.Context, owner string, repository
 	return r0, r1
 }
 
+// ClearAllPullRequestFileComments provides a mock function with given fields: ctx, owner, repository, number
+func (_m *MockClient) ClearAllPullRequestFileComments(ctx context.Context, owner string, repository string, number int) error {
+	ret := _m.Called(ctx, owner, repository, number)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearAllPullRequestFileComments")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) error); ok {
+		r0 = rf(ctx, owner, repository, number)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateBranch provides a mock function with given fields: ctx, owner, repository, sourceBranch, branchName
 func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository string, sourceBranch string, branchName string) error {
 	ret := _m.Called(ctx, owner, repository, sourceBranch, branchName)
@@ -88,6 +106,24 @@ func (_m *MockClient) CreatePullRequestComment(ctx context.Context, owner string
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, string) error); ok {
 		r0 = rf(ctx, owner, repository, number, body)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CreatePullRequestFileComment provides a mock function with given fields: ctx, owner, repository, number, comment
+func (_m *MockClient) CreatePullRequestFileComment(ctx context.Context, owner string, repository string, number int, comment FileComment) error {
+	ret := _m.Called(ctx, owner, repository, number, comment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePullRequestFileComment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, FileComment) error); ok {
+		r0 = rf(ctx, owner, repository, number, comment)
 	} else {
 		r0 = ret.Error(0)
 	}

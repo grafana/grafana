@@ -78,6 +78,8 @@ type Client interface {
 
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+	CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error
+	ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error
 }
 
 type RepositoryContent interface {
@@ -104,6 +106,13 @@ type CommitFile interface {
 	GetFilename() string
 	GetPreviousFilename() string
 	GetStatus() string
+}
+
+type FileComment struct {
+	Content  string
+	Path     string
+	Position int
+	Ref      string
 }
 
 type CreateFileOptions struct {

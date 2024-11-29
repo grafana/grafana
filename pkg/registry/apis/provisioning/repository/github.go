@@ -20,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 )
 
@@ -28,6 +29,7 @@ type githubRepository struct {
 	config  *provisioning.Repository
 	gh      pgh.Client
 	baseURL *url.URL
+	linter  lint.Linter
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -37,12 +39,14 @@ func NewGitHub(
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
 	baseURL *url.URL,
+	linter lint.Linter,
 ) *githubRepository {
 	return &githubRepository{
 		config:  config,
 		logger:  slog.Default().With("logger", "github-repository"),
 		gh:      factory.New(ctx, config.Spec.GitHub.Token),
 		baseURL: baseURL,
+		linter:  linter,
 	}
 }
 
@@ -484,18 +488,8 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 	return nil
 }
 
-const commentTemplate = `Hey there! 🎉
-Grafana spotted some changes for your resources in this pull request:
-
-| File Name | Type | Path | Action | Links |
-|-----------|------|------|--------|-------|
-{{- range .}}
-| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
-{{- end}}
-
-Click the preview links above to view how your changes will look and compare them with the original and current versions.`
-
-type commentFile struct {
+// changedResource represents a resource that has changed in a pull request.
+type changedResource struct {
 	Filename string
 	Path     string
 	Action   string
@@ -503,13 +497,27 @@ type commentFile struct {
 	Original string
 	Current  string
 	Preview  string
+	Data     []byte
 }
 
 // onPullRequestEvent is called when a pull request event is received
 // If the pull request is opened, reponed or synchronize, we read the files changed.
 func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.Logger, event *github.PullRequestEvent, factory FileReplicatorFactory) error {
 	action := event.GetAction()
-	r.logger.InfoContext(ctx, "processing pull request event", "number", event.GetNumber(), "action", action)
+	logger = logger.With("pull_request", event.GetNumber(), "action", action, "nnumber", event.GetNumber())
+	logger.InfoContext(
+		ctx,
+		"processing pull request event",
+		"linter",
+		r.Config().Spec.GitHub.PullRequestLinter,
+		"previews",
+		r.Config().Spec.GitHub.GenerateDashboardPreviews,
+	)
+
+	if !r.Config().Spec.GitHub.PullRequestLinter && !r.Config().Spec.GitHub.GenerateDashboardPreviews {
+		logger.DebugContext(ctx, "no action required on pull request event")
+		return nil
+	}
 
 	if event.GetRepo() == nil {
 		return fmt.Errorf("missing repository in pull request event")
@@ -530,7 +538,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		return fmt.Errorf("list pull request files: %w", err)
 	}
 
-	rows := make([]commentFile, 0)
+	changedResources := make([]changedResource, 0)
 
 	baseBranch := event.GetPullRequest().GetBase().GetRef()
 	mainBranch := r.config.Spec.GitHub.Branch
@@ -542,9 +550,8 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 
 	prURL := event.GetPullRequest().GetHTMLURL()
 
-	// TODO: implement the real handling of the files
 	for _, file := range files {
-		row := commentFile{
+		resource := changedResource{
 			Filename: path.Base(file.GetFilename()),
 			Path:     file.GetFilename(),
 			Action:   file.GetStatus(),
@@ -558,23 +565,23 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch file.GetStatus() {
 		case "added":
-			row.Preview = r.previewURL(ref, path, prURL)
+			resource.Preview = r.previewURL(ref, path, prURL)
 		case "modified":
-			row.Original = r.previewURL(baseBranch, path, prURL)
-			row.Current = r.previewURL(mainBranch, path, prURL)
-			row.Preview = r.previewURL(ref, path, prURL)
+			resource.Original = r.previewURL(baseBranch, path, prURL)
+			resource.Current = r.previewURL(mainBranch, path, prURL)
+			resource.Preview = r.previewURL(ref, path, prURL)
 		case "removed":
-			row.Original = r.previewURL(baseBranch, path, prURL)
-			row.Current = r.previewURL(mainBranch, path, prURL)
+			resource.Original = r.previewURL(baseBranch, path, prURL)
+			resource.Current = r.previewURL(mainBranch, path, prURL)
 			ref = baseBranch
 		case "renamed":
-			row.Original = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
-			row.Current = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
-			row.Preview = r.previewURL(ref, path, prURL)
+			resource.Original = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
+			resource.Current = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
+			resource.Preview = r.previewURL(ref, path, prURL)
 		case "changed":
-			row.Original = r.previewURL(baseBranch, path, prURL)
-			row.Current = r.previewURL(mainBranch, path, prURL)
-			row.Preview = r.previewURL(ref, path, prURL)
+			resource.Original = r.previewURL(baseBranch, path, prURL)
+			resource.Current = r.previewURL(mainBranch, path, prURL)
+			resource.Preview = r.previewURL(ref, path, prURL)
 		case "unchanged":
 			logger.InfoContext(ctx, "ignore unchanged file")
 			continue
@@ -589,6 +596,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			continue
 		}
 
+		// TODO: how does this validation works vs linting?
 		ok, err := replicator.Validate(ctx, f)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to validate file", "error", err)
@@ -599,33 +607,132 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			continue
 		}
 
+		resource.Data = f.Data
 		logger.InfoContext(ctx, "resource changed")
-		rows = append(rows, row)
+		changedResources = append(changedResources, resource)
 	}
 
-	if len(rows) == 0 {
+	if err := r.previewPullRequest(ctx, event.GetNumber(), changedResources); err != nil {
+		logger.ErrorContext(ctx, "failed to comment previews", "error", err)
+	}
+
+	headSha := event.GetPullRequest().GetHead().GetSHA()
+	if err := r.lintPullRequest(ctx, logger, event.GetNumber(), headSha, changedResources); err != nil {
+		logger.ErrorContext(ctx, "failed to lint pull request resources", "error", err)
+	}
+
+	return nil
+}
+
+var lintDashboardIssuesTemplate = `Hey there! 👋
+Grafana found some linting issues in this dashboard you may want to check:
+{{ range .}}
+{{ if eq .Severity 4 }}❌{{ else if eq .Severity 3 }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
+{{- end }}
+`
+
+// lintPullRequest lints the files changed in the pull request and comments the issues found.
+// The linter is disabled if the configuration does not have PullRequestLinter enabled.
+// The only supported type of file to lint is a dashboard.
+func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resources []changedResource) error {
+	if !r.Config().Spec.GitHub.PullRequestLinter {
 		return nil
 	}
 
-	tmpl, err := template.New("comment").Parse(commentTemplate)
+	logger.InfoContext(ctx, "lint pull request")
+
+	// Clear all previous comments because we don't know if the files have changed
+	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber); err != nil {
+		return fmt.Errorf("clear pull request comments: %w", err)
+	}
+
+	for _, resource := range resources {
+		if resource.Action == "removed" || resource.Type != "dashboard" {
+			continue
+		}
+
+		logger := logger.With("file", resource.Path)
+		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource); err != nil {
+			logger.ErrorContext(ctx, "failed to lint file", "error", err)
+		}
+	}
+
+	return nil
+}
+
+// lintPullRequestFile lints a file and comments the issues found.
+func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource) error {
+	issues, err := r.linter.Lint(ctx, resource.Data)
+	if err != nil {
+		return fmt.Errorf("lint file: %w", err)
+	}
+
+	if len(issues) == 0 {
+		return nil
+	}
+
+	// FIXME: we should not be compiling this all the time
+	tmpl, err := template.New("comment").Parse(lintDashboardIssuesTemplate)
+	if err != nil {
+		return fmt.Errorf("parse lint comment template: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, issues); err != nil {
+		return fmt.Errorf("execute lint comment template: %w", err)
+	}
+
+	comment := pgh.FileComment{
+		Content:  buf.String(),
+		Path:     resource.Path,
+		Position: 1, // create a top-level comment
+		Ref:      ref,
+	}
+
+	// FIXME: comment with Grafana Logo
+	// FIXME: comment author should be written by Grafana and not the user
+	if err := r.gh.CreatePullRequestFileComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
+		return fmt.Errorf("create pull request comment: %w", err)
+	}
+	logger.InfoContext(ctx, "lint comment created", "issues", len(issues))
+
+	return nil
+}
+
+const previewsCommentTemplate = `Hey there! 🎉
+Grafana spotted some changes for your resources in this pull request:
+
+| File Name | Type | Path | Action | Links |
+|-----------|------|------|--------|-------|
+{{- range .}}
+| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
+{{- end}}
+
+Click the preview links above to view how your changes will look and compare them with the original and current versions.`
+
+func (r *githubRepository) previewPullRequest(ctx context.Context, prNumber int, resources []changedResource) error {
+	if !r.Config().Spec.GitHub.GenerateDashboardPreviews || len(resources) == 0 {
+		return nil
+	}
+
+	// FIXME: we should not be compiling this all the time
+	tmpl, err := template.New("comment").Parse(previewsCommentTemplate)
 	if err != nil {
 		return fmt.Errorf("parse comment template: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, rows); err != nil {
+	if err := tmpl.Execute(&buf, resources); err != nil {
 		return fmt.Errorf("execute comment template: %w", err)
 	}
 
 	comment := buf.String()
 
-	// TODO: comment with Grafana Logo
-	// TODO: comment author should be written by Grafana and not the user
-	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, event.GetNumber(), comment); err != nil {
+	// FIXME: comment with Grafana Logo
+	// FIXME: comment author should be written by Grafana and not the user
+	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
-
-	r.logger.InfoContext(ctx, "comment created", "pull_request", event.GetNumber(), "num_changes", len(rows))
 
 	return nil
 }

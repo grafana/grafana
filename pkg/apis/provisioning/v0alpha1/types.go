@@ -63,6 +63,9 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	// This option is a no-op if BranchWorkflow is `false` or default.
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+
+	// PullRequestLinter enables the dashboard linter for this repository in Pull Requests
+	PullRequestLinter bool `json:"pullRequestLinter,omitempty"`
 }
 
 // RepositoryType defines the types of Repository
