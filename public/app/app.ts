@@ -89,6 +89,7 @@ import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
+import { initializeScopesServices } from './features/scopes';
 import { cleanupOldExpandedFolders } from './features/search/utils';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -184,6 +185,8 @@ export class GrafanaApp {
         importPanelPlugin,
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
+
+      initializeScopesServices();
 
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();

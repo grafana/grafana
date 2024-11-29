@@ -2,13 +2,14 @@ import { isEqual } from 'lodash';
 import { BehaviorSubject, from, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { scopesService } from '@grafana/runtime';
+import { getScopesService } from '../services';
 
 import { fetchNodes, fetchScope, fetchSelectedScopes } from './api';
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 import { getBasicScope, getScopesAndTreeScopesWithPaths, getTreeScopesFromSelectedScopes } from './utils';
 
 export interface State {
+  isOpened: boolean;
   loadingNodeName: string | undefined;
   nodes: NodesMap;
   selectedScopes: SelectedScope[];
@@ -16,6 +17,7 @@ export interface State {
 }
 
 const getInitialState = (): State => ({
+  isOpened: false,
   loadingNodeName: undefined,
   nodes: {
     '': {
@@ -34,16 +36,21 @@ const getInitialState = (): State => ({
   treeScopes: [],
 });
 
-class ScopesSelectorService {
+export class ScopesSelectorService {
   private _state = new BehaviorSubject(getInitialState());
+  private prevState = getInitialState();
 
   private nodesFetchingSub: Subscription | undefined;
 
   constructor() {
-    scopesService.stateObservable.subscribe(async ({ pendingScopes }) => {
-      if (pendingScopes) {
-        await this.applyNewScopes(pendingScopes.map((scopeName) => ({ scopeName, path: [] })));
-        scopesService.setNewScopes(null);
+    getScopesService()?.subscribeToState(async (newState, prevState) => {
+      if (newState.pendingScopes !== prevState.pendingScopes && newState.pendingScopes) {
+        await this.applyNewScopes(newState.pendingScopes.map((scopeName) => ({ scopeName, path: [] })));
+        getScopesService()?.setNewScopes(null);
+      }
+
+      if (newState.isReadOnly && this.state.isOpened) {
+        this.closePicker();
       }
     });
   }
@@ -160,13 +167,13 @@ class ScopesSelectorService {
       selectedScopes: localTreeScopes.map(({ scopeName, path }) => ({ scope: getBasicScope(scopeName), path })),
       treeScopes: localTreeScopes,
     });
-    scopesService.enterLoadingMode();
+    getScopesService()?.enterLoadingMode();
 
     const newSelectedScopes = await fetchSelectedScopes(localTreeScopes);
 
     this.updateState({ selectedScopes: newSelectedScopes });
-    scopesService.setCurrentScopes(newSelectedScopes.map(({ scope }) => scope));
-    scopesService.exitLoadingMode();
+    getScopesService()?.setCurrentScopes(newSelectedScopes.map(({ scope }) => scope));
+    getScopesService()?.exitLoadingMode();
   }
 
   public dismissNewScopes() {
@@ -177,10 +184,10 @@ class ScopesSelectorService {
     this.applyNewScopes([]);
   }
 
-  public async open() {
-    if (!scopesService.state.isReadOnly) {
+  public async openPicker() {
+    if (!getScopesService()?.state.isReadOnly) {
       if (Object.keys(this.state.nodes[''].nodes).length === 0) {
-        await scopesSelectorService.updateNode([''], true, '');
+        await this.updateNode([''], true, '');
       }
 
       let newNodes = { ...this.state.nodes };
@@ -195,17 +202,16 @@ class ScopesSelectorService {
       // Expand the nodes to the selected scope
       newNodes = this.expandNodes(newNodes, path);
 
-      scopesService.openPicker();
-      this.updateState({ nodes: newNodes });
+      this.updateState({ nodes: newNodes, isOpened: true });
     }
   }
 
-  public close() {
-    scopesService.closePicker();
+  public closePicker() {
+    this.updateState({ isOpened: false });
   }
 
-  public resetState() {
-    this._state.next(getInitialState());
+  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+    return this._state.subscribe((newState) => cb(newState, this.prevState));
   }
 
   private closeNodes(nodes: NodesMap): NodesMap {
@@ -238,8 +244,7 @@ class ScopesSelectorService {
   }
 
   private updateState(newState: Partial<State>) {
+    this.prevState = this.state;
     this._state.next({ ...this._state.getValue(), ...newState });
   }
 }
-
-export const scopesSelectorService = new ScopesSelectorService();

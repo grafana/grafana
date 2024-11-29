@@ -1,12 +1,11 @@
 import { BehaviorSubject } from 'rxjs';
 
 import { Scope } from '@grafana/data';
+import { ScopesContextValue } from '@grafana/runtime';
 
 export interface State {
   isEnabled: boolean;
   isLoading: boolean;
-  isDrawerOpened: boolean;
-  isPickerOpened: boolean;
   isReadOnly: boolean;
   pendingScopes: string[] | null;
   value: Scope[];
@@ -15,15 +14,14 @@ export interface State {
 export const getInitialState = (): State => ({
   isEnabled: false,
   isLoading: false,
-  isDrawerOpened: false,
-  isPickerOpened: false,
   isReadOnly: false,
   pendingScopes: null,
   value: [],
 });
 
-export class ScopesService {
+export class ScopesService implements ScopesContextValue {
   private _state = new BehaviorSubject<State>(getInitialState());
+  private prevState = getInitialState();
 
   public get state() {
     return this._state.getValue();
@@ -50,7 +48,7 @@ export class ScopesService {
   }
 
   public enterReadOnly() {
-    this.updateState({ isReadOnly: true, isPickerOpened: false });
+    this.updateState({ isReadOnly: true });
   }
 
   public exitReadOnly() {
@@ -65,33 +63,12 @@ export class ScopesService {
     this.updateState({ isEnabled: false });
   }
 
-  public openPicker() {
-    this.updateState({ isPickerOpened: true });
-  }
-
-  public closePicker() {
-    this.updateState({ isPickerOpened: false });
-  }
-
-  public openDrawer() {
-    this.updateState({ isDrawerOpened: true });
-  }
-
-  public closeDrawer() {
-    this.updateState({ isDrawerOpened: false });
-  }
-
-  public toggleDrawer() {
-    this.updateState({ isDrawerOpened: !this.state.isDrawerOpened });
-  }
-
-  public resetState() {
-    this._state.next(getInitialState());
+  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+    return this._state.subscribe((newState) => cb(newState, this.prevState));
   }
 
   private updateState(newState: Partial<State>) {
+    this.prevState = this.state;
     this._state.next({ ...this.state, ...newState });
   }
 }
-
-export const scopesService = new ScopesService();

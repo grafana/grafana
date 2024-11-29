@@ -1,6 +1,6 @@
 import { screen } from '@testing-library/react';
 
-import { scopesSelectorService } from '../../internal/ScopesSelectorService';
+import { getScopesSelectorService } from '../../services';
 
 const selectors = {
   tree: {
@@ -88,8 +88,8 @@ export const getResultCloudDevRadio = () =>
 export const getResultCloudOpsRadio = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.radio('cloud-ops', 'result'));
 
-export const getListOfSelectedScopes = () => scopesSelectorService.state.selectedScopes;
-export const getListOfTreeScopes = () => scopesSelectorService.state.treeScopes;
+export const getListOfSelectedScopes = () => getScopesSelectorService()?.state.selectedScopes;
+export const getListOfTreeScopes = () => getScopesSelectorService()?.state.treeScopes;
 export const getSelectedScope = (name: string) =>
   getListOfSelectedScopes()?.find((selectedScope) => selectedScope.scope.metadata.name === name);
 export const getTreeScope = (name: string) => getListOfTreeScopes()?.find((treeScope) => treeScope.scopeName === name);

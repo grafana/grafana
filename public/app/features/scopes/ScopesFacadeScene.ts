@@ -1,4 +1,3 @@
-import { scopesService } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneObjectState,
@@ -6,6 +5,8 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
+
+import { getScopesService } from './services';
 
 interface ScopesFacadeState extends SceneObjectState {
   // A callback that will be executed when new scopes are set
@@ -28,22 +29,25 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   }
 
   public updateFromUrl(values: SceneObjectUrlValues) {
-    if (!values.scopes && !scopesService.state.isEnabled) {
+    if (!values.scopes && !getScopesService()?.state.isEnabled) {
       return;
     }
 
     let scopeNames = values.scopes ?? [];
     scopeNames = Array.isArray(scopeNames) ? scopeNames : [scopeNames];
 
-    scopesService.setNewScopes(scopeNames);
+    getScopesService()?.setNewScopes(scopeNames);
   }
 
   private _activationHandler = () => {
     this.enable();
 
     this._subs.add(
-      scopesService.stateObservable.subscribe(() => {
-        this.forceRender();
+      getScopesService()?.subscribeToState((newState, prevState) => {
+        if (newState.value !== prevState.value) {
+          this.forceRender();
+          this.state.handler?.(this);
+        }
       })
     );
 
@@ -53,22 +57,22 @@ export class ScopesFacade extends SceneObjectBase<ScopesFacadeState> implements 
   };
 
   public get value() {
-    return scopesService.state.value;
+    return getScopesService()?.state.value ?? [];
   }
 
   public enable() {
-    scopesService.enable();
+    getScopesService()?.enable();
   }
 
   public disable() {
-    scopesService.disable();
+    getScopesService()?.disable();
   }
 
   public enterReadOnly() {
-    scopesService.enterReadOnly();
+    getScopesService()?.enterReadOnly();
   }
 
   public exitReadOnly() {
-    scopesService.exitReadOnly();
+    getScopesService()?.exitReadOnly();
   }
 }

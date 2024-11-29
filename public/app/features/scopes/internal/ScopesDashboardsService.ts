@@ -3,7 +3,8 @@ import { BehaviorSubject, from, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
 import { ScopeDashboardBinding } from '@grafana/data';
-import { scopesService } from '@grafana/runtime';
+
+import { getScopesService } from '../services';
 
 import { fetchDashboards } from './api';
 import { SuggestedDashboardsFoldersMap } from './types';
@@ -18,6 +19,7 @@ export interface State {
   folders: SuggestedDashboardsFoldersMap;
   forScopeNames: string[];
   isLoading: boolean;
+  isOpened: boolean;
   searchQuery: string;
 }
 
@@ -27,17 +29,21 @@ const getInitialState = (): State => ({
   folders: {},
   forScopeNames: [],
   isLoading: false,
+  isOpened: false,
   searchQuery: '',
 });
 
-class ScopesDashboardsService {
+export class ScopesDashboardsService {
   private _state = new BehaviorSubject(getInitialState());
+  private prevState = getInitialState();
 
   private dashboardsFetchingSub: Subscription | undefined;
 
   constructor() {
-    scopesService.stateObservable.subscribe(({ value }) => {
-      this.fetchDashboards(value.map((scope) => scope.metadata.name));
+    getScopesService()?.subscribeToState((newState, prevState) => {
+      if (newState.value !== prevState.value) {
+        this.fetchDashboards(newState.value.map((scope) => scope.metadata.name));
+      }
     });
   }
 
@@ -86,8 +92,12 @@ class ScopesDashboardsService {
     this.changeSearchQuery('');
   }
 
-  public resetState() {
-    this._state.next(getInitialState());
+  public toggleDrawer() {
+    this.updateState({ isOpened: !this.state.isOpened });
+  }
+
+  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+    return this._state.subscribe((newState) => cb(newState, this.prevState));
   }
 
   private async fetchDashboards(scopeNames: string[]) {
@@ -104,9 +114,8 @@ class ScopesDashboardsService {
         folders: {},
         forScopeNames: [],
         isLoading: false,
+        isOpened: false,
       });
-
-      scopesService.closeDrawer();
 
       return;
     }
@@ -128,17 +137,15 @@ class ScopesDashboardsService {
           filteredFolders: newFilteredFolders,
           folders: newFolders,
           isLoading: false,
+          isOpened: true,
         });
-
-        scopesService.openDrawer();
 
         this.dashboardsFetchingSub?.unsubscribe();
       });
   }
 
   private updateState(newState: Partial<State>) {
+    this.prevState = this.state;
     this._state.next({ ...this._state.getValue(), ...newState });
   }
 }
-
-export const scopesDashboardsService = new ScopesDashboardsService();

@@ -10,7 +10,7 @@ import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { ScopesDashboards } from 'app/features/scopes';
+import { ScopesDashboards, useScopesDashboardsService } from 'app/features/scopes';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -32,9 +32,10 @@ export function AppChrome({ children }: Props) {
   const dockedMenuBreakpoint = theme.breakpoints.values.xl;
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const scopesContext = useScopes();
+  const scopes = useScopes();
+  const scopesDashboards = useScopesDashboardsService();
   const isScopesDashboardsOpen = Boolean(
-    scopesContext.isEnabled && scopesContext.isDrawerOpened && !scopesContext.isReadOnly
+    scopes.state.isEnabled && scopesDashboards.state.isOpened && !scopes.state.isReadOnly
   );
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,

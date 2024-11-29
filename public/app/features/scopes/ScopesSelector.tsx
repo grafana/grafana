@@ -8,24 +8,34 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { ScopesInput } from './internal/ScopesInput';
 import { ScopesTree } from './internal/ScopesTree';
-import { useScopesSelectorService } from './internal/useScopesSelectorService';
+import { useScopesDashboardsService } from './useScopesDashboardsService';
+import { useScopesSelectorService } from './useScopesSelectorService';
 
 export const ScopesSelector = () => {
   const { chrome } = useGrafana();
   const chromeState = chrome.useState();
   const menuDockedAndOpen = !chromeState.chromeless && chromeState.megaMenuDocked && chromeState.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
-  const scopesContext = useScopes();
-  const { applyNewScopes, close, dismissNewScopes, open, removeAllScopes, state, toggleNodeSelect, updateNode } =
-    useScopesSelectorService();
+  const scopes = useScopes();
+  const {
+    applyNewScopes,
+    closePicker,
+    dismissNewScopes,
+    openPicker,
+    removeAllScopes,
+    state,
+    toggleNodeSelect,
+    updateNode,
+  } = useScopesSelectorService();
+  const { state: scopesDashboardsState, toggleDrawer } = useScopesDashboardsService();
 
-  if (!config.featureToggles.scopeFilters || !scopesContext.isEnabled) {
+  if (!config.featureToggles.scopeFilters || !scopes.state.isEnabled) {
     return null;
   }
 
-  const dashboardsIconLabel = scopesContext.isReadOnly
+  const dashboardsIconLabel = scopes.state.isReadOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
-    : scopesContext.isDrawerOpened
+    : scopesDashboardsState.isOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
       : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
 
@@ -37,31 +47,31 @@ export const ScopesSelector = () => {
         aria-label={dashboardsIconLabel}
         tooltip={dashboardsIconLabel}
         data-testid="scopes-dashboards-expand"
-        disabled={scopesContext.isReadOnly}
-        onClick={scopesContext.toggleDrawer}
+        disabled={scopes.state.isReadOnly}
+        onClick={toggleDrawer}
       />
 
       <ScopesInput
         nodes={state.nodes}
         scopes={state.selectedScopes}
-        isDisabled={scopesContext.isReadOnly}
-        isLoading={scopesContext.isLoading}
-        onInputClick={open}
+        isDisabled={scopes.state.isReadOnly}
+        isLoading={scopes.state.isLoading}
+        onInputClick={openPicker}
         onRemoveAllClick={removeAllScopes}
       />
 
-      {scopesContext.isPickerOpened && (
+      {state.isOpened && (
         <Drawer
           title={t('scopes.selector.title', 'Select scopes')}
           size="sm"
           onClose={() => {
-            close();
+            closePicker();
             dismissNewScopes();
           }}
         >
           <div className={styles.drawerContainer}>
             <div className={styles.treeContainer}>
-              {scopesContext.isLoading ? (
+              {scopes.state.isLoading ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <ScopesTree
@@ -80,7 +90,7 @@ export const ScopesSelector = () => {
                 variant="primary"
                 data-testid="scopes-selector-apply"
                 onClick={() => {
-                  close();
+                  closePicker();
                   applyNewScopes();
                 }}
               >
@@ -90,7 +100,7 @@ export const ScopesSelector = () => {
                 variant="secondary"
                 data-testid="scopes-selector-cancel"
                 onClick={() => {
-                  close();
+                  closePicker();
                   dismissNewScopes();
                 }}
               >

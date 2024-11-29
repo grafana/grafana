@@ -5,7 +5,7 @@ import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { scopesSelectorService } from '../../internal/ScopesSelectorService';
+import { getScopesService } from '../../services';
 
 import {
   dashboardReloadSpy,
@@ -52,15 +52,7 @@ const type = async (selector: () => HTMLInputElement, value: string) => {
   await jest.runOnlyPendingTimersAsync();
 };
 
-export const updateScopes = async (scopes: string[]) =>
-  act(async () =>
-    scopesSelectorService?.applyNewScopes(
-      scopes.map((scopeName) => ({
-        scopeName,
-        path: [],
-      }))
-    )
-  );
+export const updateScopes = async (scopes: string[]) => act(async () => getScopesService()?.setNewScopes(scopes));
 export const openSelector = async () => click(getSelectorInput);
 export const applyScopes = async () => {
   await click(getSelectorApply);

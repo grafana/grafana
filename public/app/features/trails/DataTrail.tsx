@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, urlUtil, VariableHide } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { scopesService, locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -31,6 +31,8 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+
+import { getScopesService } from '../scopes';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -428,7 +430,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneO
       const deploymentEnvironments = await getDeploymentEnvironments(
         datasourceUid,
         timeRange,
-        scopesService.state.value
+        getScopesService()?.state.value ?? []
       );
       const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       // loading from the url with otel resources selected will result in turning on OTel experience

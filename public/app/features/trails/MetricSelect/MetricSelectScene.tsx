@@ -3,7 +3,7 @@ import { debounce, isEqual } from 'lodash';
 import { SyntheticEvent, useReducer } from 'react';
 
 import { AdHocVariableFilter, GrafanaTheme2, RawTimeRange, SelectableValue } from '@grafana/data';
-import { config, scopesService, isFetchError } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   PanelBuilders,
@@ -28,6 +28,7 @@ import {
 import { Alert, Badge, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { getScopesService } from '../../scopes';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -256,7 +257,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       const response = await getMetricNames(
         datasourceUid,
         timeRange,
-        scopesService.state.value,
+        getScopesService()?.state.value ?? [],
         filters,
         jobsList,
         instancesList,
