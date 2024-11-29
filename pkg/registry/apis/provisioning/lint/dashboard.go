@@ -23,7 +23,6 @@ func NewDashboardLinter() *DashboardLinter {
 	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
-// TODO: should I receive a file?
 func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, error) {
 	var data specData
 	if err := json.Unmarshal(fileData, &data); err != nil {
@@ -45,10 +44,9 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, e
 	for r := range byRule {
 		rules = append(rules, r)
 	}
-
 	sort.Strings(rules)
-	issues := make([]Issue, 0)
 
+	issues := make([]Issue, 0)
 	for _, rule := range rules {
 		for _, rr := range byRule[rule] {
 			for _, r := range rr.Result.Results {
@@ -65,5 +63,5 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, e
 		}
 	}
 
-	return nil, nil
+	return issues, nil
 }
