@@ -160,8 +160,10 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 				return nil, errors.New("shouldn't be called")
 			}
+			getPluginArchiveByURLCalled := false
 			pluginRepo.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
 				require.Equal(t, url, pluginZipURL)
+				getPluginArchiveByURLCalled = true
 				return &repo.PluginArchive{
 					File: mockZipV2,
 				}, nil
@@ -178,6 +180,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			err = inst.Add(context.Background(), pluginID, v2, plugins.NewAddOpts(v2, runtime.GOOS, runtime.GOARCH, url))
 			require.NoError(t, err)
+			require.True(t, getPluginArchiveByURLCalled)
 		})
 
 		t.Run("Removing an existing plugin", func(t *testing.T) {
