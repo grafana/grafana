@@ -14,7 +14,6 @@ import {
   ValueFormatter,
 } from '@grafana/data';
 import { parseSampleValue, sortSeriesByLabel } from '@grafana/prometheus';
-import { config } from '@grafana/runtime';
 import {
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
@@ -105,23 +104,9 @@ export function prepareHeatmapData({
   if (options.calculate) {
     // if calculate is true, we need to have the default values for the calculation if they don't exist
     let calculation = getCalculationObjectWithDefaults(options.calculation);
-    if (config.featureToggles.transformationsVariableSupport) {
-      if (calculation.xBuckets?.value && replaceVariables !== undefined) {
-        calculation.xBuckets.value = replaceVariables(calculation.xBuckets.value);
-      }
 
-      if (calculation?.yBuckets?.value && replaceVariables !== undefined) {
-        calculation.yBuckets.value = replaceVariables(calculation.yBuckets.value);
-      }
-
-      return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, { ...calculation, timeRange }),
-        exemplars,
-        { ...options, calculation: calculation },
-        palette,
-        theme
-      );
-    }
+    calculation.xBuckets.value = replaceVariables(calculation.xBuckets.value ?? '');
+    calculation.yBuckets.value = replaceVariables(calculation.yBuckets.value ?? '');
 
     return getDenseHeatmapData(
       calculateHeatmapFromData(frames, { ...calculation, timeRange }),
@@ -206,7 +191,7 @@ export function prepareHeatmapData({
   };
 }
 
-const getCalculationObjectWithDefaults = (calculation?: HeatmapCalculationOptions): HeatmapCalculationOptions => {
+const getCalculationObjectWithDefaults = (calculation?: HeatmapCalculationOptions) => {
   return {
     xBuckets: {
       ...calculation?.xBuckets,
