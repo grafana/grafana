@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -33,6 +33,8 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
+  const modeSwitchCounter = useRef(0);
+
   const allowInterval = item.settings?.allowInterval ?? false;
 
   const onChange2 = ({ mode, scale, value = '' }: HeatmapCalculationBucketConfig) => {
@@ -64,6 +66,8 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         value={value?.mode || HeatmapCalculationMode.Size}
         options={value?.scale?.type === ScaleDistribution.Log ? logModeOptions : modeOptions}
         onChange={(mode) => {
+          modeSwitchCounter.current++;
+
           onChange2({
             ...value,
             value: '',
@@ -72,6 +76,9 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         }}
       />
       <SuggestionsInput
+        // we need this cause the value prop is not changeable after init
+        // so we have to re-create the component during mode switches to reset the value to auto
+        key={modeSwitchCounter.current}
         invalid={isInvalid}
         error={'Value needs to be an integer or a variable'}
         value={value?.value ?? ''}
