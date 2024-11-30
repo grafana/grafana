@@ -111,7 +111,7 @@ export function prepareHeatmapData({
     return getDenseHeatmapData(
       calculateHeatmapFromData(frames, { ...calculation, timeRange }),
       exemplars,
-      { ...options, calculation: calculation },
+      { ...options, calculation },
       palette,
       theme
     );
