@@ -35,22 +35,22 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
 
   const allowInterval = item.settings?.allowInterval ?? false;
 
-  const onValueChange = (bucketValue: string) => {
+  const onChange2 = ({ mode, scale, value = '' }: HeatmapCalculationBucketConfig) => {
     let isValid = true;
-    if (!allowInterval) {
-      isValid = numberOrVariableValidator(bucketValue);
-    } else if (bucketValue !== '') {
-      let durationMS = convertDurationToMilliseconds(bucketValue);
-      if (durationMS === undefined) {
-        isValid = false;
+
+    if (mode !== HeatmapCalculationMode.Count) {
+      if (!allowInterval) {
+        isValid = numberOrVariableValidator(value);
+      } else if (value !== '') {
+        let durationMS = convertDurationToMilliseconds(value);
+        if (durationMS === undefined) {
+          isValid = false;
+        }
       }
     }
 
     setInvalid(!isValid);
-    onChange({
-      ...value,
-      value: bucketValue,
-    });
+    onChange({ mode, scale, value });
   };
 
   const templateSrv = getTemplateSrv();
@@ -64,7 +64,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         value={value?.mode || HeatmapCalculationMode.Size}
         options={value?.scale?.type === ScaleDistribution.Log ? logModeOptions : modeOptions}
         onChange={(mode) => {
-          onChange({
+          onChange2({
             ...value,
             value: '',
             mode,
@@ -76,7 +76,9 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         error={'Value needs to be an integer or a variable'}
         value={value?.value ?? ''}
         placeholder="Auto"
-        onChange={onValueChange}
+        onChange={(text) => {
+          onChange2({ ...value, value: text });
+        }}
         suggestions={variables}
       />
     </HorizontalGroup>
