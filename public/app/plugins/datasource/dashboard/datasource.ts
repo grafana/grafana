@@ -1,4 +1,4 @@
-import { Observable, defer, filter, finalize, first, map, of } from 'rxjs';
+import { Observable, debounceTime, defer, finalize, first, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -118,8 +118,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     return (source: Observable<DataQueryResponse>) => {
       return requestId.includes(MIXED_REQUEST_PREFIX)
         ? source.pipe(
-            filter((result) => result.state === LoadingState.Done),
-            first()
+            debounceTime(200),
+            first((val) => val.state === LoadingState.Done)
           )
         : source;
     };
