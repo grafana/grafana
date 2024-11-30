@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
-import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { HorizontalGroup, Input, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
@@ -66,31 +66,19 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         onChange={(mode) => {
           onChange({
             ...value,
+            value: '',
             mode,
           });
         }}
       />
-      {cfg.featureToggles.transformationsVariableSupport ? (
-        <SuggestionsInput
-          invalid={isInvalid}
-          error={'Value needs to be an integer or a variable'}
-          value={value?.value ?? ''}
-          placeholder="Auto"
-          onChange={onValueChange}
-          suggestions={variables}
-        />
-      ) : (
-        <Input
-          value={value?.value ?? ''}
-          placeholder="Auto"
-          onChange={(v) => {
-            onChange({
-              ...value,
-              value: v.currentTarget.value,
-            });
-          }}
-        />
-      )}
+      <SuggestionsInput
+        invalid={isInvalid}
+        error={'Value needs to be an integer or a variable'}
+        value={value?.value ?? ''}
+        placeholder="Auto"
+        onChange={onValueChange}
+        suggestions={variables}
+      />
     </HorizontalGroup>
   );
 };
