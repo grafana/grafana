@@ -126,17 +126,16 @@ export const convertDurationToMilliseconds = (duration: string): number | undefi
   const isValidNumberOrVariable = numberOrVariableValidator(duration); // check if number only. if so, equals number of ms
   if (isValidNumberOrVariable) {
     const durationMs = Number.parseInt(duration, 10);
-    return isNaN(durationMs) ? undefined : durationMs;
+    return Number.isNaN(durationMs) ? undefined : durationMs;
   } else {
     const validDuration = isValidDuration(duration); // check if non-ms duration. If so, convert value to number of ms
     if (validDuration) {
       return durationToMilliseconds(parseDuration(duration));
     } else {
-      const match = duration.match(/(\d+)(.+)/);
-      if (match?.[2].toLowerCase() === 'ms' && match?.[1] !== undefined) {
-        // check if ms duration, if so, match equals number of ms
-        const durationMs = Number.parseInt(match?.[1], 10);
-        return isNaN(durationMs) ? undefined : durationMs;
+      const match = duration.match(/(\d+)ms$/i);
+      if (match) {
+        const durationMs = Number.parseInt(match[1], 10);
+        return Number.isNaN(durationMs) ? undefined : durationMs;
       } else {
         return undefined;
       }
