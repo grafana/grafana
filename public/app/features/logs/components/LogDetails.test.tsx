@@ -14,9 +14,9 @@ import {
 } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
+import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();

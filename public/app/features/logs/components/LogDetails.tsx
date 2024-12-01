@@ -3,6 +3,7 @@ import { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, DataFrameType, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
@@ -91,7 +92,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   <>
                     <tr>
                       <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
-                        Log line
+                        <Trans i18nKey="logs.log-details.log-line">Log line</Trans>
                       </td>
                     </tr>
                     <LogDetailsBody
@@ -108,7 +109,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
-                      Fields
+                      <Trans i18nKey="logs.log-details.fields">Fields</Trans>
                     </td>
                   </tr>
                 )}
@@ -161,7 +162,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
-                      Links
+                      <Trans i18nKey="logs.log-details.links">Links</Trans>
                     </td>
                   </tr>
                 )}
@@ -211,7 +212,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} aria-label="No details">
-                      No details available
+                      <Trans i18nKey="logs.log-details.no-details">No details available</Trans>
                     </td>
                   </tr>
                 )}
