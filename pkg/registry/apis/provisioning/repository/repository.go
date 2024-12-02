@@ -109,3 +109,9 @@ type FileReplicator interface {
 type FileReplicatorFactory interface {
 	New() (FileReplicator, error)
 }
+
+// PreviewRenderer is an interface for rendering a preview of a file
+type PreviewRenderer interface {
+	IsAvailable(ctx context.Context) bool
+	RenderDashboardPreview(ctx context.Context, repo Repository, path string, ref string) (string, error)
+}

@@ -246,7 +246,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 			r.Spec.GitHub.WebhookURL = strings.ReplaceAll(r.Spec.GitHub.WebhookURL, resourceNamePlaceholder, r.GetName())
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linter), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linter, b.renderer), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
