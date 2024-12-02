@@ -144,7 +144,6 @@ func (u *SignedInUser) GetGroups() []string {
 		groups = append(groups, strconv.FormatInt(t, 10))
 	}
 	return groups
-
 }
 
 func (u *SignedInUser) GetTokenPermissions() []string {
