@@ -13,6 +13,7 @@ import {
 } from 'app/types/unified-alerting';
 import { Annotations, Labels, PromRuleType, RulerCloudRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
@@ -53,6 +54,7 @@ export function fromRulerRuleAndGroupIdentifierV2(
     if (isGrafanaRulerRule(rule)) {
       return { uid: rule.grafana_alert.uid, ruleSourceName: 'grafana' };
     }
+    logError(new Error('Rule is not a Grafana Ruler rule'));
     throw new Error('Rule is not a Grafana Ruler rule');
   }
 

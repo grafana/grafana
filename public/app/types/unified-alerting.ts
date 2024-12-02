@@ -97,6 +97,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
+/** @deprecated use RulesSourceIdentifier instead */
 export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
@@ -164,7 +165,7 @@ export interface GrafanaRulesSourceIdentifier {
 
 export type RulesSourceIdentifier = ExternalRulesSourceIdentifier | GrafanaRulesSourceIdentifier;
 
-// identifier for where we can find a RuleGroup
+/** @deprecated use RuleGroupIdentifierV2 instead */
 export interface RuleGroupIdentifier {
   dataSourceName: string;
   /** ⚠️ use the Grafana folder UID for Grafana-managed rules */

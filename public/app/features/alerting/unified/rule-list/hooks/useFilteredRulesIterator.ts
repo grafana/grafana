@@ -13,15 +13,9 @@ import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getDatasourceAPIUid, getExternalRulesSources } from '../../utils/datasource';
 import { parseMatcher } from '../../utils/matchers';
-import { hashRule } from '../../utils/rule-id';
 import { isAlertingRule } from '../../utils/rules';
 
 export interface RuleWithOrigin {
-  /**
-   * Artificial frontend-only identifier for the rule.
-   * It's used as a key for the rule in the rule list to prevent key duplication
-   */
-  ruleKey: string;
   rule: PromRuleDTO;
   groupIdentifier: DataSourceRuleGroupIdentifier;
 }
@@ -98,10 +92,7 @@ function mapRuleToRuleWithOrigin(
   group: PromRuleGroupDTO,
   rule: PromRuleDTO
 ): RuleWithOrigin {
-  const ruleKey = `${rulesSource.name}-${group.file}-${group.name}-${rule.name}-${rule.type}-${hashRule(rule)}`;
-
   return {
-    ruleKey,
     rule,
     groupIdentifier: {
       rulesSource,

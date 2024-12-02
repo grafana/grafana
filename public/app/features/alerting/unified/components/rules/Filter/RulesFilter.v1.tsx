@@ -15,12 +15,10 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 import {
   LogMessages,
   logInfo,
-  trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
@@ -29,30 +27,11 @@ import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
-export type SupportedView = 'list' | 'grouped';
-
-const ViewOptions: Array<SelectableValue<SupportedView>> = [
-  {
-    icon: 'folder',
-    label: 'Grouped',
-    value: 'grouped',
-  },
-  {
-    icon: 'list-ul',
-    label: 'List',
-    value: 'list',
-  },
-];
+import { RulesViewModeSelector } from './RulesViewModeSelector';
 
 const RuleTypeOptions: SelectableValue[] = [
-  {
-    label: 'Alert ',
-    value: PromRuleType.Alerting,
-  },
-  {
-    label: 'Recording ',
-    value: PromRuleType.Recording,
-  },
+  { label: 'Alert ', value: PromRuleType.Alerting },
+  { label: 'Recording ', value: PromRuleType.Recording },
 ];
 
 const RuleHealthOptions: SelectableValue[] = [
@@ -309,7 +288,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
           </form>
           <div>
             <Label>View as</Label>
-            <SelectedViewComponent />
+            <RulesViewModeSelector />
           </div>
         </Stack>
         {hasActiveFilters && (
@@ -323,26 +302,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     </Stack>
   );
 };
-
-function SelectedViewComponent() {
-  const [queryParams, updateQueryParams] = useURLSearchParams();
-  const { hasActiveFilters } = useRulesFilter();
-  const wantsListView = queryParams.get('view') === 'list';
-
-  const selectedViewOption = hasActiveFilters || wantsListView ? 'list' : 'grouped';
-
-  /* If we change to the grouped view, we just remove the "list" and "search" params */
-  const handleViewChange = (view: SupportedView) => {
-    if (view === 'list') {
-      updateQueryParams({ view });
-      trackRulesListViewChange({ view });
-    } else {
-      updateQueryParams({ view: undefined, search: undefined });
-    }
-  };
-
-  return <RadioButtonGroup options={ViewOptions} value={selectedViewOption} onChange={handleViewChange} />;
-}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

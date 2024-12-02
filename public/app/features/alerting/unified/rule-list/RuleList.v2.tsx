@@ -2,7 +2,7 @@ import { withErrorBoundary } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';
-import { SupportedView } from '../components/rules/Filter/RulesFilter.v1';
+import { SupportedView } from '../components/rules/Filter/RulesViewModeSelector';
 import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useURLSearchParams } from '../hooks/useURLSearchParams';
 
