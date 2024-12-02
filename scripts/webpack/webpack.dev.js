@@ -106,13 +106,17 @@ module.exports = (env = {}) => {
     },
 
     plugins: [
-      new LiveReloadPlugin({
-        appendScriptTag: true,
-        useSourceHash: true,
-        hostname: 'localhost',
-        protocol: 'http',
-        port: 35750,
-      }),
+      ...(parseInt(env.noTsCheck, 10)
+        ? [
+            new LiveReloadPlugin({
+              appendScriptTag: true,
+              useSourceHash: true,
+              hostname: 'localhost',
+              protocol: 'http',
+              port: 35750,
+            }),
+          ]
+        : []),
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
