@@ -31,44 +31,44 @@ export class ScopesService implements ScopesContextValue {
     return this._state.asObservable();
   }
 
-  public setNewScopes(scopeNames: string[] | null) {
+  public setNewScopes = (scopeNames: string[] | null) => {
     this.updateState({ pendingScopes: scopeNames });
-  }
+  };
 
-  public setCurrentScopes(scopes: Scope[]) {
+  public setCurrentScopes = (scopes: Scope[]) => {
     this.updateState({ value: scopes });
-  }
+  };
 
-  public enterLoadingMode() {
+  public enterLoadingMode = () => {
     this.updateState({ isLoading: true });
-  }
+  };
 
-  public exitLoadingMode() {
+  public exitLoadingMode = () => {
     this.updateState({ isLoading: false });
-  }
+  };
 
-  public enterReadOnly() {
+  public enterReadOnly = () => {
     this.updateState({ isReadOnly: true });
-  }
+  };
 
-  public exitReadOnly() {
+  public exitReadOnly = () => {
     this.updateState({ isReadOnly: false });
-  }
+  };
 
-  public enable() {
+  public enable = () => {
     this.updateState({ isEnabled: true });
-  }
+  };
 
-  public disable() {
+  public disable = () => {
     this.updateState({ isEnabled: false });
-  }
+  };
 
-  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+  public subscribeToState = (cb: (newState: State, prevState: State) => void) => {
     return this._state.subscribe((newState) => cb(newState, this.prevState));
-  }
+  };
 
-  private updateState(newState: Partial<State>) {
+  private updateState = (newState: Partial<State>) => {
     this.prevState = this.state;
     this._state.next({ ...this.state, ...newState });
-  }
+  };
 }

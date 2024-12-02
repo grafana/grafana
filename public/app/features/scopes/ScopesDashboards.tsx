@@ -12,11 +12,19 @@ import { useScopesDashboardsService } from './useScopesDashboardsService';
 export function ScopesDashboards() {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
-  const { changeSearchQuery, clearSearchQuery, state, updateFolder } = useScopesDashboardsService();
+  const scopesDashboardsService = useScopesDashboardsService();
 
-  if (!scopes.state.isEnabled || !state.isOpened || scopes.state.isReadOnly) {
+  if (
+    !scopes ||
+    !scopesDashboardsService ||
+    !scopes?.state.isEnabled ||
+    !scopesDashboardsService.state?.isOpened ||
+    scopes.state.isReadOnly
+  ) {
     return null;
   }
+
+  const { state, changeSearchQuery, clearSearchQuery, updateFolder } = scopesDashboardsService;
 
   if (!state.isLoading) {
     if (state.forScopeNames.length === 0) {

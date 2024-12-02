@@ -55,7 +55,7 @@ export class ScopesDashboardsService {
     return this._state.asObservable();
   }
 
-  public updateFolder(path: string[], isExpanded: boolean) {
+  public updateFolder = (path: string[], isExpanded: boolean) => {
     let newFolders = { ...this.state.folders };
     let newFilteredFolders = { ...this.state.filteredFolders };
     let currentLevelFolders: SuggestedDashboardsFoldersMap = newFolders;
@@ -77,30 +77,30 @@ export class ScopesDashboardsService {
       folders: newFolders,
       filteredFolders: newFilteredFolders,
     });
-  }
+  };
 
-  public changeSearchQuery(newSearchQuery: string) {
+  public changeSearchQuery = (newSearchQuery: string) => {
     newSearchQuery = newSearchQuery ?? '';
 
     this.updateState({
       filteredFolders: filterFolders(this.state.folders, newSearchQuery),
       searchQuery: newSearchQuery,
     });
-  }
+  };
 
-  public clearSearchQuery() {
+  public clearSearchQuery = () => {
     this.changeSearchQuery('');
-  }
+  };
 
-  public toggleDrawer() {
+  public toggleDrawer = () => {
     this.updateState({ isOpened: !this.state.isOpened });
-  }
+  };
 
-  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+  public subscribeToState = (cb: (newState: State, prevState: State) => void) => {
     return this._state.subscribe((newState) => cb(newState, this.prevState));
-  }
+  };
 
-  private async fetchDashboards(scopeNames: string[]) {
+  private fetchDashboards = async (scopeNames: string[]) => {
     if (isEqual(this.state.forScopeNames, scopeNames)) {
       return;
     }
@@ -142,10 +142,10 @@ export class ScopesDashboardsService {
 
         this.dashboardsFetchingSub?.unsubscribe();
       });
-  }
+  };
 
-  private updateState(newState: Partial<State>) {
+  private updateState = (newState: Partial<State>) => {
     this.prevState = this.state;
     this._state.next({ ...this._state.getValue(), ...newState });
-  }
+  };
 }

@@ -17,6 +17,13 @@ export const ScopesSelector = () => {
   const menuDockedAndOpen = !chromeState.chromeless && chromeState.megaMenuDocked && chromeState.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen);
   const scopes = useScopes();
+  const scopesSelectorService = useScopesSelectorService();
+  const scopesDashboardsService = useScopesDashboardsService();
+
+  if (!scopes || !scopesSelectorService || !scopesDashboardsService || !scopes.state.isEnabled) {
+    return null;
+  }
+
   const {
     applyNewScopes,
     closePicker,
@@ -26,12 +33,8 @@ export const ScopesSelector = () => {
     state,
     toggleNodeSelect,
     updateNode,
-  } = useScopesSelectorService();
-  const { state: scopesDashboardsState, toggleDrawer } = useScopesDashboardsService();
-
-  if (!config.featureToggles.scopeFilters || !scopes.state.isEnabled) {
-    return null;
-  }
+  } = scopesSelectorService;
+  const { state: scopesDashboardsState, toggleDrawer } = scopesDashboardsService;
 
   const dashboardsIconLabel = scopes.state.isReadOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')

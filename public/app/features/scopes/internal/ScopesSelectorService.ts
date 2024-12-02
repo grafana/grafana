@@ -63,7 +63,7 @@ export class ScopesSelectorService {
     return this._state.asObservable();
   }
 
-  public async updateNode(path: string[], isExpanded: boolean, query: string) {
+  public updateNode = async (path: string[], isExpanded: boolean, query: string) => {
     this.nodesFetchingSub?.unsubscribe();
 
     let newNodes = { ...this.state.nodes };
@@ -119,9 +119,9 @@ export class ScopesSelectorService {
     } else {
       this.updateState({ nodes: newNodes, loadingNodeName: undefined });
     }
-  }
+  };
 
-  public toggleNodeSelect(path: string[]) {
+  public toggleNodeSelect = (path: string[]) => {
     let newTreeScopes = [...this.state.treeScopes];
 
     let parentNode = this.state.nodes[''];
@@ -156,9 +156,9 @@ export class ScopesSelectorService {
 
       this.updateState({ treeScopes: newTreeScopes });
     }
-  }
+  };
 
-  public async applyNewScopes(localTreeScopes = this.state.treeScopes) {
+  public applyNewScopes = async (localTreeScopes = this.state.treeScopes) => {
     if (isEqual(localTreeScopes, getTreeScopesFromSelectedScopes(this.state.selectedScopes))) {
       return;
     }
@@ -174,17 +174,17 @@ export class ScopesSelectorService {
     this.updateState({ selectedScopes: newSelectedScopes });
     getScopesService()?.setCurrentScopes(newSelectedScopes.map(({ scope }) => scope));
     getScopesService()?.exitLoadingMode();
-  }
+  };
 
-  public dismissNewScopes() {
+  public dismissNewScopes = () => {
     this.updateState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
-  }
+  };
 
-  public removeAllScopes() {
+  public removeAllScopes = () => {
     this.applyNewScopes([]);
-  }
+  };
 
-  public async openPicker() {
+  public openPicker = async () => {
     if (!getScopesService()?.state.isReadOnly) {
       if (Object.keys(this.state.nodes[''].nodes).length === 0) {
         await this.updateNode([''], true, '');
@@ -204,17 +204,17 @@ export class ScopesSelectorService {
 
       this.updateState({ nodes: newNodes, isOpened: true });
     }
-  }
+  };
 
-  public closePicker() {
+  public closePicker = () => {
     this.updateState({ isOpened: false });
-  }
+  };
 
-  public subscribeToState(cb: (newState: State, prevState: State) => void) {
+  public subscribeToState = (cb: (newState: State, prevState: State) => void): Subscription => {
     return this._state.subscribe((newState) => cb(newState, this.prevState));
-  }
+  };
 
-  private closeNodes(nodes: NodesMap): NodesMap {
+  private closeNodes = (nodes: NodesMap): NodesMap => {
     return Object.entries(nodes).reduce<NodesMap>((acc, [id, node]) => {
       acc[id] = {
         ...node,
@@ -224,9 +224,9 @@ export class ScopesSelectorService {
 
       return acc;
     }, {});
-  }
+  };
 
-  private expandNodes(nodes: NodesMap, path: string[]): NodesMap {
+  private expandNodes = (nodes: NodesMap, path: string[]): NodesMap => {
     nodes = { ...nodes };
     let currentNodes = nodes;
 
@@ -241,10 +241,10 @@ export class ScopesSelectorService {
     }
 
     return nodes;
-  }
+  };
 
-  private updateState(newState: Partial<State>) {
+  private updateState = (newState: Partial<State>) => {
     this.prevState = this.state;
     this._state.next({ ...this._state.getValue(), ...newState });
-  }
+  };
 }
