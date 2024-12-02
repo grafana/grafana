@@ -38,6 +38,7 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -127,6 +128,8 @@ export interface DashboardSceneState extends SceneObjectState {
   panelSearch?: string;
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
+  /** options pane */
+  editPane: DashboardEditPane;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -177,6 +180,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
+      editPane: new DashboardEditPane({}),
     });
 
     this._scopesFacade = getClosestScopesFacade(this);

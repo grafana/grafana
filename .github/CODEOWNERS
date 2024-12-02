@@ -297,7 +297,6 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-search-and-storage
 /pkg/generated @grafana/grafana-app-platform-squad
-/pkg/services/unifiedSearch/ @grafana/grafana-search-and-storage
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-backend
@@ -715,6 +714,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/community-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
+/.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-labeled.yml @armandgrillet

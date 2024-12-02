@@ -42,6 +42,9 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	created := time.Now()
 	updated := time.Now()

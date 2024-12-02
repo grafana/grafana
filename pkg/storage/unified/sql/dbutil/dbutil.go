@@ -165,6 +165,10 @@ func Query[T any](ctx context.Context, x db.ContextExecer, tmpl *template.Templa
 		return nil, err
 	}
 
+	defer func() {
+		_ = rows.Close()
+	}()
+
 	var ret []T
 	for rows.Next() {
 		v, err := scanRow(rows, req)
