@@ -1,4 +1,4 @@
-import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
+import { autoUpdate, flip, offset, size, useFloating } from '@floating-ui/react';
 import { useMemo, useRef, useState } from 'react';
 
 import { measureText } from '../../utils';
@@ -11,6 +11,7 @@ import {
   MENU_OPTION_HEIGHT,
   POPOVER_MAX_HEIGHT,
 } from './getComboboxStyles';
+import { tempThemeExtras } from './themeExtras';
 
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 100_000;
@@ -32,6 +33,7 @@ export const useComboboxFloat = (
 
   // the order of middleware is important!
   const middleware = [
+    offset(tempThemeExtras.controlMenuOffset),
     flip({
       // see https://floating-ui.com/docs/flip#combining-with-shift
       crossAxis: true,
