@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestGetAlertMuteTimings(t *testing.T) {
@@ -168,12 +170,35 @@ func TestGetAlertRules(t *testing.T) {
 
 		user := &user.SignedInUser{OrgID: 1}
 
-		alertRule := createAlertRule(t, ctx, s, user)
+		alertRule := createAlertRule(t, ctx, s, user, false)
 
 		alertRules, err := s.getAlertRules(ctx, user)
 		require.NoError(t, err)
 		require.Len(t, alertRules, 1)
 		require.Equal(t, alertRule.UID, alertRules[0].UID)
+	})
+
+	t.Run("when the alert_rules_state config is `paused`, then the alert rules are all returned in `paused` state", func(t *testing.T) {
+		alertRulesState := func(c *setting.Cfg) {
+			c.CloudMigration.AlertRulesState = setting.GMSAlertRulesPaused
+		}
+
+		s := setUpServiceTest(t, false, alertRulesState).(*Service)
+		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
+
+		user := &user.SignedInUser{OrgID: 1}
+
+		alertRulePaused := createAlertRule(t, ctx, s, user, true)
+		require.True(t, alertRulePaused.IsPaused)
+
+		alertRuleUnpaused := createAlertRule(t, ctx, s, user, false)
+		require.False(t, alertRuleUnpaused.IsPaused)
+
+		alertRules, err := s.getAlertRules(ctx, user)
+		require.NoError(t, err)
+		require.Len(t, alertRules, 2)
+		require.True(t, alertRules[0].IsPaused)
+		require.True(t, alertRules[1].IsPaused)
 	})
 }
 
@@ -292,12 +317,12 @@ func updateNotificationPolicyTree(t *testing.T, ctx context.Context, service *Se
 	require.NoError(t, err)
 }
 
-func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) models.AlertRule {
+func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser, isPaused bool) models.AlertRule {
 	t.Helper()
 
 	rule := models.AlertRule{
 		OrgID:        user.GetOrgID(),
-		Title:        "Alert Rule SLO",
+		Title:        fmt.Sprintf("Alert Rule SLO (Paused: %v)", isPaused),
 		NamespaceUID: "folderUID",
 		Condition:    "A",
 		Data: []models.AlertQuery{
@@ -310,6 +335,7 @@ func createAlertRule(t *testing.T, ctx context.Context, service *Service, user *
 				},
 			},
 		},
+		IsPaused:        isPaused,
 		RuleGroup:       "ruleGroup",
 		For:             time.Minute,
 		IntervalSeconds: 60,
