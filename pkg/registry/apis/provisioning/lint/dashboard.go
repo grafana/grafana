@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/grafana/dashboard-linter/lint"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 type DashboardLinter struct {
@@ -23,7 +24,7 @@ func NewDashboardLinter() *DashboardLinter {
 	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
-func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, error) {
+func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisioning.LintIssue, error) {
 	var data specData
 	if err := json.Unmarshal(fileData, &data); err != nil {
 		return nil, fmt.Errorf("unmarshal file data into spec: %w", err)
@@ -46,7 +47,7 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, e
 	}
 	sort.Strings(rules)
 
-	issues := make([]Issue, 0)
+	issues := make([]provisioning.LintIssue, 0)
 	for _, rule := range rules {
 		for _, rr := range byRule[rule] {
 			for _, r := range rr.Result.Results {
@@ -54,9 +55,9 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, e
 					continue
 				}
 
-				issues = append(issues, Issue{
+				issues = append(issues, provisioning.LintIssue{
 					Rule:     rule,
-					Severity: r.Severity,
+					Severity: toLintSeverity(r.Severity),
 					Message:  r.Message,
 				})
 			}
@@ -64,4 +65,20 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]Issue, e
 	}
 
 	return issues, nil
+}
+
+func toLintSeverity(s lint.Severity) provisioning.LintSeverity {
+	switch s {
+	case lint.Error:
+		return provisioning.LintSeverityError
+	case lint.Exclude:
+		return provisioning.LintSeverityExclude
+	case lint.Fixed:
+		return provisioning.LintSeverityFixed
+	case lint.Quiet:
+		return provisioning.LintSeverityQuiet
+	case lint.Warning:
+		return provisioning.LintSeverityWarning
+	}
+	return "" // unknown
 }

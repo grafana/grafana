@@ -181,7 +181,7 @@ type ResourceWrapper struct {
 	Resource ResourceObjects `json:"resource"`
 
 	// Lint results
-	Lint []LintResult `json:"lint,omitempty"`
+	Lint []LintIssue `json:"lint,omitempty"`
 
 	// If errors exist, show them here
 	Errors []string `json:"errors,omitempty"`
@@ -200,7 +200,7 @@ const (
 	LintSeverityFixed   LintSeverity = "fixed"
 )
 
-type LintResult struct {
+type LintIssue struct {
 	Severity LintSeverity `json:"severity"`
 	Rule     string       `json:"rule"`
 	Message  string       `json:"message"`
@@ -224,8 +224,8 @@ type ResourceObjects struct {
 	// eg, the name, folder etc will all be applied to this object
 	File common.Unstructured `json:"file,omitempty"`
 
-	// The value with the same name that is currently saved
-	Existing common.Unstructured `json:"store,omitempty"`
+	// The same value, currently saved in the grafana database
+	Existing common.Unstructured `json:"existing,omitempty"`
 
 	// The action required/used for dryRun
 	Action ResourceAction `json:"action,omitempty"`
