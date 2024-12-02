@@ -9,6 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
+import { CommandPalette2 } from 'app/features/command-palette-2';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards, useScopesDashboardsState } from 'app/features/scopes';
 import { KioskMode } from 'app/types';
@@ -156,6 +157,7 @@ export function AppChrome({ children }: Props) {
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
+      <CommandPalette2 />
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
