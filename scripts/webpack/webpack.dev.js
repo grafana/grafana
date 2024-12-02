@@ -3,6 +3,7 @@ const { getPackagesSync } = require('@manypkg/get-packages');
 const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
+const LiveReloadPlugin = require('webpack-livereload-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
@@ -105,6 +106,13 @@ module.exports = (env = {}) => {
     },
 
     plugins: [
+      new LiveReloadPlugin({
+        appendScriptTag: true,
+        useSourceHash: true,
+        hostname: 'localhost',
+        protocol: 'http',
+        port: 35750,
+      }),
       parseInt(env.noTsCheck, 10)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
