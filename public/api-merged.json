@@ -8606,6 +8606,32 @@
         }
       }
     },
+    "/scim/users/": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Creates user.",
+        "operationId": "createUser",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/search": {
       "get": {
         "tags": [
