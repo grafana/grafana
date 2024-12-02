@@ -92,6 +92,14 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			expected:           nil,
 		},
 		{
+			name:               "should map the directly mapped role if the org mapping contains at least one invalid setting and strict role mapping is disabled",
+			externalOrgs:       []string{"First"},
+			orgMappingSettings: []string{"First:1", "Second:"},
+			directlyMappedRole: "Editor",
+			strictRoleMapping:  false,
+			expected:           map[int64]org.RoleType{1: org.RoleEditor},
+		},
+		{
 			name:               "should map the higher role if directly mapped role is lower than the role found in the org mapping",
 			externalOrgs:       []string{"First"},
 			orgMappingSettings: []string{"First:1:Editor"},
@@ -240,6 +248,15 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			expected: &MappingConfiguration{
 				orgMapping:        map[string]map[int64]org.RoleType{},
 				strictRoleMapping: true,
+			},
+		},
+		{
+			name:       "should return correct mapping when org mapping part is missing from a mapping and role strict is disabled",
+			rawMapping: []string{"Second:1", "First:"},
+			roleStrict: false,
+			expected: &MappingConfiguration{
+				orgMapping:        map[string]map[int64]org.RoleType{"Second": {1: org.RoleViewer}},
+				strictRoleMapping: false,
 			},
 		},
 		{

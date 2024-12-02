@@ -34,6 +34,13 @@ type MappingConfiguration struct {
 	strictRoleMapping bool
 }
 
+func NewMappingConfiguration(orgMapping map[string]map[int64]org.RoleType, strictRoleMapping bool) *MappingConfiguration {
+	return &MappingConfiguration{
+		orgMapping,
+		strictRoleMapping,
+	}
+}
+
 func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapper {
 	return &OrgRoleMapper{
 		cfg:        cfg,
@@ -54,6 +61,11 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
+	if mappingCfg == nil {
+		// Org mapping is not configured
+		return m.getDefaultOrgMapping(false, directlyMappedRole)
+	}
+
 	if len(mappingCfg.orgMapping) == 0 {
 		// Org mapping is not configured
 		return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
@@ -175,6 +187,10 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 func (m *OrgRoleMapper) getOrgIDForInternalMapping(ctx context.Context, orgIdCfg string) (int, error) {
 	if orgIdCfg == "*" {
 		return mapperMatchAllOrgID, nil
+	}
+
+	if orgIdCfg == "" {
+		return 0, fmt.Errorf("the org name or id is empty")
 	}
 
 	orgID, err := strconv.Atoi(orgIdCfg)
