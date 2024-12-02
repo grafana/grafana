@@ -7,6 +7,7 @@ import (
 	dashboardv1alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v1alpha1"
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/registry/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboardsnapshot"
+	"github.com/grafana/grafana/pkg/registry/apis/dataset"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -31,6 +32,7 @@ func ProvideRegistryServiceSink(
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
+	_ *dataset.DatasetAPIBuilder,
 	_ *iam.IdentityAccessManagementAPIBuilder,
 	_ *scope.ScopeAPIBuilder,
 	_ *query.QueryAPIBuilder,
