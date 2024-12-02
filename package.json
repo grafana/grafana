@@ -92,7 +92,7 @@
     "@rtk-query/codegen-openapi": "^1.2.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@stylistic/eslint-plugin-ts": "^2.9.0",
-    "@swc/core": "1.4.2",
+    "@swc/core": "1.9.3",
     "@swc/helpers": "0.5.15",
     "@testing-library/dom": "10.4.0",
     "@testing-library/jest-dom": "6.6.3",
