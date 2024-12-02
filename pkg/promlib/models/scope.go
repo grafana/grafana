@@ -73,7 +73,7 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
 	filterMap := make(map[string]*labels.Matcher)
 
-	// scopes filters
+	// scope filters are applied first
 	for _, filter := range scopeFilters {
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
