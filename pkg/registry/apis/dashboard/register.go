@@ -26,6 +26,7 @@ func FeatureEnabled(features featuremgmt.FeatureToggles) bool {
 	return featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 		featuremgmt.FlagKubernetesDashboardsAPI,
+		featuremgmt.FlagKubernetesDashboards, // << the UI will call the new apis
 		featuremgmt.FlagProvisioning)
 }
 
