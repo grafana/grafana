@@ -75,7 +75,7 @@ export interface ConversionOptions {
 }
 
 /**
- * @param dateTimeRep A DateTime object, a Date object or a string represenation of a specific time.
+ * @param dateTimeRep A DateTime object, a Date object or a string representation of a specific time.
  * @param options Options for converting to DateTime
  * @returns A DateTime object if possible, undefined if not.
  */
