@@ -7,6 +7,7 @@ export const SPANISH_SPAIN = 'es-ES';
 export const GERMAN_GERMANY = 'de-DE';
 export const BRAZILIAN_PORTUGUESE = 'pt-BR';
 export const CHINESE_SIMPLIFIED = 'zh-Hans';
+export const JAPANESE = 'ja-JP';
 export const PSEUDO_LOCALE = 'pseudo';
 
 export const DEFAULT_LANGUAGE = ENGLISH_US;
@@ -62,6 +63,14 @@ export const LANGUAGES: LanguageDefinition[] = [
     name: '中文（简体）',
     loader: {
       grafana: () => import('../../../locales/zh-Hans/grafana.json'),
+    },
+  },
+
+  {
+    code: JAPANESE,
+    name: '日本語',
+    loader: {
+      grafana: () => import('../../../locales/ja-JP/grafana.json'),
     },
   },
 
