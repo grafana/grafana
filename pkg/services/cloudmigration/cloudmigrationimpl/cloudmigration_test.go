@@ -868,7 +868,6 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
-		featuremgmt.FlagOnPremToCloudMigrationsAlerts,
 		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 	)
 
