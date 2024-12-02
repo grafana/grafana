@@ -56,11 +56,11 @@ func RegisterAPIService(cfg *setting.Cfg,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 ) *FolderAPIBuilder {
-	if !(features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) ||
-		features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) ||
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
-		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagKubernetesFolders,
+		featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs,
+		featuremgmt.FlagProvisioning) {
+		return nil // skip registration unless opting into Kubernetes folders or unless we want to customize registration when testing
 	}
 
 	builder := &FolderAPIBuilder{
