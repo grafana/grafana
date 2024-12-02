@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -325,7 +326,7 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger)
 
-	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
+	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule, states)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int64("state_transitions", int64(len(states))),
 		attribute.Int64("stale_states", int64(len(staleStates))),
@@ -583,11 +584,12 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
+func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, currentStates []StateTransition) []StateTransition {
+	semantics := alertRule.GetEvalSemantics()
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		return stateIsStale(evaluatedAt, s, alertRule.IntervalSeconds, semantics, currentStates)
 	})
 	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
@@ -597,7 +599,14 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 		oldReason := s.StateReason
 
 		s.State = eval.Normal
-		s.StateReason = ngModels.StateReasonMissingSeries
+		if semantics == ngModels.EvaluationSemanticsGrafana {
+			// Grafana ages out states as "MissingSeries".
+			// Prometheus just resolves them normally, this is the main resolution method for prometheus.
+			s.StateReason = ngModels.StateReasonMissingSeries
+		} else {
+			s.StateReason = ""
+		}
+
 		s.EndsAt = evaluatedAt
 		s.LastEvaluationTime = evaluatedAt
 
@@ -624,8 +633,24 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 	return resolvedStates
 }
 
-func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
-	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+func stateIsStale(evaluatedAt time.Time, s *State, intervalSeconds int64, semantics ngModels.EvaluationSemantics, currentStates []StateTransition) bool {
+	lastEval := s.LastEvaluationTime
+	// In Grafana, a state should be resolved if it hasn't been updated in the last 2 eval cycles.
+	if semantics == ngModels.EvaluationSemanticsGrafana {
+		return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+	}
+	// in Prometheus, a state should be resolved if the series disappeared from the most recent query (by label).
+	if semantics == ngModels.EvaluationSemanticsPrometheus {
+		// CacheID is a hash of labels, use that as a proxy for now.
+		// TODO: possible bug, do we inject labels after this point? if so the cache ID may never line up?
+		for _, currentState := range currentStates {
+			if s.CacheID == currentState.CacheID {
+				return false
+			}
+		}
+		return true
+	}
+	panic(fmt.Sprintf("invalid semantics %s", semantics))
 }
 
 func StatesToRuleStatus(states []*State) ngModels.RuleStatus {

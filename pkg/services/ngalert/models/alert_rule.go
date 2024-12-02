@@ -378,6 +378,32 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
+func (alertRule *AlertRule) GetEvalSemantics() EvaluationSemantics {
+	if len(alertRule.Data) != 1 {
+		return EvaluationSemanticsGrafana
+	}
+
+	type datasource struct {
+		Type string `json:"type"`
+		UID  string `json:"uid"`
+	}
+	type queryModel struct {
+		Datasource datasource `json:"datasource"`
+	}
+
+	var node queryModel
+	err := json.Unmarshal(alertRule.Data[0].Model, &node)
+	if err != nil {
+		// Invalid model.
+		return EvaluationSemanticsGrafana
+	}
+
+	if node.Datasource.Type == "prometheus" {
+		return EvaluationSemanticsPrometheus
+	}
+	return EvaluationSemanticsGrafana
+}
+
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	meta := map[string]string{
 		"Name":    alertRule.Title,
@@ -385,18 +411,19 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
+	semantics := alertRule.GetEvalSemantics()
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
 			Condition: alertRule.Record.From,
-			Semantics: EvaluationSemanticsGrafana,
+			Semantics: semantics,
 			Data:      alertRule.Data,
 		}
 	}
 	return Condition{
 		Metadata:  meta,
 		Condition: alertRule.Condition,
-		Semantics: EvaluationSemanticsGrafana,
+		Semantics: semantics,
 		Data:      alertRule.Data,
 	}
 }
