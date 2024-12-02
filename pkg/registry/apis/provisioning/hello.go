@@ -62,13 +62,42 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 	if !ok {
 		return nil, fmt.Errorf("expected repository, but got %t", obj)
 	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		whom := r.URL.Query().Get("whom")
 		if whom == "" {
 			whom = "World"
 		}
 		logger := logger.With("whom", whom)
+
+		// Exercise rendering
+		renderPath := r.URL.Query().Get("render")
+		if renderPath != "" {
+			if !s.parent.renderer.IsAvailable(ctx) {
+				responder.Error(fmt.Errorf("render not available"))
+				return
+			}
+
+			ref := r.URL.Query().Get("ref")
+			r, err := s.parent.GetRepository(ctx, name)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			path, err := s.parent.renderer.RenderDashboardPreview(ctx, r, renderPath, ref)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			// Show the result
+			_, err = w.Write([]byte(path))
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+			return
+		}
 
 		newCommit := r.URL.Query().Get("commit")
 		if newCommit != "" {

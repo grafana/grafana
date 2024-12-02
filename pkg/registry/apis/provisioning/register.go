@@ -37,7 +37,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
 const (
@@ -58,6 +60,7 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
+	renderer          *renderer
 	client            *resources.ClientFactory
 	ghFactory         github.ClientFactory
 	identities        auth.BackgroundIdentityService
@@ -72,6 +75,8 @@ func NewProvisioningAPIBuilder(
 	webhookSecreteKey string,
 	identities auth.BackgroundIdentityService,
 	features featuremgmt.FeatureToggles,
+	render rendering.Service,
+	blobstore blob.PublicBlobStore,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
 	return &ProvisioningAPIBuilder{
@@ -83,6 +88,11 @@ func NewProvisioningAPIBuilder(
 		features:          features,
 		ghFactory:         ghFactory,
 		identities:        identities,
+		renderer: &renderer{
+			render:     render,
+			blobstore:  blobstore,
+			identities: identities,
+		},
 	}
 }
 
@@ -93,21 +103,29 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
 	identities auth.BackgroundIdentityService,
+	render rendering.Service,
 	ghFactory github.ClientFactory,
-) *ProvisioningAPIBuilder {
+) (*ProvisioningAPIBuilder, error) {
 	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs)) {
-		return nil // skip registration unless opting into experimental apis OR the feature specifically
+		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
+
+	// TODO: use wire to initialize this storage
+	store, err := blob.ProvidePublicBlobStore(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
 		ProvisioningPath: cfg.ProvisioningPath,
 		DevenvPath:       filepath.Join(cfg.HomePath, "devenv"),
 	}, func(namespace string) string {
 		return cfg.AppURL
-	}, cfg.SecretKey, identities, features, ghFactory)
+	}, cfg.SecretKey, identities, features, render, store, ghFactory)
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, nil
 }
 
 func (b *ProvisioningAPIBuilder) GetAuthorizer() authorizer.Authorizer {
