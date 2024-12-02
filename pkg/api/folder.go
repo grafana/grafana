@@ -971,7 +971,7 @@ func (fk8s *folderK8sHandler) toDTO(c *contextmodel.ReqContext, fold *folder.Fol
 		UpdatedBy: updater,
 		Updated:   fold.Updated,
 		// #TODO version doesn't seem to be used--confirm or set it properly
-		Version:       1,
+		Version:       fold.Version,
 		AccessControl: acMetadata,
 		ParentUID:     fold.ParentUID,
 	}, nil
