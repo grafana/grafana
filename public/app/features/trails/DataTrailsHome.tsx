@@ -103,8 +103,8 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
-      justifyContent: 'center',
       alignItems: 'center',
+      marginTop: '84px',
       flexDirection: 'column',
       height: '100%',
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow
