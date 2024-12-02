@@ -1,6 +1,10 @@
 package api
 
 import (
+	"io"
+
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -117,8 +121,19 @@ func (f *RulerApiHandler) handleRouteGetRulesForExport(ctx *contextmodel.ReqCont
 	return f.GrafanaRuler.ExportRules(ctx)
 }
 
-func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupPrometheusConfig, namespace string) response.Response {
-	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, conf, namespace)
+func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
+	body, err := io.ReadAll(ctx.Req.Body)
+	if err != nil {
+		return errorToResponse(err)
+	}
+	defer func() { _ = ctx.Req.Body.Close() }()
+
+	var ruleGroup apimodels.PostablePrometheusRuleGroup
+	if err := yaml.Unmarshal(body, &ruleGroup); err != nil {
+		return errorToResponse(err)
+	}
+
+	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace)
 }
 
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {

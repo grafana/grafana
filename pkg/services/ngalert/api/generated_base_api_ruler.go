@@ -115,12 +115,7 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqC
 func (f *RulerApiHandler) RoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
-	// Parse Request Body
-	conf := apimodels.PostableRuleGroupPrometheusConfig{}
-	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	return f.handleRoutePostNameGrafanaRulesPrometheusConfig(ctx, conf, namespaceParam)
+	return f.handleRoutePostNameGrafanaRulesPrometheusConfig(ctx, namespaceParam)
 }
 func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
