@@ -3,12 +3,12 @@ const { getPackagesSync } = require('@manypkg/get-packages');
 const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
-const LiveReloadPlugin = require('webpack-livereload-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin, EnvironmentPlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
+const LiveReloadPlugin = require('webpack-livereload-plugin');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
 
