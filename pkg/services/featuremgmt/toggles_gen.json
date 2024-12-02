@@ -1411,6 +1411,20 @@
     },
     {
       "metadata": {
+        "name": "exploreMetricsWingman",
+        "resourceVersion": "1733143555370",
+        "creationTimestamp": "2024-12-02T12:45:55Z"
+      },
+      "spec": {
+        "description": "Enables wingman feature in Explore Metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics",
+        "frontend": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "expressionParser",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-17T00:59:11Z"
