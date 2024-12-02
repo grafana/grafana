@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -86,6 +87,59 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 
 	sort.Sort(result)
 
+	return response.JSON(http.StatusOK, &result)
+}
+
+// swagger:route GET /datasources/health datasources getDataSourcesHealth
+//
+// # Get health check results of all the datasources with backend health check implemented
+//
+// Responses:
+// 200: []GetDataSourceHealthResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourcesHealth(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
+	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+	}
+	dataSources, err = hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to filter datasources", err)
+	}
+	var wg sync.WaitGroup
+	result := make(dtos.DataSourcesHealthResponse, 0)
+	for _, ds := range dataSources {
+		wg.Add(1)
+		go func(ds *datasources.DataSource) {
+			defer wg.Done()
+			output := dtos.DataSourceHealthResponse{Name: ds.Name, ID: ds.ID, UID: ds.UID, Type: ds.Type, HealthCheckResult: map[string]any{}}
+			pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
+			if err != nil {
+				output.Error = err.Error()
+				result = append(result, output)
+				return
+			}
+			hcResp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{PluginContext: pCtx, Headers: map[string]string{}})
+			if err != nil {
+				output.Error = err.Error()
+				result = append(result, output)
+				return
+			}
+			if hcResp != nil {
+				output.HealthCheckResult = map[string]any{
+					"status":      hcResp.Status.String(),
+					"message":     hcResp.Message,
+					"jsonDetails": string(hcResp.JSONDetails),
+				}
+			}
+			result = append(result, output)
+		}(ds)
+	}
+	wg.Wait()
+	sort.Sort(result)
 	return response.JSON(http.StatusOK, &result)
 }
 

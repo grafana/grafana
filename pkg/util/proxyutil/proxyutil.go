@@ -77,7 +77,9 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 		delete(keepCookies, v)
 	}
 
-	req.Header.Del("Cookie")
+	// Commenting out this for hackathon
+	// This line is not concurrent safe and so fails due to concurrent health check requests
+	// req.Header.Del("Cookie")
 
 	sortedCookies := []string{}
 	for name := range keepCookies {

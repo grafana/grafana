@@ -63,3 +63,26 @@ func (slice DataSourceList) Less(i, j int) bool {
 func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
+
+type DataSourceHealthResponse struct {
+	ID                int64          `json:"id"`
+	UID               string         `json:"uid"`
+	Name              string         `json:"name"`
+	Type              string         `json:"type"`
+	Error             string         `json:"error,omitempty"`
+	HealthCheckResult map[string]any `json:"result,omitempty"`
+}
+
+type DataSourcesHealthResponse []DataSourceHealthResponse
+
+func (slice DataSourcesHealthResponse) Len() int {
+	return len(slice)
+}
+
+func (slice DataSourcesHealthResponse) Less(i, j int) bool {
+	return strings.ToLower(slice[i].Name) < strings.ToLower(slice[j].Name)
+}
+
+func (slice DataSourcesHealthResponse) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
