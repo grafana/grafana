@@ -3,6 +3,8 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -10,16 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/storage/unified/blob"
 )
 
 // Render utility -- used by webhook service to create preview images
 type renderer struct {
 	render     rendering.Service
+	blobstore  blob.PublicBlobStore
 	identities auth.BackgroundIdentityService
 }
 
 func (r *renderer) IsAvailable(ctx context.Context) bool {
-	return r.render != nil && r.render.IsAvailable(ctx)
+	return r.render != nil && r.render.IsAvailable(ctx) && r.blobstore.IsAvailable()
 }
 
 func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.Repository, path string, ref string) (string, error) {
@@ -55,5 +59,15 @@ func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.R
 		return "", err
 	}
 
-	return result.FilePath, nil
+	ext := filepath.Ext(result.FilePath)
+	body, err := os.ReadFile(result.FilePath)
+	if err != nil {
+		return "", err
+	}
+
+	return r.blobstore.SaveBlob(ctx, cfg.Namespace, ext, body, map[string]string{
+		"repo": cfg.Name,
+		"path": path, // only used when saving in GCS/S3++
+		"ref":  ref,
+	})
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os/exec"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -94,9 +93,6 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 			// Show the result
 			w.Write([]byte(path))
 
-			// Try opening the file path... HACK HACK HACK!
-			cmd := exec.Command("open", path)
-			_ = cmd.Run()
 			return
 		}
 
