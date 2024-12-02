@@ -1221,6 +1221,50 @@
         }
       }
     },
+    "/ruler/grafana-prometheus/api/v1/rules/{Namespace}": {
+      "post": {
+        "consumes": [
+          "application/yaml"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "summary": "Creates or updates a rule group in Prometheus format.",
+        "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostableRuleGroupPrometheusConfig"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "UpdateRuleGroupResponse",
+            "schema": {
+              "$ref": "#/definitions/UpdateRuleGroupResponse"
+            }
+          },
+          "403": {
+            "description": "ForbiddenError",
+            "schema": {
+              "$ref": "#/definitions/ForbiddenError"
+            }
+          }
+        }
+      }
+    },
     "/ruler/grafana/api/v1/export/rules": {
       "get": {
         "description": "List rules in provisioning format",
@@ -6490,6 +6534,52 @@
         }
       }
     },
+    "PostablePrometheusRule": {
+      "type": "object",
+      "properties": {
+        "Alert": {
+          "type": "string"
+        },
+        "Annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Expr": {
+          "type": "string"
+        },
+        "For": {
+          "type": "string"
+        },
+        "KeepFiringFor": {
+          "type": "string"
+        },
+        "Labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "Record": {
+          "type": "string"
+        }
+      }
+    },
+    "PostablePrometheusRuleGroup": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostablePrometheusRule"
+          }
+        }
+      }
+    },
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
@@ -6522,6 +6612,17 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "PostableRuleGroupPrometheusConfig": {
+      "type": "object",
+      "properties": {
+        "Groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PostablePrometheusRuleGroup"
           }
         }
       }

@@ -2857,6 +2857,52 @@
    },
    "type": "object"
   },
+  "PostablePrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PostablePrometheusRuleGroup": {
+   "properties": {
+    "Name": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PostablePrometheusRule"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "PostableRuleGroupConfig": {
    "properties": {
     "align_evaluation_time_on_interval": {
@@ -2887,6 +2933,17 @@
     "source_tenants": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableRuleGroupPrometheusConfig": {
+   "properties": {
+    "Groups": {
+     "items": {
+      "$ref": "#/definitions/PostablePrometheusRuleGroup"
      },
      "type": "array"
     }

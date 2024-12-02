@@ -33,6 +33,7 @@ type RulerApi interface {
 	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRulesForExport(*contextmodel.ReqContext) response.Response
 	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RoutePostNameGrafanaRulesPrometheusConfig(*contextmodel.ReqContext) response.Response
 	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
 	RoutePostRulesGroupForExport(*contextmodel.ReqContext) response.Response
 }
@@ -110,6 +111,16 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqC
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return f.handleRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
+}
+func (f *RulerApiHandler) RoutePostNameGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	namespaceParam := web.Params(ctx.Req)[":Namespace"]
+	// Parse Request Body
+	conf := apimodels.PostableRuleGroupPrometheusConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleRoutePostNameGrafanaRulesPrometheusConfig(ctx, conf, namespaceParam)
 }
 func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -288,6 +299,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesConfig),
+				m,
+			),
+		)
+		group.Post(
+			toMacaronPath("/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodPost, "/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}",
+				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesPrometheusConfig),
 				m,
 			),
 		)

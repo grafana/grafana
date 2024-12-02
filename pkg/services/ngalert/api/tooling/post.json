@@ -2857,6 +2857,52 @@
    },
    "type": "object"
   },
+  "PostablePrometheusRule": {
+   "properties": {
+    "Alert": {
+     "type": "string"
+    },
+    "Annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Expr": {
+     "type": "string"
+    },
+    "For": {
+     "type": "string"
+    },
+    "KeepFiringFor": {
+     "type": "string"
+    },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Record": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "PostablePrometheusRuleGroup": {
+   "properties": {
+    "Name": {
+     "type": "string"
+    },
+    "Rules": {
+     "items": {
+      "$ref": "#/definitions/PostablePrometheusRule"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "PostableRuleGroupConfig": {
    "properties": {
     "align_evaluation_time_on_interval": {
@@ -2887,6 +2933,17 @@
     "source_tenants": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableRuleGroupPrometheusConfig": {
+   "properties": {
+    "Groups": {
+     "items": {
+      "$ref": "#/definitions/PostablePrometheusRuleGroup"
      },
      "type": "array"
     }
@@ -6386,6 +6443,50 @@
     },
     "tags": [
      "prometheus"
+    ]
+   }
+  },
+  "/ruler/grafana-prometheus/api/v1/rules/{Namespace}": {
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableRuleGroupPrometheusConfig"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "UpdateRuleGroupResponse",
+      "schema": {
+       "$ref": "#/definitions/UpdateRuleGroupResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Creates or updates a rule group in Prometheus format.",
+    "tags": [
+     "ruler"
     ]
    }
   },
