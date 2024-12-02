@@ -297,7 +297,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			res := evaluateExecutionResult(tc.execResults, time.Time{})
+			res := evaluateExecutionResult(tc.execResults, models.EvaluationSemanticsGrafana, time.Time{})
 
 			require.Equal(t, tc.expectResultLength, len(res))
 
@@ -319,7 +319,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"A": "1",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, models.EvaluationSemanticsGrafana, time.Time{})
 		require.Len(t, v, 1)
 		require.Equal(t, data.Labels{"datasource_uid": "1", "ref_id": "A"}, v[0].Instance)
 		require.Equal(t, NoData, v[0].State)
@@ -333,7 +333,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 				"C": "2",
 			},
 		}
-		v := evaluateExecutionResult(results, time.Time{})
+		v := evaluateExecutionResult(results, models.EvaluationSemanticsGrafana, time.Time{})
 		require.Len(t, v, 2)
 
 		datasourceUIDs := make([]string, 0, len(v))
