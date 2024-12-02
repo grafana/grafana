@@ -3,15 +3,9 @@ package lint
 import (
 	"context"
 
-	"github.com/grafana/dashboard-linter/lint"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
-type Issue struct {
-	Severity lint.Severity
-	Rule     string
-	Message  string
-}
-
 type Linter interface {
-	Lint(ctx context.Context, data []byte) ([]Issue, error)
+	Lint(ctx context.Context, data []byte) ([]provisioning.LintIssue, error)
 }

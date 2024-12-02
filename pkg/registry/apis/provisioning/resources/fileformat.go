@@ -15,60 +15,69 @@ import (
 	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 
 	"github.com/grafana/grafana/pkg/apis/dashboard"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 var ErrUnableToReadResourceBytes = errors.New("unable to read bytes as a resource")
+var ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
 
-// Tries to figure out what kind this data is.
+// This reads a "classic" file format and will convert it to an unstructured k8s resource
+// The file path may determine how the resource is parsed
 //
 // The context and logger are both only used for logging purposes. They do not control any logic.
-func FallbackResourceLoader(ctx context.Context, logger *slog.Logger, data []byte) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
+func ReadClassicResource(ctx context.Context, logger *slog.Logger, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
+	var value map[string]any
+
 	// Try parsing as JSON
-	if data[0] == '{' {
-		var value map[string]any
-		err := json.Unmarshal(data, &value)
+	if info.Data[0] == '{' {
+		err := json.Unmarshal(info.Data, &value)
 		if err != nil {
-			return nil, nil, err
-		}
-
-		// regular version headers exist
-		// TODO: do we intend on this checking Kind or kind? document reasoning.
-		if value["apiVersion"] != nil && value["Kind"] != nil {
-			logger.DebugContext(ctx, "found that the object had K8s definitions already",
-				"apiVersion", value["apiVersion"],
-				"kind", value["Kind"])
-			gv, err := schema.ParseGroupVersion(value["apiVersion"].(string))
-			if err != nil {
-				return nil, nil, fmt.Errorf("invalid apiVersion")
-			}
-			gvk := gv.WithKind(value["Kind"].(string))
-			return &unstructured.Unstructured{Object: value}, &gvk, nil
-		}
-
-		// If this is a dashboard, convert it
-		if value["panels"] != nil &&
-			value["schemaVersion"] != nil &&
-			value["tags"] != nil {
-			gvk := &schema.GroupVersionKind{
-				Group:   dashboard.GROUP,
-				Version: "v0alpha1",
-				Kind:    "Dashboard"}
-			return &unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": gvk.GroupVersion().String(),
-					"kind":       gvk.Kind,
-					"metadata": map[string]any{
-						"name": value["uid"],
-					},
-					"spec": value,
-				},
-			}, gvk, nil
+			return nil, nil, "", err
 		}
 	} else {
-		logger.DebugContext(ctx, "failed to get")
+		return nil, nil, "", fmt.Errorf("yaml not yet implemented")
 	}
 
-	return nil, nil, ErrUnableToReadResourceBytes
+	// regular version headers exist
+	// TODO: do we intend on this checking Kind or kind? document reasoning.
+	if value["apiVersion"] != nil {
+		if value["kind"] != nil {
+			return nil, nil, "", ErrClassicResourceIsAlreadyK8sForm
+		}
+
+		logger.DebugContext(ctx, "TODO... likely a provisioning",
+			"apiVersion", value["apiVersion"],
+			"kind", value["Kind"])
+		gv, err := schema.ParseGroupVersion(value["apiVersion"].(string))
+		if err != nil {
+			return nil, nil, "", fmt.Errorf("invalid apiVersion")
+		}
+		gvk := gv.WithKind(value["Kind"].(string))
+		return &unstructured.Unstructured{Object: value}, &gvk, "", nil
+	}
+
+	// If this is a dashboard, convert it
+	if value["panels"] != nil &&
+		value["schemaVersion"] != nil &&
+		value["tags"] != nil {
+		gvk := &schema.GroupVersionKind{
+			Group:   dashboard.GROUP,
+			Version: "v0alpha1",
+			Kind:    "Dashboard"}
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": gvk.GroupVersion().String(),
+				"kind":       gvk.Kind,
+				"metadata": map[string]any{
+					"name": value["uid"],
+				},
+				"spec": value,
+			},
+		}, gvk, provisioning.ClassicDashboard, nil
+	}
+
+	return nil, nil, "", ErrUnableToReadResourceBytes
 }
 
 func LoadYAMLOrJSON(input io.Reader) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {

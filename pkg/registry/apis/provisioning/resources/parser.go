@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
@@ -30,10 +31,10 @@ type FileParser struct {
 
 	// client helper (for this namespace?)
 	client *DynamicClient
-	kinds  *KindsLookup
+	kinds  KindsLookup
 }
 
-func NewParser(repo repository.Repository, client *DynamicClient, kinds *KindsLookup) *FileParser {
+func NewParser(repo repository.Repository, client *DynamicClient, kinds KindsLookup) *FileParser {
 	return &FileParser{
 		repo:   repo,
 		client: client,
@@ -44,6 +45,10 @@ func NewParser(repo repository.Repository, client *DynamicClient, kinds *KindsLo
 type ParsedFile struct {
 	// Original file Info
 	Info *repository.FileInfo
+
+	// Check for classic file types (dashboard.json, etc)
+	Classic provisioning.ClassicFileType
+
 	// Parsed contents
 	Obj *unstructured.Unstructured
 	// Metadata accessor for the file object
@@ -60,43 +65,49 @@ type ParsedFile struct {
 	// ?? do we need/want the whole thing??
 	Existing *unstructured.Unstructured
 
+	// Create or Update
+	Action provisioning.ResourceAction
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
+
+	// Optional lint issues
+	Lint []provisioning.LintIssue
 
 	// If we got some Errors
 	Errors []error
 }
 
-func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (*ParsedFile, error) {
-	obj, gvk, err := LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
+func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repository.FileInfo, validate bool) (parsed *ParsedFile, err error) {
+	parsed = &ParsedFile{
+		Info: info,
+	}
+
+	parsed.Obj, parsed.GVK, err = LoadYAMLOrJSON(bytes.NewBuffer(info.Data))
 	if err != nil {
 		logger.DebugContext(ctx, "failed to find GVK of the input data", "error", err)
-		obj, gvk, err = FallbackResourceLoader(ctx, logger, info.Data)
+		parsed.Obj, parsed.GVK, parsed.Classic, err = ReadClassicResource(ctx, logger, info)
 		if err != nil {
 			logger.DebugContext(ctx, "also failed to get GVK from fallback loader?", "error", err)
-			return nil, err
+			return parsed, err
 		}
 	}
 
-	meta, err := utils.MetaAccessor(obj)
+	parsed.Meta, err = utils.MetaAccessor(parsed.Obj)
 	if err != nil {
 		return nil, err
 	}
-	parsed := &ParsedFile{
-		Info: info,
-		Obj:  obj,
-		Meta: meta,
-		GVK:  gvk,
-	}
+	obj := parsed.Obj
+	cfg := r.repo.Config()
 
 	// Validate the namespace
-	if obj.GetNamespace() != "" && obj.GetNamespace() != r.client.GetNamespace() {
+	if obj.GetNamespace() != "" && obj.GetNamespace() != cfg.GetNamespace() {
 		parsed.Errors = append(parsed.Errors, ErrNamespaceMismatch)
 	}
 
-	obj.SetNamespace(r.client.GetNamespace())
-	meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
-		Name:      r.repo.Config().Name,
+	obj.SetNamespace(cfg.GetNamespace())
+	parsed.Meta.SetRepositoryInfo(&utils.ResourceRepositoryInfo{
+		Name:      cfg.Name,
 		Path:      joinPathWithRef(info.Path, info.Ref),
 		Hash:      info.Hash,
 		Timestamp: nil, // ???&info.Modified.Time,
@@ -113,29 +124,50 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 	}
 
 	// We can not do anything more if no kind is defined
-	if gvk == nil {
+	if parsed.GVK == nil {
 		return parsed, nil
 	}
 
-	gvr, ok := r.kinds.Resource(*gvk)
+	gvr, ok := r.kinds.Resource(*parsed.GVK)
 	if !ok {
 		return parsed, nil
 	}
 
-	client := r.client.Resource(gvr)
 	parsed.GVR = &gvr
-	parsed.Client = client
+	parsed.Client = r.client.Resource(gvr)
 	if !validate {
+		return parsed, nil
+	}
+
+	if true { // lint
+		raw := info.Data
+		if parsed.Classic == provisioning.ClassicDashboard {
+			raw, err = json.MarshalIndent(parsed.Obj, "", "  ") // indent so it is not all on one line
+			if err != nil {
+				return parsed, err
+			}
+		}
+		linter := lint.NewDashboardLinter()
+		parsed.Lint, err = linter.Lint(ctx, raw)
+		if err != nil {
+			parsed.Errors = append(parsed.Errors, err)
+		}
+	}
+
+	if parsed.Client == nil {
+		parsed.Errors = append(parsed.Errors, fmt.Errorf("unable to find client"))
 		return parsed, nil
 	}
 
 	// Dry run CREATE or UPDATE
 	parsed.Existing, _ = parsed.Client.Get(ctx, obj.GetName(), metav1.GetOptions{})
 	if parsed.Existing == nil {
+		parsed.Action = provisioning.ResourceActionCreate
 		parsed.DryRunResponse, err = parsed.Client.Create(ctx, obj, metav1.CreateOptions{
 			DryRun: []string{"All"},
 		})
 	} else {
+		parsed.Action = provisioning.ResourceActionUpdate
 		parsed.DryRunResponse, err = parsed.Client.Update(ctx, obj, metav1.UpdateOptions{
 			DryRun: []string{"All"},
 		})
@@ -167,12 +199,29 @@ func (f *ParsedFile) ToSaveBytes() ([]byte, error) {
 
 func (f *ParsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 	info := f.Info
-	res := provisioning.ResourceObjects{}
+	res := provisioning.ResourceObjects{
+		Type: provisioning.ResourceType{
+			Classic: f.Classic,
+		},
+		Action: f.Action,
+	}
+
+	if f.GVK != nil {
+		res.Type.Group = f.GVK.Group
+		res.Type.Version = f.GVK.Version
+		res.Type.Kind = f.GVK.Kind
+	}
+
+	// The resource (GVR) is derived from the kind (GVK)
+	if f.GVR != nil {
+		res.Type.Resource = f.GVR.Resource
+	}
+
 	if f.Obj != nil {
 		res.File = v0alpha1.Unstructured{Object: f.Obj.Object}
 	}
 	if f.Existing != nil {
-		res.Store = v0alpha1.Unstructured{Object: f.Existing.Object}
+		res.Existing = v0alpha1.Unstructured{Object: f.Existing.Object}
 	}
 	if f.DryRunResponse != nil {
 		res.DryRun = v0alpha1.Unstructured{Object: f.DryRunResponse.Object}
@@ -183,6 +232,7 @@ func (f *ParsedFile) AsResourceWrapper() *provisioning.ResourceWrapper {
 		Hash:      info.Hash,
 		Timestamp: info.Modified,
 		Resource:  res,
+		Lint:      f.Lint,
 	}
 	for _, err := range f.Errors {
 		wrap.Errors = append(wrap.Errors, err.Error())
