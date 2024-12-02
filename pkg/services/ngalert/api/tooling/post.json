@@ -2859,31 +2859,31 @@
   },
   "PostablePrometheusRule": {
    "properties": {
-    "Alert": {
+    "alert": {
      "type": "string"
     },
-    "Annotations": {
+    "annotations": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Expr": {
+    "expr": {
      "type": "string"
     },
-    "For": {
+    "for": {
      "type": "string"
     },
-    "KeepFiringFor": {
+    "keep_firing_for": {
      "type": "string"
     },
-    "Labels": {
+    "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
     },
-    "Record": {
+    "record": {
      "type": "string"
     }
    },
@@ -2891,10 +2891,10 @@
   },
   "PostablePrometheusRuleGroup": {
    "properties": {
-    "Name": {
+    "name": {
      "type": "string"
     },
-    "Rules": {
+    "rules": {
      "items": {
       "$ref": "#/definitions/PostablePrometheusRule"
      },
@@ -2941,7 +2941,7 @@
   },
   "PostableRuleGroupPrometheusConfig": {
    "properties": {
-    "Groups": {
+    "groups": {
      "items": {
       "$ref": "#/definitions/PostablePrometheusRuleGroup"
      },
@@ -6446,50 +6446,6 @@
     ]
    }
   },
-  "/ruler/grafana-prometheus/api/v1/rules/{Namespace}": {
-   "post": {
-    "consumes": [
-     "application/yaml"
-    ],
-    "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "Namespace",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/PostableRuleGroupPrometheusConfig"
-      }
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "202": {
-      "description": "UpdateRuleGroupResponse",
-      "schema": {
-       "$ref": "#/definitions/UpdateRuleGroupResponse"
-      }
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "summary": "Creates or updates a rule group in Prometheus format.",
-    "tags": [
-     "ruler"
-    ]
-   }
-  },
   "/ruler/grafana/api/v1/export/rules": {
    "get": {
     "description": "List rules in provisioning format",
@@ -6890,6 +6846,50 @@
       }
      }
     },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/prometheus/config/v1/rules/{Namespace}": {
+   "post": {
+    "consumes": [
+     "application/yaml"
+    ],
+    "operationId": "RoutePostNameGrafanaRulesPrometheusConfig",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "Namespace",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/PostableRuleGroupPrometheusConfig"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "UpdateRuleGroupResponse",
+      "schema": {
+       "$ref": "#/definitions/UpdateRuleGroupResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Creates or updates a rule group in Prometheus format.",
     "tags": [
      "ruler"
     ]

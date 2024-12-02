@@ -303,13 +303,13 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}"),
+			toMacaronPath("/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
-			api.authorize(http.MethodPost, "/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}"),
+			api.authorize(http.MethodPost, "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}",
+				"/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}",
 				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesPrometheusConfig),
 				m,
 			),

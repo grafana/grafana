@@ -64,7 +64,7 @@ func (api *API) authorize(method, path string) web.Handler {
 				ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 			),
 		)
-	case http.MethodPost + "/api/ruler/grafana-prometheus/api/v1/rules/{Namespace}":
+	case http.MethodPost + "/api/ruler/grafana/prometheus/config/v1/rules/{Namespace}":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
 		eval = ac.EvalAll(

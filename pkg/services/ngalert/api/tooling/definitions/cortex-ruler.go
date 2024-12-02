@@ -73,7 +73,7 @@ import (
 //       403: ForbiddenError
 //
 
-// swagger:route POST /ruler/grafana-prometheus/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
+// swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
 //
 // Creates or updates a rule group in Prometheus format.
 //
