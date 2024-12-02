@@ -6440,14 +6440,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/button@npm:3.10.0, @react-types/button@npm:^3.10.0":
-  version: 3.10.0
-  resolution: "@react-types/button@npm:3.10.0"
+"@react-types/button@npm:3.10.1, @react-types/button@npm:^3.10.0":
+  version: 3.10.1
+  resolution: "@react-types/button@npm:3.10.1"
   dependencies:
-    "@react-types/shared": "npm:^3.25.0"
+    "@react-types/shared": "npm:^3.26.0"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/13973108d935e81a9e852bdc3a530a26a4cacc4a7ec37f1dde48202be0545066a71f4d7c476806d7911e91b2b9193c79f4e89dc616280b74db37cec3dd749fea
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+  checksum: 10/5bb8d47e78f4c880e1c6c72b47c0bc7fe6c731f59f4eded4c799bcdfeb365cebf796211957e42d36ef3495c03850c868ebc434706f2652b780efc7d53ef5598e
   languageName: node
   linkType: hard
 
@@ -6486,12 +6486,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/shared@npm:3.25.0, @react-types/shared@npm:^3.25.0":
+"@react-types/shared@npm:3.25.0":
   version: 3.25.0
   resolution: "@react-types/shared@npm:3.25.0"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
   checksum: 10/fa31eb6153c223210c2eee46934a63b922917bcde0ee583f2cfe59675db122c10e1cbae6549b1fea4284391fdbeca6888b36e9dc797231ad4a76def01490aea5
+  languageName: node
+  linkType: hard
+
+"@react-types/shared@npm:^3.25.0, @react-types/shared@npm:^3.26.0":
+  version: 3.26.0
+  resolution: "@react-types/shared@npm:3.26.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+  checksum: 10/82d212b1712faf86141b3993204b7155f8a053c3c8091de095889097c0f923519c4e5eb26285c0e8764ab1540f495235c7b3fbdc39f38b1a8711661eee43cbf4
   languageName: node
   linkType: hard
 
@@ -17169,7 +17178,7 @@ __metadata:
     "@react-aria/overlays": "npm:3.23.4"
     "@react-aria/utils": "npm:3.25.3"
     "@react-awesome-query-builder/ui": "npm:6.6.4"
-    "@react-types/button": "npm:3.10.0"
+    "@react-types/button": "npm:3.10.1"
     "@react-types/menu": "npm:3.9.12"
     "@react-types/overlays": "npm:3.8.10"
     "@react-types/shared": "npm:3.25.0"
