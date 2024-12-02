@@ -62,26 +62,21 @@ func NewConverter(cfg Config) *Converter {
 	}
 }
 
-// PrometheusRulesToGrafana converts Prometheus rule groups into Grafana alert rule groups.
-func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, groups []PrometheusRuleGroup) ([]models.AlertRuleGroup, error) {
-	grafanaGroups := make([]models.AlertRuleGroup, 0, len(groups))
-
-	for _, group := range groups {
-		for _, rule := range group.Rules {
-			err := validatePrometheusRule(rule)
-			if err != nil {
-				return nil, fmt.Errorf("invalid Prometheus rule '%s': %w", rule.Alert, err)
-			}
-		}
-
-		grafanaGroup, err := p.convertRuleGroup(orgID, p.cfg.DatasourceUID, namespaceUID, group)
+// PrometheusRulesToGrafana converts Prometheus rule groups into Grafana alert rule group.
+func (p *Converter) PrometheusRulesToGrafana(orgID int64, namespaceUID string, group PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
+	for _, rule := range group.Rules {
+		err := validatePrometheusRule(rule)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert rule group '%s': %w", group.Name, err)
+			return nil, fmt.Errorf("invalid Prometheus rule '%s': %w", rule.Alert, err)
 		}
-		grafanaGroups = append(grafanaGroups, grafanaGroup)
 	}
 
-	return grafanaGroups, nil
+	grafanaGroup, err := p.convertRuleGroup(orgID, p.cfg.DatasourceUID, namespaceUID, group)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert rule group '%s': %w", group.Name, err)
+	}
+
+	return grafanaGroup, nil
 }
 
 func validatePrometheusRule(rule PrometheusRule) error {
@@ -92,24 +87,24 @@ func validatePrometheusRule(rule PrometheusRule) error {
 	return nil
 }
 
-func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID string, promGroup PrometheusRuleGroup) (models.AlertRuleGroup, error) {
+func (p *Converter) convertRuleGroup(orgID int64, datasourceUID, namespaceUID string, promGroup PrometheusRuleGroup) (*models.AlertRuleGroup, error) {
 	duration, err := parseDurationOrDefault(promGroup.Interval, *p.cfg.DefaultInterval)
 	if err != nil {
-		return models.AlertRuleGroup{}, fmt.Errorf("failed to parse interval '%s': %w", promGroup.Interval, err)
+		return nil, fmt.Errorf("failed to parse interval '%s': %w", promGroup.Interval, err)
 	}
 
 	rules := make([]models.AlertRule, 0, len(promGroup.Rules))
 	for i, rule := range promGroup.Rules {
 		gr, err := p.convertRule(orgID, datasourceUID, namespaceUID, promGroup.Name, rule)
 		if err != nil {
-			return models.AlertRuleGroup{}, fmt.Errorf("failed to convert Prometheus rule '%s' to Grafana rule: %w", rule.Alert, err)
+			return nil, fmt.Errorf("failed to convert Prometheus rule '%s' to Grafana rule: %w", rule.Alert, err)
 		}
 		gr.RuleGroupIndex = i + 1
 		gr.IntervalSeconds = int64(duration.Seconds())
 		rules = append(rules, gr)
 	}
 
-	result := models.AlertRuleGroup{
+	result := &models.AlertRuleGroup{
 		FolderUID: namespaceUID,
 		Interval:  int64(duration.Seconds()),
 		Rules:     rules,

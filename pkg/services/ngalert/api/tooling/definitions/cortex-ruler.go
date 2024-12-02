@@ -86,6 +86,9 @@ import (
 //     Responses:
 //       202: UpdateRuleGroupResponse
 //       403: ForbiddenError
+//
+//     Extensions:
+//       x-raw-request: true
 
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
@@ -649,12 +652,7 @@ type RoutePostNameGrafanaRulesPrometheusConfigParams struct {
 	// in: path
 	Namespace string
 	// in:body
-	Body PostableRuleGroupPrometheusConfig
-}
-
-// swagger:model
-type PostableRuleGroupPrometheusConfig struct {
-	Groups []PostablePrometheusRuleGroup `yaml:"groups" json:"groups"`
+	Body PostablePrometheusRuleGroup
 }
 
 // swagger:model

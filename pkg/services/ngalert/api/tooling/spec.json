@@ -1650,7 +1650,7 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/PostableRuleGroupPrometheusConfig"
+              "$ref": "#/definitions/PostablePrometheusRuleGroup"
             }
           }
         ],
@@ -1667,7 +1667,8 @@
               "$ref": "#/definitions/ForbiddenError"
             }
           }
-        }
+        },
+        "x-raw-request": "true"
       }
     },
     "/ruler/{DatasourceUID}/api/v1/rules": {
@@ -6537,31 +6538,31 @@
     "PostablePrometheusRule": {
       "type": "object",
       "properties": {
-        "Alert": {
+        "alert": {
           "type": "string"
         },
-        "Annotations": {
+        "annotations": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "Expr": {
+        "expr": {
           "type": "string"
         },
-        "For": {
+        "for": {
           "type": "string"
         },
-        "KeepFiringFor": {
+        "keep_firing_for": {
           "type": "string"
         },
-        "Labels": {
+        "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           }
         },
-        "Record": {
+        "record": {
           "type": "string"
         }
       }
@@ -6569,10 +6570,10 @@
     "PostablePrometheusRuleGroup": {
       "type": "object",
       "properties": {
-        "Name": {
+        "name": {
           "type": "string"
         },
-        "Rules": {
+        "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostablePrometheusRule"
@@ -6612,17 +6613,6 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
-        }
-      }
-    },
-    "PostableRuleGroupPrometheusConfig": {
-      "type": "object",
-      "properties": {
-        "Groups": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/PostablePrometheusRuleGroup"
           }
         }
       }
