@@ -35,7 +35,7 @@ const ALLOW_ROUTES = [
 export class SidecarService_EXPERIMENTAL {
   private _initialContext: BehaviorSubject<unknown | undefined>;
 
-  private sidecarLocationService: LocationService;
+  private secondaryMemoryLocationService: LocationService;
   private mainLocationService: LocationService;
   private secondaryLocationService: LocationService;
 
@@ -53,7 +53,7 @@ export class SidecarService_EXPERIMENTAL {
     this._initialContext = new BehaviorSubject<unknown | undefined>(undefined);
     this.mainLocationService = options.mainLocationService;
     this.secondaryLocationService = options.secondaryLocationService;
-    this.sidecarLocationService = new HistoryWrapper(
+    this.secondaryMemoryLocationService = new HistoryWrapper(
       createLocationStorageHistory({ storageKey: 'grafana.sidecar.history' })
     );
     this.handleMainLocationChanges();
@@ -87,6 +87,13 @@ export class SidecarService_EXPERIMENTAL {
     this.mainOnAllowedRoute = ALLOW_ROUTES.some((prefix) =>
       this.mainLocationService.getLocation().pathname.match(prefix)
     );
+
+    // This is run during construction so we initialize stuff based on current state of the URL.
+    if (!this.mainOnAllowedRoute) {
+      this.closeApp();
+    } else if (this.activePluginId) {
+      this.mainLocationWhenOpened = this.mainLocationService.getLocation().pathname;
+    }
 
     this.mainLocationService.getLocationObservable().subscribe((location) => {
       if (!this.activePluginId) {
@@ -153,7 +160,7 @@ export class SidecarService_EXPERIMENTAL {
 
   getLocationService() {
     if (this.memory) {
-      return this.sidecarLocationService;
+      return this.secondaryMemoryLocationService;
     } else {
       return this.secondaryLocationService;
     }
@@ -218,7 +225,7 @@ export class SidecarService_EXPERIMENTAL {
     this._initialContext.next(undefined);
 
     // Do both just to be sure some state does not linger
-    this.sidecarLocationService.replace({ pathname: '/' });
+    this.secondaryMemoryLocationService.replace({ pathname: '/' });
     this.secondaryLocationService.replace({ pathname: '/' });
 
     reportInteraction('sidecar_service_close_app');

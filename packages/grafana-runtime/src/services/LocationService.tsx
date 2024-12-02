@@ -7,8 +7,8 @@ import { attachDebugger, createLogger } from '@grafana/ui';
 
 import { config } from '../config';
 
+import { createAggregateHistory } from './AggregateLocationService';
 import { LocationUpdate } from './LocationSrv';
-import { AggregateHistoryWrapper } from './AggregateLocationService';
 
 /**
  * @public
@@ -155,21 +155,25 @@ export function locationSearchToObject(search: string | number): UrlQueryMap {
   return {};
 }
 
-const hw = new HistoryWrapper();
+const history = H.createBrowserHistory({ basename: config.appSubUrl ?? '/' });
 /**
  * @public
  */
-export let locationService: LocationService = new AggregateHistoryWrapper({
-  locationService: hw,
-  isMain: true,
-  param: 'sc',
-});
+export let locationService: LocationService = new HistoryWrapper(
+  createAggregateHistory({
+    actualHistory: history,
+    isMain: true,
+    param: '__sc',
+  })
+);
 
-export let locationServiceSecondary: LocationService = new AggregateHistoryWrapper({
-  locationService: hw,
-  isMain: false,
-  param: 'sc',
-});
+export let locationServiceSecondary: LocationService = new HistoryWrapper(
+  createAggregateHistory({
+    actualHistory: history,
+    isMain: false,
+    param: '__sc',
+  })
+);
 
 /**
  * Used for tests only

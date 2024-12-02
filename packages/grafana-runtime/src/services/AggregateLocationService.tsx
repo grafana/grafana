@@ -1,5 +1,5 @@
 import * as H from 'history';
-import { map } from 'rxjs';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 
 import { locationSearchToObject, LocationService } from './LocationService';
 import { LocationUpdate } from './LocationSrv';
@@ -158,4 +158,143 @@ export class AggregateHistoryWrapper implements LocationService {
   update(options: LocationUpdate) {
     return this.locationService.update(options);
   }
+}
+
+type LocalStorageHistoryOptions = {
+  param: string;
+  actualHistory: H.History;
+  isMain: boolean;
+};
+
+interface LocationStorageHistory extends H.History {
+  getLocationObservable(): Observable<H.Location | undefined>;
+}
+
+function getPartialLocation(location: H.Location, param: string, isMain: boolean): H.Location {
+  const newLocation = { ...location };
+  const paramsCopy = new URLSearchParams(newLocation.search);
+  if (isMain) {
+    paramsCopy.delete(param);
+    newLocation.search = paramsCopy.toString();
+    return newLocation;
+  } else {
+    const url = decodeURIComponent(paramsCopy.get(param) || '');
+    const parsed = new URL('http://sidecar' + url);
+    return {
+      pathname: parsed.pathname,
+      search: parsed.search,
+      hash: parsed.hash,
+      state: undefined,
+    };
+  }
+}
+
+function partialLocationToFull(
+  newPartialLocation: H.Location,
+  currentFullLocation: H.Location,
+  param: string,
+  isMain: boolean
+) {
+  const newPartialLocationCopy = { ...newPartialLocation };
+  const currentFullLocationCopy = { ...currentFullLocation };
+  if (isMain) {
+    // get current secondary location, which we are not changing but we need to add it to the new main location as
+    // search param.
+    const secondaryLocation = getPartialLocation(currentFullLocationCopy, param, false);
+    const paramsCopy = new URLSearchParams(newPartialLocationCopy.search);
+    paramsCopy.set(param, encodeURIComponent(secondaryLocation.pathname + secondaryLocation.search));
+    newPartialLocationCopy.search = paramsCopy.toString();
+    return newPartialLocationCopy;
+  } else {
+    // we keep the current location as it is and just change the secondary location in the search param
+    const paramsCopy = new URLSearchParams(currentFullLocationCopy.search);
+    paramsCopy.set(param, encodeURIComponent(newPartialLocationCopy.pathname + newPartialLocationCopy.search));
+    currentFullLocationCopy.search = paramsCopy.toString();
+    return currentFullLocationCopy;
+  }
+}
+
+function normalizeLocation(location: H.Path | H.LocationDescriptor<unknown>): H.Location {
+  if (typeof location === 'string') {
+    const url = new URL('http://grafana' + location);
+    return {
+      pathname: url.pathname,
+      search: url.search,
+      hash: url.hash,
+      state: undefined,
+    };
+  }
+  return {
+    ...location,
+    pathname: location.pathname || '',
+    search: location.search || '',
+    state: location.state || undefined,
+    hash: location.hash || '',
+  };
+}
+
+export function createAggregateHistory(options: LocalStorageHistoryOptions): LocationStorageHistory {
+  let currentLocation = getPartialLocation(options.actualHistory.location, options.param, options.isMain);
+  const locationSubject = new BehaviorSubject<H.Location | undefined>(currentLocation);
+
+  options.actualHistory.listen((location) => {
+    const partialLocation = getPartialLocation(location, options.param, options.isMain);
+    console.log('listen', options.isMain ? 'main' : 'sidecar', partialLocation);
+    locationSubject.next(partialLocation);
+  });
+
+  return {
+    ...options.actualHistory,
+    get length() {
+      return options.actualHistory.length;
+    },
+    get action() {
+      return options.actualHistory.action;
+    },
+    get location() {
+      return getPartialLocation(options.actualHistory.location, options.param, options.isMain);
+    },
+    listen(listener: H.LocationListener<H.LocationState>): H.UnregisterCallback {
+      return options.actualHistory.listen((location, action) => {
+        const partialLocation = getPartialLocation(location, options.param, options.isMain);
+        return listener(partialLocation, action);
+      });
+    },
+    push(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
+      console.log('push', options.isMain ? 'main' : 'sidecar', location);
+      options.actualHistory.push(
+        partialLocationToFull(
+          normalizeLocation(location),
+          options.actualHistory.location,
+          options.param,
+          options.isMain
+        ),
+        state
+      );
+    },
+    replace(location: H.Path | H.LocationDescriptor<H.LocationState>, state?: H.LocationState) {
+      console.log('replace', options.isMain ? 'main' : 'sidecar', location);
+      options.actualHistory.replace(
+        partialLocationToFull(
+          normalizeLocation(location),
+          options.actualHistory.location,
+          options.param,
+          options.isMain
+        ),
+        state
+      );
+    },
+    go(n: number) {
+      options.actualHistory.go(n);
+    },
+    goBack() {
+      options.actualHistory.goBack();
+    },
+    goForward() {
+      options.actualHistory.goForward();
+    },
+    getLocationObservable() {
+      return locationSubject.asObservable();
+    },
+  };
 }
