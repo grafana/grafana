@@ -343,3 +343,40 @@ export function createLogRowsMap() {
     return false;
   };
 }
+
+function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index = 0): null | string {
+  const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
+  if (!typeField) {
+    return null;
+  }
+  return typeField[labelKey] ?? null;
+}
+
+export function getLabelTypeFromRow(label: string, row: LogRowModel) {
+  if (!row.datasourceType) {
+    return null;
+  }
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame);
+  if (!labelType) {
+    return null;
+  }
+  return resolveDataSourceLabelType(labelType, row.datasourceType);
+}
+
+function resolveDataSourceLabelType(labelType: string, datasourceType: string) {
+  switch (datasourceType) {
+    case 'loki':
+      switch (labelType) {
+        case 'I':
+          return 'Indexed';
+        case 'S':
+          return 'Structured Metadata';
+        case 'P':
+          return 'Parsed label';
+        default:
+          return null;
+      }
+    default:
+      return null;
+  }
+}

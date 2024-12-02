@@ -15,9 +15,19 @@ import {
   LogRowModel,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, PopoverContent, Themeable2, withTheme2 } from '@grafana/ui';
+import {
+  ClipboardButton,
+  DataLinkButton,
+  Icon,
+  IconButton,
+  PopoverContent,
+  Themeable2,
+  Tooltip,
+  withTheme2,
+} from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
+import { getLabelTypeFromRow } from '../utils';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -275,6 +285,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = app === CoreApp.Explore && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], row) : null;
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -321,6 +332,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           </td>
 
+          <td>
+            {labelType && (
+              <Tooltip content={labelType}>
+                <Icon tabIndex={0} name="info-circle" size="sm" />
+              </Tooltip>
+            )}
+          </td>
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
@@ -360,7 +378,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         </tr>
         {showFieldsStats && singleKey && singleVal && (
           <tr>
-            <td>
+            <td colSpan={2}>
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
