@@ -1,37 +1,43 @@
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { InlineField, InlineSwitch } from '@grafana/ui';
 
-import { AllowedWingmanOptions, getWingmanOptionCollection, WingmanOptionCollection } from './wingman';
+import { getWingmanOptionGroup, WingmanOptionGroup } from './wingman';
 
 interface WingmanSceneState extends SceneObjectState {
-  wingmanOptions: WingmanOptionCollection;
+  wingmanOptionGroup: WingmanOptionGroup[];
 }
 
 export class WingmanScene extends SceneObjectBase<WingmanSceneState> {
   constructor(props: Partial<WingmanSceneState>) {
     super({
-      wingmanOptions: getWingmanOptionCollection(),
+      wingmanOptionGroup: getWingmanOptionGroup(),
     });
   }
 
-  onWingmanOptionChanged = (optId: AllowedWingmanOptions, newValue: boolean) => {
-    const updatedWingmanOptions = { ...this.state.wingmanOptions };
-    updatedWingmanOptions[optId].enabled = newValue;
-    this.setState({ wingmanOptions: updatedWingmanOptions });
+  onWingmanOptionChanged = (groupIdx: number, optId: string, newValue: boolean) => {
+    const updatedWingmanOptionGroup = { ...this.state.wingmanOptionGroup };
+    updatedWingmanOptionGroup[groupIdx].options[optId].enabled = newValue;
+    this.setState({ wingmanOptionGroup: updatedWingmanOptionGroup });
   };
 
   public static Component = ({ model }: SceneComponentProps<WingmanScene>) => {
-    const { wingmanOptions } = model.useState();
+    const { wingmanOptionGroup } = model.useState();
     const { onWingmanOptionChanged } = model;
     return (
       <div>
-        {Object.entries(wingmanOptions).map(([key, opt]) => (
-          <InlineField labelWidth={26} key={key} label={opt.label} tooltip={opt.description}>
-            <InlineSwitch
-              value={opt.enabled}
-              onChange={() => onWingmanOptionChanged(key as AllowedWingmanOptions, !opt.enabled)}
-            />
-          </InlineField>
+        <div>11241 Metrics</div>
+        {wingmanOptionGroup.map((group, groupIdx) => (
+          <div>
+            <h2>{group.title}</h2>
+            {Object.entries(group.options).map(([key, opt]) => (
+              <InlineField labelWidth={26} key={key} label={opt.label} tooltip={opt.description}>
+                <InlineSwitch
+                  value={opt.enabled}
+                  onChange={() => onWingmanOptionChanged(groupIdx, key, !opt.enabled)}
+                />
+              </InlineField>
+            ))}
+          </div>
         ))}
       </div>
     );
