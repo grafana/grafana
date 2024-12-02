@@ -15,7 +15,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> {
   }
 
   onWingmanOptionChanged = (groupIdx: number, optId: string, newValue: boolean) => {
-    const updatedWingmanOptionGroup = { ...this.state.wingmanOptionGroup };
+    const updatedWingmanOptionGroup = [...this.state.wingmanOptionGroup];
     updatedWingmanOptionGroup[groupIdx].options[optId].enabled = newValue;
     this.setState({ wingmanOptionGroup: updatedWingmanOptionGroup });
   };
@@ -27,7 +27,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> {
       <div>
         <div>11241 Metrics</div>
         {wingmanOptionGroup.map((group, groupIdx) => (
-          <div>
+          <div key={group.title}>
             <h2>{group.title}</h2>
             {Object.entries(group.options).map(([key, opt]) => (
               <InlineField labelWidth={26} key={key} label={opt.label} tooltip={opt.description}>
