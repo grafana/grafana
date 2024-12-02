@@ -3,7 +3,7 @@ import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 
 import { useSnappingSplitter } from '../panel-edit/splitter/useSnappingSplitter';
@@ -12,6 +12,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPane';
 import { useEditPaneCollapsed } from './shared';
+import DropZone from 'react-dropzone';
 
 interface Props {
   dashboard: DashboardScene;
@@ -23,6 +24,7 @@ interface Props {
 export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const theme = useTheme2();
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
   if (!config.featureToggles.dashboardNewLayouts) {
@@ -31,10 +33,55 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         <div className={styles.canvasWrappperOld}>
           <NavToolbarActions dashboard={dashboard} />
           <div className={styles.controlsWrapperSticky}>{controls}</div>
-          <div className={styles.body}>{body}</div>
+          <DropZone
+            onDrop={() => {
+              alert('droppped');
+            }}
+          >
+            {({ getRootProps, isDragActive }) => {
+              const overlayStyles = getOverlayStyles(theme, isDragActive)
+              return (
+                <div onPaste={() => {alert('pasted')}} {...getRootProps({ className: styles.body })}>
+                  {body}
+                  <div className={overlayStyles.dropOverlay}>
+                    <div className={overlayStyles.dropHint}>
+                      <Icon name="upload" size="xxxl"></Icon>
+                      <h3>Create tables from spreadsheets</h3>
+                    </div>
+                  </div>
+                </div>
+              );
+            }}
+          </DropZone>
         </div>
       </NativeScrollbar>
     );
+  }
+
+  function getOverlayStyles(theme: GrafanaTheme2, isDragActive: boolean) {
+    return {
+      dropZone: css`
+        height: 100%;
+      `,
+      dropOverlay: css`
+        background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
+        border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
+        position: absolute;
+        display: ${isDragActive ? 'flex' : 'none'};
+        z-index: ${theme.zIndex.modal};
+        top: 0px;
+        left: 0px;
+        height: 100%;
+        width: 100%;
+        align-items: center;
+        justify-content: center;
+      `,
+      dropHint: css`
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+      `,
+    };
   }
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
