@@ -106,7 +106,7 @@ module.exports = (env = {}) => {
     },
 
     plugins: [
-      ...(parseInt(env.noTsCheck, 10)
+      ...(parseInt(env.liveReload, 10)
         ? [
             new LiveReloadPlugin({
               appendScriptTag: true,
