@@ -71,15 +71,15 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
 			ReadOnly:  ds.ReadOnly,
-			Invisible: ds.Invisible,
+			System:    ds.System,
 		}
 
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
 			dsItem.Type = plugin.ID // may be from an alias
-			// If the plugin type is invisible, the datasource item will be forced to invisible
-			dsItem.Invisible = dsItem.Invisible || plugin.Invisible
+			// If the plugin has the "System" flag, the datasource will also be set to "System"
+			dsItem.System = dsItem.System || plugin.System
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -753,7 +753,7 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		Version:          ds.Version,
 		ReadOnly:         ds.ReadOnly,
 		APIVersion:       ds.APIVersion,
-		Invisible:        ds.Invisible,
+		System:           ds.System,
 	}
 
 	if hs.pluginStore != nil {

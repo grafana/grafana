@@ -59,7 +59,7 @@ type DataSource struct {
 	BasicAuthPassword string            `json:"-"`
 	WithCredentials   bool              `json:"withCredentials"`
 	IsDefault         bool              `json:"isDefault"`
-	Invisible         bool              `json:"invisible,omitempty"`
+	System            bool              `json:"system,omitempty"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
@@ -167,7 +167,7 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
-	Invisible       bool              `json:"invisible,omitempty"`
+	System          bool              `json:"system,omitempty"`
 
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
@@ -197,7 +197,7 @@ type UpdateDataSourceCommand struct {
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	Version         int               `json:"version"`
 	UID             string            `json:"uid"`
-	Invisible       bool              `json:"invisible,omitempty"`
+	System          bool              `json:"system,omitempty"`
 	// swagger:ignore
 	APIVersion string `json:"apiVersion"`
 	// swagger:ignore

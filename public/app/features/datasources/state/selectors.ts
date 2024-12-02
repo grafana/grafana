@@ -10,7 +10,7 @@ export const getDataSources = memoizeOne((state: DataSourcesState) => {
     .filter((dataSource: DataSourceSettings) => {
       return regex.test(dataSource.name) || regex.test(dataSource.database) || regex.test(dataSource.type);
     })
-    .filter((dataSource) => !dataSource.invisible);
+    .filter((dataSource) => !dataSource.system);
 
   return filteredDataSources.sort((a, b) =>
     state.isSortAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)

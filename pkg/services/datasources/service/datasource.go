@@ -233,7 +233,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 		BasicAuthEnabled:        cmd.BasicAuth,
 		BasicAuthUser:           cmd.BasicAuthUser,
 		APIVersion:              cmd.APIVersion,
-		Invisible:               cmd.Invisible,
+		System:                  cmd.System,
 	}, nil)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 	// The mutable properties
 	cmd.URL = settings.URL
 	cmd.User = settings.User
-	cmd.Invisible = settings.Invisible
+	cmd.System = settings.System
 	cmd.BasicAuth = settings.BasicAuthEnabled
 	cmd.BasicAuthUser = settings.BasicAuthUser
 	cmd.Database = settings.Database

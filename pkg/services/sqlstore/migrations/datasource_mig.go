@@ -143,7 +143,7 @@ func addDataSourceMigration(mg *Migrator) {
 		Name: "api_version", Type: DB_Varchar, Nullable: true, Length: 20,
 	}))
 
-	mg.AddMigration("Add invisible column", NewAddColumnMigration(tableV2, &Column{
-		Name: "invisible", Type: DB_Bool, Nullable: true,
+	mg.AddMigration("Add system column", NewAddColumnMigration(tableV2, &Column{
+		Name: "system", Type: DB_Bool, Nullable: true,
 	}))
 }

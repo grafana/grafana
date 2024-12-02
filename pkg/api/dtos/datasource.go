@@ -14,7 +14,7 @@ type DataSource struct {
 	OrgId            int64                  `json:"orgId"`
 	Name             string                 `json:"name"`
 	Type             string                 `json:"type"`
-	Invisible        bool                   `json:"invisible,omitempty"`
+	System           bool                   `json:"system,omitempty"`
 	TypeLogoUrl      string                 `json:"typeLogoUrl"`
 	Access           datasources.DsAccess   `json:"access"`
 	Url              string                 `json:"url"`
@@ -49,7 +49,7 @@ type DataSourceListItemDTO struct {
 	IsDefault   bool                 `json:"isDefault"`
 	JsonData    *simplejson.Json     `json:"jsonData,omitempty"`
 	ReadOnly    bool                 `json:"readOnly"`
-	Invisible   bool                 `json:"invisible,omitempty"`
+	System      bool                 `json:"system,omitempty"`
 }
 
 type DataSourceList []DataSourceListItemDTO

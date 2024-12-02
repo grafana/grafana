@@ -278,7 +278,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
-			Invisible:       cmd.Invisible,
+			System:          cmd.System,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -357,7 +357,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
-			Invisible:       cmd.Invisible,
+			System:          cmd.System,
 		}
 
 		sess.UseBool("is_default")

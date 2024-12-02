@@ -205,13 +205,13 @@ export class DatasourceSrv implements DataSourceService {
 
   getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
     const base = Object.values(this.settingsMapByName).filter((x) => {
-      const invisible = x.invisible || x.meta.invisible;
-      if (filters.onlyInvisible) {
-        if (invisible) {
+      const system = x.system || x.meta.system;
+      if (filters.onlySystem) {
+        if (system) {
           return false;
         }
       } else {
-        if (!invisible) {
+        if (!system) {
           return false;
         }
       }
