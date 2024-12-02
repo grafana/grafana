@@ -389,12 +389,14 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		return Condition{
 			Metadata:  meta,
 			Condition: alertRule.Record.From,
+			Semantics: EvaluationSemanticsGrafana,
 			Data:      alertRule.Data,
 		}
 	}
 	return Condition{
 		Metadata:  meta,
 		Condition: alertRule.Condition,
+		Semantics: EvaluationSemanticsGrafana,
 		Data:      alertRule.Data,
 	}
 }
@@ -733,6 +735,14 @@ type UpdateRule struct {
 	New      AlertRule
 }
 
+type EvaluationSemantics string
+
+const (
+	EvaluationSemanticsUndefined  EvaluationSemantics = ""
+	EvaluationSemanticsGrafana    EvaluationSemantics = "grafana"
+	EvaluationSemanticsPrometheus EvaluationSemantics = "prometheus"
+)
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
@@ -741,6 +751,8 @@ type Condition struct {
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
+
+	Semantics EvaluationSemantics
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
