@@ -30,6 +30,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/overview',
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "AlertingOverview" */ 'app/features/alerting/unified/overview/Overview')
+      ),
+    },
+    {
       path: '/alerting/list',
       roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
       component: importAlertingComponent(

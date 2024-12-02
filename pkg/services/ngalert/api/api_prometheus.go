@@ -506,6 +506,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		alertingRule := apimodels.AlertingRule{
+			UID:         rule.UID,
 			State:       "inactive",
 			Name:        rule.Title,
 			Query:       ruleToQuery(log, rule),
@@ -514,6 +515,7 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 		}
 
 		newRule := apimodels.Rule{
+			UID:            rule.UID,
 			Name:           rule.Title,
 			Labels:         apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
 			Health:         status.Health,

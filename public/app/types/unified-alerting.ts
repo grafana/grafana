@@ -32,6 +32,8 @@ export function hasAlertState(alert: Alert, state: PromAlertingRuleState | Grafa
 export type RuleHealth = 'nodata' | 'error' | 'err' | string;
 
 interface RuleBase {
+  // GMA Only
+  uid: string;
   health: RuleHealth;
   name: string;
   query: string;
