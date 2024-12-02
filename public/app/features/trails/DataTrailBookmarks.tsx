@@ -16,7 +16,7 @@ type Props = {
 export function DataTrailsBookmarks({ onSelect, onDelete }: Props) {
   const [toggleBookmark, setToggleBookmark] = useState(() => {
     const savedState = localStorage.getItem('toggleBookmark');
-    return savedState ? JSON.parse(savedState) : false;
+    return savedState ? (JSON.parse(savedState) as boolean) : false;
   });
   const styles = useStyles2(getStyles);
 
