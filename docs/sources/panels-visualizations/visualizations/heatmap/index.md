@@ -68,32 +68,71 @@ The data is converted as follows:
 
 {{< figure src="/static/img/docs/heatmap-panel/heatmap.png" max-width="1025px" alt="A heatmap visualization showing the random walk distribution over time" >}}
 
-## Panel options
+## Configuration options
+
+{{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Heatmap options
+### Tooltip options
 
-### Calculate from data
+#### Tooltip mode
 
-This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel.
+When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
 
-### X Bucket
+- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden -** Do not display the tooltip when you interact with the visualization.
 
-This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
+Use an override to hide individual series from the tooltip.
 
-### Y Bucket
+#### Show histogram (Y axis)
 
-This setting determines how the Y-axis is split into buckets.
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
 
-### Y Bucket scale
+#### Show color scale
 
-Select one of the following Y-axis value scales:
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
 
-- **linear -** Linear scale.
-- **log (base 2) -** Logarithmic scale with base 2.
-- **log (base 10) -** Logarithmic scale with base 10.
-- **symlog -** Symlog scale.
+![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
+
+### Legend options
+
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
+
+### Axis options
+
+<!-- tba -->
+
+### Graph styles options
+
+<!-- tba -->
+
+### Standard options
+
+{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Data links
+
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Value mappings
+
+{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Thresholds 1
+
+{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Thresholds 2
+
+{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+### Field overrides
+
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Y Axes
 
@@ -158,42 +197,29 @@ By default, Grafana calculates cell colors based on minimum and maximum bucket v
 
 Use these settings to refine your visualization.
 
-## Additional display options
-
-### Tooltip
-
-#### Tooltip mode
-
-When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
-
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
-- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the visualization.
-
-Use an override to hide individual series from the tooltip.
-
-#### Show histogram (Y axis)
-
-When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
-
-#### Show color scale
-
-When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
-
-![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
-
-### Legend
-
-Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
-
-### Data links
-
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Field overrides
-
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Exemplars
+## Exemplars
 
 Set the color used to show exemplar data.
+
+## Heatmap options
+
+### Calculate from data
+
+This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel.
+
+### X Bucket
+
+This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
+
+### Y Bucket
+
+This setting determines how the Y-axis is split into buckets.
+
+### Y Bucket scale
+
+Select one of the following Y-axis value scales:
+
+- **linear -** Linear scale.
+- **log (base 2) -** Logarithmic scale with base 2.
+- **log (base 10) -** Logarithmic scale with base 10.
+- **symlog -** Symlog scale.
