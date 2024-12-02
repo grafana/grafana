@@ -1,8 +1,9 @@
 package api
 
 import (
-	"gopkg.in/yaml.v3"
 	"io"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -125,7 +126,7 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 	if err != nil {
 		return errorToResponse(err)
 	}
-	defer ctx.Req.Body.Close()
+	defer func() { _ = ctx.Req.Body.Close() }()
 
 	var ruleGroup apimodels.PostablePrometheusRuleGroup
 	if err := yaml.Unmarshal(body, &ruleGroup); err != nil {
