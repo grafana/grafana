@@ -79,6 +79,7 @@ func toLintSeverity(s lint.Severity) provisioning.LintSeverity {
 		return provisioning.LintSeverityQuiet
 	case lint.Warning:
 		return provisioning.LintSeverityWarning
+	default:
 	}
 	return "" // unknown
 }
