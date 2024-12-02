@@ -660,7 +660,7 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
    *  Set to `true` if this is a system data source that we don't want shown
    *  along with the other data sources.
    */
-  system: boolean;
+  system?: boolean;
   jsonData: T;
   secureJsonData?: S;
   secureJsonFields: KeyValue<boolean>;
