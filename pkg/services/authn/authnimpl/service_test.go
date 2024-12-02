@@ -507,7 +507,7 @@ func TestService_Logout(t *testing.T) {
 			expectedRedirect: &authn.Redirect{URL: "http://idp.com/logout"},
 			client: &authntest.MockClient{
 				NameFunc: func() string { return "auth.client.azuread" },
-				LogoutFunc: func(ctx context.Context, _ identity.Requester) (*authn.Redirect, bool) {
+				LogoutFunc: func(ctx context.Context, _ identity.Requester, sessionToken *usertoken.UserToken) (*authn.Redirect, bool) {
 					return &authn.Redirect{URL: "http://idp.com/logout"}, true
 				},
 			},

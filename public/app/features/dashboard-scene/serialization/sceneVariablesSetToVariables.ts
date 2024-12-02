@@ -18,7 +18,6 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
-  VariableRefresh,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -53,7 +52,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
       let options: VariableOption[] = [];
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       variables.push({
@@ -74,6 +73,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
+        allowCustomValue: variable.state.allowCustomValue,
         skipUrlSync: variable.state.skipUrlSync,
       });
     } else if (sceneUtils.isCustomVariable(variable)) {
@@ -90,6 +90,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
@@ -107,6 +108,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
@@ -168,6 +170,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
           // @ts-expect-error
           value: variable.state.value,
         },
+        allowCustomValue: variable.state.allowCustomValue,
       });
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
@@ -175,6 +178,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         name: variable.state.name,
         type: 'adhoc',
         datasource: variable.state.datasource,
+        allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,
@@ -264,7 +268,7 @@ export function sceneVariablesSetToSchemaV2Variables(
     if (sceneUtils.isQueryVariable(variable)) {
       // Not sure if we actually have to still support this option given
       // that it's not exposed in the UI
-      if (transformVariableRefreshToEnum(variable.state.refresh) === VariableRefresh.Never || keepQueryOptions) {
+      if (transformVariableRefreshToEnum(variable.state.refresh) === 'never' || keepQueryOptions) {
         options = variableValueOptionsToVariableOptions(variable.state);
       }
       //query: DataQueryKind | string;
@@ -320,7 +324,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           current: currentVariableOption,
           options: [],
           regex: variable.state.regex,
-          refresh: VariableRefresh.OnDashboardLoad,
+          refresh: 'onDashboardLoad',
           pluginId: variable.state.pluginId,
           defaultOptionEnabled: !!variable.state.defaultOptionEnabled,
           multi: variable.state.isMulti || false,
@@ -356,7 +360,7 @@ export function sceneVariablesSetToSchemaV2Variables(
             text: variable.state.value,
           },
           query: intervals,
-          refresh: VariableRefresh.OnTimeRangeChanged,
+          refresh: 'onTimeRangeChanged',
           options: variable.state.intervals.map((interval) => ({
             value: interval,
             text: interval,
