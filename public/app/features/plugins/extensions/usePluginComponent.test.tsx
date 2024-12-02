@@ -7,15 +7,11 @@ import { config } from '@grafana/runtime';
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
-import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
-import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { setupPluginExtensionRegistries } from './registry/setup';
 import { PluginExtensionRegistries } from './registry/types';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponent } from './usePluginComponent';
 import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
 
-jest.mock('./useLoadAppPlugins');
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
     id: 'my-app-plugin',
@@ -87,12 +83,7 @@ describe('usePluginComponent()', () => {
   };
 
   beforeEach(() => {
-    registries = {
-      addedComponentsRegistry: new AddedComponentsRegistry(),
-      exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      addedLinksRegistry: new AddedLinksRegistry(),
-    };
-    jest.mocked(useLoadAppPlugins).mockReturnValue({ isLoading: false });
+    registries = setupPluginExtensionRegistries();
     jest.mocked(isGrafanaDevMode).mockReturnValue(false);
     resetLogMock(log);
 

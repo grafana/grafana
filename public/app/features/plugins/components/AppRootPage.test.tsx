@@ -11,9 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 
 import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
-import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
-import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
+import { setupPluginExtensionRegistries } from '../extensions/registry/setup';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 
@@ -88,11 +86,7 @@ function renderUnderRouter(page = '') {
 
   appPluginNavItem.parentItem = appsSection;
 
-  const registries = {
-    addedComponentsRegistry: new AddedComponentsRegistry(),
-    exposedComponentsRegistry: new ExposedComponentsRegistry(),
-    addedLinksRegistry: new AddedLinksRegistry(),
-  };
+  const registries = setupPluginExtensionRegistries();
   const pagePath = page ? `/${page}` : '';
   const route = {
     path: `/a/:pluginId/*`,

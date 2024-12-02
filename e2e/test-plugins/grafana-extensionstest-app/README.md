@@ -32,4 +32,4 @@ Note that this plugin extends the `@grafana/plugin-configs` configs which is why
 
 ## Run Playwright tests
 
-- `yarn playwright test --project extensions-test-app`
+- `yarn playwright --project extensions-test-app`

@@ -10,8 +10,7 @@ import {
 import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 import * as errors from './errors';
 import { log } from './logs/log';
-import { useLoadAppPlugins } from './useLoadAppPlugins';
-import { getExtensionPointPluginDependencies, isGrafanaDevMode } from './utils';
+import { isGrafanaDevMode } from './utils';
 import { isExtensionPointIdValid, isExtensionPointMetaInfoMissing } from './validators';
 
 // Returns an array of component extensions for the given extension point
@@ -22,7 +21,6 @@ export function usePluginComponents<Props extends object = {}>({
   const registry = useAddedComponentsRegistry();
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
-  const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
@@ -47,13 +45,6 @@ export function usePluginComponents<Props extends object = {}>({
       };
     }
 
-    if (isLoadingAppPlugins) {
-      return {
-        isLoading: true,
-        components: [],
-      };
-    }
-
     for (const registryItem of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = registryItem;
 
@@ -74,5 +65,5 @@ export function usePluginComponents<Props extends object = {}>({
       isLoading: false,
       components,
     };
-  }, [extensionPointId, limitPerPlugin, pluginContext, registryState, isLoadingAppPlugins]);
+  }, [extensionPointId, limitPerPlugin, pluginContext, registryState]);
 }
