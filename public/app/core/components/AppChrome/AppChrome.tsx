@@ -157,7 +157,7 @@ export function AppChrome({ children }: Props) {
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
       {!state.chromeless && <CommandPalette />}
-      <CommandPalette2 />
+      {!state.chromeless && <CommandPalette2 />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
