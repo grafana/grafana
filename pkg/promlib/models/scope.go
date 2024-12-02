@@ -88,7 +88,6 @@ func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 		} else {
 			filterMap[filter.Key] = matcher
 		}
-
 	}
 
 	// ad hoc filters are applied after scope filters
