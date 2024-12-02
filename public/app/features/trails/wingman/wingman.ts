@@ -29,13 +29,15 @@ export const getAllOptionKeys = (): string[] => {
   return getWingmanOptionGroup().flatMap((group) => Object.keys(group.options));
 };
 
+// Only one option in each group can be enabled
+// Non-available options should be shown grayed out
 export const getWingmanOptionGroup = (): WingmanOptionGroup[] => [
   {
     id: 'wm_display_view',
     title: 'Display view',
     options: {
       default: { label: 'Default', description: 'Option 1', enabled: true, available: true },
-      red_metrics: { label: 'RED Metrics', description: 'Option 2', enabled: true, available: true },
+      red_metrics: { label: 'RED Metrics', description: 'Option 2', enabled: false, available: true },
       anomalies: { label: 'Anomalies', description: 'Option 3', enabled: false, available: true },
     },
   },
@@ -44,10 +46,10 @@ export const getWingmanOptionGroup = (): WingmanOptionGroup[] => [
     title: 'Group by',
     options: {
       none: { label: 'None', description: 'Option 1', enabled: true, available: true },
-      alerts: { label: 'Alerts', description: 'Option 2', enabled: true, available: true },
-      dashboards: { label: 'Dashboards', description: 'Option 3', enabled: false, available: true },
-      metric_name: { label: 'Metric name', description: 'Option 3', enabled: false, available: true },
-      services: { label: 'Services', description: 'Option 3', enabled: false, available: true },
+      alerts: { label: 'Alerts', description: 'Option 2', enabled: false, available: false },
+      dashboards: { label: 'Dashboards', description: 'Option 3', enabled: false, available: false },
+      metric_name: { label: 'Metric name', description: 'Option 3', enabled: false, available: false },
+      services: { label: 'Services', description: 'Option 3', enabled: false, available: false },
     },
   },
   {
@@ -55,11 +57,11 @@ export const getWingmanOptionGroup = (): WingmanOptionGroup[] => [
     title: 'Sort by',
     options: {
       alphabetical_az: { label: 'Alphabetical (A-Z)', description: 'Option 1', enabled: true, available: true },
-      alphabetical_za: { label: 'Alphabetical (Z-A)', description: 'Option 2', enabled: true, available: true },
-      org_most_queried: { label: 'Org - most queried', description: 'Option 3', enabled: false, available: true },
-      org_most_recent: { label: 'Org - most recent', description: 'Option 3', enabled: false, available: true },
-      team_most_queried: { label: 'Team - most queried', description: 'Option 3', enabled: false, available: true },
-      team_most_recent: { label: 'Team - most recent', description: 'Option 3', enabled: false, available: true },
+      alphabetical_za: { label: 'Alphabetical (Z-A)', description: 'Option 2', enabled: false, available: false },
+      org_most_queried: { label: 'Org - most queried', description: 'Option 3', enabled: false, available: false },
+      org_most_recent: { label: 'Org - most recent', description: 'Option 3', enabled: false, available: false },
+      team_most_queried: { label: 'Team - most queried', description: 'Option 3', enabled: false, available: false },
+      team_most_recent: { label: 'Team - most recent', description: 'Option 3', enabled: false, available: false },
     },
   },
 ];
