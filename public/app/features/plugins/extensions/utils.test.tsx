@@ -911,7 +911,7 @@ describe('Plugin Extensions / Utils', () => {
       config.apps = originalApps;
     });
 
-    test('should return the correct list of dependencies', () => {
+    test('should not end up in an infinite loop if there are circular dependencies', () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
@@ -944,7 +944,7 @@ describe('Plugin Extensions / Utils', () => {
       expect(appPluginIds).toEqual(['myorg-third-app']);
     });
 
-    test('should return the correct list of dependencies', () => {
+    test('should not end up in an infinite loop if a plugin depends on itself', () => {
       config.apps = {
         'myorg-first-app': {
           ...genereicAppPluginConfig,
