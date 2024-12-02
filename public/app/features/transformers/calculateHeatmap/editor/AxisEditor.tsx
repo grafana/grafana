@@ -37,7 +37,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
 
   const allowInterval = item.settings?.allowInterval ?? false;
 
-  const onChange2 = ({ mode, scale, value = '' }: HeatmapCalculationBucketConfig) => {
+  const onValueChange = ({ mode, scale, value = '' }: HeatmapCalculationBucketConfig) => {
     let isValid = true;
 
     if (mode !== HeatmapCalculationMode.Count) {
@@ -68,7 +68,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         onChange={(mode) => {
           modeSwitchCounter.current++;
 
-          onChange2({
+          onValueChange({
             ...value,
             value: '',
             mode,
@@ -84,7 +84,7 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
         value={value?.value ?? ''}
         placeholder="Auto"
         onChange={(text) => {
-          onChange2({ ...value, value: text });
+          onValueChange({ ...value, value: text });
         }}
         suggestions={variables}
       />
