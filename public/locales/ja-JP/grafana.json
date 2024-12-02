@@ -100,76 +100,76 @@
       "not-editable": "このユーザーの役割は、認証プロバイダーから同期されているため編集できません。詳細については、<1>Grafana 認証ドキュメント</1>を参照してください。"
     },
     "orgs": {
-      "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
+      "delete-body": "'{{deleteOrgName}}' を削除してもよろしいですか?<3></3> <5>この組織のダッシュボードはすべて削除されます!</5>",
       "id-header": "ID",
-      "name-header": "Name",
-      "new-org-button": "New org"
+      "name-header": "名前",
+      "new-org-button": "新しい組織"
     },
     "server-settings": {
-      "alerts-button": "Manage alerts",
-      "dashboards-button": "Manage dashboards",
-      "data-sources-button": "Manage data sources",
-      "not-found": "No stats found.",
-      "title": "Instance statistics",
-      "users-button": "Manage users"
+      "alerts-button": "アラートの管理",
+      "dashboards-button": "ダッシュボードの管理",
+      "data-sources-button": "データソースの管理",
+      "not-found": "統計が見つかりません。",
+      "title": "インスタンスの統計",
+      "users-button": "ユーザーの管理"
     },
     "settings": {
-      "info-description": "These system settings are defined in grafana.ini or custom.ini (or overridden in ENV variables). To change these you currently need to restart Grafana."
+      "info-description": "これらのシステム設定は、grafana.ini または custom.ini で定義されています (または ENV 変数で上書きされています)。これらを変更するには、現在再起動する必要がありますGrafana."
     },
     "upgrade-info": {
-      "title": "Enterprise license"
+      "title": "エンタープライズ ライセンス"
     },
     "user-orgs": {
-      "add-button": "Add user to organization",
-      "change-role-button": "Change role",
-      "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
-      "remove-button": "Remove from organization",
-      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
-      "title": "Organizations"
+      "add-button": "ユーザーを組織に追加",
+      "change-role-button": "ロールを変更",
+      "external-user-tooltip": "このユーザーの組み込みロールは、認証プロバイダーから同期されているため編集できません。詳細については、<1>Grafana 認証ドキュメント</1>を参照してください。",
+      "remove-button": "組織から削除",
+      "role-not-editable": "このユーザーのロールは、認証プロバイダーから同期されているため編集できません。詳細については、<1>Grafana 認証ドキュメント</1>を参照してください。",
+      "title": "組織"
     },
     "user-orgs-modal": {
-      "add-button": "Add to organization",
-      "cancel-button": "Cancel"
+      "add-button": "組織に追加",
+      "cancel-button": "キャンセル"
     },
     "user-permissions": {
-      "change-button": "Change",
+      "change-button": "変更",
       "grafana-admin-key": "Grafana Admin",
-      "grafana-admin-no": "No",
-      "grafana-admin-yes": "Yes",
-      "title": "Permissions"
+      "grafana-admin-no": "いいえ",
+      "grafana-admin-yes": "はい",
+      "title": "権限"
     },
     "user-profile": {
-      "delete-button": "Delete user",
-      "disable-button": "Disable user",
-      "edit-button": "Edit",
-      "enable-button": "Enable user",
-      "title": "User information"
+      "delete-button": "ユーザーを削除",
+      "disable-button": "ユーザーを無効にする",
+      "edit-button": "編集",
+      "enable-button": "ユーザーを有効にする",
+      "title": "ユーザー情報"
     },
     "user-sessions": {
-      "browser-column": "Browser and OS",
-      "force-logout-all-button": "Force logout from all devices",
-      "force-logout-button": "Force logout",
-      "ip-column": "IP address",
-      "last-seen-column": "Last seen",
-      "logged-on-column": "Logged on",
-      "title": "Sessions"
+      "browser-column": "ブラウザと OS",
+      "force-logout-all-button": "すべてのデバイスから強制的にログアウト",
+      "force-logout-button": "強制的にログアウト",
+      "ip-column": "IP アドレス",
+      "last-seen-column": "最終ログイン",
+      "logged-on-column": "ログオン済み",
+      "title": "セッション"
     },
     "users-create": {
-      "create-button": "Create user"
+      "create-button": "ユーザーの作成"
     },
     "users-list": {
-      "create-button": "New user"
+      "create-button": "新規ユーザー"
     },
     "users-table": {
-      "last-seen-never": "Never",
-      "no-licensed-roles": "Not assigned"
+      "last-seen-never": "なし",
+      "no-licensed-roles": "割り当てられていません"
     }
   },
   "alert-labels": {
     "button": {
-      "hide": "Hide common labels",
+      "hide": "共通ラベルを非表示",
       "show": {
-        "tooltip": "Show common labels"
+        "tooltip": "共通ラベルを表示"
       }
     }
   },
@@ -177,25 +177,25 @@
     "alert-recording-rule-form": {
       "evaluation-behaviour": {
         "description": {
-          "text": "Define how the recording rule is evaluated."
+          "text": "記録ルールの評価方法を定義します。"
         }
       }
     },
     "alert-rules": {
-      "firing-for": "Firing for",
-      "next-evaluation": "Next evaluation",
-      "next-evaluation-in": "next evaluation in",
-      "rule-definition": "Rule definition"
+      "firing-for": "発火対象",
+      "next-evaluation": "次の評価",
+      "next-evaluation-in": "次の評価",
+      "rule-definition": "ルール定義"
     },
     "alertform": {
       "labels": {
-        "alerting": "Add labels to your rule for searching, silencing, or routing to a notification policy.",
-        "recording": "Add labels to your rule."
+        "alerting": "検索、サイレント化、または通知ポリシーへのルーティング用にルールにラベルを追加します。",
+        "recording": "ルールにラベルを追加します。"
       }
     },
     "annotations": {
-      "description": "Add more context to your alert notifications.",
-      "title": "Configure notification message"
+      "description": "アラート通知にコンテキストを追加します。",
+      "title": "通知メッセージを構成する"
     },
     "central-alert-history": {
       "details": {
