@@ -44,10 +44,19 @@ const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     namespace: 'default',
     labels: {},
     resourceVersion: '',
-    creationTimestamp: '',
+    creationTimestamp: 'creationTs',
+    annotations: {
+      'grafana.app/createdBy': 'user:createBy',
+      'grafana.app/folder': 'folder-uid',
+      'grafana.app/updatedBy': 'user:updatedBy',
+      'grafana.app/updatedTimestamp': 'updatedTs',
+    },
   },
   spec: handyTestingSchema,
-  access: {},
+  access: {
+    url: '/d/abc',
+    slug: 'what-a-dashboard',
+  },
   apiVersion: 'v2',
 };
 
@@ -289,5 +298,121 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanels.length).toBe(1);
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.type).toBe('mixed');
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
+  });
+
+  describe('meta', () => {
+    describe('initializes meta based on k8s resource', () => {
+      it('handles undefined access values', () => {
+        const scene = transformSaveModelSchemaV2ToScene(defaultDashboard);
+        // when access metadata undefined
+        expect(scene.state.meta.canShare).toBe(true);
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canStar).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+        expect(scene.state.meta.canAdmin).toBe(true);
+        expect(scene.state.meta.annotationsPermissions).toBe(undefined);
+
+        expect(scene.state.meta.url).toBe('/d/abc');
+        expect(scene.state.meta.slug).toBe('what-a-dashboard');
+        expect(scene.state.meta.created).toBe('creationTs');
+        expect(scene.state.meta.createdBy).toBe('user:createBy');
+        expect(scene.state.meta.updated).toBe('updatedTs');
+        expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
+        expect(scene.state.meta.folderUid).toBe('folder-uid');
+      });
+
+      it('handles access metadata values', () => {
+        const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          access: {
+            canSave: false,
+            canEdit: false,
+            canDelete: false,
+            canShare: false,
+            canStar: false,
+            canAdmin: false,
+            annotationsPermissions: {
+              dashboard: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+              organization: {
+                canAdd: false,
+                canEdit: false,
+                canDelete: false,
+              },
+            },
+          },
+        };
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canShare).toBe(false);
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canStar).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+        expect(scene.state.meta.canAdmin).toBe(false);
+        expect(scene.state.meta.annotationsPermissions).toEqual(dashboard.access.annotationsPermissions);
+      });
+    });
+
+    describe('Editable false dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: false,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+        expect(scene.state.meta.canMakeEditable).toBe(true);
+
+        expect(scene.state.meta.canSave).toBe(false);
+        expect(scene.state.meta.canEdit).toBe(false);
+        expect(scene.state.meta.canDelete).toBe(false);
+      });
+
+      describe('when does not have save permissions', () => {
+        it('Should set meta correct meta', () => {
+          dashboard.access.canSave = false;
+          const scene = transformSaveModelSchemaV2ToScene(dashboard);
+          expect(scene.state.meta.canMakeEditable).toBe(false);
+
+          expect(scene.state.meta.canSave).toBe(false);
+          expect(scene.state.meta.canEdit).toBe(false);
+          expect(scene.state.meta.canDelete).toBe(false);
+        });
+      });
+    });
+
+    describe('Editable true dashboard', () => {
+      let dashboard: DashboardWithAccessInfo<DashboardV2Spec>;
+
+      beforeEach(() => {
+        dashboard = {
+          ...cloneDeep(defaultDashboard),
+          spec: {
+            ...defaultDashboard.spec,
+            editable: true,
+          },
+        };
+      });
+      it('Should set meta canEdit and canSave to false', () => {
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        expect(scene.state.meta.canMakeEditable).toBe(false);
+
+        expect(scene.state.meta.canSave).toBe(true);
+        expect(scene.state.meta.canEdit).toBe(true);
+        expect(scene.state.meta.canDelete).toBe(true);
+      });
+    });
   });
 });
