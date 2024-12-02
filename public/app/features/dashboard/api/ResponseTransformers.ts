@@ -330,7 +330,7 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
             ...a.target,
           },
         },
-        filter: a.filter, // TODO[schema v2]: handle filter
+        filter: a.filter,
       },
     };
     return aq;
