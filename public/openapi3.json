@@ -2230,6 +2230,9 @@
             },
             "type": "object"
           },
+          "system": {
+            "type": "boolean"
+          },
           "type": {
             "type": "string"
           },
@@ -4828,6 +4831,9 @@
             },
             "type": "object"
           },
+          "system": {
+            "type": "boolean"
+          },
           "type": {
             "type": "string"
           },
@@ -4888,6 +4894,9 @@
             "type": "integer"
           },
           "readOnly": {
+            "type": "boolean"
+          },
+          "system": {
             "type": "boolean"
           },
           "type": {
@@ -11802,6 +11811,9 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "system": {
+            "type": "boolean"
           },
           "type": {
             "type": "string"
@@ -22480,32 +22492,6 @@
         "tags": [
           "saml",
           "enterprise"
-        ]
-      }
-    },
-    "/scim/users/": {
-      "post": {
-        "operationId": "createUser",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbiddenError"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Creates user.",
-        "tags": [
-          "users"
         ]
       }
     },
