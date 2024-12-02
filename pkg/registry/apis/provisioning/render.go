@@ -31,7 +31,7 @@ func (r *renderer) RenderDashboardPreview(ctx context.Context, repo repository.R
 		return "", err
 	}
 
-	url := fmt.Sprintf("dashboard/provisioning/%s/%s?kiosk&ref=%s", cfg.Name, path, ref)
+	url := fmt.Sprintf("admin/provisioning/%s/dashboard/preview/%s?kiosk&ref=%s", cfg.Name, path, ref)
 	// fmt.Printf("RENDER: http://localhost:3000/render/%s\n", url)
 
 	renderContext := identity.WithRequester(context.Background(), id)
