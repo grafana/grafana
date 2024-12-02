@@ -50,6 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
     palette: css({
       height: '70vh',
+      maxHeight: 650,
       width: '100%',
       maxWidth: 800,
       margin: '32px auto',
