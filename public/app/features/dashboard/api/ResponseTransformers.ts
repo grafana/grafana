@@ -7,6 +7,7 @@ import {
   defaultDashboardV2Spec,
   defaultTimeSettingsSpec,
   PanelQueryKind,
+  QueryVariableKind,
   TransformationKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';

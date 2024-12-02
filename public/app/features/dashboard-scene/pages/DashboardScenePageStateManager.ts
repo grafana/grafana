@@ -17,6 +17,7 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -272,6 +273,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
                 ...params.variables,
               }
             : undefined;
+
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
@@ -372,7 +374,32 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    throw new Error('Method not implemented.');
+    const fromCache = this.getSceneFromCache(options.uid);
+
+    // TODO[schema v2]: Dashboard scene state is incorrectly save, it must use the resourceVersion
+    if (fromCache && fromCache.state.version === rsp?.metadata.resourceVersion) {
+      return fromCache;
+    }
+
+    if (rsp) {
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+
+      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
+      if (options.uid) {
+        this.setSceneCache(options.uid, scene);
+      }
+
+      return scene;
+    }
+
+    // TOD)[schema v2]: Figure out redirect utl
+    // if (rsp?.redirectUri) {
+    //   const newUrl = locationUtil.stripBaseFromUrl(rsp.redirectUri);
+    //   locationService.replace(newUrl);
+    //   return null;
+    // }
+
+    throw new Error('Dashboard not found');
   }
 
   reloadDashboard(params: LoadDashboardOptions['params']): Promise<void> {
@@ -385,7 +412,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     urlFolderUid,
     params,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
-    debugger;
     // throw new Error('Method not implemented.');
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
     if (!params) {
@@ -462,7 +488,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-let stateManager: DashboardScenePageStateManager | null = null;
+const managers: {
+  v1?: DashboardScenePageStateManager;
+  v2?: DashboardScenePageStateManagerV2;
+} = {
+  v1: undefined,
+  v2: undefined,
+};
 
 export function getDashboardScenePageStateManager(
   v: 'v2'
@@ -472,9 +504,16 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
 export function getDashboardScenePageStateManager(
   v?: 'v2'
 ): DashboardScenePageStateManagerLike<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>> {
-  if (!stateManager) {
-    stateManager = new DashboardScenePageStateManager({});
-  }
+  if (v === 'v2') {
+    if (!managers.v2) {
+      managers.v2 = new DashboardScenePageStateManagerV2({});
+    }
 
-  return stateManager;
+    return managers.v2;
+  } else {
+    if (!managers.v1) {
+      managers.v1 = new DashboardScenePageStateManager({});
+    }
+    return managers.v1;
+  }
 }
