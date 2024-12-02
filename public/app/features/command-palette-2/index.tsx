@@ -1,18 +1,104 @@
 /* eslint @grafana/no-untranslated-strings: 0 */
 /* eslint @grafana/no-border-radius-literal: 0 */
 
-import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
-import { getModKey } from 'app/core/utils/browser';
+import impressionSrv from 'app/core/services/impression_srv';
+
+import { getGrafanaSearcher } from '../search/service';
 
 // interface CommandPalette2Props {}
 
+interface CommandPaletteDividerItem {
+  type: 'divider';
+  title: string;
+}
+
+interface CommandPaletteResultItem {
+  type: 'result';
+  title: string;
+  subtitle?: string;
+  parentTitle?: string;
+  icon: IconName;
+}
+
+type CommandPaletteItem = CommandPaletteDividerItem | CommandPaletteResultItem;
+
+const FAKE_DASH_DIVIDER: CommandPaletteDividerItem = { type: 'divider', title: 'Dashboards' };
+const FAKE_DASH_ITEMS: CommandPaletteItem[] = [
+  { type: 'result', title: 'Dashboards squad', icon: 'apps', parentTitle: 'UI experiments' },
+  {
+    type: 'result',
+    title: 'Dashboard with adhoc filtering',
+    icon: 'apps',
+    parentTitle: 'Grafana Frontend Division',
+  },
+  { type: 'result', title: 'Cloud Logs Export Insights', icon: 'apps', parentTitle: 'GrafanaCloud' },
+  {
+    type: 'result',
+    title: 'Usage Insights - 6 - Loki Query Fair Usage Drilldown',
+    icon: 'apps',
+    parentTitle: 'GrafanaCloud',
+  },
+  { type: 'result', title: 'USE Method / Node', icon: 'apps', parentTitle: 'Linux Node' },
+];
+
+const ITEMS: CommandPaletteItem[] = [
+  { type: 'divider', title: 'Folders' },
+  { type: 'result', title: 'Dashboards squad', icon: 'folder-open', parentTitle: 'Grafana Frontend Division' },
+];
+
+const MAX_RECENT_DASHBOARDS = 10;
+
 export function CommandPalette2() {
   const styles = useStyles2(getStyles);
-  const modKey = useMemo(() => getModKey(), []);
+  const modKey = '⌘'; /*useMemo(() => getModKey(), []);*/
+
+  const [items, setItems] = useState<CommandPaletteItem[]>(ITEMS);
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
+      const resultsDataFrame = await getGrafanaSearcher().search({
+        kind: ['dashboard'],
+        limit: MAX_RECENT_DASHBOARDS,
+        uid: recentUids,
+      });
+
+      const recentResults = resultsDataFrame.view.toArray().map((v) => {
+        const item: CommandPaletteResultItem = {
+          type: 'result',
+          title: v.name,
+          icon: 'apps',
+        };
+
+        return item;
+      });
+
+      setItems([...ITEMS, FAKE_DASH_DIVIDER, ...recentResults, ...FAKE_DASH_ITEMS]);
+    })();
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    if (inputValue.length === 0) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      if (item.type === 'divider') {
+        return true;
+      }
+
+      return (
+        item.title.toLowerCase().includes(inputValue.toLowerCase()) ||
+        item.subtitle?.toLowerCase().includes(inputValue.toLowerCase())
+      );
+    });
+  }, [inputValue, items]);
 
   return (
     <Portal>
@@ -20,15 +106,64 @@ export function CommandPalette2() {
         <div className={styles.palette}>
           <div className={styles.inputBarCell}>
             <Icon name="search" />
-            <input className={styles.searchInput} type="text" placeholder="Search for anything..." />
+
+            <input
+              className={styles.searchInput}
+              onChange={(ev) => setInputValue(ev.currentTarget.value)}
+              value={inputValue}
+              type="text"
+              placeholder="Search for anything..."
+            />
+
             <div className={styles.shortcut}>
               <span className={styles.keyboardKey}>{modKey}</span>
               <span className={styles.keyboardKey}>K</span>
             </div>
           </div>
-          <div className={styles.mainCell}>main</div>
-          <div className={styles.detailCell}>detail</div>
-          <div className={styles.footerCell}>footer</div>
+
+          <div className={styles.mainCell}>
+            {filteredItems.map((item, idx) => {
+              if (item.type === 'divider') {
+                return (
+                  <div key={idx} className={styles.dividerItem}>
+                    <div>{item.title}</div>
+                    <div className={styles.dividerDivider} />
+                  </div>
+                );
+              }
+
+              return (
+                <div key={idx} className={styles.resultItem}>
+                  <Icon name={item.icon} />
+                  <div className={styles.resultTitle}>{item.title}</div>
+                  {item.subtitle && <div className={styles.resultSubtitle}>{item.subtitle}</div>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* <div className={styles.detailCell}>detail</div> */}
+
+          <div className={styles.footerCell}>
+            <div className={styles.shortcut}>
+              <span className={styles.keyboardKey}>
+                <Icon name="arrow-up" />
+              </span>
+              <span className={styles.keyboardKey}>
+                <Icon name="arrow-down" />
+              </span>
+              <span>to navigate</span>
+            </div>
+
+            <div className={styles.footerDivider} />
+
+            <div className={styles.shortcut}>
+              <span className={cx(styles.keyboardKey, styles.keyboardMultiKey)}>esc</span>
+              <span>
+                Close <strong>Launchpad</strong>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </Portal>
@@ -54,7 +189,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       maxWidth: 800,
       margin: '32px auto',
-      overflow: 'hidden',
+      overflow: 'auto',
       borderRadius: 10,
       background: 'rgba(0, 0, 0, 0.80)',
       display: 'grid',
@@ -72,18 +207,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       gridTemplateAreas: gt([
         // no prettier
         ['input', 'input'],
-        ['main', 'detail'],
+        ['main', 'main'],
         ['footer', 'footer'],
       ]),
     }),
 
     inputBarCell: css({
+      position: 'sticky',
+      top: 0,
       padding: theme.spacing(3),
       gridArea: 'input',
       background: 'rgba(0, 0, 0, 0.40)',
       display: 'grid',
       gridTemplateColumns: 'auto 1fr auto',
       gap: theme.spacing(2),
+      backdropFilter: 'blur(2px)',
+      alignItems: 'center',
     }),
 
     searchInput: css({
@@ -91,7 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     mainCell: css({
-      padding: 8,
+      padding: theme.spacing(1, 3),
       gridArea: 'main',
       // background: 'green',
     }),
@@ -103,9 +242,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     footerCell: css({
-      padding: 8,
+      position: 'sticky',
+      bottom: 0,
+      padding: theme.spacing(2, 3),
       gridArea: 'footer',
       background: '#16161E80',
+      display: 'flex',
+      gap: theme.spacing(2),
+      backdropFilter: 'blur(2px)',
+    }),
+
+    footerDivider: css({
+      height: '100%',
+      width: 1,
+      background: '#20202A',
     }),
 
     shortcut: css({
@@ -118,9 +268,40 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: 24,
       height: 24,
       borderRadius: 6,
-      border: `1px solid #2D2D32`,
-      background: '#0D0D0F',
+      border: `1px solid #20202A`,
+      color: '#9D9DAD',
+      background: 'black',
       textAlign: 'center',
+      fontSize: 13,
+    }),
+
+    keyboardMultiKey: css({
+      width: 'unset',
+      padding: '0 8px',
+    }),
+
+    resultItem: css({
+      padding: theme.spacing(2, 0),
+      color: '#9898A4',
+      display: 'flex',
+      fontSize: 14,
+    }),
+
+    dividerItem: css({
+      textTransform: 'uppercase',
+      display: 'flex',
+      gap: theme.spacing(3),
+      alignItems: 'center',
+      color: '#4F4F5D',
+      fontWeight: 500,
+      fontSize: 12,
+    }),
+
+    dividerDivider: css({
+      height: 1,
+      width: '100%',
+      background: 'rgba(44, 44, 57, 0.40)',
+      flex: 1,
     }),
   };
 };
