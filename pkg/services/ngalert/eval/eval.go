@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"runtime/debug"
 	"sort"
@@ -125,7 +126,7 @@ func NewEvaluatorFactory(
 // EvaluateAlert takes the results of an executed query and evaluates it as an alert rule, returning alert states that the query produces.
 func EvaluateAlert(queryResponse *backend.QueryDataResponse, condition models.Condition, now time.Time) Results {
 	execResults := queryDataResponseToExecutionResults(condition, queryResponse)
-	return evaluateExecutionResult(execResults, now)
+	return evaluateExecutionResult(execResults, condition.Semantics, now)
 }
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -660,7 +661,7 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 //   - Nonzero (e.g 1.2, NaN) results in Alerting.
 //   - nil results in noData.
 //   - unsupported Frame schemas results in Error.
-func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results {
+func evaluateExecutionResult(execResults ExecutionResults, semantics models.EvaluationSemantics, ts time.Time) Results {
 	evalResults := make([]Result, 0)
 
 	appendErrRes := func(e error) {
@@ -736,7 +737,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-		r := buildResult(f, val, ts)
+		r := buildResult(f, val, ts, semantics)
 
 		evalResults = append(evalResults, r)
 	}
@@ -762,7 +763,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	return evalResults
 }
 
-func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
+func buildResult(f *data.Frame, val *float64, ts time.Time, semantics models.EvaluationSemantics) Result {
 	r := Result{
 		Instance:           f.Fields[0].Labels,
 		EvaluatedAt:        ts,
@@ -770,15 +771,39 @@ func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
 		EvaluationString:   extractEvalString(f),
 		Values:             extractValues(f),
 	}
-	switch {
-	case val == nil:
-		r.State = NoData
-	case *val == 0:
-		r.State = Normal
+	switch semantics {
+	case models.EvaluationSemanticsPrometheus:
+		r.State = evaluatePrometheus(val)
+	case models.EvaluationSemanticsGrafana:
+		r.State = evaluateGrafana(val)
+	case models.EvaluationSemanticsUndefined:
+		r.State = evaluateGrafana(val)
 	default:
-		r.State = Alerting
+		return NewResultFromError(fmt.Errorf("unsupported evaluation semantics: %s", semantics), ts, 0)
 	}
 	return r
+}
+
+func evaluateGrafana(val *float64) State {
+	switch {
+	case val == nil:
+		return NoData
+	case *val == 0:
+		return Normal
+	default:
+		return Alerting
+	}
+}
+
+func evaluatePrometheus(val *float64) State {
+	switch {
+	case val == nil:
+		return Normal
+	case math.IsNaN(*val):
+		return Normal
+	default:
+		return Alerting
+	}
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
