@@ -15,6 +15,8 @@ weight: 250
 
 Team LBAC is available in private preview on Grafana Cloud for Loki created with basic authentication. Loki datasources for Team LBAC can only be created, provisioning is currently not available.
 
+You cannot configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the setting of the provisioned data source in a new data source as described in [LBAC Configuration for New Loki Data Source](https://grafana.com/docs/grafana/latest/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/#task-1-lbac-configuration-for-new-loki-data-source) and then add the LBAC configuration to the new data source.
+
 ## Before you begin
 
 To be able to use Team LBAC rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
