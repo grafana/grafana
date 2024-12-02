@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -349,7 +350,11 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 
-	return srv.updateAlertRulesInGroup(c, groupKey, rules)
+	changes, errResponse := srv.updateAlertRulesInGroup(c.Req.Context(), c, groupKey, rules)
+	if errResponse != nil {
+		return errResponse
+	}
+	return response.JSON(http.StatusAccepted, changes)
 }
 
 func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {
@@ -368,10 +373,10 @@ func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) er
 // All operations are performed in a single transaction
 //
 //nolint:gocyclo
-func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) (*apimodels.UpdateRuleGroupResponse, *response.NormalResponse) {
 	var finalChanges *store.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
-	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
+	err := srv.xactManager.InTransaction(ctx, func(tranCtx context.Context) error {
 		id, _ := c.SignedInUser.GetInternalID()
 		userNamespace := c.SignedInUser.GetIdentityType()
 
@@ -388,18 +393,18 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return nil
 		}
 
-		err = srv.authz.AuthorizeRuleChanges(c.Req.Context(), c.SignedInUser, groupChanges)
+		err = srv.authz.AuthorizeRuleChanges(ctx, c.SignedInUser, groupChanges)
 		if err != nil {
 			return err
 		}
 
-		if err := validateQueries(c.Req.Context(), groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
+		if err := validateQueries(ctx, groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
 			return err
 		}
 
 		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
 		if len(newOrUpdatedNotificationSettings) > 0 {
-			dbConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(c.Req.Context(), groupChanges.GroupKey.OrgID)
+			dbConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(ctx, groupChanges.GroupKey.OrgID)
 			if err != nil {
 				return fmt.Errorf("failed to get latest configuration: %w", err)
 			}
@@ -415,7 +420,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			}
 		}
 
-		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {
+		if err := verifyProvisionedRulesNotAffected(ctx, srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {
 			return err
 		}
 
@@ -486,51 +491,51 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 	if err != nil {
 		if errors.As(err, &errutil.Error{}) {
-			return response.Err(err)
+			return nil, response.Err(err)
 		} else if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
-			return ErrResp(http.StatusNotFound, err, "failed to update rule group")
+			return nil, ErrResp(http.StatusNotFound, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrAlertRuleFailedValidation) || errors.Is(err, errProvisionedResource) {
-			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
+			return nil, ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
-			return ErrResp(http.StatusForbidden, err, "")
+			return nil, ErrResp(http.StatusForbidden, err, "")
 		} else if errors.Is(err, store.ErrOptimisticLock) {
-			return ErrResp(http.StatusConflict, err, "")
+			return nil, ErrResp(http.StatusConflict, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
+		return nil, ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
+	if srv.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
 		// This isn't strictly necessary since the alertmanager config is periodically synced.
-		err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, dbConfig)
+		err := srv.amRefresher.ApplyConfig(ctx, groupKey.OrgID, dbConfig)
 		if err != nil {
 			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.SignedInUser.GetOrgID(), "error", err)
 		}
 	}
 
-	return changesToResponse(finalChanges)
+	return changesToResponse(finalChanges), nil
 }
 
-func changesToResponse(finalChanges *store.GroupDelta) response.Response {
-	body := apimodels.UpdateRuleGroupResponse{
+func changesToResponse(finalChanges *store.GroupDelta) *apimodels.UpdateRuleGroupResponse {
+	result := &apimodels.UpdateRuleGroupResponse{
 		Message: "rule group updated successfully",
 		Created: make([]string, 0, len(finalChanges.New)),
 		Updated: make([]string, 0, len(finalChanges.Update)),
 		Deleted: make([]string, 0, len(finalChanges.Delete)),
 	}
 	if finalChanges.IsEmpty() {
-		body.Message = "no changes detected in the rule group"
+		result.Message = "no changes detected in the rule group"
 	} else {
 		for _, r := range finalChanges.New {
-			body.Created = append(body.Created, r.UID)
+			result.Created = append(result.Created, r.UID)
 		}
 		for _, r := range finalChanges.Update {
-			body.Updated = append(body.Updated, r.Existing.UID)
+			result.Updated = append(result.Updated, r.Existing.UID)
 		}
 		for _, r := range finalChanges.Delete {
-			body.Deleted = append(body.Deleted, r.UID)
+			result.Deleted = append(result.Deleted, r.UID)
 		}
 	}
-	return response.JSON(http.StatusAccepted, body)
+	return result
 }
 
 func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
@@ -723,4 +728,96 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 		}
 	}
 	return byGroupKey, totalGroups, nil
+}
+
+func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroupsConfig apimodels.PostableRuleGroupPrometheusConfig, namespaceUID string) response.Response {
+	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return toNamespaceErrorResponse(err)
+	}
+
+	promConverter := prom.NewConverter(prom.Config{})
+
+	// checkGroupLimits is skipped
+
+	promGroups := convertToPrometheusModels(ruleGroupsConfig.Groups)
+	grafanaGroups, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroups)
+	if err != nil {
+		return response.Err(err)
+	}
+
+	changes := apimodels.UpdateRuleGroupResponse{
+		Created: []string{},
+		Updated: []string{},
+		Deleted: []string{},
+	}
+
+	var errResponse *response.NormalResponse
+
+	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		for _, grafanaGroup := range grafanaGroups {
+			groupKey := ngmodels.AlertRuleGroupKey{
+				OrgID:        c.SignedInUser.GetOrgID(),
+				NamespaceUID: namespace.UID,
+				RuleGroup:    grafanaGroup.Title,
+			}
+
+			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
+			for _, r := range grafanaGroup.Rules {
+				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
+					AlertRule: r,
+				})
+			}
+
+			srv.log.FromContext(ctx).Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
+			var gc *apimodels.UpdateRuleGroupResponse
+			gc, errResponse = srv.updateAlertRulesInGroup(ctx, c, groupKey, rules)
+			if errResponse == nil {
+				changes.Message = gc.Message
+				changes.Created = append(changes.Created, gc.Created...)
+				changes.Updated = append(changes.Updated, gc.Updated...)
+				changes.Deleted = append(changes.Deleted, gc.Deleted...)
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return response.Err(err)
+	}
+
+	if errResponse != nil {
+		return errResponse
+	}
+
+	return response.JSON(http.StatusAccepted, changes)
+}
+
+func convertToPrometheusModels(groups []apimodels.PostablePrometheusRuleGroup) []prom.PrometheusRuleGroup {
+	result := make([]prom.PrometheusRuleGroup, 0, len(groups))
+
+	for _, group := range groups {
+		rules := make([]prom.PrometheusRule, 0, len(group.Rules))
+		for _, r := range group.Rules {
+			rule := prom.PrometheusRule{
+				Alert:         r.Alert,
+				Expr:          r.Expr,
+				For:           r.For,
+				KeepFiringFor: r.KeepFiringFor,
+				Labels:        r.Labels,
+				Annotations:   r.Annotations,
+				Record:        r.Record,
+			}
+			rules = append(rules, rule)
+		}
+
+		promGroup := prom.PrometheusRuleGroup{
+			Name:  group.Name,
+			Rules: rules,
+		}
+		result = append(result, promGroup)
+	}
+
+	return result
 }

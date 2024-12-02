@@ -73,6 +73,20 @@ import (
 //       403: ForbiddenError
 //
 
+// swagger:route POST /ruler/grafana/prometheus/config/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesPrometheusConfig
+//
+// Creates or updates a rule group in Prometheus format.
+//
+//     Consumes:
+//     - application/yaml
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
+
 // swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
@@ -628,4 +642,34 @@ type UpdateRuleGroupResponse struct {
 	Created []string `json:"created,omitempty"`
 	Updated []string `json:"updated,omitempty"`
 	Deleted []string `json:"deleted,omitempty"`
+}
+
+// swagger:parameters RoutePostNameGrafanaRulesPrometheusConfig
+type RoutePostNameGrafanaRulesPrometheusConfigParams struct {
+	// in: path
+	Namespace string
+	// in:body
+	Body PostableRuleGroupPrometheusConfig
+}
+
+// swagger:model
+type PostableRuleGroupPrometheusConfig struct {
+	Groups []PostablePrometheusRuleGroup `yaml:"groups" json:"groups"`
+}
+
+// swagger:model
+type PostablePrometheusRuleGroup struct {
+	Name  string                   `yaml:"name" json:"name"`
+	Rules []PostablePrometheusRule `yaml:"rules" json:"rules"`
+}
+
+// swagger:model
+type PostablePrometheusRule struct {
+	Alert         string            `yaml:"alert" json:"alert"`
+	Expr          string            `yaml:"expr" json:"expr"`
+	For           string            `yaml:"for" json:"for"`
+	KeepFiringFor string            `yaml:"keep_firing_for" json:"keep_firing_for"`
+	Labels        map[string]string `yaml:"labels" json:"labels"`
+	Annotations   map[string]string `yaml:"annotations" json:"annotations"`
+	Record        string            `yaml:"record" json:"record"`
 }
