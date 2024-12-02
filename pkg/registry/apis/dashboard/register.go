@@ -22,6 +22,13 @@ var (
 	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
 )
 
+func FeatureEnabled(features featuremgmt.FeatureToggles) bool {
+	return featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+		featuremgmt.FlagKubernetesDashboardsAPI,
+		featuremgmt.FlagProvisioning)
+}
+
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct{}
 
@@ -29,7 +36,7 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 ) *DashboardsAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) && !features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboardsAPI) {
+	if !FeatureEnabled(features) {
 		return nil // skip registration unless opting into experimental apis or dashboards in the k8s api
 	}
 	builder := &DashboardsAPIBuilder{}
