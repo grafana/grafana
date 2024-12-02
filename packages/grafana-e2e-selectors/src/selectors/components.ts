@@ -469,7 +469,7 @@ export const versionedComponents = {
     General: {
       content: {
         '11.1.0': 'data-testid Panel editor content',
-        '8.0.0': 'Panel editor content',        
+        '8.0.0': 'Panel editor content',
       },
     },
     OptionsPane: {
@@ -498,7 +498,7 @@ export const versionedComponents = {
     },
     toggleVizPicker: {
       '10.0.0': 'data-testid toggle-viz-picker',
-      '8.0.0': 'toggle-viz-picker',      
+      '8.0.0': 'toggle-viz-picker',
     },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
@@ -920,7 +920,7 @@ export const versionedComponents = {
   DataSourcePicker: {
     container: {
       '10.0.0': 'data-testid Data source picker select container',
-      '8.0.0': 'Data source picker select container',      
+      '8.0.0': 'Data source picker select container',
     },
     inputV2: {
       '10.1.0': 'data-testid Select a data source',
