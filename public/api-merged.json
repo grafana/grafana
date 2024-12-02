@@ -8607,30 +8607,6 @@
       }
     },
     "/scim/users/": {
-      "get": {
-        "tags": [
-          "users"
-        ],
-        "summary": "Fetches all users in UserSchema format.",
-        "operationId": "getUsers",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
       "post": {
         "tags": [
           "users"
