@@ -10,11 +10,11 @@ require (
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel v1.32.0
-	k8s.io/api v0.31.1
-	k8s.io/apimachinery v0.31.1
-	k8s.io/apiserver v0.31.1
-	k8s.io/client-go v0.31.1
-	k8s.io/component-base v0.31.1
+	k8s.io/api v0.31.3
+	k8s.io/apimachinery v0.31.3
+	k8s.io/apiserver v0.31.3
+	k8s.io/client-go v0.31.3
+	k8s.io/component-base v0.31.3
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1
