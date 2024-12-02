@@ -76,101 +76,66 @@ The data is converted as follows:
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-### Tooltip options
+### Heatmap options
 
-#### Tooltip mode
+#### Calculate from data
 
-When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
+This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel.
 
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
-- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the visualization.
+#### X Bucket
 
-Use an override to hide individual series from the tooltip.
+This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
 
-#### Show histogram (Y axis)
+#### Y Bucket
 
-When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
+This setting determines how the Y-axis is split into buckets.
 
-#### Show color scale
+#### Y Bucket scale
 
-When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
+Select one of the following Y-axis value scales:
 
-![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
+- **linear -** Linear scale.
+- **log (base 2) -** Logarithmic scale with base 2.
+- **log (base 10) -** Logarithmic scale with base 10.
+- **symlog -** Symlog scale.
 
-### Legend options
-
-Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
-
-### Axis options
-
-<!-- tba -->
-
-### Graph styles options
-
-<!-- tba -->
-
-### Standard options
-
-{{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Data links
-
-{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Value mappings
-
-{{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Thresholds 1
-
-{{< docs/shared lookup="visualizations/thresholds-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Thresholds 2
-
-{{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Field overrides
-
-{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Y Axes
+### Y Axis options
 
 Defines how the Y axis is displayed
 
-### Placement
+#### Placement
 
 - **Left** On the left
 - **Right** On the right
 - **Hidden** Hidden
 
-### Unit
+#### Unit
 
 Unit configuration
 
-### Decimals
+#### Decimals
 
 This setting determines decimal configuration.
 
-### Min/Max value
+#### Min/Max value
 
 This setting configures the axis range.
 
-### Axis width
+#### Axis width
 
 This setting configures the width for the axis.
 
-### Axis value
+#### Axis value
 
 This setting configures the axis value.
 
-### Reverse
+#### Reverse
 
 When selected, the axis appears in reverse order.
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
-## Colors
+### Colors
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket. The leftmost color on the spectrum represents the minimum count and the color on the right most side represents the maximum count. Some color schemes are automatically inverted when using the light theme.
 
@@ -186,40 +151,85 @@ You can also change the color mode to Opacity. In this case, the color will not 
       - **sqrt -** Power scale. Cell opacity calculated as `value ^ k`, where `k` is a configured **Exponent** value. If exponent is less than `1`, you will get a logarithmic scale. If exponent is greater than `1`, you will get an exponential scale. In case of `1`, scale will be the same as linear.
     - **Exponent -** value of the exponent, greater than `0`.
 
-### Start/end color from value
+#### Start/end color from value
 
 By default, Grafana calculates cell colors based on minimum and maximum bucket values. With Min and Max you can overwrite those values. Consider a bucket value as a Z-axis and Min and Max as Z-Min and Z-Max, respectively.
 
 - **Start -** Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
 - **End -** Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
 
-## Cell display
+### Cell display
 
 Use these settings to refine your visualization.
+
+### Tooltip options
+
+Tooltip options control the information overlay that appears when you hover over data points in the visualization.
+
+| Option                                  | Description                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [Tooltip mode](#tooltip-mode)           | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                   |
+| [Values sort order](#values-sort-order) | This option controls the order in which values are listed in a tooltip.                                                        |
+| [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display. |
+| Max width                               | Set the maximum width of the tooltip box.                                                                                      |
+| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                          |
+
+#### Tooltip mode
+
+When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
+
+- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden -** Do not display the tooltip when you interact with the visualization.
+
+Use an override to hide individual series from the tooltip.
+
+#### Values sort order
+
+When you set the **Tooltip mode** to **All**, the **Values sort order** option is displayed. This option controls the order in which values are listed in a tooltip. Choose from the following:
+
+- **None** - Grafana automatically sorts the values displayed in a tooltip.
+- **Ascending** - Values in the tooltip are listed from smallest to largest.
+- **Descending** - Values in the tooltip are listed from largest to smallest.
+
+#### Hover proximity
+
+Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.
+
+![Adding a hover proximity limit for tooltips](/media/docs/grafana/gif-grafana-10-4-hover-proximity.gif)
+
+#### Max width
+
+Set the maximum width of the tooltip box.
+
+#### Max height
+
+Set the maximum height of the tooltip box. The default is 600 pixels.
+
+<!-- >
+#### Show histogram (Y axis)
+
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.
+
+#### Show color scale
+
+When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
+
+![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
+-->
+
+### Legend options
+
+Choose whether you want to display the heatmap legend on the visualization by toggling the **Show legend** switch.
 
 ## Exemplars
 
 Set the color used to show exemplar data.
 
-## Heatmap options
+### Data links
 
-### Calculate from data
+{{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-This setting determines if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel.
+### Field overrides
 
-### X Bucket
-
-This setting determines how the X-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the X-axis.
-
-### Y Bucket
-
-This setting determines how the Y-axis is split into buckets.
-
-### Y Bucket scale
-
-Select one of the following Y-axis value scales:
-
-- **linear -** Linear scale.
-- **log (base 2) -** Logarithmic scale with base 2.
-- **log (base 10) -** Logarithmic scale with base 10.
-- **symlog -** Symlog scale.
+{{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
