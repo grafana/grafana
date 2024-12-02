@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, Alert } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ExpressionQuery, ExpressionQuerySettings, ReducerMode, reducerModes, reducerTypes } from '../types';
 
@@ -30,6 +31,10 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
   const onModeChanged = (value: SelectableValue<ReducerMode>) => {
     let newSettings: ExpressionQuerySettings;
     switch (value.value) {
+      case ReducerMode.Strict:
+        newSettings = { mode: ReducerMode.Strict };
+        break;
+
       case ReducerMode.ReplaceNonNumbers:
         let replaceWithNumber = 0;
         if (query.settings?.mode === ReducerMode.ReplaceNonNumbers) {
@@ -40,6 +45,7 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
           replaceWithValue: replaceWithNumber,
         };
         break;
+
       default:
         newSettings = {
           mode: value.value,
@@ -66,8 +72,30 @@ export const Reduce = ({ labelWidth = 'auto', onChange, refIds, query }: Props) 
     );
   };
 
+  const strictModeNotification = () => {
+    if (mode !== ReducerMode.Strict) {
+      return null;
+    }
+    return (
+      <Alert title={t('reduce.strictMode.title', 'Strict Mode Behaviour')} severity="info">
+        <Trans i18nKey="reduce.strictMode.description">
+          When <code>Reduce Strict mode</code> is used, the <code>fill(null)</code> function (InfluxQL) will result in{' '}
+          <code>NaN</code>.{' '}
+          <a
+            href="https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries/#sum"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            See the documentation for more details.
+          </a>
+        </Trans>
+      </Alert>
+    );
+  };
+
   return (
     <>
+      {strictModeNotification()}
       <InlineFieldRow>
         <InlineField label="Input" labelWidth={labelWidth}>
           <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={'auto'} />
