@@ -459,8 +459,13 @@ export const getExposedComponentPluginDependencies = (exposedComponentId: string
 // Returns a list of app plugin ids that are necessary to be loaded, based on the `dependencies.extensions`
 // metadata field. (For example the plugins that expose components that the app depends on.)
 // Heads up! This is a recursive function.
-export const getAppPluginDependencies = (pluginId: string): string[] => {
+export const getAppPluginDependencies = (pluginId: string, visited: string[] = []): string[] => {
   if (!config.apps[pluginId]) {
+    return [];
+  }
+
+  // Prevent infinite recursion (it would happen if there is a circular dependency between app plugins)
+  if (visited.includes(pluginId)) {
     return [];
   }
 
@@ -468,9 +473,14 @@ export const getAppPluginDependencies = (pluginId: string): string[] => {
     getAppPluginIdFromExposedComponentId
   );
 
-  return pluginIdDependencies.reduce((acc, pluginId) => {
-    return [...acc, ...getAppPluginDependencies(pluginId)];
-  }, pluginIdDependencies);
+  return (
+    pluginIdDependencies
+      .reduce((acc, _pluginId) => {
+        return [...acc, ...getAppPluginDependencies(_pluginId, [...visited, pluginId])];
+      }, pluginIdDependencies)
+      // We don't want the plugin to "depend on itself"
+      .filter((id) => id !== pluginId)
+  );
 };
 
 // Returns a list of app plugins that has to be loaded before core Grafana could finish the initialization.
