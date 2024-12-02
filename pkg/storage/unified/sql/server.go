@@ -3,18 +3,18 @@ package sql
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
@@ -54,41 +54,23 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	opts.Backend = store
 	opts.Diagnostics = store
 	opts.Lifecycle = store
-	opts.Search = resource.SearchOptions{
-		Resources: docs,
-	}
 
+	// Setup the search server
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
-		opts.Index = resource.NewResourceIndexServer(cfg, tracer)
+		opts.Search = resource.SearchOptions{
+			Backend: search.NewBleveBackend(search.BleveOptions{
+				Root:          filepath.Join(cfg.DataPath, "unified-search", "bleve"),
+				FileThreshold: 10,  // fewer than X items will use a memory index
+				BatchSize:     500, // This is the batch size for how many objects to add to the index at once
+			}, tracer, reg),
+			Resources:     docs,
+			WorkerThreads: 5, // from cfg?
+		}
 	}
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
 		return nil, err
-	}
-
-	// Initialize the indexer if one is configured
-	if opts.Index != nil {
-		// TODO: Create a proper identity for the indexer
-		orgId := int64(1)
-		ctx = identity.WithRequester(ctx, &identity.StaticRequester{
-			Type:           claims.TypeServiceAccount, // system:apiserver
-			UserID:         1,
-			OrgID:          int64(1),
-			Name:           "admin",
-			Login:          "admin",
-			OrgRole:        identity.RoleAdmin,
-			IsGrafanaAdmin: true,
-			Permissions: map[int64]map[string][]string{
-				orgId: {
-					"*": {"*"}, // all resources, all scopes
-				},
-			},
-		})
-		_, err = rs.(resource.ResourceIndexer).Index(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return rs, nil

@@ -314,10 +314,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows) (*dashboardRow, error) {
 
 func getUserID(v sql.NullString, id sql.NullInt64) string {
 	if v.Valid && v.String != "" {
-		return identity.NewTypedIDString(claims.TypeUser, v.String)
+		return claims.NewTypeID(claims.TypeUser, v.String)
 	}
 	if id.Valid && id.Int64 == -1 {
-		return identity.NewTypedIDString(claims.TypeProvisioning, "")
+		return claims.NewTypeID(claims.TypeProvisioning, "")
 	}
 	return ""
 }

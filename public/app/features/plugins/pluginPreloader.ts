@@ -1,11 +1,9 @@
 import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
-import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { PluginExtensionRegistries } from './extensions/registry/types';
-import { importPluginModule } from './plugin_loader';
+import { importAppPlugin } from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
@@ -15,67 +13,28 @@ export type PluginPreloadResult = {
   addedLinkConfigs?: PluginExtensionAddedLinkConfig[];
 };
 
-export async function preloadPlugins(
-  apps: AppPluginConfig[] = [],
-  registries: PluginExtensionRegistries,
-  eventName = 'frontend_plugins_preload'
-) {
-  startMeasure(eventName);
-  const promises = apps.filter((config) => config.preload).map((config) => preload(config));
-  const preloadedPlugins = await Promise.all(promises);
+const preloadedAppPlugins = new Set<string>();
+const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
+const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
 
-  for (const preloadedPlugin of preloadedPlugins) {
-    if (preloadedPlugin.error) {
-      console.error(`[Plugins] Skip loading extensions for "${preloadedPlugin.pluginId}" due to an error.`);
-      continue;
-    }
+export async function preloadPlugins(apps: AppPluginConfig[] = []) {
+  const appPluginsToPreload = apps.filter(isNotYetPreloaded);
 
-    registries.exposedComponentsRegistry.register({
-      pluginId: preloadedPlugin.pluginId,
-      configs: preloadedPlugin.exposedComponentConfigs,
-    });
-    registries.addedComponentsRegistry.register({
-      pluginId: preloadedPlugin.pluginId,
-      configs: preloadedPlugin.addedComponentConfigs || [],
-    });
-    registries.addedLinksRegistry.register({
-      pluginId: preloadedPlugin.pluginId,
-      configs: preloadedPlugin.addedLinkConfigs || [],
-    });
+  if (appPluginsToPreload.length === 0) {
+    return;
   }
 
-  stopMeasure(eventName);
+  markAsPreloaded(apps);
+
+  await Promise.all(appPluginsToPreload.map(preload));
 }
 
-async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
-  const { path, version, id: pluginId, loadingStrategy } = config;
+async function preload(config: AppPluginConfig) {
   try {
-    startMeasure(`frontend_plugin_preload_${pluginId}`);
-    const { plugin } = await importPluginModule({
-      path,
-      version,
-      isAngular: config.angular.detected,
-      pluginId,
-      loadingStrategy,
-      moduleHash: config.moduleHash,
-    });
-    const { exposedComponentConfigs = [], addedComponentConfigs = [], addedLinkConfigs = [] } = plugin;
+    const meta = await getPluginSettings(config.id);
 
-    // Fetching meta-information for the preloaded app plugin and caching it for later.
-    // (The function below returns a promise, but it's not awaited for a reason: we don't want to block the preload process, we would only like to cache the result for later.)
-    getPluginSettings(pluginId);
-
-    return { pluginId, exposedComponentConfigs, addedComponentConfigs, addedLinkConfigs };
+    await importAppPlugin(meta);
   } catch (error) {
-    console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return {
-      pluginId,
-      error,
-      exposedComponentConfigs: [],
-      addedComponentConfigs: [],
-      addedLinkConfigs: [],
-    };
-  } finally {
-    stopMeasure(`frontend_plugin_preload_${pluginId}`);
+    console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
   }
 }
