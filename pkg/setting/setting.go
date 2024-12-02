@@ -196,7 +196,6 @@ type Cfg struct {
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
 	HideAngularDeprecation           []string
-	PluginInstallToken               string
 	ForwardHostEnvVars               []string
 	PreinstallPlugins                []InstallPlugin
 	PreinstallPluginsAsync           bool

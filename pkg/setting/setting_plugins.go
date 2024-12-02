@@ -91,8 +91,5 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
-	// Installation token for managed plugins
-	cfg.PluginInstallToken = pluginsSection.Key("install_token").MustString("")
-
 	return nil
 }
