@@ -145,6 +145,7 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 		NamespaceUID: namespaceUID,
 		Title:        title,
 		Data:         []models.AlertQuery{queryNode},
+		Condition:    "A",
 		NoDataState:  noDataState,
 		ExecErrState: execErrState,
 		Annotations:  rule.Annotations,
@@ -159,14 +160,6 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 			From:   "A",
 			Metric: rule.Record,
 		}
-		result.Condition = "A" // todo: is this needed?
-	} else {
-		conditionNode, err := createAlertConditionNode(*p.cfg.FromTimeRange)
-		if err != nil {
-			return models.AlertRule{}, err
-		}
-		result.Data = append(result.Data, conditionNode)
-		result.Condition = "B"
 	}
 
 	return result, nil
@@ -210,55 +203,6 @@ func createAlertQueryNode(datasourceUID, expr string, fromTimeRange time.Duratio
 		RefID:         "A",
 		RelativeTimeRange: models.RelativeTimeRange{
 			From: models.Duration(fromTimeRange),
-			To:   0,
-		},
-	}, nil
-}
-
-func createAlertConditionNode(fromTimeRange time.Duration) (models.AlertQuery, error) {
-	modelData := map[string]interface{}{
-		"datasource": map[string]interface{}{
-			"type": "__expr__",
-			"uid":  "__expr__",
-		},
-		"conditions": []interface{}{
-			map[string]interface{}{
-				"evaluator": map[string]interface{}{
-					"params": []interface{}{0},
-					"type":   "gt",
-				},
-				"operator": map[string]interface{}{
-					"type": "and",
-				},
-				"query": map[string]interface{}{
-					"params": []interface{}{"B"},
-				},
-				"reducer": map[string]interface{}{
-					"params": []interface{}{},
-					"type":   "last",
-				},
-				"type": "query",
-			},
-		},
-		"intervalMs":    1000,
-		"expression":    "A",
-		"legendFormat":  "__auto",
-		"maxDataPoints": 43200,
-		"refId":         "B",
-		"type":          "threshold",
-	}
-
-	modelJSON, err := json.Marshal(modelData)
-	if err != nil {
-		return models.AlertQuery{}, err
-	}
-
-	return models.AlertQuery{
-		DatasourceUID: "__expr__",
-		Model:         modelJSON,
-		RefID:         "B",
-		RelativeTimeRange: models.RelativeTimeRange{
-			From: models.Duration(fromTimeRange), // TODO: is it needed?
 			To:   0,
 		},
 	}, nil
