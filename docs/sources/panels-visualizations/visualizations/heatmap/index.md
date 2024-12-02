@@ -109,15 +109,11 @@ Defines how the y-axis is displayed
 | Min/Max value | These settings configure the axis range. |
 | Axis width | This setting configures the width for the axis. |
 | Axis value | This setting configures the axis value. |
-| [Reverse](#reverse) | This setting configures the width for the axis. |
-
-#### Reverse
-
-When selected, the axis appears in reverse order.
+| Reverse| When selected, the axis appears in reverse order. |
 
 <!-- prettier-ignore-end -->
 
-### Colors
+### Colors options
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket. The leftmost color on the spectrum represents the minimum count and the color on the right most side represents the maximum count. Some color schemes are automatically inverted when using the light theme.
 
@@ -151,7 +147,7 @@ By default, Grafana calculates cell colors based on minimum and maximum bucket v
 - **Start** - Minimum value using for cell color calculation. If the bucket value is less than Min, then it is mapped to the "minimum" color. The series min value is the default value.
 - **End** - Maximum value using for cell color calculation. If the bucket value is greater than Max, then it is mapped to the "maximum" color. The series max value is the default value.
 
-### Cell display
+### Cell display options
 
 Use these settings to refine your visualization.
 
