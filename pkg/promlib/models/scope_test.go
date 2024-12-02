@@ -106,6 +106,16 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expected:  `{__name__="http_requests_total",namespace="istio"}`,
 			expectErr: false,
 		},
+		{
+			name:  "merge label matchers from if multiple scopes are passed",
+			query: `http_requests_total{}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			},
+			expected:  `http_requests_total{namespace=~"default|kube-system"}`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -116,7 +126,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.expected, expr)
+				require.Equal(t, tt.expected, expr, tt.name)
 			}
 		})
 	}
