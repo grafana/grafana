@@ -411,6 +411,8 @@ export class MetricSelectSceneForWingman
 
     const children: SceneFlexItem[] = [];
 
+    const rowTemplate = showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+
     // TODO
     //    urlSync will pass the necessary params to this function.
     //    For now we can just set a default value for params and keep hacking.
@@ -427,9 +429,11 @@ export class MetricSelectSceneForWingman
     switch (displayAs) {
       case 'red_metrics':
         children.push(...renderAsRedMetricsDisplay());
+        this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'anomalies':
         children.push(...renderAsRedMetricsDisplay());
+        this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'default':
       default:
@@ -502,8 +506,6 @@ export class MetricSelectSceneForWingman
         children.push(panel);
       }
     }
-
-    const rowTemplate = showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
 
     this.state.body.setState({ children, autoRows: rowTemplate });
   }
