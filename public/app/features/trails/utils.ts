@@ -83,7 +83,7 @@ export function getDataSourceName(dataSourceUid: string) {
 
 export function getMetricName(metric?: string) {
   if (!metric) {
-    return 'Select metric';
+    return 'All metrics';
   }
 
   if (metric === LOGS_METRIC) {
