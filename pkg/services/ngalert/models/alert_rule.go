@@ -378,9 +378,9 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 	return labels
 }
 
-func (alertRule *AlertRule) IsPromStyle() bool {
+func (alertRule *AlertRule) GetEvalSemantics() EvaluationSemantics {
 	if len(alertRule.Data) != 1 {
-		return false
+		return EvaluationSemanticsGrafana
 	}
 
 	type datasource struct {
@@ -395,13 +395,13 @@ func (alertRule *AlertRule) IsPromStyle() bool {
 	err := json.Unmarshal(alertRule.Data[0].Model, &node)
 	if err != nil {
 		// Invalid model.
-		return false
+		return EvaluationSemanticsGrafana
 	}
 
 	if node.Datasource.Type == "prometheus" {
-		return true
+		return EvaluationSemanticsPrometheus
 	}
-	return false
+	return EvaluationSemanticsGrafana
 }
 
 func (alertRule *AlertRule) GetEvalCondition() Condition {
@@ -411,10 +411,7 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
-	semantics := EvaluationSemanticsGrafana
-	if alertRule.IsPromStyle() {
-		semantics = EvaluationSemanticsPrometheus
-	}
+	semantics := alertRule.GetEvalSemantics()
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
