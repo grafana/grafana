@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type muteTimeInterval struct {
@@ -167,9 +168,16 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 		return nil, fmt.Errorf("fetching alert rules: %w", err)
 	}
 
+	settingAlertRulesPaused := s.cfg.CloudMigration.AlertRulesState == setting.GMSAlertRulesPaused
+
 	provisionedAlertRules := make([]alertRule, 0, len(alertRules))
 
 	for _, rule := range alertRules {
+		isPaused := rule.IsPaused
+		if settingAlertRulesPaused {
+			isPaused = true
+		}
+
 		provisionedAlertRules = append(provisionedAlertRules, alertRule{
 			ID:                   rule.ID,
 			UID:                  rule.UID,
@@ -185,7 +193,7 @@ func (s *Service) getAlertRules(ctx context.Context, signedInUser *user.SignedIn
 			ExecErrState:         rule.ExecErrState.String(),
 			Annotations:          rule.Annotations,
 			Labels:               rule.Labels,
-			IsPaused:             rule.IsPaused,
+			IsPaused:             isPaused,
 			NotificationSettings: ngalertapi.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings),
 			Record:               ngalertapi.ApiRecordFromModelRecord(rule.Record),
 		})
