@@ -9,7 +9,7 @@ include .bingo/Variables.mk
 
 GO = go
 GO_VERSION = 1.23.1
-GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_LINT_FILES ?= $(shell $(GO) list -m -f '{{.Dir}}' | xargs -I{} sh -c 'test ! -f {}/.nolint && echo {}/...')
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
@@ -323,7 +323,7 @@ lint-go-diff: $(GOLANGCI_LINT)
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.toml
+		$(XARGSR) $(GOLANGCI_LINT) run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
