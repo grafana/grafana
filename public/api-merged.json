@@ -8762,8 +8762,8 @@
           "401": {
             "$ref": "#/responses/unauthorisedError"
           },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
