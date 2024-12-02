@@ -729,20 +729,18 @@ func (r *githubRepository) previewPullRequest(ctx context.Context, logger *slog.
 	}
 
 	// generate preview image for each dashboard if not removed
-	if r.Config().Spec.GitHub.GenerateDashboardPreviews {
-		for i, resource := range resources {
-			if resource.Action == "removed" {
-				continue
-			}
-
-			screenshotURL, err := r.renderer.RenderDashboardPreview(ctx, r, resource.Path, resource.Ref)
-			if err != nil {
-				return fmt.Errorf("render dashboard preview: %w", err)
-			}
-
-			resources[i].PreviewScreenshotURL = screenshotURL
-			logger.InfoContext(ctx, "dashboard preview screenshot created", "file", resource.Path, "url", screenshotURL)
+	for i, resource := range resources {
+		if resource.Action == "removed" {
+			continue
 		}
+
+		screenshotURL, err := r.renderer.RenderDashboardPreview(ctx, r, resource.Path, resource.Ref)
+		if err != nil {
+			return fmt.Errorf("render dashboard preview: %w", err)
+		}
+
+		resources[i].PreviewScreenshotURL = screenshotURL
+		logger.InfoContext(ctx, "dashboard preview screenshot created", "file", resource.Path, "url", screenshotURL)
 	}
 
 	// FIXME: we should not be compiling this all the time
