@@ -39,6 +39,7 @@ const getValuePillStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
     padding: theme.spacing(0.25),
     fontSize: theme.typography.bodySmall.fontSize,
+    flexShrink: 0,
   }),
 
   separator: css({

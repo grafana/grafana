@@ -36,8 +36,20 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     pillWrapper: css({
       display: 'inline-flex',
-      flexWrap: 'wrap',
+      flexWrap: 'nowrap',
       gap: theme.spacing(0.5),
+    }),
+    restNumber: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: theme.spacing(0, 1),
+      borderRadius: theme.shape.radius.default,
+      backgroundColor: theme.colors.background.secondary,
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
     }),
   };
 };
