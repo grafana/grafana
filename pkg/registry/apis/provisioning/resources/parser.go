@@ -148,7 +148,8 @@ func (r *FileParser) Parse(ctx context.Context, logger *slog.Logger, info *repos
 			}
 		}
 		linter := lint.NewDashboardLinter()
-		parsed.Lint, err = linter.Lint(ctx, raw)
+		// TODO: pass the config file
+		parsed.Lint, err = linter.Lint(ctx, nil, raw)
 		if err != nil {
 			parsed.Errors = append(parsed.Errors, err)
 		}

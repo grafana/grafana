@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/dashboard-linter/lint"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"gopkg.in/yaml.v2"
 )
 
 type DashboardLinter struct {
@@ -24,7 +25,11 @@ func NewDashboardLinter() *DashboardLinter {
 	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
-func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisioning.LintIssue, error) {
+func (l *DashboardLinter) ConfigPath() string {
+	return ".dashboard-lint"
+}
+
+func (l *DashboardLinter) Lint(ctx context.Context, cfg []byte, fileData []byte) ([]provisioning.LintIssue, error) {
 	var data specData
 	if err := json.Unmarshal(fileData, &data); err != nil {
 		return nil, fmt.Errorf("unmarshal file data into spec: %w", err)
@@ -38,6 +43,15 @@ func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisio
 	results, err := l.rules.Lint([]lint.Dashboard{dashboard})
 	if err != nil {
 		return nil, fmt.Errorf("failed to lint dashboard: %v", err)
+	}
+
+	if len(cfg) > 0 {
+		var lintCfg lint.ConfigurationFile
+		if err := yaml.Unmarshal(cfg, &lintCfg); err != nil {
+			return nil, fmt.Errorf("unmarshal linter config: %w", err)
+		}
+
+		results.Configure(&lintCfg)
 	}
 
 	byRule := results.ByRule()

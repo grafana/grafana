@@ -627,7 +627,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 var lintDashboardIssuesTemplate = `Hey there! 👋
 Grafana found some linting issues in this dashboard you may want to check:
 {{ range .}}
-{{ if eq .Severity 4 }}❌{{ else if eq .Severity 3 }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
+{{ if eq .Severity "error" }}❌{{ else if eq .Severity "warning" }}⚠️ {{ end }} [dashboard-linter/{{ .Rule }}](https://github.com/grafana/dashboard-linter/blob/main/docs/rules/{{ .Rule }}.md): {{ .Message }}.
 {{- end }}
 `
 
@@ -641,6 +641,17 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 
 	logger.InfoContext(ctx, "lint pull request")
 
+	// Load linter config
+	cfg, err := r.Read(ctx, logger, r.linter.ConfigPath(), ref)
+	switch {
+	case err == nil:
+		logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
+	case errors.Is(err, pgh.ErrResourceNotFound):
+		logger.InfoContext(ctx, "no linter config found")
+	default:
+		return fmt.Errorf("read linter config: %w", err)
+	}
+
 	// Clear all previous comments because we don't know if the files have changed
 	if err := r.gh.ClearAllPullRequestFileComments(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber); err != nil {
 		return fmt.Errorf("clear pull request comments: %w", err)
@@ -652,7 +663,7 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 		}
 
 		logger := logger.With("file", resource.Path)
-		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource); err != nil {
+		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, cfg); err != nil {
 			logger.ErrorContext(ctx, "failed to lint file", "error", err)
 		}
 	}
@@ -661,8 +672,12 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 }
 
 // lintPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource) error {
-	issues, err := r.linter.Lint(ctx, resource.Data)
+func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, cfg *FileInfo) error {
+	var cfgBytes []byte
+	if cfg != nil {
+		cfgBytes = cfg.Data
+	}
+	issues, err := r.linter.Lint(ctx, cfgBytes, resource.Data)
 	if err != nil {
 		return fmt.Errorf("lint file: %w", err)
 	}

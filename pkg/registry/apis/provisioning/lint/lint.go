@@ -7,5 +7,6 @@ import (
 )
 
 type Linter interface {
-	Lint(ctx context.Context, data []byte) ([]provisioning.LintIssue, error)
+	ConfigPath() string
+	Lint(ctx context.Context, cfg []byte, data []byte) ([]provisioning.LintIssue, error)
 }
