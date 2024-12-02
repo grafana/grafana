@@ -25,18 +25,9 @@ func TestGetAlertMuteTimings(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the mute timings", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
 		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		muteTimeIntervals, err := s.getAlertMuteTimings(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, muteTimeIntervals)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the mute timings", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -54,18 +45,8 @@ func TestGetNotificationTemplates(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the notification templates", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		notificationTemplates, err := s.getNotificationTemplates(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, notificationTemplates)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the notification templates", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -83,18 +64,8 @@ func TestGetContactPoints(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the contact points", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		contactPoints, err := s.getContactPoints(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, contactPoints)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the contact points", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{
 			OrgID: 1,
@@ -121,18 +92,8 @@ func TestGetNotificationPolicies(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the contact points", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		notificationPolicies, err := s.getNotificationPolicies(ctx, nil)
-		require.NoError(t, err)
-		require.Empty(t, notificationPolicies)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the contact points", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -155,18 +116,8 @@ func TestGetAlertRules(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is not enabled it returns nil", func(t *testing.T) {
+	t.Run("it returns the alert rules", func(t *testing.T) {
 		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations)
-
-		alertRules, err := s.getAlertRules(ctx, nil)
-		require.NoError(t, err)
-		require.Nil(t, alertRules)
-	})
-
-	t.Run("when the feature flag `onPremToCloudMigrationsAlerts` is enabled it returns the alert rules", func(t *testing.T) {
-		s := setUpServiceTest(t, false).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
@@ -184,7 +135,6 @@ func TestGetAlertRules(t *testing.T) {
 		}
 
 		s := setUpServiceTest(t, false, alertRulesState).(*Service)
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagOnPremToCloudMigrations, featuremgmt.FlagOnPremToCloudMigrationsAlerts)
 
 		user := &user.SignedInUser{OrgID: 1}
 
