@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -35,6 +36,12 @@ func TestIntegrationOpenTSDB(t *testing.T) {
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
+
+	stats := testEnv.SQLStore.GetEngine().DB().Stats()
+	assert.Equal(t, "max_open_conn", stats.MaxOpenConnections)
+	assert.Equal(t, "max_idle_closed", stats.MaxIdleClosed)
+	assert.Equal(t, "open_conn", stats.OpenConnections)
+	assert.Equal(t, "stats", stats)
 
 	u := testinfra.CreateUser(t, testEnv.SQLStore, testEnv.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
