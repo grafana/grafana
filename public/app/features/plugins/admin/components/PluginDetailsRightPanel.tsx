@@ -35,7 +35,9 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
                   <Text color="secondary">
                     <Trans i18nKey="plugins.details.labels.latestVersion">Latest version: </Trans>
                   </Text>
-                  <div className={styles.pluginVersionDetails}>{getLatestCompatibleVersion(plugin.details?.versions)?.version}</div>
+                  <div className={styles.pluginVersionDetails}>
+                    {getLatestCompatibleVersion(plugin.details?.versions)?.version}
+                  </div>
                 </Stack>
               );
             }
@@ -102,11 +104,10 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
   );
 }
 
-
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
     pluginVersionDetails: css({
       wordBreak: 'break-word',
     }),
-  }
+  };
 };
