@@ -73,11 +73,31 @@ func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFi
 func FiltersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matcher, error) {
 	filterMap := make(map[string]*labels.Matcher)
 
-	for _, filter := range append(scopeFilters, adhocFilters...) {
+	// scope filters are applied first
+	for _, filter := range scopeFilters {
 		matcher, err := filterToMatcher(filter)
 		if err != nil {
 			return nil, err
 		}
+
+		// when scopes have the same key, both values should be matched
+		// in prometheus that means using an regex with both values
+		if _, ok := filterMap[filter.Key]; ok {
+			filterMap[filter.Key].Value = filterMap[filter.Key].Value + "|" + matcher.Value
+			filterMap[filter.Key].Type = labels.MatchRegexp
+		} else {
+			filterMap[filter.Key] = matcher
+		}
+	}
+
+	// ad hoc filters are applied after scope filters
+	for _, filter := range adhocFilters {
+		matcher, err := filterToMatcher(filter)
+		if err != nil {
+			return nil, err
+		}
+
+		// when ad hoc filters have the same key, the last one should be used
 		filterMap[filter.Key] = matcher
 	}
 
