@@ -21,7 +21,7 @@ import (
 
 const tracingPrexfixBleve = "unified_search.bleve."
 
-var _ resource.SearchBackend = &bleveBackend{}
+var _ resource.SearchBackend = &BleveBackend{}
 var _ resource.ResourceIndex = &bleveIndex{}
 
 type BleveOptions struct {
@@ -36,7 +36,7 @@ type BleveOptions struct {
 	BatchSize int
 }
 
-type bleveBackend struct {
+type BleveBackend struct {
 	tracer trace.Tracer
 	log    *slog.Logger
 	opts   BleveOptions
@@ -46,8 +46,8 @@ type bleveBackend struct {
 	cacheMu sync.RWMutex
 }
 
-func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *bleveBackend {
-	b := &bleveBackend{
+func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Registerer) *BleveBackend {
+	b := &BleveBackend{
 		log:    slog.Default().With("logger", "bleve-backend"),
 		tracer: tracer,
 		cache:  make(map[resource.NamespacedResource]*bleveIndex),
@@ -55,14 +55,17 @@ func NewBleveBackend(opts BleveOptions, tracer trace.Tracer, reg prometheus.Regi
 	}
 
 	if reg != nil {
-		b.log.Info("TODO, register metrics collectors!")
+		err := reg.Register(NewBleveMetrics(opts.Root, b))
+		if err != nil {
+			b.log.Warn("failed to register metrics", "error", err)
+		}
 	}
 
 	return b
 }
 
 // This will return nil if the key does not exist
-func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
+func (b *BleveBackend) GetIndex(ctx context.Context, key resource.NamespacedResource) (resource.ResourceIndex, error) {
 	b.cacheMu.RLock()
 	defer b.cacheMu.RUnlock()
 
@@ -74,7 +77,7 @@ func (b *bleveBackend) GetIndex(ctx context.Context, key resource.NamespacedReso
 }
 
 // Build an index from scratch
-func (b *bleveBackend) BuildIndex(ctx context.Context,
+func (b *BleveBackend) BuildIndex(ctx context.Context,
 	key resource.NamespacedResource,
 
 	// When the size is known, it will be passed along here
@@ -107,8 +110,10 @@ func (b *bleveBackend) BuildIndex(ctx context.Context,
 		if err == nil {
 			b.log.Info("TODO, check last RV so we can see if the numbers have changed", "dir", dir)
 		}
+		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "file").Inc()
 	} else {
 		index, err = bleve.NewMemOnly(mapper)
+		IndexMetrics.IndexTenants.WithLabelValues(key.Namespace, "memory").Inc()
 	}
 	if err != nil {
 		return nil, err
@@ -283,6 +288,11 @@ func (b *bleveIndex) Search(
 		response.Facet[k] = f
 	}
 	return response, nil
+}
+
+func (b *bleveIndex) DocCount() (int, error) {
+	count, err := b.index.DocCount()
+	return int(count), err
 }
 
 // make sure the request key matches the index

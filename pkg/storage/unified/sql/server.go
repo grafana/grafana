@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -59,12 +58,12 @@ func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg,
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Search = resource.SearchOptions{
 			Backend: search.NewBleveBackend(search.BleveOptions{
-				Root:          filepath.Join(cfg.DataPath, "unified-search", "bleve"),
-				FileThreshold: 10,  // fewer than X items will use a memory index
-				BatchSize:     500, // This is the batch size for how many objects to add to the index at once
+				Root:          cfg.IndexPath,
+				FileThreshold: cfg.IndexFileThreshold, // fewer than X items will use a memory index
+				BatchSize:     cfg.IndexMaxBatchSize,  // This is the batch size for how many objects to add to the index at once
 			}, tracer, reg),
 			Resources:     docs,
-			WorkerThreads: 5, // from cfg?
+			WorkerThreads: cfg.IndexWorkers,
 		}
 	}
 
