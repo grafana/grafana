@@ -12,8 +12,6 @@ import {
   Field,
   getValueFormat,
   formattedValueToString,
-  durationToMilliseconds,
-  parseDuration,
   TransformationApplicabilityLevels,
   TimeRange,
 } from '@grafana/data';
@@ -26,7 +24,7 @@ import {
   HeatmapCalculationOptions,
 } from '@grafana/schema';
 
-import { niceLinearIncrs, niceTimeIncrs } from './utils';
+import { convertDurationToMilliseconds, niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
   /** the raw values will still exist in results after transformation */
@@ -329,7 +327,7 @@ export function calculateHeatmapFromData(
     xMode: xBucketsCfg.mode,
     xSize:
       xBucketsCfg.mode === HeatmapCalculationMode.Size
-        ? durationToMilliseconds(parseDuration(xBucketsCfg.value ?? ''))
+        ? convertDurationToMilliseconds(xBucketsCfg.value ?? '')
         : xBucketsCfg.value
           ? +xBucketsCfg.value
           : undefined,
