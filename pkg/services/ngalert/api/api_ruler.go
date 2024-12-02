@@ -730,7 +730,7 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroupsConfig apimodels.PostableRuleGroupPrometheusConfig, namespaceUID string) response.Response {
+func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, namespaceUID string) response.Response {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
@@ -740,52 +740,27 @@ func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContex
 
 	// checkGroupLimits is skipped
 
-	promGroups := convertToPrometheusModels(ruleGroupsConfig.Groups)
-	grafanaGroups, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroups)
+	promGroup := convertToPrometheusModels(ruleGroup)
+	grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
 	if err != nil {
 		return response.Err(err)
 	}
 
-	changes := apimodels.UpdateRuleGroupResponse{
-		Created: []string{},
-		Updated: []string{},
-		Deleted: []string{},
+	groupKey := ngmodels.AlertRuleGroupKey{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		NamespaceUID: namespace.UID,
+		RuleGroup:    grafanaGroup.Title,
 	}
 
-	var errResponse *response.NormalResponse
-
-	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
-		for _, grafanaGroup := range grafanaGroups {
-			groupKey := ngmodels.AlertRuleGroupKey{
-				OrgID:        c.SignedInUser.GetOrgID(),
-				NamespaceUID: namespace.UID,
-				RuleGroup:    grafanaGroup.Title,
-			}
-
-			rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
-			for _, r := range grafanaGroup.Rules {
-				rules = append(rules, &ngmodels.AlertRuleWithOptionals{
-					AlertRule: r,
-				})
-			}
-
-			srv.log.FromContext(ctx).Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
-			var gc *apimodels.UpdateRuleGroupResponse
-			gc, errResponse = srv.updateAlertRulesInGroup(ctx, c, groupKey, rules)
-			if errResponse == nil {
-				changes.Message = gc.Message
-				changes.Created = append(changes.Created, gc.Created...)
-				changes.Updated = append(changes.Updated, gc.Updated...)
-				changes.Deleted = append(changes.Deleted, gc.Deleted...)
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return response.Err(err)
+	rules := make([]*ngmodels.AlertRuleWithOptionals, 0, len(grafanaGroup.Rules))
+	for _, r := range grafanaGroup.Rules {
+		rules = append(rules, &ngmodels.AlertRuleWithOptionals{
+			AlertRule: r,
+		})
 	}
+
+	srv.log.FromContext(c.Req.Context()).Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
+	changes, errResponse := srv.updateAlertRulesInGroup(c.Req.Context(), c, groupKey, rules)
 
 	if errResponse != nil {
 		return errResponse
@@ -794,30 +769,23 @@ func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContex
 	return response.JSON(http.StatusAccepted, changes)
 }
 
-func convertToPrometheusModels(groups []apimodels.PostablePrometheusRuleGroup) []prom.PrometheusRuleGroup {
-	result := make([]prom.PrometheusRuleGroup, 0, len(groups))
-
-	for _, group := range groups {
-		rules := make([]prom.PrometheusRule, 0, len(group.Rules))
-		for _, r := range group.Rules {
-			rule := prom.PrometheusRule{
-				Alert:         r.Alert,
-				Expr:          r.Expr,
-				For:           r.For,
-				KeepFiringFor: r.KeepFiringFor,
-				Labels:        r.Labels,
-				Annotations:   r.Annotations,
-				Record:        r.Record,
-			}
-			rules = append(rules, rule)
+func convertToPrometheusModels(group apimodels.PostablePrometheusRuleGroup) prom.PrometheusRuleGroup {
+	rules := make([]prom.PrometheusRule, 0, len(group.Rules))
+	for _, r := range group.Rules {
+		rule := prom.PrometheusRule{
+			Alert:         r.Alert,
+			Expr:          r.Expr,
+			For:           r.For,
+			KeepFiringFor: r.KeepFiringFor,
+			Labels:        r.Labels,
+			Annotations:   r.Annotations,
+			Record:        r.Record,
 		}
-
-		promGroup := prom.PrometheusRuleGroup{
-			Name:  group.Name,
-			Rules: rules,
-		}
-		result = append(result, promGroup)
+		rules = append(rules, rule)
 	}
 
-	return result
+	return prom.PrometheusRuleGroup{
+		Name:  group.Name,
+		Rules: rules,
+	}
 }
