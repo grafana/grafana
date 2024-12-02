@@ -91,8 +91,11 @@ func (s *helloWorldSubresource) Connect(ctx context.Context, name string, opts r
 			}
 
 			// Show the result
-			w.Write([]byte(path))
-
+			_, err = w.Write([]byte(path))
+			if err != nil {
+				responder.Error(err)
+				return
+			}
 			return
 		}
 
