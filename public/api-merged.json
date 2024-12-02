@@ -8617,9 +8617,6 @@
           "200": {
             "$ref": "#/responses/okResponse"
           },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
           "401": {
             "$ref": "#/responses/unauthorisedError"
           },
@@ -8628,32 +8625,6 @@
           },
           "409": {
             "$ref": "#/responses/conflictError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/scim/users/:id": {
-      "get": {
-        "tags": [
-          "user"
-        ],
-        "summary": "Gets user by id.",
-        "operationId": "getUser",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
