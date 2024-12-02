@@ -11,7 +11,7 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { PromQuery } from '@grafana/prometheus';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -70,6 +70,7 @@ import {
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getTrailFor, limitAdhocProviders } from './utils';
+import { withWingman } from './wingman/wingman';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -670,11 +671,18 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 }
 
 export function getTopSceneFor(metric?: string) {
+  let topScene;
   if (metric) {
-    return new MetricScene({ metric: metric });
+    topScene = new MetricScene({ metric });
   } else {
-    return new MetricSelectScene({});
+    topScene = new MetricSelectScene({});
   }
+
+  if (config.featureToggles.exploreMetricsWingman) {
+    return withWingman(topScene);
+  }
+
+  return topScene;
 }
 
 function getVariableSet(

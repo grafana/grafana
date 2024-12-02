@@ -56,6 +56,7 @@ function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
+      width: '100%',
     }),
     sticky: css({
       display: 'flex',

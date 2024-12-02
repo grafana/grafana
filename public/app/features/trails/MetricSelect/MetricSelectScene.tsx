@@ -638,6 +638,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
     }),
     headingWrapper: css({
       marginBottom: theme.spacing(0.5),
