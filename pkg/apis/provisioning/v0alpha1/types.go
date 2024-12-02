@@ -149,6 +149,17 @@ type HelloWorld struct {
 	Whom string `json:"whom,omitempty"`
 }
 
+// The kubernetes action required when loading a given resource
+// +enum
+type ResourceAction string
+
+// ResourceAction values
+const (
+	ResourceActionCreate ResourceAction = "create"
+	ResourceActionUpdate ResourceAction = "update"
+	ResourceActionDelete ResourceAction = "delete"
+)
+
 // This is a container type for any resource type
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ResourceWrapper struct {
@@ -166,16 +177,60 @@ type ResourceWrapper struct {
 	// The modified time in the remote file system
 	Timestamp *metav1.Time `json:"timestamp,omitempty"`
 
-	// If errors exist, show them here
-	Errors []string `json:"errors,omitempty"`
-
 	// Different flavors of the same object
 	Resource ResourceObjects `json:"resource"`
+
+	// Lint results
+	Lint []LintIssue `json:"lint,omitempty"`
+
+	// If errors exist, show them here
+	Errors []string `json:"errors,omitempty"`
+}
+
+// The kubernetes action required when loading a given resource
+// +enum
+type LintSeverity string
+
+// ResourceAction values
+const (
+	LintSeverityExclude LintSeverity = "exclude"
+	LintSeverityQuiet   LintSeverity = "quiet"
+	LintSeverityWarning LintSeverity = "warning"
+	LintSeverityError   LintSeverity = "error"
+	LintSeverityFixed   LintSeverity = "fixed"
+)
+
+type LintIssue struct {
+	Severity LintSeverity `json:"severity"`
+	Rule     string       `json:"rule"`
+	Message  string       `json:"message"`
+}
+
+type ResourceType struct {
+	Group    string `json:"group,omitempty"`
+	Version  string `json:"version,omitempty"`
+	Kind     string `json:"kind,omitempty"`
+	Resource string `json:"resource,omitempty"`
+
+	// For non-k8s native formats, what did this start as
+	Classic ClassicFileType `json:"classic,omitempty"`
 }
 
 type ResourceObjects struct {
-	File   common.Unstructured `json:"file,omitempty"`
-	Store  common.Unstructured `json:"store,omitempty"`
+	// The identified type for this object
+	Type ResourceType `json:"type"`
+
+	// The resource from the repository with all modifications applied
+	// eg, the name, folder etc will all be applied to this object
+	File common.Unstructured `json:"file,omitempty"`
+
+	// The same value, currently saved in the grafana database
+	Existing common.Unstructured `json:"existing,omitempty"`
+
+	// The action required/used for dryRun
+	Action ResourceAction `json:"action,omitempty"`
+
+	// The value returned from a dryRun request
 	DryRun common.Unstructured `json:"dryRun,omitempty"`
 }
 

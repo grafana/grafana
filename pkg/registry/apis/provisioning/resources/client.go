@@ -5,10 +5,11 @@ import (
 	"errors"
 	"sync"
 
-	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
 )
 
 var ErrNoNamespace = errors.New("no namespace was given")
@@ -21,7 +22,7 @@ type ClientFactory struct {
 
 type namespacedClients struct {
 	client *DynamicClient
-	kinds  *KindsLookup
+	kinds  KindsLookup
 }
 
 func NewFactory(identities auth.BackgroundIdentityService) *ClientFactory {
@@ -35,7 +36,7 @@ func NewFactory(identities auth.BackgroundIdentityService) *ClientFactory {
 // The KindsLookup returned can be used to get a resource from a group, version, and kind.
 //
 // An empty namespace returns ErrNoNamespace. A namespace is always required.
-func (c *ClientFactory) New(ns string) (*DynamicClient, *KindsLookup, error) {
+func (c *ClientFactory) New(ns string) (*DynamicClient, KindsLookup, error) {
 	if ns == "" {
 		return nil, nil, ErrNoNamespace
 	}
@@ -60,10 +61,7 @@ func (c *ClientFactory) New(ns string) (*DynamicClient, *KindsLookup, error) {
 	}
 	nsClients = namespacedClients{
 		client: &DynamicClient{inner: client, namespace: ns},
-		kinds: &KindsLookup{
-			client: client,
-			kinds:  make(map[schema.GroupVersionKind]schema.GroupVersionResource),
-		},
+		kinds:  &StaticKindsLookup{},
 	}
 	c.clients[ns] = nsClients
 	return nsClients.client, nsClients.kinds, nil
@@ -82,37 +80,26 @@ func (c *DynamicClient) GetNamespace() string {
 // Fetches an interface for the given resource, in the namespace used to create the client.
 // The client cannot ever use another namespace. This is done to ensure that no accidental resource leaks occur.
 func (c *DynamicClient) Resource(resource schema.GroupVersionResource) dynamic.ResourceInterface {
+	if c.inner == nil {
+		return nil // this can happen in tests
+	}
 	return c.inner.Resource(resource).Namespace(c.namespace)
 }
 
-type KindsLookup struct {
-	client *dynamic.DynamicClient
-	kinds  map[schema.GroupVersionKind]schema.GroupVersionResource
-	kindMu sync.Mutex
+type KindsLookup interface {
+	Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool)
 }
+type StaticKindsLookup struct{}
 
-func (c *KindsLookup) Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool) {
-	c.kindMu.Lock()
-	defer c.kindMu.Unlock()
-
-	gvr, ok := c.kinds[gvk]
-	if !ok {
-		ok = true
-		switch gvk.Kind {
-		case "Dashboard":
-			gvr = gvk.GroupVersion().WithResource("dashboards")
-		case "Playlist":
-			gvr = gvk.GroupVersion().WithResource("playlists")
-		case "Folder":
-			gvr = gvk.GroupVersion().WithResource(folder.RESOURCE)
-		default:
-			ok = false
-		}
-		// TODO... use the client to get the resource!
-		if ok {
-			c.kinds[gvk] = gvr
-		}
+func (c *StaticKindsLookup) Resource(gvk schema.GroupVersionKind) (schema.GroupVersionResource, bool) {
+	switch gvk.Kind {
+	case "Dashboard":
+		return gvk.GroupVersion().WithResource("dashboards"), true
+	case "Playlist":
+		return gvk.GroupVersion().WithResource("playlists"), true
+	case "Folder":
+		return gvk.GroupVersion().WithResource(folder.RESOURCE), true
+	default:
 	}
-
-	return gvr, ok
+	return gvk.GroupVersion().WithResource(""), false
 }
