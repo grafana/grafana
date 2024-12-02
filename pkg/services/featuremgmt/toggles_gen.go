@@ -906,4 +906,8 @@ const (
 	// FlagAlertingNotificationsStepMode
 	// Enables simplified step mode in the notifications section
 	FlagAlertingNotificationsStepMode = "alertingNotificationsStepMode"
+
+	// FlagEasyIssueReportButton
+	// Enables a button to send reports from the Grafana UI
+	FlagEasyIssueReportButton = "easyIssueReportButton"
 )

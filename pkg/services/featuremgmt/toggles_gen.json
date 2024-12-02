@@ -1244,6 +1244,19 @@
     },
     {
       "metadata": {
+        "name": "easyIssueReportButton",
+        "resourceVersion": "1733157534811",
+        "creationTimestamp": "2024-12-02T16:38:54Z"
+      },
+      "spec": {
+        "description": "Enables a button to send reports from the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-01-24T09:43:44Z"
