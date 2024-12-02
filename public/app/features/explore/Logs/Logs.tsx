@@ -52,7 +52,7 @@ import {
 import { mapMouseEventToMode } from '@grafana/ui/src/components/VizLegend/utils';
 import { Trans } from 'app/core/internationalization';
 import store from 'app/core/store';
-import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRows } from 'app/features/logs/components/LogRows';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
@@ -651,49 +651,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef.current = onClose;
   };
 
-  const getPreviousLog = useCallback((row: LogRowModel, allLogs: LogRowModel[]) => {
-    for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
-      if (allLogs[i].timeEpochMs > row.timeEpochMs) {
-        return allLogs[i];
-      }
-    }
-
-    return null;
-  }, []);
-
-  const getPermalinkRange = useCallback(
-    (row: LogRowModel) => {
-      const range = {
-        from: new Date(absoluteRange.from).toISOString(),
-        to: new Date(absoluteRange.to).toISOString(),
-      };
-      if (!config.featureToggles.logsInfiniteScrolling) {
-        return range;
-      }
-
-      // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
-      // Look for the previous sibling log, and use its timestamp
-      const allLogs = logRows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
-      const prevLog = getPreviousLog(row, allLogs);
-
-      if (row.timeEpochMs > absoluteRange.to && !prevLog) {
-        // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
-        // This only happens when you scroll into the future and you want to share the first log of the list
-        return {
-          from: new Date(absoluteRange.from).toISOString(),
-          // Slide 1ms otherwise it's very likely to be omitted in the results
-          to: new Date(row.timeEpochMs + 1).toISOString(),
-        };
-      }
-
-      return {
-        from: new Date(absoluteRange.from).toISOString(),
-        to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
-      };
-    },
-    [absoluteRange.from, absoluteRange.to, getPreviousLog, logRows]
-  );
-
   const onPermalinkClick = async (row: LogRowModel) => {
     // this is an extra check, to be sure that we are not
     // creating permalinks for logs without an id-field.
@@ -709,7 +666,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       ...panelState,
       logs: { id: row.uid, visualisationType: visualisationType ?? getDefaultVisualisationType(), displayedFields },
     };
-    urlState.range = getPermalinkRange(row);
+    urlState.range = getLogsPermalinkRange(row, logRows, absoluteRange);
 
     // append changed urlState to baseUrl
     const serializedState = serializeStateToUrlParam(urlState);
