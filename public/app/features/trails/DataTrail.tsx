@@ -70,6 +70,7 @@ import {
   VAR_OTEL_RESOURCES,
 } from './shared';
 import { getTrailFor, limitAdhocProviders } from './utils';
+import { MetricSelectSceneForWingman } from './wingman/MetricSelectSceneForWingman';
 import { withWingman } from './wingman/wingman';
 
 export interface DataTrailState extends SceneObjectState {
@@ -671,18 +672,15 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 }
 
 export function getTopSceneFor(metric?: string) {
-  let topScene;
   if (metric) {
-    topScene = new MetricScene({ metric });
+    return new MetricScene({ metric: metric });
   } else {
-    topScene = new MetricSelectScene({});
+    if (config.featureToggles.exploreMetricsWingman) {
+      return withWingman(new MetricSelectSceneForWingman({}));
+    } else {
+      return new MetricSelectScene({});
+    }
   }
-
-  if (config.featureToggles.exploreMetricsWingman) {
-    return withWingman(topScene);
-  }
-
-  return topScene;
 }
 
 function getVariableSet(
