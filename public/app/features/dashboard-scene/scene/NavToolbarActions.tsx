@@ -26,6 +26,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
 
+import { AnnoKeyRepoName } from '../../apiserver/types';
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
@@ -114,6 +115,16 @@ export function ToolbarActions({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.DashNav.publicDashboardTag}
           />
         );
+      },
+    });
+  }
+
+  if (meta.k8s?.annotations?.[AnnoKeyRepoName]) {
+    toolbarActions.push({
+      group: 'icon-actions',
+      condition: true,
+      render: () => {
+        return <Badge color="green" text="Provisioned" key="provisioned-dashboard-button-badge" />;
       },
     });
   }
@@ -548,6 +559,15 @@ export function ToolbarActions({ dashboard }: Props) {
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
+          {!meta.k8s?.annotations?.[AnnoKeyRepoName] && (
+            <Menu.Item
+              label="Save to repository"
+              icon="github"
+              onClick={() => {
+                dashboard.openSaveDrawer({ saveProvisioned: true });
+              }}
+            />
+          )}
         </Menu>
       );
 
@@ -573,6 +593,24 @@ export function ToolbarActions({ dashboard }: Props) {
             />
           </Dropdown>
         </ButtonGroup>
+      );
+    },
+  });
+
+  // Will open a schema v2 editor drawer. Only available with dashboardSchemaV2 feature toggle on.
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: uid && config.featureToggles.dashboardSchemaV2,
+    render: () => {
+      return (
+        <ToolbarButton
+          tooltip={'Edit dashboard v2 schema'}
+          icon={<Icon name="brackets-curly" size="lg" type="default" />}
+          key="schema-v2-button"
+          onClick={() => {
+            dashboard.openV2SchemaEditor();
+          }}
+        />
       );
     },
   });

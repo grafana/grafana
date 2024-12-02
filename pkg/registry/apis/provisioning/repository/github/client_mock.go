@@ -13,6 +13,52 @@ type MockClient struct {
 	mock.Mock
 }
 
+// BranchExists provides a mock function with given fields: ctx, owner, repository, branchName
+func (_m *MockClient) BranchExists(ctx context.Context, owner string, repository string, branchName string) (bool, error) {
+	ret := _m.Called(ctx, owner, repository, branchName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BranchExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (bool, error)); ok {
+		return rf(ctx, owner, repository, branchName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) bool); ok {
+		r0 = rf(ctx, owner, repository, branchName)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branchName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ClearAllPullRequestFileComments provides a mock function with given fields: ctx, owner, repository, number
+func (_m *MockClient) ClearAllPullRequestFileComments(ctx context.Context, owner string, repository string, number int) error {
+	ret := _m.Called(ctx, owner, repository, number)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearAllPullRequestFileComments")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) error); ok {
+		r0 = rf(ctx, owner, repository, number)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // CreateBranch provides a mock function with given fields: ctx, owner, repository, sourceBranch, branchName
 func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository string, sourceBranch string, branchName string) error {
 	ret := _m.Called(ctx, owner, repository, sourceBranch, branchName)
@@ -31,26 +77,6 @@ func (_m *MockClient) CreateBranch(ctx context.Context, owner string, repository
 	return r0
 }
 
-func (_m *MockClient) BranchExists(ctx context.Context, owner string, repository string, branchName string) (bool, error) {
-	ret := _m.Called(ctx, owner, repository, branchName)
-	if len(ret) == 0 {
-		panic("no return value specified for BranchExists")
-	}
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) bool); ok {
-		r0 = rf(ctx, owner, repository, branchName)
-	} else {
-		r0 = ret.Bool(0)
-	}
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, branchName)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
 // CreateFile provides a mock function with given fields: ctx, owner, repository, path, branch, message, content
 func (_m *MockClient) CreateFile(ctx context.Context, owner string, repository string, path string, branch string, message string, content []byte) error {
 	ret := _m.Called(ctx, owner, repository, path, branch, message, content)
@@ -62,6 +88,42 @@ func (_m *MockClient) CreateFile(ctx context.Context, owner string, repository s
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, []byte) error); ok {
 		r0 = rf(ctx, owner, repository, path, branch, message, content)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CreatePullRequestComment provides a mock function with given fields: ctx, owner, repository, number, body
+func (_m *MockClient) CreatePullRequestComment(ctx context.Context, owner string, repository string, number int, body string) error {
+	ret := _m.Called(ctx, owner, repository, number, body)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePullRequestComment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, string) error); ok {
+		r0 = rf(ctx, owner, repository, number, body)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// CreatePullRequestFileComment provides a mock function with given fields: ctx, owner, repository, number, comment
+func (_m *MockClient) CreatePullRequestFileComment(ctx context.Context, owner string, repository string, number int, comment FileComment) error {
+	ret := _m.Called(ctx, owner, repository, number, comment)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePullRequestFileComment")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, FileComment) error); ok {
+		r0 = rf(ctx, owner, repository, number, comment)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -180,6 +242,73 @@ func (_m *MockClient) GetContents(ctx context.Context, owner string, repository 
 	return r0, r1, r2
 }
 
+// GetTree provides a mock function with given fields: ctx, owner, repository, ref, recursive
+func (_m *MockClient) GetTree(ctx context.Context, owner string, repository string, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+	ret := _m.Called(ctx, owner, repository, ref, recursive)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTree")
+	}
+
+	var r0 []RepositoryContent
+	var r1 bool
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bool) ([]RepositoryContent, bool, error)); ok {
+		return rf(ctx, owner, repository, ref, recursive)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, bool) []RepositoryContent); ok {
+		r0 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]RepositoryContent)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, bool) bool); ok {
+		r1 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string, bool) error); ok {
+		r2 = rf(ctx, owner, repository, ref, recursive)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// ListPullRequestFiles provides a mock function with given fields: ctx, owner, repository, number
+func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, repository string, number int) ([]CommitFile, error) {
+	ret := _m.Called(ctx, owner, repository, number)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPullRequestFiles")
+	}
+
+	var r0 []CommitFile
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) ([]CommitFile, error)); ok {
+		return rf(ctx, owner, repository, number)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) []CommitFile); ok {
+		r0 = rf(ctx, owner, repository, number)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]CommitFile)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int) error); ok {
+		r1 = rf(ctx, owner, repository, number)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListWebhooks provides a mock function with given fields: ctx, owner, repository
 func (_m *MockClient) ListWebhooks(ctx context.Context, owner string, repository string) ([]WebhookConfig, error) {
 	ret := _m.Called(ctx, owner, repository)
@@ -233,8 +362,7 @@ func (_m *MockClient) UpdateFile(ctx context.Context, owner string, repository s
 func NewMockClient(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockClient {
+}) *MockClient {
 	mock := &MockClient{}
 	mock.Mock.Test(t)
 

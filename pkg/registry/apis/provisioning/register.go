@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"path/filepath"
 	"slices"
 
@@ -29,8 +30,10 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/auth"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/lint"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -51,9 +54,10 @@ type ProvisioningAPIBuilder struct {
 	getter            rest.Getter
 	localFileResolver *repository.LocalFolderResolver
 	logger            *slog.Logger
-	client            *resourceClient
 	renderer          *renderer
+	client            *resources.ClientFactory
 	ghFactory         github.ClientFactory
+	identities        auth.BackgroundIdentityService
 }
 
 // This constructor will be called when building a multi-tenant apiserveer
@@ -73,9 +77,10 @@ func NewProvisioningAPIBuilder(
 		localFileResolver: local,
 		logger:            slog.Default().With("logger", "provisioning-api-builder"),
 		webhookSecretKey:  webhookSecreteKey,
-		client:            newResourceClient(identities),
+		client:            resources.NewFactory(identities),
 		features:          features,
 		ghFactory:         ghFactory,
+		identities:        identities,
 		renderer: &renderer{
 			render:     render,
 			identities: identities,
@@ -93,7 +98,9 @@ func RegisterAPIService(
 	render rendering.Service,
 	ghFactory github.ClientFactory,
 ) *ProvisioningAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) && !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(features.IsEnabledGlobally(featuremgmt.FlagProvisioning) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
+		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs)) {
 		return nil // skip registration unless opting into experimental apis OR the feature specifically
 	}
 	builder := NewProvisioningAPIBuilder(&repository.LocalFolderResolver{
@@ -160,28 +167,32 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		logger:        b.logger.With("connector", "hello_world"),
 	}
 
-	exportConnector := &exportConnector{
-		repoGetter: b,
-		client:     b.client,
-		logger:     b.logger.With("connector", "export"),
-	}
-
 	storage := map[string]rest.Storage{}
 	storage[provisioning.RepositoryResourceInfo.StoragePath()] = repositoryStorage
 	// Can be used by kubectl: kubectl --kubeconfig grafana.kubeconfig patch Repository local-devenv --type=merge --subresource=status --patch='status: {"currentGitCommit": "hello"}'
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 	storage[provisioning.RepositoryResourceInfo.StoragePath("hello")] = helloWorld
 	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = &webhookConnector{
-		getter: b,
-		client: b.client.identities,
-		logger: b.logger.With("connector", "webhook"),
+		getter:         b,
+		client:         b.identities,
+		resourceClient: b.client,
+		logger:         b.logger.With("connector", "webhook"),
 	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = &filesConnector{
 		getter: b,
 		client: b.client,
 		logger: b.logger.With("connector", "files"),
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = exportConnector
+	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "import"),
+	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("export")] = &exportConnector{
+		repoGetter: b,
+		client:     b.client,
+		logger:     b.logger.With("connector", "export"),
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -207,7 +218,13 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		return repository.NewGitHub(ctx, r, b.ghFactory), nil
+		baseURL, err := url.Parse(b.urlProvider(r.GetNamespace()))
+		if err != nil {
+			return nil, fmt.Errorf("invalid base URL: %w", err)
+		}
+
+		linter := lint.NewDashboardLinter()
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linter), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:
@@ -279,31 +296,21 @@ func (b *ProvisioningAPIBuilder) beginUpdate(ctx context.Context, obj, old runti
 }
 
 func (b *ProvisioningAPIBuilder) ensureRepositoryFolderExists(ctx context.Context, cfg *provisioning.Repository) error {
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) && !b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerTestingWithExperimentalAPIs) {
-		// Nothing to do: we can't use the folders API.
-		return nil
-	}
-
 	if cfg.Spec.Folder == "" {
 		// The root folder can't not exist, so we don't have to do anything.
 		return nil
 	}
 
-	client, err := b.client.Client(cfg.GetNamespace())
+	client, _, err := b.client.New(cfg.GetNamespace())
 	if err != nil {
 		return err
 	}
-
-	lookup := newKindsLookup(client)
-	folderResource, ok := lookup.Resource(schema.GroupVersionKind{
-		Group:   "folder.grafana.app",
-		Version: "v0alpha1",
-		Kind:    "Folder",
+	// FIXME: make sure folders are actually enabled in the apiserver.
+	folderIface := client.Resource(schema.GroupVersionResource{
+		Group:    "folder.grafana.app",
+		Version:  "v0alpha1",
+		Resource: "folders",
 	})
-	if !ok {
-		return fmt.Errorf("failed to get resource client of the Folder kind")
-	}
-	folderIface := client.Resource(folderResource).Namespace(cfg.GetNamespace())
 
 	_, err = folderIface.Get(ctx, cfg.Spec.Folder, metav1.GetOptions{})
 	if err == nil {
@@ -352,6 +359,7 @@ func (b *ProvisioningAPIBuilder) afterDelete(obj runtime.Object, opts *metav1.De
 		return
 	}
 }
+
 func (b *ProvisioningAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
 	obj := a.GetObject()
 
@@ -465,6 +473,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 
+	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+
 	// TODO: we might want to register some extras for subresources here.
 	sub := oas.Paths.Paths[repoprefix+"/hello"]
 	if sub != nil && sub.Get != nil {
@@ -488,46 +498,68 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
-	// hide the version with no path
-	delete(oas.Paths.Paths, repoprefix+"/files")
+	ref := &spec3.Parameter{
+		ParameterProps: spec3.ParameterProps{
+			Name:    "ref",
+			In:      "query",
+			Example: "",
+			Examples: map[string]*spec3.Example{
+				"": {
+					ExampleProps: spec3.ExampleProps{
+						Summary: "The default",
+					},
+				},
+				"branch": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "my-branch",
+						Summary: "Select branch",
+					},
+				},
+				"commit": {
+					ExampleProps: spec3.ExampleProps{
+						Value:   "7f7cc2153",
+						Summary: "Commit hash (or prefix)",
+					},
+				},
+			},
+			Description: "branch or commit hash",
+			Schema:      spec.StringProperty(),
+			Required:    false,
+		},
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/import"]
+	if sub != nil && sub.Post != nil {
+		sub.Post.Parameters = []*spec3.Parameter{ref}
+	}
+
+	// Show a special list command
+	sub = oas.Paths.Paths[repoprefix+"/files"]
+	if sub != nil {
+		delete(oas.Paths.Paths, repoprefix+"/files")
+		oas.Paths.Paths[repoprefix+"/files/"] = sub // add the trailing final slash
+		sub.Get.Description = "Get the files and content hash"
+		sub.Get.Summary = "File listing"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+		sub.Post = nil
+		sub.Put = nil
+		sub.Delete = nil
+
+		// Replace the content type for this response
+		mt := sub.Get.Responses.StatusCodeResponses[200].Content
+		s := defs["github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1.FileList"].Schema
+		mt["*/*"].Schema = &s
+	}
 
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
-		ref := &spec3.Parameter{
-			ParameterProps: spec3.ParameterProps{
-				Name:    "ref",
-				In:      "query",
-				Example: "",
-				Examples: map[string]*spec3.Example{
-					"": {
-						ExampleProps: spec3.ExampleProps{
-							Summary: "The default",
-						},
-					},
-					"branch": {
-						ExampleProps: spec3.ExampleProps{
-							Value:   "my-branch",
-							Summary: "Select branch",
-						},
-					},
-					"commit": {
-						ExampleProps: spec3.ExampleProps{
-							Value:   "7f7cc2153",
-							Summary: "Commit hash (or prefix)",
-						},
-					},
-				},
-				Description: "optional branch or commit hash",
-				Schema:      spec.StringProperty(),
-				Required:    false,
-			}}
-
 		sub.Get.Description = "Read value from upstream repository"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
 		// Add message to the OpenAPI spec
-		comment := []*spec3.Parameter{ref,
+		comment := []*spec3.Parameter{
+			ref,
 			{
 				ParameterProps: spec3.ParameterProps{
 					Name:        "message",
@@ -585,7 +617,8 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 kind: Dashboard
 spec:
   title: Sample dashboard
-`},
+`,
+									},
 								},
 								"playlist": {
 									ExampleProps: spec3.ExampleProps{
@@ -597,7 +630,8 @@ spec:
   items:
   - type: dashboard_by_tag
     value: panel-tests
-`},
+`,
+									},
 								},
 							},
 						},

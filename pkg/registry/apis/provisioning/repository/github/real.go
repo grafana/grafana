@@ -51,6 +51,41 @@ func (r *realImpl) GetContents(ctx context.Context, owner, repository, path, ref
 	}
 }
 
+func (r *realImpl) GetTree(ctx context.Context, owner, repository, ref string, recursive bool) ([]RepositoryContent, bool, error) {
+	tree, _, err := r.gh.Git.GetTree(ctx, owner, repository, ref, recursive)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if !errors.As(err, &ghErr) {
+			return nil, false, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, false, ErrServiceUnavailable
+		}
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, false, ErrResourceNotFound
+		}
+		return nil, false, err
+	}
+
+	entries := make([]RepositoryContent, 0, len(tree.Entries))
+	for _, te := range tree.Entries {
+		rrc := &realRepositoryContent{
+			real: &github.RepositoryContent{
+				Path: te.Path,
+				Size: te.Size,
+				SHA:  te.SHA,
+			},
+		}
+		if te.GetType() == "tree" {
+			rrc.real.Type = github.String("dir")
+		} else {
+			rrc.real.Type = te.Type
+		}
+		entries = append(entries, rrc)
+	}
+	return entries, tree.GetTruncated(), nil
+}
+
 func (r *realImpl) CreateFile(ctx context.Context, owner, repository, path, branch, message string, content []byte) error {
 	if strings.Contains(path, "..") {
 		return ErrPathTraversalDisallowed
@@ -275,6 +310,89 @@ func (r *realImpl) EditWebhook(ctx context.Context, owner, repository string, cf
 	return err
 }
 
+func (r *realImpl) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
+	commitFiles, _, err := r.gh.PullRequests.ListFiles(ctx, owner, repository, number, nil)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, ErrServiceUnavailable
+		}
+		return nil, err
+	}
+
+	ret := make([]CommitFile, 0, len(commitFiles))
+	for _, f := range commitFiles {
+		ret = append(ret, f)
+	}
+
+	return ret, nil
+}
+
+func (r *realImpl) CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error {
+	comment := &github.IssueComment{
+		Body: &body,
+	}
+
+	if _, _, err := r.gh.Issues.CreateComment(ctx, owner, repository, number, comment); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return ErrServiceUnavailable
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (r *realImpl) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
+	commentRequest := &github.PullRequestComment{
+		Body:     &comment.Content,
+		CommitID: &comment.Ref,
+		Path:     &comment.Path,
+		Position: &comment.Position,
+	}
+
+	if _, _, err := r.gh.PullRequests.CreateComment(ctx, owner, repository, number, commentRequest); err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return ErrServiceUnavailable
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (r *realImpl) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
+	comments, _, err := r.gh.PullRequests.ListComments(ctx, owner, repository, number, nil)
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return ErrServiceUnavailable
+		}
+		return err
+	}
+
+	userLogin, _, err := r.gh.Users.Get(ctx, "")
+	if err != nil {
+		return fmt.Errorf("get user: %w", err)
+	}
+
+	for _, c := range comments {
+		// skip if comments were not created by us
+		if c.User.GetLogin() != userLogin.GetLogin() {
+			continue
+		}
+
+		if _, err := r.gh.PullRequests.DeleteComment(ctx, owner, repository, c.GetID()); err != nil {
+			return fmt.Errorf("delete comment: %w", err)
+		}
+	}
+
+	return nil
+}
+
 type realRepositoryContent struct {
 	real *github.RepositoryContent
 }
@@ -299,4 +417,16 @@ func (c realRepositoryContent) GetPath() string {
 
 func (c realRepositoryContent) GetSHA() string {
 	return c.real.GetSHA()
+}
+
+func (c realRepositoryContent) GetSize() int64 {
+	if c.real.Size != nil {
+		return int64(*c.real.Size)
+	}
+	if c.real.Content != nil {
+		if c, err := c.real.GetContent(); err == nil {
+			return int64(len(c))
+		}
+	}
+	return 0
 }

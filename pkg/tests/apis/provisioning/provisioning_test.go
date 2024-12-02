@@ -32,8 +32,9 @@ func TestIntegrationProvisioning(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,      // Required to start the example service
-			featuremgmt.FlagKubernetesFolders, // Required for tests that deal with folders.
+			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagKubernetesFolders,                    // Required for tests that deal with folders.
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // !!!
 		},
 	})
 	helper.GetEnv().GitHubMockFactory.Constructor = func(ttc github.TestingTWithCleanup) github.Client {
@@ -96,8 +97,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"namespaced": true,
 					"kind": "ResourceWrapper",
 					"verbs": [
-						"create",
-						"get"
+						"create"
 					]
 				},
 				{
@@ -119,6 +119,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"kind": "HelloWorld",
 					"verbs": [
 						"get"
+					]
+				},
+				{
+					"name": "repositories/import",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "ResourceWrapper",
+					"verbs": [
+						"create"
 					]
 				},
 				{
@@ -196,6 +205,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 					"branchWorkflow": true,
 					"generateDashboardPreviews": true,
 					"owner": "grafana",
+					"pullRequestLinter": true,
 					"repository": "git-ui-sync-demo",
 					"token": "github_pat_dummy",
 					"webhookSecret": "dummyWebhookSecret",

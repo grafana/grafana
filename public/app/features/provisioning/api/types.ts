@@ -98,3 +98,10 @@ export type GetFileArg = {
   path: string;
   ref?: string;
 };
+
+export type ListFilesApiResponse = {
+  apiVersion?: string;
+  files?: any[];
+  kind?: string;
+  metadata?: any;
+};

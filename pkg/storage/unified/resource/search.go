@@ -78,11 +78,16 @@ type searchSupport struct {
 	log         *slog.Logger
 	storage     StorageBackend
 	search      SearchBackend
+	access      authz.AccessClient
 	builders    *builderCache
 	initWorkers int
 }
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
+var (
+	_ ResourceIndexServer = (*searchSupport)(nil)
+)
+
+func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.AccessClient, blob BlobSupport, tracer trace.Tracer) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -93,6 +98,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	}
 
 	support = &searchSupport{
+		access:      access,
 		tracer:      tracer,
 		storage:     storage,
 		search:      opts.Backend,
@@ -111,6 +117,46 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, blob BlobSuppo
 	}
 
 	return support, err
+}
+
+// History implements ResourceIndexServer.
+func (s *searchSupport) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
+	return nil, fmt.Errorf("not implemented yet... likely should not be the serarch server")
+}
+
+// Origin implements ResourceIndexServer.
+func (s *searchSupport) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
+	return nil, fmt.Errorf("TBD.. rename to repository")
+}
+
+// Search implements ResourceIndexServer.
+func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
+	nsr := NamespacedResource{
+		Group:     req.Options.Key.Group,
+		Namespace: req.Options.Key.Namespace,
+		Resource:  req.Options.Key.Resource,
+	}
+	idx, err := s.getOrCreateIndex(ctx, nsr)
+	if err != nil {
+		return &ResourceSearchResponse{
+			Error: AsErrorResult(err),
+		}, nil
+	}
+
+	// Get the federated indexes
+	federate := make([]ResourceIndex, len(req.Federated))
+	for i, f := range req.Federated {
+		nsr.Group = f.Group
+		nsr.Resource = f.Resource
+		federate[i], err = s.getOrCreateIndex(ctx, nsr)
+		if err != nil {
+			return &ResourceSearchResponse{
+				Error: AsErrorResult(err),
+			}, nil
+		}
+	}
+
+	return idx.Search(ctx, s.access, req, federate)
 }
 
 // init is called during startup.  any failure will block startup and continued execution
@@ -160,9 +206,76 @@ func (s *searchSupport) init(ctx context.Context) error {
 	}
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
-	s.log.Debug("TODO, listen to all events")
+	// Now start listening for new events
+	watchctx := context.Background() // new context?
+	events, err := s.storage.WatchWriteEvents(watchctx)
+	if err != nil {
+		return err
+	}
+	go func() {
+		for {
+			v := <-events
+
+			s.handleEvent(watchctx, v)
+		}
+	}()
 
 	return nil
+}
+
+// Async event
+func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
+	nsr := NamespacedResource{
+		Namespace: evt.Key.Namespace,
+		Group:     evt.Key.Group,
+		Resource:  evt.Key.Resource,
+	}
+
+	index, err := s.getOrCreateIndex(ctx, nsr)
+	if err != nil {
+		s.log.Warn("error getting index for watch event", "error", err)
+		return
+	}
+
+	builder, err := s.builders.get(ctx, nsr)
+	if err != nil {
+		s.log.Warn("error getting builder for watch event", "error", err)
+		return
+	}
+
+	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
+	if err != nil {
+		s.log.Warn("error building document watch event", "error", err)
+		return
+	}
+
+	err = index.Write(doc)
+	if err != nil {
+		s.log.Warn("error writing document watch event", "error", err)
+		return
+	}
+}
+
+func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
+	// TODO???
+	// We want to block while building the index and return the same index for the key
+	// simple mutex not great... we don't want to block while anything in building, just the same key
+
+	idx, err := s.search.GetIndex(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if idx == nil {
+		idx, _, err = s.build(ctx, key, 10, 0) // unknown size and RV
+		if err != nil {
+			return nil, err
+		}
+		if idx == nil {
+			return nil, fmt.Errorf("nil index after build")
+		}
+	}
+	return idx, nil
 }
 
 func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size int64, rv int64) (ResourceIndex, int64, error) {

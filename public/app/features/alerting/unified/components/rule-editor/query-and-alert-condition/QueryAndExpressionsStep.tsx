@@ -32,7 +32,6 @@ import {
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
-import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
@@ -134,15 +133,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
-  const [queryParams] = useURLSearchParams();
   const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isNewFromQueryParams = queryParams.has('defaults') && !editingExistingRule;
 
   const initialState = {
     queries: getValues('queries'),
   };
 
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
+  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   // data queries only
   const dataQueries = useMemo(() => {
@@ -153,6 +151,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const expressionQueries = useMemo(() => {
     return queries.filter((query) => isExpressionQueryInAlert(query));
   }, [queries]);
+
+  useEffect(() => {
+    // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
+    // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
+
+    if (!editingExistingRule && isOptimizeReducerEnabled) {
+      dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
+    }
+  }, [dataQueries, expressionQueries, editingExistingRule, isOptimizeReducerEnabled]);
 
   const [type, condition, dataSourceName, editorSettings] = watch([
     'type',
@@ -167,20 +174,23 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
   const [showResetModeModal, setShowResetModal] = useState(false);
 
-  const { isAdvancedMode, simpleCondition, setSimpleCondition } = useAdvancedMode(
-    editorSettings,
+  const simplifiedQueryInForm = editorSettings?.simplifiedQueryEditor;
+
+  const { simpleCondition, setSimpleCondition } = useAdvancedMode(
+    simplifiedQueryInForm,
     isGrafanaAlertingType,
-    isNewFromQueryParams,
     dataQueries,
     expressionQueries
   );
 
+  const simplifiedQueryStep = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') : false;
+
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
-    if (!isAdvancedMode && isGrafanaAlertingType) {
+    if (simplifiedQueryStep && isGrafanaAlertingType) {
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
-  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
+  }, [simplifiedQueryStep, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
   const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
 
@@ -192,14 +202,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
       // we need to be sure the condition is set once we switch to simple mode
-      if (!isAdvancedMode) {
+      if (simplifiedQueryStep) {
         setValue('condition', SimpleConditionIdentifier.thresholdId);
         runQueries(getValues('queries'), SimpleConditionIdentifier.thresholdId);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
       }
     },
-    [isCloudAlertRuleType, runQueries, getValues, isAdvancedMode, setValue]
+    [isCloudAlertRuleType, runQueries, getValues, simplifiedQueryStep, setValue]
   );
 
   // whenever we update the queries we have to update the form too
@@ -265,7 +275,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const updateExpressionAndDatasource = useSetExpressionAndDataSource();
-  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
@@ -279,12 +288,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
-      // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
-      // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
-      if (!editingExistingRule && isOptimizeReducerEnabled) {
-        dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
-      }
-
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
 
@@ -294,7 +297,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
+    [queries, updateExpressionAndDatasource, getValues, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -472,13 +475,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   if (!type) {
     return null;
   }
-
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-          isAdvancedMode,
+          isAdvancedMode: !simplifiedQueryStep,
           setAdvancedMode: (isAdvanced: boolean) => {
-            if (!isAdvanced) {
+            if (!getValues('editorSettings.simplifiedQueryEditor')) {
               if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
                 setShowResetModal(true);
                 return;
@@ -573,7 +575,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               condition={condition}
               onSetCondition={handleSetCondition}
             />
-            {isAdvancedMode && (
+            {!simplifiedQueryStep && (
               <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
                 <Button
                   type="button"
@@ -590,7 +592,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {isGrafanaAlertingType && isAdvancedMode && (
+            {isGrafanaAlertingType && !simplifiedQueryStep && (
               <SmartAlertTypeDetector
                 editingExistingRule={editingExistingRule}
                 rulesSourcesWithRuler={rulesSourcesWithRuler}
@@ -599,7 +601,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               />
             )}
             {/* Expression Queries */}
-            {isAdvancedMode && (
+            {!simplifiedQueryStep && (
               <>
                 <Stack direction="column" gap={0}>
                   <Text element="h5">Expressions</Text>
@@ -628,7 +630,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             )}
             {/* action buttons */}
             <Stack direction="column">
-              {!isAdvancedMode && (
+              {simplifiedQueryStep && (
                 <SimpleConditionEditor
                   simpleCondition={simpleCondition}
                   onChange={setSimpleCondition}
@@ -638,7 +640,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 />
               )}
               <Stack direction="row">
-                {isAdvancedMode && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
+                {!simplifiedQueryStep && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
                 {isPreviewLoading && (
                   <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
@@ -653,7 +655,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                     onClick={() => runQueriesPreview()}
                     disabled={emptyQueries}
                   >
-                    {isAdvancedMode
+                    {!simplifiedQueryStep
                       ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
                       : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
                   </Button>
@@ -688,7 +690,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setValue('editorSettings.simplifiedNotificationEditor', true);
+          setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}
@@ -768,7 +770,7 @@ const useSetExpressionAndDataSource = () => {
   };
 };
 
-function isExpressionQueryInAlert(
+export function isExpressionQueryInAlert(
   query: AlertQuery<AlertDataQuery | ExpressionQuery>
 ): query is AlertQuery<ExpressionQuery> {
   return isExpressionQuery(query.model);

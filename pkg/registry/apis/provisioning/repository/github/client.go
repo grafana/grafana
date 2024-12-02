@@ -17,7 +17,7 @@ var (
 	ErrMismatchedHash        = errors.New("the update cannot be applied because the expected and actual hashes are unequal")
 	ErrNoSecret              = errors.New("new webhooks must have a secret")
 	//lint:ignore ST1005 this is not punctuation
-	ErrPathTraversalDisallowed = errors.New("the path contained ..")
+	ErrPathTraversalDisallowed = errors.New("the path contained ..") //nolint:stylecheck
 	ErrServiceUnavailable      = apierrors.NewServiceUnavailable("github is unavailable")
 )
 
@@ -31,6 +31,13 @@ type Client interface {
 	//
 	// If ".." appears in the "path", this method will return an error.
 	GetContents(ctx context.Context, owner, repository, path, ref string) (fileContents RepositoryContent, dirContents []RepositoryContent, err error)
+
+	// GetTree returns the Git tree in the repository.
+	// When recursive is given, subtrees are mapped into the returned array.
+	//
+	// The truncated bool will be set to true if the tree is larger than 7 MB or 100 000 entries.
+	// When truncated is true, you may wish to read each subtree manually instead.
+	GetTree(ctx context.Context, owner, repository, ref string, recursive bool) (entries []RepositoryContent, truncated bool, err error)
 
 	// CreateFile creates a new file in the repository under the given path.
 	// The file is created on the branch given.
@@ -68,6 +75,11 @@ type Client interface {
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
 	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
 	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
+
+	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
+	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+	CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error
+	ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error
 }
 
 type RepositoryContent interface {
@@ -85,6 +97,22 @@ type RepositoryContent interface {
 	// Get the SHA hash. This is usually a SHA-256, but may also be SHA-512.
 	// Directories have SHA hashes, too (TODO: how is this calculated?).
 	GetSHA() string
+	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
+	GetSize() int64
+}
+
+type CommitFile interface {
+	GetSHA() string
+	GetFilename() string
+	GetPreviousFilename() string
+	GetStatus() string
+}
+
+type FileComment struct {
+	Content  string
+	Path     string
+	Position int
+	Ref      string
 }
 
 type CreateFileOptions struct {

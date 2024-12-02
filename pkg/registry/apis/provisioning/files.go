@@ -17,11 +17,12 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 type filesConnector struct {
 	getter RepoGetter
-	client *resourceClient
+	client *resources.ClientFactory
 	logger *slog.Logger
 }
 
@@ -65,7 +66,11 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := logger.With("url", r.URL.Path)
+		query := r.URL.Query()
+		ref := query.Get("ref")
+		message := query.Get("message")
+		logger = logger.With("url", r.URL.Path, "ref", ref, "message", message)
+
 		prefix := fmt.Sprintf("/%s/files/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -75,9 +80,30 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		filePath := r.URL.Path[idx+len(prefix):]
-		if filePath == "" {
-			logger.DebugContext(r.Context(), "got an empty file path")
-			responder.Error(apierrors.NewBadRequest("missing path"))
+		if filePath == "" || strings.HasSuffix(filePath, "/") {
+			if len(filePath) > 0 {
+				responder.Error(apierrors.NewBadRequest("folder navigation not yet supported"))
+				return
+			}
+
+			rsp, err := repo.ReadTree(r.Context(), logger, ref)
+			if err != nil {
+				responder.Error(err)
+				return
+			}
+
+			files := &provisioning.FileList{}
+			for _, v := range rsp {
+				if !v.Blob {
+					continue // folder item
+				}
+				files.Items = append(files.Items, provisioning.FileItem{
+					Path: v.Path,
+					Size: v.Size,
+					Hash: v.Hash,
+				})
+			}
+			responder.Object(http.StatusOK, files)
 			return
 		}
 
@@ -97,10 +123,6 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		}
 
 		var obj *provisioning.ResourceWrapper
-		ref := r.URL.Query().Get("ref")
-		message := r.URL.Query().Get("message")
-		logger = logger.With("ref", ref, "message", message)
-
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
@@ -125,21 +147,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 	}), nil
 }
 
-func (s *filesConnector) getParser(repo repository.Repository) (*fileParser, error) {
+func (s *filesConnector) getParser(repo repository.Repository) (*resources.FileParser, error) {
 	ns := repo.Config().Namespace
-	if ns == "" {
-		return nil, fmt.Errorf("missing namespace")
-	}
-	client, err := s.client.Client(ns) // As system user
+	client, kinds, err := s.client.New(ns) // As system user
 	if err != nil {
 		return nil, err
 	}
-	return &fileParser{
-		namespace: ns,
-		repo:      repo,
-		client:    client,
-		kinds:     newKindsLookup(client),
-	}, nil
+	return resources.NewParser(repo, client, kinds), nil
 }
 
 func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo repository.Repository, path string, ref string) (int, *provisioning.ResourceWrapper, error) {
@@ -153,22 +167,23 @@ func (s *filesConnector) doRead(ctx context.Context, logger *slog.Logger, repo r
 		return 0, nil, err
 	}
 
-	parsed, err := parser.parse(ctx, logger, info, true)
+	parsed, err := parser.Parse(ctx, logger, info, true)
 	if err != nil {
 		return 0, nil, err
 	}
 
 	// GVR will exist for anything we can actually save (dashboard/playlist for now)
-	if parsed.gvr == nil {
-		if parsed.gvk != nil {
-			parsed.errors = append(parsed.errors, fmt.Errorf("unknown resource for Kind: "+parsed.gvk.Kind))
+	if parsed.GVR == nil {
+		if parsed.GVK != nil {
+			//nolint:govet
+			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource for Kind: "+parsed.GVK.Kind))
 		} else {
-			parsed.errors = append(parsed.errors, fmt.Errorf("unknown resource"))
+			parsed.Errors = append(parsed.Errors, fmt.Errorf("unknown resource"))
 		}
 	}
 
 	code := http.StatusOK
-	if len(parsed.errors) > 0 {
+	if len(parsed.Errors) > 0 {
 		code = http.StatusNotAcceptable
 	}
 	return code, parsed.AsResourceWrapper(), nil
@@ -199,16 +214,16 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 		return nil, err
 	}
 
-	parsed, err := parser.parse(ctx, logger, info, true)
+	parsed, err := parser.Parse(ctx, logger, info, true)
 	if err != nil {
-		if errors.Is(err, ErrUnableToReadResourceBytes) {
+		if errors.Is(err, resources.ErrUnableToReadResourceBytes) {
 			return nil, apierrors.NewBadRequest("unable to read the request as a resource")
 		}
 		return nil, err
 	}
 
 	// GVR will exist for anything we can actually save (dashboard/playlist for now)
-	if parsed.gvr == nil {
+	if parsed.GVR == nil {
 		return nil, apierrors.NewBadRequest("The payload does not map to a known resource")
 	}
 
@@ -228,19 +243,19 @@ func (s *filesConnector) doWrite(ctx context.Context, logger *slog.Logger, updat
 
 	// Which context?  request of background???
 	// Behaves the same running sync after writing
-	if parsed.existing == nil {
-		obj, err := parsed.client.Create(ctx, parsed.obj, metav1.CreateOptions{})
+	if parsed.Existing == nil {
+		obj, err := parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{})
 		if err != nil {
-			parsed.errors = append(parsed.errors, err)
+			parsed.Errors = append(parsed.Errors, err)
 		} else {
-			parsed.obj = obj
+			parsed.Obj = obj
 		}
 	} else {
-		obj, err := parsed.client.Update(ctx, parsed.obj, metav1.UpdateOptions{})
+		obj, err := parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{})
 		if err != nil {
-			parsed.errors = append(parsed.errors, err)
+			parsed.Errors = append(parsed.Errors, err)
 		} else {
-			parsed.obj = obj
+			parsed.Obj = obj
 		}
 	}
 

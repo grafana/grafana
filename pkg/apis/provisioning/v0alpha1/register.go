@@ -81,6 +81,7 @@ func AddKnownTypes(gv schema.GroupVersion, scheme *runtime.Scheme) error {
 		&HelloWorld{},
 		&WebhookResponse{},
 		&ResourceWrapper{},
+		&FileList{},
 	)
 	return nil
 }

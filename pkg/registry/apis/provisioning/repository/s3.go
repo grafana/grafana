@@ -63,6 +63,15 @@ func (r *s3Repository) Read(ctx context.Context, logger *slog.Logger, path strin
 	}
 }
 
+func (r *s3Repository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "read file tree resource is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 func (r *s3Repository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
 	return &errors.StatusError{
 		ErrStatus: metav1.Status{
@@ -91,7 +100,7 @@ func (r *s3Repository) Delete(ctx context.Context, logger *slog.Logger, path str
 }
 
 // Webhook implements provisioning.Repository.
-func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
+func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }

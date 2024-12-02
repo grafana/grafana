@@ -6,46 +6,47 @@ import (
 	"context"
 	"os"
 
-	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/cog"
 )
 
 type codegenTargets struct {
-	schemaPath string
-	outputPath string
+	modulePath        string
+	outputPath        string
+	cueImportsMap     map[string]string
+	packagesImportMap map[string]string
 }
 
 func main() {
-	cueCtx := cuecontext.New()
-
 	targets := []codegenTargets{
 		{
-			schemaPath: "../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.schema.cue",
+			modulePath: "../packages/grafana-schema/src/schema/dashboard/v2alpha0/",
 			outputPath: "../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen.ts",
+			cueImportsMap: map[string]string{
+				"github.com/grafana/grafana/packages/grafana-schema/src/common": "../packages/grafana-schema/src/common",
+			},
+			packagesImportMap: map[string]string{
+				"common": "@grafana/schema",
+			},
 		},
 	}
 
 	for _, target := range targets {
-		rawSchema, err := os.ReadFile(target.schemaPath)
-		if err != nil {
-			panic(err)
-		}
-
-		value := cueCtx.CompileBytes(rawSchema)
-		if value.Err() != nil {
-			panic(value.Err())
-		}
-
 		codegenPipeline := cog.TypesFromSchema().
-			CUEValue("dashboard", value).
-			Typescript()
+			CUEModule(
+				target.modulePath,
+				cog.CUEImports(target.cueImportsMap),
+			).
+			Typescript(cog.TypescriptConfig{
+				ImportsMap:        target.packagesImportMap,
+				EnumsAsUnionTypes: true,
+			})
 
-		tsBytes, err := codegenPipeline.Run(context.Background())
+		files, err := codegenPipeline.Run(context.Background())
 		if err != nil {
 			panic(err)
 		}
 
-		if err := os.WriteFile(target.outputPath, tsBytes, 0644); err != nil {
+		if err := os.WriteFile(target.outputPath, files[0].Data, 0644); err != nil {
 			panic(err)
 		}
 	}

@@ -2,8 +2,14 @@ package repository
 
 import (
 	"context"
+	// Git still uses sha1 for the most part: https://git-scm.com/docs/hash-function-transition
+	//nolint:gosec
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -116,24 +122,39 @@ func (r *localRepository) Test(ctx context.Context, logger *slog.Logger) error {
 	}
 }
 
-// ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+// Test implements provisioning.Repository.
+func (r *localRepository) validateRequest(ref string) error {
 	if ref != "" {
-		return nil, apierrors.NewBadRequest("local repository does not support ref")
+		return apierrors.NewBadRequest("local repository does not support ref")
 	}
 	if r.path == "" {
-		return nil, &apierrors.StatusError{
+		return &apierrors.StatusError{
 			ErrStatus: metav1.Status{
 				Message: "the service is missing a root path",
 				Code:    http.StatusFailedDependency,
 			},
 		}
 	}
+	return nil
+}
+
+// ReadResource implements provisioning.Repository.
+func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path string, ref string) (*FileInfo, error) {
+	if err := r.validateRequest(ref); err != nil {
+		return nil, err
+	}
 
 	fullpath := filepath.Join(r.path, path)
+	// Treats https://securego.io/docs/rules/g304.html
+	if !strings.HasPrefix(fullpath, r.path) {
+		return nil, ErrFileNotFound
+	}
+
 	info, err := os.Stat(fullpath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, ErrFileNotFound
+	} else if err != nil {
+		return nil, err
 	}
 
 	//nolint:gosec
@@ -142,27 +163,78 @@ func (r *localRepository) Read(ctx context.Context, logger *slog.Logger, path st
 		return nil, err
 	}
 
+	hash, _, err := r.calculateFileHash(fullpath)
+	if err != nil {
+		return nil, err
+	}
+
 	return &FileInfo{
 		Path: path,
 		Data: data,
+		Hash: hash,
 		Modified: &metav1.Time{
 			Time: info.ModTime(),
 		},
 	}, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
+// ReadResource implements provisioning.Repository.
+func (r *localRepository) ReadTree(ctx context.Context, logger *slog.Logger, ref string) ([]FileTreeEntry, error) {
+	if err := r.validateRequest(ref); err != nil {
+		return nil, err
 	}
 
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
+	rootlen := len(r.path)
+	entries := make([]FileTreeEntry, 0, 100)
+	err := filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
 		}
+		entry := FileTreeEntry{
+			Path: strings.TrimLeft(path[rootlen:], "/"),
+			Size: info.Size(),
+		}
+		if !info.IsDir() {
+			entry.Blob = true
+			entry.Hash, _, err = r.calculateFileHash(path)
+			if err != nil {
+				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
+			}
+		}
+		entries = append(entries, entry)
+		return err
+	})
+
+	return entries, err
+}
+
+func (r *localRepository) calculateFileHash(path string) (string, int64, error) {
+	// Treats https://securego.io/docs/rules/g304.html
+	if !strings.HasPrefix(path, r.path) {
+		return "", 0, ErrFileNotFound
+	}
+
+	// We've already made sure the path is safe, so we'll ignore the gosec lint.
+	//nolint:gosec
+	file, err := os.OpenFile(path, os.O_RDONLY, 0)
+	if err != nil {
+		return "", 0, err
+	}
+
+	// TODO: Define what hashing algorithm we want to use for the entire repository. Maybe a config option?
+	hasher := sha1.New()
+	// TODO: context-aware io.Copy? Is that even possible with a reasonable impl?
+	size, err := io.Copy(hasher, file)
+	if err != nil {
+		return "", 0, err
+	}
+	// NOTE: EncodeToString (& hex.Encode for that matter) return lower-case hex.
+	return hex.EncodeToString(hasher.Sum(nil)), size, nil
+}
+
+func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	path = filepath.Join(r.path, path)
@@ -176,17 +248,8 @@ func (r *localRepository) Create(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path string, ref string, data []byte, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
-	}
-
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	path = filepath.Join(r.path, path)
@@ -197,24 +260,15 @@ func (r *localRepository) Update(ctx context.Context, logger *slog.Logger, path 
 }
 
 func (r *localRepository) Delete(ctx context.Context, logger *slog.Logger, path string, ref string, comment string) error {
-	if ref != "" {
-		return apierrors.NewBadRequest("local repository does not support ref")
-	}
-
-	if r.path == "" {
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
+	if err := r.validateRequest(ref); err != nil {
+		return err
 	}
 
 	return os.Remove(filepath.Join(r.path, path))
 }
 
 // Webhook implements provisioning.Repository.
-func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder) http.HandlerFunc {
+func (r *localRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	// webhooks are not supported with local
 	return nil
 }
