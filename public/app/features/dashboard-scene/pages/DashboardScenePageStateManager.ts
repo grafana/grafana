@@ -18,6 +18,7 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -118,6 +119,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
                 ...params.variables,
               }
             : undefined;
+
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid, queryParams);
 
           if (route === DashboardRoutes.Embedded) {
@@ -280,8 +282,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return fromCache;
       }
 
-      // TODO[schema]: handle v2
-      throw new Error('v2 schema handling not implemented');
+      // TODO[schema v2]: handle v2 redirect url
+
+      const scene = transformSaveModelSchemaV2ToScene(rsp);
+      if (options.uid) {
+        this.setSceneCache(options.uid, scene);
+      }
+      return scene;
     } else {
       if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
         return fromCache;

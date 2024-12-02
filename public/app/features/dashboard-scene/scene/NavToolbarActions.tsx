@@ -55,6 +55,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  */
 export function ToolbarActions({ dashboard }: Props) {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
+
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
