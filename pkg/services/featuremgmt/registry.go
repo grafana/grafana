@@ -1681,8 +1681,8 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "easyIssueReportButton",
-			Description:  "Enables a button to send reports from the Grafana UI",
+			Name:         "feedbackButton",
+			Description:  "Enables a button to send feedback from the Grafana UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaOperatorExperienceSquad,
 			HideFromDocs: true,
