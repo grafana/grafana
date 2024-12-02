@@ -1,103 +1,103 @@
 {
-  "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
-      "role-label": "Role",
-      "serviceaccount-label": "Service Account",
-      "team-label": "Team",
-      "title": "Add permission for",
-      "user-label": "User"
+      "role-label": "役割",
+      "serviceaccount-label": "サービス アカウント",
+      "team-label": "チーム",
+      "title": "権限の追加",
+      "user-label": "ユーザー"
     },
     "add-permissions": {
-      "save": "Save"
+      "save": "保存"
     },
     "permission-list": {
-      "permission": "Permission"
+      "permission": "権限"
     },
     "permission-list-item": {
-      "inherited": "Inherited from folder"
+      "inherited": "フォルダから継承"
     },
     "permissions": {
-      "add-label": "Add a permission",
-      "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
-      "role": "Role",
-      "serviceaccount": "Service Account",
-      "team": "Team",
-      "title": "Permissions",
-      "user": "User"
+      "add-label": "権限の追加",
+      "no-permissions": "権限がありません",
+      "permissions-change-warning": "これにより、このフォルダとそのすべての子孫の権限が変更されます。合計すると、影響:",
+      "role": "役割",
+      "serviceaccount": "サービス アカウント",
+      "team": "チーム",
+      "title": "権限",
+      "user": "ユーザー"
     }
   },
   "action-editor": {
     "modal": {
-      "cancel-button": "Cancel",
-      "save-button": "Save"
+      "cancel-button": "キャンセル",
+      "save-button": "保存"
     }
   },
   "actions-editor": {
     "inline": {
-      "add-button": "Add action",
-      "one-click-link": "One-click link"
+      "add-button": "アクションの追加",
+      "one-click-link": "ワンクリック リンク"
     }
   },
   "admin": {
     "anon-users": {
-      "not-found": "No anonymous users found."
+      "not-found": "匿名ユーザーが見つかりません。"
     },
     "edit-org": {
-      "access-denied": "You do not have permission to see users in this organization. To update this organization, contact your server administrator.",
-      "heading": "Edit Organization",
-      "update-button": "Update",
-      "users-heading": "Organization users"
+      "access-denied": "この組織のユーザーを表示する権限がありません。この組織を更新するには、サーバー管理者に問い合わせてください。",
+      "heading": "組織の編集",
+      "update-button": "更新",
+      "users-heading": "組織のユーザー"
     },
     "feature-toggles": {
-      "sub-title": "View and edit feature toggles. Read more about feature toggles at <2>grafana.com</2>."
+      "sub-title": "機能トグルを表示および編集します。機能トグルの詳細については、<2>grafana.com</2> を参照してください。"
     },
     "get-enterprise": {
-      "contact-us": "Contact us and get a free trial",
-      "description": "You can use the trial version for free for 30 days. We will remind you about it five days before the trial period ends.",
-      "features-heading": "Enhanced functionality",
-      "included-description": "Indemnification, working with Grafana Labs on future prioritization, and training from the core Grafana team.",
-      "included-heading": "Also included:",
-      "service-title": "At your service",
-      "team-sync-details": "LDAP, GitHub OAuth, Auth Proxy, Okta",
-      "title": "Get Grafana Enterprise"
+      "contact-us": "お問い合わせいただき、無料トライアルをご利用ください",
+      "description": "トライアル版は 30 日間無料でご利用いただけます。トライアル期間終了の 5 日前にお知らせします。",
+      "features-heading": "強化された機能",
+      "included-description": "補償、将来の優先順位付けに関する Grafana Labs との連携、コア Grafana チームによるトレーニング。",
+      "included-heading": "以下も含まれます:",
+      "service-title": "ご対応いたします",
+      "team-sync-details": "LDAP、GitHub OAuth、Auth Proxy、Okta",
+      "title": "Grafana Enterprise を入手"
     },
     "ldap": {
-      "test-mapping-heading": "Test user mapping",
-      "test-mapping-run-button": "Run"
+      "test-mapping-heading": "ユーザー マッピングのテスト",
+      "test-mapping-run-button": "実行"
     },
     "ldap-permissions": {
-      "active": "<0></0> Active",
-      "admin": "<0></0> Yes",
-      "inactive": "<0></0> Inactive"
+      "active": "<0></0> アクティブ",
+      "admin": "<0></0> はい",
+      "inactive": "<0></0> 非アクティブ"
     },
     "ldap-status": {
-      "title": "LDAP Connection"
+      "title": "LDAP 接続"
     },
     "ldap-sync": {
-      "debug-button": "Debug LDAP Mapping",
-      "external-sync-description": "User synced via LDAP. Some changes must be done in LDAP or mappings.",
-      "external-sync-label": "External sync",
-      "next-sync-label": "Next scheduled synchronization",
-      "not-enabled": "Not enabled",
-      "sync-button": "Sync user",
-      "title": "LDAP Synchronisation"
+      "debug-button": "LDAP マッピングのデバッグ",
+      "external-sync-description": "ユーザーは LDAP 経由で同期されました。一部の変更は、LDAP またはマッピングで行う必要があります。",
+      "external-sync-label": "外部同期",
+      "next-sync-label": "次にスケジュールされた同期",
+      "not-enabled": "有効になっていません",
+      "sync-button": "ユーザーの同期",
+      "title": "LDAP 同期"
     },
     "ldap-sync-info": {
-      "title": "LDAP Synchronization"
+      "title": "LDAP 同期"
     },
     "ldap-user-groups": {
-      "no-org-found": "No match <2><0></0></2>"
+      "no-org-found": "一致するものがありません <2><0></0></2>"
     },
     "ldap-user-info": {
-      "no-team": "No teams found via LDAP"
+      "no-team": "LDAP 経由でチームが見つかりません"
     },
     "org-uers": {
-      "last-seen-never": "Never"
+      "last-seen-never": "なし"
     },
     "org-users": {
-      "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
+      "not-editable": "このユーザーの役割は、認証プロバイダーから同期されているため編集できません。詳細については、<1>Grafana 認証ドキュメント</1>を参照してください。"
     },
     "orgs": {
       "delete-body": "Are you sure you want to delete '{{deleteOrgName}}'?<3></3> <5>All dashboards for this organization will be removed!</5>",
