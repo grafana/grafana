@@ -111,9 +111,8 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     homepageBox: css({
       backgroundColor: theme.colors.background.secondary,
-      width: '725px',
-      height: '294px',
-      padding: '40px 32px',
+      width: '904px',
+      padding: '80px 32px',
       boxSizing: 'border-box', // Ensure padding doesn't cause overflow
       flexShrink: 0,
     }),
