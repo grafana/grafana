@@ -620,6 +620,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
+      panelName: panel?.state?.title,
       panelPluginId: panel?.state.pluginId,
       scopes: this._scopesFacade?.value,
     };
