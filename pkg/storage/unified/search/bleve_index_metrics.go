@@ -139,20 +139,3 @@ func getTotalIndexSize(dir string) (int64, error) {
 
 	return totalSize, err
 }
-
-// getFileBasedTenantCount returns the number of tenants using a file-based index
-func getFileBasedTenantCount(dir string) (int, error) {
-	var count int
-
-	files, err := os.ReadDir(dir)
-	if err != nil {
-		return 0, err
-	}
-
-	for _, file := range files {
-		if file.IsDir() {
-			count++
-		}
-	}
-	return count, err
-}
