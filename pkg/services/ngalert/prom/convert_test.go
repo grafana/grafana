@@ -137,7 +137,13 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 
 				for j, promRule := range promGroup.Rules {
 					grafanaRule := grafanaGroup.Rules[j]
-					assert.Equal(t, promRule.Alert, grafanaRule.Title, tc.name)
+
+					if promRule.Record != "" {
+						assert.Equal(t, promRule.Record, grafanaRule.Title)
+					} else {
+						assert.Equal(t, promRule.Alert, grafanaRule.Title)
+					}
+
 					if promRule.For != "" {
 						expectedFor, _ := parseDurationOrDefault(promRule.For, 0)
 						assert.Equal(t, expectedFor, grafanaRule.For, tc.name)

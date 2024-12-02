@@ -138,10 +138,17 @@ func (p *Converter) convertRule(orgID int64, datasourceUID, namespaceUID, group 
 		return models.AlertRule{}, fmt.Errorf("failed to parse exec_err_state '%s': %w", p.cfg.ExecErrState, err)
 	}
 
+	var title string
+	if rule.Record != "" {
+		title = rule.Record
+	} else {
+		title = rule.Alert
+	}
+
 	result := models.AlertRule{
 		OrgID:        orgID,
 		NamespaceUID: namespaceUID,
-		Title:        rule.Alert,
+		Title:        title,
 		Data:         []models.AlertQuery{queryNode},
 		NoDataState:  noDataState,
 		ExecErrState: execErrState,
