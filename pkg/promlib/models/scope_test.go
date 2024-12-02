@@ -107,13 +107,26 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "merge label matchers from if multiple scopes are passed",
+			name:  "merge scopes filters into using OR if they share filter key",
 			query: `http_requests_total{}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
 				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
 			},
 			expected:  `http_requests_total{namespace=~"default|kube-system"}`,
+			expectErr: false,
+		},
+		{
+			name:  "adhoc filters win over scope filters if they share filter key",
+			query: `http_requests_total{}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "namespace", Value: "default", Operator: FilterOperatorEquals},
+				{Key: "namespace", Value: "kube-system", Operator: FilterOperatorEquals},
+			},
+			adhocFilters: []ScopeFilter{
+				{Key: "namespace", Value: "adhoc-wins", Operator: FilterOperatorEquals},
+			},
+			expected:  `http_requests_total{namespace="adhoc-wins"}`,
 			expectErr: false,
 		},
 	}
