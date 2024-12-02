@@ -85,7 +85,7 @@ import {
 
 const DEFAULT_DATASOURCE = 'default';
 
-type TypedVariableModelv2 =
+export type TypedVariableModelv2 =
   | QueryVariableKind
   | TextVariableKind
   | ConstantVariableKind

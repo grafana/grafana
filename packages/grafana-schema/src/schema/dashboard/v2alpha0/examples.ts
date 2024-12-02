@@ -22,7 +22,51 @@ export const handyTestingSchema: DashboardV2Spec = {
     to: 'now',
     weekStart: 'monday',
   },
-  annotations: [],
+  annotations: [
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        builtIn: true,
+        query: {
+          kind: 'prometheus',
+          spec: {
+            expr: 'test-query',
+          },
+        },
+        datasource: {
+          type: 'datasource',
+          uid: 'grafana',
+        },
+        filter: { ids: [] },
+        enable: true,
+        hide: false,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'testdata',
+          uid: 'gdev-testdata',
+        },
+        enable: true,
+        iconColor: 'red',
+        name: 'Enabled',
+        query: {
+          kind: 'test',
+          spec: {
+            lines: 4,
+            refId: 'Anno',
+            scenarioId: 'annotations',
+          },
+        },
+        filter: { ids: [] },
+        hide: false,
+      },
+    },
+  ],
   elements: {
     'test-panel-uid': {
       kind: 'Panel',
