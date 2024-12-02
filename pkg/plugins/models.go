@@ -63,6 +63,7 @@ type ExtensionsV2 struct {
 	AddedComponents   []AddedComponent   `json:"addedComponents"`
 	ExposedComponents []ExposedComponent `json:"exposedComponents"`
 	ExtensionPoints   []ExtensionPoint   `json:"extensionPoints"`
+	AddedHooks        []AddedHook        `json:"addedHooks"`
 }
 
 type Extensions ExtensionsV2
@@ -76,6 +77,7 @@ func (e *Extensions) UnmarshalJSON(data []byte) error {
 		e.AddedLinks = extensionsV2.AddedLinks
 		e.ExposedComponents = extensionsV2.ExposedComponents
 		e.ExtensionPoints = extensionsV2.ExtensionPoints
+		e.AddedHooks = extensionsV2.AddedHooks
 
 		return nil
 	}
@@ -121,6 +123,11 @@ type AddedComponent struct {
 	Targets     []string `json:"targets"`
 	Title       string   `json:"title"`
 	Description string   `json:"description"`
+}
+
+type AddedHook struct {
+	Targets []string `json:"targets"`
+	Title   string   `json:"title"`
 }
 
 type ExposedComponent struct {
@@ -280,6 +287,7 @@ type DataSourceDTO struct {
 	Access     string         `json:"access,omitempty"`
 	Preload    bool           `json:"preload"`
 	Module     string         `json:"module,omitempty"`
+	Extensions Extensions     `json:"extensions"`
 	JSONData   map[string]any `json:"jsonData"`
 	ReadOnly   bool           `json:"readOnly"`
 	APIVersion string         `json:"apiVersion,omitempty"`
@@ -311,6 +319,7 @@ type PanelDTO struct {
 	SkipDataQuery   bool            `json:"skipDataQuery"`
 	ReleaseState    string          `json:"state"`
 	BaseURL         string          `json:"baseUrl"`
+	Extensions      Extensions      `json:"extensions"`
 	Signature       string          `json:"signature"`
 	Module          string          `json:"module"`
 	Angular         AngularMeta     `json:"angular"`

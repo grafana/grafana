@@ -476,6 +476,7 @@ describe('Plugin Extensions / Utils', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
 
@@ -554,6 +555,7 @@ describe('Plugin Extensions / Utils', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
 
@@ -583,6 +585,7 @@ describe('Plugin Extensions / Utils', () => {
             addedComponents: [],
             exposedComponents: [],
             extensionPoints: [],
+            addedHooks: [],
           },
         },
         'myorg-third-app': {
@@ -622,6 +625,7 @@ describe('Plugin Extensions / Utils', () => {
             ],
             exposedComponents: [],
             extensionPoints: [],
+            addedHooks: [],
           },
         },
       };
@@ -678,6 +682,7 @@ describe('Plugin Extensions / Utils', () => {
             ],
             exposedComponents: [],
             extensionPoints: [],
+            addedHooks: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -704,6 +709,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -725,6 +731,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
         },
         'myorg-sixth-app': {
@@ -762,6 +769,7 @@ describe('Plugin Extensions / Utils', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
 
@@ -790,6 +798,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
         },
         'myorg-third-app': {
@@ -824,6 +833,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -849,6 +859,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
           dependencies: {
             ...genereicAppPluginConfig.dependencies,
@@ -870,6 +881,7 @@ describe('Plugin Extensions / Utils', () => {
               },
             ],
             extensionPoints: [],
+            addedHooks: [],
           },
         },
       };

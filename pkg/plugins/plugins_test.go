@@ -188,6 +188,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 								"id": "myorg-extensions-app/component-1/v1"
 							}
 						],
+						"addedHooks": [
+              {"targets": ["foo/bar"], "title":"some hook"}
+            ],
 						"extensionPoints": [
 							{
 								"title": "Extension point 1",
@@ -216,6 +219,9 @@ func Test_ReadPluginJSON(t *testing.T) {
 					},
 					ExtensionPoints: []ExtensionPoint{
 						{Id: "myorg-extensions-app/extensions-point-1/v1", Title: "Extension point 1", Description: "Extension points 1 description"},
+					},
+					AddedHooks: []AddedHook{
+						{Targets: []string{"foo/bar"}, Title: "some hook"},
 					},
 				},
 

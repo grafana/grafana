@@ -559,6 +559,7 @@ export {
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionAddedHookConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

@@ -12,6 +12,7 @@ import { Echo } from 'app/core/services/echo/Echo';
 
 import { ExtensionRegistriesProvider } from '../extensions/ExtensionRegistriesContext';
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
+import { AddedHooksRegistry } from '../extensions/registry/AddedHooksRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
 import { getPluginSettings } from '../pluginSettings';
@@ -92,6 +93,7 @@ function renderUnderRouter(page = '') {
     addedComponentsRegistry: new AddedComponentsRegistry(),
     exposedComponentsRegistry: new ExposedComponentsRegistry(),
     addedLinksRegistry: new AddedLinksRegistry(),
+    addedHooksRegistry: new AddedHooksRegistry(),
   };
   const pagePath = page ? `/${page}` : '';
   const route = {

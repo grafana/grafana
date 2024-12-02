@@ -1,9 +1,12 @@
-import type { PluginExtensionAddedLinkConfig, PluginExtensionExposedComponentConfig } from '@grafana/data';
+import type {
+  PanelPluginMeta,
+  PluginExtensionAddedLinkConfig,
+  PluginExtensionExposedComponentConfig,
+} from '@grafana/data';
 import { PluginExtensionAddedComponentConfig } from '@grafana/data/src/types/pluginExtensions';
 import type { AppPluginConfig } from '@grafana/runtime';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
-import { importAppPlugin } from './plugin_loader';
+import { loadPlugin } from './utils';
 
 export type PluginPreloadResult = {
   pluginId: string;
@@ -14,10 +17,11 @@ export type PluginPreloadResult = {
 };
 
 const preloadedAppPlugins = new Set<string>();
-const isNotYetPreloaded = ({ id }: AppPluginConfig) => !preloadedAppPlugins.has(id);
-const markAsPreloaded = (apps: AppPluginConfig[]) => apps.forEach(({ id }) => preloadedAppPlugins.add(id));
+const isNotYetPreloaded = ({ id }: AppPluginConfig | PanelPluginMeta) => !preloadedAppPlugins.has(id);
+const markAsPreloaded = (apps: Array<AppPluginConfig | PanelPluginMeta>) =>
+  apps.forEach(({ id }) => preloadedAppPlugins.add(id));
 
-export async function preloadPlugins(apps: AppPluginConfig[] = []) {
+export async function preloadPlugins(apps: Array<AppPluginConfig | PanelPluginMeta> = []) {
   const appPluginsToPreload = apps.filter(isNotYetPreloaded);
 
   if (appPluginsToPreload.length === 0) {
@@ -29,12 +33,10 @@ export async function preloadPlugins(apps: AppPluginConfig[] = []) {
   await Promise.all(appPluginsToPreload.map(preload));
 }
 
-async function preload(config: AppPluginConfig) {
+async function preload(config: AppPluginConfig | PanelPluginMeta) {
   try {
-    const meta = await getPluginSettings(config.id);
-
-    await importAppPlugin(meta);
+    await loadPlugin(config.id);
   } catch (error) {
-    console.error(`[Plugins] Failed to preload plugin: ${config.path} (version: ${config.version})`, error);
+    console.error(`[Plugins] Failed to preload plugin: ${config.id} (version: ${config.moduleHash})`, error);
   }
 }

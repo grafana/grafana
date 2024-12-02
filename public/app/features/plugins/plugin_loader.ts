@@ -13,7 +13,12 @@ import { DataQuery } from '@grafana/schema';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from './extensions/registry/setup';
+import {
+  addedComponentsRegistry,
+  addedHooksRegistry,
+  addedLinksRegistry,
+  exposedComponentsRegistry,
+} from './extensions/registry/setup';
 import { getPluginFromCache, registerPluginInCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
@@ -35,7 +40,7 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 // This instructs SystemJS to load plugin assets using fetch and eval if it returns a truthy value, otherwise
 // it will load the plugin using a script tag. The logic that sets loadingStrategy comes from the backend.
 // See: pkg/services/pluginsintegration/pluginassets/pluginassets.go
-systemJSPrototype.shouldFetch = function (url) {
+systemJSPrototype.shouldFetch = function(url) {
   const pluginInfo = getPluginFromCache(url);
   const jsTypeRegEx = /^[^#?]+\.(js)([?#].*)?$/;
 
@@ -48,7 +53,7 @@ systemJSPrototype.shouldFetch = function (url) {
 
 const originalImport = systemJSPrototype.import;
 // Hook Systemjs import to support plugins that only have a default export.
-systemJSPrototype.import = function (...args: Parameters<typeof originalImport>) {
+systemJSPrototype.import = function(...args: Parameters<typeof originalImport>) {
   return originalImport.apply(this, args).then((module) => {
     if (module && module.__useDefault) {
       return module.default;
@@ -58,7 +63,7 @@ systemJSPrototype.import = function (...args: Parameters<typeof originalImport>)
 };
 
 const systemJSFetch = systemJSPrototype.fetch;
-systemJSPrototype.fetch = function (url: string, options?: Record<string, unknown>) {
+systemJSPrototype.fetch = function(url: string, options?: Record<string, unknown>) {
   return decorateSystemJSFetch(systemJSFetch, url, options);
 };
 
@@ -204,6 +209,10 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   addedLinksRegistry.register({
     pluginId,
     configs: plugin.addedLinkConfigs || [],
+  });
+  addedHooksRegistry.register({
+    pluginId,
+    configs: plugin.addedHooksConfigs || [],
   });
 
   importedAppPlugins[pluginId] = plugin;

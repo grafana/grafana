@@ -52,6 +52,16 @@ export type UsePluginLinksResult = {
   links: PluginExtensionLink[];
 };
 
+export type UsePluginHooksOptions = {
+  extensionPointId: string;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginHooksResult<Signature> = {
+  isLoading: boolean;
+  hooks: Array<Signature>;
+};
+
 let singleton: GetPluginExtensions | undefined;
 
 export function setPluginExtensionGetter(instance: GetPluginExtensions): void {

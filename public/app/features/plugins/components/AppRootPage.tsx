@@ -29,6 +29,7 @@ import {
   useAddedLinksRegistry,
   useAddedComponentsRegistry,
   useExposedComponentsRegistry,
+  useAddedHooksRegistry,
 } from '../extensions/ExtensionRegistriesContext';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
@@ -60,6 +61,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const addedLinksRegistry = useAddedLinksRegistry();
   const addedComponentsRegistry = useAddedComponentsRegistry();
   const exposedComponentsRegistry = useExposedComponentsRegistry();
+  const addedHooksRegistry = useAddedHooksRegistry();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
@@ -104,6 +106,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
           addedLinksRegistry: addedLinksRegistry.readOnly(),
           addedComponentsRegistry: addedComponentsRegistry.readOnly(),
           exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+          addedHooksRegistry: addedHooksRegistry.readOnly(),
         }}
       >
         <plugin.root

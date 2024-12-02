@@ -63,6 +63,8 @@ export abstract class Registry<TRegistryValue, TMapType> {
     if (this.isReadOnly) {
       throw new Error(MSG_CANNOT_REGISTER_READ_ONLY);
     }
+    console.log(`registry received request to register`);
+    console.log(result);
 
     this.resultSubject.next(result);
   }
