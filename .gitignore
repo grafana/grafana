@@ -17,13 +17,11 @@ vendor/
 tsconfig.tsbuildinfo
 __debug_bin*
 
-# Yarn
-.yarn/
-!.yarn/patches
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
+# yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
 .pnp.*
 
 # Enterprise emails
