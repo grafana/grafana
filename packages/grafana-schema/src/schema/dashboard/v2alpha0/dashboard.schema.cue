@@ -1,4 +1,8 @@
-package dashboard
+package v2alpha0
+
+import (
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+)
 
 DashboardV2Spec: {
   // Unique numeric identifier for the dashboard.
@@ -113,7 +117,7 @@ DataTransformerConfig: {
   // Optional frame matcher. When missing it will be applied to all results
   filter?: MatcherConfig
   // Where to pull DataFrames from as input to transformation
-  topic?: "series" | "annotations" | "alertStates" // replaced with common.DataTopic
+  topic?: common.DataTopic
   // Options to be passed to the transformer
   // Valid options depend on the transformer id
   options: _
@@ -217,7 +221,7 @@ MatcherConfig: {
 }
 
 Threshold: {
-  value: number | null
+  value: number
   color: string
 }
 
@@ -235,7 +239,7 @@ ValueMapping: ValueMap | RangeMap | RegexMap | SpecialValueMap
 // `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 // `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 // `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
-MappingType: "value" | "range" | "regex" | "special"
+MappingType: "value" | "range" | "regex" | "special" @cog(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue")
 
 // Maps text values to a color or different display text and color.
 // For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -287,7 +291,7 @@ SpecialValueMap: {
 }
 
 // Special value types supported by the `SpecialValueMap`
-SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty"
+SpecialValueMatch: "true" | "false" | "null" | "nan" | "null+nan" | "empty" @cog(kind="enum",memberNames="True|False|Null|NaN|NullAndNaN|Empty")
 
 // Result used as replacement with text and color when the value matches
 ValueMappingResult: {
@@ -358,12 +362,9 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
   query: DataQueryKind
-
-  // TODO: Should be figured out based on datasource (Grafana ds)
-  // builtIn?: int
-  // Below are currently existing options for annotation queries
+  builtIn?: bool
   enable: bool
   filter: AnnotationPanelFilter
   hide: bool
@@ -383,6 +384,7 @@ QueryOptionsSpec: {
   queryCachingTTL?: int
   interval?: string
   cacheTimeout?: string
+  hideTimeOverride?: bool
 }
 
 DataQueryKind: {
@@ -393,7 +395,7 @@ DataQueryKind: {
 
 PanelQuerySpec: {
   query: DataQueryKind
-  datasource: DataSourceRef
+  datasource?: DataSourceRef
 
   refId: string
   hidden: bool
@@ -593,7 +595,7 @@ QueryVariableSpec: {
   refresh: VariableRefresh
   skipUrlSync: bool | *false
   description?: string
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   query: string | DataQueryKind | *""
   regex: string | *""
   sort: VariableSort
@@ -727,7 +729,7 @@ CustomVariableKind: {
 // GroupBy variable specification
 GroupByVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   current: VariableOption | *{
     text: ""
     value: ""
@@ -751,7 +753,7 @@ GroupByVariableKind: {
 // Adhoc variable specification
 AdhocVariableSpec: {
   name: string | *""
-  datasource: DataSourceRef | *{}
+  datasource?: DataSourceRef
   baseFilters: [...AdHocFilterWithLabels] | *[]
   filters: [...AdHocFilterWithLabels] | *[]
   defaultKeys: [...MetricFindValue] | *[]
