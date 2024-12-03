@@ -3229,9 +3229,7 @@
       "or-view-bookmarks": "Or view bookmarks"
     },
     "card": {
-      "data-source": "Data source: ",
-      "date-created": "Date created: ",
-      "metric": "Metric:"
+      "date-created": "Date created: "
     },
     "home": {
       "learn-more": "Learn more",

@@ -245,7 +245,7 @@ func (b *ProvisioningAPIBuilder) asRepository(ctx context.Context, obj runtime.O
 		}
 
 		linterFactory := lint.NewDashboardLinterFactory()
-		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, baseURL, linterFactory, b.renderer), nil
 	case provisioning.S3RepositoryType:
 		return repository.NewS3(r), nil
 	default:

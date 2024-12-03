@@ -30,6 +30,8 @@ type githubRepository struct {
 	gh            pgh.Client
 	baseURL       *url.URL
 	linterFactory lint.LinterFactory
+	linter        lint.Linter
+	renderer      PreviewRenderer
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -40,6 +42,7 @@ func NewGitHub(
 	factory pgh.ClientFactory,
 	baseURL *url.URL,
 	linterFactory lint.LinterFactory,
+	renderer PreviewRenderer,
 ) *githubRepository {
 	return &githubRepository{
 		config:        config,
@@ -47,6 +50,7 @@ func NewGitHub(
 		gh:            factory.New(ctx, config.Spec.GitHub.Token),
 		baseURL:       baseURL,
 		linterFactory: linterFactory,
+		renderer:      renderer,
 	}
 }
 
@@ -490,14 +494,16 @@ func (r *githubRepository) onPushEvent(ctx context.Context, logger *slog.Logger,
 
 // changedResource represents a resource that has changed in a pull request.
 type changedResource struct {
-	Filename string
-	Path     string
-	Action   string
-	Type     string
-	Original string
-	Current  string
-	Preview  string
-	Data     []byte
+	Filename             string
+	Path                 string
+	Ref                  string
+	Action               string
+	Type                 string
+	OriginalURL          string
+	CurrentURL           string
+	PreviewURL           string
+	PreviewScreenshotURL string
+	Data                 []byte
 }
 
 // onPullRequestEvent is called when a pull request event is received
@@ -556,32 +562,32 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			Path:     file.GetFilename(),
 			Action:   file.GetStatus(),
 			Type:     "dashboard", // TODO: get this from the resource
+			Ref:      event.GetPullRequest().GetHead().GetRef(),
 		}
 
 		path := file.GetFilename()
 		logger := logger.With("file", path, "status", file.GetStatus(), "sha", file.GetSHA())
 
-		ref := event.GetPullRequest().GetHead().GetRef()
 		// reference: https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
 		switch file.GetStatus() {
 		case "added":
-			resource.Preview = r.previewURL(ref, path, prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
 		case "modified":
-			resource.Original = r.previewURL(baseBranch, path, prURL)
-			resource.Current = r.previewURL(mainBranch, path, prURL)
-			resource.Preview = r.previewURL(ref, path, prURL)
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
 		case "removed":
-			resource.Original = r.previewURL(baseBranch, path, prURL)
-			resource.Current = r.previewURL(mainBranch, path, prURL)
-			ref = baseBranch
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.Ref = baseBranch
 		case "renamed":
-			resource.Original = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
-			resource.Current = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
-			resource.Preview = r.previewURL(ref, path, prURL)
+			resource.OriginalURL = r.previewURL(baseBranch, file.GetPreviousFilename(), prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, file.GetPreviousFilename(), prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
 		case "changed":
-			resource.Original = r.previewURL(baseBranch, path, prURL)
-			resource.Current = r.previewURL(mainBranch, path, prURL)
-			resource.Preview = r.previewURL(ref, path, prURL)
+			resource.OriginalURL = r.previewURL(baseBranch, path, prURL)
+			resource.CurrentURL = r.previewURL(mainBranch, path, prURL)
+			resource.PreviewURL = r.previewURL(resource.Ref, path, prURL)
 		case "unchanged":
 			logger.InfoContext(ctx, "ignore unchanged file")
 			continue
@@ -590,7 +596,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 			continue
 		}
 
-		f, err := r.Read(ctx, logger, path, ref)
+		f, err := r.Read(ctx, logger, path, resource.Ref)
 		if err != nil {
 			logger.ErrorContext(ctx, "failed to read file", "error", err)
 			continue
@@ -612,7 +618,7 @@ func (r *githubRepository) onPullRequestEvent(ctx context.Context, logger *slog.
 		changedResources = append(changedResources, resource)
 	}
 
-	if err := r.previewPullRequest(ctx, event.GetNumber(), changedResources); err != nil {
+	if err := r.previewPullRequest(ctx, logger, event.GetNumber(), changedResources); err != nil {
 		logger.ErrorContext(ctx, "failed to comment previews", "error", err)
 	}
 
@@ -718,17 +724,40 @@ func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog
 const previewsCommentTemplate = `Hey there! 🎉
 Grafana spotted some changes for your resources in this pull request:
 
+## Summary
 | File Name | Type | Path | Action | Links |
 |-----------|------|------|--------|-------|
 {{- range .}}
-| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .Original}}[Original]({{.Original}}){{end}}{{if .Current}}, [Current]({{.Current}}){{end}}{{if .Preview}}, [Preview]({{.Preview}}){{end}}|
+| {{.Filename}} | {{.Type}} | {{.Path}} | {{.Action}} | {{if .OriginalURL}}[Original]({{.OriginalURL}}){{end}}{{if .CurrentURL}}, [Current]({{.CurrentURL}}){{end}}{{if .PreviewURL}}, [Preview]({{.PreviewURL}}){{end}}|
 {{- end}}
 
-Click the preview links above to view how your changes will look and compare them with the original and current versions.`
+Click the preview links above to view how your changes will look and compare them with the original and current versions.
 
-func (r *githubRepository) previewPullRequest(ctx context.Context, prNumber int, resources []changedResource) error {
+{{- range .}}
+{{- if .PreviewScreenshotURL}}
+### Preview of {{.Filename}}
+![Preview]({{.PreviewScreenshotURL}})
+{{- end}}
+{{- end}}`
+
+func (r *githubRepository) previewPullRequest(ctx context.Context, logger *slog.Logger, prNumber int, resources []changedResource) error {
 	if !r.Config().Spec.GitHub.GenerateDashboardPreviews || len(resources) == 0 {
 		return nil
+	}
+
+	// generate preview image for each dashboard if not removed
+	for i, resource := range resources {
+		if resource.Action == "removed" {
+			continue
+		}
+
+		screenshotURL, err := r.renderer.RenderDashboardPreview(ctx, r, resource.Path, resource.Ref)
+		if err != nil {
+			return fmt.Errorf("render dashboard preview: %w", err)
+		}
+
+		resources[i].PreviewScreenshotURL = screenshotURL
+		logger.InfoContext(ctx, "dashboard preview screenshot created", "file", resource.Path, "url", screenshotURL)
 	}
 
 	// FIXME: we should not be compiling this all the time
@@ -749,6 +778,8 @@ func (r *githubRepository) previewPullRequest(ctx context.Context, prNumber int,
 	if err := r.gh.CreatePullRequestComment(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, prNumber, comment); err != nil {
 		return fmt.Errorf("create pull request comment: %w", err)
 	}
+
+	logger.InfoContext(ctx, "preview comment created", "resources", len(resources))
 
 	return nil
 }

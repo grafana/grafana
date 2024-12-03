@@ -124,7 +124,3 @@ func (u *Unstructured) GetNestedInt64(fields ...string) int64 {
 	}
 	return val
 }
-
-func (u *Unstructured) ToKubernetesObject() *unstructured.Unstructured {
-	return &unstructured.Unstructured{Object: u.Object}
-}
