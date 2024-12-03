@@ -51,7 +51,6 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
-    // const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, changeInfo.isNew);
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
@@ -201,15 +200,3 @@ async function validateDashboardName(title: string, formValues: SaveDashboardAsF
     return e instanceof Error ? e.message : 'Dashboard name is invalid';
   }
 }
-
-// function getSaveAsDashboardSaveModel(source: Dashboard, form: SaveDashboardAsFormDTO, isNew?: boolean): Dashboard {
-//   // TODO remove old alerts and thresholds when copying (See getSaveAsDashboardClone)
-//   return {
-//     ...source,
-//     id: null,
-//     uid: '',
-//     title: form.title,
-//     description: form.description,
-//     tags: isNew || form.copyTags ? source.tags : [],
-//   };
-// }
