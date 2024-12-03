@@ -9769,6 +9769,33 @@
         }
       }
     },
+    "getUsers": {
+      "description": "",
+      "headers": {
+        "Resources": {
+          "type": "array",
+          "items": {}
+        },
+        "itemsPerPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalResults": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "goneError": {
       "description": "GoneError is returned when the requested endpoint was removed.",
       "schema": {

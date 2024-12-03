@@ -1405,6 +1405,43 @@
         },
         "description": "(empty)"
       },
+      "getUsers": {
+        "description": "(empty)",
+        "headers": {
+          "Resources": {
+            "schema": {
+              "items": {},
+              "type": "array"
+            }
+          },
+          "itemsPerPage": {
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "schemas": {
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "startIndex": {
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          "totalResults": {
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        }
+      },
       "goneError": {
         "content": {
           "application/json": {
@@ -22488,7 +22525,7 @@
         "operationId": "getUsers",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/okResponse"
+            "$ref": "#/components/responses/getUsers"
           },
           "400": {
             "$ref": "#/components/responses/badRequestError"

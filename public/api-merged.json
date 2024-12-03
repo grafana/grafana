@@ -8615,7 +8615,7 @@
         "operationId": "getUsers",
         "responses": {
           "200": {
-            "$ref": "#/responses/okResponse"
+            "$ref": "#/responses/getUsers"
           },
           "400": {
             "$ref": "#/responses/badRequestError"
@@ -24162,6 +24162,33 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/TeamDTO"
+        }
+      }
+    },
+    "getUsers": {
+      "description": "(empty)",
+      "headers": {
+        "Resources": {
+          "type": "array",
+          "items": {}
+        },
+        "itemsPerPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "schemas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "startIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalResults": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
