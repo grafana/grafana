@@ -22618,6 +22618,30 @@
       }
     },
     "/scim/users/": {
+      "delete": {
+        "operationId": "deleteUser",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Deletes user.",
+        "tags": [
+          "user"
+        ]
+      },
       "get": {
         "operationId": "getUsers",
         "responses": {
