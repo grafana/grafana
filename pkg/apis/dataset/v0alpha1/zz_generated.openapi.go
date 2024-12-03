@@ -144,7 +144,7 @@ func schema_pkg_apis_dataset_v0alpha1_FrameInfo(ref common.ReferenceCallback) co
 							Description: "Title is the display value",
 							Default:     0,
 							Type:        []string{"integer"},
-							Format:      "int64",
+							Format:      "int32",
 						},
 					},
 				},

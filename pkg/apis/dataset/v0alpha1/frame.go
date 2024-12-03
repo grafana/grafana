@@ -15,7 +15,7 @@ type DataFrame struct {
 }
 
 // Hand constructed OpenAPI spec 😬
-func (u DataFrame) OpenAPIDefinition() openapi.OpenAPIDefinition {
+func (d DataFrame) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
