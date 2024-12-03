@@ -2,7 +2,8 @@
 /* eslint @grafana/no-border-radius-literal: 0 */
 
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
@@ -41,10 +42,41 @@ const FAKE_BASE_ITEMS: CommandPaletteItem[] = [
 export function CommandPalette2() {
   const styles = useStyles2(getStyles);
   const modKey = '⌘'; /*useMemo(() => getModKey(), []);*/
+  const [keyState, setKeyState] = useState({ up: false, down: false });
 
   const recentDashboardItems = useRecentDashboards();
   const navItems = useNavItems();
   const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    const handleKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === 'ArrowDown') {
+        setKeyState((old) => ({ ...old, down: true }));
+      }
+
+      if (ev.key === 'ArrowUp') {
+        setKeyState((old) => ({ ...old, up: true }));
+      }
+    };
+
+    const handleKeyUp = (ev: KeyboardEvent) => {
+      if (ev.key === 'ArrowDown') {
+        setKeyState((old) => ({ ...old, down: false }));
+      }
+
+      if (ev.key === 'ArrowUp') {
+        setKeyState((old) => ({ ...old, up: false }));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   const items = useMemo(() => {
     return [...FAKE_BASE_ITEMS, DASH_DIVIDER, ...recentDashboardItems, ...FAKE_DASH_ITEMS, PAGES_DIVIDER, ...navItems];
@@ -122,12 +154,24 @@ export function CommandPalette2() {
 
           <div className={styles.footerCell}>
             <div className={styles.shortcut}>
-              <span className={styles.keyboardKey}>
-                <Icon name="arrow-up" />
-              </span>
-              <span className={styles.keyboardKey}>
-                <Icon name="arrow-down" />
-              </span>
+              <motion.span
+                animate={{ color: keyState.up ? '#FFFFFF' : '#9D9DAD' }}
+                transition={{ duration: 0.1 }}
+                className={styles.keyboardKey}
+              >
+                <motion.span style={{ display: 'inline-block' }} animate={{ y: keyState.up ? -2 : 0 }}>
+                  <Icon name="arrow-up" />
+                </motion.span>
+              </motion.span>
+              <motion.span
+                animate={{ color: keyState.down ? '#FFFFFF' : '#9D9DAD' }}
+                transition={{ duration: 0.1 }}
+                className={styles.keyboardKey}
+              >
+                <motion.span style={{ display: 'inline-block' }} animate={{ y: keyState.down ? 2 : 0 }}>
+                  <Icon name="arrow-down" />
+                </motion.span>
+              </motion.span>
               <span>to navigate</span>
             </div>
 

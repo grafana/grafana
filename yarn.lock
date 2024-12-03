@@ -16481,6 +16481,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"framer-motion@npm:^11.13.1":
+  version: 11.13.1
+  resolution: "framer-motion@npm:11.13.1"
+  dependencies:
+    motion-dom: "npm:^11.13.0"
+    motion-utils: "npm:^11.13.0"
+    tslib: "npm:^2.4.0"
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10/621419951160d1506931554595a977abf603a8ecb92c6481481c23c48b18f90691fcff3cc8570b4c86e8fe65d1fec98210c7d18ff5a3c6953e48bf603b833c02
+  languageName: node
+  linkType: hard
+
 "framework-utils@npm:^1.1.0":
   version: 1.1.0
   resolution: "framework-utils@npm:1.1.0"
@@ -17413,6 +17435,7 @@ __metadata:
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.46"
     monaco-editor: "npm:0.34.1"
+    motion: "npm:^11.13.1"
     moveable: "npm:0.53.0"
     msw: "npm:2.6.5"
     mutationobserver-shim: "npm:0.3.7"
@@ -21792,6 +21815,41 @@ __metadata:
   dependencies:
     color-name: "npm:^1.1.4"
   checksum: 10/6dced73bfb3048d2a60e4c7e2a5c414c4e7877dac54283168715a891525819109141b40bd9a7fd28f878802b4e166bd0452be926bfb6c0ab95bf9ee2b84e1b3d
+  languageName: node
+  linkType: hard
+
+"motion-dom@npm:^11.13.0":
+  version: 11.13.0
+  resolution: "motion-dom@npm:11.13.0"
+  checksum: 10/9c58f60cc693cb40f956477b831bd3a66f7f70887929324b0196c471c79eda896e7e85849d3b5a389617505654343522393e897c84ffd33cae9ade3b3c9f57c8
+  languageName: node
+  linkType: hard
+
+"motion-utils@npm:^11.13.0":
+  version: 11.13.0
+  resolution: "motion-utils@npm:11.13.0"
+  checksum: 10/f0141d6b1ac8efd48208bfcfd64c3bf8e952322954c1d63726b1f067e2828d01c9ca5ad1c4751461886f12c16e68d49ad0a8a38f997772f24dbd45bf6dc56238
+  languageName: node
+  linkType: hard
+
+"motion@npm:^11.13.1":
+  version: 11.13.1
+  resolution: "motion@npm:11.13.1"
+  dependencies:
+    framer-motion: "npm:^11.13.1"
+    tslib: "npm:^2.4.0"
+  peerDependencies:
+    "@emotion/is-prop-valid": "*"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  peerDependenciesMeta:
+    "@emotion/is-prop-valid":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  checksum: 10/8a6dbe9a7309fc6b160a491265160915aa292c984d0e961f7df70df72b34b226610c21be06b6bce77ee445a4fad7276532deff266bc1584705f71a3ae0e73bd0
   languageName: node
   linkType: hard
 
