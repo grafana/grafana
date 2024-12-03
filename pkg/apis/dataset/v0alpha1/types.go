@@ -44,5 +44,5 @@ type FrameInfo struct {
 	Fields []string `json:"fields"`
 
 	// Title is the display value
-	Rows int64 `json:"rows"`
+	Rows int `json:"rows"`
 }

@@ -21,6 +21,7 @@ func (u DataFrame) OpenAPIDefinition() openapi.OpenAPIDefinition {
 			SchemaProps: spec.SchemaProps{
 				Type:                 []string{"object"},
 				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
+				Description:          "This schema is currently a placeholder while we define a better OpenAPI spec for DataFrame",
 			},
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: map[string]interface{}{
@@ -40,7 +41,23 @@ func (d *DataFrame) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON ensures that the unstructured object properly decodes
 // JSON when passed to Go's standard JSON library.
 func (d *DataFrame) UnmarshalJSON(b []byte) error {
-	return json.Unmarshal(b, d.Frame)
+	d.Frame = new(data.Frame)
+	err := d.Frame.UnmarshalJSON(b)
+	if err != nil {
+		// HACK Alert!!!
+		// Kubectl seems to reverse the order of schema+data
+		// This should really really be fixed in:
+		// https://github.com/grafana/grafana-plugin-sdk-go/blob/v0.260.1/data/frame_json.go#L277
+		type swapper struct {
+			Schema json.RawMessage `json:"schema,omitempty"`
+			Data   json.RawMessage `json:"data,omitempty"`
+		}
+		tmp := &swapper{}
+		_ = json.Unmarshal(b, tmp)
+		b, _ = json.Marshal(tmp) // swap order
+		err = d.Frame.UnmarshalJSON(b)
+	}
+	return err
 }
 
 func (d *DataFrame) DeepCopy() *DataFrame {

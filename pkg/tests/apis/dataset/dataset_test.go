@@ -3,9 +3,12 @@ package dataset
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	dataset "github.com/grafana/grafana/pkg/apis/dataset/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -26,6 +29,21 @@ func TestIntegrationPeakQ(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
+	})
+
+	t.Run("Check object loading", func(t *testing.T) {
+		raw, err := os.ReadFile("testdata/population_by_state.json")
+		require.NoError(t, err)
+
+		ds := &dataset.Dataset{}
+		err = json.Unmarshal(raw, ds)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, len(ds.Spec.Data))
+
+		jj, err := json.MarshalIndent(ds, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", string(jj))
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {

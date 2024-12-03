@@ -1,9 +1,13 @@
 package dataset
 
 import (
+	"context"
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -96,6 +100,48 @@ func (b *DatasetAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.AP
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dataset.VERSION] = storage
+	return nil
+}
+
+func (b *DatasetAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	obj := a.GetObject()
+
+	if obj == nil || a.GetOperation() == admission.Connect {
+		return nil // This is normal for sub-resource
+	}
+
+	ds, ok := obj.(*dataset.Dataset)
+	if !ok {
+		return fmt.Errorf("expected dataset")
+	}
+
+	if len(ds.Spec.Data) < 1 {
+		return fmt.Errorf("empty dataset")
+	}
+
+	// Info set from mutation webhook
+	ds.Spec.Info = make([]dataset.FrameInfo, len(ds.Spec.Data))
+	for i, d := range ds.Spec.Data {
+		if d.Frame == nil {
+			return fmt.Errorf("frame data can not be nil")
+		}
+
+		rows, err := d.Frame.RowLen()
+		if err != nil {
+			return err
+		}
+		names := make([]string, len(d.Frame.Fields))
+		for i, f := range d.Frame.Fields {
+			names[i] = f.Name
+		}
+
+		ds.Spec.Info[i] = dataset.FrameInfo{
+			Name:   d.Frame.Name,
+			Fields: names,
+			Rows:   rows,
+		}
+	}
+
 	return nil
 }
 

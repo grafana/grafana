@@ -26,12 +26,12 @@ func NewDatasetLargeObjectSupport(scheme *runtime.Scheme) *apistore.BasicLargeOb
 				return fmt.Errorf("unable to convert value to dataset")
 			}
 
-			if len(data.Spec.Frames) < 1 {
+			if len(data.Spec.Data) < 1 {
 				return fmt.Errorf("missing frame data")
 			}
 
 			data.SetManagedFields(nil) // this could be bigger than the object!
-			data.Spec.Frames = nil
+			data.Spec.Data = nil
 			return nil
 		},
 
