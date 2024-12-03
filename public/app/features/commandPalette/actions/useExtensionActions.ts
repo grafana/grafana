@@ -24,16 +24,18 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       name: link.title,
       target: link.path,
       perform: () => link.onClick && link.onClick(),
-      ...extractExtraSettings(link.description),
+      shortcut: extractKeyboardShortcuts(link.description),
+      keywords: extractKeywords(link.description),
     }));
   }, [links]);
 }
 
-function extractExtraSettings(input: string): Record<'shortcut' | 'keywords', string[]> {
-  const match = input.match(/(?:\[shortcut:(?<shortcut>[^\]]+)\])?\s?(?:\[keywords:(?<keywords>[^\]]+)\])?/);
-  const [shortcut, keywords] = Object.values(match?.groups ?? {}).map((x) => x?.split(','));
-  return {
-    ...(shortcut && {shortcut}),
-    ...(keywords && {keywords}),
-  };
+function extractKeyboardShortcuts(input: string) {
+  const match = input.match(/\[shortcut:([^\]]+)\]/);
+  return match ? match[1].split(',') : undefined;
+}
+
+function extractKeywords(input: string) {
+  const match = input.match(/\[keywords:([^\]]+)\]/);
+  return match ? match[1].replace(',', ' ') : undefined;
 }
