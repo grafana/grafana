@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"slices"
 	"strings"
@@ -730,19 +731,36 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, namespaceUID string) response.Response {
-	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
+func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, promNamespace string) response.Response {
+	logger := srv.log.FromContext(c.Req.Context())
+
+	namespaceUID, err := generateNamespaceUID(promNamespace)
 	if err != nil {
+		logger.Error("Failed to generate namespace UID", "error", err)
+		return response.Err(err)
+	}
+
+	srv.log.FromContext(c.Req.Context()).Debug("Creating a new namespace", "title", promNamespace, "namespace_uid", namespaceUID)
+	namespace, err := srv.store.GetOrCreateNamespaceByUID(
+		c.Req.Context(),
+		namespaceUID,
+		promNamespace,
+		c.SignedInUser.GetOrgID(),
+		c.SignedInUser,
+	)
+	if err != nil {
+		logger.Error("Failed to create a new namespace", "error", err)
 		return toNamespaceErrorResponse(err)
 	}
 
-	promConverter := prom.NewConverter(prom.Config{})
-
 	// checkGroupLimits is skipped
 
+	logger.Debug("Converting Prometheus rules to Grafana rules", "group", ruleGroup.Name, "namespace_uid", namespace.UID, "rule_count", len(ruleGroup.Rules))
 	promGroup := convertToPrometheusModels(ruleGroup)
+	promConverter := prom.NewConverter(prom.Config{})
 	grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
 	if err != nil {
+		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 		return response.Err(err)
 	}
 
@@ -759,14 +777,24 @@ func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContex
 		})
 	}
 
-	srv.log.FromContext(c.Req.Context()).Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
+	logger.Debug("Saving Prometheus rule group", "group", groupKey.RuleGroup, "namespace_uid", namespace.UID, "rule_count", len(rules))
 	changes, errResponse := srv.updateAlertRulesInGroup(c.Req.Context(), c, groupKey, rules)
-
 	if errResponse != nil {
+		logger.Error("Failed to save Prometheus rule group")
 		return errResponse
 	}
 
 	return response.JSON(http.StatusAccepted, changes)
+}
+
+func generateNamespaceUID(namespace string) (string, error) {
+	hasher := fnv.New64a()
+	_, err := hasher.Write([]byte(namespace))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate namespace UID: %w", err)
+	}
+
+	return fmt.Sprintf("%016x", hasher.Sum64()), nil
 }
 
 func convertToPrometheusModels(group apimodels.PostablePrometheusRuleGroup) prom.PrometheusRuleGroup {

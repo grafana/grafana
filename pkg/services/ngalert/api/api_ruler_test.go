@@ -28,10 +28,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -640,6 +642,50 @@ func TestValidateQueries(t *testing.T) {
 	})
 }
 
+func TestRoutePostNameRulesPrometheusConfig(t *testing.T) {
+	t.Run("valid request saves Prometheus rules as Grafana rules", func(t *testing.T) {
+		orgID := rand.Int63()
+		promNamespace := "test-namespace"
+		ruleGroup := apimodels.PostablePrometheusRuleGroup{
+			Name: "test-group",
+			Rules: []apimodels.PostablePrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   "5m",
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+					Annotations: map[string]string{
+						"summary": "Instance is down",
+					},
+				},
+			},
+		}
+
+		ruleStore := fakes.NewRuleStore(t)
+		service := createService(ruleStore)
+
+		permissions := createPermissionsToImportPrometheusRules(orgID)
+		req := createRequestContextWithPerms(orgID, permissions, nil)
+
+		response := service.RoutePostNameRulesPrometheusConfig(req, ruleGroup, promNamespace)
+
+		require.Equal(t, http.StatusAccepted, response.Status())
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+		rule := rules[0]
+		require.Equal(t, "TestAlert", rule.Title)
+		require.Equal(t, "A", rule.Condition)
+		require.Equal(t, 5*time.Minute, rule.For)
+		require.Equal(t, "critical", rule.Labels["severity"])
+		require.Equal(t, "Instance is down", rule.Annotations["summary"])
+	})
+}
+
 func createServiceWithProvenanceStore(store *fakes.RuleStore, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
 	svc := createService(store)
 	svc.provenanceStore = provenanceStore
@@ -650,17 +696,50 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
-		QuotaService:    nil,
+		QuotaService:    &fakeQuotaService{},
 		provenanceStore: fakes.NewFakeProvisioningStore(),
 		log:             log.New("test"),
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,
 		},
-		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
-		amConfigStore:  &fakeAMRefresher{},
-		amRefresher:    &fakeAMRefresher{},
-		featureManager: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
+		authz:              accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
+		amConfigStore:      &fakeAMRefresher{},
+		amRefresher:        &fakeAMRefresher{},
+		featureManager:     featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules),
+		conditionValidator: &fakeConditionValidator{},
 	}
+}
+
+type fakeConditionValidator struct{}
+
+func (r *fakeConditionValidator) Validate(_ eval.EvaluationContext, _ models.Condition) error {
+	return nil
+}
+
+type fakeQuotaService struct{}
+
+func (f *fakeQuotaService) GetQuotasByScope(ctx context.Context, scope quota.Scope, ID int64) ([]quota.QuotaDTO, error) {
+	return nil, nil
+}
+
+func (f *fakeQuotaService) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd) error {
+	return nil
+}
+
+func (f *fakeQuotaService) QuotaReached(c *contextmodel.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
+	return false, nil
+}
+
+func (f *fakeQuotaService) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error) {
+	return false, nil
+}
+
+func (f *fakeQuotaService) DeleteQuotaForUser(ctx context.Context, userID int64) error {
+	return nil
+}
+
+func (f *fakeQuotaService) RegisterQuotaReporter(e *quota.NewUsageReporter) error {
+	return nil
 }
 
 type fakeAMRefresher struct {
@@ -718,4 +797,21 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 		}
 	}
 	return map[int64]map[string][]string{orgID: permissions}
+}
+
+func createPermissionsToImportPrometheusRules(orgID int64) map[int64]map[string][]string {
+	permissions := map[int64]map[string][]string{}
+
+	permissions[orgID] = map[string][]string{
+		dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll},
+		datasources.ActionQuery:        {datasources.ScopeAll},
+
+		ac.ActionAlertingRuleCreate: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleUpdate: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleDelete: {dashboards.ScopeFoldersAll},
+		ac.ActionAlertingRuleRead:   {dashboards.ScopeFoldersAll},
+	}
+
+	return permissions
 }
