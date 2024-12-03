@@ -7,7 +7,7 @@ import (
 var WireSet = wire.NewSet(
 	ProvideService,
 	ProvideRegisterer,
-	ProvideGatherer,
+	ProvideMultiGatherer,
 )
 
 var WireSetForTest = wire.NewSet(
