@@ -731,7 +731,7 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, q authorized
 	return byGroupKey, totalGroups, nil
 }
 
-func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, promNamespace string) response.Response {
+func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContext, ruleGroup apimodels.PostablePrometheusRuleGroup, promNamespace, datasourceUID string) response.Response {
 	logger := srv.log.FromContext(c.Req.Context())
 
 	namespaceUID, err := generateNamespaceUID(promNamespace)
@@ -757,7 +757,7 @@ func (srv RulerSrv) RoutePostNameRulesPrometheusConfig(c *contextmodel.ReqContex
 
 	logger.Debug("Converting Prometheus rules to Grafana rules", "group", ruleGroup.Name, "namespace_uid", namespace.UID, "rule_count", len(ruleGroup.Rules))
 	promGroup := convertToPrometheusModels(ruleGroup)
-	promConverter := prom.NewConverter(prom.Config{})
+	promConverter := prom.NewConverter(prom.Config{DatasourceUID: datasourceUID})
 	grafanaGroup, err := promConverter.PrometheusRulesToGrafana(c.SignedInUser.GetOrgID(), namespace.UID, promGroup)
 	if err != nil {
 		logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)

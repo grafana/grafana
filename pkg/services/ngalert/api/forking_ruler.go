@@ -11,6 +11,10 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
+const (
+	datasourceUIDHeader = "X-Datasource-Uid"
+)
+
 // RulerApiHandler will validate and proxy requests to the correct backend type depending on the datasource.
 type RulerApiHandler struct {
 	LotexRuler      *LotexRuler
@@ -128,12 +132,14 @@ func (f *RulerApiHandler) handleRoutePostNameGrafanaRulesPrometheusConfig(ctx *c
 	}
 	defer func() { _ = ctx.Req.Body.Close() }()
 
+	datasourceUID := ctx.Req.Header.Get(datasourceUIDHeader)
+
 	var ruleGroup apimodels.PostablePrometheusRuleGroup
 	if err := yaml.Unmarshal(body, &ruleGroup); err != nil {
 		return errorToResponse(err)
 	}
 
-	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace)
+	return f.GrafanaRuler.RoutePostNameRulesPrometheusConfig(ctx, ruleGroup, namespace, datasourceUID)
 }
 
 func (f *RulerApiHandler) getService(ctx *contextmodel.ReqContext) (*LotexRuler, error) {

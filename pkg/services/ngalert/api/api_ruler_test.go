@@ -669,7 +669,7 @@ func TestRoutePostNameRulesPrometheusConfig(t *testing.T) {
 		permissions := createPermissionsToImportPrometheusRules(orgID)
 		req := createRequestContextWithPerms(orgID, permissions, nil)
 
-		response := service.RoutePostNameRulesPrometheusConfig(req, ruleGroup, promNamespace)
+		response := service.RoutePostNameRulesPrometheusConfig(req, ruleGroup, promNamespace, "")
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{

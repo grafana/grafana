@@ -662,6 +662,8 @@ type UpdateRuleGroupResponse struct {
 type RoutePostNameGrafanaRulesPrometheusConfigParams struct {
 	// in: path
 	Namespace string
+	// in: header
+	DatasourceUID string `json:"x-datasource-uid"`
 	// in:body
 	Body PostablePrometheusRuleGroup
 }
