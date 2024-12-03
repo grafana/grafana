@@ -87,11 +87,13 @@ Labels that you manually configure in the alert rule to identify the generated a
 
 Additionally, you can use a [template](ref:templates) to customize the label value and generate dynamic values from query data.
 
-**Data source query labels**
+**Query labels**
 
-For example, if you are monitoring temperature readings and each time series for these readings has a `sensor_id`, and a `location` label, an alert instance might have the labels `{sensor_id="1",location="NY"}`, while another alert instance might have `{sensor_id="2",location="WA"}`.
+Query labels are labels returned by the data source query.
 
-Data source query labels labels are also used to generate multiple alert instances from the same alert rule, helping to distinguish alerts from different data.
+{{< figure src="/media/docs/alerting/query-labels-and-values.png" max-width="1200px" caption="An alert rule query returning labels from the query." >}}
+
+Query labels can generate multiple alert instances from the same alert rule, helping to distinguish alerts from different data. In this example, the `instance` label generates an alert instance for each server.
 
 **Reserved labels**
 

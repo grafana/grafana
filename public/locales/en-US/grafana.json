@@ -3336,6 +3336,12 @@
       "info-box-content": "Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names in your metric queries you can use variables in their place. Variables are shown as list boxes at the top of the dashboard. These drop-down lists make it easy to change the data being displayed in your dashboard.",
       "info-box-content-2": "Check out the <2>Templates and variables documentation</2> for more information.",
       "title": "There are no variables added yet"
+    },
+    "unknown-table": {
+      "loading": "Loading...",
+      "no-unknowns": "No renamed or missing variables found.",
+      "renamed-or-missing-variables": "Renamed or missing variables",
+      "variable": "Variable"
     }
   }
 }
