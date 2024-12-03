@@ -24,10 +24,8 @@ export function FlameChartViewPort<T>(props: FlameChartViewPortProps<T>) {
     containerSize: { width, height },
   });
 
-  console.log('renderItems', renderItems);
-
   return (
-    <div ref={sizeRef} className={styles.container}>
+    <div ref={sizeRef} style={{ height: `${renderItems.height}px` }} className={styles.container}>
       {renderItems.items.map((item) => (
         <FlameChartNode key={container.getOperationId(item.operation.entity)} container={container} renderItem={item} />
       ))}
@@ -40,9 +38,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       position: 'relative',
       overflow: 'hidden',
-      height: '100%',
       width: '100%',
-      flex: 1,
     }),
   };
 }

@@ -5,7 +5,7 @@ import { getColorByKey } from '../utils/color-generator';
 
 export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<TraceSpan> {
   const id2operation: Record<string, Operation<TraceSpan>> = {};
-
+  console.log('trace', trace);
   // instantiate operations
   trace.spans.forEach((span) => {
     id2operation[span.spanID] = {
@@ -16,18 +16,22 @@ export function traceToFlameChartContainer(trace: Trace): FlameChartContainer<Tr
     };
   });
 
-  // define parent/child relationships
   trace.spans.forEach((span) => {
-    const operation = id2operation[span.spanID];
-    if (span.childSpanIds) {
-      span.childSpanIds.forEach((childSpanId) => {
-        const childOperation = id2operation[childSpanId];
-        if (childOperation) {
-          operation.children.push(childOperation);
-          childOperation.parent = operation;
-        }
-      });
+    const parentId = span.references.find((ref) => ref.refType === 'CHILD_OF')?.spanID;
+    if (parentId) {
+      const child = id2operation[span.spanID];
+      const parent = id2operation[parentId];
+      if (!child.parent) {
+        child.parent = parent;
+      }
+      if (!parent.children.includes(child)) {
+        parent.children.push(child);
+      }
     }
+  });
+
+  Object.values(id2operation).forEach((op) => {
+    op.children.sort((a, b) => a.startMs - b.startMs);
   });
 
   return {

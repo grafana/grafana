@@ -1,11 +1,14 @@
 import { GrafanaTheme2 } from '@grafana/data';
 
-export interface Operation<T> {
+export interface TreeNode<T> {
+  parent?: T;
+  children: T[];
+}
+
+export interface Operation<T> extends TreeNode<Operation<T>> {
   startMs: number;
   durationMs: number;
   entity: T;
-  parent?: Operation<T>;
-  children: Array<Operation<T>>;
 }
 
 export interface FlameChartContainer<T> {
@@ -25,5 +28,6 @@ export interface RenderItem<T> {
 export interface RenderContainer<T> {
   fromMs: number;
   toMs: number;
+  height: number;
   items: Array<RenderItem<T>>;
 }

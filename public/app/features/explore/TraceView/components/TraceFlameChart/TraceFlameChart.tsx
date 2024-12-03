@@ -32,8 +32,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       minHeight: '600px',
-      display: 'flex',
-      flexDirection: 'column',
     }),
   };
 }

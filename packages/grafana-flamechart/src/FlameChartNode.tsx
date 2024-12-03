@@ -59,6 +59,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   label: css({
     flex: 1,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   }),
   duration: css({
     fontStyle: 'italic',
