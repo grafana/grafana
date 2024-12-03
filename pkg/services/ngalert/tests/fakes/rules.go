@@ -258,6 +258,38 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
+func (f *RuleStore) GetOrCreateNamespaceByUID(_ context.Context, uid, title string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	q := GenericRecordedQuery{
+		Name:   "GetOrCreateNamespaceByUID",
+		Params: []any{orgID, uid, title, user},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+	err := f.Hook(q)
+	if err != nil {
+		return nil, err
+	}
+	folders := f.Folders[orgID]
+	for _, folder := range folders {
+		if folder.UID == uid {
+			return folder, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:       rand.Int63(), // nolint:staticcheck
+		UID:      uid,
+		Title:    title,
+		Fullpath: "fullpath_" + title,
+	}
+
+	folders = append(folders, newFolder)
+	f.Folders[orgID] = folders
+
+	return newFolder, nil
+}
+
 func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -269,15 +301,15 @@ func (f *RuleStore) UpdateAlertRules(_ context.Context, q []models.UpdateRule) e
 }
 
 func (f *RuleStore) InsertAlertRules(_ context.Context, q []models.AlertRule) ([]models.AlertRuleKeyWithId, error) {
-	f.mtx.Lock()
-	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, q)
 	ids := make([]models.AlertRuleKeyWithId, 0, len(q))
 	for _, rule := range q {
+		rule.UID = util.GenerateShortUID()
 		ids = append(ids, models.AlertRuleKeyWithId{
 			AlertRuleKey: rule.GetKey(),
 			ID:           rand.Int63(),
 		})
+		f.PutRule(context.Background(), &rule)
 	}
 	if err := f.Hook(q); err != nil {
 		return ids, err
