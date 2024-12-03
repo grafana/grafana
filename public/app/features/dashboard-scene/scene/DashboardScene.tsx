@@ -645,6 +645,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._serializer.initialSaveModel = saveModel;
   }
 
+  public getTrackingInformation() {
+    return this._serializer.getTrackingInformation();
+  }
+
   public async onDashboardDelete() {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });

@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { getV1SchemaPanelCounts, getV1SchemaVariables } from 'app/features/dashboard/utils/tracking';
 import { SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges } from '../saving/getDashboardChanges';
@@ -27,6 +28,17 @@ export interface DashboardSceneSerializerLike<T> {
     }
   ) => DashboardChangeInfo;
   onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
+  getTrackingInformation: () => DashboardTrackingInfo | undefined;
+}
+
+interface DashboardTrackingInfo {
+  uid?: string;
+  title?: string;
+  schemaVersion: number;
+  version_before_migration?: number;
+  panels_count: number;
+  settings_nowdelay?: number;
+  settings_livenow?: boolean;
 }
 
 export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
@@ -79,6 +91,26 @@ export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashb
       version: result.version,
     };
   }
+
+  getTrackingInformation(): DashboardTrackingInfo | undefined {
+    const panels = getV1SchemaPanelCounts(this.initialSaveModel?.panels || []);
+    const variables = getV1SchemaVariables(this.initialSaveModel?.templating?.list || []);
+
+    if (this.initialSaveModel) {
+      return {
+        uid: this.initialSaveModel.uid,
+        title: this.initialSaveModel.title,
+        schemaVersion: this.initialSaveModel.schemaVersion,
+        version_before_migration: this.initialSaveModel.version,
+        panels_count: this.initialSaveModel.panels?.length || 0,
+        settings_nowdelay: undefined,
+        settings_livenow: !!this.initialSaveModel.liveNow,
+        ...panels,
+        ...variables,
+      };
+    }
+    return undefined;
+  }
 }
 
 export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
@@ -102,6 +134,11 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
     throw new Error('v2 schema: Method not implemented.');
+  }
+
+  getTrackingInformation() {
+    throw new Error('v2 schema: Method not implemented.');
+    return undefined;
   }
 }
 
