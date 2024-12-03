@@ -93,6 +93,39 @@ In both cases, the assignment applies only to the user, team or service account 
 1. Select a role within an organization that you want to assign to the user.
 1. Click **Save**.
 
+## Assign fixed or custom roles using the HTTP api
+
+This section describes how to:
+
+- Assign a fixed role to a user, team or service account as an organization administrator.
+
+<br/>
+
+**Before you begin:**
+
+- [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
+- Identify the fixed roles that you want to assign to the user, team or service account.
+
+  For more information about available fixed roles, refer to [RBAC role definitions](ref:rbac-role-definitions).
+
+- Ensure that your own user account has the correct permissions:
+  - If you are assigning permissions to a user, team or service account within an organization, you must have organization administrator or server administrator permissions.
+  - If you are assigning permissions to a user who belongs to multiple organizations, you must have server administrator permissions.
+  - Your Grafana user can also assign fixed role if it has either the `fixed:roles:writer` fixed role assigned to the same organization to which you are assigning RBAC to a user, or a custom role with `users.roles:add` and `users.roles:remove` permissions.
+  - Your own user account must have the roles you are granting. For example, if you would like to grant the `fixed:users:writer` role to a team, you must have that role yourself.
+
+<br/>
+
+**To assign a fixed role to a user or service account:**
+
+Refer to the [RBAC http api for user role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-user-role-assignment).
+
+The service account ID can be used in place of the user ID.
+
+**To assign a fixed role to a team:**
+
+Refer to the [RBAC http api for team role assignment](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#add-a-team-role-assignment).
+
 ## Assign fixed or custom roles to a team using provisioning
 
 Instead of using the Grafana role picker, you can use file-based provisioning to assign fixed roles to teams. If you have a large number of teams, provisioning can provide an easier approach to assigning and managing role assignments.
