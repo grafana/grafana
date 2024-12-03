@@ -85,7 +85,7 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
   initialSaveModel?: DashboardV2Spec;
 
   getSaveModel(s: DashboardScene) {
-    return transformSceneToSaveModelSchemaV2(s) as DashboardV2Spec;
+    return transformSceneToSaveModelSchemaV2(s);
   }
 
   getSaveAsModel(s: DashboardScene, options: SaveDashboardAsOptions) {
@@ -96,7 +96,6 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 
   getDashboardChangesFromScene(scene: DashboardScene) {
     throw new Error('v2 schema: Method not implemented.');
-    // return getRawDashboardV2Changes(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
     // eslint-disable-next-line
     return {} as DashboardChangeInfo;
   }
@@ -109,6 +108,7 @@ export class V2DashboardSerializer implements DashboardSceneSerializerLike<Dashb
 export function getDashboardSceneSerializer(
   forceLegacy?: boolean
 ): DashboardSceneSerializerLike<Dashboard | DashboardV2Spec> {
+  // When we have end-to-end v2 API integration, this will be controlled by a feature toggle, no need for forceLegacy
   if (forceLegacy) {
     return new V1DashboardSerializer();
   }
