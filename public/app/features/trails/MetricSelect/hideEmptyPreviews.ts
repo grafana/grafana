@@ -1,6 +1,8 @@
 import { FieldType, LoadingState } from '@grafana/data';
 import { SceneCSSGridItem, sceneGraph } from '@grafana/scenes';
 
+import { MetricSelectSceneForWingman } from '../wingman/MetricSelectSceneForWingman';
+
 import { MetricSelectScene } from './MetricSelectScene';
 
 export function hideEmptyPreviews(metric: string) {
@@ -14,7 +16,12 @@ export function hideEmptyPreviews(metric: string) {
       if (state.data?.state === LoadingState.Loading || state.data?.state === LoadingState.Error) {
         return;
       }
-      const scene = sceneGraph.getAncestor(gridItem, MetricSelectScene);
+      let scene: MetricSelectScene | MetricSelectSceneForWingman;
+      try {
+        scene = sceneGraph.getAncestor(gridItem, MetricSelectScene);
+      } catch {
+        scene = sceneGraph.getAncestor(gridItem, MetricSelectSceneForWingman);
+      }
 
       if (!state.data?.series.length) {
         scene.updateMetricPanel(metric, true, true);
