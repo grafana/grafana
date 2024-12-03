@@ -87,7 +87,7 @@
     "@playwright/test": "1.48.2",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.15",
     "@react-types/button": "3.10.1",
-    "@react-types/menu": "3.9.12",
+    "@react-types/menu": "3.9.13",
     "@react-types/overlays": "3.8.10",
     "@react-types/shared": "3.25.0",
     "@rtk-query/codegen-openapi": "^1.2.0",
