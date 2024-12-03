@@ -30,7 +30,6 @@ type githubRepository struct {
 	gh            pgh.Client
 	baseURL       *url.URL
 	linterFactory lint.LinterFactory
-	linter        lint.Linter
 	renderer      PreviewRenderer
 }
 
