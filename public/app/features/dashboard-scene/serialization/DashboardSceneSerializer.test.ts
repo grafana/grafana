@@ -312,7 +312,7 @@ describe('DashboardSceneSerializer', () => {
     it('should throw on getSaveAsModel', () => {
       const serializer = new V2DashboardSerializer();
       const dashboard = setup();
-      expect(() => serializer.getSaveAsModel(dashboard, {} as any)).toThrow('Method not implemented.');
+      expect(() => serializer.getSaveAsModel(dashboard, {})).toThrow('Method not implemented.');
     });
 
     it('should throw on getDashboardChangesFromScene', () => {
