@@ -669,7 +669,6 @@ DatasourceVariableSpec: {
     text: ""
     value: ""
   }
-  defaultOptionEnabled: bool | *false
   options: [...VariableOption] | *[]
   multi: bool | *false
   includeAll: bool | *false

@@ -284,7 +284,6 @@ export const handyTestingSchema: DashboardV2Spec = {
           text: 'text1',
           value: 'value1',
         },
-        defaultOptionEnabled: true,
         description: 'A datasource variable',
         hide: 'dontHide',
         includeAll: false,
