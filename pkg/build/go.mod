@@ -90,10 +90,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require (
-	dagger.io/dagger v0.11.8-rc.2
-	github.com/moby/moby v27.3.1+incompatible
-)
+require dagger.io/dagger v0.11.8-rc.2
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
