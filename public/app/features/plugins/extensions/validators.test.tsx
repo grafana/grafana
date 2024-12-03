@@ -85,7 +85,7 @@ describe('Plugin Extension Validators', () => {
           title: 'Title',
           description: 'Description',
           targets: 'grafana/some-page/extension-point-a',
-          configure: () => {},
+          configure: () => { },
         } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });
@@ -98,7 +98,7 @@ describe('Plugin Extension Validators', () => {
             title: 'Title',
             description: 'Description',
             extensionPointId: 'grafana/some-page/extension-point-a',
-            handler: () => {},
+            handler: () => { },
             configure: '() => {}',
           } as PluginExtensionLinkConfig
         );
@@ -271,6 +271,7 @@ describe('Plugin Extension Validators', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
     const extensionConfig = {
@@ -387,6 +388,7 @@ describe('Plugin Extension Validators', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
     const extensionConfig = {
@@ -503,6 +505,7 @@ describe('Plugin Extension Validators', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
     };
     const exposedComponentConfig = {
@@ -688,6 +691,7 @@ describe('Plugin Extension Validators', () => {
             addedComponents: [],
             exposedComponents: [],
             extensionPoints: [],
+            addedHooks: [],
           },
           dependencies: {
             grafanaVersion: '8.0.0',

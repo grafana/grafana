@@ -6,6 +6,15 @@ import { CodeLanguage, defaultCodeOptions, defaultOptions, Options, TextMode } f
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<Options>(TextPanel)
+  .addHook<(data: string) => null>({
+    title: 'foo',
+    targets: ['dashboard/dragndrop'],
+    hook: (data) => {
+      alert(`you've triggered the dragndrop hook inside the text plugin! ${data}`);
+      console.log(`text panel testing data using hook '${data}'`);
+      return null;
+    },
+  })
   .setPanelOptions((builder) => {
     builder
       .addRadio({

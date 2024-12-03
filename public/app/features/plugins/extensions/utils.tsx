@@ -238,7 +238,7 @@ export function createAddedLinkConfig<T extends object>(
 
 function assertLinkConfig<T extends object>(
   config: PluginExtensionAddedLinkConfig<T>
-): asserts config is PluginExtensionAddedLinkConfig {}
+): asserts config is PluginExtensionAddedLinkConfig { }
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
@@ -426,6 +426,12 @@ export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 export const getAppPluginConfigs = (pluginIds: string[] = []) =>
   Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
 
+export const getPluginConfigs = (pluginIds: string[] = []) => {
+  const appConfigs = Object.values(config.apps).filter((app) => pluginIds.includes(app.id));
+  const panelConfigs = Object.values(config.panels).filter((panel) => pluginIds.includes(panel.id));
+  return [...appConfigs, ...panelConfigs];
+};
+
 export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string) => {
   return exposedComponentId.split('/')[0];
 };
@@ -434,16 +440,21 @@ export const getAppPluginIdFromExposedComponentId = (exposedComponentId: string)
 // (These plugins are necessary to be loaded to use the extension point.)
 // (The function also returns the plugin ids that the plugins - that extend the extension point - depend on.)
 export const getExtensionPointPluginDependencies = (extensionPointId: string): string[] => {
-  return Object.values(config.apps)
+  const matchingApps = Object.values(config.apps)
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedHooks.some((hook) => hook.targets.includes(extensionPointId)) ||
         app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
       return [...acc, id, ...getAppPluginDependencies(id)];
     }, []);
+  const matchingPanels = Object.values(config.panels)
+    .filter((plugin) => plugin.extensions?.addedHooks?.some((link) => link.targets.includes(extensionPointId)))
+    .map((plugin) => plugin.id);
+  return [...matchingApps, ...matchingPanels];
 };
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.

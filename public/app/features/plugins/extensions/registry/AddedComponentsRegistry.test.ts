@@ -53,6 +53,7 @@ describe('AddedComponentsRegistry', () => {
       addedLinks: [],
       addedComponents: [],
       exposedComponents: [],
+      addedHooks: [],
       extensionPoints: [],
     },
   };

@@ -13,6 +13,7 @@ import { PluginExtensionRegistries } from './registry/types';
 import { useLoadAppPlugins } from './useLoadAppPlugins';
 import { usePluginComponents } from './usePluginComponents';
 import { isGrafanaDevMode, wrapWithPluginContext } from './utils';
+import { AddedHooksRegistry } from './registry/AddedHooksRegistry';
 
 jest.mock('./useLoadAppPlugins');
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -61,6 +62,7 @@ describe('usePluginComponents()', () => {
       addedComponentsRegistry: new AddedComponentsRegistry(),
       exposedComponentsRegistry: new ExposedComponentsRegistry(),
       addedLinksRegistry: new AddedLinksRegistry(),
+      addedHooksRegistry: new AddedHooksRegistry(),
     };
 
     jest.mocked(wrapWithPluginContext).mockClear();
@@ -90,6 +92,7 @@ describe('usePluginComponents()', () => {
         addedComponents: [],
         exposedComponents: [],
         extensionPoints: [],
+        addedHooks: [],
       },
       dependencies: {
         grafanaVersion: '8.0.0',

@@ -4,9 +4,16 @@
   "id": "text",
 
   "skipDataQuery": true,
-
+  "extensions": {
+    "addedHooks": [
+      {
+        "targets": ["dashboard/dragndrop"],
+        "title": "paste as text panel"
+      }
+    ]
+  },
   "info": {
-    "description": "Supports markdown and html content",
+    "description": "Supports markdown and html content and paste hooks",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

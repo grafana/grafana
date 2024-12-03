@@ -1,14 +1,27 @@
+import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 import { ClipboardEvent, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 export function useDropAndPaste() {
+
+  const { hooks } = usePluginHooks<(data: File) => null>({
+    extensionPointId: 'dashboard/grid',
+    limitPerPlugin: 200,
+  });
+
   const onImportFile = useCallback((file?: File) => {
     if (!file) {
       return;
     }
 
+    for (const hook of hooks) {
+      hook(file);
+    }
+
     alert(`Importing file: ${file.name}`);
-  }, []);
+  }, [hooks]);
+
+
 
   const onPaste = useCallback(
     (event: ClipboardEvent<HTMLDivElement>) => {

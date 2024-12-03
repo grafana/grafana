@@ -8,6 +8,7 @@ import { importAppPlugin, importDataSourcePlugin } from './plugin_loader';
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
   let result: GrafanaPlugin | undefined;
+  console.log(`loading plugin ${pluginId} type ${info.type}`);
 
   if (info.type === PluginType.app) {
     result = await importAppPlugin(info);
@@ -16,6 +17,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await importDataSourcePlugin(info);
   }
   if (info.type === PluginType.panel) {
+    console.log(`loading plugin ${pluginId} as panel plugin`);
     const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
     result = panelPlugin as unknown as GrafanaPlugin;
   }
