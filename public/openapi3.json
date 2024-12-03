@@ -22520,7 +22520,7 @@
           "users"
         ]
       }
-    },    
+    },
     "/search": {
       "get": {
         "operationId": "search",
