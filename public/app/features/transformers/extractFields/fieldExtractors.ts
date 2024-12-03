@@ -1,4 +1,4 @@
-import { Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
+import { readCSV, Registry, RegistryItem, stringStartsAsRegEx, stringToJsRegex } from '@grafana/data';
 
 import { ExtractFieldsOptions, FieldExtractorID } from './types';
 
@@ -133,7 +133,31 @@ const extLabels: FieldExtractor = {
   getParser: (options) => parseKeyValuePairs,
 };
 
-const fmts = [extJSON, extLabels, extRegExp];
+const extCSV: FieldExtractor = {
+  id: FieldExtractorID.CSV,
+  name: 'CSV',
+  description: 'Comma seperated values are set to true',
+  getParser: (options) => {
+    return (v: string) => {
+      const df = readCSV(v);
+
+      // Assume that this is just a list of words separated by commas
+      if (!df[0] || !df[0].fields) {
+        console.warn('Could not extract fields from CSV');
+        return undefined;
+      }
+
+      const res: Record<string, boolean> = {};
+
+      for (const field of df[0].fields) {
+        res[field.name.trim()] = true;
+      }
+      return res;
+    };
+  },
+};
+
+const fmts = [extJSON, extLabels, extCSV, extRegExp];
 
 const extAuto: FieldExtractor = {
   id: FieldExtractorID.Auto,

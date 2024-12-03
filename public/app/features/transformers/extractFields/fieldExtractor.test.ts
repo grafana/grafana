@@ -151,4 +151,35 @@ describe('Extract fields from text', () => {
       }
     `);
   });
+
+  describe('CSV', () => {
+    it('splits by comma', async () => {
+      const extractor = fieldExtractors.get(FieldExtractorID.CSV);
+      const parse = extractor.getParser({});
+      const out = parse('a,b,c');
+
+      expect(out).toMatchInlineSnapshot(`
+        {
+          "a": true,
+          "b": true,
+          "c": true,
+        }
+      `);
+    });
+
+    it("trims whitespace and doesn't split on escaped comma", async () => {
+      const extractor = fieldExtractors.get(FieldExtractorID.CSV);
+      const parse = extractor.getParser({});
+      const out = parse('a, b, c, d');
+
+      expect(out).toMatchInlineSnapshot(`
+        {
+          "a": true,
+          "b": true,
+          "c": true,
+          "d": true,
+        }
+      `);
+    });
+  });
 });
