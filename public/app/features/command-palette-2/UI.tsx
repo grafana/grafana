@@ -3,7 +3,7 @@
 
 import { css, cx } from '@emotion/css';
 import { motion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
@@ -129,24 +129,13 @@ export function CommandPalette2() {
 
           <div className={styles.footerCell}>
             <div className={styles.shortcut}>
-              <motion.span
-                animate={{ color: activeKeys.ArrowUp ? '#FFFFFF' : '#9D9DAD' }}
-                transition={{ duration: 0.1 }}
-                className={styles.keyboardKey}
-              >
-                <motion.span style={{ display: 'inline-block' }} animate={{ y: activeKeys.ArrowUp ? -2 : 0 }}>
-                  <Icon name="arrow-up" />
-                </motion.span>
-              </motion.span>
-              <motion.span
-                animate={{ color: activeKeys.ArrowDown ? '#FFFFFF' : '#9D9DAD' }}
-                transition={{ duration: 0.1 }}
-                className={styles.keyboardKey}
-              >
-                <motion.span style={{ display: 'inline-block' }} animate={{ y: activeKeys.ArrowDown ? 2 : 0 }}>
-                  <Icon name="arrow-down" />
-                </motion.span>
-              </motion.span>
+              <AnimatedKeyCap direction={-1} isActive={!!activeKeys.ArrowUp} className={styles.keyboardKey}>
+                <Icon name="arrow-up" />
+              </AnimatedKeyCap>
+
+              <AnimatedKeyCap direction={1} isActive={!!activeKeys.ArrowDown} className={styles.keyboardKey}>
+                <Icon name="arrow-down" />
+              </AnimatedKeyCap>
               <span>to navigate</span>
             </div>
 
@@ -308,3 +297,27 @@ const gt = (gridDef: Array<string | string[]>) => {
     })
     .join('\n');
 };
+
+function AnimatedKeyCap({
+  isActive,
+  className,
+  children,
+  direction,
+}: {
+  className: string;
+  children: ReactNode;
+  isActive: boolean;
+  direction: number;
+}) {
+  return (
+    <motion.span
+      animate={{ color: isActive ? '#FFFFFF' : '#9D9DAD' }}
+      transition={{ duration: 0.1 }}
+      className={className}
+    >
+      <motion.span style={{ display: 'inline-block' }} animate={{ y: isActive ? 2 * direction : 0 }}>
+        {children}
+      </motion.span>
+    </motion.span>
+  );
+}
