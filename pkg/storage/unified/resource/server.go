@@ -95,7 +95,14 @@ type StorageBackend interface {
 	// For HA setups, this will be more events than the local WriteEvent above!
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 
-	Namespaces(ctx context.Context) ([]string, error)
+	GetResourceStats(ctx context.Context, minCount int) ([]ResourceStats, error)
+}
+
+type ResourceStats struct {
+	NamespacedResource
+
+	Count           int64
+	ResourceVersion int64
 }
 
 // This interface is not exposed to end users directly
@@ -133,6 +140,9 @@ type SearchOptions struct {
 
 	// How many threads should build indexes
 	WorkerThreads int
+
+	// Skip building index on startup for small indexes
+	InitMinCount int
 }
 
 type ResourceServerOptions struct {
