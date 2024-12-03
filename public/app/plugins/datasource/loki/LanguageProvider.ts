@@ -176,7 +176,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       const labels = res
         .slice()
         .sort()
-        .filter((label) => label !== '__name__');
+        .filter((label: string) => label.startsWith('__') === false);
       this.labelKeys = labels;
       return this.labelKeys;
     }
