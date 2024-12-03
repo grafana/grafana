@@ -1,4 +1,4 @@
-import { stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
+import { escapeStringForRegex, stringStartsAsRegEx, stringToJsRegex } from '../../text/string';
 import { DataFrame } from '../../types/dataFrame';
 import { FrameMatcherInfo } from '../../types/transformations';
 
@@ -22,6 +22,12 @@ const refIdMatcher: FrameMatcherInfo<string> = {
           console.warn(error.message);
         }
       }
+    }
+    // old format that was simply unescaped pipe-joined strings -> regexp
+    else if (pattern.includes('|')) {
+      // convert A|B -> /^(?:A|B)$/, regexp-escaping all chars between pipes
+      const escapedUnion = pattern.split('|').map(escapeStringForRegex).join('|');
+      regex = new RegExp(`^(?:${escapedUnion})$`);
     }
 
     return (frame: DataFrame) => {

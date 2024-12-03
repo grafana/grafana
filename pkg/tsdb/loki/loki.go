@@ -289,8 +289,12 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 	}
 
 	for _, frame := range res.Frames {
-		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
+		// Skip frames without fields
+		if len(frame.Fields) < 2 {
+			continue
+		}
 
+		err = adjustFrame(frame, query, false, responseOpts.logsDataplane)
 		if err != nil {
 			plog.Error("Error adjusting frame", "error", err)
 			return res, err

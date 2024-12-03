@@ -10,11 +10,14 @@ import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
+import { UsagesToNetwork, VariableUsageTree } from '../../variables/utils';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
 export interface Props {
   variables: Array<SceneVariable<SceneVariableState>>;
+  usages: VariableUsageTree[];
+  usagesNetwork: UsagesToNetwork[];
   onAdd: () => void;
   onChangeOrder: (fromIndex: number, toIndex: number) => void;
   onDuplicate: (identifier: string) => void;
@@ -24,6 +27,8 @@ export interface Props {
 
 export function VariableEditorList({
   variables,
+  usages,
+  usagesNetwork,
   onChangeOrder,
   onDelete,
   onDuplicate,
@@ -71,6 +76,8 @@ export function VariableEditorList({
                       onDelete={onDelete}
                       onDuplicate={onDuplicate}
                       onEdit={onEdit}
+                      usageTree={usages}
+                      usagesNetwork={usagesNetwork}
                     />
                   );
                 })}
