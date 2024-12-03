@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { AnnotationQuery, DataQuery, DataTransformerConfig, Panel, VariableModel } from '@grafana/schema';
+import { AnnotationQuery, DataQuery, Panel, VariableModel } from '@grafana/schema';
 import {
   AnnotationQueryKind,
   DashboardV2Spec,
@@ -10,6 +10,7 @@ import {
   QueryVariableKind,
   TransformationKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
+import { DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -17,9 +18,13 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
 } from 'app/features/apiserver/types';
+import { transformCursorSyncV2ToV1 } from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   transformCursorSynctoEnum,
+  transformDataTopic,
+  transformSortVariableToEnum,
   transformVariableHideToEnum,
+  transformVariableRefreshToEnum,
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { DashboardDataDTO, DashboardDTO } from 'app/types';
 
@@ -68,7 +73,7 @@ export function ensureV2Response(
       nowDelay: spec.timepicker?.nowDelay || timeSettingsDefaults.nowDelay,
     },
     links: spec.links || [],
-    annotations, // TODO
+    annotations,
     variables,
     elements,
     layout,
@@ -110,8 +115,7 @@ export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2S
       description: spec.description,
       tags: spec.tags,
       schemaVersion: spec.schemaVersion,
-      // @ts-ignore TODO: Use transformers for these enums
-      //   graphTooltip: spec.cursorSync, // Assuming transformCursorSynctoEnum is reversible
+      graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
       preload: spec.preload,
       liveNow: spec.liveNow,
       editable: spec.editable,
@@ -130,8 +134,9 @@ export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2S
       fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
       weekStart: spec.timeSettings.weekStart,
       version: parseInt(dashboard.metadata.resourceVersion, 10),
-      links: spec.links, // Assuming transformDashboardLinksToEnums is reversible
-      annotations: { list: [] }, // TODO
+      links: spec.links,
+      // TODO[schema v2]: handle annotations
+      annotations: { list: [] },
     },
   };
 }
@@ -250,6 +255,7 @@ function getPanelTransformations(transformations: DataTransformerConfig[]): Tran
       kind: t.id,
       spec: {
         ...t,
+        topic: transformDataTopic(t.topic),
       },
     };
   });
@@ -260,6 +266,13 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
   for (const v of vars) {
     switch (v.type) {
       case 'query':
+        let query = v.query || {};
+
+        if (typeof query === 'string') {
+          console.error('Query variable query is a string. It needs to extend DataQuery.');
+          query = {};
+        }
+
         const qv: QueryVariableKind = {
           kind: 'QueryVariable',
           spec: {
@@ -270,16 +283,16 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
             allValue: v.allValue,
-            current: v.current, // TODO[schema v2]: handle current
+            current: v.current || { text: '', value: '' },
             options: v.options || [],
-            refresh: 'onDashboardLoad', // TODO[schema v2]: handle refresh
+            refresh: transformVariableRefreshToEnum(v.refresh),
             datasource: v.datasource ?? undefined,
             regex: v.regex || '',
-            sort: 'alphabeticalAsc', // TODO[schema v2]: handle sort
+            sort: transformSortVariableToEnum(v.sort),
             query: {
               kind: v.datasource?.type || getDefaultDatasourceType(),
               spec: {
-                ...v.query, // TODO[schema v2]: handle query
+                ...query,
               },
             },
           },
@@ -287,21 +300,26 @@ function getVariables(vars: VariableModel[]): DashboardV2Spec['variables'] {
         variables.push(qv);
         break;
       case 'datasource':
+        let pluginId = getDefaultDatasourceType();
+
+        if (v.query && typeof v.query === 'string') {
+          pluginId = v.query;
+        }
+
         const dv: DatasourceVariableKind = {
           kind: 'DatasourceVariable',
           spec: {
             name: v.name,
             label: v.label,
-            hide: 'dontHide', // TODO[schema v2]: handle hide
+            hide: transformVariableHideToEnum(v.hide),
             skipUrlSync: Boolean(v.skipUrlSync),
             multi: Boolean(v.multi),
             includeAll: Boolean(v.includeAll),
             allValue: v.allValue,
-            current: v.current, // TODO[schema v2]: handle current
+            current: v.current || { text: '', value: '' },
             options: v.options || [],
-            refresh: 'onDashboardLoad', // TODO[schema v2]: handle refresh
-            pluginId: v.query || getDefaultDatasourceType(),
-            // defaultOptionEnabled: Boolean(v.defaultOptionEnabled), // TODO[schema v2]: handle defaultOptionEnabled
+            refresh: transformVariableRefreshToEnum(v.refresh),
+            pluginId,
             regex: v.regex || '',
             description: v.description || '',
           },

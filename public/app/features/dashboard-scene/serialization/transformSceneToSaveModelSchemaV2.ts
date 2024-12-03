@@ -35,7 +35,6 @@ import {
   GroupByVariableKind,
   AdhocVariableKind,
   AnnotationQueryKind,
-  defaultAnnotationPanelFilter,
   defaultAnnotationQuerySpec,
   DataLink,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2alpha0/dashboard.gen';
@@ -405,7 +404,7 @@ function getAnnotations(state: DashboardSceneState): AnnotationQueryKind[] {
         },
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
-        filter: layer.state.query.filter ?? defaultAnnotationPanelFilter(),
+        filter: layer.state.query.filter,
         iconColor: layer.state.query.iconColor,
         builtIn:
           layer.state.query.builtIn === undefined
