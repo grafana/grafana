@@ -24,6 +24,12 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       name: link.title,
       target: link.path,
       perform: () => link.onClick && link.onClick(),
+      shortcut: extractKeyboardShortcuts(link.description),
     }));
   }, [links]);
+}
+
+function extractKeyboardShortcuts(input: string) {
+  const match = input.match(/^\[shortcut:([^\]]+)\]/);
+  return match ? match[1].split(',') : undefined;
 }

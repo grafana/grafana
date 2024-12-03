@@ -3,7 +3,7 @@ import { ActionId, ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Badge, Stack, useStyles2 } from '@grafana/ui';
 
 export const ResultItem = React.forwardRef(
   (
@@ -63,6 +63,16 @@ export const ResultItem = React.forwardRef(
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
+        {action.shortcut && (
+          <Stack gap={1}>
+            {action.shortcut
+              .join('+')
+              .split('')
+              .map((singleKey, idx) =>
+                singleKey === '+' ? <div key={idx}>+</div> : <Badge key={idx} text={singleKey} color="blue" />
+              )}
+          </Stack>
+        )}
       </div>
     );
   }
