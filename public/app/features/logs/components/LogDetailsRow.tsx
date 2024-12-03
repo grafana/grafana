@@ -58,7 +58,6 @@ interface State {
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
-  console.log(theme);
   return {
     labelType: css({
       border: `solid 1px ${theme.colors.text.primary}`,
