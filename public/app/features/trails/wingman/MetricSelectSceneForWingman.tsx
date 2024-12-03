@@ -440,7 +440,8 @@ export class MetricSelectSceneForWingman
     switch (displayAs) {
       case 'red_metrics':
         console.log('red metrics will be rendered');
-        children.push(...renderAsRedMetricsDisplay());
+        const redChildren = await renderAsRedMetricsDisplay(trail);
+        children.push(...redChildren);
         this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'anomalies':
