@@ -13,6 +13,7 @@ import {
   rangeUtil,
   TimeRange,
   LoadingState,
+  getValueFormat,
 } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
@@ -79,8 +80,8 @@ export function adjustTargetsFromResponseState(targets: LokiQuery[], response: D
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
   const responseKey = requests.length ? requests[0].request.queryGroupId : uuidv4();
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming, key: responseKey };
-  const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
-  const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
+  let totalRequests = 0;
+  let longestPartition: TimeRange[] = [];
 
   let shouldStop = false;
   let subquerySubscription: Subscription | null = null;
@@ -116,6 +117,12 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     };
 
     const retry = (errorResponse?: DataQueryResponse) => {
+      console.log('Query failed');
+      const range = group.partition[requestN - 1];
+      const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
+      for (const query of targets) {
+        getStats(query, range, datasource);
+      }
       try {
         if (errorResponse && !isRetriableError(errorResponse)) {
           return false;
@@ -189,7 +196,13 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    runNextRequest(subscriber, totalRequests, 0);
+    adjustRequestsByVolume(requests, datasource).then((updatedRequests: LokiGroupedRequest[]) => {
+      requests = updatedRequests;
+      totalRequests = Math.max(...updatedRequests.map(({ partition }) => partition.length));
+      longestPartition = updatedRequests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
+      runNextRequest(subscriber, totalRequests, 0);
+    });
+
     return () => {
       shouldStop = true;
       if (retryTimer) {
@@ -290,6 +303,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
         const groupedRequest = {
           request: { ...request, targets: resolutionPartition[resolution] },
           partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
+          intervalMs: request.intervalMs,
+          chunkRangeMs: Number(chunkRangeMs),
+          stepMs: 0,
         };
 
         if (direction === LokiQueryDirection.Forward) {
@@ -318,6 +334,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
       requests.push({
         request: { ...request, targets },
         partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
+        intervalMs: request.intervalMs,
+        chunkRangeMs: Number(chunkRangeMs),
+        stepMs: Number(stepMs),
       });
     }
   }
@@ -326,6 +345,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     requests.push({
       request: { ...request, targets: nonSplittingQueries },
       partition: [request.range],
+      intervalMs: request.intervalMs,
+      chunkRangeMs: 0,
+      stepMs: 0,
     });
   }
 
@@ -354,4 +376,68 @@ function calculateStep(intervalMs: number, range: TimeRange, resolution: number,
   const newStep = intervalMs * resolution;
   const safeStep = Math.round((range.to.valueOf() - range.from.valueOf()) / 11000);
   return Math.max(newStep, safeStep);
+}
+
+async function adjustRequestsByVolume(requests: LokiGroupedRequest[], datasource: LokiDatasource) {
+  for (const group of requests) {
+    for (const query of group.request.targets) {
+      let maxBytes = 0;
+      for (const range of group.partition) {
+        const stats = await getStats(query, range, datasource);
+        if (!stats) {
+          continue;
+        }
+        maxBytes = stats.bytes > maxBytes ? stats.bytes : maxBytes;
+      }
+      if (maxBytes) {
+        const newPartition = adjustPartitionByVolume(group, maxBytes, group.request.targets.indexOf(query));
+
+        if (newPartition !== group.partition) {
+          console.log(`New partition size ${newPartition.length}`);
+          group.partition = newPartition;
+          break;
+        }
+      }
+    }
+  }
+
+  return requests;
+}
+
+function adjustPartitionByVolume(group: LokiGroupedRequest, bytes: number, queryIndex: number) {
+  const gb = Math.pow(2, 30);
+  const tb = Math.pow(2, 40);
+  if (bytes <= gb) {
+    console.log('Less than a gb, skipping');
+    return group.partition;
+  }
+
+  let newChunkRangeMs = group.chunkRangeMs
+  if (bytes < tb) {
+    const gbs = Math.round(bytes / gb) || 1;
+    newChunkRangeMs = group.chunkRangeMs / (gbs);
+  } else {
+    const tbs = Math.round(bytes / tb) || 1;
+    newChunkRangeMs = group.chunkRangeMs / (tbs * 20);
+  }
+  const minChunkRangeMs = 30 * 60 * 1000;
+  newChunkRangeMs = newChunkRangeMs < minChunkRangeMs ? minChunkRangeMs : newChunkRangeMs;
+
+  const isLogs = isLogsQuery(group.request.targets[queryIndex].expr);
+  if (isLogs) {
+    return partitionTimeRange(true, group.request.range, group.intervalMs, newChunkRangeMs)
+  }
+  
+  return partitionTimeRange(false, group.request.range, Number(group.stepMs), newChunkRangeMs);
+}
+
+async function getStats(query: LokiQuery, range: TimeRange, datasource: LokiDatasource) {
+  const stats = await datasource.getStats({ ...query, refId: `stats_${query.refId}` }, range);
+  if (!stats) {
+    return null;
+  }
+  console.log(stats);
+  const { text, suffix } = getValueFormat('bytes')(stats.bytes, 1);
+  console.log(`Query ${query.expr} from ${range.from.toLocaleString()} to ${range.to.toLocaleString()} will use ${text}${suffix}`);
+  return stats;
 }
