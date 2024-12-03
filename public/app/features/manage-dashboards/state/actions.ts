@@ -283,6 +283,3 @@ export function searchFolders(
 export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
   return getBackendSrv().get(`/api/folders/${uid}`);
 }
-export function getFolderById(id: number): Promise<{ id: number; title: string }> {
-  return getBackendSrv().get(`/api/folders/id/${id}`);
-}

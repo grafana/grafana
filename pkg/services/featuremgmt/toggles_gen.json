@@ -662,6 +662,22 @@
     },
     {
       "metadata": {
+        "name": "azureMonitorEnableUserAuth",
+        "resourceVersion": "1732189410576",
+        "creationTimestamp": "2024-11-21T11:42:29Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-11-21 11:43:30.576196 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables user auth for Azure Monitor datasource only",
+        "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "azureMonitorLogLimit",
         "resourceVersion": "1727696791818",
         "creationTimestamp": "2024-09-30T11:45:45Z",
@@ -1228,6 +1244,20 @@
     },
     {
       "metadata": {
+        "name": "easyIssueReportButton",
+        "resourceVersion": "1733157534811",
+        "creationTimestamp": "2024-12-02T16:38:54Z",
+        "deletionTimestamp": "2024-12-02T16:46:56Z"
+      },
+      "spec": {
+        "description": "Enables a button to send reports from the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-01-24T09:43:44Z"
@@ -1510,6 +1540,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "feedbackButton",
+        "resourceVersion": "1733158016122",
+        "creationTimestamp": "2024-12-02T16:46:56Z"
+      },
+      "spec": {
+        "description": "Enables a button to send feedback from the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromDocs": true
       }
     },

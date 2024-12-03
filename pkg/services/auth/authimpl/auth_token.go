@@ -248,12 +248,16 @@ func (s *UserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, 
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) GetExternalSession(ctx context.Context, extSessionID int64) (*auth.ExternalSession, error) {
-	return s.externalSessionStore.Get(ctx, extSessionID)
+func (s *UserAuthTokenService) GetExternalSession(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+	return s.externalSessionStore.Get(ctx, externalSessionID)
 }
 
 func (s *UserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.ListExternalSessionQuery) ([]*auth.ExternalSession, error) {
 	return s.externalSessionStore.List(ctx, query)
+}
+
+func (s *UserAuthTokenService) UpdateExternalSession(ctx context.Context, externalSessionID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	return s.externalSessionStore.Update(ctx, externalSessionID, cmd)
 }
 
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
