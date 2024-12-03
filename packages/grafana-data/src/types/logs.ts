@@ -273,6 +273,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 export interface DataSourceWithLabelTypeSupport {
   /**
    * Given a label type identifier, returns a readable name to be displayed in Log Details.
+   * @alpha
    */
   getNameForLabelType(labelType: string): string | null;
 }
