@@ -3,7 +3,7 @@ import { BaseStateReport } from 'crashme/dist/types';
 import { nanoid } from 'nanoid';
 
 import { config, createMonitoringLogger } from '@grafana/runtime';
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+import { corsWorker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
 import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
@@ -48,7 +48,7 @@ export function initializeCrashDetection() {
     dbName: 'grafana.crashes',
 
     createClientWorker(): Worker {
-      return new Worker(new URL('./client.worker', import.meta.url));
+      return corsWorker('./client.worker', { name: 'crash' });
     },
 
     /**

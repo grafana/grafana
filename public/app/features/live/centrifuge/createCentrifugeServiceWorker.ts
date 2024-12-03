@@ -1,3 +1,3 @@
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+import { corsWorker } from 'app/core/utils/CorsWorker';
 
-export const createWorker = () => new Worker(new URL('./service.worker.ts', import.meta.url));
+export const createWorker = () => corsWorker('./service.worker.ts', { name: 'centrifuge' });
