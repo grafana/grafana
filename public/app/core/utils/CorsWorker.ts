@@ -1,4 +1,4 @@
-// This function is used to create a worker that can be used to fetch data from a different domain (e.g. CDN).
+// This function is used to create a worker that can load across domains.
 export function corsWorker(workerUrl: string, options: WorkerOptions) {
   const js = `import ${JSON.stringify(new URL(workerUrl, import.meta.url))}`;
   const blob = new Blob([js], { type: 'application/javascript' });

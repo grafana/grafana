@@ -6,7 +6,7 @@ import { config, createMonitoringLogger } from '@grafana/runtime';
 import { corsWorker } from 'app/core/utils/CorsWorker';
 
 import { contextSrv } from '../services/context_srv';
-import { CorsSharedWorker as SharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
+import { corsSharedWorker, sharedWorkersSupported } from '../utils/CorsSharedWorker';
 
 import { isChromePerformance, prepareContext } from './crash.utils';
 
@@ -61,8 +61,7 @@ export function initializeCrashDetection() {
      *  We guarantee the type assertion is correct by returning a SharedWorker in CorsSharedWorker constructor.
      */
     createDetectorWorker() {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return new SharedWorker(new URL('./detector.worker', import.meta.url)) as globalThis.SharedWorker;
+      return corsSharedWorker('./detector.worker', { name: 'crashDetector' });
     },
 
     reportCrash: async (report) => {
