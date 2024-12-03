@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"time"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -248,7 +250,7 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// FIXME: should be named "items", but avoid subresource error for now:
+	// should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
 	Items []FileItem `json:"files,omitempty"`
 }
@@ -267,7 +269,7 @@ type HistoryList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// FIXME: should be named "items", but avoid subresource error for now:
+	// should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
 	Items []HistoryItem `json:"files,omitempty"`
 }
@@ -278,8 +280,8 @@ type Author struct {
 }
 
 type HistoryItem struct {
-	Ref     string   `json:"ref"`
-	Message string   `json:"message"`
-	Authors []Author `json:"authors"`
-	Date    int64    `json:"date"`
+	Ref       string    `json:"ref"`
+	Message   string    `json:"message"`
+	Authors   []Author  `json:"authors"`
+	CreatedAt time.Time `json:"date"`
 }

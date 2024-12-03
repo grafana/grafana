@@ -90,6 +90,9 @@ type Repository interface {
 	// Delete a file in the remote repository
 	Delete(ctx context.Context, logger *slog.Logger, path, ref, message string) error
 
+	// History of changes for a path
+	History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error)
+
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc
 	// Hooks called after the repository has been created, updated or deleted

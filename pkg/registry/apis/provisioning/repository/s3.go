@@ -99,6 +99,15 @@ func (r *s3Repository) Delete(ctx context.Context, logger *slog.Logger, path str
 	}
 }
 
+func (r *s3Repository) History(ctx context.Context, logger *slog.Logger, path string, ref string) ([]provisioning.HistoryItem, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "history is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements provisioning.Repository.
 func (r *s3Repository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	// webhooks are not supported with local

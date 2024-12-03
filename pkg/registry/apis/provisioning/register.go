@@ -198,6 +198,10 @@ func (b *ProvisioningAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserv
 		client: b.client,
 		logger: b.logger.With("connector", "files"),
 	}
+	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
+		repoGetter: b,
+		logger:     b.logger.With("connector", "history"),
+	}
 	storage[provisioning.RepositoryResourceInfo.StoragePath("import")] = &importConnector{
 		repoGetter: b,
 		client:     b.client,
@@ -560,6 +564,21 @@ func (b *ProvisioningAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.
 	sub = oas.Paths.Paths[repoprefix+"/import"]
 	if sub != nil && sub.Post != nil {
 		sub.Post.Parameters = []*spec3.Parameter{ref}
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/history"]
+	if sub != nil {
+		sub.Get.Description = "Get the history of the repository"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+		// TODO: Check response
+		// TODO: check / or no slash
+	}
+
+	sub = oas.Paths.Paths[repoprefix+"/history/{path}"]
+	if sub != nil {
+		sub.Get.Description = "Get the history of a path"
+		sub.Get.Parameters = []*spec3.Parameter{ref}
+		// TODO: Check response
 	}
 
 	// Show a special list command

@@ -173,7 +173,7 @@ func schema_pkg_apis_provisioning_v0alpha1_FileList(ref common.ReferenceCallback
 					},
 					"files": {
 						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
+							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -335,9 +335,8 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryItem(ref common.ReferenceCallb
 					},
 					"date": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
+							Type:   []string{"string"},
+							Format: "date-time",
 						},
 					},
 				},
@@ -378,7 +377,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoryList(ref common.ReferenceCallb
 					},
 					"files": {
 						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
+							Description: "should be named \"items\", but avoid subresource error for now: kubernetes/kubernetes#126809",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

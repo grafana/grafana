@@ -94,6 +94,15 @@ func (r *unknownRepository) Delete(ctx context.Context, logger *slog.Logger, pat
 	}
 }
 
+func (r *unknownRepository) History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error) {
+	return nil, &errors.StatusError{
+		ErrStatus: metav1.Status{
+			Message: "history is not yet implemented",
+			Code:    http.StatusNotImplemented,
+		},
+	}
+}
+
 // Webhook implements provisioning.Repository.
 func (r *unknownRepository) Webhook(ctx context.Context, logger *slog.Logger, responder rest.Responder, factory FileReplicatorFactory) http.HandlerFunc {
 	// webhooks are not supported with local
