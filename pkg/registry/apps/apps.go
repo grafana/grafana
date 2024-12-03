@@ -3,6 +3,7 @@ package appregistry
 import (
 	"context"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/feedback"
@@ -42,7 +43,13 @@ func ProvideRegistryServiceSink(
 		RestConfigGetter: cfgWrapper,
 		APIRegistrar:     registrar,
 	}
-	runner, err := runner.NewAPIGroupRunner(cfg, playlistAppProvider, feedbackAppProvider)
+
+	providers := []app.Provider{playlistAppProvider}
+	if feedbackAppProvider != nil {
+		providers = append(providers, feedbackAppProvider)
+	}
+
+	runner, err := runner.NewAPIGroupRunner(cfg, providers...)
 	if err != nil {
 		return nil, err
 	}

@@ -10,14 +10,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	apis "github.com/grafana/grafana/apps/feedback/pkg/apis"
 	feedbackv0alpha1 "github.com/grafana/grafana/apps/feedback/pkg/apis/feedback/v0alpha1"
 	"github.com/grafana/grafana/apps/feedback/pkg/watchers"
 )
-
-func Provider(appCfg app.SpecificConfig) app.Provider {
-	return simple.NewAppProvider(apis.LocalManifest(), appCfg, New)
-}
 
 func New(cfg app.Config) (app.App, error) {
 	feedbackWatcher, err := watchers.NewFeedbackWatcher()
