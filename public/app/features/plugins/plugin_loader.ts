@@ -212,7 +212,7 @@ export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   });
   addedHooksRegistry.register({
     pluginId,
-    configs: plugin.addedHooksConfigs || [],
+    configs: plugin.addedHooks || [],
   });
 
   importedAppPlugins[pluginId] = plugin;

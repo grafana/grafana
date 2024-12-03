@@ -444,6 +444,7 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
+        app.extensions.addedHooks.some((hook) => hook.targets.includes(extensionPointId)) ||
         app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
