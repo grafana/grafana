@@ -1,4 +1,4 @@
-import { CorsWorker as Worker } from 'app/core/utils/CorsWorker';
+import { corsWorker } from 'app/core/utils/CorsWorker';
 
-export const createWorker = () => new Worker(new URL('./layout.worker.js', import.meta.url));
-export const createMsaglWorker = () => new Worker(new URL('./layeredLayout.worker.js', import.meta.url));
+export const createWorker = () => corsWorker('./layout.worker.js', { name: 'nodeGraphLayout' });
+export const createMsaglWorker = () => corsWorker('./layeredLayout.worker.js', { name: 'nodeGraphLayeredLayout' });
