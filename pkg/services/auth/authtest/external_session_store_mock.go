@@ -147,6 +147,24 @@ func (_m *MockExternalSessionStore) List(ctx context.Context, query *auth.ListEx
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: ctx, ID, cmd
+func (_m *MockExternalSessionStore) Update(ctx context.Context, ID int64, cmd *auth.UpdateExternalSessionCommand) error {
+	ret := _m.Called(ctx, ID, cmd)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, *auth.UpdateExternalSessionCommand) error); ok {
+		r0 = rf(ctx, ID, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewMockExternalSessionStore creates a new instance of MockExternalSessionStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockExternalSessionStore(t interface {
