@@ -66,10 +66,15 @@ type Client interface {
 	// If ".." appears in the "path", this method will return an error.
 	DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error
 
+	// FileCommits returns the commits that changed the file.
+	FileCommits(ctx context.Context, owner, repository, branch, path string) ([]Commit, error)
+
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
 	// BranchExists checks if a branch exists in the repository.
 	BranchExists(ctx context.Context, owner, repository, branchName string) (bool, error)
+	// BranchCommits returns the commits in a branch.
+	BranchCommits(ctx context.Context, owner, repository, branchName string) ([]Commit, error)
 
 	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
 	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
@@ -99,6 +104,18 @@ type RepositoryContent interface {
 	GetSHA() string
 	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
 	GetSize() int64
+}
+
+type CommitAuthor struct {
+	Name      string
+	AvatarURL string
+}
+
+type Commit struct {
+	Ref       string
+	Message   string
+	Author    *CommitAuthor
+	Committer *CommitAuthor
 }
 
 type CommitFile interface {

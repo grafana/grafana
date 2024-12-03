@@ -183,6 +183,17 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
+func (r *realImpl) FileCommits(ctx context.Context, owner, repository, branch, path string) ([]Commit, error) {
+	gitCommits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
+		SHA: branch,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return convertCommits(gitCommits), nil
+}
+
 func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {
 	// Fail if the branch already exists
 	if _, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0); err == nil {
@@ -218,6 +229,46 @@ func (r *realImpl) BranchExists(ctx context.Context, owner, repository, branchNa
 	}
 
 	return false, err
+}
+
+func (r *realImpl) BranchCommits(ctx context.Context, owner, repository, branchName string) ([]Commit, error) {
+	gitCommits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
+		SHA: branchName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return convertCommits(gitCommits), nil
+}
+
+func convertCommits(commits []*github.RepositoryCommit) []Commit {
+	ret := make([]Commit, 0, len(commits))
+	for _, c := range commits {
+		var author *CommitAuthor
+		if c.GetAuthor() != nil {
+			author = &CommitAuthor{
+				c.GetAuthor().GetName(),
+				c.GetAuthor().GetAvatarURL(),
+			}
+		}
+		var committer *CommitAuthor
+		if c.GetCommitter() != nil {
+			committer = &CommitAuthor{
+				Name:      c.GetCommitter().GetName(),
+				AvatarURL: c.GetCommitter().GetAvatarURL(),
+			}
+		}
+
+		ret = append(ret, Commit{
+			Ref:       c.GetSHA(),
+			Message:   c.GetCommit().GetMessage(),
+			Author:    author,
+			Committer: committer,
+		})
+	}
+
+	return ret
 }
 
 func (r *realImpl) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
