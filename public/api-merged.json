@@ -8657,6 +8657,30 @@
             "$ref": "#/responses/internalServerError"
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "user"
+        ],
+        "summary": "Deletes user.",
+        "operationId": "deleteUser",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
       }
     },
     "/search": {
