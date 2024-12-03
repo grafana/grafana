@@ -137,6 +137,18 @@ export function ensureV1Response(dashboard: DashboardWithAccessInfo<DashboardV2S
       links: spec.links,
       // TODO[schema v2]: handle annotations
       annotations: { list: [] },
+      // TODO[schema v2]: handle panels
+      panels: [],
+      // TODO[schema v2]: handle variables
+      templating: {
+        list: [],
+      },
+      // TODO[schema v2]: handle id
+      // id: 0,
+      // TODO[schema v2]: handle revision
+      // revision: 0,
+      // TODO[schema v2]: handle variables
+      // gnetId
     },
   };
 }
