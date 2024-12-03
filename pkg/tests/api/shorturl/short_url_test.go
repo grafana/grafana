@@ -47,8 +47,10 @@ func TestShortURL(t *testing.T) {
 	// Create a valid short-urls
 	res, err := c.post("/api/short-urls", bytes.NewReader([]byte(`{"path":"explore"}`)))
 	require.NoError(t, err)
+	defer func() {
+		_ = res.Body.Close()
+	}()
 	require.Equal(t, http.StatusOK, res.StatusCode)
-	defer res.Body.Close()
 
 	bodyRaw, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
@@ -62,12 +64,18 @@ func TestShortURL(t *testing.T) {
 	// If the go-to exists, it should be set in the location and the status should match 302.
 	res, err = c.get(fmt.Sprintf("/goto/%s", resParsed.UID))
 	require.NoError(t, err)
+	defer func() {
+		_ = res.Body.Close()
+	}()
 	require.Equal(t, "http://localhost:3000/explore", res.Header.Get("Location"))
 	require.Equal(t, http.StatusFound, res.StatusCode)
 
 	// If the go-to does not exist, it should redirect to the home page and return 308.
 	res, err = c.get("/goto/DoesNotExist")
 	require.NoError(t, err)
+	defer func() {
+		_ = res.Body.Close()
+	}()
 	require.Equal(t, "http://localhost:3000/", res.Header.Get("Location"))
 	require.Equal(t, http.StatusPermanentRedirect, res.StatusCode)
 }
@@ -111,10 +119,12 @@ func (a apiClient) get(path string) (*http.Response, error) {
 			return http.ErrUseLastResponse
 		},
 	}
+	// nolint:gosec
 	return client.Get(u)
 }
 
 func (a apiClient) post(path string, body io.Reader) (*http.Response, error) {
 	u := fmt.Sprintf("%s%s", a.url, path)
+	// nolint:gosec
 	return http.Post(u, "application/json", body)
 }
