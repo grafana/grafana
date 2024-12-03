@@ -155,7 +155,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   checkLabelType() {
-    console.log('checmign')
     if (!this.labelTypeChecked && !this.state.labelType && this.props.parsedKeys.length === 1) {
       getLabelTypeFromRow(this.props.parsedKeys[0], this.props.row).then((labelType) => {
         this.labelTypeChecked = true;
