@@ -47,7 +47,6 @@ import {
   VAR_DATASOURCE,
   VAR_DATASOURCE_EXPR,
   VAR_FILTERS,
-  WMDisplayChangeEvent,
 } from '../shared';
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
@@ -110,7 +109,7 @@ export class MetricSelectSceneForWingman
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix', 'wm_display_view'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: () => {
@@ -127,6 +126,12 @@ export class MetricSelectSceneForWingman
     if (typeof values.metricPrefix === 'string') {
       if (this.state.metricPrefix !== values.metricPrefix) {
         this.setState({ metricPrefix: values.metricPrefix });
+      }
+    }
+
+    if (typeof values.wm_display_view === 'string') {
+      if (this.state.wm_display_view !== values.wm_display_view) {
+        this.setState({ wm_display_view: values.wm_display_view });
       }
     }
   }
@@ -156,20 +161,6 @@ export class MetricSelectSceneForWingman
             from: isRelatedMetricSelector ? 'related_metrics' : 'metric_list',
             searchTermCount,
           });
-        }
-      })
-    );
-
-    this._subs.add(
-      trail.subscribeToEvent(WMDisplayChangeEvent, (event) =>
-        this.setState({ [event.payload.groupId]: event.payload.value })
-      )
-    );
-
-    this._subs.add(
-      this.subscribeToState(({ wm_display_view }, oldState) => {
-        if (wm_display_view !== oldState.wm_display_view) {
-          this.buildLayout();
         }
       })
     );

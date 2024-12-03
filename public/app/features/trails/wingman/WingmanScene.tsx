@@ -8,8 +8,6 @@ import {
 } from '@grafana/scenes';
 import { RadioButtonList } from '@grafana/ui';
 
-import { WMDisplayChangeEvent } from '../shared';
-
 import { isWingmanGroupKey, useWingmanOptionGroup, WingmanGroupKeyType } from './wingman';
 
 type WingmanGroupKeyInState = {
@@ -50,8 +48,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
   }
 
   onWingmanOptionChanged = (groupId: string, value: string) => {
-    this.setState({[groupId]: value});
-    this.publishEvent(new WMDisplayChangeEvent({groupId, value}), true);
+    this.setState({ [groupId]: value });
   };
 
   public static Component = ({ model }: SceneComponentProps<WingmanScene>) => {

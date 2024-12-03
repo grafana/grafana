@@ -25,6 +25,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncConfig,
   SceneObjectUrlValues,
+  SceneObjectWithUrlSync,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -32,6 +33,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncContextProvider,
   UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
@@ -100,7 +102,7 @@ export interface DataTrailState extends SceneObjectState {
   metricSearch?: string;
 }
 
-export class DataTrail extends SceneObjectBase<DataTrailState> {
+export class DataTrail extends SceneObjectBase<DataTrailState> implements SceneObjectWithUrlSync {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
@@ -665,7 +667,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             <settings.Component model={settings} />
           </div>
         )}
-        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+        {topScene && (
+          <UrlSyncContextProvider scene={topScene}>
+            <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+          </UrlSyncContextProvider>
+        )}
       </div>
     );
   };
