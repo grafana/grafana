@@ -8,6 +8,8 @@ import {
 } from '@grafana/scenes';
 import { RadioButtonList } from '@grafana/ui';
 
+import { WMDisplayChangeEvent } from '../shared';
+
 import { isWingmanGroupKey, useWingmanOptionGroup, WingmanGroupKeyType } from './wingman';
 
 type WingmanGroupKeyInState = {
@@ -23,7 +25,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
 
   constructor(state: Partial<WingmanSceneState>) {
     super({
-      wm_display_view: state.wm_display_view ?? 'defaults',
+      wm_display_view: state.wm_display_view ?? 'default',
       wm_group_by: state.wm_group_by ?? 'none',
       wm_sort_by: state.wm_sort_by ?? 'alphabetical_az',
     });
@@ -34,6 +36,7 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     return { wm_sort_by, wm_display_view, wm_group_by };
   }
 
+  // For some reason this isn't triggered. So we will rely on events instead.
   updateFromUrl(values: SceneObjectUrlValues): void {
     const urlState = this._urlSync.getKeys().reduce<Partial<WingmanGroupKeyInState>>((prev, key) => {
       const val = values[key];
@@ -46,8 +49,9 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     this.setState({ ...urlState });
   }
 
-  onWingmanOptionChanged = (groupId: string, val: string) => {
-    this.setState({ [groupId]: val });
+  onWingmanOptionChanged = (groupId: string, value: string) => {
+    this.setState({[groupId]: value});
+    this.publishEvent(new WMDisplayChangeEvent({groupId, value}), true);
   };
 
   public static Component = ({ model }: SceneComponentProps<WingmanScene>) => {

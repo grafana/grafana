@@ -79,3 +79,12 @@ export class MetricSelectedEvent extends BusEventWithPayload<string | undefined>
 export class RefreshMetricsEvent extends BusEventBase {
   public static type = 'refresh-metrics-event';
 }
+
+export type WMDisplayChangeEventPayload = {
+  groupId: string;
+  value: string;
+};
+
+export class WMDisplayChangeEvent extends BusEventWithPayload<WMDisplayChangeEventPayload> {
+  public static type = 'wm-display-change-event';
+}
