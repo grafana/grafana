@@ -10,6 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -36,6 +37,7 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
+	ext APIExtender
 }
 
 func RegisterAPIService(
@@ -43,6 +45,7 @@ func RegisterAPIService(
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
+	ext APIExtender,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	authorizer, client := newLegacyAuthorizer(ac, store)
@@ -52,14 +55,16 @@ func RegisterAPIService(
 		sso:          ssoService,
 		authorizer:   authorizer,
 		accessClient: client,
+		ext:          ext,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
 }
 
-func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+func NewAPIService(store legacy.LegacyIdentityStore, ext APIExtender) *IdentityAccessManagementAPIBuilder {
 	return &IdentityAccessManagementAPIBuilder{
+		ext:   ext,
 		store: store,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -126,8 +131,25 @@ func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetO
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
-	// no custom API routes
+	if b.ext != nil {
+		return b.ext.GetAPIRoutes()
+	}
 	return nil
+}
+
+func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// The application description
+	oas.Info.Description = "Grafana Identity and Access Management"
+
+	// The root api URL
+	root := "/apis/" + b.GetGroupVersion().String() + "/"
+
+	// The root API discovery list
+	sub := oas.Paths.Paths[root]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
