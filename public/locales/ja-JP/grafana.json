@@ -1071,7 +1071,7 @@
     "pro-tip": "プロのヒント: {{proTip}}"
   },
   "entity-not-found": {
-    "description": "探していますが見つかりません {{lowerCaseEntity}}。 <4>家</4> または、 <7>コミュニティサイト。</7>"
+    "description": "探していますが見つかりません {{lowerCaseEntity}}。 <4>ホーム</4> または、 <7>コミュニティサイト。</7>"
   },
   "errors": {
     "dashboard-settings": {
@@ -1998,7 +1998,7 @@
       "title": "アクティブな通知"
     },
     "alerting-home": {
-      "title": "家"
+      "title": "ホーム"
     },
     "alerting-legacy": {
       "title": "アラート (レガシー)"
@@ -2137,7 +2137,7 @@
     "help/keyboard-shortcuts": "キーボードショートカット",
     "help/support": "サポート",
     "home": {
-      "title": "家"
+      "title": "ホーム"
     },
     "incidents": {
       "title": "事件"
