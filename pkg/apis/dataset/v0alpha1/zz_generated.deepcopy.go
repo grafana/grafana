@@ -8,7 +8,6 @@
 package v0alpha1
 
 import (
-	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -103,9 +102,9 @@ func (in *Spec) DeepCopyInto(out *Spec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
-	if in.Frames != nil {
-		in, out := &in.Frames, &out.Frames
-		*out = make([]commonv0alpha1.Unstructured, len(*in))
+	if in.Data != nil {
+		in, out := &in.Data, &out.Data
+		*out = make([]DataFrame, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

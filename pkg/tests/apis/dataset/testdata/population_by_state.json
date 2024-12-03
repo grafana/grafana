@@ -1,0 +1,60 @@
+{
+  "kind": "Dataset",
+  "apiVersion": "dataset.grafana.app/v0alpha1",
+  "metadata": {
+    "name": "population_by_state"
+  },
+  "spec": {
+    "title": "Name of the dataset",
+    "description": "A description from here",
+    "data": [
+      {
+        "schema": {
+          "name": "population_by_state.csv",
+          "fields": [
+            {
+              "name": "State",
+              "type": "string",
+              "typeInfo": {
+                "frame": "string",
+                "nullable": true
+              }
+            },
+            {
+              "name": "2020",
+              "type": "number",
+              "typeInfo": {
+                "frame": "int64",
+                "nullable": true
+              }
+            },
+            {
+              "name": "2000",
+              "type": "number",
+              "typeInfo": {
+                "frame": "int64",
+                "nullable": true
+              }
+            },
+            {
+              "name": "1980",
+              "type": "number",
+              "typeInfo": {
+                "frame": "int64",
+                "nullable": true
+              }
+            }
+          ]
+        },
+        "data": {
+          "values": [
+            ["California", "Texas", "Florida"],
+            [39368078, 29360759, 21733312],
+            [33987977, 20944499, 16047515],
+            [23800800, 14338208, 9839835]
+          ]
+        }
+      }
+    ]
+  }
+}
