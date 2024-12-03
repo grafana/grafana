@@ -47,9 +47,10 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     const maxWidth = width - suffixWidth;
     let currWidth = 0;
     for (let i = 0; i < selectedItems.length; i++) {
-      const w = measureText(selectedItems[i].label || '', 12).width + 4 + 8 + 20 + 4 + 10;
-      currWidth += w + 4;
+      // Measure text width and add size of padding, separator and close button
+      currWidth += measureText(selectedItems[i].label || '', 12).width + 50;
       if (currWidth > maxWidth) {
+        // Always show at least 1 item
         setShownItems(i || 1);
         break;
       }

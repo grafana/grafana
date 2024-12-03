@@ -39,6 +39,7 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
     pillWrapper: css({
       display: 'inline-flex',
       flexWrap: 'nowrap',
+      minWidth: '50px',
       gap: theme.spacing(0.5),
     }),
     restNumber: css({

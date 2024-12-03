@@ -15,7 +15,7 @@ export const ValuePill = forwardRef<HTMLSpanElement, ValuePillProps>(({ children
   const styles = useStyles2(getValuePillStyles);
   return (
     <span className={styles.wrapper} {...rest} ref={ref}>
-      {children}
+      <span className={styles.text}>{children}</span>
       <span className={styles.separator} />
       <IconButton
         name="times"
@@ -40,6 +40,17 @@ const getValuePillStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.25),
     fontSize: theme.typography.bodySmall.fontSize,
     flexShrink: 0,
+    minWidth: '50px',
+
+    '&:only-child': {
+      flexShrink: 1,
+    },
+  }),
+
+  text: css({
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
 
   separator: css({
