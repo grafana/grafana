@@ -122,6 +122,15 @@ func TestIntegrationProvisioning(t *testing.T) {
 					]
 				},
 				{
+					"name": "repositories/history",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "HistoryList",
+					"verbs": [
+						"get"
+					]
+				},
+				{
 					"name": "repositories/import",
 					"singularName": "",
 					"namespaced": true,

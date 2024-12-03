@@ -5,6 +5,7 @@ package github
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/go-github/v66/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -66,6 +67,9 @@ type Client interface {
 	// If ".." appears in the "path", this method will return an error.
 	DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error
 
+	// Commits returns the commits for the given path
+	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
+
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
 	// BranchExists checks if a branch exists in the repository.
@@ -99,6 +103,20 @@ type RepositoryContent interface {
 	GetSHA() string
 	// The size of the file. Not necessarily non-zero, even if the file is supposed to be non-zero.
 	GetSize() int64
+}
+
+type CommitAuthor struct {
+	Name      string
+	Username  string
+	AvatarURL string
+}
+
+type Commit struct {
+	Ref       string
+	Message   string
+	Author    *CommitAuthor
+	Committer *CommitAuthor
+	CreatedAt time.Time
 }
 
 type CommitFile interface {

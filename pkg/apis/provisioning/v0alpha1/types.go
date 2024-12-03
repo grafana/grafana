@@ -260,3 +260,27 @@ type FileItem struct {
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
 }
+
+// HistoryList is a list of versions of a resource
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HistoryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// should be named "items", but avoid subresource error for now:
+	// kubernetes/kubernetes#126809
+	Items []HistoryItem `json:"items,omitempty"`
+}
+
+type Author struct {
+	Name      string `json:"name"`
+	Username  string `json:"username"`
+	AvatarURL string `json:"avatarURL,omitempty"`
+}
+
+type HistoryItem struct {
+	Ref       string   `json:"ref"`
+	Message   string   `json:"message"`
+	Authors   []Author `json:"authors"`
+	CreatedAt int64    `json:"createdAt"`
+}

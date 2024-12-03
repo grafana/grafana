@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/v66/github"
 )
@@ -181,6 +182,62 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 		return ErrServiceUnavailable
 	}
 	return err
+}
+
+func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
+	commits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
+		Path: path,
+		SHA:  branch,
+	})
+	if err != nil {
+		var ghErr *github.ErrorResponse
+		if !errors.As(err, &ghErr) {
+			return nil, err
+		}
+		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
+			return nil, ErrServiceUnavailable
+		}
+
+		if ghErr.Response.StatusCode == http.StatusNotFound {
+			return nil, ErrResourceNotFound
+		}
+
+		return nil, err
+	}
+
+	ret := make([]Commit, 0, len(commits))
+	for _, c := range commits {
+		var createdAt time.Time
+		var author *CommitAuthor
+		if c.GetCommit().GetAuthor() != nil {
+			author = &CommitAuthor{
+				Name:      c.GetCommit().GetAuthor().GetName(),
+				Username:  c.GetAuthor().GetLogin(),
+				AvatarURL: c.GetAuthor().GetAvatarURL(),
+			}
+
+			createdAt = c.GetCommit().GetAuthor().GetDate().Time
+		}
+
+		var committer *CommitAuthor
+		if c.GetCommitter() != nil {
+			committer = &CommitAuthor{
+				Name:      c.GetCommit().GetCommitter().GetName(),
+				Username:  c.GetCommitter().GetLogin(),
+				AvatarURL: c.GetCommitter().GetAvatarURL(),
+			}
+		}
+
+		ret = append(ret, Commit{
+			Ref:       c.GetSHA(),
+			Message:   c.GetCommit().GetMessage(),
+			Author:    author,
+			Committer: committer,
+			CreatedAt: createdAt,
+		})
+	}
+
+	return ret, nil
 }
 
 func (r *realImpl) CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error {

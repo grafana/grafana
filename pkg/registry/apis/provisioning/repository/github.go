@@ -264,6 +264,55 @@ func (r *githubRepository) Delete(ctx context.Context, logger *slog.Logger, path
 	return r.gh.DeleteFile(ctx, owner, repo, path, ref, comment, file.GetSHA())
 }
 
+func (r *githubRepository) History(ctx context.Context, logger *slog.Logger, path, ref string) ([]provisioning.HistoryItem, error) {
+	if ref == "" {
+		ref = r.config.Spec.GitHub.Branch
+	}
+
+	commits, err := r.gh.Commits(ctx, r.config.Spec.GitHub.Owner, r.config.Spec.GitHub.Repository, path, ref)
+	if err != nil {
+		if errors.Is(err, pgh.ErrResourceNotFound) {
+			return nil, &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "path not found",
+					Code:    http.StatusNotFound,
+				},
+			}
+		}
+
+		return nil, fmt.Errorf("get commits: %w", err)
+	}
+
+	ret := make([]provisioning.HistoryItem, 0, len(commits))
+	for _, commit := range commits {
+		authors := make([]provisioning.Author, 0)
+		if commit.Author != nil {
+			authors = append(authors, provisioning.Author{
+				Name:      commit.Author.Name,
+				Username:  commit.Author.Username,
+				AvatarURL: commit.Author.AvatarURL,
+			})
+		}
+
+		if commit.Committer != nil && commit.Author != nil && commit.Author.Name != commit.Committer.Name {
+			authors = append(authors, provisioning.Author{
+				Name:      commit.Committer.Name,
+				Username:  commit.Committer.Username,
+				AvatarURL: commit.Committer.AvatarURL,
+			})
+		}
+
+		ret = append(ret, provisioning.HistoryItem{
+			Ref:       commit.Ref,
+			Message:   commit.Message,
+			Authors:   authors,
+			CreatedAt: commit.CreatedAt.UnixNano(),
+		})
+	}
+
+	return ret, nil
+}
+
 // basicGitBranchNameRegex is a regular expression to validate a git branch name
 // it does not cover all cases as positive lookaheads are not supported in Go's regexp
 var basicGitBranchNameRegex = regexp.MustCompile(`^[a-zA-Z0-9\-\_\/\.]+$`)
