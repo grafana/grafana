@@ -344,7 +344,7 @@ export function createLogRowsMap() {
   };
 }
 
-function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index = 0): null | string {
+function getLabelTypeFromFrame(labelKey: string, frame: DataFrame, index: number): null | string {
   const typeField = frame.fields.find((field) => field.name === 'labelTypes')?.values[index];
   if (!typeField) {
     return null;
@@ -356,7 +356,15 @@ export function getLabelTypeFromRow(label: string, row: LogRowModel) {
   if (!row.datasourceType) {
     return null;
   }
-  const labelType = getLabelTypeFromFrame(label, row.dataFrame);
+  const idField = row.dataFrame.fields.find((field) => field.name === 'id');
+  if (!idField) {
+    return null;
+  }
+  const rowIndex = idField.values.findIndex(id => id === row.rowId);
+  if (rowIndex < 0) {
+    return null;
+  }
+  const labelType = getLabelTypeFromFrame(label, row.dataFrame, rowIndex);
   if (!labelType) {
     return null;
   }
