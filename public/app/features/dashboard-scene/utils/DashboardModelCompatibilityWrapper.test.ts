@@ -18,6 +18,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { NEW_LINK } from '../settings/links/utils';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 
 describe('DashboardModelCompatibilityWrapper', () => {
   it('Provide basic prop and function of compatability', () => {
@@ -150,8 +151,8 @@ function setup() {
       weekStart: 'friday',
       timeZone: 'America/New_York',
     }),
-    $data: new SceneDataLayerSet({
-      layers: [
+    $data: new DashboardDataLayerSet({
+      annotationLayers: [
         new DashboardAnnotationsDataLayer({
           key: `annotations-test`,
           query: {

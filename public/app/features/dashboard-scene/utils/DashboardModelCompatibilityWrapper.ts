@@ -9,6 +9,7 @@ import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotation
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -104,8 +105,8 @@ export class DashboardModelCompatibilityWrapper {
   public get annotations(): { list: AnnotationQuery[] } {
     const annotations: { list: AnnotationQuery[] } = { list: [] };
 
-    if (this._scene.state.$data instanceof SceneDataLayerSet) {
-      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    if (this._scene.state.$data instanceof DashboardDataLayerSet) {      
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.annotationLayers);
     }
 
     return annotations;
