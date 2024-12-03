@@ -958,7 +958,6 @@ export interface DatasourceVariableSpec {
 	refresh: VariableRefresh;
 	regex: string;
 	current: VariableOption;
-	defaultOptionEnabled: boolean;
 	options: VariableOption[];
 	multi: boolean;
 	includeAll: boolean;
@@ -975,7 +974,6 @@ export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
 	refresh: "never",
 	regex: "",
 	current: { text: "", value: "", },
-	defaultOptionEnabled: false,
 	options: [],
 	multi: false,
 	includeAll: false,
