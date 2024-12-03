@@ -152,10 +152,27 @@ describe('Extract fields from text', () => {
     `);
   });
 
-  it('splits by regexp with multiple groups', async () => {
+  it('splits by regexp with multiple groups with seperate matches', async () => {
     const extractor = fieldExtractors.get(FieldExtractorID.RegExp);
     const opts: ExtractFieldsOptions = {
       regExp: '/(?<Metrics>Metrics)?(?<Logs>Logs)?(?<Profiles>Profiles)/',
+    };
+    const parse = extractor.getParser(opts);
+    const out = parse('Metrics, Logs, Traces, Profiles');
+
+    expect(out).toMatchInlineSnapshot(`
+      {
+        "Metrics": "Metrics",
+        "Logs": "Logs",
+        "Profiles": "Profiles",
+      }
+    `);
+  });
+
+  it('splits by regexp with multiple groups in a single match', async () => {
+    const extractor = fieldExtractors.get(FieldExtractorID.RegExp);
+    const opts: ExtractFieldsOptions = {
+      regExp: '/(?:(?<Metrics>Metrics))?(?:(?<Logs>Logs))?(?:(?<Profiles>Profiles))/', // (?: ... ) makes each capture group optional
     };
     const parse = extractor.getParser(opts);
     const out = parse('Metrics, Logs, Traces, Profiles');
