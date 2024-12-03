@@ -170,13 +170,13 @@ describe('Extract fields from text', () => {
     it("trims whitespace and doesn't split on escaped comma", async () => {
       const extractor = fieldExtractors.get(FieldExtractorID.CSV);
       const parse = extractor.getParser({});
-      const out = parse('a, b, c, d');
+      const out = parse(`a, b,"c, this", d`);
 
       expect(out).toMatchInlineSnapshot(`
         {
           "a": true,
           "b": true,
-          "c": true,
+          "c, this": true,
           "d": true,
         }
       `);
