@@ -24,7 +24,8 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		errorsource.AddErrorToResponse(req.Queries[0].RefID, resp, err)
+		return resp, nil
 	}
 
 	for _, q := range req.Queries {
