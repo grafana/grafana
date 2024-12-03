@@ -17,10 +17,11 @@ import cx from 'classnames';
 import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
-import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, BadgeColor, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { VisualizationType } from '../../types';
 import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
@@ -31,6 +32,11 @@ import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
 import { SpanFilters } from './SpanFilters/SpanFilters';
+
+const VISUALIZATION_OPTIONS: Array<SelectableValue<VisualizationType>> = [
+  { label: 'Span List', value: VisualizationType.SpanList, icon: 'list-ui-alt' },
+  { label: 'Flame Graph', value: VisualizationType.FlameChart, icon: 'fire' },
+];
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -49,6 +55,8 @@ export type TracePageHeaderProps = {
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   setHeaderHeight: (height: number) => void;
+  visualization: VisualizationType;
+  visualizationOnChange: (v: VisualizationType) => void;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -69,6 +77,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     spanFilterMatches,
     datasourceType,
     setHeaderHeight,
+    visualization,
+    visualizationOnChange,
   } = props;
   const styles = useStyles2(getNewStyles);
 
@@ -166,6 +176,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           )}
         </span>
       </div>
+
+      <Stack direction="row" justifyContent="flex-end">
+        <RadioButtonGroup<VisualizationType>
+          options={VISUALIZATION_OPTIONS}
+          value={visualization}
+          onChange={visualizationOnChange}
+        />
+      </Stack>
 
       <SpanFilters
         trace={trace}

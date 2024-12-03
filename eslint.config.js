@@ -245,6 +245,19 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/flamechart-overrides',
+    files: ['packages/grafana-flamechart/**/*.{ts,tsx}'],
+    ignores: ['packages/grafana-flamechart/**/*.{test,story}.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['@grafana/runtime', '@grafana/e2e', '@grafana/e2e-selectors/*'],
+        },
+      ],
+    },
+  },
+  {
     name: 'grafana/alerting-overrides',
     plugins: {
       unicorn: unicornPlugin,

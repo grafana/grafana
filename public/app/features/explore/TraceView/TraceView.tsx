@@ -34,9 +34,11 @@ import {
   TTraceTimeline,
 } from './components';
 import memoizedTraceCriticalPath from './components/CriticalPath';
+import { TraceFlameChart } from './components/TraceFlameChart/TraceFlameChart';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TraceFlameGraphs } from './components/TraceTimelineViewer/SpanDetail';
 import { createSpanLinkFactory } from './createSpanLink';
+import { VisualizationType } from './types';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
@@ -110,6 +112,7 @@ export function TraceView(props: Props) {
    * Keeps state of resizable name column width
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.4);
+  const [visualization, setVisualization] = useState<VisualizationType>(VisualizationType.SpanList);
 
   const [focusedSpanIdExplore, createFocusSpanLinkExplore] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -192,57 +195,64 @@ export function TraceView(props: Props) {
             datasourceType={datasourceType}
             setHeaderHeight={setHeaderHeight}
             app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            visualization={visualization}
+            visualizationOnChange={setVisualization}
           />
-          <SpanGraph
-            trace={traceProp}
-            viewRange={viewRange}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-          />
-          <TraceTimelineViewer
-            findMatchesIDs={spanFilterMatches}
-            trace={traceProp}
-            traceToProfilesOptions={traceToProfilesOptions}
-            datasourceType={datasourceType}
-            spanBarOptions={spanBarOptions?.spanBar}
-            traceTimeline={traceTimeline}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            collapseAll={collapseAll}
-            collapseOne={collapseOne}
-            expandAll={expandAll}
-            expandOne={expandOne}
-            childrenToggle={childrenToggle}
-            detailLogItemToggle={detailLogItemToggle}
-            detailLogsToggle={detailLogsToggle}
-            detailWarningsToggle={detailWarningsToggle}
-            detailStackTracesToggle={detailStackTracesToggle}
-            detailReferencesToggle={detailReferencesToggle}
-            detailReferenceItemToggle={detailReferenceItemToggle}
-            detailProcessToggle={detailProcessToggle}
-            detailTagsToggle={detailTagsToggle}
-            detailToggle={toggleDetail}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
-            createSpanLink={createSpanLink}
-            scrollElement={scrollElement}
-            focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
-            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-            showCriticalPathSpansOnly={showCriticalPathSpansOnly}
-            createFocusSpanLink={createFocusSpanLink}
-            topOfViewRef={topOfViewRef}
-            headerHeight={headerHeight}
-            criticalPath={criticalPath}
-            traceFlameGraphs={traceFlameGraphs}
-            setTraceFlameGraphs={setTraceFlameGraphs}
-            redrawListView={redrawListView}
-            setRedrawListView={setRedrawListView}
-          />
+          {visualization === VisualizationType.SpanList && (
+            <>
+              <SpanGraph
+                trace={traceProp}
+                viewRange={viewRange}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+              />
+              <TraceTimelineViewer
+                findMatchesIDs={spanFilterMatches}
+                trace={traceProp}
+                traceToProfilesOptions={traceToProfilesOptions}
+                datasourceType={datasourceType}
+                spanBarOptions={spanBarOptions?.spanBar}
+                traceTimeline={traceTimeline}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+                viewRange={viewRange}
+                timeZone={timeZone}
+                setSpanNameColumnWidth={setSpanNameColumnWidth}
+                collapseAll={collapseAll}
+                collapseOne={collapseOne}
+                expandAll={expandAll}
+                expandOne={expandOne}
+                childrenToggle={childrenToggle}
+                detailLogItemToggle={detailLogItemToggle}
+                detailLogsToggle={detailLogsToggle}
+                detailWarningsToggle={detailWarningsToggle}
+                detailStackTracesToggle={detailStackTracesToggle}
+                detailReferencesToggle={detailReferencesToggle}
+                detailReferenceItemToggle={detailReferenceItemToggle}
+                detailProcessToggle={detailProcessToggle}
+                detailTagsToggle={detailTagsToggle}
+                detailToggle={toggleDetail}
+                addHoverIndentGuideId={addHoverIndentGuideId}
+                removeHoverIndentGuideId={removeHoverIndentGuideId}
+                linksGetter={() => []}
+                createSpanLink={createSpanLink}
+                scrollElement={scrollElement}
+                focusedSpanId={focusedSpanId}
+                focusedSpanIdForSearch={focusedSpanIdForSearch}
+                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+                showCriticalPathSpansOnly={showCriticalPathSpansOnly}
+                createFocusSpanLink={createFocusSpanLink}
+                topOfViewRef={topOfViewRef}
+                headerHeight={headerHeight}
+                criticalPath={criticalPath}
+                traceFlameGraphs={traceFlameGraphs}
+                setTraceFlameGraphs={setTraceFlameGraphs}
+                redrawListView={redrawListView}
+                setRedrawListView={setRedrawListView}
+              />
+            </>
+          )}
+          {visualization === VisualizationType.FlameChart && <TraceFlameChart trace={traceProp} />}
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>
