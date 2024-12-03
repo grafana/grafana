@@ -1,4 +1,4 @@
-import { defaults } from 'lodash';
+import { defaults, sum } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
@@ -645,8 +645,9 @@ function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesC
     }
 
     const arr = new Array(value.length);
+    const total = sum(value);
     for (let i = 0; i < arr.length; i++) {
-      arr[i] = operator.operation(value[i]);
+      arr[i] = operator.operation(value[i], total);
     }
 
     return arr;
