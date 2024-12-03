@@ -27,7 +27,7 @@ import { DashboardWithAccessInfo } from './types';
 import { isDashboardResource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
-  dto: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
+  dto: DashboardWithAccessInfo<DashboardV2Spec | DashboardDataDTO>
 ): DashboardWithAccessInfo<DashboardV2Spec> {
   const spec = dto.spec;
 
