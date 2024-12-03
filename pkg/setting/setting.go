@@ -100,7 +100,7 @@ type Cfg struct {
 	AppSubURL         string
 	InstanceName      string
 	ServeFromSubPath  bool
-	FrontendDevServer string
+	FrontendDevServer bool
 	StaticRootPath    string
 	Protocol          Scheme
 	SocketGid         int
@@ -1864,7 +1864,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	}
 
 	// TODO: sanitize this for trailing slashes
-	cfg.FrontendDevServer = valueAsString(server, "frontend_dev_server", "")
+	cfg.FrontendDevServer = server.Key("frontend_dev_server").MustBool(false)
 	cfg.Domain = valueAsString(server, "domain", "localhost")
 	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
