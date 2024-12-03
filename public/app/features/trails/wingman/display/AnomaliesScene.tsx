@@ -1,9 +1,16 @@
 import { parser } from '@prometheus-io/lezer-promql';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { SceneObjectBase, SceneComponentProps, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import {
+  SceneObjectBase,
+  SceneComponentProps,
+  SceneObjectState,
+  sceneGraph,
+  SceneCSSGridLayout,
+} from '@grafana/scenes';
 import type { Dashboard, Panel } from '@grafana/schema';
 
+import { getPreviewPanelFor } from '../../MetricSelect/previewPanel';
 import { VAR_DATASOURCE_EXPR } from '../../shared';
 
 /**
@@ -16,15 +23,13 @@ function extractMetricNames(promqlExpression: string): string[] {
   const metricNames = new Set<string>();
   const cursor = tree.cursor();
 
-  // Since we can see in the output that the metric appears as an Identifier node
-  // within a VectorSelector, we'll adjust our approach
   do {
-    // When we find a VectorSelector...
+    // when we find a VectorSelector...
     if (cursor.type.is('VectorSelector')) {
-      // Go to its first child
+      // go to its first child
       if (cursor.firstChild()) {
         do {
-          // Look for the Identifier node (not MetricIdentifier as we originally thought)
+          // look for the Identifier node
           if (cursor.type.is('Identifier')) {
             const metricName = promqlExpression.slice(cursor.from, cursor.to);
             metricNames.add(metricName);
@@ -40,7 +45,10 @@ function extractMetricNames(promqlExpression: string): string[] {
 
 interface AnomaliesSceneState extends SceneObjectState {
   anomalies: string[];
+  body: SceneCSSGridLayout;
 }
+
+const ANOMALIES_GRID_KEY = 'anomalies_grid';
 
 export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   private metrics: string[] = [];
@@ -48,6 +56,13 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
   constructor(state: Partial<AnomaliesSceneState>) {
     super({
       anomalies: [],
+      body: new SceneCSSGridLayout({
+        key: ANOMALIES_GRID_KEY,
+        children: [],
+        autoRows: '200px',
+        templateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+        isLazy: true,
+      }),
       ...state,
     });
 
@@ -83,12 +98,18 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
             .filter((expr) => isString(expr));
           this.metrics = Array.from(new Set(exprs.flatMap((expr) => extractMetricNames(expr))));
           this.setState({ anomalies: this.metrics });
+
+          if (this.state.anomalies.length) {
+            sceneGraph.findByKeyAndType(this, ANOMALIES_GRID_KEY, SceneCSSGridLayout).setState({
+              children: this.state.anomalies.map((anomaly, idx) => getPreviewPanelFor(anomaly, idx, 0)),
+            });
+          }
         });
       });
   }
 
   public static Component = ({ model }: SceneComponentProps<AnomaliesScene>) => {
-    const { anomalies } = model.useState();
+    const { anomalies, body } = model.useState();
 
     if (!anomalies.length) {
       return <div>No anomalies found</div>;
@@ -96,9 +117,7 @@ export class AnomaliesScene extends SceneObjectBase<AnomaliesSceneState> {
 
     return (
       <div>
-        {anomalies.map((a, idx) => (
-          <p key={idx}>{a}</p>
-        ))}
+        <body.Component model={body} />
       </div>
     );
   };

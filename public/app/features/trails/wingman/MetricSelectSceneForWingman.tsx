@@ -484,7 +484,7 @@ export class MetricSelectSceneForWingman
     //     break;
     // }
 
-    if (displayAs !== 'default') {
+    if (typeof displayAs === 'string' && displayAs !== 'default') {
       return;
     }
 
