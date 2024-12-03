@@ -206,7 +206,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(1);
     const vizPanel = vizPanels[0];
-    validateVizPanel(vizPanel, scene, dash);
+    validateVizPanel(vizPanel, dash);
 
     // FIXME: Fix the key incompatibility since panel is not numeric anymore
     expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
