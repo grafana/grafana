@@ -23,6 +23,7 @@ export function usePluginHooks<Signature>({
   const registryState = useObservable(registry.asObservable());
   const pluginContext = usePluginContext();
   const deps = getExtensionPointPluginDependencies(extensionPointId);
+  console.log(`deps: ${JSON.stringify(deps)}`);
   const { isLoading: isLoadingAppPlugins } = useLoadPlugins(deps);
 
   return useMemo(() => {
@@ -53,7 +54,6 @@ export function usePluginHooks<Signature>({
         hooks: [],
       };
     }
-
     for (const registryItem of registryState?.[extensionPointId] ?? []) {
       const { pluginId } = registryItem;
 

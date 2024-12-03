@@ -28,9 +28,6 @@ export class AddedHooksRegistry extends Registry<AddedHooksRegistryItem[], Plugi
     item: PluginExtensionConfigs<PluginExtensionAddedHookConfig>
   ): RegistryType<AddedHooksRegistryItem[]> {
     const { pluginId, configs } = item;
-    console.log(`mapToRegistry`);
-    console.log(item);
-    console.log(configs);
     for (const config of configs) {
       const configLog = this.logger.child({
         title: config.title,

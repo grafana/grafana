@@ -7,7 +7,6 @@ import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
-import { usePluginHooks } from 'app/features/plugins/extensions/usePluginHooks';
 import { useSelector } from 'app/types';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
@@ -58,26 +57,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       </>
     );
   }
-  const { hooks } = usePluginHooks<(data: string) => null>({
-    extensionPointId: 'dashboard/dragndrop',
-    limitPerPlugin: 1,
-  });
-
-  useEffect(() => {
-    const pasteListener = async (event: ClipboardEvent) => {
-      console.log(event);
-      const data = await navigator.clipboard.readText();
-      for (const hook of hooks) {
-        console.log(`calling hook`);
-        hook(data);
-      }
-    };
-    addEventListener('paste', pasteListener);
-    return () => {
-      removeEventListener('paste', pasteListener);
-    };
-  }, [hooks]);
-
   function renderBody() {
     if (meta.dashboardNotFound) {
       return <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;

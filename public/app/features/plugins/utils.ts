@@ -17,7 +17,6 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await importDataSourcePlugin(info);
   }
   if (info.type === PluginType.panel) {
-    console.log(`loading plugin ${pluginId} as panel plugin`);
     const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
     result = panelPlugin as unknown as GrafanaPlugin;
   }

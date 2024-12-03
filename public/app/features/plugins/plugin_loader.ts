@@ -156,6 +156,11 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
       dsPlugin.meta = meta;
+      addedHooksRegistry.register({
+        pluginId: meta.id,
+        configs: dsPlugin.addedHooks || [],
+      });
+
       return dsPlugin;
     }
 
@@ -167,6 +172,11 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
       >(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
       dsPlugin.meta = meta;
+      addedHooksRegistry.register({
+        pluginId: meta.id,
+        configs: dsPlugin.addedHooks || [],
+      });
+
       return dsPlugin;
     }
 

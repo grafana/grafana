@@ -466,6 +466,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
+			Extensions:                plugin.Extensions,
 		}
 
 		if ds.JsonData == nil {
