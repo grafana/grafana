@@ -207,11 +207,11 @@ export class DatasourceSrv implements DataSourceService {
     const base = Object.values(this.settingsMapByName).filter((x) => {
       const system = x.system || x.meta.system;
       if (filters.onlySystem) {
-        if (system) {
+        if (!system) {
           return false;
         }
       } else {
-        if (!system) {
+        if (system) {
           return false;
         }
       }
