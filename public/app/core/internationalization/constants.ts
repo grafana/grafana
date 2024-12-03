@@ -10,7 +10,7 @@ export const CHINESE_SIMPLIFIED = 'zh-Hans';
 export const JAPANESE = 'ja-JP';
 export const PSEUDO_LOCALE = 'pseudo';
 
-export const DEFAULT_LANGUAGE = ENGLISH_US;
+export const DEFAULT_LANGUAGE = JAPANESE;
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
 
