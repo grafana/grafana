@@ -5,17 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	clientrest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	conversions "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -509,4 +517,233 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			require.NoError(t, resp.Body.Close())
 		})
 	}
+}
+
+type mockClientConfigProvider struct {
+	host string
+}
+
+func (m mockClientConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
+	return &clientrest.Config{
+		Host: m.host,
+	}
+}
+
+func (m mockClientConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+
+func TestUpdateFolderLegacyAndUnifiedStorage(t *testing.T) {
+	testuser := &user.User{ID: 99, UID: "fdxsqt7t5ryf4a", Login: "testuser"}
+
+	legacyFolder := folder.Folder{
+		UID:          "ady4yobv315a8e",
+		Title:        "Example folder 226",
+		URL:          "/dashboards/f/ady4yobv315a8e/example-folder-226",
+		CreatedBy:    99,
+		CreatedByUID: "fdxsqt7t5ryf4a",
+		Created:      time.Date(2024, time.November, 29, 0, 42, 34, 0, time.UTC),
+		UpdatedBy:    99,
+		UpdatedByUID: "fdxsqt7t5ryf4a",
+		Updated:      time.Date(2024, time.November, 29, 0, 42, 34, 0, time.UTC),
+		Version:      3,
+	}
+
+	namespacer := func(_ int64) string { return "1" }
+	unifiedStorageFolder, err := conversions.LegacyFolderToUnstructured(&legacyFolder, namespacer)
+	require.NoError(t, err)
+
+	expectedFolder := dtos.Folder{
+		UID:       legacyFolder.UID,
+		OrgID:     0,
+		Title:     legacyFolder.Title,
+		URL:       legacyFolder.URL,
+		HasACL:    false,
+		CanSave:   false,
+		CanEdit:   true,
+		CanAdmin:  false,
+		CanDelete: false,
+		CreatedBy: "testuser",
+		Created:   legacyFolder.Created,
+		UpdatedBy: "testuser",
+		Updated:   legacyFolder.Updated,
+		Version:   legacyFolder.Version,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v0alpha1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
+		require.NoError(t, err)
+	})
+
+	folderApiServerMock := httptest.NewServer(mux)
+	defer folderApiServerMock.Close()
+
+	t.Run("happy path", func(t *testing.T) {
+		type testCase struct {
+			description                string
+			folderUID                  string
+			legacyFolder               folder.Folder
+			expectedFolder             dtos.Folder
+			expectedFolderServiceError error
+			unifiedStorageEnabled      bool
+			unifiedStorageMode         grafanarest.DualWriterMode
+			expectedCode               int
+		}
+
+		tcs := []testCase{
+			{
+				description:           "Happy Path - Legacy",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: false,
+			},
+			{
+				description:           "Happy Path - Unified storage, mode 1",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode1,
+			},
+			{
+				description:           "Happy Path - Unified storage, mode 2",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode2,
+			},
+			{
+				description:           "Happy Path - Unified storage, mode 3",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode3,
+			},
+			{
+				description:           "Happy Path - Unified storage, mode 4",
+				expectedCode:          http.StatusOK,
+				legacyFolder:          legacyFolder,
+				folderUID:             legacyFolder.UID,
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode4,
+			},
+			{
+				description:                "Folder Not Found - Legacy",
+				expectedCode:               http.StatusNotFound,
+				legacyFolder:               legacyFolder,
+				folderUID:                  "notfound",
+				expectedFolder:             expectedFolder,
+				unifiedStorageEnabled:      false,
+				expectedFolderServiceError: dashboards.ErrFolderNotFound,
+			},
+			{
+				description:           "Folder Not Found - Unified storage, mode 1",
+				expectedCode:          http.StatusNotFound,
+				legacyFolder:          legacyFolder,
+				folderUID:             "notfound",
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode1,
+			},
+			{
+				description:           "Folder Not Found - Unified storage, mode 2",
+				expectedCode:          http.StatusNotFound,
+				legacyFolder:          legacyFolder,
+				folderUID:             "notfound",
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode2,
+			},
+			{
+				description:           "Folder Not Found - Unified storage, mode 3",
+				expectedCode:          http.StatusNotFound,
+				legacyFolder:          legacyFolder,
+				folderUID:             "notfound",
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode3,
+			},
+			{
+				description:           "Folder Not Found - Unified storage, mode 4",
+				expectedCode:          http.StatusNotFound,
+				legacyFolder:          legacyFolder,
+				folderUID:             "notfound",
+				expectedFolder:        expectedFolder,
+				unifiedStorageEnabled: true,
+				unifiedStorageMode:    grafanarest.Mode4,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.description, func(t *testing.T) {
+				setUpRBACGuardian(t)
+
+				cfg := setting.NewCfg()
+				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+					folderv0alpha1.RESOURCEGROUP: {
+						DualWriterMode: tc.unifiedStorageMode,
+					},
+				}
+
+				featuresArr := []any{featuremgmt.FlagNestedFolders}
+				if tc.unifiedStorageEnabled {
+					featuresArr = append(featuresArr, featuremgmt.FlagKubernetesFolders)
+				}
+
+				server := SetupAPITestServer(t, func(hs *HTTPServer) {
+					hs.Cfg = cfg
+					hs.folderService = &foldertest.FakeService{
+						ExpectedFolder: &tc.legacyFolder,
+						ExpectedError:  tc.expectedFolderServiceError,
+					}
+					hs.QuotaService = quotatest.New(false, nil)
+					hs.SearchService = &mockSearchService{
+						ExpectedResult: model.HitList{},
+					}
+					hs.userService = &usertest.FakeUserService{
+						ExpectedUser: testuser,
+					}
+					hs.Features = featuremgmt.WithFeatures(
+						featuresArr...,
+					)
+					hs.clientConfigProvider = mockClientConfigProvider{
+						host: folderApiServerMock.URL,
+					}
+				})
+
+				req := server.NewRequest(http.MethodPut, fmt.Sprintf("/api/folders/%s", tc.folderUID), strings.NewReader(`{"title":"new title"}`))
+				req.Header.Set("Content-Type", "application/json")
+				webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+					1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersAll},
+						{Action: dashboards.ActionFoldersWrite, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("ady4yobv315a8e")},
+					}),
+				}})
+
+				res, err := server.Send(req)
+				require.NoError(t, err)
+
+				require.Equal(t, tc.expectedCode, res.StatusCode)
+				defer func() { require.NoError(t, res.Body.Close()) }()
+
+				if tc.expectedCode == http.StatusOK {
+					body := dtos.Folder{}
+					require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+
+					//nolint:staticcheck
+					body.ID = 0
+					body.Version = 0
+					tc.expectedFolder.Version = 0
+					require.Equal(t, tc.expectedFolder, body)
+				}
+			})
+		}
+	})
 }
