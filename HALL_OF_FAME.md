@@ -4,3 +4,4 @@ List of previous team members that have had a big impact on the company or the p
 
 - Hugo Häggmark ([Björn Lundén](https://www.bjornlunden.se/))
 - Marcus Efraimsson
+- Giordano Ricci
