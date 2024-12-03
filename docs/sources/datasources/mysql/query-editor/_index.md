@@ -1,8 +1,5 @@
 ---
-aliases:
-  - ../data-sources/mysql/
-  - ../features/datasources/mysql/
-description: Guide for using MySQL in Grafana
+description: This document describes the MySQL query editor..
 keywords:
   - grafana
   - mysql
@@ -12,8 +9,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: MySQL
-title: MySQL data source
+menuTitle: Query editor
+title: Query editor
 weight: 1000
 refs:
   add-template-variables-interval:
@@ -63,159 +60,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
-# MySQL data source
-
-Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database like MariaDB or Percona Server.
-
-For instructions on how to add a data source to Grafana, refer to the [administration documentation](ref:data-source-management).
-Only users with the `Organization administrator` role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
-
-{{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview" >}}
-
-<!-- ## Configure the data source
-
-**To access the data source configuration page:**
-
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `MySQL` in the search bar.
-1. Select **MySQL**.
-
-   The **Settings** tab of the data source is displayed.
-
-1. Set the data source's basic configuration options.
-
-| Name                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Default**                   | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Host**                      | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **Database**                  | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Session Timezone**          | Specifies the timezone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set this to `+00:00` so Grafana can handle times properly. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, the timezone will not be updated. For more information, refer to [MySQL Server Time Zone Support](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                      |
-| **Max open**                  | The maximum number of open connections to the database, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| **Auto (max idle)**           | Toggle to set the maximum number of idle connections to the number of maximum open connections. Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **Allow cleartext passwords** | Allows the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) as required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/en/pam-pluggable-authentication.html). <br />**Sending passwords in clear text may be a security problem in some configurations**. To avoid password issues, it is recommended that clients connect to a MySQL server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. |
-| **Max lifetime**              | The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL. The default is `14400` or 4 hours.                                                                                                                                                                                                                                                                                                                                                                                                  |
-
-### Min time interval
-
-The **Min time interval** setting defines a lower limit for the [`$__interval`](ref:add-template-variables-interval) and [`$__interval_ms`](ref:add-template-variables-interval-ms) variables.
-
-This value _must_ be formatted as a number followed by a valid time identifier:
-
-| Identifier | Description |
-| ---------- | ----------- |
-| `y`        | year        |
-| `M`        | month       |
-| `w`        | week        |
-| `d`        | day         |
-| `h`        | hour        |
-| `m`        | minute      |
-| `s`        | second      |
-| `ms`       | millisecond |
-
-We recommend setting this value to match your MySQL write frequency.
-For example, use `1m` if MySQL writes data every minute.
-
-You can also override this setting in a dashboard panel under its data source options.
-
-### Database User Permissions (Important!)
-
-The database user you specify when you add the data source should only be granted SELECT permissions on
-the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
-could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommend you create a specific mysql user with restricted permissions.
-
-Example:
-
-```sql
- CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
- GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
-```
-
-You can use wildcards (`*`) in place of database or table if you want to grant access to more databases and tables.
-
-### Provision the data source
-
-You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
-
-#### Provisioning examples
-
-##### Basic Provisioning
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    user: grafana
-    jsonData:
-      database: grafana
-      maxOpenConns: 100
-      maxIdleConns: 100
-      maxIdleConnsAuto: true
-      connMaxLifetime: 14400
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-```
-
-##### Using TLS verification
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    user: grafana
-    jsonData:
-      tlsAuth: true
-      database: grafana
-      maxOpenConns: 100
-      maxIdleConns: 100
-      maxIdleConnsAuto: true
-      connMaxLifetime: 14400
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
-      tlsCACert: ${GRAFANA_TLS_CA_CERT}
-```
-
-##### Use TLS and Skip Certificate Verification
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: MySQL
-    type: mysql
-    url: localhost:3306
-    user: grafana
-    jsonData:
-      tlsAuth: true
-      tlsSkipVerify: true
-      database: grafana
-      maxOpenConns: 100
-      maxIdleConns: 100
-      maxIdleConnsAuto: true
-      connMaxLifetime: 14400
-    secureJsonData:
-      password: ${GRAFANA_MYSQL_PASSWORD}
-      tlsClientCert: ${GRAFANA_TLS_CLIENT_CERT}
-      tlsCACert: ${GRAFANA_TLS_CA_CERT}
-``` -->
-
-## Query builder
-
-{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
+# MySQL query editor
 
 The MySQL query builder is available when editing a panel using a MySQL data source.
 
@@ -223,6 +68,8 @@ This topic explains querying specific to the MySQL data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 You can run the built query by pressing the `Run query` button in the top right corner of the editor.
+
+{{< figure src="/static/img/docs/v92/mysql_query_builder.png" class="docs-image--no-shadow" >}}
 
 ### Format
 
