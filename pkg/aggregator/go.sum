@@ -131,6 +131,7 @@ github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWS
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/grafana-plugin-sdk-go v0.260.2-0.20241202224434-6fabe88833c0 h1:1as76HQ7f2hvQkwXDPo8ZhF6rjbyHQHfJuPC0PBCWmg=
+github.com/grafana/grafana-plugin-sdk-go v0.260.2-0.20241202224434-6fabe88833c0/go.mod h1:JriieK5Oc5v120QKhMs/LO55N0P3YI2ttEiVT1wfYsw=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435 h1:lmw60EW7JWlAEvgggktOyVkH4hF1m/+LSF/Ap0NCyi8=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435/go.mod h1:ORVFiW/KNRY52lNjkGwnFWCxNVfE97bJG2jr2fetq0I=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435 h1:SNEeqY22DrGr5E9kGF1mKSqlOom14W9+b1u4XEGJowA=
