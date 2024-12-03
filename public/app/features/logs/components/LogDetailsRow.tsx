@@ -55,6 +55,7 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
+  labelType: string | null;
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
@@ -134,11 +135,34 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
+    labelType: null,
   };
 
-  componentDidUpdate() {
+  labelTypeChecked = false;
+
+  componentDidUpdate(prevProps: Readonly<Props>): void {
     if (this.state.showFieldsStats) {
       this.updateStats();
+    }
+    if (prevProps.parsedKeys[0] !== this.props.parsedKeys[0]) {
+      this.labelTypeChecked = false;
+      this.checkLabelType();
+    }
+  }
+  
+  componentDidMount(): void {
+    this.checkLabelType();
+  }
+
+  checkLabelType() {
+    console.log('checmign')
+    if (!this.labelTypeChecked && !this.state.labelType && this.props.parsedKeys.length === 1) {
+      getLabelTypeFromRow(this.props.parsedKeys[0], this.props.row).then((labelType) => {
+        this.labelTypeChecked = true;
+        this.setState({
+          labelType,
+        });
+      })
     }
   }
 
@@ -290,14 +314,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onPinLine,
       pinLineButtonTooltipTitle,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount, labelType } = this.state;
     const styles = getStyles(theme);
     const rowStyles = getLogRowStyles(theme);
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
     const refIdTooltip = app === CoreApp.Explore && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
-    const labelType = singleKey ? getLabelTypeFromRow(parsedKeys[0], row) : null;
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');

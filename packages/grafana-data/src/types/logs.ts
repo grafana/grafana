@@ -266,6 +266,17 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
+/**
+ * Log Data sources that support labelType fields specifying the type of the label.
+ * This interface will be used to display the type of the label in Log Details.
+ */
+export interface DataSourceWithLabelTypeSupport {
+  /**
+   * Given a label type identifier, returns a readable name to be displayed in Log Details.
+   */
+  getNameForLabelType(labelType: string): string | null;
+}
+
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
   datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
   type: SupplementaryQueryType
