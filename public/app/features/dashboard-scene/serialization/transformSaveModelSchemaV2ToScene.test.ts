@@ -38,7 +38,7 @@ import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 
-import { transformSaveModelSchemaV2ToScene, TypedVariableModelv2 } from './transformSaveModelSchemaV2ToScene';
+import { transformSaveModelSchemaV2ToScene, TypedVariableModelV2 } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -115,60 +115,68 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Variables
     const variables = scene.state?.$variables;
     expect(variables?.state.variables).toHaveLength(dash.variables.length);
-    validateQueryVariable({
-      variable: variables?.state.variables[0],
-      kind: dash.variables[0] as QueryVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[0],
+      variableKind: dash.variables[0] as QueryVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: QueryVariable,
       index: 0,
     });
-    validateCustomVariable({
-      variable: variables?.state.variables[1],
-      kind: dash.variables[1] as CustomVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[1],
+      variableKind: dash.variables[1] as CustomVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: CustomVariable,
       index: 1,
     });
-    validateDataSourceVariable({
-      variable: variables?.state.variables[2],
-      kind: dash.variables[2] as DatasourceVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[2],
+      variableKind: dash.variables[2] as DatasourceVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: DataSourceVariable,
       index: 2,
     });
-    validateConstantVariable({
-      variable: variables?.state.variables[3],
-      kind: dash.variables[3] as ConstantVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[3],
+      variableKind: dash.variables[3] as ConstantVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: ConstantVariable,
       index: 3,
     });
-    validateIntervalVariable({
-      variable: variables?.state.variables[4],
-      kind: dash.variables[4] as IntervalVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[4],
+      variableKind: dash.variables[4] as IntervalVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: IntervalVariable,
       index: 4,
     });
-    validateTextBoxVariable({
-      variable: variables?.state.variables[5],
-      kind: dash.variables[5] as TextVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[5],
+      variableKind: dash.variables[5] as TextVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: TextBoxVariable,
       index: 5,
     });
-    validateGroupByVariable({
-      variable: variables?.state.variables[6],
-      kind: dash.variables[6] as GroupByVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[6],
+      variableKind: dash.variables[6] as GroupByVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: GroupByVariable,
       index: 6,
     });
-    validateAdHocFiltersVariable({
-      variable: variables?.state.variables[7],
-      kind: dash.variables[7] as AdhocVariableKind,
+    validateVariable({
+      sceneVariable: variables?.state.variables[7],
+      variableKind: dash.variables[7] as AdhocVariableKind,
       scene: scene,
       dashSpec: dash,
+      sceneVariableClass: AdHocFiltersVariable,
       index: 7,
     });
 
@@ -177,7 +185,23 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const dataLayers = scene.state.$data as DashboardDataLayerSet;
     expect(dataLayers.state.annotationLayers).toHaveLength(dash.annotations.length);
     expect(dataLayers.state.annotationLayers[0].state.name).toBe(dash.annotations[0].spec.name);
+    expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(dash.annotations[0].spec.enable);
+    expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(dash.annotations[0].spec.hide);
+
+    // Enabled
     expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
+    expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
+    expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
+
+    // Disabled
+    expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
+    expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
+    expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
+
+    // Hidden
+    expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
+    expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
+    expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
 
     // To be implemented
     // expect(timePicker.state.ranges).toEqual(dash.timeSettings.quickRanges);
@@ -193,7 +217,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
     expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
 
-    // FIXME: There is an error of data being undefined
     expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
     const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
     expect(dataTransformer.state.transformations[0]).toEqual(
@@ -300,90 +323,47 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 });
 
-interface VariableValidation<T extends TypedVariableModelv2> {
-  variable: SceneVariable<SceneVariableState> | undefined;
-  kind: T;
+type SceneVariableConstructor<T extends SceneVariable<SceneVariableState>> = new (
+  initialState: Partial<SceneVariableState>
+) => T;
+
+interface VariableValidation<T extends TypedVariableModelV2> {
+  sceneVariable: SceneVariable<SceneVariableState> | undefined;
+  variableKind: T;
   scene: DashboardScene;
   dashSpec: DashboardV2Spec;
+  sceneVariableClass: SceneVariableConstructor<SceneVariable<SceneVariableState>>;
   index: number;
 }
 
-function validateQueryVariable({ variable, kind, scene, dashSpec, index }: VariableValidation<QueryVariableKind>) {
-  expect(variable).toBeInstanceOf(QueryVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateCustomVariable({ variable, kind, scene, dashSpec, index }: VariableValidation<CustomVariableKind>) {
-  expect(variable).toBeInstanceOf(CustomVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateDataSourceVariable({
-  variable,
-  kind,
+function validateVariable<T extends TypedVariableModelV2>({
+  sceneVariable,
+  variableKind,
   scene,
   dashSpec,
+  sceneVariableClass,
   index,
-}: VariableValidation<DatasourceVariableKind>) {
-  expect(variable).toBeInstanceOf(DataSourceVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateConstantVariable({
-  variable,
-  kind,
-  scene,
-  dashSpec,
-  index,
-}: VariableValidation<ConstantVariableKind>) {
-  expect(variable).toBeInstanceOf(ConstantVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateIntervalVariable({
-  variable,
-  kind,
-  scene,
-  dashSpec,
-  index,
-}: VariableValidation<IntervalVariableKind>) {
-  expect(variable).toBeInstanceOf(IntervalVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateTextBoxVariable({ variable, kind, scene, dashSpec, index }: VariableValidation<TextVariableKind>) {
-  expect(variable).toBeInstanceOf(TextBoxVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateGroupByVariable({ variable, kind, scene, dashSpec, index }: VariableValidation<GroupByVariableKind>) {
-  expect(variable).toBeInstanceOf(GroupByVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    kind.spec.current.value
-  );
-}
-
-function validateAdHocFiltersVariable({
-  variable,
-  kind,
-  scene,
-  dashSpec,
-  index,
-}: VariableValidation<AdhocVariableKind>) {
-  expect(variable).toBeInstanceOf(AdHocFiltersVariable);
-  expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-    `${kind.spec.filters[0].key}="${kind.spec.filters[0].value}"`
-  );
+}: VariableValidation<T>) {
+  if (variableKind.kind === 'AdhocVariable' && sceneVariable instanceof AdHocFiltersVariable) {
+    expect(sceneVariable).toBeInstanceOf(AdHocFiltersVariable);
+    expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
+      `${variableKind.spec.filters[0].key}="${variableKind.spec.filters[0].value}"`
+    );
+    expect(sceneVariable?.state.datasource).toEqual(variableKind.spec.datasource);
+  } else if (variableKind.kind !== 'AdhocVariable') {
+    expect(sceneVariable).toBeInstanceOf(sceneVariableClass);
+    expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
+      variableKind.spec.current.value
+    );
+  }
+  if (sceneVariable instanceof DataSourceVariable && variableKind.kind === 'DatasourceVariable') {
+    expect(sceneVariable?.state.pluginId).toBe(variableKind.spec.pluginId);
+  }
+  if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
+    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
+    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
+  }
+  if (sceneVariable instanceof GroupByVariable && variableKind.kind === 'CustomVariable') {
+    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.query);
+  }
 }

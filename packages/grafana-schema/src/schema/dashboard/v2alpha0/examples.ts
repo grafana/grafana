@@ -34,8 +34,8 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         },
         datasource: {
-          type: 'datasource',
-          uid: 'grafana',
+          type: 'prometheus',
+          uid: 'uid',
         },
         filter: { ids: [] },
         enable: true,
@@ -48,14 +48,14 @@ export const handyTestingSchema: DashboardV2Spec = {
       kind: 'AnnotationQuery',
       spec: {
         datasource: {
-          type: 'testdata',
-          uid: 'gdev-testdata',
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
         },
         enable: true,
         iconColor: 'red',
         name: 'Enabled',
         query: {
-          kind: 'test',
+          kind: 'grafana-testdata-datasource',
           spec: {
             lines: 4,
             refId: 'Anno',
@@ -63,7 +63,47 @@ export const handyTestingSchema: DashboardV2Spec = {
           },
         },
         filter: { ids: [] },
+        hide: true,
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
+        },
+        filter: { ids: [] },
+        enable: false,
+        iconColor: 'yellow',
+        name: 'Disabled',
+        query: {
+          kind: 'grafana-testdata-datasource',
+          spec: { lines: 5, refId: 'Anno', scenarioId: 'annotations' },
+        },
         hide: false,
+      },
+    },
+    {
+      kind: 'AnnotationQuery',
+      spec: {
+        datasource: {
+          type: 'grafana-testdata-datasource',
+          uid: 'uid',
+        },
+        filter: { ids: [] },
+        enable: true,
+        hide: true,
+        iconColor: 'dark-purple',
+        name: 'Hidden',
+        query: {
+          kind: 'grafana-testdata-datasource',
+          spec: {
+            lines: 6,
+            refId: 'Anno',
+            scenarioId: 'annotations',
+          },
+        },
       },
     },
   ],
