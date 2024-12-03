@@ -5,7 +5,7 @@ go 1.23.1
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v27.3.1+incompatible
+replace github.com/docker/docker => github.com/moby/moby v26.0.0+incompatible
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
@@ -90,7 +90,10 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require dagger.io/dagger v0.11.8-rc.2
+require (
+	dagger.io/dagger v0.11.8-rc.2
+	github.com/moby/moby v27.3.1+incompatible
+)
 
 require (
 	cloud.google.com/go/longrunning v0.6.0 // indirect
