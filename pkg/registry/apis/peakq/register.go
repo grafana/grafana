@@ -28,8 +28,10 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, reg prometheus.Registerer) *PeakQAPIBuilder {
-	if !((features.IsEnabledGlobally(featuremgmt.FlagQueryService) && features.IsEnabledGlobally(featuremgmt.FlagQueryLibrary)) ||
-		features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
+	if !featuremgmt.AnyEnabled(features,
+		featuremgmt.FlagQueryService,
+		featuremgmt.FlagQueryLibrary,
+		featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless explicitly added (or all experimental are added)
 	}
 	builder := NewPeakQAPIBuilder()
