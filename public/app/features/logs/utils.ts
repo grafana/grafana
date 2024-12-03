@@ -370,7 +370,7 @@ function resolveDataSourceLabelType(labelType: string, datasourceType: string) {
         case 'I':
           return 'Indexed';
         case 'S':
-          return 'Structured Metadata';
+          return 'Structured metadata';
         case 'P':
           return 'Parsed label';
         default:
