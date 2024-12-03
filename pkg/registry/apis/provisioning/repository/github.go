@@ -25,11 +25,11 @@ import (
 )
 
 type githubRepository struct {
-	logger  *slog.Logger
-	config  *provisioning.Repository
-	gh      pgh.Client
-	baseURL *url.URL
-	linter  lint.Linter
+	logger        *slog.Logger
+	config        *provisioning.Repository
+	gh            pgh.Client
+	baseURL       *url.URL
+	linterFactory lint.LinterFactory
 }
 
 var _ Repository = (*githubRepository)(nil)
@@ -39,14 +39,14 @@ func NewGitHub(
 	config *provisioning.Repository,
 	factory pgh.ClientFactory,
 	baseURL *url.URL,
-	linter lint.Linter,
+	linterFactory lint.LinterFactory,
 ) *githubRepository {
 	return &githubRepository{
-		config:  config,
-		logger:  slog.Default().With("logger", "github-repository"),
-		gh:      factory.New(ctx, config.Spec.GitHub.Token),
-		baseURL: baseURL,
-		linter:  linter,
+		config:        config,
+		logger:        slog.Default().With("logger", "github-repository"),
+		gh:            factory.New(ctx, config.Spec.GitHub.Token),
+		baseURL:       baseURL,
+		linterFactory: linterFactory,
 	}
 }
 
@@ -642,7 +642,7 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 	logger.InfoContext(ctx, "lint pull request")
 
 	// Load linter config
-	cfg, err := r.Read(ctx, logger, r.linter.ConfigPath(), ref)
+	cfg, err := r.Read(ctx, logger, r.linterFactory.ConfigPath(), ref)
 	switch {
 	case err == nil:
 		logger.InfoContext(ctx, "linter config found", "config", string(cfg.Data))
@@ -650,6 +650,11 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 		logger.InfoContext(ctx, "no linter config found")
 	default:
 		return fmt.Errorf("read linter config: %w", err)
+	}
+
+	linter, err := r.linterFactory.NewFromConfig(cfg.Data)
+	if err != nil {
+		return fmt.Errorf("create linter: %w", err)
 	}
 
 	// Clear all previous comments because we don't know if the files have changed
@@ -663,7 +668,7 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 		}
 
 		logger := logger.With("file", resource.Path)
-		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, cfg); err != nil {
+		if err := r.lintPullRequestFile(ctx, logger, prNumber, ref, resource, linter); err != nil {
 			logger.ErrorContext(ctx, "failed to lint file", "error", err)
 		}
 	}
@@ -672,12 +677,8 @@ func (r *githubRepository) lintPullRequest(ctx context.Context, logger *slog.Log
 }
 
 // lintPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, cfg *FileInfo) error {
-	var cfgBytes []byte
-	if cfg != nil {
-		cfgBytes = cfg.Data
-	}
-	issues, err := r.linter.Lint(ctx, cfgBytes, resource.Data)
+func (r *githubRepository) lintPullRequestFile(ctx context.Context, logger *slog.Logger, prNumber int, ref string, resource changedResource, linter lint.Linter) error {
+	issues, err := linter.Lint(ctx, resource.Data)
 	if err != nil {
 		return fmt.Errorf("lint file: %w", err)
 	}

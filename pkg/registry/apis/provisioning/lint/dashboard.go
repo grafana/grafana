@@ -11,8 +11,32 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type DashboardLinterFactory struct{}
+
+func NewDashboardLinterFactory() *DashboardLinterFactory {
+	return &DashboardLinterFactory{}
+}
+
+func (f *DashboardLinterFactory) New() (Linter, error) {
+	return &DashboardLinter{rules: lint.NewRuleSet()}, nil
+}
+
+func (f *DashboardLinterFactory) NewFromConfig(cfg []byte) (Linter, error) {
+	var lintCfg lint.ConfigurationFile
+	if err := yaml.Unmarshal(cfg, &lintCfg); err != nil {
+		return nil, fmt.Errorf("unmarshal linter config: %w", err)
+	}
+
+	return &DashboardLinter{rules: lint.NewRuleSet(), cfg: lintCfg}, nil
+}
+
+func (f *DashboardLinterFactory) ConfigPath() string {
+	return ".dashboard-lint"
+}
+
 type DashboardLinter struct {
 	rules lint.RuleSet
+	cfg   lint.ConfigurationFile
 }
 
 // FIXME: what would be a good place to put all the schema validation?
@@ -25,11 +49,7 @@ func NewDashboardLinter() *DashboardLinter {
 	return &DashboardLinter{rules: lint.NewRuleSet()}
 }
 
-func (l *DashboardLinter) ConfigPath() string {
-	return ".dashboard-lint"
-}
-
-func (l *DashboardLinter) Lint(ctx context.Context, cfg []byte, fileData []byte) ([]provisioning.LintIssue, error) {
+func (l *DashboardLinter) Lint(ctx context.Context, fileData []byte) ([]provisioning.LintIssue, error) {
 	var data specData
 	if err := json.Unmarshal(fileData, &data); err != nil {
 		return nil, fmt.Errorf("unmarshal file data into spec: %w", err)
@@ -45,14 +65,7 @@ func (l *DashboardLinter) Lint(ctx context.Context, cfg []byte, fileData []byte)
 		return nil, fmt.Errorf("failed to lint dashboard: %v", err)
 	}
 
-	if len(cfg) > 0 {
-		var lintCfg lint.ConfigurationFile
-		if err := yaml.Unmarshal(cfg, &lintCfg); err != nil {
-			return nil, fmt.Errorf("unmarshal linter config: %w", err)
-		}
-
-		results.Configure(&lintCfg)
-	}
+	results.Configure(&l.cfg)
 
 	byRule := results.ByRule()
 	rules := make([]string, 0, len(byRule))
