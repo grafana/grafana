@@ -35,7 +35,8 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 
 	instance, err := e.getInstance(ctx, req.PluginContext)
 	if err != nil {
-		return nil, err
+		errorsource.AddErrorToResponse(req.Queries[0].RefID, resp, err)
+		return resp, nil
 	}
 
 	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),

@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 type Duration struct {
@@ -61,13 +62,16 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 	case float64:
 		*duration = Duration{time.Duration(value)}
 	case string:
+		if value == "" {
+			return nil
+		}
 		dur, err := time.ParseDuration(value)
 		if err != nil {
-			return err
+			return errorsource.DownstreamError(err, false)
 		}
 		*duration = Duration{dur}
 	default:
-		return fmt.Errorf("invalid duration: %#v", unmarshalledJson)
+		return errorsource.DownstreamError(fmt.Errorf("invalid duration: %#v", unmarshalledJson), false)
 	}
 
 	return nil
