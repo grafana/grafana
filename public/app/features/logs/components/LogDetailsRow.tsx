@@ -18,7 +18,6 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   ClipboardButton,
   DataLinkButton,
-  Icon,
   IconButton,
   PopoverContent,
   Themeable2,
@@ -59,7 +58,20 @@ interface State {
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2) => {
+  console.log(theme);
   return {
+    labelType: css({
+      border: `solid 1px ${theme.colors.text.primary}`,
+      color: theme.colors.text.primary,
+      borderRadius: theme.shape.radius.circle,
+      fontSize: theme.spacing(1),
+      lineHeight: theme.spacing(1.75),
+      height: theme.spacing(2),
+      width: theme.spacing(2),
+      display: 'flex',
+      justifyContent: 'center',
+      verticalAlign: 'middle',
+    }),
     wordBreakAll: css({
       label: 'wordBreakAll',
       wordBreak: 'break-all',
@@ -332,13 +344,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </div>
           </td>
 
-          <td>
-            {labelType && (
-              <Tooltip content={labelType}>
-                <Icon tabIndex={0} name="info-circle" size="sm" />
-              </Tooltip>
-            )}
-          </td>
+          <td>{labelType && <LabelTypeBadge type={labelType} styles={styles} />}</td>
           {/* Key - value columns */}
           <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
@@ -402,6 +408,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       </>
     );
   }
+}
+
+function LabelTypeBadge({ type, styles }: { type: string; styles: ReturnType<typeof getStyles> }) {
+  return (
+    <Tooltip content={type}>
+      <div className={styles.labelType}>
+        <span>{type.substring(0, 1)}</span>
+      </div>
+    </Tooltip>
+  );
 }
 
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
