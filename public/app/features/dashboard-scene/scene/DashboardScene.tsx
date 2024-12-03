@@ -264,16 +264,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
-    if (isV2Dashboard(saveModel)) {
-      throw new Error('v2 schema not supported');
-    } else {
-      (this._serializer as DashboardSceneSerializerLike<Dashboard>).initialSaveModel = {
-        ...saveModel,
-        id: result.id,
-        uid: result.uid,
-        version: result.version,
-      };
-    }
+    this._serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
 

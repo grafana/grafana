@@ -2,6 +2,7 @@ import { config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/dashboard.gen';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
+import { SaveDashboardResponseDTO } from 'app/types';
 
 import { getRawDashboardChanges } from '../saving/getDashboardChanges';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -25,9 +26,10 @@ export interface DashboardSceneSerializerLike<T> {
       saveRefresh?: boolean;
     }
   ) => DashboardChangeInfo;
+  onSaveComplete(saveModel: T, result: SaveDashboardResponseDTO): void;
 }
 
-class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
+export class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
   initialSaveModel?: Dashboard;
 
   getSaveModel(s: DashboardScene) {
@@ -68,9 +70,18 @@ class V1DashboardSerializer implements DashboardSceneSerializerLike<Dashboard> {
       hasChanges: changeInfo.hasChanges || hasFolderChanges,
     };
   }
+
+  onSaveComplete(saveModel: Dashboard, result: SaveDashboardResponseDTO): void {
+    this.initialSaveModel = {
+      ...saveModel,
+      id: result.id,
+      uid: result.uid,
+      version: result.version,
+    };
+  }
 }
 
-class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
+export class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2Spec> {
   initialSaveModel?: DashboardV2Spec;
 
   getSaveModel(s: DashboardScene) {
@@ -88,6 +99,10 @@ class V2DashboardSerializer implements DashboardSceneSerializerLike<DashboardV2S
     // return getRawDashboardV2Changes(initialSaveModel, changedSaveModel, saveTimeRange, saveVariables, saveRefresh);
     // eslint-disable-next-line
     return {} as DashboardChangeInfo;
+  }
+
+  onSaveComplete(saveModel: DashboardV2Spec, result: SaveDashboardResponseDTO): void {
+    throw new Error('v2 schema: Method not implemented.');
   }
 }
 
