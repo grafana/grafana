@@ -33,7 +33,6 @@ import { MetricScene } from '../MetricScene';
 import { AddToExplorationButton } from '../MetricSelect/AddToExplorationsButton';
 import { SelectMetricAction } from '../MetricSelect/SelectMetricAction';
 import { getMetricNames } from '../MetricSelect/api';
-import { getPreviewPanelFor } from '../MetricSelect/previewPanel';
 import { sortRelatedMetrics } from '../MetricSelect/relatedMetrics';
 import { createJSRegExpFromSearchTerms, createPromRegExp, deriveSearchTermsFromInput } from '../MetricSelect/util';
 import { StatusWrapper } from '../StatusWrapper';
@@ -52,6 +51,7 @@ import {
 import { getFilters, getTrailFor, isSceneTimeRangeState } from '../utils';
 
 import { renderAsRedMetricsDisplay } from './display/redMetrics';
+import { getPreviewPanelFor } from './previewPanel';
 
 interface MetricPanel {
   name: string;
@@ -70,6 +70,7 @@ export interface MetricSelectSceneForWingmanState extends SceneObjectState {
   metricNamesLoading?: boolean;
   metricNamesError?: string;
   metricNamesWarning?: string;
+  wm_display_view?: string;
 }
 
 const ROW_PREVIEW_HEIGHT = '175px';
@@ -93,6 +94,7 @@ export class MetricSelectSceneForWingman
     super({
       $variables: state.$variables,
       metricPrefix: state.metricPrefix ?? METRIC_PREFIX_ALL,
+      wm_display_view: state.wm_display_view ?? 'default',
       body:
         state.body ??
         new SceneCSSGridLayout({
@@ -107,7 +109,7 @@ export class MetricSelectSceneForWingman
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metricPrefix', 'wm_display_view'] });
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE, VAR_FILTERS],
     onReferencedVariableValueChanged: () => {
@@ -124,6 +126,12 @@ export class MetricSelectSceneForWingman
     if (typeof values.metricPrefix === 'string') {
       if (this.state.metricPrefix !== values.metricPrefix) {
         this.setState({ metricPrefix: values.metricPrefix });
+      }
+    }
+
+    if (typeof values.wm_display_view === 'string') {
+      if (this.state.wm_display_view !== values.wm_display_view) {
+        this.setState({ wm_display_view: values.wm_display_view });
       }
     }
   }
@@ -400,7 +408,7 @@ export class MetricSelectSceneForWingman
     });
   }
 
-  private async buildLayout(displayAs?: string, groupBy?: string, sortBy?: string) {
+  private async buildLayout() {
     const trail = getTrailFor(this);
     const showPreviews = trail.state.showPreviews;
     // Temp hack when going back to select metric scene and variable updates
@@ -426,12 +434,16 @@ export class MetricSelectSceneForWingman
      * This is pretty bad way of handling things but for now it'll do the job.
      */
 
+    const { wm_display_view: displayAs } = this.state;
+
     switch (displayAs) {
       case 'red_metrics':
+        console.log('red metrics will be rendered');
         children.push(...renderAsRedMetricsDisplay());
         this.state.body.setState({ children, autoRows: rowTemplate });
         break;
       case 'anomalies':
+        console.log('animalies will be rendered');
         children.push(...renderAsRedMetricsDisplay());
         this.state.body.setState({ children, autoRows: rowTemplate });
         break;
@@ -440,37 +452,37 @@ export class MetricSelectSceneForWingman
       // default display no action needed.
     }
 
-    switch (groupBy) {
-      case 'none':
-        break;
-      case 'alerts':
-        break;
-      case 'dashboards':
-        break;
-      case 'metric_name':
-        break;
-      case 'services':
-        break;
-      default:
-        break;
-    }
-
-    switch (sortBy) {
-      case 'alphabetical_az':
-        break;
-      case 'alphabetical_za':
-        break;
-      case 'org_most_queried':
-        break;
-      case 'org_most_recent':
-        break;
-      case 'team_most_queried':
-        break;
-      case 'team_most_recent':
-        break;
-      default:
-        break;
-    }
+    // switch (groupBy) {
+    //   case 'none':
+    //     break;
+    //   case 'alerts':
+    //     break;
+    //   case 'dashboards':
+    //     break;
+    //   case 'metric_name':
+    //     break;
+    //   case 'services':
+    //     break;
+    //   default:
+    //     break;
+    // }
+    //
+    // switch (sortBy) {
+    //   case 'alphabetical_az':
+    //     break;
+    //   case 'alphabetical_za':
+    //     break;
+    //   case 'org_most_queried':
+    //     break;
+    //   case 'org_most_recent':
+    //     break;
+    //   case 'team_most_queried':
+    //     break;
+    //   case 'team_most_recent':
+    //     break;
+    //   default:
+    //     break;
+    // }
 
     const metricsList = this.sortedPreviewMetrics();
 
