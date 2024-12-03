@@ -1,7 +1,8 @@
 import { textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-const CSP_REPORT_ONLY_ENABLED = config.bootData.settings.cspReportOnlyEnabled;
+// Check properties with optional chaining to simplify testing where `bootData` is only partially set
+const CSP_REPORT_ONLY_ENABLED = config.bootData?.settings?.cspReportOnlyEnabled;
 
 export const defaultTrustedTypesPolicy = {
   createHTML: (string: string, source: string, sink: string) => {
@@ -22,7 +23,8 @@ export const defaultTrustedTypesPolicy = {
 };
 
 if (
-  config.bootData.settings.trustedTypesDefaultPolicyEnabled &&
+  // Check properties with optional chaining to simplify testing where `bootData` is only partially set
+  config.bootData?.settings?.trustedTypesDefaultPolicyEnabled &&
   window.trustedTypes &&
   window.trustedTypes.createPolicy
 ) {
