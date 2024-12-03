@@ -632,7 +632,7 @@ func (st DBstore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title stri
 		Title:        title,
 		SignedInUser: user,
 	}
-	f, err = st.FolderService.Create(ctx, cmd)
+	f, err := st.FolderService.Create(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
