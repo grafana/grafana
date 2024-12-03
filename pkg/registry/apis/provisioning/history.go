@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -47,7 +46,7 @@ func (h *historySubresource) ConnectMethods() []string {
 }
 
 func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) {
-	return &provisioning.HistoryList{}, false, ""
+	return nil, true, "" // true adds the {path} component
 }
 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -62,17 +61,18 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 		query := r.URL.Query()
 		ref := query.Get("ref")
 		logger = logger.With("ref", ref)
+		ctx := r.Context()
 
+		var filePath string
 		prefix := fmt.Sprintf("/%s/history/", name)
 		idx := strings.Index(r.URL.Path, prefix)
-		if idx == -1 {
-			logger.DebugContext(r.Context(), "failed to find a file path in the URL")
-			responder.Error(apierrors.NewBadRequest("invalid request path"))
-			return
+		if idx != -1 {
+			filePath = r.URL.Path[idx+len(prefix):]
 		}
 
-		filePath := r.URL.Path[idx+len(prefix):]
-		commits, err := repo.History(ctx, logger, filePath, filePath)
+		logger = logger.With("path", filePath)
+
+		commits, err := repo.History(ctx, logger, filePath, ref)
 		if err != nil {
 			logger.DebugContext(ctx, "failed to get history", "error", err)
 			responder.Error(err)

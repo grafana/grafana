@@ -59,9 +59,9 @@ func (_m *MockClient) ClearAllPullRequestFileComments(ctx context.Context, owner
 	return r0
 }
 
-// Commits provides a mock function with given fields: ctx, owner, repository, branch, path
-func (_m *MockClient) Commits(ctx context.Context, owner string, repository string, branch string, path string) ([]Commit, error) {
-	ret := _m.Called(ctx, owner, repository, branch, path)
+// Commits provides a mock function with given fields: ctx, owner, repository, path, branch
+func (_m *MockClient) Commits(ctx context.Context, owner string, repository string, path string, branch string) ([]Commit, error) {
+	ret := _m.Called(ctx, owner, repository, path, branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Commits")
@@ -70,10 +70,10 @@ func (_m *MockClient) Commits(ctx context.Context, owner string, repository stri
 	var r0 []Commit
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]Commit, error)); ok {
-		return rf(ctx, owner, repository, branch, path)
+		return rf(ctx, owner, repository, path, branch)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) []Commit); ok {
-		r0 = rf(ctx, owner, repository, branch, path)
+		r0 = rf(ctx, owner, repository, path, branch)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]Commit)
@@ -81,7 +81,7 @@ func (_m *MockClient) Commits(ctx context.Context, owner string, repository stri
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, branch, path)
+		r1 = rf(ctx, owner, repository, path, branch)
 	} else {
 		r1 = ret.Error(1)
 	}

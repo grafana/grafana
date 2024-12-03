@@ -184,9 +184,10 @@ func (r *realImpl) DeleteFile(ctx context.Context, owner, repository, path, bran
 	return err
 }
 
-func (r *realImpl) Commits(ctx context.Context, owner, repository, branch, path string) ([]Commit, error) {
+func (r *realImpl) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
 	commits, _, err := r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
-		SHA: branch,
+		Path: path,
+		SHA:  branch,
 	})
 	if err != nil {
 		var ghErr *github.ErrorResponse
@@ -208,10 +209,10 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, branch, path 
 	for _, c := range commits {
 		var createdAt time.Time
 		var author *CommitAuthor
-		if c.GetAuthor() != nil {
+		if c.GetCommit().GetAuthor() != nil {
 			author = &CommitAuthor{
-				c.GetAuthor().GetName(),
-				c.GetAuthor().GetAvatarURL(),
+				Name:      c.GetCommit().GetAuthor().GetName(),
+				AvatarURL: c.GetAuthor().GetAvatarURL(),
 			}
 
 			createdAt = c.GetCommit().GetAuthor().GetDate().Time
@@ -220,7 +221,7 @@ func (r *realImpl) Commits(ctx context.Context, owner, repository, branch, path 
 		var committer *CommitAuthor
 		if c.GetCommitter() != nil {
 			committer = &CommitAuthor{
-				Name:      c.GetCommitter().GetName(),
+				Name:      c.GetCommit().GetCommitter().GetName(),
 				AvatarURL: c.GetCommitter().GetAvatarURL(),
 			}
 		}

@@ -68,7 +68,7 @@ type Client interface {
 	DeleteFile(ctx context.Context, owner, repository, path, branch, message, hash string) error
 
 	// Commits returns the commits for the given path
-	Commits(ctx context.Context, owner, repository, branch, path string) ([]Commit, error)
+	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
 
 	// CreateBranch creates a new branch in the repository.
 	CreateBranch(ctx context.Context, owner, repository, sourceBranch, branchName string) error
