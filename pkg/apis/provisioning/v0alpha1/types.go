@@ -248,7 +248,7 @@ type FileList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	// should be named "items", but avoid subresource error for now:
+	// FIXME: should be named "items", but avoid subresource error for now:
 	// kubernetes/kubernetes#126809
 	Items []FileItem `json:"files,omitempty"`
 }
@@ -259,4 +259,27 @@ type FileItem struct {
 	Hash     string `json:"hash,omitempty"`
 	Modified int64  `json:"modified,omitempty"`
 	Author   string `json:"author,omitempty"`
+}
+
+// HistoryList is a list of versions of a resource
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type HistoryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	// FIXME: should be named "items", but avoid subresource error for now:
+	// kubernetes/kubernetes#126809
+	Items []HistoryItem `json:"files,omitempty"`
+}
+
+type Author struct {
+	Name      string `json:"name"`
+	AvatarURL string `json: "avatarURL,omitempty"`
+}
+
+type HistoryItem struct {
+	Ref     string   `json:"ref"`
+	Message string   `json:"message"`
+	Authors []Author `json:"authors"`
+	Date    int64    `json:"date"`
 }
