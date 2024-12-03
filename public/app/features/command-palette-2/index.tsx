@@ -2,32 +2,19 @@
 /* eslint @grafana/no-border-radius-literal: 0 */
 
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Portal, useStyles2 } from '@grafana/ui';
-import impressionSrv from 'app/core/services/impression_srv';
 
-import { getGrafanaSearcher } from '../search/service';
+import { CommandPaletteDividerItem, CommandPaletteItem } from './types';
+import { useNavItems } from './useNavItems';
+import { useRecentDashboards } from './useRecentDashboards';
 
 // interface CommandPalette2Props {}
 
-interface CommandPaletteDividerItem {
-  type: 'divider';
-  title: string;
-}
-
-interface CommandPaletteResultItem {
-  type: 'result';
-  title: string;
-  subtitle?: string;
-  parentTitle?: string;
-  icon: IconName;
-}
-
-type CommandPaletteItem = CommandPaletteDividerItem | CommandPaletteResultItem;
-
-const FAKE_DASH_DIVIDER: CommandPaletteDividerItem = { type: 'divider', title: 'Dashboards' };
+const PAGES_DIVIDER: CommandPaletteDividerItem = { type: 'divider', title: 'Pages' };
+const DASH_DIVIDER: CommandPaletteDividerItem = { type: 'divider', title: 'Dashboards' };
 const FAKE_DASH_ITEMS: CommandPaletteItem[] = [
   { type: 'result', title: 'Dashboards squad', icon: 'apps', parentTitle: 'UI experiments' },
   {
@@ -46,42 +33,22 @@ const FAKE_DASH_ITEMS: CommandPaletteItem[] = [
   { type: 'result', title: 'USE Method / Node', icon: 'apps', parentTitle: 'Linux Node' },
 ];
 
-const ITEMS: CommandPaletteItem[] = [
+const FAKE_BASE_ITEMS: CommandPaletteItem[] = [
   { type: 'divider', title: 'Folders' },
   { type: 'result', title: 'Dashboards squad', icon: 'folder-open', parentTitle: 'Grafana Frontend Division' },
 ];
-
-const MAX_RECENT_DASHBOARDS = 10;
 
 export function CommandPalette2() {
   const styles = useStyles2(getStyles);
   const modKey = '⌘'; /*useMemo(() => getModKey(), []);*/
 
-  const [items, setItems] = useState<CommandPaletteItem[]>(ITEMS);
+  const recentDashboardItems = useRecentDashboards();
+  const navItems = useNavItems();
   const [inputValue, setInputValue] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
-      const resultsDataFrame = await getGrafanaSearcher().search({
-        kind: ['dashboard'],
-        limit: MAX_RECENT_DASHBOARDS,
-        uid: recentUids,
-      });
-
-      const recentResults = resultsDataFrame.view.toArray().map((v) => {
-        const item: CommandPaletteResultItem = {
-          type: 'result',
-          title: v.name,
-          icon: 'apps',
-        };
-
-        return item;
-      });
-
-      setItems([...ITEMS, FAKE_DASH_DIVIDER, ...recentResults, ...FAKE_DASH_ITEMS]);
-    })();
-  }, []);
+  const items = useMemo(() => {
+    return [...FAKE_BASE_ITEMS, DASH_DIVIDER, ...recentDashboardItems, ...FAKE_DASH_ITEMS, PAGES_DIVIDER, ...navItems];
+  }, [navItems, recentDashboardItems]);
 
   const filteredItems = useMemo(() => {
     if (inputValue.length === 0) {
@@ -123,6 +90,11 @@ export function CommandPalette2() {
 
           <div className={styles.mainCell}>
             {filteredItems.map((item, idx) => {
+              const nextItem = filteredItems[idx + 1];
+              if (item.type === 'divider' && nextItem?.type === 'divider') {
+                return null;
+              }
+
               if (item.type === 'divider') {
                 return (
                   <div key={idx} className={styles.dividerItem}>
@@ -135,8 +107,12 @@ export function CommandPalette2() {
               return (
                 <div key={idx} className={styles.resultItem}>
                   <Icon name={item.icon} />
-                  <div className={styles.resultTitle}>{item.title}</div>
-                  {item.subtitle && <div className={styles.resultSubtitle}>{item.subtitle}</div>}
+                  <div>{item.title}</div>
+                  {item.parentTitle && (
+                    <div>
+                      {item.parentIcon && <Icon name={item.parentIcon} />} {item.parentTitle}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -178,7 +154,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: 0,
       right: 0,
       bottom: 0,
-      overflow: 'hidden',
       background: 'rgba(255, 255, 255, 0.10)',
       backdropFilter: 'blur(2px)',
     }),
@@ -189,7 +164,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       maxWidth: 800,
       margin: '32px auto',
-      overflow: 'auto',
+      overflow: 'hidden',
       borderRadius: 10,
       background: 'rgba(0, 0, 0, 0.80)',
       display: 'grid',
@@ -213,8 +188,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     inputBarCell: css({
-      position: 'sticky',
-      top: 0,
       padding: theme.spacing(3),
       gridArea: 'input',
       background: 'rgba(0, 0, 0, 0.40)',
@@ -232,6 +205,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     mainCell: css({
       padding: theme.spacing(1, 3),
       gridArea: 'main',
+      overflow: 'auto',
       // background: 'green',
     }),
 
@@ -242,8 +216,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     footerCell: css({
-      position: 'sticky',
-      bottom: 0,
       padding: theme.spacing(2, 3),
       gridArea: 'footer',
       background: '#16161E80',
@@ -281,9 +253,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     resultItem: css({
+      display: 'grid',
+      gridTemplateColumns: 'auto 1fr auto',
+      gap: theme.spacing(2),
+      alignItems: 'center',
       padding: theme.spacing(2, 0),
       color: '#9898A4',
-      display: 'flex',
       fontSize: 14,
     }),
 
