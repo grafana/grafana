@@ -225,6 +225,19 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 	}
 }
 
+func TestOrgRoleMapper_MapOrgRoles_ReturnsDefaultOnNilMapping(t *testing.T) {
+	orgService := orgtest.NewOrgServiceFake()
+	cfg := setting.NewCfg()
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgId = 2
+	cfg.AutoAssignOrgRole = string(org.RoleViewer)
+	mapper := ProvideOrgRoleMapper(cfg, orgService)
+
+	actual := mapper.MapOrgRoles(nil, []string{"First"}, org.RoleNone)
+
+	assert.EqualValues(t, map[int64]org.RoleType{2: org.RoleNone}, actual)
+}
+
 func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 	testCases := []struct {
 		name       string
