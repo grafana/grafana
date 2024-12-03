@@ -27,6 +27,7 @@ type RulerApi interface {
 	RouteDeleteRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
 	RouteGetGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaRulesPrometheusConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
 	RouteGetRuleByUID(*contextmodel.ReqContext) response.Response
@@ -77,6 +78,9 @@ func (f *RulerApiHandler) RouteGetGrafanaRuleGroupConfig(ctx *contextmodel.ReqCo
 }
 func (f *RulerApiHandler) RouteGetGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaRulesConfig(ctx)
+}
+func (f *RulerApiHandler) RouteGetGrafanaRulesPrometheusConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetGrafanaRulesPrometheusConfig(ctx)
 }
 func (f *RulerApiHandler) RouteGetNamespaceGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -229,6 +233,18 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules",
 				api.Hooks.Wrap(srv.RouteGetGrafanaRulesConfig),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/ruler/grafana/prometheus/config/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/prometheus/config/v1/rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/ruler/grafana/prometheus/config/v1/rules",
+				api.Hooks.Wrap(srv.RouteGetGrafanaRulesPrometheusConfig),
 				m,
 			),
 		)

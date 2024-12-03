@@ -212,9 +212,10 @@ func convertRuleToPrometheus(rule models.AlertRule) (PrometheusRule, error) {
 			expr = nodeExpr
 		}
 	}
-	if expr == "" {
+	// Allow expressionless rules through as a hack to deal with non-prom rules.
+	/*if expr == "" {
 		return PrometheusRule{}, fmt.Errorf("failed to convert rule '%s': no node found with a valid prometheus query", rule.Title)
-	}
+	}*/
 
 	return PrometheusRule{
 		Alert:         alert,
