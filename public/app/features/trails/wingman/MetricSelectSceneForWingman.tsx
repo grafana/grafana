@@ -124,19 +124,11 @@ export class MetricSelectSceneForWingman
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    console.log('getUrlState(): SceneObjectUrlValues {');
     if (typeof values.metricPrefix === 'string') {
       if (this.state.metricPrefix !== values.metricPrefix) {
         this.setState({ metricPrefix: values.metricPrefix });
       }
     }
-
-    // if (typeof values.wm_display_view === 'string') {
-    //   if (this.state.wm_display_view !== values.wm_display_view) {
-    //     this.setState({ wm_display_view: values.wm_display_view });
-    //     this.buildLayout();
-    //   }
-    // }
   }
 
   private _onActivate() {
