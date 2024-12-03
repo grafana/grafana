@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
-	"github.com/moby/moby/api/types/image"
+	"github.com/docker/docker/api/types/image"
 	"github.com/stretchr/testify/assert"
 	"github.com/urfave/cli/v2"
 )

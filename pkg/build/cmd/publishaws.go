@@ -15,9 +15,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/marketplacecatalog"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
-	"github.com/moby/moby/api/types/image"
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/build/config"
@@ -172,8 +172,8 @@ func (s *AwsMarketplacePublishingService) Login(ctx context.Context) error {
 	return err
 }
 
-func (s *AwsMarketplacePublishingService) PullImage(ctx context.Context, image string, version string) error {
-	reader, err := s.docker.ImagePull(ctx, fmt.Sprintf("%s:%s", image, version), image.PullOptions{
+func (s *AwsMarketplacePublishingService) PullImage(ctx context.Context, imageName string, version string) error {
+	reader, err := s.docker.ImagePull(ctx, fmt.Sprintf("%s:%s", imageName, version), image.PullOptions{
 		Platform: imagePlatform,
 	})
 	if err != nil {
