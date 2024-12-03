@@ -50,7 +50,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
       const w = measureText(selectedItems[i].label || '', 12).width + 4 + 8 + 20 + 4 + 10;
       currWidth += w + 4;
       if (currWidth > maxWidth) {
-        setShownItems(i);
+        setShownItems(i || 1);
         break;
       }
       if (i === selectedItems.length - 1) {
@@ -139,39 +139,41 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
   });
 
   return (
-    <div className={multiStyles.wrapper} ref={measureRef}>
-      <span className={multiStyles.pillWrapper}>
-        {selectedItems.slice(0, shownItems).map((item, index) => (
-          <ValuePill
-            onRemove={() => {
-              removeSelectedItem(item);
-            }}
-            key={`${item.value}${index}`}
-            {...getSelectedItemProps({ selectedItem: item, index })}
-          >
-            {itemToString(item)}
-          </ValuePill>
-        ))}
-      </span>
-      <Stack ref={suffixMeasureRef}>
-        {selectedItems.length > shownItems && (
-          <Box display="flex" direction="row" marginLeft={0.5} gap={1}>
-            {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-            <Text>...</Text>
-            <Tooltip
-              interactive
-              content={
-                <>
-                  {selectedItems.slice(shownItems).map((item) => (
-                    <div>{itemToString(item)}</div>
-                  ))}
-                </>
-              }
+    <div>
+      <div className={multiStyles.wrapper} ref={measureRef} onClick={() => setIsOpen(!isOpen)}>
+        <span className={multiStyles.pillWrapper}>
+          {selectedItems.slice(0, shownItems).map((item, index) => (
+            <ValuePill
+              onRemove={() => {
+                removeSelectedItem(item);
+              }}
+              key={`${item.value}${index}`}
+              {...getSelectedItemProps({ selectedItem: item, index })}
             >
-              <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
-            </Tooltip>
-          </Box>
-        )}
+              {itemToString(item)}
+            </ValuePill>
+          ))}
+        </span>
+        <Stack ref={suffixMeasureRef}>
+          {selectedItems.length > shownItems && (
+            <Box display="flex" direction="row" marginLeft={0.5} gap={1}>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+              <Text>...</Text>
+              <Tooltip
+                interactive
+                content={
+                  <>
+                    {selectedItems.slice(shownItems).map((item) => (
+                      <div>{itemToString(item)}</div>
+                    ))}
+                  </>
+                }
+              >
+                <div className={multiStyles.restNumber}>{selectedItems.length - shownItems}</div>
+              </Tooltip>
+            </Box>
+          )}
+        </Stack>
         <input
           className={multiStyles.input}
           {...getInputProps(
@@ -182,7 +184,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
             })
           )}
         />
-      </Stack>
+      </div>
       <div {...getMenuProps()}>
         <Portal>
           {isOpen && (

@@ -25,6 +25,8 @@ export const getMultiComboboxStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       outline: 'none',
       background: 'transparent',
+      width: '4px',
+      pointerEvents: 'none',
       flexGrow: 1,
       minWidth: '0',
       '&::placeholder': {
