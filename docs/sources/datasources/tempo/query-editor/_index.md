@@ -75,7 +75,7 @@ You can use the **Search** query builder's user interface to select options to s
 These selections generate a TraceQL query.
 Any query generated using **Search** query builder can be transferred to the **TraceQL** query editor, where you can edit the query directly.
 
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql).
 
 ## Choose a query editing mode
 
@@ -123,15 +123,15 @@ Using the service graph view, you can:
 - Determine how long the slowest queries in your service take to complete.
 - Examine all traces that contain spans of particular interest based on rate, error, and duration values (RED signals).
 
-For more information about the service graph, refer to [Service graph](../service-graph/).
+For more information about the service graph, refer to [Service graph](../service-graph).
 
 ![Screenshot of the Service Graph view](/media/docs/grafana/data-sources/tempo/query-editor/tempo-ds-query-service-graph.png)
 
 ## Use TraceQL panels in dashboards
 
-To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](/docs/grafana/latest/panels-visualizations/visualizations/traces/).
+To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/traces/).
 
-To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/latest/dashboards/use-dashboards/).
+To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards/).
 
 ## Set options for query builder and editor
 

@@ -2785,6 +2785,7 @@ __metadata:
     "@grafana/ui": "npm:11.4.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.14"
@@ -3075,6 +3076,7 @@ __metadata:
     "@grafana/schema": "npm:11.4.0-pre"
     "@grafana/ui": "npm:11.4.0-pre"
     "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/jest-dom": "npm:6.6.3"
     "@testing-library/react": "npm:16.0.1"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/debounce-promise": "npm:3.1.9"
@@ -3990,7 +3992,7 @@ __metadata:
     rc-time-picker: "npm:^3.7.3"
     rc-tooltip: "npm:6.2.1"
     react: "npm:18.2.0"
-    react-calendar: "npm:5.1.0"
+    react-calendar: "npm:^5.1.0"
     react-colorful: "npm:5.6.1"
     react-custom-scrollbars-2: "npm:4.5.0"
     react-dom: "npm:18.2.0"
@@ -6463,19 +6465,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.9.12":
-  version: 3.9.12
-  resolution: "@react-types/menu@npm:3.9.12"
+"@react-types/menu@npm:3.9.13":
+  version: 3.9.13
+  resolution: "@react-types/menu@npm:3.9.13"
   dependencies:
-    "@react-types/overlays": "npm:^3.8.10"
-    "@react-types/shared": "npm:^3.25.0"
+    "@react-types/overlays": "npm:^3.8.11"
+    "@react-types/shared": "npm:^3.26.0"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
-  checksum: 10/a6276115c5da08c63b9641b985c366435e69847af680ace5fef32ce2ca6eab9669db5cc8f5a20e01377a54f17392a95864ee40831b13b2258ed6d43bcc1398f5
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+  checksum: 10/ce1d5310e16300e06ad7c4a940525279b54d097242e3c88f3e6272e130d5036f18fda132c78836f8eac1da0a19a5f08d1c560491f8d8a30ff1dab5ea95b89852
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:3.8.10, @react-types/overlays@npm:^3.8.10":
+"@react-types/overlays@npm:3.8.10":
   version: 3.8.10
   resolution: "@react-types/overlays@npm:3.8.10"
   dependencies:
@@ -6483,6 +6485,17 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0
   checksum: 10/2e8edf37f75df2884a280cbd25a3798d24b93669b8b2b606cadacaf40f605f63e437749cea28861fabecd78293302ac39108f4e65cedd412c474e92be9895561
+  languageName: node
+  linkType: hard
+
+"@react-types/overlays@npm:^3.8.10, @react-types/overlays@npm:^3.8.11":
+  version: 3.8.11
+  resolution: "@react-types/overlays@npm:3.8.11"
+  dependencies:
+    "@react-types/shared": "npm:^3.26.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+  checksum: 10/3906806bda8d953d46409214be98b4e7a58d1b677d29f358f6a28e9a6238d0672b83382527607a69ccc94174c0b156b3f96140b950a4fab5c44775382929d3f9
   languageName: node
   linkType: hard
 
@@ -17223,7 +17236,7 @@ __metadata:
     "@react-aria/utils": "npm:3.25.3"
     "@react-awesome-query-builder/ui": "npm:6.6.4"
     "@react-types/button": "npm:3.10.1"
-    "@react-types/menu": "npm:3.9.12"
+    "@react-types/menu": "npm:3.9.13"
     "@react-types/overlays": "npm:3.8.10"
     "@react-types/shared": "npm:3.25.0"
     "@reduxjs/toolkit": "npm:2.3.0"
@@ -24738,7 +24751,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:5.1.0":
+"react-calendar@npm:^5.1.0":
   version: 5.1.0
   resolution: "react-calendar@npm:5.1.0"
   dependencies:
