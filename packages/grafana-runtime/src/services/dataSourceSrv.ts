@@ -75,6 +75,9 @@ export interface GetDataSourceListFilters {
 
   /** Only returns datasources matching the specified types (ie. Loki, Prometheus) */
   type?: string | string[];
+
+  /** Only return systems datasources. By default, systems datasources will be excluded. */
+  onlySystem?: boolean;
 }
 
 let singletonInstance: DataSourceSrv;

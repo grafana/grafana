@@ -2230,6 +2230,9 @@
             },
             "type": "object"
           },
+          "system": {
+            "type": "boolean"
+          },
           "type": {
             "type": "string"
           },
@@ -4828,6 +4831,9 @@
             },
             "type": "object"
           },
+          "system": {
+            "type": "boolean"
+          },
           "type": {
             "type": "string"
           },
@@ -4888,6 +4894,9 @@
             "type": "integer"
           },
           "readOnly": {
+            "type": "boolean"
+          },
+          "system": {
             "type": "boolean"
           },
           "type": {
@@ -11802,6 +11811,9 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "system": {
+            "type": "boolean"
           },
           "type": {
             "type": "string"

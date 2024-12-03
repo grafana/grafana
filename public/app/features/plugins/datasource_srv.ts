@@ -205,6 +205,17 @@ export class DatasourceSrv implements DataSourceService {
 
   getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
     const base = Object.values(this.settingsMapByName).filter((x) => {
+      const system = x.system || x.meta.system;
+      if (filters.onlySystem) {
+        if (!system) {
+          return false;
+        }
+      } else {
+        if (system) {
+          return false;
+        }
+      }
+
       if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
         return false;
       }

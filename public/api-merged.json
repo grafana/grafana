@@ -12182,6 +12182,9 @@
             "type": "string"
           }
         },
+        "system": {
+          "type": "boolean"
+        },
         "type": {
           "type": "string"
         },
@@ -14780,6 +14783,9 @@
             "type": "boolean"
           }
         },
+        "system": {
+          "type": "boolean"
+        },
         "type": {
           "type": "string"
         },
@@ -14840,6 +14846,9 @@
           "format": "int64"
         },
         "readOnly": {
+          "type": "boolean"
+        },
+        "system": {
           "type": "boolean"
         },
         "type": {
@@ -21755,6 +21764,9 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "system": {
+          "type": "boolean"
         },
         "type": {
           "type": "string"

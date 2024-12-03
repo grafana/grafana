@@ -120,6 +120,7 @@ type JSONData struct {
 	Table                     bool            `json:"tables"`
 	Logs                      bool            `json:"logs"`
 	Tracing                   bool            `json:"tracing"`
+	System                    bool            `json:"system,omitempty"`
 	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
 	BuiltIn                   bool            `json:"builtIn,omitempty"`
 	Mixed                     bool            `json:"mixed,omitempty"`

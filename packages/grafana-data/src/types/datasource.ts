@@ -142,6 +142,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   unlicensed?: boolean;
   backend?: boolean;
   isBackend?: boolean;
+  system?: boolean;
   multiValueFilterOperators?: boolean;
 }
 
@@ -655,6 +656,11 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault: boolean;
+  /**
+   *  Set to `true` if this is a system data source that we don't want shown
+   *  along with the other data sources.
+   */
+  system?: boolean;
   jsonData: T;
   secureJsonData?: S;
   secureJsonFields: KeyValue<boolean>;
@@ -688,6 +694,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
    */
   database?: string;
   isDefault?: boolean;
+  system?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)
 
   /**
