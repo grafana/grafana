@@ -109,7 +109,7 @@ func (s *cdkBackend) getPath(key *ResourceKey, rv int64) string {
 }
 
 // GetResourceStats implements Backend.
-func (s *cdkBackend) GetResourceStats(ctx context.Context, minCount int64) ([]ResourceStats, error) {
+func (s *cdkBackend) GetResourceStats(ctx context.Context, minCount int) ([]ResourceStats, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

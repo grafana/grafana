@@ -74,7 +74,7 @@ func (r sqlResourceRequest) Validate() error {
 
 type sqlStatsRequest struct {
 	sqltemplate.SQLTemplate
-	MinCount int64
+	MinCount int
 }
 
 func (r sqlStatsRequest) Validate() error {

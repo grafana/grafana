@@ -122,7 +122,7 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, minCount int64) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStats(ctx context.Context, minCount int) ([]resource.ResourceStats, error) {
 	_, span := b.tracer.Start(ctx, tracePrefix+".GetResourceStats")
 	defer span.End()
 
@@ -143,7 +143,7 @@ func (b *backend) GetResourceStats(ctx context.Context, minCount int64) ([]resou
 			if err != nil {
 				return err
 			}
-			if row.Count > minCount {
+			if row.Count > int64(minCount) {
 				res = append(res, row)
 			}
 		}

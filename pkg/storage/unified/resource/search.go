@@ -81,6 +81,7 @@ type searchSupport struct {
 	access      authz.AccessClient
 	builders    *builderCache
 	initWorkers int
+	initMinSize int
 }
 
 var (
@@ -104,6 +105,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access authz.A
 		search:      opts.Backend,
 		log:         slog.Default().With("logger", "resource-search"),
 		initWorkers: opts.WorkerThreads,
+		initMinSize: opts.InitMinCount,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -168,7 +170,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 	group := errgroup.Group{}
 	group.SetLimit(s.initWorkers)
 
-	stats, err := s.storage.GetResourceStats(ctx, 10)
+	stats, err := s.storage.GetResourceStats(ctx, s.initMinSize)
 	if err != nil {
 		return err
 	}
@@ -177,7 +179,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 		group.Go(func() error {
 			s.log.Debug("initializing search index", "namespace", info.Namespace, "group", info.Group, "resource", info.Resource)
 			totalBatchesIndexed++
-			_, _, err = s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion) // TODO, approximate size
+			_, _, err = s.build(ctx, info.NamespacedResource, info.Count, info.ResourceVersion)
 			return err
 		})
 	}
