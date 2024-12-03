@@ -34,7 +34,6 @@ export class WingmanScene extends SceneObjectBase<WingmanSceneState> implements 
     return { wm_sort_by, wm_display_view, wm_group_by };
   }
 
-  // For some reason this isn't triggered. So we will rely on events instead.
   updateFromUrl(values: SceneObjectUrlValues): void {
     const urlState = this._urlSync.getKeys().reduce<Partial<WingmanGroupKeyInState>>((prev, key) => {
       const val = values[key];
