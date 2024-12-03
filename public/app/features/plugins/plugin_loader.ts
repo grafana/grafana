@@ -13,6 +13,7 @@ import { DataQuery } from '@grafana/schema';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { addedComponentsRegistry, addedLinksRegistry, exposedComponentsRegistry } from './extensions/registry/setup';
 import { getPluginFromCache, registerPluginInCache } from './loader/cache';
 // SystemJS has to be imported before the sharedDependenciesMap
 import { SystemJS } from './loader/systemjs';
@@ -69,6 +70,15 @@ systemJSPrototype.resolve = decorateSystemJSResolve.bind(systemJSPrototype, syst
 // Any css files loaded via SystemJS have their styles applied onload.
 systemJSPrototype.onload = decorateSystemJsOnload;
 
+type PluginImportInfo = {
+  path: string;
+  pluginId: string;
+  loadingStrategy: PluginLoadingStrategy;
+  version?: string;
+  isAngular?: boolean;
+  moduleHash?: string;
+};
+
 export async function importPluginModule({
   path,
   pluginId,
@@ -76,14 +86,7 @@ export async function importPluginModule({
   version,
   isAngular,
   moduleHash,
-}: {
-  path: string;
-  pluginId: string;
-  loadingStrategy: PluginLoadingStrategy;
-  version?: string;
-  isAngular?: boolean;
-  moduleHash?: string;
-}): Promise<System.Module> {
+}: PluginImportInfo): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
   }
@@ -166,21 +169,44 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
   });
 }
 
-export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
-  const isAngular = meta.angular?.detected ?? meta.angularDetected;
-  const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
-  return importPluginModule({
+// Only successfully loaded plugins are cached
+const importedAppPlugins: Record<string, AppPlugin> = {};
+
+export async function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
+  const pluginId = meta.id;
+
+  if (importedAppPlugins[pluginId]) {
+    return importedAppPlugins[pluginId];
+  }
+
+  const pluginExports = await importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular,
-    loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
+    isAngular: meta.angular?.detected ?? meta.angularDetected,
+    loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
     moduleHash: meta.moduleHash,
-  }).then((pluginExports) => {
-    const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();
-    plugin.init(meta);
-    plugin.meta = meta;
-    plugin.setComponentsFromLegacyExports(pluginExports);
-    return plugin;
   });
+
+  const { plugin = new AppPlugin() } = pluginExports;
+  plugin.init(meta);
+  plugin.meta = meta;
+  plugin.setComponentsFromLegacyExports(pluginExports);
+
+  exposedComponentsRegistry.register({
+    pluginId,
+    configs: plugin.exposedComponentConfigs || [],
+  });
+  addedComponentsRegistry.register({
+    pluginId,
+    configs: plugin.addedComponentConfigs || [],
+  });
+  addedLinksRegistry.register({
+    pluginId,
+    configs: plugin.addedLinkConfigs || [],
+  });
+
+  importedAppPlugins[pluginId] = plugin;
+
+  return plugin;
 }
