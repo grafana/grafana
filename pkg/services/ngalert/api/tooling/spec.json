@@ -1647,6 +1647,11 @@
             "required": true
           },
           {
+            "type": "string",
+            "name": "x-datasource-uid",
+            "in": "header"
+          },
+          {
             "name": "Body",
             "in": "body",
             "schema": {

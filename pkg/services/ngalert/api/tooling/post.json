@@ -6854,6 +6854,11 @@
       "type": "string"
      },
      {
+      "in": "header",
+      "name": "x-datasource-uid",
+      "type": "string"
+     },
+     {
       "in": "body",
       "name": "Body",
       "schema": {
