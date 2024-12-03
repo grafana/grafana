@@ -9,13 +9,9 @@ import {
   IntervalVariable,
   QueryVariable,
   TextBoxVariable,
-  SceneDataTransformer,
   sceneGraph,
-  SceneQueryRunner,
   GroupByVariable,
   AdHocFiltersVariable,
-  SceneVariable,
-  SceneVariableState,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
@@ -33,12 +29,12 @@ import { DashboardWithAccessInfo } from 'app/features/dashboard/api/dashboard_ap
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
+import { validateVariable, validateVizPanel } from '../v2schema/test-helpers.test';
 
-import { transformSaveModelSchemaV2ToScene, TypedVariableModelV2 } from './transformSaveModelSchemaV2ToScene';
+import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
 
 const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -210,31 +206,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
     expect(vizPanels).toHaveLength(1);
     const vizPanel = vizPanels[0];
-    expect(vizPanel.state.title).toBe(dash.elements['test-panel-uid'].spec.title);
-    expect(vizPanel.state.description).toBe(dash.elements['test-panel-uid'].spec.description);
-    expect(vizPanel.state.pluginId).toBe(dash.elements['test-panel-uid'].spec.vizConfig.kind);
-    expect(vizPanel.state.pluginVersion).toBe(dash.elements['test-panel-uid'].spec.vizConfig.spec.pluginVersion);
-    expect(vizPanel.state.options).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.options);
-    expect(vizPanel.state.fieldConfig).toEqual(dash.elements['test-panel-uid'].spec.vizConfig.spec.fieldConfig);
-
-    expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
-    const dataTransformer = vizPanel.state.$data as SceneDataTransformer;
-    expect(dataTransformer.state.transformations[0]).toEqual(
-      dash.elements['test-panel-uid'].spec.data.spec.transformations[0].spec
-    );
-
-    expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
-    const queryRunner = getQueryRunnerFor(vizPanel)!;
-    expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
-    expect(queryRunner.state.queries).toEqual([
-      { datasource: { type: 'prometheus', uid: 'datasource1' }, expr: 'test-query', hide: false, refId: 'A' },
-    ]);
-    expect(queryRunner.state.maxDataPoints).toBe(100);
-    expect(queryRunner.state.cacheTimeout).toBe('1m');
-    expect(queryRunner.state.queryCachingTTL).toBe(60);
-    expect(queryRunner.state.minInterval).toBe('1m');
-    // FIXME: This is asking for a number as panel ID but here the uid of a panel is string
-    // expect(queryRunner.state.dataLayerFilter?.panelId).toBe(0);
+    validateVizPanel(vizPanel, scene, dash);
 
     // FIXME: Fix the key incompatibility since panel is not numeric anymore
     expect(vizPanel.state.key).toBe(dash.elements['test-panel-uid'].spec.uid);
@@ -322,48 +294,3 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(getQueryRunnerFor(vizPanels[0])?.state.datasource?.uid).toBe(MIXED_DATASOURCE_NAME);
   });
 });
-
-type SceneVariableConstructor<T extends SceneVariable<SceneVariableState>> = new (
-  initialState: Partial<SceneVariableState>
-) => T;
-
-interface VariableValidation<T extends TypedVariableModelV2> {
-  sceneVariable: SceneVariable<SceneVariableState> | undefined;
-  variableKind: T;
-  scene: DashboardScene;
-  dashSpec: DashboardV2Spec;
-  sceneVariableClass: SceneVariableConstructor<SceneVariable<SceneVariableState>>;
-  index: number;
-}
-
-function validateVariable<T extends TypedVariableModelV2>({
-  sceneVariable,
-  variableKind,
-  scene,
-  dashSpec,
-  sceneVariableClass,
-  index,
-}: VariableValidation<T>) {
-  if (variableKind.kind === 'AdhocVariable' && sceneVariable instanceof AdHocFiltersVariable) {
-    expect(sceneVariable).toBeInstanceOf(AdHocFiltersVariable);
-    expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-      `${variableKind.spec.filters[0].key}="${variableKind.spec.filters[0].value}"`
-    );
-    expect(sceneVariable?.state.datasource).toEqual(variableKind.spec.datasource);
-  } else if (variableKind.kind !== 'AdhocVariable') {
-    expect(sceneVariable).toBeInstanceOf(sceneVariableClass);
-    expect(scene.state?.$variables?.getByName(dashSpec.variables[index].spec.name)?.getValue()).toBe(
-      variableKind.spec.current.value
-    );
-  }
-  if (sceneVariable instanceof DataSourceVariable && variableKind.kind === 'DatasourceVariable') {
-    expect(sceneVariable?.state.pluginId).toBe(variableKind.spec.pluginId);
-  }
-  if (sceneVariable instanceof QueryVariable && variableKind.kind === 'QueryVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.datasource);
-    expect(sceneVariable?.state.query).toBe(variableKind.spec.query);
-  }
-  if (sceneVariable instanceof GroupByVariable && variableKind.kind === 'CustomVariable') {
-    expect(sceneVariable?.state.datasource).toBe(variableKind.spec.query);
-  }
-}
